@@ -76,6 +76,7 @@
     <section class="tour-section tour-additional-info-section">
       <app-additional-info
         [tourId]="tour.id"
+        [periodID]="selectedDepartureData?.id?.toString() || ''"
         [totalPrice]="totalPrice"
         [selectedCity]="selectedCity"
         [selectedDeparture]="selectedDepartureData"

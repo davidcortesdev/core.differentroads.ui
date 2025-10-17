@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { Order } from '../../../core/models/orders/order.model';
-import { AdditionalInfoService } from './additional-info.service';
+import { AdditionalInfoService } from '../../../core/services/v2/additional-info.service';
 
 @Component({
   selector: 'app-additional-info',
@@ -14,12 +14,14 @@ import { AdditionalInfoService } from './additional-info.service';
 export class AdditionalInfoComponent implements OnInit, OnDestroy {
   // Inputs para recibir datos del contexto donde se use (tour-v2 o checkout-v2)
   @Input() existingOrder: Order | null = null;
+  @Input() tourId: string = ''; // ID del tour
   @Input() tourName: string = '';
   @Input() periodName: string = '';
   @Input() periodDates: string = '';
   @Input() selectedFlight: any = null;
   @Input() travelersSelected: any = { adults: 0, childs: 0, babies: 0 };
   @Input() periodID: string = '';
+  @Input() selectedDeparture: any = null; // Para compatibilidad con tour
   @Input() isAuthenticated: boolean = false;
   @Input() infoCards: any[] = []; // Para mostrar información adicional si es necesario
   @Input() context: 'checkout' | 'tour' = 'checkout'; // Contexto para aplicar estilos específicos
@@ -72,6 +74,49 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     // Verificar autenticación y obtener email del usuario
     this.checkAuthentication();
+    // Establecer datos del contexto para el servicio
+    this.setContextData();
+  }
+
+  /**
+   * Establece los datos del contexto en el servicio
+   */
+  private setContextData(): void {
+    // Usar tourId si está disponible, sino usar selectedDeparture
+    const tourId = this.tourId || (this.selectedDeparture?.tourId?.toString()) || '';
+    const periodId = this.periodID || (this.selectedDeparture?.id?.toString()) || '';
+    
+    
+    this.additionalInfoService.setContextData({
+      tourId: tourId,
+      periodId: periodId,
+      travelersData: this.travelersSelected,
+      selectedFlight: this.selectedFlight,
+      totalPrice: this.calculateTotalPrice()
+    });
+  }
+
+  /**
+   * Calcula el precio total basado en los datos disponibles
+   */
+  private calculateTotalPrice(): number {
+    // TODO: Implementar cálculo real del precio
+    // Por ahora retorna un valor por defecto
+    return 0;
+  }
+
+  /**
+   * Obtiene el texto del botón según el contexto
+   */
+  getSaveButtonText(): string {
+    const totalPassengers = this.travelersSelected ? 
+      (this.travelersSelected.adults || 0) + (this.travelersSelected.childs || 0) + (this.travelersSelected.babies || 0) : 0;
+    
+    const isCheckoutContext = totalPassengers > 0 && this.calculateTotalPrice() > 0;
+    
+    return isCheckoutContext 
+      ? 'Guarda tu presupuesto'
+      : 'Añadir a favoritos';
   }
 
   /**
@@ -88,6 +133,8 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
+    // Limpiar datos del contexto
+    this.additionalInfoService.clearContextData();
   }
 
   /**
@@ -185,6 +232,9 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Actualizar datos del contexto antes de guardar
+    this.setContextData();
+
     this.loading = true;
 
     if (this.isUpdateMode) {
@@ -201,11 +251,19 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
    */
   private createBudget(): void {
     const saveSub = this.additionalInfoService.saveNewBudget(this.userEmail).subscribe({
-      next: (createdOrder) => {
+      next: (response) => {
         this.loading = false;
-        this.additionalInfoService.showSuccess('Presupuesto guardado correctamente');
-        // Disparar evento de analytics
-        this.additionalInfoService.trackContactForm(this.userEmail, 'ficha_tour');
+        
+        // Manejar respuesta del servidor
+        if (response.success) {
+          this.additionalInfoService.showSuccess(response.message || 'Presupuesto guardado correctamente');
+          
+          // Disparar evento de analytics
+          this.additionalInfoService.trackContactForm(this.userEmail, 'ficha_tour');
+          
+        } else {
+          this.additionalInfoService.showError(response.message || 'Error al guardar el presupuesto');
+        }
       },
       error: (error) => {
         this.loading = false;
@@ -232,7 +290,14 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           this.loading = false;
-          this.additionalInfoService.showSuccess('Presupuesto guardado correctamente');
+          
+          // Manejar respuesta del servidor
+          if (response.success) {
+            this.additionalInfoService.showSuccess(response.message || 'Presupuesto actualizado correctamente');
+            
+          } else {
+            this.additionalInfoService.showError(response.message || 'Error al actualizar el presupuesto');
+          }
         },
         error: (error) => {
           this.loading = false;

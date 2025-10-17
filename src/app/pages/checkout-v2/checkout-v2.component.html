@@ -190,6 +190,7 @@
       <div class="tour-additional-info-container">
         <app-additional-info
           [existingOrder]="reservationData"
+          [tourId]="tourId?.toString() || ''"
           [tourName]="tourName"
           [periodName]="tourName"
           [periodDates]="tourDates"

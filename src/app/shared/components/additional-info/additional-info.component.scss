@@ -1,0 +1,172 @@
+// Este componente usa principalmente los estilos del padre (checkout-v2)
+// Solo se definen estilos específicos si es necesario
+
+:host {
+  display: contents; // Permite que los elementos hijos se comporten como si estuvieran directamente en el padre
+}
+
+// Estilos adicionales si es necesario para otros contextos
+.action-card {
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  border: 1px solid #ced4da;
+  border-radius: 11.82px;
+  padding: 1rem;
+  background: #fff;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-color: #002b57 !important;
+  }
+}
+
+.card-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  
+  .bg-pink-100 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    background-color: #ff6f61;
+    border-radius: 6px;
+    flex-shrink: 0;
+    
+    i {
+      color: white;
+      font-size: 1rem;
+    }
+  }
+  
+  .card-text {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--background-azul);
+    line-height: 1.2;
+  }
+}
+
+.claseBord {
+  border-radius: 0.875rem;
+  border: 1px solid #002b57;
+}
+
+// Estilos para el modal
+.modal-content {
+  padding: 1rem 0;
+  
+  .info-section {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e0e0e0;
+    
+    h4 {
+      margin: 0 0 0.5rem 0;
+      color: var(--background-azul, #002b57);
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    
+    p {
+      margin: 0.25rem 0;
+      color: #666;
+      font-size: 0.9rem;
+    }
+  }
+  
+  .form-section {
+    .form-field {
+      margin-bottom: 1.5rem;
+      
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: #333;
+        font-size: 0.95rem;
+      }
+      
+      input,
+      textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #d0d5dd;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        
+        &:focus {
+          outline: none;
+          border-color: var(--background-azul, #002b57);
+          box-shadow: 0 0 0 3px rgba(0, 43, 87, 0.1);
+        }
+        
+        &::placeholder {
+          color: #98a2b3;
+        }
+      }
+      
+      textarea {
+        resize: vertical;
+        min-height: 100px;
+        font-family: inherit;
+      }
+      
+      .error {
+        display: block;
+        margin-top: 0.25rem;
+        color: #dc3545;
+        font-size: 0.875rem;
+      }
+      
+      .checkbox-field {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        
+        label {
+          margin: 0;
+          font-weight: 400;
+          cursor: pointer;
+        }
+      }
+    }
+    
+    .loading-indicator {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 0;
+      gap: 1rem;
+      
+      p {
+        margin: 0;
+        color: var(--background-azul, #002b57);
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+// Deep styles para PrimeNG
+::ng-deep {
+  p-dialog .p-dialog-header {
+    padding: 1.25rem 1.5rem;
+  }
+  
+  p-dialog .p-dialog-content {
+    padding: 0 1.5rem 1rem 1.5rem;
+  }
+  
+  p-dialog .p-dialog-footer {
+    padding: 1rem 1.5rem;
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+  }
+}

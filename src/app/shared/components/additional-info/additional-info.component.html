@@ -1,0 +1,164 @@
+<!-- Card para "Guarda tu presupuesto" -->
+<div
+  class="action-card"
+  (click)="handleSaveTrip()"
+  [title]="
+    !isAuthenticated
+      ? 'Para guardar tu presupuesto debes iniciar sesión o registrarte en la plataforma'
+      : 'Guarda este presupuesto en tu perfil para consultarlo más tarde'
+  "
+>
+  <div class="card-content">
+    <span class="bg-pink-100">
+      <i class="pi pi-bookmark" aria-hidden="true"></i>
+    </span>
+    <span class="card-text">Guarda tu presupuesto</span>
+  </div>
+</div>
+
+<!-- Card para "Descarga tu presupuesto" -->
+<div
+  class="action-card"
+  (click)="handleDownloadTrip()"
+  title="Envia un email con un PDF con toda la información de este presupuesto"
+>
+  <div class="card-content">
+    <span class="bg-pink-100">
+      <i class="pi pi-download" aria-hidden="true"></i>
+    </span>
+    <span class="card-text">Descarga tu presupuesto</span>
+  </div>
+</div>
+
+<!-- Card para "Comparte tu presupuesto con alguien" -->
+<div
+  class="action-card"
+  (click)="handleInviteFriend()"
+  title="Comparte este presupuesto con amigos o familiares"
+>
+  <div class="card-content">
+    <span class="bg-pink-100">
+      <i class="pi pi-user-plus" aria-hidden="true"></i>
+    </span>
+    <span class="card-text">Comparte tu presupuesto con alguien</span>
+  </div>
+</div>
+
+<!-- Toast para notificaciones -->
+<p-toast position="top-right"></p-toast>
+
+<!-- Modal de compartir/descargar presupuesto -->
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [breakpoints]="dialogBreakpoints"
+  [style]="dialogStyle"
+  [draggable]="false"
+  [resizable]="false"
+  [closeOnEscape]="true"
+  [dismissableMask]="true"
+  (onHide)="handleCloseModal()"
+  [header]="isShareMode ? 'Compartir Presupuesto' : 'Descargar Presupuesto'"
+>
+  <div class="modal-content">
+    <!-- Información del tour -->
+    <div class="info-section">
+      <h4>{{ tourName }}</h4>
+      <p *ngIf="periodDates">{{ periodDates }}</p>
+      <p *ngIf="selectedFlight">Vuelo: {{ selectedFlight.name || 'Sin especificar' }}</p>
+      <p *ngIf="travelersSelected">
+        Viajeros: {{ travelersSelected.adults }} adulto(s)
+        <span *ngIf="travelersSelected.childs > 0">, {{ travelersSelected.childs }} niño(s)</span>
+        <span *ngIf="travelersSelected.babies > 0">, {{ travelersSelected.babies }} bebé(s)</span>
+      </p>
+    </div>
+    
+    <!-- Formulario -->
+    <form class="form-section" [formGroup]="shareForm">
+      <!-- Email destinatario -->
+      <div class="form-field">
+        <label for="recipientEmail">
+          {{ isShareMode ? 'Email del destinatario *' : 'Tu email *' }}
+        </label>
+        <input
+          id="recipientEmail"
+          type="email"
+          pInputText
+          formControlName="recipientEmail"
+          [placeholder]="isShareMode ? 'ejemplo@email.com' : userEmail || 'ejemplo@email.com'"
+          class="w-full"
+        />
+        <small class="error" *ngIf="shareForm.get('recipientEmail')?.invalid && shareForm.get('recipientEmail')?.touched">
+          Por favor, introduce un email válido
+        </small>
+      </div>
+
+      <!-- Nombre destinatario (solo modo compartir) -->
+      <div class="form-field" *ngIf="isShareMode">
+        <label for="recipientName">Nombre del destinatario</label>
+        <input
+          id="recipientName"
+          type="text"
+          pInputText
+          formControlName="recipientName"
+          placeholder="Nombre (opcional)"
+          class="w-full"
+        />
+      </div>
+
+      <!-- Mensaje personalizado -->
+      <div class="form-field">
+        <label for="message">
+          {{ isShareMode ? 'Mensaje personalizado' : 'Comentarios adicionales' }}
+        </label>
+        <textarea
+          id="message"
+          pTextarea
+          formControlName="message"
+          [rows]="4"
+          [placeholder]="isShareMode ? 'Escribe un mensaje para acompañar el presupuesto (opcional)' : 'Añade cualquier comentario (opcional)'"
+          class="w-full"
+        ></textarea>
+      </div>
+
+      <!-- Opciones adicionales para compartir -->
+      <div class="form-field" *ngIf="isShareMode">
+        <div class="checkbox-field">
+          <p-checkbox
+            formControlName="includeDetails"
+            [binary]="true"
+            inputId="includeDetails"
+          ></p-checkbox>
+          <label for="includeDetails">Incluir detalles completos del itinerario</label>
+        </div>
+      </div>
+
+      <!-- Indicador de envío -->
+      <div class="loading-indicator" *ngIf="loading">
+        <p-progressSpinner 
+          styleClass="w-4rem h-4rem" 
+          strokeWidth="4"
+          animationDuration=".5s"
+        ></p-progressSpinner>
+        <p>Enviando...</p>
+      </div>
+    </form>
+  </div>
+  
+  <ng-template pTemplate="footer">
+    <p-button 
+      label="Cerrar" 
+      icon="pi pi-times" 
+      (onClick)="handleCloseModal()"
+      styleClass="p-button-text"
+      [disabled]="loading"
+    ></p-button>
+    <p-button 
+      [label]="isShareMode ? 'Compartir' : 'Enviar'" 
+      [icon]="isShareMode ? 'pi pi-share-alt' : 'pi pi-send'"
+      (onClick)="onSubmitShare()"
+      [disabled]="!shareForm.valid || loading"
+      [loading]="loading"
+    ></p-button>
+  </ng-template>
+</p-dialog>

@@ -1,0 +1,409 @@
+import { Component, OnInit, OnDestroy, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Router } from '@angular/router';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Subscription } from 'rxjs';
+import { Order } from '../../../core/models/orders/order.model';
+import { AdditionalInfoService } from './additional-info.service';
+
+@Component({
+  selector: 'app-additional-info',
+  standalone: false,
+  templateUrl: './additional-info.component.html',
+  styleUrl: './additional-info.component.scss',
+})
+export class AdditionalInfoComponent implements OnInit, OnDestroy {
+  // Inputs para recibir datos del contexto donde se use (tour-v2 o checkout-v2)
+  @Input() existingOrder: Order | null = null;
+  @Input() tourName: string = '';
+  @Input() periodName: string = '';
+  @Input() periodDates: string = '';
+  @Input() selectedFlight: any = null;
+  @Input() travelersSelected: any = { adults: 0, childs: 0, babies: 0 };
+  @Input() periodID: string = '';
+  @Input() isAuthenticated: boolean = false;
+  @Input() infoCards: any[] = []; // Para mostrar información adicional si es necesario
+
+  // Estados del componente
+  visible: boolean = false;
+  loginDialogVisible: boolean = false;
+  loading: boolean = false;
+  userEmail: string = '';
+
+  // Flags para controlar el comportamiento de los modales
+  shouldClearFields: boolean = false;
+  isDownloadMode: boolean = false;
+  isShareMode: boolean = false;
+
+  // Configuración de diálogos
+  dialogBreakpoints = { '1199px': '80vw', '575px': '90vw' };
+  dialogStyle = { width: '50vw' };
+
+  // Formulario para compartir/descargar
+  shareForm!: FormGroup;
+
+  // Suscripciones
+  private subscription: Subscription = new Subscription();
+
+  // Getter para determinar si estamos en modo actualización (checkout) o creación (tour detail)
+  get isUpdateMode(): boolean {
+    return !!this.existingOrder;
+  }
+
+  // Getter para verificar si hay tarjetas de información
+  get hasInfoCards(): boolean {
+    return this.infoCards.length > 0;
+  }
+
+  // Getter para información de viajeros formateada
+  get formattedInfoCards(): any[] {
+    return this.infoCards;
+  }
+
+  constructor(
+    private additionalInfoService: AdditionalInfoService,
+    private router: Router,
+    private formBuilder: FormBuilder
+  ) {
+    // Inicializar formulario
+    this.initializeForm();
+  }
+
+  ngOnInit(): void {
+    // Verificar autenticación y obtener email del usuario
+    this.checkAuthentication();
+  }
+
+  /**
+   * Inicializa el formulario reactivo
+   */
+  private initializeForm(): void {
+    this.shareForm = this.formBuilder.group({
+      recipientEmail: ['', [Validators.required, Validators.email]],
+      recipientName: [''],
+      message: [''],
+      includeDetails: [true]
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe();
+  }
+
+  /**
+   * Verifica el estado de autenticación del usuario
+   */
+  private checkAuthentication(): void {
+    const authSub = this.additionalInfoService.isAuthenticated().subscribe({
+      next: (isAuthenticated) => {
+        this.isAuthenticated = isAuthenticated;
+        if (isAuthenticated) {
+          this.loadUserEmail();
+        }
+      },
+      error: () => {}
+    });
+    this.subscription.add(authSub);
+  }
+
+  /**
+   * Carga el email del usuario autenticado
+   */
+  private loadUserEmail(): void {
+    const emailSub = this.additionalInfoService.getUserEmail().subscribe({
+      next: (email) => {
+        this.userEmail = email;
+      },
+      error: () => {}
+    });
+    this.subscription.add(emailSub);
+  }
+
+  /**
+   * Maneja el guardado del presupuesto
+   */
+  handleSaveTrip(): void {
+    this.isDownloadMode = false;
+    this.isShareMode = false;
+
+    if (!this.isAuthenticated) {
+      const currentUrl = window.location.pathname;
+      sessionStorage.setItem('redirectUrl', currentUrl);
+      this.loginDialogVisible = true;
+      this.additionalInfoService.showInfo(
+        'Debes iniciar sesión para guardar el presupuesto.'
+      );
+      return;
+    }
+
+    this.saveBudget();
+  }
+
+  /**
+   * Maneja la descarga del presupuesto
+   */
+  handleDownloadTrip(): void {
+    this.shouldClearFields = false;
+    this.isDownloadMode = true;
+    this.isShareMode = false;
+    
+    if (this.userEmail) {
+      this.shareForm.patchValue({
+        recipientEmail: this.userEmail
+      });
+    }
+    
+    this.visible = true;
+  }
+
+  /**
+   * Maneja compartir el presupuesto con alguien
+   */
+  handleInviteFriend(): void {
+    this.shouldClearFields = true;
+    this.isShareMode = true;
+    this.isDownloadMode = false;
+    
+    this.shareForm.reset({
+      recipientEmail: '',
+      recipientName: '',
+      message: '',
+      includeDetails: true
+    });
+    
+    this.visible = true;
+  }
+
+  /**
+   * Guarda el presupuesto (crear nuevo o actualizar existente)
+   */
+  private saveBudget(): void {
+    if (!this.userEmail) {
+      this.additionalInfoService.showError(
+        'No se pudo obtener la información del usuario. Por favor, inténtalo de nuevo.'
+      );
+      return;
+    }
+
+    this.loading = true;
+
+    if (this.isUpdateMode) {
+      // Modo actualización (desde checkout)
+      this.updateBudget();
+    } else {
+      // Modo creación (desde tour detail)
+      this.createBudget();
+    }
+  }
+
+  /**
+   * Crea un nuevo presupuesto
+   */
+  private createBudget(): void {
+    const saveSub = this.additionalInfoService.saveNewBudget(this.userEmail).subscribe({
+      next: (createdOrder) => {
+        this.loading = false;
+        this.additionalInfoService.showSuccess('Presupuesto guardado correctamente');
+        // Disparar evento de analytics
+        this.additionalInfoService.trackContactForm(this.userEmail, 'ficha_tour');
+      },
+      error: (error) => {
+        this.loading = false;
+        this.additionalInfoService.showError(
+          'Ha ocurrido un error al guardar el presupuesto. Por favor, inténtalo de nuevo.'
+        );
+      }
+    });
+    this.subscription.add(saveSub);
+  }
+
+  /**
+   * Actualiza un presupuesto existente
+   */
+  private updateBudget(): void {
+    if (!this.existingOrder) {
+      this.additionalInfoService.showError('No se encontró información de la orden existente.');
+      this.loading = false;
+      return;
+    }
+
+    const updateSub = this.additionalInfoService
+      .updateExistingBudget(this.existingOrder, this.userEmail)
+      .subscribe({
+        next: (response) => {
+          this.loading = false;
+          this.additionalInfoService.showSuccess('Presupuesto guardado correctamente');
+        },
+        error: (error) => {
+          this.loading = false;
+          this.additionalInfoService.showError(
+            'Ha ocurrido un error al guardar el presupuesto. Por favor, inténtalo de nuevo.'
+          );
+        }
+      });
+    this.subscription.add(updateSub);
+  }
+
+  /**
+   * Cierra el modal de presupuesto
+   */
+  handleCloseModal(): void {
+    this.visible = false;
+    // Restablecer flags y formulario después de cerrar
+    setTimeout(() => {
+      this.shouldClearFields = false;
+      this.isDownloadMode = false;
+      this.isShareMode = false;
+      this.shareForm.reset({
+        recipientEmail: '',
+        recipientName: '',
+        message: '',
+        includeDetails: true
+      });
+    }, 100);
+  }
+
+  /**
+   * Maneja el envío del formulario de compartir/descargar
+   */
+  onSubmitShare(): void {
+    if (this.shareForm.invalid) {
+      Object.keys(this.shareForm.controls).forEach(key => {
+        this.shareForm.get(key)?.markAsTouched();
+      });
+      return;
+    }
+
+    this.loading = true;
+    const formData = this.shareForm.value;
+
+    if (this.isShareMode) {
+      this.handleShareMode(formData);
+    } else {
+      this.handleDownloadMode(formData);
+    }
+  }
+
+  /**
+   * Procesa el envío de presupuesto a otra persona
+   */
+  private handleShareMode(formData: any): void {
+    const budgetData = {
+      recipientEmail: formData.recipientEmail,
+      recipientName: formData.recipientName || '',
+      message: formData.message || '',
+      includeDetails: formData.includeDetails,
+      tourName: this.tourName,
+      periodName: this.periodName,
+      periodDates: this.periodDates,
+      flightInfo: this.selectedFlight?.name || 'Sin vuelo',
+      travelers: this.travelersSelected,
+      reservationId: this.existingOrder?._id || null,
+      isShareMode: true
+    };
+
+    const sendSub = this.additionalInfoService.sendBudgetByEmail(budgetData).subscribe({
+      next: () => {
+        this.loading = false;
+        this.additionalInfoService.showSuccess(
+          `Presupuesto compartido exitosamente con ${formData.recipientEmail}`
+        );
+        this.handleCloseModal();
+      },
+      error: () => {
+        this.loading = false;
+        this.additionalInfoService.showError(
+          'Ha ocurrido un error al compartir el presupuesto. Por favor, inténtalo de nuevo.'
+        );
+      }
+    });
+
+    this.subscription.add(sendSub);
+  }
+
+  /**
+   * Procesa la descarga del presupuesto en PDF
+   */
+  private handleDownloadMode(formData: any): void {
+    const budgetData = {
+      recipientEmail: formData.recipientEmail,
+      message: formData.message || '',
+      tourName: this.tourName,
+      periodName: this.periodName,
+      periodDates: this.periodDates,
+      flightInfo: this.selectedFlight?.name || 'Sin vuelo',
+      travelers: this.travelersSelected,
+      reservationId: this.existingOrder?._id || null
+    };
+
+    const downloadSub = this.additionalInfoService.downloadBudgetPDF(budgetData).subscribe({
+      next: (response) => {
+        this.loading = false;
+
+        if (response instanceof Blob) {
+          this.downloadPDFFromBlob(response, `presupuesto-${this.tourName}.pdf`);
+        } else if (response.pdfUrl) {
+          this.downloadPDFFromURL(response.pdfUrl, response.fileName);
+        }
+
+        this.additionalInfoService.showSuccess(
+          `Presupuesto descargado y enviado a ${formData.recipientEmail}`
+        );
+        this.handleCloseModal();
+      },
+      error: () => {
+        this.loading = false;
+        this.additionalInfoService.showError(
+          'Ha ocurrido un error al descargar el presupuesto. Por favor, inténtalo de nuevo.'
+        );
+      }
+    });
+
+    this.subscription.add(downloadSub);
+  }
+
+  /**
+   * Descarga un archivo PDF desde un Blob
+   */
+  private downloadPDFFromBlob(blob: Blob, fileName: string): void {
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    link.click();
+    window.URL.revokeObjectURL(url);
+  }
+
+  /**
+   * Descarga un archivo PDF desde una URL
+   */
+  private downloadPDFFromURL(url: string, fileName: string): void {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    link.target = '_blank';
+    link.click();
+  }
+
+  /**
+   * Cierra el modal de login
+   */
+  closeLoginModal(): void {
+    this.loginDialogVisible = false;
+  }
+
+  /**
+   * Navega a la página de login
+   */
+  navigateToLogin(): void {
+    this.closeLoginModal();
+    this.router.navigate(['/login']);
+  }
+
+  /**
+   * Navega a la página de registro
+   */
+  navigateToRegister(): void {
+    this.closeLoginModal();
+    this.router.navigate(['/sign-up']);
+  }
+}

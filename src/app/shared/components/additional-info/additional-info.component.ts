@@ -295,6 +295,9 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
     // Simular respuesta exitosa inmediatamente
     this.loading = false;
     this.additionalInfoService.showSuccess('Presupuesto actualizado correctamente');
+    
+    // Disparar evento de analytics: add_to_wishlist (también en modo actualización)
+    this.trackAddToWishlist();
   }
 
   /**

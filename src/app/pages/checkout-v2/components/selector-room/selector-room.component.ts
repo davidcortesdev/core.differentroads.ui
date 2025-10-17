@@ -91,8 +91,10 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
   private destroy$ = new Subject<void>();
   private saveSubject = new Subject<void>();
 
-  // NUEVO: Subject para debounce de selección de habitaciones
-  private roomSelectionSubject = new Subject<void>();
+  // NUEVO: Propiedades para indicador de proceso
+  processingStatus: string = '';
+  savingCountdown: number = 0;
+  private countdownInterval: any = null;
 
   // NUEVO: Propiedades para controlar el estado de carga de viajeros
   loadingTravelers: boolean = false;
@@ -196,18 +198,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
         error: () => {},
       });
 
-    // NUEVO: Configurar debounce para selección de habitaciones
-    this.roomSelectionSubject
-      .pipe(
-        debounceTime(500), // Debounce de 500ms para permitir clics rápidos
-        takeUntil(this.destroy$)
-      )
-      .subscribe({
-        next: () => {
-          this.processAllRoomSelections();
-        },
-        error: () => {},
-      });
   }
 
   ngOnInit(): void {
@@ -224,6 +214,7 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    this.clearCountdown();
   }
 
   // NUEVO: Método para cargar viajeros independientemente
@@ -260,37 +251,37 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
     if (!this.departureId) return;
 
     try {
-      // Cargar datos básicos en paralelo
-      const [accommodations, types] = await Promise.all([
+      // FASE 1: Cargar TODOS los datos maestros en paralelo
+      const [accommodations, types, prices, travelers] = await Promise.all([
         firstValueFrom(
-          this.departureAccommodationService.getByDeparture(this.departureId!)
+          this.departureAccommodationService.getByDeparture(this.departureId)
         ),
         firstValueFrom(this.departureAccommodationTypeService.getAll()),
-      ]);
-
-      this.processBasicData(accommodations || [], types || []);
-
-      // Cargar precios, viajeros y grupos de edad en paralelo
-      const [prices, travelers] = await Promise.all([
         firstValueFrom(
           this.departureAccommodationPriceService.getByDeparture(
-            this.departureId!
+            this.departureId
           )
         ),
-        this.loadTravelersIndependently(), // NUEVO: Carga independiente
+        this.loadTravelersIndependently(),
       ]);
 
-      // Cargar grupos de edad para validaciones
+      // Cargar grupos de edad (necesario para clasificar viajeros)
       await this.loadAgeGroupsForValidation();
 
+      // Procesar datos maestros
+      this.processBasicData(accommodations || [], types || []);
       this.assignPricesToRooms(prices || []);
 
-      // Procesar viajeros si existen
+      // Actualizar contadores de viajeros
       if (travelers && travelers.length > 0) {
-        await this.loadExistingTravelerAccommodations();
+        this.updateTravelersNumbersFromExistingTravelers();
+
+        // FASE 2: Recuperar y validar asignaciones existentes
+        await this.loadAndValidateExistingAssignments();
       }
 
-      this.updateUIFromData();
+      // FASE 3: Actualizar UI sin redistribuir
+      this.updateUIWithoutDistribution();
     } catch (error) {
       console.error('Error initializing component:', error);
     }
@@ -324,35 +315,196 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
     this.roomsUpdated.emit();
   }
 
-  // Método para actualizar la UI después de cargar todos los datos
-  updateUIFromData(): void {
-    // Ordenar por capacidad
+  // NUEVO: Método para cargar y validar asignaciones existentes sin redistribuir
+  private async loadAndValidateExistingAssignments(): Promise<void> {
+    // Cargar asignaciones de BD
+    await this.loadExistingTravelerAccommodations();
+
+    // Validar asignaciones
+    const validation = this.validateExistingAssignments();
+
+    if (validation.isValid) {
+      // ✅ Asignaciones válidas → Solo actualizar UI
+      console.log('✅ Asignaciones válidas, no se modifican');
+      this.currentRoomAssignments = validation.assignments;
+      this.syncSelectedRoomsFromAssignments();
+    } else {
+      // ❌ Asignaciones inválidas → Limpiar y esperar interacción
+      console.warn('⚠️ Asignaciones inválidas:', validation.error);
+      this.clearInvalidAssignments();
+    }
+  }
+
+  // NUEVO: Validar asignaciones existentes
+  private validateExistingAssignments(): {
+    isValid: boolean;
+    assignments: any[];
+    error?: string;
+  } {
+    if (
+      !this.existingTravelerAccommodations ||
+      this.existingTravelerAccommodations.length === 0
+    ) {
+      return { isValid: false, assignments: [], error: 'No hay asignaciones' };
+    }
+
+    // Verificar que todos los viajeros tienen asignación
+    if (
+      this.existingTravelerAccommodations.length !== this.existingTravelers.length
+    ) {
+      return {
+        isValid: false,
+        assignments: [],
+        error: 'Faltan viajeros por asignar',
+      };
+    }
+
+    // Construir asignaciones desde BD
+    const assignments = this.buildAssignmentsFromDB();
+
+    // Validar que cada habitación tiene al menos un adulto
+    const roomGroups = this.groupAssignmentsByRoom(assignments);
+
+    for (const [roomKey, travelers] of Object.entries(roomGroups)) {
+      const hasAdult = travelers.some((t) =>
+        this.isAdultTraveler(
+          this.existingTravelers.find((et) => et.id === t.travelerId)!
+        )
+      );
+
+      if (!hasAdult) {
+        return {
+          isValid: false,
+          assignments: [],
+          error: `Habitación ${roomKey} sin adulto`,
+        };
+      }
+
+      // Validar que los niños están con adultos
+      const children = travelers.filter((t) =>
+        this.isChildTraveler(
+          this.existingTravelers.find((et) => et.id === t.travelerId)!
+        )
+      );
+
+      if (children.length > 0 && !hasAdult) {
+        return {
+          isValid: false,
+          assignments: [],
+          error: `Niños solos en habitación ${roomKey}`,
+        };
+      }
+    }
+
+    return { isValid: true, assignments };
+  }
+
+  // NUEVO: Construir asignaciones desde BD
+  private buildAssignmentsFromDB(): any[] {
+    const assignments: any[] = [];
+
+    this.existingTravelerAccommodations.forEach((accommodation, index) => {
+      const traveler = this.existingTravelers.find(
+        (t) => t.id === accommodation.reservationTravelerId
+      );
+
+      const room = this.allRoomsAvailability.find(
+        (r) => r.id === accommodation.departureAccommodationId
+      );
+
+      if (traveler && room) {
+        assignments.push({
+          travelerId: traveler.id,
+          travelerNumber: traveler.travelerNumber,
+          isLeadTraveler: traveler.isLeadTraveler,
+          roomId: room.id,
+          roomTkId: room.tkId,
+          roomName: room.name,
+          departureAccommodationId: room.id,
+          bedNumber: index + 1,
+          isShared: room.isShared || false,
+          roomInstanceKey: `${room.id}_${accommodation.id}`,
+        });
+      }
+    });
+
+    return assignments;
+  }
+
+  // NUEVO: Agrupar asignaciones por habitación
+  private groupAssignmentsByRoom(assignments: any[]): {
+    [roomKey: string]: any[];
+  } {
+    return assignments.reduce((groups, assignment) => {
+      const key = assignment.roomInstanceKey || assignment.roomId;
+      if (!groups[key]) {
+        groups[key] = [];
+      }
+      groups[key].push(assignment);
+      return groups;
+    }, {} as { [roomKey: string]: any[] });
+  }
+
+  // NUEVO: Sincronizar selectedRooms desde asignaciones BD
+  private syncSelectedRoomsFromAssignments(): void {
+    this.selectedRooms = {};
+
+    // Contar cuántas habitaciones de cada tipo hay asignadas
+    const roomCounts: { [tkId: string]: Set<string> } = {};
+
+    this.currentRoomAssignments.forEach((assignment) => {
+      if (!roomCounts[assignment.roomTkId]) {
+        roomCounts[assignment.roomTkId] = new Set();
+      }
+      // Usar roomInstanceKey para contar instancias únicas
+      roomCounts[assignment.roomTkId].add(
+        assignment.roomInstanceKey || `${assignment.roomId}`
+      );
+    });
+
+    // Convertir a números
+    Object.entries(roomCounts).forEach(([tkId, instanceSet]) => {
+      this.selectedRooms[tkId] = instanceSet.size;
+    });
+
+    console.log('🔄 Habitaciones sincronizadas desde BD:', this.selectedRooms);
+  }
+
+  // NUEVO: Limpiar asignaciones inválidas
+  private clearInvalidAssignments(): void {
+    this.currentRoomAssignments = [];
+    this.selectedRooms = {};
+    this.errorMsg = 'Por favor, selecciona las habitaciones para los viajeros';
+    console.log('🧹 Asignaciones limpiadas, esperando selección del usuario');
+  }
+
+  // NUEVO: Actualizar UI sin redistribuir automáticamente
+  private updateUIWithoutDistribution(): void {
+    // Ordenar habitaciones por capacidad
     this.allRoomsAvailability.sort(
       (a, b) => (a.capacity || 0) - (b.capacity || 0)
     );
 
-    // Obtener asignaciones existentes de travelers
-    const travelersRoomAssignments = this.initializeRoomsFromTravelers();
-
-    // Inicializar selectedRooms con las asignaciones existentes
-    this.selectedRooms = {};
-    this.allRoomsAvailability.forEach((room) => {
-      this.selectedRooms[room.tkId] = travelersRoomAssignments[room.tkId] || 0;
-    });
-
-    // Filtrar habitaciones
-    const initialTravelers = this.travelersNumbersSource.getValue();
-    const totalTravelers =
-      initialTravelers.adults +
-      initialTravelers.childs +
-      initialTravelers.babies;
+    // Filtrar habitaciones según número de viajeros
+    const totalTravelers = this.getTotalTravelers();
     this.filterRooms(totalTravelers);
 
     // Inicializar el total anterior de viajeros
     this.setPreviousTotalTravelers(totalTravelers);
 
-    // Limpiar errores de inicialización
-    this.errorMsg = null;
+    // Limpiar errores
+    if (!this.errorMsg) {
+      this.errorMsg = null;
+    }
+
+    console.log('🎨 UI actualizada sin redistribuir habitaciones');
+  }
+
+  // Método para actualizar la UI después de cargar todos los datos
+  // ⚠️ OBSOLETO: Usar updateUIWithoutDistribution() en su lugar
+  updateUIFromData(): void {
+    console.warn('⚠️ updateUIFromData() es obsoleto, usar updateUIWithoutDistribution()');
+    this.updateUIWithoutDistribution();
   }
 
   updateRoomSharedStatus(): void {
@@ -753,35 +905,42 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
     );
   }
 
-  // Manejar cambios en selección (ahora con debounce)
+  // Manejar cambios en selección (procesamiento inmediato)
   onRoomSpacesChange(changedRoom: RoomAvailability, newValue: number): void {
-    // Actualizar SOLO la UI local inmediatamente - SIN BLOQUEOS
+    // Actualizar la UI local inmediatamente
     if (newValue === 0) {
       delete this.selectedRooms[changedRoom.tkId];
     } else {
       this.selectedRooms[changedRoom.tkId] = newValue;
     }
 
-    // Solo disparar el debounce - permite múltiples clics rápidos
-    this.roomSelectionSubject.next();
+    // Procesar inmediatamente (el debounce solo está en el guardado)
+    this.processAllRoomSelections();
   }
 
-  // NUEVO: Procesar todas las selecciones después del debounce
+  // Procesar todas las selecciones
   private processAllRoomSelections(): void {
+    // Mostrar estado de validación
+    this.processingStatus = '🔍 Validando selección...';
+
     // Validar todas las selecciones actuales
     const validationResult = this.validateRoomSelections();
     if (!validationResult.isValid) {
       this.errorMsg = validationResult.message;
+      this.processingStatus = '❌ Selección inválida';
+      this.clearCountdown();
       return;
     }
 
     // Limpiar errores si la validación es exitosa
     this.errorMsg = null;
+    this.processingStatus = '✅ Selección válida';
 
     // Actualizar habitaciones con todas las selecciones
     this.updateRooms();
 
-    // Guardar con debounce para no interferir con la selección del usuario
+    // Iniciar countdown y guardar con debounce
+    this.startSavingCountdown();
     this.saveSubject.next();
   }
 
@@ -1227,6 +1386,9 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
       // Mostrar toast de éxito
       this.showSuccessToast();
 
+      // Actualizar estado de éxito
+      this.updateStatusAfterSave(true);
+
       return true;
     } catch (error) {
       // Determinar el tipo de error y mensaje específico
@@ -1253,6 +1415,9 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
         detail: errorDetail,
         life: 5000,
       });
+
+      // Actualizar estado de error
+      this.updateStatusAfterSave(false);
 
       return false;
     } finally {
@@ -1318,23 +1483,25 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
   // NUEVO: Método público para recargar cuando cambien los viajeros
   async reloadOnTravelersChange(): Promise<void> {
     try {
+      console.log('🔄 Recargando habitaciones por cambio de viajeros...');
+
       // Recargar viajeros
       await this.loadTravelersIndependently();
 
       // Actualizar contadores de viajeros basándose en los viajeros reales
       this.updateTravelersNumbersFromExistingTravelers();
 
-      // Recargar asignaciones existentes
+      // Recargar y validar asignaciones (sin redistribuir)
       if (this.existingTravelers.length > 0) {
-        await this.loadExistingTravelerAccommodations();
+        await this.loadAndValidateExistingAssignments();
       }
 
-      // Recalcular distribución de habitaciones
-      this.recalculateRoomDistribution();
+      // Actualizar UI sin redistribuir
+      this.updateUIWithoutDistribution();
 
-      // Actualizar UI
-      this.updateUIFromData();
+      console.log('✅ Recarga completa');
     } catch (error) {
+      console.error('❌ Error al recargar habitaciones:', error);
       this.errorMsg = 'Error al recargar las habitaciones.';
     }
   }
@@ -1373,28 +1540,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
     });
   }
 
-  // NUEVO: Método para recalcular distribución de habitaciones
-  private recalculateRoomDistribution(): void {
-    if (this.existingTravelers.length === 0) {
-      return;
-    }
-
-    // Obtener habitaciones seleccionadas actualmente
-    const selectedRoomsWithQty = Object.keys(this.selectedRooms)
-      .filter((tkId) => this.selectedRooms[tkId] > 0)
-      .map((tkId) => {
-        const room = this.allRoomsAvailability.find((r) => r.tkId === tkId);
-        return { ...room, qty: this.selectedRooms[tkId] };
-      })
-      .filter((room) => room.qty > 0);
-
-    if (selectedRoomsWithQty.length > 0) {
-      this.distributeRoomsToTravelers(
-        selectedRoomsWithQty as RoomAvailability[]
-      );
-    }
-  }
-
   // Métodos para mostrar toasts
   private showSavingToast(): void {
     this.messageService.add({
@@ -1412,6 +1557,52 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
       detail: 'Asignaciones de habitaciones actualizadas correctamente',
       life: 3000,
     });
+  }
+
+  // Métodos para countdown del guardado
+  private startSavingCountdown(): void {
+    // Limpiar countdown anterior si existe
+    this.clearCountdown();
+
+    // Iniciar en 1200ms (1.2 segundos)
+    this.savingCountdown = 1200;
+    this.processingStatus = `⏳ Guardando en ${(this.savingCountdown / 1000).toFixed(1)}s...`;
+
+    // Actualizar cada 100ms para un countdown suave
+    this.countdownInterval = setInterval(() => {
+      this.savingCountdown -= 100;
+
+      if (this.savingCountdown > 0) {
+        this.processingStatus = `⏳ Guardando en ${(this.savingCountdown / 1000).toFixed(1)}s...`;
+      } else {
+        this.processingStatus = '💾 Guardando...';
+        this.clearCountdown();
+      }
+    }, 100);
+  }
+
+  private clearCountdown(): void {
+    if (this.countdownInterval) {
+      clearInterval(this.countdownInterval);
+      this.countdownInterval = null;
+    }
+    this.savingCountdown = 0;
+  }
+
+  private updateStatusAfterSave(success: boolean): void {
+    this.clearCountdown();
+
+    if (success) {
+      this.processingStatus = '✅ Guardado exitoso';
+      // Limpiar el mensaje después de 3 segundos
+      setTimeout(() => {
+        if (this.processingStatus === '✅ Guardado exitoso') {
+          this.processingStatus = '';
+        }
+      }, 3000);
+    } else {
+      this.processingStatus = '❌ Error al guardar';
+    }
   }
 
   // Métodos auxiliares para manejo de cambios de viajeros

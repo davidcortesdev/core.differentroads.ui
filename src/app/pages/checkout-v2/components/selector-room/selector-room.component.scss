@@ -1,3 +1,55 @@
+// Indicador de proceso y guardado
+.processing-status {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border-radius: 0.5rem;
+  border-left: 4px solid #2196f3;
+  animation: fadeIn 0.3s ease-in;
+
+  .status-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    .status-text {
+      color: #1976d2;
+      font-size: 0.9375rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background-color: #e3f2fd;
+      border-radius: 2px;
+      overflow: hidden;
+      position: relative;
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #2196f3 0%, #1976d2 100%);
+        transition: width 0.1s linear;
+        border-radius: 2px;
+      }
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
 // Información de viajeros
 .travelers-info {
   margin-bottom: 1rem;

@@ -386,9 +386,6 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
         }
       }
 
-      // Actualizar total en reserva
-      await this.updateReservationTotalPassengers();
-
       this.messageService.add({
         severity: 'success',
         summary: 'Viajero agregado',
@@ -447,9 +444,6 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
           throw error;  // Re-lanzar para que se maneje en el catch principal
         }
       }
-
-      // Actualizar total en reserva
-      await this.updateReservationTotalPassengers();
 
       this.messageService.add({
         severity: 'success',
@@ -564,38 +558,6 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
     return true;
   }
 
-  /**
-   * Actualizar el total de pasajeros en la reserva
-   */
-  private async updateReservationTotalPassengers(): Promise<void> {
-    if (!this.reservationId || !this.reservationData) {
-      return;
-    }
-
-    const newTotal = this.travelers.length;
-
-    return new Promise((resolve, reject) => {
-      const updateData = {
-        ...this.reservationData,
-        totalPassengers: newTotal,
-        updatedAt: new Date().toISOString(),
-      };
-
-      this.reservationService
-        .update(this.reservationId!, updateData)
-        .subscribe({
-          next: (success) => {
-            if (success) {
-              this.reservationData.totalPassengers = newTotal;
-              resolve();
-            } else {
-              reject(new Error('Failed to update reservation'));
-            }
-          },
-          error: reject,
-        });
-    });
-  }
 
   /**
    * TrackBy function para optimizar el ngFor

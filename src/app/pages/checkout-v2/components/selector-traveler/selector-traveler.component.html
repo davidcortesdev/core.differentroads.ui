@@ -13,7 +13,14 @@
     </div>
   </div>
 
-  <div class="traveler-selector-wrap" *ngIf="!loading && !loadingAgeGroups">
+  <!-- Mostrar loading spinner solo cuando loadingAgeGroups es true -->
+  <div class="loading-container" *ngIf="loadingAgeGroups">
+    <i class="pi pi-spin pi-spinner"></i>
+    <span>Cargando grupos de edad...</span>
+  </div>
+
+  <!-- Selector siempre visible, solo se deshabilita durante loading -->
+  <div class="traveler-selector-wrap" *ngIf="!loadingAgeGroups">
     <div
       class="traveler-selector-wrap-item"
       *ngFor="let ageGroup of orderedAgeGroups; trackBy: trackByAgeGroup"

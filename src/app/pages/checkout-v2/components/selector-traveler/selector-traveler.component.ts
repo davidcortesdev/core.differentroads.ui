@@ -38,25 +38,8 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
   @Input() reservationId: number | null = null;
   @Input() availableTravelers: string[] = [];
 
-  // Emitir cambios en el conteo por grupo de edad (dinámico)
-  @Output() ageGroupCountsChange = new EventEmitter<{
-    [ageGroupId: number]: number;
-  }>();
-
-  // Emitir eventos de guardado para el componente padre
-  @Output() saveStatusChange = new EventEmitter<{
-    saving: boolean;
-    success?: boolean;
-    error?: string;
-  }>();
-
-  // NUEVO: Output para notificar guardado exitoso al componente padre
-  @Output() saveCompleted = new EventEmitter<{
-    component: 'selector-traveler';
-    success: boolean;
-    data?: any;
-    error?: string;
-  }>();
+  // Notificar al padre que los datos han sido actualizados
+  @Output() travelersUpdated = new EventEmitter<void>();
 
   // ULTRA SIMPLIFICADO: Una sola lista que se muestra
   travelers: IReservationTravelerResponse[] = [];
@@ -161,8 +144,8 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
 
         this.loading = false;
         
-        // Emitir conteos iniciales
-        this.emitCurrentCounts();
+        // Notificar al padre que se cargaron los datos
+        this.notifyUpdate();
       },
       error: (error) => {
         this.error = 'Error al cargar los datos iniciales.';
@@ -173,14 +156,10 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   /**
-   * Emitir conteos actuales al componente padre
+   * Notificar al padre que los datos han sido actualizados
    */
-  private emitCurrentCounts(): void {
-    const counts: { [ageGroupId: number]: number } = {};
-    this.ageGroups.forEach(ag => {
-      counts[ag.id] = this.getCountForAgeGroup(ag.id);
-    });
-    this.ageGroupCountsChange.emit(counts);
+  private notifyUpdate(): void {
+    this.travelersUpdated.emit();
   }
 
   private loadReservationData(): void {
@@ -251,8 +230,8 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
         );
         this.loadingAgeGroups = false;
         
-        // Emitir conteos actuales
-        this.emitCurrentCounts();
+        // Notificar al padre que se cargaron los age groups
+        this.notifyUpdate();
       },
       error: (error) => {
         this.ageGroupsError =
@@ -279,8 +258,8 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
           this.travelers = [...travelers];
           this.loading = false;
           
-          // Emitir conteos actuales
-          this.emitCurrentCounts();
+          // Notificar al padre que se cargaron los travelers
+          this.notifyUpdate();
         },
         error: (error) => {
           this.error =
@@ -344,9 +323,9 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
       await this.deleteTraveler(ageGroupId, toRemove);
     }
 
-    // Validar adultos y emitir cambios
+    // Validar adultos y notificar cambios
     this.validateAdultsMinimum();
-    this.emitCurrentCounts();
+    this.notifyUpdate();
   }
 
   /**

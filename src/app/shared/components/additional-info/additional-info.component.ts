@@ -22,6 +22,7 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
   @Input() periodID: string = '';
   @Input() isAuthenticated: boolean = false;
   @Input() infoCards: any[] = []; // Para mostrar información adicional si es necesario
+  @Input() context: 'checkout' | 'tour' = 'checkout'; // Contexto para aplicar estilos específicos
 
   // Estados del componente
   visible: boolean = false;

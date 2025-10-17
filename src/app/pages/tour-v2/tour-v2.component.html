@@ -71,6 +71,23 @@
     <section class="tour-section tour-info-accordion-section">
       <app-tour-info-accordion-v2 [tourId]="tour.id"></app-tour-info-accordion-v2>
     </section>
+
+    <!-- Tour Information Accordion Section -->
+    <section class="tour-section tour-additional-info-section">
+      <app-additional-info
+        [tourId]="tour.id"
+        [totalPrice]="totalPrice"
+        [selectedCity]="selectedCity"
+        [selectedDeparture]="selectedDepartureData"
+        [totalPassengers]="totalPassengers"
+        [selectedActivities]="selectedActivities"
+        [showActivitiesStatus]="showActivitiesStatus"
+        [passengersData]="passengersData"
+        [ageGroupCategories]="ageGroupCategories"
+        [context]="'tour'"
+        [isAuthenticated]="isAuthenticated">
+      </app-additional-info>
+    </section>
     
     <!-- Tour Reviews Section -->
     <section class="tour-section tour-reviews-section">

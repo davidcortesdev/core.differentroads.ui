@@ -1,6 +1,10 @@
 <!-- Card para "Guarda tu presupuesto" -->
 <div
   class="action-card"
+  [ngClass]="{
+    'checkout-style': context === 'checkout',
+    'tour-style': context === 'tour'
+  }"
   (click)="handleSaveTrip()"
   [title]="
     !isAuthenticated
@@ -19,6 +23,10 @@
 <!-- Card para "Descarga tu presupuesto" -->
 <div
   class="action-card"
+  [ngClass]="{
+    'checkout-style': context === 'checkout',
+    'tour-style': context === 'tour'
+  }"
   (click)="handleDownloadTrip()"
   title="Envia un email con un PDF con toda la información de este presupuesto"
 >
@@ -33,6 +41,10 @@
 <!-- Card para "Comparte tu presupuesto con alguien" -->
 <div
   class="action-card"
+  [ngClass]="{
+    'checkout-style': context === 'checkout',
+    'tour-style': context === 'tour'
+  }"
   (click)="handleInviteFriend()"
   title="Comparte este presupuesto con amigos o familiares"
 >

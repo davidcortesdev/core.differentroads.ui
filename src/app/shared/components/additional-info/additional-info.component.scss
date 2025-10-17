@@ -1,11 +1,36 @@
-// Este componente usa principalmente los estilos del padre (checkout-v2)
-// Solo se definen estilos específicos si es necesario
+/**
+ * Estilos del Componente de Información Adicional
+ * Proporciona estilos contextuales para las tarjetas de acciones de presupuesto en diferentes páginas
+ */
 
 :host {
-  display: contents; // Permite que los elementos hijos se comporten como si estuvieran directamente en el padre
+  display: contents;
 }
 
-// Estilos adicionales si es necesario para otros contextos
+/**
+ * Layout de la Sección de Tour
+ * Diseño horizontal para páginas de tour con comportamiento responsivo
+ */
+:host-context(.tour-additional-info-section) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 2rem 0 2rem 0;
+  
+  @media (max-width: 767px) {
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 0.75rem 0 1.5rem 0;
+  }
+}
+
+/**
+ * Estilos Base de las Tarjetas de Acción
+ * Estilos comunes para todas las tarjetas de acciones de presupuesto independientemente del contexto
+ */
 .action-card {
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
@@ -21,6 +46,53 @@
   }
 }
 
+/**
+ * Estilos para Contexto de Checkout
+ * Tarjetas de ancho fijo para diseño horizontal en páginas de checkout
+ */
+.action-card.checkout-style {
+  width: 250px;
+  flex-shrink: 0;
+
+  @media (max-width: 1366px) { 
+    width: 230px; 
+  }
+  
+  @media (max-width: 576px) { 
+    width: 100%; 
+    max-width: 100%; 
+  }
+}
+
+/**
+ * Estilos para Contexto de Tour
+ * Tarjetas de ancho flexible para diseño horizontal en páginas de tour
+ */
+.action-card.tour-style {
+  width: 100%;
+  max-width: 100%;
+  flex: 1;
+  margin-bottom: 0;
+  
+  @media (min-width: 768px) {
+    max-width: 250px;
+    margin: 0;
+  }
+  
+  @media (max-width: 767px) {
+    width: 100%;
+    margin-bottom: 0.75rem;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+/**
+ * Layout del Contenido de las Tarjetas
+ * Estructura interna para las tarjetas de acción con icono y texto
+ */
 .card-content {
   display: flex;
   align-items: center;
@@ -50,12 +122,19 @@
   }
 }
 
+/**
+ * Clase de Utilidad para Bordes
+ * Estilos de borde personalizados para estados específicos de las tarjetas
+ */
 .claseBord {
   border-radius: 0.875rem;
   border: 1px solid #002b57;
 }
 
-// Estilos para el modal
+/**
+ * Estilos del Modal de Diálogo
+ * Estilos para el modal de compartir/descargar presupuesto
+ */
 .modal-content {
   padding: 1rem 0;
   
@@ -153,7 +232,10 @@
   }
 }
 
-// Deep styles para PrimeNG
+/**
+ * Sobrescrituras de PrimeNG Dialog
+ * Estilos personalizados para los componentes de diálogo de PrimeNG
+ */
 ::ng-deep {
   p-dialog .p-dialog-header {
     padding: 1.25rem 1.5rem;

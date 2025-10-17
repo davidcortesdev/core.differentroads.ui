@@ -38,15 +38,10 @@ import {
 } from 'rxjs';
 import {
   debounceTime,
-  distinctUntilChanged,
   takeUntil,
-  tap,
   switchMap,
 } from 'rxjs/operators';
-import {
-  AgeGroupFilters,
-  AgeGroupService,
-} from '../../../../core/services/agegroup/age-group.service';
+import { AgeGroupService } from '../../../../core/services/agegroup/age-group.service';
 import { MessageService } from 'primeng/api';
 
 interface RoomAvailability {
@@ -159,26 +154,30 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
     private messageService: MessageService
   ) {
     // Suscripción a cambios de travelers
-    this.travelersNumbers$.subscribe((data) => {
-      const newTotalTravelers = data.adults + data.childs + data.babies;
-      const previousTotalTravelers = this.getPreviousTotalTravelers();
+    this.travelersNumbers$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((data) => {
+        const newTotalTravelers = data.adults + data.childs + data.babies;
+        const previousTotalTravelers = this.getPreviousTotalTravelers();
 
-      // Solo procesar si realmente cambió el número de viajeros
-      if (previousTotalTravelers !== newTotalTravelers) {
-        this.handleTravelerNumberChange(newTotalTravelers, data);
-      }
+        // Solo procesar si realmente cambió el número de viajeros
+        if (previousTotalTravelers !== newTotalTravelers) {
+          this.handleTravelerNumberChange(newTotalTravelers, data);
+        }
 
-      // Actualizar el total anterior
-      this.setPreviousTotalTravelers(newTotalTravelers);
-    });
+        // Actualizar el total anterior
+        this.setPreviousTotalTravelers(newTotalTravelers);
+      });
 
     // Suscripción a habitaciones seleccionadas
-    this.selectedRooms$.subscribe((rooms) => {
-      this.selectedRooms = rooms.reduce((acc, room) => {
-        acc[room.tkId] = room.qty || 0;
-        return acc;
-      }, {} as { [tkId: string]: number });
-    });
+    this.selectedRooms$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((rooms) => {
+        this.selectedRooms = rooms.reduce((acc, room) => {
+          acc[room.tkId] = room.qty || 0;
+          return acc;
+        }, {} as { [tkId: string]: number });
+      });
 
     // Configurar debounce para guardado automático
     this.saveSubject
@@ -1079,134 +1078,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
     this.errorMsg = null; // Limpiar errores si la validación es exitosa
   }
 
-  // Método para trigger del guardado con debounce
-  private debouncedSave(): void {
-    if (!this.reservationId) {
-      return;
-    }
-
-    // Solo emitir el evento, el debounce ya está configurado en el constructor
-    this.saveSubject.next();
-  }
-
-  // Método auxiliar para generar asignaciones de habitaciones sin modificar el estado
-  private generateRoomAssignments(selectedRooms: RoomAvailability[]): any[] {
-    if (!this.existingTravelers || this.existingTravelers.length === 0) {
-      return [];
-    }
-
-    const roomAssignments: any[] = [];
-    let travelerIndex = 0;
-
-    selectedRooms.forEach((room) => {
-      const qty = room.qty || 0;
-      for (let i = 0; i < qty; i++) {
-        if (travelerIndex < this.existingTravelers.length) {
-          const traveler = this.existingTravelers[travelerIndex];
-          const roomInstanceKey = `${room.id}_${i + 1}`; // Generar clave única por instancia
-
-          roomAssignments.push({
-            travelerId: traveler.id,
-            roomId: room.id,
-            roomTkId: room.tkId,
-            roomName: room.name,
-            departureAccommodationId: room.id,
-            isLeadTraveler: traveler.isLeadTraveler,
-            travelerNumber: traveler.travelerNumber,
-            roomInstanceKey: roomInstanceKey,
-            bedNumber: 1, // Asumir cama 1 para simplificar
-            isShared: room.isShared || false,
-          });
-          travelerIndex++;
-        }
-      }
-    });
-
-    return roomAssignments;
-  }
-
-  // Método auxiliar para validar asignaciones de niños con asignaciones específicas
-  private validateChildrenAssignmentsWithAssignments(assignments: any[]): {
-    isValid: boolean;
-    errorMessage: string;
-  } {
-    if (!this.existingTravelers || this.existingTravelers.length === 0) {
-      const travelerNumbers = this.travelersNumbersSource.getValue();
-      const adults = travelerNumbers.adults;
-      const children = travelerNumbers.childs;
-
-      if (children === 0) {
-        return { isValid: true, errorMessage: '' };
-      }
-      if (adults === 0) {
-        return {
-          isValid: false,
-          errorMessage:
-            'Debe haber al menos un adulto para acompañar a los niños.',
-        };
-      }
-      return { isValid: true, errorMessage: '' };
-    }
-
-    const adults = this.existingTravelers.filter((t) =>
-      this.isAdultTraveler(t)
-    );
-    const children = this.existingTravelers.filter((t) =>
-      this.isChildTraveler(t)
-    );
-
-    if (children.length === 0) {
-      return { isValid: true, errorMessage: '' };
-    }
-    if (adults.length === 0) {
-      return {
-        isValid: false,
-        errorMessage:
-          'Debe haber al menos un adulto para acompañar a los niños.',
-      };
-    }
-
-    // Verificar que cada niño tenga un adulto asignado en la misma habitación
-    const invalidAssignments = assignments.filter((assignment) => {
-      const traveler = this.existingTravelers.find(
-        (t) => t.id === assignment.travelerId
-      );
-      if (!traveler || !this.isChildTraveler(traveler)) {
-        return false;
-      }
-
-      // Buscar si hay un adulto en la misma habitación usando roomInstanceKey
-      const hasAdultInSameRoom = assignments.some((otherAssignment) => {
-        if (otherAssignment.travelerId === assignment.travelerId) {
-          return false;
-        }
-        const otherTraveler = this.existingTravelers.find(
-          (t) => t.id === otherAssignment.travelerId
-        );
-
-        // Usar roomInstanceKey si está disponible, sino usar roomId como fallback
-        const sameRoom =
-          assignment.roomInstanceKey && otherAssignment.roomInstanceKey
-            ? assignment.roomInstanceKey === otherAssignment.roomInstanceKey
-            : assignment.roomId === otherAssignment.roomId;
-
-        return sameRoom && otherTraveler && this.isAdultTraveler(otherTraveler);
-      });
-
-      return !hasAdultInSameRoom;
-    });
-
-    if (invalidAssignments.length > 0) {
-      return {
-        isValid: false,
-        errorMessage:
-          'Los niños no pueden estar solos en una habitación. Deben estar acompañados por un adulto.',
-      };
-    }
-
-    return { isValid: true, errorMessage: '' };
-  }
-
   // Método para guardar las asignaciones de habitaciones
   async saveRoomAssignments(): Promise<boolean> {
     if (!this.reservationId) {
@@ -1391,58 +1262,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
       // Emitir que se actualizaron las habitaciones (éxito o error)
       this.emitRoomsUpdated();
     }
-  }
-
-  // Método para verificar si hay asignaciones válidas para guardar
-  get hasValidAssignments(): boolean {
-    return (
-      this.currentRoomAssignments.length > 0 &&
-      this.currentRoomAssignments.length === this.existingTravelers.length
-    );
-  }
-
-  // Método para obtener el resumen de asignaciones
-  getAssignmentsSummary(): string {
-    if (this.currentRoomAssignments.length === 0) {
-      return 'Sin asignaciones de habitaciones';
-    }
-
-    const roomGroups = this.currentRoomAssignments.reduce(
-      (groups, assignment) => {
-        if (!groups[assignment.roomName]) {
-          groups[assignment.roomName] = 0;
-        }
-        groups[assignment.roomName]++;
-        return groups;
-      },
-      {} as Record<string, number>
-    );
-
-    const summary = Object.entries(roomGroups)
-      .map(([roomName, count]) => `${count}x ${roomName}`)
-      .join(', ');
-
-    return summary;
-  }
-
-  // Método para obtener las asignaciones existentes desde la BD
-  getTravelerRoomAssignments(): TravelerRoomAssignment[] {
-    return this.createTravelerRoomAssignments();
-  }
-
-  // Método para obtener qué habitación tiene asignada un traveler específico
-  getTravelerAssignedRoom(travelerId: number): string | null {
-    const assignments = this.createTravelerRoomAssignments();
-    const assignment = assignments.find(
-      (assign) => assign.travelerId === travelerId
-    );
-    return assignment ? assignment.roomName : null;
-  }
-
-  // Método para verificar si un traveler tiene habitación asignada
-  hasTravelerRoomAssigned(travelerId: number): boolean {
-    const assignments = this.createTravelerRoomAssignments();
-    return assignments.some((assign) => assign.travelerId === travelerId);
   }
 
   // Verificar si hay bebés

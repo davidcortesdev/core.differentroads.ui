@@ -180,20 +180,61 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Maneja la descarga del presupuesto
+   * Maneja la descarga directa del presupuesto
    */
   handleDownloadTrip(): void {
-    this.shouldClearFields = false;
-    this.isDownloadMode = true;
-    this.isShareMode = false;
-    
-    if (this.userEmail) {
-      this.shareForm.patchValue({
-        recipientEmail: this.userEmail
-      });
+    if (!this.isAuthenticated) {
+      const currentUrl = window.location.pathname;
+      sessionStorage.setItem('redirectUrl', currentUrl);
+      this.loginDialogVisible = true;
+      this.additionalInfoService.showInfo(
+        'Debes iniciar sesión para descargar el presupuesto.'
+      );
+      return;
     }
-    
-    this.visible = true;
+
+    this.downloadBudget();
+  }
+
+  /**
+   * Descarga el presupuesto directamente
+   */
+  private downloadBudget(): void {
+    if (!this.userEmail) {
+      this.additionalInfoService.showError(
+        'No se pudo obtener la información del usuario. Por favor, inténtalo de nuevo.'
+      );
+      return;
+    }
+
+    this.loading = true;
+
+    // Actualizar datos del contexto antes de descargar
+    this.setContextData();
+
+    const downloadSub = this.additionalInfoService.downloadBudgetPDF(this.userEmail).subscribe({
+      next: (response) => {
+        this.loading = false;
+        
+        // Manejar respuesta del servidor
+        if (response.success) {
+          this.additionalInfoService.showSuccess('Presupuesto descargado correctamente');
+          
+          // Disparar evento de analytics: file_download
+          this.trackFileDownload();
+          
+        } else {
+          this.additionalInfoService.showError(response.message || 'Error al descargar el presupuesto');
+        }
+      },
+      error: (error) => {
+        this.loading = false;
+        this.additionalInfoService.showError(
+          'Ha ocurrido un error al descargar el presupuesto. Por favor, inténtalo de nuevo.'
+        );
+      }
+    });
+    this.subscription.add(downloadSub);
   }
 
   /**
@@ -251,8 +292,8 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
         if (response.success) {
           this.additionalInfoService.showSuccess(response.message || 'Presupuesto guardado correctamente');
           
-          // Disparar evento de analytics
-          this.additionalInfoService.trackContactForm(this.userEmail, 'ficha_tour');
+          // Disparar evento de analytics: add_to_wishlist
+          this.trackAddToWishlist();
           
         } else {
           this.additionalInfoService.showError(response.message || 'Error al guardar el presupuesto');
@@ -366,6 +407,10 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
         this.additionalInfoService.showSuccess(
           `Presupuesto compartido exitosamente con ${formData.recipientEmail}`
         );
+        
+        // Disparar evento de analytics: share
+        this.trackShare();
+        
         this.handleCloseModal();
       },
       error: () => {
@@ -394,7 +439,9 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
       reservationId: this.existingOrder?._id || null
     };
 
-    const downloadSub = this.additionalInfoService.downloadBudgetPDF(budgetData).subscribe({
+    const downloadSub = this.additionalInfoService.downloadBudgetPDF(
+      JSON.stringify(budgetData)
+    ).subscribe({
       next: (response) => {
         this.loading = false;
 
@@ -464,5 +511,47 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
   navigateToRegister(): void {
     this.closeLoginModal();
     this.router.navigate(['/sign-up']);
+  }
+
+  // ============================================
+  // MÉTODOS DE ANALYTICS
+  // ============================================
+
+  /**
+   * Dispara evento add_to_wishlist cuando se guarda un presupuesto
+   * Evento 4 del plan de medición
+   */
+  private trackAddToWishlist(): void {
+    this.additionalInfoService.trackAddToWishlist(
+      this.tourId,
+      this.tourName,
+      this.periodID,
+      this.periodName,
+      this.periodDates,
+      this.travelersSelected,
+      this.userEmail
+    );
+  }
+
+  /**
+   * Dispara evento file_download cuando se descarga un presupuesto
+   * Evento 28 del plan de medición
+   */
+  private trackFileDownload(): void {
+    this.additionalInfoService.trackFileDownload(
+      'Presupuesto',
+      this.userEmail
+    );
+  }
+
+  /**
+   * Dispara evento share cuando se comparte un presupuesto
+   * Evento 29 del plan de medición
+   */
+  private trackShare(): void {
+    this.additionalInfoService.trackShare(
+      'Presupuesto',
+      this.userEmail
+    );
   }
 }

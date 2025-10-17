@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { MessageService } from 'primeng/api';
@@ -6,11 +7,35 @@ import { AuthenticateService } from '../auth/auth-service.service';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { ReservationService, ReservationCreate, ReservationUpdate } from '../reservation/reservation.service';
 
+/**
+ * Servicio para la gestión de presupuestos y funcionalidades adicionales
+ * 
+ * Este servicio maneja todas las operaciones relacionadas con presupuestos:
+ * - Creación y actualización de presupuestos
+ * - Descarga de PDFs
+ * - Compartir presupuestos por email
+ * - Validación de datos del contexto
+ * 
+ * Endpoints del backend utilizados:
+ * - POST /api/budgets - Crear presupuesto
+ * - PUT /api/budgets/{id} - Actualizar presupuesto
+ * - POST /api/budgets/share - Compartir por email
+ * - POST /api/budgets/download - Descargar PDF
+ */
 @Injectable({
   providedIn: 'root'
 })
 export class AdditionalInfoService {
-  // Propiedades para almacenar datos del contexto
+  /**
+   * URL base de la API de producción
+   * Configuración del endpoint principal para todas las operaciones de presupuestos
+   */
+  private readonly API_BASE_URL = 'https://tour-dev.differentroads.es/api';
+  
+  /**
+   * Propiedades para almacenar datos del contexto del presupuesto
+   * Estos datos se utilizan para construir las peticiones al backend
+   */
   private tourId: string = '';
   private periodId: string = '';
   private travelersData: any = null;
@@ -18,6 +43,7 @@ export class AdditionalInfoService {
   private totalPrice: number = 0;
 
   constructor(
+    private http: HttpClient,
     private authService: AuthenticateService,
     private analyticsService: AnalyticsService,
     private messageService: MessageService,
@@ -83,8 +109,13 @@ export class AdditionalInfoService {
   }
 
   /**
-   * Construye los datos de reservación para crear una nueva orden
-   * Diferencia entre contexto de tour (mínimo) y checkout (completo)
+   * Construye los datos de reservación para el backend
+   * 
+   * Este método prepara la estructura de datos que el backend espera
+   * para crear una nueva reservación/presupuesto. Diferencia entre
+   * contexto de tour (datos mínimos) y checkout (datos completos).
+   * 
+   * @returns Objeto ReservationCreate con los datos estructurados para el backend
    */
   private buildReservationData(): ReservationCreate {
     const totalPassengers = this.travelersData ? 
@@ -154,10 +185,16 @@ export class AdditionalInfoService {
   }
 
   /**
-   * Guarda un nuevo presupuesto (crear nueva orden)
+   * Guarda un nuevo presupuesto en el backend
+   * 
+   * Endpoint: POST /api/budgets
+   * Descripción: Crea una nueva reserva/presupuesto en el sistema
+   * 
+   * @param userEmail Email del usuario autenticado
+   * @returns Observable con la respuesta del servidor
    */
   saveNewBudget(userEmail: string): Observable<any> {
-    // Validar datos antes de proceder
+    // Validación previa de datos requeridos
     const validation = this.validateContextData();
     
     if (!validation.valid) {
@@ -167,29 +204,39 @@ export class AdditionalInfoService {
       });
     }
 
-    // TODO: Conectar con API real cuando esté disponible
-    // const reservationData = this.buildReservationData();
-    // return this.reservationService.create(reservationData);
+    // Construcción de datos para el backend
+    const reservationData = this.buildReservationData();
     
-    // Determinar el tipo de guardado según el contexto
-    const totalPassengers = this.travelersData ? 
-      (this.travelersData.adults || 0) + (this.travelersData.childs || 0) + (this.travelersData.babies || 0) : 0;
-    
-    const isCheckoutContext = totalPassengers > 0 && this.totalPrice > 0;
-    const message = isCheckoutContext 
-      ? 'Presupuesto guardado correctamente'
-      : 'Tour añadido a tus favoritos';
-    
-    // Simulación temporal
-    return of({ 
-      success: true, 
-      message: message,
-      data: this.buildReservationData()
-    });
+    // Llamada HTTP al endpoint de creación de presupuestos
+    return this.http.post(`${this.API_BASE_URL}/budgets`, reservationData).pipe(
+      map((response: any) => {
+        // Procesamiento de la respuesta del backend
+        const totalPassengers = this.travelersData ? 
+          (this.travelersData.adults || 0) + (this.travelersData.childs || 0) + (this.travelersData.babies || 0) : 0;
+        
+        const isCheckoutContext = totalPassengers > 0 && this.totalPrice > 0;
+        const message = isCheckoutContext 
+          ? 'Presupuesto guardado correctamente'
+          : 'Tour añadido a tus favoritos';
+        
+        return {
+          success: true,
+          message: message,
+          data: response
+        };
+      })
+    );
   }
 
   /**
-   * Construye los datos de actualización para una orden existente
+   * Construye los datos de actualización para el backend
+   * 
+   * Este método prepara la estructura de datos que el backend espera
+   * para actualizar una reservación/presupuesto existente. Combina
+   * los datos existentes con los nuevos datos del contexto.
+   * 
+   * @param existingOrder Datos de la orden existente
+   * @returns Objeto ReservationUpdate con los datos estructurados para el backend
    */
   private buildReservationUpdateData(existingOrder: any): ReservationUpdate {
     const totalPassengers = this.travelersData ? 
@@ -215,10 +262,17 @@ export class AdditionalInfoService {
   }
 
   /**
-   * Actualiza un presupuesto existente (actualizar orden)
+   * Actualiza un presupuesto existente en el backend
+   * 
+   * Endpoint: PUT /api/budgets/{budgetId}
+   * Descripción: Modifica una reservación/presupuesto existente en el sistema
+   * 
+   * @param existingOrder Datos de la orden existente a actualizar
+   * @param userEmail Email del usuario autenticado
+   * @returns Observable con la respuesta del servidor
    */
   updateExistingBudget(existingOrder: any, userEmail: string): Observable<any> {
-    // Validar datos antes de proceder
+    // Validación previa de datos requeridos
     const validation = this.validateContextData();
     
     if (!validation.valid) {
@@ -228,6 +282,7 @@ export class AdditionalInfoService {
       });
     }
 
+    // Validación de existencia de la orden
     if (!existingOrder || (!existingOrder.id && !existingOrder._id)) {
       return of({ 
         success: false, 
@@ -235,16 +290,18 @@ export class AdditionalInfoService {
       });
     }
 
-    // TODO: Conectar con API real cuando esté disponible
-    // const updateData = this.buildReservationUpdateData(existingOrder);
-    // return this.reservationService.update(existingOrder.id, updateData);
+    // Construcción de datos de actualización para el backend
+    const updateData = this.buildReservationUpdateData(existingOrder);
+    const budgetId = existingOrder.id || existingOrder._id;
     
-    // Simulación temporal
-    return of({ 
-      success: true, 
-      message: 'Presupuesto actualizado correctamente',
-      data: this.buildReservationUpdateData(existingOrder)
-    });
+    // Llamada HTTP al endpoint de actualización de presupuestos
+    return this.http.put(`${this.API_BASE_URL}/budgets/${budgetId}`, updateData).pipe(
+      map((response: any) => ({
+        success: true,
+        message: 'Presupuesto actualizado correctamente',
+        data: response
+      }))
+    );
   }
 
   /**
@@ -264,6 +321,100 @@ export class AdditionalInfoService {
             this.authService.getCognitoIdValue()
           )
         );
+      }
+    });
+  }
+
+  // MÉTODOS DE ANALYTICS ESPECÍFICOS
+
+  /**
+   * Dispara evento add_to_wishlist cuando se guarda un presupuesto
+   */
+  trackAddToWishlist(
+    tourId: string,
+    tourName: string,
+    periodId: string,
+    periodName: string,
+    periodDates: string,
+    travelers: any,
+    userEmail: string
+  ): void {
+    // Obtener datos del usuario para analytics
+    this.analyticsService.getCurrentUserData().subscribe({
+      next: (userData) => {
+        // Construir item para el evento ecommerce
+        const item = {
+          item_id: tourId,
+          item_name: tourName,
+          item_brand: 'Different Roads',
+          item_category: 'Tours',
+          item_variant: `${tourId} - ${periodName}`,
+          price: this.totalPrice || 0,
+          quantity: 1,
+          start_date: periodDates,
+          pasajeros_adultos: travelers?.adults?.toString() || '0',
+          pasajeros_niños: travelers?.childs?.toString() || '0'
+        };
+
+        // Disparar evento add_to_wishlist
+        this.analyticsService.addToWishlist(
+          'presupuestos_guardados',
+          'Presupuestos guardados',
+          item,
+          userData
+        );
+      },
+      error: () => {
+        // Fallback sin datos de usuario
+        const item = {
+          item_id: tourId,
+          item_name: tourName,
+          item_brand: 'Different Roads',
+          item_category: 'Tours',
+          item_variant: `${tourId} - ${periodName}`,
+          price: this.totalPrice || 0,
+          quantity: 1,
+          start_date: periodDates,
+          pasajeros_adultos: travelers?.adults?.toString() || '0',
+          pasajeros_niños: travelers?.childs?.toString() || '0'
+        };
+
+        this.analyticsService.addToWishlist(
+          'presupuestos_guardados',
+          'Presupuestos guardados',
+          item,
+          { email_address: userEmail }
+        );
+      }
+    });
+  }
+
+  /**
+   * Dispara evento file_download cuando se descarga un presupuesto
+   */
+  trackFileDownload(fileName: string, userEmail: string): void {
+    this.analyticsService.getCurrentUserData().subscribe({
+      next: (userData) => {
+        this.analyticsService.fileDownload(fileName, userData);
+      },
+      error: () => {
+        // Fallback sin datos de usuario
+        this.analyticsService.fileDownload(fileName, { email_address: userEmail });
+      }
+    });
+  }
+
+  /**
+   * Dispara evento share cuando se comparte un presupuesto
+   */
+  trackShare(fileName: string, userEmail: string): void {
+    this.analyticsService.getCurrentUserData().subscribe({
+      next: (userData) => {
+        this.analyticsService.share(fileName, userData);
+      },
+      error: () => {
+        // Fallback sin datos de usuario
+        this.analyticsService.share(fileName, { email_address: userEmail });
       }
     });
   }
@@ -305,36 +456,72 @@ export class AdditionalInfoService {
   }
 
   /**
-   * Envía el presupuesto por email a otra persona
+   * Envía el presupuesto por email a través del backend
+   * 
+   * Endpoint: POST /api/budgets/share
+   * Descripción: Comparte un presupuesto con otra persona mediante email
+   * 
+   * @param budgetData Datos del presupuesto y destinatario
+   * @returns Observable con la respuesta del servidor
    */
   sendBudgetByEmail(budgetData: any): Observable<any> {
-    return new Observable(observer => {
-      setTimeout(() => {
-        observer.next({
-          success: true,
-          message: 'Email enviado correctamente',
-          data: budgetData
-        });
-        observer.complete();
-      }, 2000);
-    });
+    // Llamada HTTP al endpoint de compartir presupuestos
+    return this.http.post(`${this.API_BASE_URL}/budgets/share`, budgetData).pipe(
+      map((response: any) => ({
+        success: true,
+        message: 'Email enviado correctamente',
+        data: response
+      }))
+    );
   }
 
   /**
-   * Descarga el presupuesto como PDF y lo envía por email
+   * Descarga el presupuesto como PDF desde el backend
+   * 
+   * Endpoint: POST /api/budgets/download
+   * Descripción: Genera y descarga un PDF del presupuesto
+   * Response-Type: application/pdf (blob)
+   * 
+   * @param userEmail Email del usuario autenticado
+   * @returns Observable con la respuesta del servidor
    */
-  downloadBudgetPDF(budgetData: any): Observable<any> {
-    return new Observable(observer => {
-      setTimeout(() => {
-        observer.next({
+  downloadBudgetPDF(userEmail: string): Observable<any> {
+    // Validación previa de datos requeridos
+    const validation = this.validateContextData();
+    
+    if (!validation.valid) {
+      return of({ 
+        success: false, 
+        message: validation.message || 'Datos incompletos para descargar el presupuesto'
+      });
+    }
+
+    // Construcción de datos para la generación del PDF
+    const downloadData = this.buildReservationData();
+    
+    // Llamada HTTP al endpoint de descarga de PDF
+    return this.http.post(`${this.API_BASE_URL}/budgets/download`, downloadData, { 
+      responseType: 'blob' 
+    }).pipe(
+      map((blob: Blob) => {
+        // Procesamiento del blob PDF recibido del backend
+        const fileName = `presupuesto-${this.tourId}-${Date.now()}.pdf`;
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        return {
           success: true,
-          message: 'PDF generado y enviado por email',
-          pdfUrl: '#',
-          fileName: `presupuesto-${budgetData.tourName.replace(/\s+/g, '-')}.pdf`
-        });
-        observer.complete();
-      }, 2000);
-    });
+          message: 'Presupuesto descargado correctamente',
+          fileName: fileName
+        };
+      })
+    );
   }
 
 }

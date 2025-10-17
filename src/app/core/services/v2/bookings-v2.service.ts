@@ -112,6 +112,8 @@ export class BookingsServiceV2 {
    * @returns Observable de array de ReservationResponse
    */
   getReservationsByTravelerEmail(email: string): Observable<ReservationResponse[]> {
+    console.log('🔍 DEBUG: Buscando reservas para email:', email);
+    
     // Primero obtener todos los ReservationTraveler que tienen este email
     const travelersUrl = `${environment.reservationsApiUrl}/ReservationTraveler`;
     const travelersParams = new HttpParams()
@@ -119,16 +121,24 @@ export class BookingsServiceV2 {
 
     return this.http.get<any[]>(travelersUrl, { params: travelersParams }).pipe(
       switchMap((travelers: any[]) => {
+        console.log('🔍 DEBUG: Todos los travelers:', travelers);
+        
         // Filtrar viajeros que tienen el email en sus campos
         const travelersWithEmail = travelers.filter(traveler => {
           // Verificar si el viajero tiene campos con email
-          return this.hasEmailInFields(traveler, email);
+          const hasEmail = this.hasEmailInFields(traveler, email);
+          console.log('🔍 DEBUG: Traveler', traveler.id, 'tiene email?', hasEmail);
+          return hasEmail;
         });
+
+        console.log('🔍 DEBUG: Travelers con email:', travelersWithEmail);
 
         // Obtener IDs únicos de reservas
         const reservationIds = [...new Set(travelersWithEmail.map(t => t.reservationId))];
+        console.log('🔍 DEBUG: Reservation IDs:', reservationIds);
         
         if (reservationIds.length === 0) {
+          console.log('🔍 DEBUG: No se encontraron reservation IDs');
           return of([]);
         }
 

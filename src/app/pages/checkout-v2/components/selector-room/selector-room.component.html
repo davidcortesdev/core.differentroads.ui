@@ -93,6 +93,11 @@
     </p>
   </div>
 
+  <div *ngIf="hasUnassignedTravelers" class="warning-message">
+    <i class="pi pi-exclamation-triangle"></i>
+    <p>{{ unassignedTravelersMessage }}</p>
+  </div>
+
   <div *ngIf="errorMsg" [ngClass]="{
     'error-message': errorMsgType === 'error',
     'warning-message': errorMsgType === 'warning',

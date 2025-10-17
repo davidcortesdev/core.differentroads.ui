@@ -1460,6 +1460,51 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
     });
   }
 
+  // Obtener el número de viajeros sin asignar
+  get unassignedTravelersCount(): number {
+    if (!this.existingTravelers || this.existingTravelers.length === 0) {
+      return 0;
+    }
+
+    // Contar cuántos viajeros están asignados actualmente
+    const assignedTravelers = this.currentRoomAssignments.length;
+    const totalTravelers = this.existingTravelers.length;
+
+    return totalTravelers - assignedTravelers;
+  }
+
+  // Verificar si hay viajeros sin asignar
+  get hasUnassignedTravelers(): boolean {
+    return this.unassignedTravelersCount > 0;
+  }
+
+  // Obtener mensaje descriptivo de viajeros sin asignar
+  get unassignedTravelersMessage(): string {
+    const count = this.unassignedTravelersCount;
+    if (count === 0) return '';
+    
+    const plural = count > 1 ? 's' : '';
+    const totalTravelers = this.existingTravelers.length;
+    const assignedCount = this.currentRoomAssignments.length;
+    
+    return `${assignedCount} de ${totalTravelers} viajero${totalTravelers > 1 ? 's' : ''} asignado${assignedCount > 1 ? 's' : ''}. Quedan ${count} viajero${plural} sin asignar. Por favor, selecciona las habitaciones necesarias.`;
+  }
+
+  // Obtener el total de plazas seleccionadas en habitaciones
+  get totalSelectedPlaces(): number {
+    return Object.keys(this.selectedRooms).reduce((total, tkId) => {
+      const room = this.allRoomsAvailability.find((r) => r.tkId === tkId);
+      const qty = this.selectedRooms[tkId];
+      
+      if (room && qty > 0) {
+        const capacity = room.isShared ? 1 : (room.capacity || 0);
+        return total + (capacity * qty);
+      }
+      
+      return total;
+    }, 0);
+  }
+
   // Método para actualizar desde componente padre
   updateTravelersNumbers(travelersNumbers: {
     adults: number;

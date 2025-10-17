@@ -47,6 +47,7 @@
               [departureId]="departureId"
               [reservationId]="reservationId"
               [availableTravelers]="[]"
+              (travelersUpdated)="onTravelersUpdated()"
               #travelerSelector
             >
             </app-selector-traveler>

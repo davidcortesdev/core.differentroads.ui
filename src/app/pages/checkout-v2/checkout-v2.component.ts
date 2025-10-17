@@ -612,6 +612,19 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
+   * Maneja el evento de actualización de travelers desde selector-traveler
+   */
+  onTravelersUpdated(): void {
+    console.log('🔔 Checkout recibió evento: travelers actualizados', {
+      timestamp: new Date().toISOString(),
+      component: 'selector-traveler'
+    });
+    
+    // Disparar actualización del summary
+    this.triggerSummaryRefresh();
+  }
+
+  /**
    * xNUEVO: Maneja el evento de guardado completado desde actividades opcionales
    */
   onSaveCompleted(event: {

@@ -170,6 +170,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   cartStatusId: number | null = null;
   budgetStatusId: number | null = null;
   draftStatusId: number | null = null;
+  bookedStatusId: number | null = null;
 
   // Propiedades para requisitos de reserva de Amadeus
   amadeusBookingRequirements: IBookingRequirements | null = null;
@@ -266,12 +267,14 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     forkJoin({
       cartStatus: this.reservationStatusService.getByCode('CART'),
       budgetStatus: this.reservationStatusService.getByCode('BUDGET'),
-      draftStatus: this.reservationStatusService.getByCode('DRAFT')
+      draftStatus: this.reservationStatusService.getByCode('DRAFT'),
+      bookedStatus: this.reservationStatusService.getByCode('BOOKED')
     }).subscribe({
       next: (statuses) => {
         this.cartStatusId = statuses.cartStatus[0].id;
         this.budgetStatusId = statuses.budgetStatus[0].id;
         this.draftStatusId = statuses.draftStatus[0].id;
+        this.bookedStatusId = statuses.bookedStatus[0].id;
         
         // Ahora verificar el estado actual de la reserva
         this.checkReservationStatus();
@@ -1267,6 +1270,17 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
 
       // Recargar datos existentes después de guardar
       this.loadExistingTravelerFields();
+
+      // ✅ NUEVO: Cambiar estado de la reserva a BOOKED después de guardar datos de viajeros
+      if (this.bookedStatusId && this.reservationId) {
+        try {
+          await this.reservationService.updateStatus(this.reservationId, this.bookedStatusId).toPromise();
+          console.log('✅ Estado de reserva actualizado a BOOKED');
+        } catch (error) {
+          console.error('❌ Error al actualizar estado de reserva a BOOKED:', error);
+          // No mostrar error al usuario, solo log
+        }
+      }
 
       this.messageService.add({
         severity: 'success',

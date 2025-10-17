@@ -462,8 +462,95 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
       this.periodName,
       this.periodDates,
       this.travelersSelected,
-      this.userEmail
+      this.userEmail,
+      this.getTourData() // Pasar datos completos del tour
     );
+  }
+
+  /**
+   * Obtiene los datos completos del tour para analytics
+   */
+  private getTourData(): any {
+    return {
+      category: this.getTourCategory(),
+      subcategory: this.getTourSubcategory(),
+      type: this.getTourType(),
+      tripType: this.getTripType(),
+      rating: this.getTourRating(),
+      duration: this.getTourDuration()
+    };
+  }
+
+  /**
+   * Obtiene la categoría del tour desde los datos disponibles
+   */
+  private getTourCategory(): string | undefined {
+    // Intentar obtener desde selectedDeparture si está disponible
+    if (this.selectedDeparture?.continent) {
+      return this.selectedDeparture.continent;
+    }
+    // Si no hay datos reales, no devolver nada
+    return undefined;
+  }
+
+  /**
+   * Obtiene la subcategoría del tour desde los datos disponibles
+   */
+  private getTourSubcategory(): string | undefined {
+    // Intentar obtener desde selectedDeparture si está disponible
+    if (this.selectedDeparture?.tripType) {
+      return this.selectedDeparture.tripType;
+    }
+    // Si no hay datos reales, no devolver nada
+    return undefined;
+  }
+
+  /**
+   * Obtiene el tipo del tour desde los datos disponibles
+   */
+  private getTourType(): string | undefined {
+    // Intentar obtener desde selectedDeparture si está disponible
+    if (this.selectedDeparture?.productStyle) {
+      return this.selectedDeparture.productStyle;
+    }
+    // Si no hay datos reales, no devolver nada
+    return undefined;
+  }
+
+  /**
+   * Obtiene el tipo de viaje desde los datos disponibles
+   */
+  private getTripType(): string | undefined {
+    // Intentar obtener desde selectedDeparture si está disponible
+    if (this.selectedDeparture?.tripType) {
+      return this.selectedDeparture.tripType;
+    }
+    // Si no hay datos reales, no devolver nada
+    return undefined;
+  }
+
+  /**
+   * Obtiene la puntuación del tour desde los datos disponibles
+   */
+  private getTourRating(): string | undefined {
+    // Intentar obtener desde selectedDeparture si está disponible
+    if (this.selectedDeparture?.rating) {
+      return this.selectedDeparture.rating.toString();
+    }
+    // Si no hay datos reales, no devolver nada
+    return undefined;
+  }
+
+  /**
+   * Obtiene la duración del tour desde los datos disponibles
+   */
+  private getTourDuration(): string | undefined {
+    // Intentar obtener desde selectedDeparture si está disponible
+    if (this.selectedDeparture?.duration) {
+      return this.selectedDeparture.duration;
+    }
+    // Si no hay datos reales, no devolver nada
+    return undefined;
   }
 
   /**

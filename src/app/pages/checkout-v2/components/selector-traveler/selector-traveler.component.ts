@@ -9,8 +9,6 @@ import {
   EventEmitter,
 } from '@angular/core';
 import { MessageService } from 'primeng/api';
-import { DepartureService } from '../../../../core/services/departure/departure.service';
-import { ReservationService } from '../../../../core/services/reservation/reservation.service';
 import {
   ReservationTravelerService,
   IReservationTravelerResponse,
@@ -24,8 +22,7 @@ import {
   AgeGroupService,
   IAgeGroupResponse,
 } from '../../../../core/services/agegroup/age-group.service';
-import { forkJoin, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-selector-traveler',
@@ -36,39 +33,28 @@ import { map, catchError } from 'rxjs/operators';
 export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
   @Input() departureId: number | null = null;
   @Input() reservationId: number | null = null;
-  @Input() availableTravelers: string[] = [];
 
   // Notificar al padre que los datos han sido actualizados
   @Output() travelersUpdated = new EventEmitter<void>();
 
-  // ULTRA SIMPLIFICADO: Una sola lista que se muestra
+  // Lista de viajeros
   travelers: IReservationTravelerResponse[] = [];
 
+  // Estados de carga y errores
   adultsErrorMsg = '';
   loading: boolean = false;
   error: string | null = null;
-
-  // Datos del departure y travelers
-  departureData: any = null;
-  reservationData: any = null;
+  loadingAgeGroups: boolean = false;
+  ageGroupsError: string | null = null;
 
   // Datos del departure price supplement
   departurePriceSupplements: IDeparturePriceSupplementResponse[] = [];
-  loadingSupplements: boolean = false;
-  supplementsError: string | null = null;
 
-  // Datos de los grupos de edad
+  // Datos de los grupos de edad (ordenados para UI)
   ageGroups: IAgeGroupResponse[] = [];
-  loadingAgeGroups: boolean = false;
-  ageGroupsError: string | null = null;
-  dynamicAvailableTravelers: string[] = [];
-
-  // Nueva propiedad: mantener ageGroups ordenados para UI
   orderedAgeGroups: IAgeGroupResponse[] = [];
 
   constructor(
-    private departureService: DepartureService,
-    private reservationService: ReservationService,
     private reservationTravelerService: ReservationTravelerService,
     private departurePriceSupplementService: DeparturePriceSupplementService,
     private ageGroupService: AgeGroupService,
@@ -80,11 +66,9 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
     if (this.departureId && this.reservationId) {
       this.loadAllDataInParallel();
     } else if (this.departureId) {
-      this.loadDepartureData();
       this.loadDeparturePriceSupplements();
     } else if (this.reservationId) {
       this.loadExistingTravelers();
-      this.loadReservationData();
     }
   }
 
@@ -100,14 +84,12 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
   ngOnChanges(changes: SimpleChanges) {
     // Detectar cambios en departureId
     if (changes['departureId'] && changes['departureId'].currentValue) {
-      this.loadDepartureData();
       this.loadDeparturePriceSupplements();
     }
 
     // Detectar cambios en reservationId
     if (changes['reservationId'] && changes['reservationId'].currentValue) {
       this.loadExistingTravelers();
-      this.loadReservationData();
     }
   }
 
@@ -115,8 +97,6 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
     this.loading = true;
 
     const requests = [
-      this.departureService.getById(this.departureId!),
-      this.reservationService.getById(this.reservationId!),
       this.reservationTravelerService.getByReservationOrdered(
         this.reservationId!
       ),
@@ -125,16 +105,12 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
 
     forkJoin(requests).subscribe({
       next: (results) => {
-        const [departure, reservation, travelers, supplements] = results as [
-          any,
-          any,
+        const [travelers, supplements] = results as [
           IReservationTravelerResponse[],
           IDeparturePriceSupplementResponse[]
         ];
-        this.departureData = departure;
-        this.reservationData = reservation;
         
-        // SIMPLIFICADO: Guardar la lista que se muestra
+        // Guardar la lista de viajeros
         this.travelers = [...travelers];
         
         this.departurePriceSupplements = supplements || [];
@@ -162,41 +138,20 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
     this.travelersUpdated.emit();
   }
 
-  private loadReservationData(): void {
-    if (!this.reservationId) {
-      return;
-    }
-
-    this.reservationService.getById(this.reservationId).subscribe({
-      next: (reservation) => {
-        this.reservationData = reservation;
-      },
-      error: (error) => {
-        console.error('Error al cargar los datos de la reserva:', error);
-      },
-    });
-  }
-
   private loadDeparturePriceSupplements(): void {
     if (!this.departureId) {
       return;
     }
-
-    this.loadingSupplements = true;
-    this.supplementsError = null;
 
     this.departurePriceSupplementService
       .getByDeparture(this.departureId)
       .subscribe({
         next: (supplements) => {
           this.departurePriceSupplements = supplements || [];
-          this.loadingSupplements = false;
           this.loadAgeGroupsFromSupplements();
         },
         error: (error) => {
-          this.supplementsError =
-            'Error al cargar los suplementos de precio del viaje.';
-          this.loadingSupplements = false;
+          this.error = 'Error al cargar los suplementos de precio del viaje.';
           console.error('Error loading supplements:', error);
         },
       });
@@ -254,7 +209,7 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
       .getByReservationOrdered(this.reservationId)
       .subscribe({
         next: (travelers) => {
-          // SIMPLIFICADO: Guardar la lista que se muestra
+          // Guardar la lista de viajeros
           this.travelers = [...travelers];
           this.loading = false;
           
@@ -262,34 +217,11 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
           this.notifyUpdate();
         },
         error: (error) => {
-          this.error =
-            'Error al cargar la información de viajeros. Usando valores por defecto.';
+          this.error = 'Error al cargar la información de viajeros.';
           this.loading = false;
           console.error('Error loading existing travelers:', error);
         },
       });
-  }
-
-  private loadDepartureData(): void {
-    if (!this.departureId) {
-      return;
-    }
-
-    this.loading = true;
-    this.error = null;
-
-    this.departureService.getById(this.departureId).subscribe({
-      next: (departure) => {
-        this.departureData = departure;
-        this.loading = false;
-      },
-      error: (error) => {
-        this.error =
-          'Error al cargar la información del viaje. Usando valores por defecto.';
-        this.loading = false;
-        console.error('Error loading departure data:', error);
-      },
-    });
   }
 
   /**

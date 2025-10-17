@@ -33,6 +33,8 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
   @Input() tourDuration: string = '';
   @Input() tourTripType: string = '';
   @Input() tourProductStyle: string = '';
+  @Input() tourListId: string = ''; // ID de la lista del tour para analytics
+  @Input() tourListName: string = ''; // Nombre de la lista del tour para analytics
 
   // Estados del componente
   visible: boolean = false;
@@ -485,7 +487,9 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
       type: this.getTourType(),
       tripType: this.getTripType(),
       rating: this.getTourRating(),
-      duration: this.getTourDuration()
+      duration: this.getTourDuration(),
+      listId: this.tourListId || '',
+      listName: this.tourListName || ''
     };
   }
 

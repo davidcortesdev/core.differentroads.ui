@@ -75,18 +75,30 @@
     <!-- Tour Information Accordion Section -->
     <section class="tour-section tour-additional-info-section">
       <app-additional-info
-        [tourId]="tour.id"
+        [tourId]="tour.id?.toString() || ''"
+        [tourName]="tour.name || ''"
         [periodID]="selectedDepartureData?.id?.toString() || ''"
+        [periodName]="selectedDepartureData?.group || ''"
+        [periodDates]="selectedDepartureData?.departureDate && selectedDepartureData?.returnDate ? selectedDepartureData.departureDate + ' - ' + selectedDepartureData.returnDate : ''"
         [totalPrice]="totalPrice"
         [selectedCity]="selectedCity"
         [selectedDeparture]="selectedDepartureData"
         [totalPassengers]="totalPassengers"
+        [travelersSelected]="passengersData"
         [selectedActivities]="selectedActivities"
         [showActivitiesStatus]="showActivitiesStatus"
         [passengersData]="passengersData"
         [ageGroupCategories]="ageGroupCategories"
         [context]="'tour'"
-        [isAuthenticated]="isAuthenticated">
+        [isAuthenticated]="isAuthenticated"
+        [tourCountry]="tourCountry"
+        [tourContinent]="tourContinent"
+        [tourRating]="tourRating"
+        [tourDuration]="tourDuration"
+        [tourTripType]="tourTripType"
+        [tourProductStyle]="tourProductStyle"
+        [tourListId]="tour.id?.toString() || ''"
+        [tourListName]="tour.name || ''">
       </app-additional-info>
     </section>
     

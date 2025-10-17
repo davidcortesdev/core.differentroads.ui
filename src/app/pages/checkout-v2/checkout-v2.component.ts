@@ -146,6 +146,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   // Tour slug para navegación
   tourSlug: string = '';
 
+  // Propiedades para datos del tour (analytics)
+  tourCountry: string = '';
+  tourContinent: string = '';
+  tourRating: number | null = null;
+  tourDuration: string = '';
+  tourTripType: string = '';
+  tourProductStyle: string = '';
+
   // Propiedades para autenticación
   loginDialogVisible: boolean = false;
 

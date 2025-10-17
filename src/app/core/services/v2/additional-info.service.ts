@@ -383,8 +383,8 @@ export class AdditionalInfoService {
           item_category3: tourData?.type || '',
           item_category4: periodDates,
           item_category5: tourData?.tripType || '',
-          item_list_id: 'presupuestos_guardados',
-          item_list_name: 'Presupuestos guardados',
+          item_list_id: tourData?.listId || '',
+          item_list_name: tourData?.listName || '',
           item_variant: '',
           price: this.totalPrice || 0,
           quantity: 1,
@@ -394,8 +394,8 @@ export class AdditionalInfoService {
 
         // Disparar evento add_to_wishlist
         this.analyticsService.addToWishlist(
-          'presupuestos_guardados',
-          'Presupuestos guardados',
+          tourData?.listId || '',
+          tourData?.listName || '',
           item,
           userData
         );
@@ -414,8 +414,8 @@ export class AdditionalInfoService {
           item_category3: tourData?.type || '',
           item_category4: periodDates,
           item_category5: tourData?.tripType || '',
-          item_list_id: 'presupuestos_guardados',
-          item_list_name: 'Presupuestos guardados',
+          item_list_id: tourData?.listId || '',
+          item_list_name: tourData?.listName || '',
           item_variant: '',
           price: this.totalPrice || 0,
           quantity: 1,
@@ -424,8 +424,8 @@ export class AdditionalInfoService {
         };
 
         this.analyticsService.addToWishlist(
-          'presupuestos_guardados',
-          'Presupuestos guardados',
+          tourData?.listId || '',
+          tourData?.listName || '',
           item,
           { email_address: userEmail }
         );

@@ -17,6 +17,8 @@ import { UsersNetService } from '../../../../core/services/users/usersNet.servic
 import { HubspotService } from '../../../../core/services/integrations/hubspot.service';
 import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
 import { ConfirmationCodeComponent } from '../../../../shared/components/confirmation-code/confirmation-code.component';
+import { IUserResponse } from '../../../../core/models/users/user.model';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-sign-up-form',
@@ -43,6 +45,7 @@ export class SignUpFormComponent {
   successMessage: string = '';
   registeredUsername: string = '';
   userPassword: string = '';
+  registeredUser: IUserResponse | null = null;
 
   // Mensajes de error personalizados
   errorMessages: { [key: string]: { [key: string]: string } } = {
@@ -135,35 +138,92 @@ export class SignUpFormComponent {
             .signUp(this.signUpForm.value.email, this.signUpForm.value.password)
             .then((cognitoUserId) => {
               console.log('Usuario creado en Cognito con ID:', cognitoUserId);
+              
+              // Primero buscar si el usuario ya existe en UsersNet por email
               this.usersNetService
-                .createUser({
-                  cognitoId: cognitoUserId,
-                  name: this.signUpForm.value.firstName,
-                  lastName: this.signUpForm.value.lastName,
-                  email: this.signUpForm.value.email,
-                  phone: this.signUpForm.value.phone,
-                  hasWebAccess: true,
-                  hasMiddleAccess: false
-                })
+                .getUsersByEmail(this.signUpForm.value.email)
                 .subscribe({
-                  next: (user) => {
-                    console.log('Usuario creado exitosamente:', user);
-                    
-                    this.isLoading = false;
-                    this.isConfirming = true;
-                    this.registeredUsername = this.signUpForm.value.email;
-                    this.userPassword = this.signUpForm.value.password;
-                    console.log('Registro completado. Esperando confirmación.');
+                  next: (existingUsers) => {
+                    // Datos completos para crear usuario (todos los campos requeridos)
+                    const userData = {
+                      cognitoId: cognitoUserId,
+                      name: this.signUpForm.value.firstName,
+                      email: this.signUpForm.value.email,
+                      lastName: this.signUpForm.value.lastName,
+                      phone: this.signUpForm.value.phone,
+                      hasWebAccess: true,
+                      hasMiddleAccess: false
+                    };
+
+                    if (existingUsers && existingUsers.length > 0) {
+                      // Usuario existe, actualizar solo name, lastName, phone y cognitoId
+                      const existingUser = existingUsers[0];
+                      console.log('Usuario ya existe en UsersNet, actualizando datos:', existingUser);
+                      
+                      // Datos de actualización (campos requeridos + los que queremos actualizar)
+                      const updateData = {
+                        cognitoId: cognitoUserId,
+                        name: this.signUpForm.value.firstName,
+                        email: this.signUpForm.value.email,
+                        lastName: this.signUpForm.value.lastName,
+                        phone: this.signUpForm.value.phone
+                      };
+                      
+                      this.usersNetService
+                        .updateUser(existingUser.id, updateData)
+                        .subscribe({
+                          next: (updated) => {
+                            console.log('Usuario actualizado exitosamente:', updated);
+                            
+                            // Guardar el usuario para verificar después de la confirmación
+                            this.registeredUser = existingUser;
+                            
+                            this.isLoading = false;
+                            this.isConfirming = true;
+                            this.registeredUsername = this.signUpForm.value.email;
+                            this.userPassword = this.signUpForm.value.password;
+                            console.log('Registro completado. Esperando confirmación.');
+                          },
+                          error: (error: unknown) => {
+                            this.isLoading = false;
+                            this.errorMessage = error instanceof Error ? error.message : 'Error al actualizar usuario';
+                          }
+                        });
+                    } else {
+                      // Usuario no existe, crear nuevo
+                      console.log('Usuario no existe en UsersNet, creando nuevo usuario');
+                      
+                      this.usersNetService
+                        .createUser(userData)
+                        .subscribe({
+                          next: (user) => {
+                            console.log('Usuario creado exitosamente:', user);
+                            
+                            // Guardar el usuario para verificar después de la confirmación
+                            this.registeredUser = user;
+                            
+                            this.isLoading = false;
+                            this.isConfirming = true;
+                            this.registeredUsername = this.signUpForm.value.email;
+                            this.userPassword = this.signUpForm.value.password;
+                            console.log('Registro completado. Esperando confirmación.');
+                          },
+                          error: (error: unknown) => {
+                            this.isLoading = false;
+                            this.errorMessage = error instanceof Error ? error.message : 'Registro fallido';
+                          }
+                        });
+                    }
                   },
-                  error: (error: any) => {
+                  error: (error: unknown) => {
                     this.isLoading = false;
-                    this.errorMessage = error.message || 'Registro fallido';
+                    this.errorMessage = error instanceof Error ? error.message : 'Error al verificar usuario existente';
                   }
                 });
             })
             .catch((error) => {
               this.isLoading = false;
-              this.errorMessage = error.message || 'Registro fallido';
+              this.errorMessage = error instanceof Error ? error.message : 'Registro fallido';
             });
         },
         error: (hubspotError) => {
@@ -177,14 +237,22 @@ export class SignUpFormComponent {
   onConfirmSuccess(): void {
     this.isLoading = false;
     this.isRedirecting = true;
-    this.successMessage = 'Verificación exitosa. Redirigiendo al inicio de sesión...';
     
     // Disparar evento sign_up para confirmación exitosa con datos completos
     this.trackSignUpWithCompleteData('manual');
     
-    setTimeout(() => {
-      this.router.navigate(['/login']);
-    }, 2000);
+    // Verificar si debe redirigir a tour operation después de confirmar la cuenta
+    if (this.registeredUser && this.shouldRedirectToTourOperation(this.registeredUser)) {
+      this.successMessage = 'Verificación exitosa. Redirigiendo a Tour Operation...';
+      setTimeout(() => {
+        this.redirectToTourOperation();
+      }, 2000);
+    } else {
+      this.successMessage = 'Verificación exitosa. Redirigiendo al inicio de sesión...';
+      setTimeout(() => {
+        this.router.navigate(['/login']);
+      }, 2000);
+    }
   }
 
   getErrorMessage(controlName: string, errors: any): string {
@@ -248,5 +316,21 @@ export class SignUpFormComponent {
         );
       }
     });
+  }
+
+  /**
+   * Verifica si el usuario debe ser redirigido a la plataforma de tour operation
+   */
+  private shouldRedirectToTourOperation(user: IUserResponse): boolean {
+    return !user.hasWebAccess && user.hasTourOperationAccess;
+  }
+
+  /**
+   * Redirige al usuario a la plataforma de tour operation
+   */
+  private redirectToTourOperation(): void {
+    this.isLoading = false;
+    console.log('🔀 Redirigiendo a Tour Operation...');
+    window.location.href = environment.tourOperationUrl;
   }
 }

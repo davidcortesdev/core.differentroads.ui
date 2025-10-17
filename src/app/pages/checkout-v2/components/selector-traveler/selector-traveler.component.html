@@ -27,7 +27,7 @@
         </span>
       </div>
       <p-inputNumber
-        [(ngModel)]="ageGroupCounts[ageGroup.id]"
+        [ngModel]="getCountForAgeGroup(ageGroup.id)"
         (ngModelChange)="handlePassengersForAgeGroup(ageGroup.id, $event)"
         [showButtons]="true"
         buttonLayout="horizontal"
@@ -41,7 +41,7 @@
         "
         [class.input-warning]="
           ageGroup.id === orderedAgeGroups[0]?.id &&
-          (ageGroupCounts[ageGroup.id] || 0) === 0
+          getCountForAgeGroup(ageGroup.id) === 0
         "
       >
         <ng-template #incrementbuttonicon>

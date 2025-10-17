@@ -1500,6 +1500,12 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
     return travelersNumbers.babies > 0;
   }
 
+  // Obtener el total de viajeros
+  getTotalTravelers(): number {
+    const travelersNumbers = this.travelersNumbersSource.getValue();
+    return travelersNumbers.adults + travelersNumbers.childs + travelersNumbers.babies;
+  }
+
   // Verificar opciones de habitaciones compartidas
   get hasSharedRoomsOption(): boolean {
     return this.allRoomsAvailability.some((room) => room.isShared);
@@ -1548,6 +1554,9 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
       // Recargar viajeros
       await this.loadTravelersIndependently();
 
+      // Actualizar contadores de viajeros basándose en los viajeros reales
+      this.updateTravelersNumbersFromExistingTravelers();
+
       // Recargar asignaciones existentes
       if (this.existingTravelers.length > 0) {
         await this.loadExistingTravelerAccommodations();
@@ -1561,6 +1570,40 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
     } catch (error) {
       this.errorMsg = 'Error al recargar las habitaciones.';
     }
+  }
+
+  // NUEVO: Método para actualizar contadores de viajeros desde viajeros reales
+  private updateTravelersNumbersFromExistingTravelers(): void {
+    if (!this.existingTravelers || this.existingTravelers.length === 0) {
+      return;
+    }
+
+    // Contar adultos y niños usando los métodos de validación existentes
+    const adults = this.existingTravelers.filter((t) => 
+      this.isAdultTraveler(t)
+    ).length;
+    
+    const children = this.existingTravelers.filter((t) => 
+      this.isChildTraveler(t)
+    ).length;
+
+    // Calcular bebés: viajeros que no son adultos ni niños
+    // (esto incluye bebés que están fuera de los rangos de edad)
+    const babies = this.existingTravelers.length - adults - children;
+
+    // Actualizar el BehaviorSubject con los conteos reales
+    this.travelersNumbersSource.next({
+      adults: adults,
+      childs: children,
+      babies: babies >= 0 ? babies : 0 // Asegurar que no sea negativo
+    });
+
+    console.log('📊 Contadores de viajeros actualizados:', {
+      adults,
+      children,
+      babies: babies >= 0 ? babies : 0,
+      total: this.existingTravelers.length
+    });
   }
 
   // NUEVO: Método para recalcular distribución de habitaciones

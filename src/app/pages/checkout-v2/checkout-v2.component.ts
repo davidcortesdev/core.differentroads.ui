@@ -614,11 +614,16 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   /**
    * Maneja el evento de actualización de travelers desde selector-traveler
    */
-  onTravelersUpdated(): void {
+  async onTravelersUpdated(): Promise<void> {
     console.log('🔔 Checkout recibió evento: travelers actualizados', {
       timestamp: new Date().toISOString(),
       component: 'selector-traveler'
     });
+    
+    // Recargar viajeros en el selector de habitaciones
+    if (this.roomSelector) {
+      await this.roomSelector.reloadOnTravelersChange();
+    }
     
     // Disparar actualización del summary
     this.triggerSummaryRefresh();

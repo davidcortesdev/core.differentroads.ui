@@ -1,3 +1,73 @@
+// Información de viajeros
+.travelers-info {
+  margin-bottom: 1rem;
+  padding: 0.875rem 1rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 0.5rem;
+  border-left: 4px solid var(--background-azul);
+
+  .travelers-summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+
+    i.pi-users {
+      color: var(--background-azul);
+      font-size: 1.125rem;
+    }
+
+    .travelers-text {
+      color: var(--background-azul);
+      font-size: 0.9375rem;
+
+      strong {
+        font-size: 1.125rem;
+        font-weight: 600;
+      }
+    }
+
+    .travelers-breakdown {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-left: 0.25rem;
+
+      .traveler-type {
+        color: #495057;
+        font-size: 0.875rem;
+        padding: 0.25rem 0.625rem;
+        background: white;
+        border-radius: 1rem;
+        font-weight: 500;
+        white-space: nowrap;
+
+        &:not(:last-child)::after {
+          content: "•";
+          margin-left: 0.75rem;
+          color: #dee2e6;
+        }
+      }
+    }
+  }
+
+  @media (max-width: 480px) {
+    .travelers-summary {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+
+      .travelers-breakdown {
+        margin-left: 0;
+
+        .traveler-type:not(:last-child)::after {
+          display: none;
+        }
+      }
+    }
+  }
+}
+
 .room-selector {
   --p-inputnumber-button-background: var(--background-azul-color-letra);
   --p-inputtext-background: var(--background-azul-color-letra);

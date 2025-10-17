@@ -119,6 +119,12 @@
                     [label]="getReserveLabel()" 
                     styleClass="p-button-rounded" 
                     (click)="reserveItem(item)"></p-button>
+                  <!-- Botón para usar puntos - solo en reservas activas -->
+                  <p-button *ngIf="shouldShowUsePoints()" 
+                    [label]="'Usar puntos'" 
+                    styleClass="p-button-success p-button-rounded" 
+                    icon="pi pi-star"
+                    (click)="openPointsModal(item)"></p-button>
                 </div>
               </div>
             </div>
@@ -134,4 +140,64 @@
       </ng-template>
     </p-dataView>
   </div>
+
+  <!-- Modal para usar puntos -->
+  <p-dialog 
+    header="Usar puntos" 
+    [(visible)]="pointsModalVisible" 
+    [modal]="true" 
+    [closable]="true"
+    [style]="{width: '450px'}"
+    [draggable]="false"
+    [resizable]="false">
+    
+    <div class="points-modal-content" *ngIf="selectedBookingItem">
+      <div class="booking-info">
+        <h4>{{ selectedBookingItem.title }}</h4>
+        <p>Nº Reserva: {{ selectedBookingItem.reservationNumber || selectedBookingItem.number }}</p>
+      </div>
+
+      <div class="points-info">
+        <div class="available-points">
+          <i class="pi pi-star" style="color: #FFD700;"></i>
+          <span>Puntos disponibles: <strong>{{ userPoints }}</strong></span>
+        </div>
+        
+        <div class="points-form">
+          <label for="pointsToUse">Cantidad de puntos a usar:</label>
+          <p-inputNumber 
+            id="pointsToUse"
+            [(ngModel)]="pointsToUse" 
+            [min]="1" 
+            [max]="userPoints"
+            [showButtons]="true"
+            [step]="1"
+            placeholder="Ingresa cantidad">
+          </p-inputNumber>
+          
+          <div class="discount-info" *ngIf="pointsToUse > 0">
+            <p>Descuento: <strong>{{ pointsToUse | currency:'EUR' }}</strong></p>
+            <p class="new-total">Nuevo total: <strong>{{ calculateNewTotal() | currency:'EUR' }}</strong></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+      <div class="modal-buttons">
+        <p-button 
+          label="Cancelar" 
+          styleClass="p-button-text" 
+          (click)="closePointsModal()">
+        </p-button>
+        <p-button 
+          label="Aplicar puntos" 
+          styleClass="p-button-success" 
+          [disabled]="!canApplyPoints()"
+          [loading]="applyingPoints"
+          (click)="applyPoints()">
+        </p-button>
+      </div>
+    </ng-template>
+  </p-dialog>
 </div>

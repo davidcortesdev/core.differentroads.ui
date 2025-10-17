@@ -109,6 +109,14 @@ export class TourV2Component implements OnInit {
     babies: { id: null, lowerAge: null, upperAge: null },
   };
 
+  // Propiedades para datos del tour (analytics)
+  tourCountry: string = '';
+  tourContinent: string = '';
+  tourRating: number | null = null;
+  tourDuration: string = '';
+  tourTripType: string = '';
+  tourProductStyle: string = '';
+
   constructor(
     private titleService: Title,
     private route: ActivatedRoute,

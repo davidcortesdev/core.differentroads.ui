@@ -109,14 +109,7 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
    * Obtiene el texto del botón según el contexto
    */
   getSaveButtonText(): string {
-    const totalPassengers = this.travelersSelected ? 
-      (this.travelersSelected.adults || 0) + (this.travelersSelected.childs || 0) + (this.travelersSelected.babies || 0) : 0;
-    
-    const isCheckoutContext = totalPassengers > 0 && this.calculateTotalPrice() > 0;
-    
-    return isCheckoutContext 
-      ? 'Guarda tu presupuesto'
-      : 'Añadir a favoritos';
+    return 'Guarda tu presupuesto';
   }
 
   /**

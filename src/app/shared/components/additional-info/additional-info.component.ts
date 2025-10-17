@@ -25,6 +25,14 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
   @Input() isAuthenticated: boolean = false;
   @Input() infoCards: any[] = []; // Para mostrar información adicional si es necesario
   @Input() context: 'checkout' | 'tour' = 'checkout'; // Contexto para aplicar estilos específicos
+  
+  // Inputs para datos del tour (analytics)
+  @Input() tourCountry: string = '';
+  @Input() tourContinent: string = '';
+  @Input() tourRating: number | null = null;
+  @Input() tourDuration: string = '';
+  @Input() tourTripType: string = '';
+  @Input() tourProductStyle: string = '';
 
   // Estados del componente
   visible: boolean = false;
@@ -482,75 +490,45 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Obtiene la categoría del tour desde los datos disponibles
+   * Obtiene la categoría del tour (continente) desde los datos disponibles
    */
-  private getTourCategory(): string | undefined {
-    // Intentar obtener desde selectedDeparture si está disponible
-    if (this.selectedDeparture?.continent) {
-      return this.selectedDeparture.continent;
-    }
-    // Si no hay datos reales, no devolver nada
-    return undefined;
+  private getTourCategory(): string {
+    return this.tourContinent || '';
   }
 
   /**
-   * Obtiene la subcategoría del tour desde los datos disponibles
+   * Obtiene la subcategoría del tour (país) desde los datos disponibles
    */
-  private getTourSubcategory(): string | undefined {
-    // Intentar obtener desde selectedDeparture si está disponible
-    if (this.selectedDeparture?.tripType) {
-      return this.selectedDeparture.tripType;
-    }
-    // Si no hay datos reales, no devolver nada
-    return undefined;
+  private getTourSubcategory(): string {
+    return this.tourCountry || '';
   }
 
   /**
-   * Obtiene el tipo del tour desde los datos disponibles
+   * Obtiene el tipo del tour (estilo de producto) desde los datos disponibles
    */
-  private getTourType(): string | undefined {
-    // Intentar obtener desde selectedDeparture si está disponible
-    if (this.selectedDeparture?.productStyle) {
-      return this.selectedDeparture.productStyle;
-    }
-    // Si no hay datos reales, no devolver nada
-    return undefined;
+  private getTourType(): string {
+    return this.tourProductStyle || '';
   }
 
   /**
    * Obtiene el tipo de viaje desde los datos disponibles
    */
-  private getTripType(): string | undefined {
-    // Intentar obtener desde selectedDeparture si está disponible
-    if (this.selectedDeparture?.tripType) {
-      return this.selectedDeparture.tripType;
-    }
-    // Si no hay datos reales, no devolver nada
-    return undefined;
+  private getTripType(): string {
+    return this.tourTripType || '';
   }
 
   /**
    * Obtiene la puntuación del tour desde los datos disponibles
    */
-  private getTourRating(): string | undefined {
-    // Intentar obtener desde selectedDeparture si está disponible
-    if (this.selectedDeparture?.rating) {
-      return this.selectedDeparture.rating.toString();
-    }
-    // Si no hay datos reales, no devolver nada
-    return undefined;
+  private getTourRating(): string {
+    return this.tourRating ? this.tourRating.toString() : '';
   }
 
   /**
    * Obtiene la duración del tour desde los datos disponibles
    */
-  private getTourDuration(): string | undefined {
-    // Intentar obtener desde selectedDeparture si está disponible
-    if (this.selectedDeparture?.duration) {
-      return this.selectedDeparture.duration;
-    }
-    // Si no hay datos reales, no devolver nada
-    return undefined;
+  private getTourDuration(): string {
+    return this.tourDuration || '';
   }
 
   /**

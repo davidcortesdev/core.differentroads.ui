@@ -370,7 +370,7 @@ export class AdditionalInfoService {
     // Obtener datos del usuario para analytics
     this.analyticsService.getCurrentUserData().subscribe({
       next: (userData) => {
-        // Construir item para el evento ecommerce
+        // Construir item para el evento ecommerce con todas las propiedades obligatorias
         const item: any = {
           item_id: tourId,
           item_name: tourName,
@@ -378,37 +378,19 @@ export class AdditionalInfoService {
           discount: 0,
           index: 1,
           item_brand: 'Different Roads',
+          item_category: tourData?.category || '',
+          item_category2: tourData?.subcategory || '',
+          item_category3: tourData?.type || '',
+          item_category4: periodDates,
+          item_category5: tourData?.tripType || '',
           item_list_id: 'presupuestos_guardados',
           item_list_name: 'Presupuestos guardados',
-          item_variant: `${tourId} - ${periodName}`,
+          item_variant: '',
           price: this.totalPrice || 0,
           quantity: 1,
-          start_date: periodDates,
-          pasajeros_adultos: travelers?.adults?.toString() || '0',
-          pasajeros_niños: travelers?.childs?.toString() || '0'
+          puntuacion: tourData?.rating || '',
+          duracion: tourData?.duration || ''
         };
-
-        // Solo añadir propiedades que tengan datos reales
-        const category = tourData?.category || this.getTourCategory();
-        if (category) item.item_category = category;
-
-        const subcategory = tourData?.subcategory || this.getTourSubcategory();
-        if (subcategory) item.item_category2 = subcategory;
-
-        const type = tourData?.type || this.getTourType();
-        if (type) item.item_category3 = type;
-
-        // item_category4 siempre es periodDates
-        item.item_category4 = periodDates;
-
-        const tripType = tourData?.tripType || this.getTripType();
-        if (tripType) item.item_category5 = tripType;
-
-        const rating = tourData?.rating || this.getTourRating();
-        if (rating) item.puntuacion = rating;
-
-        const duration = tourData?.duration || this.getTourDuration();
-        if (duration) item.duracion = duration;
 
         // Disparar evento add_to_wishlist
         this.analyticsService.addToWishlist(
@@ -427,37 +409,19 @@ export class AdditionalInfoService {
           discount: 0,
           index: 1,
           item_brand: 'Different Roads',
+          item_category: tourData?.category || '',
+          item_category2: tourData?.subcategory || '',
+          item_category3: tourData?.type || '',
+          item_category4: periodDates,
+          item_category5: tourData?.tripType || '',
           item_list_id: 'presupuestos_guardados',
           item_list_name: 'Presupuestos guardados',
-          item_variant: `${tourId} - ${periodName}`,
+          item_variant: '',
           price: this.totalPrice || 0,
           quantity: 1,
-          start_date: periodDates,
-          pasajeros_adultos: travelers?.adults?.toString() || '0',
-          pasajeros_niños: travelers?.childs?.toString() || '0'
+          puntuacion: tourData?.rating || '',
+          duracion: tourData?.duration || ''
         };
-
-        // Solo añadir propiedades que tengan datos reales
-        const category = tourData?.category || this.getTourCategory();
-        if (category) item.item_category = category;
-
-        const subcategory = tourData?.subcategory || this.getTourSubcategory();
-        if (subcategory) item.item_category2 = subcategory;
-
-        const type = tourData?.type || this.getTourType();
-        if (type) item.item_category3 = type;
-
-        // item_category4 siempre es periodDates
-        item.item_category4 = periodDates;
-
-        const tripType = tourData?.tripType || this.getTripType();
-        if (tripType) item.item_category5 = tripType;
-
-        const rating = tourData?.rating || this.getTourRating();
-        if (rating) item.puntuacion = rating;
-
-        const duration = tourData?.duration || this.getTourDuration();
-        if (duration) item.duracion = duration;
 
         this.analyticsService.addToWishlist(
           'presupuestos_guardados',

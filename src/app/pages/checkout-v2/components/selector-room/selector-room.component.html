@@ -1,3 +1,37 @@
+<!-- Información de viajeros -->
+<div class="travelers-info" *ngIf="(travelersNumbers$ | async) as travelers">
+  <div class="travelers-summary">
+    <i class="pi pi-users"></i>
+    <span class="travelers-text">
+      <strong>{{ getTotalTravelers() }}</strong> viajero<span *ngIf="getTotalTravelers() !== 1">s</span>:
+    </span>
+    <span class="travelers-breakdown">
+      <span *ngIf="travelers.adults > 0" class="traveler-type">
+        {{ travelers.adults }} adulto<span *ngIf="travelers.adults !== 1">s</span>
+      </span>
+      <span *ngIf="travelers.childs > 0" class="traveler-type">
+        {{ travelers.childs }} niño<span *ngIf="travelers.childs !== 1">s</span>
+      </span>
+      <span *ngIf="travelers.babies > 0" class="traveler-type">
+        {{ travelers.babies }} bebé<span *ngIf="travelers.babies !== 1">s</span>
+      </span>
+    </span>
+  </div>
+</div>
+
+<!-- Indicador de proceso y guardado -->
+<div class="processing-status" *ngIf="processingStatus">
+  <div class="status-content">
+    <span class="status-text">{{ processingStatus }}</span>
+    <div class="progress-bar" *ngIf="savingCountdown > 0">
+      <div 
+        class="progress-fill" 
+        [style.width.%]="((1200 - savingCountdown) / 1200) * 100"
+      ></div>
+    </div>
+  </div>
+</div>
+
 <div class="room-selector" [class.saving]="saving">
   <div
     *ngFor="let room of roomsAvailabilityForTravelersNumber; let i = index"
@@ -59,7 +93,16 @@
     </p>
   </div>
 
-  <div *ngIf="errorMsg" class="error-message">
+  <div *ngIf="hasUnassignedTravelers" class="warning-message">
+    <i class="pi pi-exclamation-triangle"></i>
+    <p>{{ unassignedTravelersMessage }}</p>
+  </div>
+
+  <div *ngIf="errorMsg" [ngClass]="{
+    'error-message': errorMsgType === 'error',
+    'warning-message': errorMsgType === 'warning',
+    'info-message': errorMsgType === 'info'
+  }">
     <i class="pi pi-info-circle"></i>
     <p>{{ errorMsg }}</p>
   </div>

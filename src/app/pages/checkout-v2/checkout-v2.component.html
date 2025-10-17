@@ -46,10 +46,7 @@
             <app-selector-traveler
               [departureId]="departureId"
               [reservationId]="reservationId"
-              [availableTravelers]="[]"
-              (ageGroupCountsChange)="onAgeGroupCountsChange($event)"
-              (saveStatusChange)="onTravelerSelectorSaveStatusChange($event)"
-              (saveCompleted)="onTravelerSelectorSaveCompleted($event)"
+              (travelersUpdated)="onTravelersUpdated()"
               #travelerSelector
             >
             </app-selector-traveler>
@@ -58,7 +55,7 @@
             <app-selector-room
               [departureId]="departureId"
               [reservationId]="reservationId"
-              (roomsSelectionChange)="onRoomsSelectionChange($event)"
+              (roomsUpdated)="onRoomsUpdated()"
               #roomSelector
             >
             </app-selector-room>

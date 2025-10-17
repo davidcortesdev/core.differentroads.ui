@@ -82,26 +82,8 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
   @Input() departureId: number | null = null;
   @Input() reservationId: number | null = null;
 
-  // Output para notificar cambios en habitaciones al componente padre
-  @Output() roomsSelectionChange = new EventEmitter<{
-    [tkId: string]: number;
-  }>();
-
-  // NUEVO: Output para notificar que se necesita recargar
-  @Output() travelersChanged = new EventEmitter<void>();
-  @Output() saveStatusChange = new EventEmitter<{
-    saving: boolean;
-    success?: boolean;
-    error?: string;
-  }>();
-
-  // NUEVO: Output para notificar guardado exitoso al componente padre
-  @Output() saveCompleted = new EventEmitter<{
-    component: 'selector-room';
-    success: boolean;
-    data?: any;
-    error?: string;
-  }>();
+  // Output para notificar que se han actualizado las habitaciones
+  @Output() roomsUpdated = new EventEmitter<void>();
 
   // Propiedades principales
   roomsAvailabilityForTravelersNumber: RoomAvailability[] = [];
@@ -338,14 +320,9 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
     this.updateRoomSharedStatus();
   }
 
-  // Método para emitir cambios de habitaciones
-  private emitRoomsSelectionChange(): void {
-    this.roomsSelectionChange.emit(this.selectedRooms);
-  }
-
-  // NUEVO: Método para emisión inicial sin debounce
-  private emitInitialRoomsSelection(): void {
-    this.roomsSelectionChange.emit(this.selectedRooms);
+  // Método para emitir que se actualizaron las habitaciones
+  private emitRoomsUpdated(): void {
+    this.roomsUpdated.emit();
   }
 
   // Método para actualizar la UI después de cargar todos los datos
@@ -377,9 +354,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
 
     // Limpiar errores de inicialización
     this.errorMsg = null;
-
-    // Emitir datos iniciales inmediatamente (sin debounce)
-    this.emitInitialRoomsSelection();
   }
 
   updateRoomSharedStatus(): void {
@@ -795,9 +769,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
 
   // NUEVO: Procesar todas las selecciones después del debounce
   private processAllRoomSelections(): void {
-    // Emitir cambios al componente padre DESPUÉS del debounce
-    this.roomsSelectionChange.emit(this.selectedRooms);
-
     // Validar todas las selecciones actuales
     const validationResult = this.validateRoomSelections();
     if (!validationResult.isValid) {
@@ -1269,9 +1240,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
     this.saving = true;
     this.showSavingToast();
 
-    // Emitir evento de inicio de guardado
-    this.saveStatusChange.emit({ saving: true });
-
     try {
       // Siempre recargar travelers para asegurar datos actualizados
       const currentTravelers =
@@ -1388,14 +1356,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
       // Mostrar toast de éxito
       this.showSuccessToast();
 
-      // Emitir eventos de éxito
-      this.saveStatusChange.emit({ saving: false, success: true });
-      this.saveCompleted.emit({
-        component: 'selector-room',
-        success: true,
-        data: this.currentRoomAssignments,
-      });
-
       return true;
     } catch (error) {
       // Determinar el tipo de error y mensaje específico
@@ -1423,22 +1383,13 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
         life: 5000,
       });
 
-      // Emitir eventos de error
-      this.saveStatusChange.emit({
-        saving: false,
-        success: false,
-        error: errorMessage,
-      });
-      this.saveCompleted.emit({
-        component: 'selector-room',
-        success: false,
-        error: errorMessage,
-      });
-
       return false;
     } finally {
       // Ocultar indicador de guardado
       this.saving = false;
+      
+      // Emitir que se actualizaron las habitaciones (éxito o error)
+      this.emitRoomsUpdated();
     }
   }
 
@@ -1548,9 +1499,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
   // NUEVO: Método público para recargar cuando cambien los viajeros
   async reloadOnTravelersChange(): Promise<void> {
     try {
-      // Emitir evento de cambio de viajeros
-      this.travelersChanged.emit();
-
       // Recargar viajeros
       await this.loadTravelersIndependently();
 
@@ -1668,9 +1616,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
 
     // Actualizar UI
     this.updateRooms();
-
-    // Emitir cambios al componente padre
-    this.roomsSelectionChange.emit(this.selectedRooms);
 
     // Mostrar mensaje informativo si se limpiaron selecciones
     this.showRoomUpdateMessage(newTotalTravelers, travelerData);

@@ -955,23 +955,13 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
 
   /**
-   * OPTIMIZADO: Método llamado cuando cambian las habitaciones seleccionadas
+   * Método llamado cuando se actualizan las habitaciones
    */
-  async onRoomsSelectionChange(selectedRooms: {
-    [tkId: string]: number;
-  }): Promise<void> {
-    // NUEVO: Forzar actualización del summary cuando cambian las habitaciones
-    this.forceSummaryUpdate();
+  onRoomsUpdated(): void {
+    console.log('🏠 Las habitaciones se han actualizado');
 
-    // ✅ Guardar inmediatamente cambios de habitaciones
-    try {
-      await this.roomSelector?.saveRoomAssignments?.();
-    } catch (err) {
-      console.error('❌ Error guardando asignaciones de habitaciones:', err);
-    }
-
-    // ✅ Disparar actualización del summary inmediatamente
-    this.triggerSummaryRefresh();
+        // Disparar actualización del summary inmediatamente
+        this.triggerSummaryRefresh();
   }
 
   /**

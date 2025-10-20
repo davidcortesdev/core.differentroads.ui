@@ -1,9 +1,17 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { TableRowCollapseEvent, TableRowExpandEvent } from 'primeng/table';
-import { Document } from '../../../core/models/document/document.model';
-import { NotificationLog } from '../../../core/models/notification-log/notification-log.model';
+import {
+  DocumentationService,
+  IDocumentReservationResponse,
+  IDocumentTypeResponse,
+} from '../../../core/services/documentation/documentation.service';
+import {
+  NotificationService,
+  INotification,
+  INotificationStatusResponse,
+  INotificationTypeResponse,
+} from '../../../core/services/documentation/notification.service';
+import { MessageService } from 'primeng/api';
 import { BookingNote } from '../../../core/models/bookings/booking-note.model';
-import { SelectItem } from 'primeng/api';
 
 type Severity =
   | 'success'
@@ -21,120 +29,257 @@ type Severity =
 })
 export class BookingDocumentationV2Component implements OnInit {
   @Input() bookingId!: string; // Receive bookingId as input
-  @Input() showExpandControls: boolean = true; // controla visibilidad de expand/collapse
 
-  documents: Document[] = []; // Replace products with documents array
-  groupedDocuments: { [type: string]: Document[] } = {};
-  latestDocuments: Document[] = [];
-  expandedRowKeys: { [key: string]: boolean } = {};
+  // Propiedades para los servicios de API
+  apiDocuments: IDocumentReservationResponse[] = [];
+  apiNotifications: INotification[] = [];
+  documentsLoading: boolean = false;
+  notificationsLoading: boolean = false;
 
-  // Add property for notification logs
-  notificationLogs: NotificationLog[] = [];
+  // Propiedades para estados y tipos
+  notificationStatuses: INotificationStatusResponse[] = [];
+  notificationTypes: INotificationTypeResponse[] = [];
+  statusesLoading: boolean = false;
+  typesLoading: boolean = false;
+
+  // Propiedades para tipos de documento
+  documentTypes: IDocumentTypeResponse[] = [];
+  documentTypesLoading: boolean = false;
 
   // Add property for notes
   notes: BookingNote[] = [];
 
-  // Add property for type options
-  typeOptions: SelectItem[] = [];
-
-  constructor() {}
+  constructor(
+    private documentationService: DocumentationService,
+    private notificationService: NotificationService,
+    private messageService: MessageService
+  ) {}
 
   ngOnInit(): void {
     if (this.bookingId) {
+      this.loadNotificationStatuses();
+      this.loadNotificationTypes();
+      this.loadDocumentTypes();
       this.loadDocuments();
-      this.loadNotificationLogs();
+      this.loadNotifications();
       this.loadNotes();
     }
   }
 
-  loadDocuments(): void {
-    //TODO: Implementar leyendo los datos de mysql
+  /**
+   * Carga estados de notificación desde la API
+   */
+  loadNotificationStatuses(): void {
+    this.statusesLoading = true;
 
-  }
-
-  groupDocumentsByType(): void {
-    // Agrupar por type
-    const grouped: { [type: string]: Document[] } = {};
-    for (const doc of this.documents) {
-      if (!grouped[doc.type]) {
-        grouped[doc.type] = [];
-      }
-      grouped[doc.type].push(doc);
-    }
-    // Ordenar cada grupo por fecha descendente
-    for (const type in grouped) {
-      grouped[type].sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-    }
-    this.groupedDocuments = grouped;
-    console.log('Grouped documents:', this.groupedDocuments);
-
-    // Solo el más reciente de cada tipo
-    this.latestDocuments = Object.values(grouped).map((docs) => docs[0]);
-  }
-
-  getPreviousVersions(type: string): Document[] {
-    const docs = this.groupedDocuments[type] || [];
-    return docs.slice(1); // Todas menos la más reciente
-  }
-
-  rowExpanded(document: Document): void {
-    console.log('Row expanded for document:', document);
-    console.log('Previous versions:', this.getPreviousVersions(document.type));
-  }
-
-  onRowExpand(event: TableRowExpandEvent) {
-    console.log('Row expanded:', event.data);
-  }
-
-  onRowCollapse(event: TableRowCollapseEvent) {
-    console.log('Row collapsed:', event.data);
-  }
-
-  expandAll() {
-    this.latestDocuments.forEach((doc) => {
-      if (this.getPreviousVersions(doc.type).length > 0) {
-        this.expandedRowKeys[doc._id] = true;
-      }
+    this.notificationService.getNotificationStatuses().subscribe({
+      next: (statuses: INotificationStatusResponse[]) => {
+        this.notificationStatuses = statuses;
+        this.statusesLoading = false;
+        console.log('📊 Notification statuses loaded:', statuses);
+      },
+      error: (error) => {
+        console.error('❌ Error loading notification statuses:', error);
+        this.notificationStatuses = [];
+        this.statusesLoading = false;
+      },
     });
   }
 
-  collapseAll() {
-    this.expandedRowKeys = {};
+  /**
+   * Carga tipos de notificación desde la API
+   */
+  loadNotificationTypes(): void {
+    this.typesLoading = true;
+
+    this.notificationService.getNotificationTypes().subscribe({
+      next: (types: INotificationTypeResponse[]) => {
+        this.notificationTypes = types;
+        this.typesLoading = false;
+        console.log('📋 Notification types loaded:', types);
+      },
+      error: (error) => {
+        console.error('❌ Error loading notification types:', error);
+        this.notificationTypes = [];
+        this.typesLoading = false;
+      },
+    });
   }
 
-  // Add method to load notification logs
-  loadNotificationLogs(): void {
-    //TODO: Implementar leyendo los datos de mysql
+  /**
+   * Carga tipos de documento desde la API
+   */
+  loadDocumentTypes(): void {
+    this.documentTypesLoading = true;
+
+    this.documentationService.getDocumentTypes().subscribe({
+      next: (types: IDocumentTypeResponse[]) => {
+        this.documentTypes = types;
+        this.documentTypesLoading = false;
+        console.log('📄 Document types loaded:', types);
+      },
+      error: (error) => {
+        console.error('❌ Error loading document types:', error);
+        this.documentTypes = [];
+        this.documentTypesLoading = false;
+      },
+    });
   }
 
-  // Add method to load notes
+  /**
+   * Carga documentos desde la API
+   */
+  loadDocuments(): void {
+    this.documentsLoading = true;
+
+    this.documentationService
+      .getCompleteDocumentsByReservationId(parseInt(this.bookingId, 10))
+      .subscribe({
+        next: (documents: any[]) => {
+          this.apiDocuments = documents;
+          this.documentsLoading = false;
+          console.log('📄 Documents loaded:', documents);
+        },
+        error: (error) => {
+          console.error('❌ Error loading documents:', error);
+          this.apiDocuments = [];
+          this.documentsLoading = false;
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Advertencia',
+            detail: 'No se pudieron cargar los documentos',
+          });
+        },
+      });
+  }
+
+  /**
+   * Carga notificaciones desde la API
+   */
+  loadNotifications(): void {
+    this.notificationsLoading = true;
+
+    this.notificationService
+      .getNotificationsByReservationId(parseInt(this.bookingId, 10))
+      .subscribe({
+        next: (notifications: INotification[]) => {
+          this.apiNotifications = notifications;
+          this.notificationsLoading = false;
+          console.log('📧 Notifications loaded:', notifications);
+        },
+        error: (error) => {
+          console.error('❌ Error loading notifications:', error);
+          this.apiNotifications = [];
+          this.notificationsLoading = false;
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Advertencia',
+            detail: 'No se pudieron cargar las notificaciones',
+          });
+        },
+      });
+  }
+
+  /**
+   * Carga notas (método restaurado)
+   */
   loadNotes(): void {
-    //TODO: Implementar leyendo los datos de mysql
-      
+    // Inicializar array vacío como estaba antes
+    this.notes = [];
+    console.log('📝 Notes loaded:', this.notes);
   }
 
-  /** devuelve severidad válida para p-tag */
-  getCategorySeverity(category: string): Severity {
-    switch (category?.toLowerCase()) {
-      case 'internal':
-        return 'info';
-      case 'customer':
-        return 'warn';
-      case 'important':
-        return 'danger';
-      case 'system':
-        return 'secondary';
-      default:
-        return 'secondary';
+  /**
+   * Formatea la fecha de creación de un documento
+   */
+  formatDocumentDate(dateString: string): string {
+    if (!dateString) return 'Fecha no disponible';
+
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch (error) {
+      return 'Fecha no válida';
     }
   }
 
-  /** devuelve severidad válida para p-tag */
+  /**
+   * Formatea la fecha de creación de una notificación
+   */
+  formatNotificationDate(dateString: string): string {
+    if (!dateString) return 'Fecha no disponible';
+
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch (error) {
+      return 'Fecha no válida';
+    }
+  }
+
+  /**
+   * Obtiene el estado de una notificación en texto legible desde la API
+   */
+  getNotificationStatusText(notificationStatusId: number): string {
+    const status = this.notificationStatuses.find(
+      (s) => s.id === notificationStatusId
+    );
+    return status?.name || 'Desconocido';
+  }
+
+  /**
+   * Obtiene el color del estado de una notificación basado en el código de la API
+   */
+  getNotificationStatusColor(notificationStatusId: number): Severity {
+    const status = this.notificationStatuses.find(
+      (s) => s.id === notificationStatusId
+    );
+    if (!status) return 'secondary';
+
+    const code = status.code?.toUpperCase();
+    switch (code) {
+      case 'PENDING':
+        return 'warn';
+      case 'READY':
+        return 'info';
+      case 'SENT':
+        return 'success';
+      case 'FAILED':
+        return 'danger';
+      case 'CANCELLED':
+        return 'secondary';
+      default:
+        return 'info';
+    }
+  }
+
+  /**
+   * Obtiene el tipo de notificación en texto legible desde la API
+   */
+  getNotificationTypeText(notificationTypeId: number): string {
+    const type = this.notificationTypes.find(
+      (t) => t.id === notificationTypeId
+    );
+    return type?.name || 'Desconocido';
+  }
+
+  /**
+   * Obtiene la severidad del tipo de nota (método restaurado)
+   */
   getTypeSeverity(type: string): Severity {
-    switch (type?.toLowerCase()) {
+    switch (type) {
       case 'info':
         return 'info';
       case 'warning':
@@ -146,5 +291,47 @@ export class BookingDocumentationV2Component implements OnInit {
       default:
         return 'secondary';
     }
+  }
+
+  /**
+   * Obtiene el nombre del tipo de documento desde la API
+   */
+  getDocumentTypeText(documentTypeId: number): string {
+    const type = this.documentTypes.find((t) => t.id === documentTypeId);
+    return type?.name || 'Desconocido';
+  }
+
+  /**
+   * Método de prueba para verificar que los servicios funcionan
+   */
+  testServices(): void {
+    console.log('🧪 TEST: Testing services for booking:', this.bookingId);
+    console.log('📊 Loaded notification statuses:', this.notificationStatuses);
+    console.log('📋 Loaded notification types:', this.notificationTypes);
+    console.log('📄 Loaded document types:', this.documentTypes);
+
+    // Probar servicio de notificaciones
+    this.notificationService
+      .getNotificationsByReservationId(parseInt(this.bookingId, 10))
+      .subscribe({
+        next: (notifications) => {
+          console.log('✅ TEST: Notifications service working:', notifications);
+        },
+        error: (error) => {
+          console.error('❌ TEST: Notifications service error:', error);
+        },
+      });
+
+    // Probar servicio de documentación con reserva que tiene documentos
+    this.documentationService
+      .getCompleteDocumentsByReservationId(56) // Usar reserva 56 que tiene documentos
+      .subscribe({
+        next: (documents) => {
+          console.log('✅ TEST: Documentation service working:', documents);
+        },
+        error: (error) => {
+          console.error('❌ TEST: Documentation service error:', error);
+        },
+      });
   }
 }

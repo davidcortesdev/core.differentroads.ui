@@ -12,6 +12,14 @@ import {
 } from '../../../../core/services/cms/cms-tour.service';
 import { DocumentPDFService } from '../../../../core/services/documentation/document-pdf.service';
 import { EmailSenderService } from '../../../../core/services/documentation/email-sender.service';
+import {
+  DocumentationService,
+  IDocumentReservationResponse,
+} from '../../../../core/services/documentation/documentation.service';
+import {
+  NotificationService,
+  INotification,
+} from '../../../../core/services/documentation/notification.service';
 import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 import { switchMap, map, catchError, of, forkJoin } from 'rxjs';
 
@@ -32,6 +40,12 @@ export class BookingListSectionV2Component implements OnInit {
   downloadLoading: { [key: string]: boolean } = {};
   notificationLoading: { [key: string]: boolean } = {};
 
+  // Propiedades para documentación y notificaciones
+  documentsLoading: { [key: string]: boolean } = {};
+  notificationsLoading: { [key: string]: boolean } = {};
+  documents: { [key: string]: IDocumentReservationResponse[] } = {};
+  notifications: { [key: string]: INotification[] } = {};
+
   // Propiedades para el modal de puntos
   pointsModalVisible: boolean = false;
   selectedBookingItem: BookingItem | null = null;
@@ -48,6 +62,8 @@ export class BookingListSectionV2Component implements OnInit {
     private cmsTourService: CMSTourService,
     private documentPDFService: DocumentPDFService,
     private emailSenderService: EmailSenderService,
+    private documentationService: DocumentationService,
+    private notificationService: NotificationService,
     private authService: AuthenticateService
   ) {}
 
@@ -178,6 +194,8 @@ export class BookingListSectionV2Component implements OnInit {
         next: (bookingItems: BookingItem[]) => {
           this.bookingItems = bookingItems;
           this.loading = false;
+          // Cargar documentación y notificaciones para todas las reservas
+          this.loadDocumentationAndNotifications();
         },
         error: (error) => {
           console.error('Error en la suscripción:', error);
@@ -255,6 +273,8 @@ export class BookingListSectionV2Component implements OnInit {
         next: (bookingItems: BookingItem[]) => {
           this.bookingItems = bookingItems;
           this.loading = false;
+          // Cargar documentación y notificaciones para todas las reservas
+          this.loadDocumentationAndNotifications();
         },
         error: (error) => {
           console.error('Error en la suscripción:', error);
@@ -332,6 +352,8 @@ export class BookingListSectionV2Component implements OnInit {
         next: (bookingItems: BookingItem[]) => {
           this.bookingItems = bookingItems;
           this.loading = false;
+          // Cargar documentación y notificaciones para todas las reservas
+          this.loadDocumentationAndNotifications();
         },
         error: (error) => {
           console.error('Error en la suscripción:', error);
@@ -664,5 +686,298 @@ export class BookingListSectionV2Component implements OnInit {
       });
       this.closePointsModal();
     }, 2000);
+  }
+
+  // ===== MÉTODOS PARA DOCUMENTACIÓN Y NOTIFICACIONES =====
+
+  /**
+   * Carga la documentación para una reserva específica
+   * @param reservationId - ID de la reserva
+   */
+  loadDocumentsForReservation(reservationId: string): void {
+    this.documentsLoading[reservationId] = true;
+
+    console.log('🔍 DEBUG: Loading documents for reservation:', reservationId);
+
+    this.documentationService
+      .getDocumentsByReservationId(parseInt(reservationId, 10))
+      .subscribe({
+        next: (documents: IDocumentReservationResponse[]) => {
+          console.log('🔍 DEBUG: Documents loaded successfully:', documents);
+          this.documents[reservationId] = documents;
+          this.documentsLoading[reservationId] = false;
+        },
+        error: (error) => {
+          console.error(
+            'Error loading documents for reservation:',
+            reservationId,
+            error
+          );
+          this.documents[reservationId] = [];
+          this.documentsLoading[reservationId] = false;
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Advertencia',
+            detail: 'No se pudieron cargar los documentos de la reserva',
+          });
+        },
+      });
+  }
+
+  /**
+   * Carga las notificaciones para una reserva específica
+   * @param reservationId - ID de la reserva
+   */
+  loadNotificationsForReservation(reservationId: string): void {
+    this.notificationsLoading[reservationId] = true;
+
+    console.log(
+      '🔍 DEBUG: Loading notifications for reservation:',
+      reservationId
+    );
+
+    this.notificationService
+      .getNotificationsByReservationId(parseInt(reservationId, 10))
+      .subscribe({
+        next: (notifications: INotification[]) => {
+          console.log(
+            '🔍 DEBUG: Notifications loaded successfully:',
+            notifications
+          );
+          this.notifications[reservationId] = notifications;
+          this.notificationsLoading[reservationId] = false;
+        },
+        error: (error) => {
+          console.error(
+            'Error loading notifications for reservation:',
+            reservationId,
+            error
+          );
+          this.notifications[reservationId] = [];
+          this.notificationsLoading[reservationId] = false;
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Advertencia',
+            detail: 'No se pudieron cargar las notificaciones de la reserva',
+          });
+        },
+      });
+  }
+
+  /**
+   * Carga documentación y notificaciones para todas las reservas
+   */
+  loadDocumentationAndNotifications(): void {
+    this.bookingItems.forEach((item) => {
+      this.loadDocumentsForReservation(item.id);
+      this.loadNotificationsForReservation(item.id);
+    });
+  }
+
+  /**
+   * Obtiene los documentos de una reserva específica
+   * @param reservationId - ID de la reserva
+   * @returns Array de documentos o array vacío
+   */
+  getDocumentsForReservation(
+    reservationId: string
+  ): IDocumentReservationResponse[] {
+    return this.documents[reservationId] || [];
+  }
+
+  /**
+   * Obtiene las notificaciones de una reserva específica
+   * @param reservationId - ID de la reserva
+   * @returns Array de notificaciones o array vacío
+   */
+  getNotificationsForReservation(reservationId: string): INotification[] {
+    return this.notifications[reservationId] || [];
+  }
+
+  /**
+   * Verifica si se están cargando documentos para una reserva
+   * @param reservationId - ID de la reserva
+   * @returns true si se están cargando documentos
+   */
+  isLoadingDocuments(reservationId: string): boolean {
+    return this.documentsLoading[reservationId] || false;
+  }
+
+  /**
+   * Verifica si se están cargando notificaciones para una reserva
+   * @param reservationId - ID de la reserva
+   * @returns true si se están cargando notificaciones
+   */
+  isLoadingNotifications(reservationId: string): boolean {
+    return this.notificationsLoading[reservationId] || false;
+  }
+
+  /**
+   * Obtiene el estado de carga de documentación y notificaciones para una reserva
+   * @param reservationId - ID de la reserva
+   * @returns true si se están cargando documentos o notificaciones
+   */
+  isLoadingDocumentationAndNotifications(reservationId: string): boolean {
+    return (
+      this.isLoadingDocuments(reservationId) ||
+      this.isLoadingNotifications(reservationId)
+    );
+  }
+
+  /**
+   * Formatea la fecha de creación de un documento
+   * @param dateString - Fecha en formato string
+   * @returns Fecha formateada
+   */
+  formatDocumentDate(dateString: string): string {
+    if (!dateString) return 'Fecha no disponible';
+
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch (error) {
+      return 'Fecha no válida';
+    }
+  }
+
+  /**
+   * Formatea la fecha de creación de una notificación
+   * @param dateString - Fecha en formato string
+   * @returns Fecha formateada
+   */
+  formatNotificationDate(dateString: string): string {
+    if (!dateString) return 'Fecha no disponible';
+
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch (error) {
+      return 'Fecha no válida';
+    }
+  }
+
+  /**
+   * Obtiene el estado de una notificación en texto legible
+   * @param notificationStatusId - ID del estado de la notificación
+   * @returns Estado en texto legible
+   */
+  getNotificationStatusText(notificationStatusId: number): string {
+    const statusMap: { [key: number]: string } = {
+      1: 'Pendiente',
+      2: 'Enviada',
+      3: 'Fallida',
+      4: 'Cancelada',
+    };
+    return statusMap[notificationStatusId] || 'Desconocido';
+  }
+
+  /**
+   * Obtiene el color del estado de una notificación
+   * @param notificationStatusId - ID del estado de la notificación
+   * @returns Color del estado
+   */
+  getNotificationStatusColor(notificationStatusId: number): string {
+    const colorMap: { [key: number]: string } = {
+      1: 'warning', // Pendiente
+      2: 'success', // Enviada
+      3: 'danger', // Fallida
+      4: 'secondary', // Cancelada
+    };
+    return colorMap[notificationStatusId] || 'secondary';
+  }
+
+  // ===== MÉTODOS DE PRUEBA Y DEBUG =====
+
+  /**
+   * Método de prueba para verificar que los servicios funcionan correctamente
+   * @param reservationId - ID de la reserva para probar
+   */
+  testServices(reservationId: string = '847'): void {
+    console.log('🧪 TEST: Testing services for reservation:', reservationId);
+
+    // Probar servicio de notificaciones
+    this.notificationService
+      .getNotificationsByReservationId(parseInt(reservationId, 10))
+      .subscribe({
+        next: (notifications) => {
+          console.log('✅ TEST: Notifications service working:', notifications);
+        },
+        error: (error) => {
+          console.error('❌ TEST: Notifications service error:', error);
+        },
+      });
+
+    // Probar servicio de documentación
+    this.documentationService
+      .getDocumentsByReservationId(parseInt(reservationId, 10))
+      .subscribe({
+        next: (documents) => {
+          console.log('✅ TEST: Documentation service working:', documents);
+        },
+        error: (error) => {
+          console.error('❌ TEST: Documentation service error:', error);
+        },
+      });
+  }
+
+  /**
+   * Método para probar manualmente la carga de datos
+   * @param reservationId - ID de la reserva
+   */
+  testLoadData(reservationId: string = '847'): void {
+    console.log('🧪 TEST: Testing data load for reservation:', reservationId);
+    this.loadDocumentsForReservation(reservationId);
+    this.loadNotificationsForReservation(reservationId);
+  }
+
+  /**
+   * Método para probar la llamada HTTP directa con fetch
+   * @param reservationId - ID de la reserva
+   */
+  testDirectHttpCall(reservationId: string = '847'): void {
+    console.log(
+      '🧪 TEST: Testing direct HTTP call with fetch for reservation:',
+      reservationId
+    );
+
+    const url = `https://documentation-dev.differentroads.es/api/Notification/by-reservation/${reservationId}`;
+
+    console.log('🧪 TEST: Making direct HTTP call to:', url);
+
+    fetch(url, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((response) => {
+        console.log('🧪 TEST: Fetch response status:', response.status);
+        console.log('🧪 TEST: Fetch response headers:', response.headers);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        console.log('✅ TEST: Direct fetch call successful:', data);
+      })
+      .catch((error) => {
+        console.error('❌ TEST: Direct fetch call failed:', error);
+      });
   }
 }

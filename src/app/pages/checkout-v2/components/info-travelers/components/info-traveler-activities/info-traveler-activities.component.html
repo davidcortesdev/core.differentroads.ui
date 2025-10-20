@@ -2,10 +2,7 @@
   <h4>Actividades asignadas:</h4>
   <div class="activities-list">
     <!-- Actividades individuales (memoria visible) -->
-     {{visibleActivityIds | json}}
-     {{visiblePackIds | json}}
     <ng-container *ngFor="let activityId of visibleActivityIds">
-        {{getActivityName(activityId)}}
       <div *ngIf="getActivityName(activityId)" class="activity-item" style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0;">
         <div class="activity-info">
           <h5><strong>{{ getActivityName(activityId) }}</strong></h5>
@@ -16,20 +13,19 @@
             styleClass="activity-saving-spinner"
             [style]="{ width: '20px', height: '20px' }">
           </p-progressSpinner>
-          <p-toggleSwitch 
+          <p-toggleswitch 
             *ngIf="!isSavingActivity(activityId)"
             [ngModel]="!isTravelerActivityDeleted(activityId) && isCurrentlyAssigned(activityId)"
             [disabled]="isSavingActivity(activityId)"
             (ngModelChange)="onActivityToggleChange(activityId, $event)"
             [ngModelOptions]="{standalone: true}">
-          </p-toggleSwitch>
+          </p-toggleswitch>
         </div>
       </div>
     </ng-container>
 
     <!-- Paquetes de actividades (memoria visible) -->
     <ng-container *ngFor="let packId of visiblePackIds">
-        {{getActivityName(packId)}}
       <div *ngIf="getActivityName(packId)" class="activity-item" style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0;">
         <div class="activity-info">
           <h5><strong>{{ getActivityName(packId) }}</strong></h5>
@@ -40,13 +36,13 @@
             styleClass="activity-saving-spinner"
             [style]="{ width: '20px', height: '20px' }">
           </p-progressSpinner>
-          <p-toggleSwitch 
+          <p-toggleswitch 
             *ngIf="!isSavingActivity(packId)"
             [ngModel]="!isTravelerActivityDeleted(packId) && isCurrentlyAssigned(packId)"
             [disabled]="isSavingActivity(packId)"
             (ngModelChange)="onActivityToggleChange(packId, $event)"
             [ngModelOptions]="{standalone: true}">
-          </p-toggleSwitch>
+          </p-toggleswitch>
         </div>
       </div>
     </ng-container>

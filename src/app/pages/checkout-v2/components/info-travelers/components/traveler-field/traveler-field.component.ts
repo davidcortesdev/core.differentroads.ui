@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, ChangeDetectorRef, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { FormGroup, ValidationErrors } from '@angular/forms';
 import { IReservationFieldResponse } from '../../../../../../core/services/reservation/reservation-field.service';
 
@@ -9,7 +9,7 @@ import { IReservationFieldResponse } from '../../../../../../core/services/reser
   styleUrls: ['./traveler-field.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class TravelerFieldComponent {
+export class TravelerFieldComponent implements OnInit, OnChanges {
   @Input() fieldDetails!: IReservationFieldResponse;
   @Input() travelerId!: number;
   @Input() travelerForm!: FormGroup;
@@ -26,8 +26,31 @@ export class TravelerFieldComponent {
 
   // Sugerencias filtradas para sexOptions
   filteredSexOptions: Array<{ label: string; value: string }> = [];
+  
+  // Opción seleccionada actual para el autocomplete de sexo
+  sexSelectedOption: { label: string; value: string } | null = null;
 
   constructor(private cdr: ChangeDetectorRef) {}
+
+  ngOnInit(): void {
+    this.initializeSexField();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['sexOptions'] || changes['travelerForm']) {
+      this.initializeSexField();
+    }
+  }
+
+  private initializeSexField(): void {
+    // Sincronizar el valor del FormControl con sexSelectedOption
+    if (this.fieldDetails?.code === 'sex' && this.control) {
+      const currentValue = this.control.value;
+      if (currentValue && typeof currentValue === 'string') {
+        this.sexSelectedOption = this.sexOptions.find(opt => opt.value === currentValue) || null;
+      }
+    }
+  }
 
   get controlName(): string {
     return `${this.fieldDetails.code}_${this.travelerId}`;
@@ -73,25 +96,6 @@ export class TravelerFieldComponent {
     return `Introduce tu ${this.fieldDetails.name.toLowerCase()}`;
   }
 
-  // Getter para el valor del sexo (convierte string a objeto)
-  get sexValue(): { label: string; value: string } | null {
-    const value = this.control?.value;
-    if (!value || typeof value !== 'string') {
-      return null;
-    }
-    
-    // Buscar el objeto correspondiente al valor string
-    const sexOption = this.sexOptions.find(opt => opt.value === value);
-    return sexOption || null;
-  }
-
-  // Setter para el valor del sexo (convierte objeto a string)
-  set sexValue(sexOption: { label: string; value: string } | null) {
-    if (this.control && sexOption) {
-      this.control.setValue(sexOption.value);
-    }
-  }
-
   onFieldInput(): void {
     this.fieldChange.emit(this.fieldDetails.code);
   }
@@ -124,10 +128,35 @@ export class TravelerFieldComponent {
     this.cdr.markForCheck();
   }
 
+  onSexModelChange(value: { label: string; value: string } | null): void {
+    // Sincronizar el objeto seleccionado con el valor string del FormControl
+    if (this.control && value && typeof value === 'object' && value.value) {
+      this.control.setValue(value.value);
+      this.control.markAsDirty();
+      this.control.markAsTouched();
+      this.control.updateValueAndValidity();
+      this.fieldChange.emit(this.fieldDetails.code);
+    }
+    this.cdr.markForCheck();
+  }
+
   onSexSelect(event: { label: string; value: string }): void {
-    // El setter sexValue ya actualiza el control con el valor
-    // Solo necesitamos marcar como touched y dirty
+    // Guardar el valor string (no el objeto) en el FormControl
     if (this.control) {
+      this.control.setValue(event.value);
+      this.control.markAsDirty();
+      this.control.markAsTouched();
+      this.control.updateValueAndValidity();
+    }
+    this.fieldChange.emit(this.fieldDetails.code);
+    this.cdr.markForCheck();
+  }
+
+  onSexClear(): void {
+    // Limpiar el valor del FormControl y la opción seleccionada
+    this.sexSelectedOption = null;
+    if (this.control) {
+      this.control.setValue(null);
       this.control.markAsDirty();
       this.control.markAsTouched();
       this.control.updateValueAndValidity();

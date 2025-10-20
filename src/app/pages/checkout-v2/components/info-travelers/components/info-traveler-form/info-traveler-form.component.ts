@@ -99,9 +99,8 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
   } = {};
 
   sexOptions = [
-    { label: 'Masculino', value: 'Masculino' },
-    { label: 'Femenino', value: 'Femenino' },
-    { label: 'Otro', value: 'Otro' }
+    { label: 'Masculino', value: 'M' },
+    { label: 'Femenino', value: 'F' }
   ];
 
   countryOptions = [
@@ -141,7 +140,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     },
     sex: {
       required: () => 'Debe seleccionar un sexo.',
-      pattern: () => 'Debe seleccionar Masculino, Femenino u Otro.',
+      pattern: () => 'Debe seleccionar una opción válida.',
     },
     country: {
       required: () => 'Debe seleccionar un país.',
@@ -435,7 +434,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
         }
         break;
       case 'sex':
-        validators.push(Validators.pattern(/^(Masculino|Femenino|Otro)$/));
+        validators.push(Validators.pattern(/^(M|F)$/));
         break;
       case 'country':
         validators.push(Validators.pattern(/^[A-Z]{2}$/));
@@ -797,17 +796,44 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       case 'direccion':
         return userData.direccion || null;
       case 'sexo':
-        return userData.sexo || null;
+        return this.normalizeSexValue(userData.sexo);
       default:
         const codeLower = (fieldCode || '').toLowerCase();
         switch (codeLower) {
           case 'sex':
           case 'gender':
-            return userData.sexo || null;
+            return this.normalizeSexValue(userData.sexo);
           default:
             return null;
         }
     }
+  }
+
+  /**
+   * Normaliza el valor del sexo a formato corto (M, F)
+   */
+  private normalizeSexValue(sexValue: string | null | undefined): string | null {
+    if (!sexValue) {
+      return null;
+    }
+
+    const sexUpper = sexValue.toUpperCase().trim();
+    
+    // Si ya está en formato corto, retornar tal cual
+    if (sexUpper === 'M' || sexUpper === 'F') {
+      return sexUpper;
+    }
+
+    // Convertir valores completos a formato corto
+    if (sexUpper === 'MASCULINO' || sexUpper === 'MALE' || sexUpper === 'HOMBRE') {
+      return 'M';
+    }
+    if (sexUpper === 'FEMENINO' || sexUpper === 'FEMALE' || sexUpper === 'MUJER') {
+      return 'F';
+    }
+
+    // Si no coincide con ninguno, retornar null
+    return null;
   }
 
   /**

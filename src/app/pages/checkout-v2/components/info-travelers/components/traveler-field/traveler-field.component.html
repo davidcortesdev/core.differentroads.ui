@@ -78,16 +78,18 @@
     <!-- Campo de sexo (autocomplete) -->
     <ng-container *ngSwitchCase="'sex'">
       <p-autocomplete 
-        [(ngModel)]="sexValue"
+        [(ngModel)]="sexSelectedOption"
         [suggestions]="filteredSexOptions"
         field="label"
-        placeholder="Seleccione"
         [dropdown]="true"
         appendTo="body"
         [forceSelection]="true"
+        placeholder="Seleccione"
         [ngClass]="{ 'p-invalid': hasError }"
         (completeMethod)="filterSexOptions($event)"
-        (onSelect)="onSexSelect($event)">
+        (onSelect)="onSexSelect($event)"
+        (onClear)="onSexClear()"
+        (ngModelChange)="onSexModelChange($event)">
       </p-autocomplete>
       <small *ngIf="hasError" class="p-error">
         {{ getErrorMessage(errors) }}

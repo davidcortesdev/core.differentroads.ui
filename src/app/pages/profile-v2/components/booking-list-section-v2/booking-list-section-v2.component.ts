@@ -47,15 +47,12 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   ) {}
 
   ngOnInit() {
-    console.log('🔍 [BookingList] ngOnInit - userId:', this.userId, 'listType:', this.listType);
-    // Solo cargar si ya tenemos userId en la inicialización
     if (this.userId) {
       this.loadData();
     }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    // Cargar datos cuando el userId cambie y tenga valor
     if (changes['userId'] && changes['userId'].currentValue) {
       this.loadData();
     }
@@ -64,11 +61,9 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   private loadData(): void {
     this.loading = true;
     
-    // Convertir userId de string a number para la API
     const userIdNumber = parseInt(this.userId, 10);
     
     if (isNaN(userIdNumber)) {
-      console.error('Error: userId no es un número válido:', this.userId);
       this.bookingItems = [];
       this.loading = false;
       return;

@@ -1271,17 +1271,6 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       // Recargar datos existentes después de guardar
       this.loadExistingTravelerFields();
 
-      // ✅ NUEVO: Cambiar estado de la reserva a BOOKED después de guardar datos de viajeros
-      if (this.bookedStatusId && this.reservationId) {
-        try {
-          await this.reservationService.updateStatus(this.reservationId, this.bookedStatusId).toPromise();
-          console.log('✅ Estado de reserva actualizado a BOOKED');
-        } catch (error) {
-          console.error('❌ Error al actualizar estado de reserva a BOOKED:', error);
-          // No mostrar error al usuario, solo log
-        }
-      }
-
       this.messageService.add({
         severity: 'success',
         summary: 'Éxito',

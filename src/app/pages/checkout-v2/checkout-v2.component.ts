@@ -643,35 +643,13 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   /**
    * Maneja los cambios de asignación de actividades por viajero
    */
-  async onActivitiesAssignmentChange(event: {
-    travelerId: number;
-    activityId: number;
-    isAssigned: boolean;
-    activityName: string;
-    activityPrice: number;
-  }): Promise<void> {
-    // Inicializar el objeto para el viajero si no existe
-    if (!this.travelerActivities[event.travelerId]) {
-      this.travelerActivities[event.travelerId] = {};
-    }
-
-    // Actualizar el estado de la actividad para el viajero
-    this.travelerActivities[event.travelerId][event.activityId] =
-      event.isAssigned;
-
-    // Actualizar el conteo de actividades por actividad
-    this.updateActivitiesByTraveler(
-      event.activityId,
-      event.activityName,
-      event.activityPrice
-    );
-
-    // Forzar detección de cambios
-    this.cdr.detectChanges();
-
+  onActivitiesAssignmentChange(): void {
+    // Solo notificar que se ha actualizado - el componente hijo maneja su propio estado
+    console.log('Actividades actualizadas');
+    
     // ✅ Esperar a que terminen guardados pendientes en actividades antes de refrescar
     try {
-      await this.activitiesOptionals?.waitForPendingSaves?.();
+      this.activitiesOptionals?.waitForPendingSaves?.();
     } catch (err) {
       console.error('❌ Error esperando guardados de actividades:', err);
     }
@@ -1868,34 +1846,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   // Método auxiliar para logging detallado
   private logComponentState(): void {}
 
-  // Método para guardar todos los datos de los viajeros
-  private async saveTravelersData(): Promise<boolean> {
-    if (!this.infoTravelers) {
-      return true; // Si no hay componente, no hay nada que guardar
-    }
-
-    try {
-      // Validar que todos los campos obligatorios estén completados
-      if (!this.infoTravelers.validateFormAndShowToast()) {
-        // El toast ya se mostró automáticamente en validateFormAndShowToast()
-        return false; // No continuar si hay campos faltantes
-      }
-
-      // Llamar al método saveAllTravelersData del componente hijo y esperar a que se complete
-      await this.infoTravelers.saveAllTravelersData();
-      return true;
-    } catch (error) {
-      console.error('Error en saveTravelersData:', error);
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error al guardar',
-        detail: 'Error al guardar los datos de los viajeros',
-        life: 5000,
-      });
-      return false;
-    }
-  }
-
   // NUEVO: Método para guardar todos los datos del paso 0 (personaliza tu viaje)
   private async saveStep0Data(): Promise<boolean> {
     try {
@@ -2160,7 +2110,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       }
     }
 
-    // Guardar datos de viajeros antes de continuar al paso de pago (targetStep === 3)
+    // Validar datos de viajeros antes de continuar al paso de pago (targetStep === 3)
     if (targetStep === 3) {
       if (!this.infoTravelers) {
         console.error('Componente infoTravelers no está disponible');
@@ -2174,10 +2124,22 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         return;
       }
 
-      const saved = await this.saveTravelersData();
-      if (!saved) {
-        return; // No continuar si no se pudieron guardar los datos
+      // ✅ NUEVO: Validar que todos los viajeros estén listos para continuar
+      console.log('=== Validando viajeros antes de continuar al pago ===');
+      const allTravelersReady = this.infoTravelers.canContinueToNextStep();
+
+      if (!allTravelersReady) {
+        // ❌ Algunos viajeros no están listos
+        console.log('❌ Validación de viajeros fallida: no se puede continuar');
+        
+        // Mostrar error específico indicando qué viajeros faltan
+        this.infoTravelers.showValidationError();
+        
+        return; // No continuar al siguiente paso
       }
+
+      // ✅ Todos los viajeros están listos
+      console.log('✅ Validación de viajeros exitosa: todos los viajeros están listos');
     }
 
     // Navegar al siguiente paso

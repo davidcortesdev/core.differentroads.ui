@@ -1,19 +1,27 @@
-:root {
-  --form-spacing: 10px;
-  --mobile-breakpoint: 768px;
-  --content-horizontal-padding: 16px;
-}
+// ============================================
+// Variables
+// ============================================
+$form-spacing: 10px;
+$mobile-breakpoint: 768px;
+$tablet-breakpoint: 577px;
+$small-mobile: 480px;
+$content-horizontal-padding: 16px;
 
-:host {
-  display: block;
-  width: 100%;
-  --p-datepicker-panel-background: #fff !important;
-}
+// Colores
+$primary-color: var(--background-azul);
+$error-color: #dc3545;
+$success-color: #28a745;
+$border-color: #e0e0e0;
+$light-gray: #f0f0f0;
+$text-gray: #666;
 
+// ============================================
+// Mixins
+// ============================================
 @mixin form-input-base {
   width: 100%;
   border: none;
-  border-bottom: 1px solid var(--background-azul) !important;
+  border-bottom: 1px solid $primary-color !important;
   border-radius: 0;
   background: transparent;
   font-size: 14px;
@@ -21,26 +29,42 @@
   box-shadow: none !important;
 }
 
-* { color: var(--background-azul); }
-
-
-.content-form {
-  --p-panel-background: var(--background-azul-color-letra) !important;
-  --p-accordion-content-background: var(--background-azul-color-letra) !important;
-  --p-accordion-content-padding: 15px !important;
-  --p-accordion-content-border-radius: 10px !important;
-  padding: var(--form-spacing);
-  border-radius: 8px;
-  margin: 15px 0 0 0;
-  width: 100%;
-  @media (max-width: var(--mobile-breakpoint)) {
-    padding: var(--content-horizontal-padding);
+@mixin mobile {
+  @media (max-width: $mobile-breakpoint) {
+    @content;
   }
 }
 
+@mixin small-mobile {
+  @media (max-width: $small-mobile) {
+    @content;
+  }
+}
 
+@mixin tablet-up {
+  @media (min-width: $tablet-breakpoint) {
+    @content;
+  }
+}
+
+// ============================================
+// Host y estilos globales
+// ============================================
+:host {
+  display: block;
+  width: 100%;
+  --p-datepicker-panel-background: #fff !important;
+}
+
+* {
+  color: $primary-color;
+}
+
+// ============================================
+// Títulos
+// ============================================
 .title {
-  @media (max-width: 480px) {
+  @include small-mobile {
     margin-top: -10px;
     font-size: 1.1rem;
   }
@@ -48,345 +72,363 @@
 
 h3.title {
   margin-left: 0;
-  padding: 0 var(--content-horizontal-padding);
+  padding: 0 $content-horizontal-padding;
   margin-bottom: 1px;
-  @media (max-width: var(--mobile-breakpoint)) {
+
+  @include mobile {
     margin-top: 15px;
   }
+
   &:not(:first-child) {
     margin: 15px 0;
   }
 }
 
+// ============================================
+// Contenedor principal del formulario
+// ============================================
+.content-form {
+  --p-panel-background: var(--background-azul-color-letra) !important;
+  --p-accordion-content-background: var(--background-azul-color-letra) !important;
+  --p-accordion-content-padding: 15px !important;
+  --p-accordion-content-border-radius: 10px !important;
+  
+  padding: $form-spacing;
+  border-radius: 8px;
+  margin: 15px 0 0 0;
+  width: 100%;
 
+  @include mobile {
+    padding: $content-horizontal-padding;
+  }
+}
+
+// ============================================
+// Formulario de viajero
+// ============================================
 .traveler-form {
   margin-top: 15px;
   width: 100%;
+
   .form-section {
     margin-bottom: 1rem;
   }
+
   .form-row {
     display: flex;
     justify-content: space-between;
     margin-bottom: 15px;
     flex-wrap: wrap;
     gap: 10px;
-    flex-direction: row;
-    @media (max-width: var(--mobile-breakpoint)) {
+
+    @include mobile {
       flex-direction: column;
     }
+
+    @include tablet-up {
+      flex-direction: row !important;
+    }
   }
+
   .form-column {
     flex: 1;
     margin-right: 10px;
+
     &:last-child {
       margin-right: 0;
     }
-    @media (max-width: var(--mobile-breakpoint)) {
+
+    @include mobile {
       margin-right: 0;
     }
+
     &.half-width {
       flex: 0 0 48%;
       max-width: 48%;
-      @media (max-width: 480px) {
-        flex: 0 0 100%;
-        max-width: 100%;
-      }
-      @media (max-width: var(--mobile-breakpoint)) {
+
+      @include mobile {
         flex: 1 1 100%;
         margin-right: 0;
       }
+
+      @include tablet-up {
+        flex: 0 0 48% !important;
+        max-width: 48% !important;
+      }
     }
+
     &.full-width {
       flex: 0 0 100%;
       max-width: 100%;
+
+      @include tablet-up {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+      }
     }
   }
 }
 
-.form-field {
-  margin-bottom: 10px; 
-  font-size: 14px; 
-  position: relative;
-  
-  label { 
-    display: block; 
-    margin-bottom: 5px; 
-    color: var(--background-azul); 
-  }
-  
-  .field-container {
-    position: relative; 
-    display: flex; 
-    align-items: center;
-    input, p-autocomplete, p-calendar, p-select, p-datepicker { 
-      width: 100%; 
-      flex: 1; 
-    }
-  }
-  
-  input, p-autocomplete, p-calendar, p-select, p-datepicker { 
-    width: 100%; 
-  }
-  
-  &.checkbox-field {
-    display: flex; 
-    align-items: center; 
-    margin-bottom: 15px;
-    .checkbox-label { 
-      margin-left: 10px; 
-      margin-bottom: 0; 
-      cursor: pointer; 
-      font-size: 14px; 
-    }
-  }
-  
-  &.field-valid .field-container input, 
-  &.field-valid .field-container .p-inputtext { 
-    border-bottom: 2px solid #28a745 !important; 
-  }
-  &.field-invalid .field-container input, 
-  &.field-invalid .field-container .p-inputtext { 
-    border-bottom: 2px solid #dc3545 !important; 
-    background-color: rgba(220, 53, 69, 0.05) !important; 
-  }
-}
+// Nota: Los estilos de .form-field y .checkbox-field
+// ahora están en traveler-field.component.scss
 
-.checkbox-field {
-  display: flex; 
-  align-items: flex-start; 
-  gap: 10px;
-  .checkbox-label { 
-    margin-bottom: 0; 
-    cursor: pointer; 
-    line-height: 1.4; 
-  }
-}
-
+// ============================================
+// Actividades de viajero
+// ============================================
 .traveler-activities {
   margin: 15px 0;
-  h5 { 
-    margin: 0 0 10px 0; 
-    font-size: 14px; 
-    font-weight: 600; 
-    color: var(--background-azul); 
+
+  h5 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: $primary-color;
   }
+
   .activities-list .activity-item {
-    display: flex !important; 
-    justify-content: space-between !important; 
-    align-items: center !important; 
-    padding: 8px 0 !important; 
-    border-bottom: 1px solid #f0f0f0;
-    &:last-child { border-bottom: none; }
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 8px 0 !important;
+    border-bottom: 1px solid $light-gray;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
     .activity-info {
       flex: 1;
-      p { 
-        margin: 0 0 3px 0; 
-        font-size: 13px; 
-        line-height: 1.3; 
-      }
-      p strong { 
-        font-weight: 600; 
-        color: var(--background-azul); 
-      }
-      p:last-child { 
-        margin-bottom: 0; 
-        font-size: 11px; 
-        color: #666; 
+
+      p {
+        margin: 0 0 3px 0;
+        font-size: 13px;
+        line-height: 1.3;
+
+        strong {
+          font-weight: 600;
+          color: $primary-color;
+        }
+
+        &:last-child {
+          margin-bottom: 0;
+          font-size: 11px;
+          color: $text-gray;
+        }
       }
     }
-    p-toggleSwitch { 
-      flex-shrink: 0; 
-      margin-left: 15px; 
+
+    p-toggleSwitch {
+      flex-shrink: 0;
+      margin-left: 15px;
     }
   }
 }
 
-@media (min-width: 577px) {
-  .traveler-form .form-row { 
-    display: flex; 
-    flex-direction: row !important; 
-    flex-wrap: wrap; 
+// ============================================
+// Estilos de PrimeNG (::ng-deep)
+// ============================================
+.content-form ::ng-deep {
+  // Inputs base
+  .p-inputtext,
+  .p-dropdown,
+  .p-datepicker,
+  .p-autocomplete,
+  .p-select {
+    @include form-input-base;
   }
-  .traveler-form .form-column.half-width { 
-    flex: 0 0 48% !important; 
-    max-width: 48% !important; 
+
+  .p-dropdown .p-dropdown-label,
+  .p-select .p-select-label {
+    padding-top: 0 !important;
   }
-  .traveler-form .form-column.full-width { 
-    flex: 0 0 100% !important; 
-    max-width: 100% !important; 
+
+  .p-datepicker .p-inputtext,
+  .p-autocomplete .p-autocomplete-input {
+    @include form-input-base;
+  }
+
+  // Select
+  .p-select {
+    cursor: pointer;
+
+    .p-select-dropdown {
+      color: $primary-color;
+    }
+  }
+
+  // Dropdowns
+  .p-datepicker-dropdown,
+  .p-autocomplete-dropdown,
+  .p-select-dropdown,
+  .p-dropdown-trigger {
+    background: transparent !important;
+    border-radius: 0 !important;
+    border-top: none !important;
+    border-right: none !important;
+    border-left: none !important;
+    border-bottom: 1px solid $primary-color !important;
+  }
+
+  // Checkbox
+  .p-checkbox .p-checkbox-box {
+    border: 1px solid $primary-color;
+    border-radius: 3px;
+    background: transparent;
+
+    &.p-highlight {
+      background: $primary-color;
+      border-color: $primary-color;
+    }
+  }
+
+  // Toggle Switch
+  .p-toggleswitch {
+    width: 2.5rem;
+    height: 1.5rem;
+
+    .p-toggleswitch-slider {
+      border-radius: 0.75rem;
+    }
+  }
+
+  // Panel
+  .p-panel {
+    .p-panel-content {
+      padding: 10px;
+      border: 1px solid #d1c1c1;
+      border-radius: 9px;
+      width: 100%;
+      display: block;
+    }
+
+    .p-panel-header {
+      padding: 0;
+    }
+
+    &.user-button .p-panel-content {
+      width: auto;
+      display: inline-block;
+    }
+  }
+
+  // Focus states
+  .p-inputtext:focus,
+  .p-dropdown:focus,
+  .p-autocomplete-input:focus,
+  .p-select:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    border-bottom: 2px solid $primary-color !important;
+  }
+
+  // Estados inválidos
+  .p-invalid {
+    border-bottom: 2px solid $error-color !important;
+    background-color: rgba($error-color, 0.05) !important;
+
+    &:focus {
+      box-shadow: 0 0 0 0.2rem rgba($error-color, 0.25) !important;
+    }
+  }
+
+  .p-dropdown.p-invalid .p-dropdown-label,
+  .p-select.p-invalid .p-select-label {
+    color: $error-color !important;
+  }
+
+  .p-datepicker.p-invalid .p-inputtext,
+  .p-autocomplete.p-invalid .p-autocomplete-input {
+    border-bottom: 2px solid $error-color !important;
+    background-color: rgba($error-color, 0.05) !important;
+  }
+
+  // Mensajes de error
+  .p-error {
+    color: $error-color !important;
+    font-size: 0.875rem !important;
+    margin-top: 0.25rem !important;
+    display: block !important;
+  }
+
+  // Labels con error
+  .form-field:has(.p-invalid) label {
+    color: $error-color !important;
+    font-weight: 600 !important;
+  }
+
+  .form-field.required-empty label::after {
+    content: " *";
+    color: $error-color;
+    font-weight: bold;
+  }
+
+  // Icono de advertencia
+  .form-field:has(.p-invalid)::before {
+    content: "⚠";
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: $error-color;
+    font-size: 1.2rem;
+    z-index: 10;
+    pointer-events: none;
   }
 }
 
-.content-form {
-  ::ng-deep {
-    .p-inputtext, .p-dropdown, .p-datepicker, .p-autocomplete, .p-select {
-      @include form-input-base;
-    }
-    
-    .p-dropdown .p-dropdown-label, 
-    .p-select .p-select-label { 
-      padding-top: 0 !important; 
-    }
-    
-    .p-datepicker .p-inputtext, 
-    .p-autocomplete .p-autocomplete-input { 
-      @include form-input-base;
-    }
-    
-    .p-select { cursor: pointer; }
-    .p-select .p-select-dropdown { color: var(--background-azul); }
-    
-    .p-datepicker-dropdown, 
-    .p-autocomplete-dropdown, 
-    .p-select-dropdown, 
-    .p-dropdown-trigger { 
-      background: transparent !important; 
-      border-radius: 0 !important; 
-      border-top: none !important; 
-      border-right: none !important; 
-      border-left: none !important; 
-      border-bottom: 1px solid var(--background-azul) !important; 
-    }
-    
-    .p-checkbox .p-checkbox-box { 
-      border: 1px solid var(--background-azul); 
-      border-radius: 3px; 
-      background: transparent; 
-    }
-    .p-checkbox .p-checkbox-box.p-highlight { 
-      background: var(--background-azul); 
-      border-color: var(--background-azul); 
-    }
-    
-    .p-toggleswitch { 
-      width: 2.5rem; 
-      height: 1.5rem; 
-    }
-    .p-toggleswitch .p-toggleswitch-slider { 
-      border-radius: 0.75rem; 
-    }
-    
-    .p-panel .p-panel-content { 
-      padding: 10px; 
-      border: 1px solid #d1c1c1; 
-      border-radius: 9px; 
-      width: 100%; 
-      display: block; 
-    }
-    .p-panel .p-panel-header { 
-      padding: 0; 
-    }
-    .p-panel.user-button .p-panel-content { 
-      width: auto; 
-      display: inline-block; 
-    }
-    
-    .p-inputtext:focus, 
-    .p-dropdown:focus, 
-    .p-autocomplete-input:focus, 
-    .p-select:focus { 
-      outline: none !important; 
-      box-shadow: none !important; 
-      border-bottom: 2px solid var(--background-azul) !important; 
-    }
-    
-    .p-invalid {
-      border-bottom: 2px solid #dc3545 !important;
-      background-color: rgba(220, 53, 69, 0.05) !important;
-      &:focus { 
-        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important; 
-      }
-    }
-    
-    .p-dropdown.p-invalid .p-dropdown-label,
-    .p-select.p-invalid .p-select-label { 
-      color: #dc3545 !important; 
-    }
-    
-    .p-datepicker.p-invalid .p-inputtext,
-    .p-autocomplete.p-invalid .p-autocomplete-input { 
-      border-bottom: 2px solid #dc3545 !important;
-      background-color: rgba(220, 53, 69, 0.05) !important;
-    }
-    
-    .p-error { 
-      color: #dc3545 !important; 
-      font-size: 0.875rem !important; 
-      margin-top: 0.25rem !important; 
-      display: block !important; 
-    }
-    
-    .form-field:has(.p-invalid) label { 
-      color: #dc3545 !important; 
-      font-weight: 600 !important; 
-    }
-    
-    .form-field.required-empty label::after { 
-      content: " *"; 
-      color: #dc3545; 
-      font-weight: bold; 
-    }
-    
-    .form-field:has(.p-invalid)::before { 
-      content: "⚠"; 
-      position: absolute; 
-      right: 8px; 
-      top: 50%; 
-      transform: translateY(-50%); 
-      color: #dc3545; 
-      font-size: 1.2rem; 
-      z-index: 10; 
-      pointer-events: none; 
-    }
-  }
-}
-
+// ============================================
+// Accordion
+// ============================================
 .p-accordion {
-  .p-accordionheader { 
-    background: white !important; 
-    border-radius: 10px !important; 
-    color: var(--background-azul) !important; 
+  .p-accordionheader {
+    background: white !important;
+    border-radius: 10px !important;
+    color: $primary-color !important;
   }
-  .p-accordioncontent { 
-    border-radius: 10px !important; 
+
+  .p-accordioncontent {
+    border-radius: 10px !important;
   }
+
   .p-accordionpanel {
-    border: 1px solid #e0e0e0 !important; 
-    border-radius: 10px !important; 
-    margin-bottom: 15px !important; 
-    background: white !important; 
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); 
-    margin-top: 20px;
-    &:last-child { 
-      margin-bottom: 0; 
+    border: 1px solid $border-color !important;
+    border-radius: 10px !important;
+    margin: 20px 0 15px 0 !important;
+    background: white !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+    &:last-child {
+      margin-bottom: 0 !important;
     }
   }
 }
 
-.show-more-button { 
-  margin-top: -10px; 
-  margin-left: -1px; 
-  color: var(--background-azul); 
-  font-size: 0.9rem; 
-  &:hover { 
-    background-color: rgba(0, 0, 0, 0.04); 
-  } 
+// ============================================
+// Botones y animaciones
+// ============================================
+.show-more-button {
+  margin-top: -10px;
+  margin-left: -1px;
+  color: $primary-color;
+  font-size: 0.9rem;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+  }
 }
 
-
-.additional-fields { 
-  margin-top: 15px; 
-  animation: fadeIn 0.3s ease-in-out; 
+.additional-fields {
+  margin-top: 15px;
+  animation: fadeIn 0.3s ease-in-out;
 }
 
-@keyframes fadeIn { 
-  from { 
-    opacity: 0; 
-    transform: translateY(-10px); 
-  } 
-  to { 
-    opacity: 1; 
-    transform: translateY(0); 
-  } 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

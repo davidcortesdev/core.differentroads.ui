@@ -55,14 +55,16 @@ if (currentValue && currentValue !== existingValue) {
 
 **Casos que detecta:**
 
-| Escenario | Dirty | Valor Actual | Valor BD | ¿Guardar? |
-|-----------|-------|-------------|----------|-----------|
-| Usuario escribe | ✅ Sí | "Jaime" | "" | ✅ Sí |
-| Usuario escribe | ✅ Sí | "Jaime" | "Juan" | ✅ Sí |
-| Cargar del perfil | ❌ No | "Jaime" | "" | ✅ Sí (diferente) |
-| Cargar del perfil | ❌ No | "Jaime" | "Jaime" | ❌ No (igual) |
-| Sin cambios | ❌ No | "Jaime" | "Jaime" | ❌ No |
-| Campo vacío | ❌ No | "" | "" | ❌ No |
+| Escenario | Dirty | Valor Actual | Valor BD | Válido | ¿Guardar? |
+|-----------|-------|-------------|----------|--------|-----------|
+| Usuario escribe | ✅ Sí | "Jaime" | "" | ✅ Sí | ✅ **Sí** |
+| Usuario escribe | ✅ Sí | "Jaime" | "Juan" | ✅ Sí | ✅ **Sí** |
+| Cargar del perfil | ❌ No | "Jaime" | "" | ✅ Sí | ✅ **Sí** (diferente) |
+| Email inválido | ✅ Sí | "email@" | "" | ❌ No | ❌ **No** (inválido) ⭐ |
+| Fecha inválida | ✅ Sí | "99/99/9999" | "" | ❌ No | ❌ **No** (inválido) ⭐ |
+| Cargar del perfil | ❌ No | "Jaime" | "Jaime" | ✅ Sí | ❌ No (igual) |
+| Sin cambios | ❌ No | "Jaime" | "Jaime" | ✅ Sí | ❌ No |
+| Campo vacío | ❌ No | "" | "" | ✅ Sí | ❌ No |
 
 ### 3. Guardado Automático (AutoSave) ⭐ NUEVO
 
@@ -87,9 +89,28 @@ initializeAutoSave() {
 
 - ⏱️ **Debounce de 2 segundos**: Espera que el usuario deje de escribir
 - 🔍 **Detección de cambios reales**: Solo guarda si los valores cambiaron
+- ✅ **Solo campos válidos**: NO guarda campos con errores de validación ⭐
 - 🚫 **No interfiere con guardado manual**: Si ya está guardando, espera
 - 💾 **Toast sutil**: Notifica discretamente cuando guarda
 - 📊 **Logs completos**: Debugging detallado en consola
+
+#### Validación Inteligente ⭐
+
+El guardado automático **NO guardará** campos con errores:
+
+```typescript
+// Ejemplos de campos que NO se guardarán automáticamente:
+- Email inválido: "email@" ❌
+- Teléfono inválido: "abc123" ❌
+- Fecha inválida: "99/99/9999" ❌
+- Sexo sin seleccionar: null ❌ (si es obligatorio)
+
+// Solo se guardan campos válidos:
+- Email válido: "user@example.com" ✅
+- Teléfono válido: "+34123456789" ✅
+- Fecha válida: "07/10/2025" ✅
+- Sexo seleccionado: "M" ✅
+```
 
 #### Flujo:
 

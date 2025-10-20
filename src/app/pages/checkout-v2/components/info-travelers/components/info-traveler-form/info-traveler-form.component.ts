@@ -1424,11 +1424,13 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
             // 1. El control está dirty (modificado)
             // 2. Tiene un valor Y es diferente al guardado en BD
             // 3. Tiene un valor Y no existe en BD
+            // 4. ⭐ NUEVO: El control es VÁLIDO
             const hasValue = currentValue !== '' && currentValue !== null && currentValue !== undefined;
             const isDifferent = currentValue !== existingValue;
+            const isValid = control.valid;
 
-            if (control.dirty || (hasValue && isDifferent)) {
-              console.log(`[INCLUIR] ${fieldCode}: actual="${currentValue}" vs BD="${existingValue}" (dirty: ${control.dirty}, hasValue: ${hasValue}, isDifferent: ${isDifferent})`);
+            if ((control.dirty || (hasValue && isDifferent)) && isValid) {
+              console.log(`[INCLUIR] ${fieldCode}: actual="${currentValue}" vs BD="${existingValue}" (dirty: ${control.dirty}, hasValue: ${hasValue}, isDifferent: ${isDifferent}, valid: ${isValid})`);
               
               const fieldData: ReservationTravelerFieldCreate = {
                 id: 0,
@@ -1438,6 +1440,8 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
               };
 
               formData.push(fieldData);
+            } else if (!isValid && (control.dirty || (hasValue && isDifferent))) {
+              console.log(`[SKIP-INVALID] ${fieldCode}: actual="${currentValue}" (campo inválido, no se guardará)`);
             } else {
               console.log(`[SKIP] ${fieldCode}: actual="${currentValue}" vs BD="${existingValue}" (sin cambios)`);
             }
@@ -1629,21 +1633,17 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
   /**
    * Verifica si hay cambios pendientes de guardar
    * Compara valores del formulario con los datos guardados en BD
+   * Solo considera campos VÁLIDOS
    */
   hasPendingChanges(): boolean {
     if (!this.traveler) {
       return false;
     }
 
-    // Verificar si el formulario está dirty (modificado por el usuario)
-    if (this.travelerForm.dirty) {
-      console.log('[hasPendingChanges] Formulario dirty: true');
-      return true;
-    }
-
-    // Verificar si hay valores en el formulario diferentes a los guardados en BD
+    // Verificar si hay valores VÁLIDOS en el formulario diferentes a los guardados en BD
     let hasDifferences = false;
     const differences: string[] = [];
+    const invalidFields: string[] = [];
 
     Object.keys(this.travelerForm.controls).forEach((controlName) => {
       const control = this.travelerForm.get(controlName);
@@ -1673,8 +1673,13 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
 
             // Si hay valor y es diferente al guardado
             if (currentValue && currentValue !== existingValue) {
-              hasDifferences = true;
-              differences.push(`${fieldCode}: "${currentValue}" !== "${existingValue}"`);
+              // ⭐ NUEVO: Solo considerar si el campo es VÁLIDO
+              if (control.valid) {
+                hasDifferences = true;
+                differences.push(`${fieldCode}: "${currentValue}" !== "${existingValue}"`);
+              } else {
+                invalidFields.push(`${fieldCode}: inválido`);
+              }
             }
           }
         }
@@ -1682,7 +1687,11 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     });
 
     if (hasDifferences) {
-      console.log('[hasPendingChanges] Diferencias encontradas:', differences);
+      console.log('[hasPendingChanges] Diferencias válidas encontradas:', differences);
+    }
+    
+    if (invalidFields.length > 0) {
+      console.log('[hasPendingChanges] Campos inválidos (no se guardarán):', invalidFields);
     }
 
     return hasDifferences;

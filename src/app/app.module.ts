@@ -163,10 +163,6 @@ import { InfoTravelersComponent } from './pages/checkout-v2/components/info-trav
 import { InfoTravelersRoomComponent } from './pages/checkout-v2/components/info-travelers/components/info-travelers-room/info-travelers-room.component';
 import { PaymentManagementComponent } from './pages/checkout-v2/components/payment-management/payment-management.component';
 import { LoadingSectionComponent } from './pages/checkout-v2/components/payment-management/components/loading-section/loading-section.component';
-import { PointsRedemptionComponent } from './pages/checkout-v2/components/points-redemption/points-redemption.component';
-import { TravelersListComponent } from './pages/checkout-v2/components/points-redemption/components/travelers-list/travelers-list.component';
-import { MessagePointsComponent } from './pages/checkout-v2/components/points-redemption/components/message-points/message-points.component';
-import { BalanceInfoComponent } from './pages/checkout-v2/components/points-redemption/components/balance-info/balance-info.component';
 import { NewReservationComponent } from './pages/checkout-v2/components/new-reservation/new-reservation.component';
 import { TravelInfoComponent } from './pages/checkout-v2/components/new-reservation/travel-info/travel-info.component';
 import { TravelersInfoComponent } from './pages/checkout-v2/components/new-reservation/travelers-info/travelers-info.component';
@@ -337,10 +333,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     InfoTravelersRoomComponent,
     PaymentManagementComponent,
     LoadingSectionComponent,
-    PointsRedemptionComponent,
-    TravelersListComponent,
-    MessagePointsComponent,
-    BalanceInfoComponent,
     NewReservationComponent,
     TravelInfoComponent,
     TravelersInfoComponent,

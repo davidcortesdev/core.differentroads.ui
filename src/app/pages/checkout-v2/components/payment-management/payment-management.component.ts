@@ -93,23 +93,9 @@ export interface PaymentOption {
 export class PaymentManagementComponent
   implements OnInit, OnDestroy, OnChanges, AfterViewInit
 {
-  // Inputs
-  @Input() set totalPrice(value: number) {
-    const previousPrice = this._totalPrice;
-    this._totalPrice = value;
 
-    // Solo reinicializar el widget si el precio cambió y hay un valor válido
-    if (
-      value &&
-      value !== previousPrice &&
-      this.paymentState.type === 'installments'
-    ) {
-      console.log(`💰 Precio actualizado: ${previousPrice} → ${value}`);
-      setTimeout(() => {
-        this.forceScalapayReload();
-      }, 100);
-    }
-  }
+  //Total reservation amount
+  totalPrice: number = 0;
 
   ngAfterViewInit(): void {
     console.log('🔧 Inicializando componente de pago...');
@@ -117,11 +103,6 @@ export class PaymentManagementComponent
     this.initializeScalapayScript();
   }
 
-  get totalPrice(): number {
-    return this._totalPrice;
-  }
-
-  private _totalPrice: number = 0;
   @Input() reservationId!: number;
   @Input() depositAmount: number = 200;
   @Input() paymentDeadline: string = '30 días antes del tour';
@@ -195,6 +176,7 @@ export class PaymentManagementComponent
   ) {}
 
   ngOnInit(): void {
+    this.loadReservationTotalAmount();
     this.loadPaymentIds();
     this.checkAmadeusFlightStatus();
     this.loadUserPoints();
@@ -2125,6 +2107,17 @@ export class PaymentManagementComponent
       this.pointsRedemption.totalPointsToUse = 0;
       this.pointsRedemption.totalDiscount = 0;
       this.pointsDiscountChange.emit(0);
+      this.reloadReservationTotalAmount();
     }
+  }
+
+  loadReservationTotalAmount(): void {
+    this.reservationService.getById(this.reservationId).subscribe((reservation) => {
+      this.totalPrice = reservation.totalAmount;
+    });
+  }
+
+  reloadReservationTotalAmount(): void {
+    this.loadReservationTotalAmount();
   }
 }

@@ -6,10 +6,22 @@ import { BookingsServiceV2 } from '../../../../core/services/v2/bookings-v2.serv
 import { ReservationResponse } from '../../../../core/models/v2/profile-v2.model';
 import { ToursServiceV2 } from '../../../../core/services/v2/tours-v2.service';
 import { DataMappingV2Service } from '../../../../core/services/v2/data-mapping-v2.service';
-import { CMSTourService, ICMSTourResponse } from '../../../../core/services/cms/cms-tour.service';
+import {
+  CMSTourService,
+  ICMSTourResponse,
+} from '../../../../core/services/cms/cms-tour.service';
+import { DocumentPDFService } from '../../../../core/services/documentation/document-pdf.service';
+import { EmailSenderService } from '../../../../core/services/documentation/email-sender.service';
+import {
+  DocumentationService,
+  IDocumentReservationResponse,
+} from '../../../../core/services/documentation/documentation.service';
+import {
+  NotificationService,
+  INotification,
+} from '../../../../core/services/documentation/notification.service';
 import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 import { switchMap, map, catchError, of, forkJoin } from 'rxjs';
-
 
 @Component({
   selector: 'app-booking-list-section-v2',
@@ -19,13 +31,20 @@ import { switchMap, map, catchError, of, forkJoin } from 'rxjs';
 })
 export class BookingListSectionV2Component implements OnInit {
   @Input() userId: string = '';
-  @Input() listType: 'active-bookings' | 'travel-history' | 'recent-budgets' = 'active-bookings';
+  @Input() listType: 'active-bookings' | 'travel-history' | 'recent-budgets' =
+    'active-bookings';
 
   bookingItems: BookingItem[] = [];
   isExpanded: boolean = true;
   loading: boolean = false;
   downloadLoading: { [key: string]: boolean } = {};
   notificationLoading: { [key: string]: boolean } = {};
+
+  // Propiedades para documentación y notificaciones
+  documentsLoading: { [key: string]: boolean } = {};
+  notificationsLoading: { [key: string]: boolean } = {};
+  documents: { [key: string]: IDocumentReservationResponse[] } = {};
+  notifications: { [key: string]: INotification[] } = {};
 
   // Propiedades para el modal de puntos
   pointsModalVisible: boolean = false;
@@ -41,6 +60,10 @@ export class BookingListSectionV2Component implements OnInit {
     private toursService: ToursServiceV2,
     private dataMappingService: DataMappingV2Service,
     private cmsTourService: CMSTourService,
+    private documentPDFService: DocumentPDFService,
+    private emailSenderService: EmailSenderService,
+    private documentationService: DocumentationService,
+    private notificationService: NotificationService,
     private authService: AuthenticateService
   ) {}
 
@@ -50,10 +73,10 @@ export class BookingListSectionV2Component implements OnInit {
 
   private loadData(): void {
     this.loading = true;
-    
+
     // Convertir userId de string a number para la API
     const userIdNumber = parseInt(this.userId, 10);
-    
+
     if (isNaN(userIdNumber)) {
       console.error('Error: userId no es un número válido:', this.userId);
       this.bookingItems = [];
@@ -85,7 +108,7 @@ export class BookingListSectionV2Component implements OnInit {
   private loadActiveBookings(userId: number): void {
     // Obtener email del usuario actual
     const userEmail = this.authService.getUserEmailValue();
-    
+
     if (!userEmail) {
       console.warn('No se pudo obtener el email del usuario');
       this.bookingItems = [];
@@ -96,202 +119,249 @@ export class BookingListSectionV2Component implements OnInit {
     // Combinar reservas del usuario como titular + reservas donde aparece como viajero
     forkJoin({
       userReservations: this.bookingsService.getActiveBookings(userId),
-      travelerReservations: this.bookingsService.getActiveBookingsByTravelerEmail(userEmail)
-    }).pipe(
-      switchMap(({ userReservations, travelerReservations }) => {
-        // Combinar y eliminar duplicados basándose en el ID de reserva
-        const allReservations = [...userReservations, ...travelerReservations];
-        const uniqueReservations = allReservations.filter((reservation, index, self) => 
-          index === self.findIndex(r => r.id === reservation.id)
-        );
+      travelerReservations:
+        this.bookingsService.getActiveBookingsByTravelerEmail(userEmail),
+    })
+      .pipe(
+        switchMap(({ userReservations, travelerReservations }) => {
+          // Combinar y eliminar duplicados basándose en el ID de reserva
+          const allReservations = [
+            ...userReservations,
+            ...travelerReservations,
+          ];
+          const uniqueReservations = allReservations.filter(
+            (reservation, index, self) =>
+              index === self.findIndex((r) => r.id === reservation.id)
+          );
 
-        if (uniqueReservations.length === 0) {
-          return of([]);
-        }
+          if (uniqueReservations.length === 0) {
+            return of([]);
+          }
 
-        // Obtener información de tours y imágenes CMS para cada reserva
-        const tourPromises = uniqueReservations.map(reservation => 
-          forkJoin({
-            tour: this.toursService.getTourById(reservation.tourId).pipe(
-              catchError(error => {
-                console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
-                return of(null);
-              })
-            ),
-            cmsTour: this.cmsTourService.getAllTours({ tourId: reservation.tourId }).pipe(
-              map((cmsTours: ICMSTourResponse[]) => cmsTours.length > 0 ? cmsTours[0] : null),
-              catchError(error => {
-                console.warn(`Error obteniendo CMS tour ${reservation.tourId}:`, error);
-                return of(null);
-              })
+          // Obtener información de tours y imágenes CMS para cada reserva
+          const tourPromises = uniqueReservations.map((reservation) =>
+            forkJoin({
+              tour: this.toursService.getTourById(reservation.tourId).pipe(
+                catchError((error) => {
+                  console.warn(
+                    `Error obteniendo tour ${reservation.tourId}:`,
+                    error
+                  );
+                  return of(null);
+                })
+              ),
+              cmsTour: this.cmsTourService
+                .getAllTours({ tourId: reservation.tourId })
+                .pipe(
+                  map((cmsTours: ICMSTourResponse[]) =>
+                    cmsTours.length > 0 ? cmsTours[0] : null
+                  ),
+                  catchError((error) => {
+                    console.warn(
+                      `Error obteniendo CMS tour ${reservation.tourId}:`,
+                      error
+                    );
+                    return of(null);
+                  })
+                ),
+            }).pipe(
+              map(({ tour, cmsTour }) => ({ reservation, tour, cmsTour }))
             )
-          }).pipe(
-            map(({ tour, cmsTour }) => ({ reservation, tour, cmsTour }))
-          )
-        );
+          );
 
-        return forkJoin(tourPromises);
-      }),
-      map((reservationTourPairs: any[]) => {
-        // Mapear usando el servicio de mapeo con imágenes CMS
-        return this.dataMappingService.mapReservationsToBookingItems(
-          reservationTourPairs.map(pair => pair.reservation),
-          reservationTourPairs.map(pair => pair.tour),
-          'active-bookings',
-          reservationTourPairs.map(pair => pair.cmsTour)
-        );
-      }),
-      catchError(error => {
-        console.error('Error obteniendo reservas activas:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Error al cargar las reservas activas'
-        });
-        return of([]);
-      })
-    ).subscribe({
-      next: (bookingItems: BookingItem[]) => {
-        this.bookingItems = bookingItems;
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Error en la suscripción:', error);
-        this.bookingItems = [];
-        this.loading = false;
-      }
-    });
+          return forkJoin(tourPromises);
+        }),
+        map((reservationTourPairs: any[]) => {
+          // Mapear usando el servicio de mapeo con imágenes CMS
+          return this.dataMappingService.mapReservationsToBookingItems(
+            reservationTourPairs.map((pair) => pair.reservation),
+            reservationTourPairs.map((pair) => pair.tour),
+            'active-bookings',
+            reservationTourPairs.map((pair) => pair.cmsTour)
+          );
+        }),
+        catchError((error) => {
+          console.error('Error obteniendo reservas activas:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al cargar las reservas activas',
+          });
+          return of([]);
+        })
+      )
+      .subscribe({
+        next: (bookingItems: BookingItem[]) => {
+          this.bookingItems = bookingItems;
+          this.loading = false;
+          // Cargar documentación y notificaciones para todas las reservas
+          this.loadDocumentationAndNotifications();
+        },
+        error: (error) => {
+          console.error('Error en la suscripción:', error);
+          this.bookingItems = [];
+          this.loading = false;
+        },
+      });
   }
 
   /**
    * Carga historial de viajes usando servicios v2
    */
   private loadTravelHistory(userId: number): void {
-    this.bookingsService.getTravelHistory(userId).pipe(
-      switchMap((reservations: ReservationResponse[]) => {
-        if (!reservations || reservations.length === 0) {
-          return of([]);
-        }
+    this.bookingsService
+      .getTravelHistory(userId)
+      .pipe(
+        switchMap((reservations: ReservationResponse[]) => {
+          if (!reservations || reservations.length === 0) {
+            return of([]);
+          }
 
-        // Obtener información de tours y imágenes CMS para cada reserva
-        const tourPromises = reservations.map(reservation => 
-          forkJoin({
-            tour: this.toursService.getTourById(reservation.tourId).pipe(
-              catchError(error => {
-                console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
-                return of(null);
-              })
-            ),
-            cmsTour: this.cmsTourService.getAllTours({ tourId: reservation.tourId }).pipe(
-              map((cmsTours: ICMSTourResponse[]) => cmsTours.length > 0 ? cmsTours[0] : null),
-              catchError(error => {
-                console.warn(`Error obteniendo CMS tour ${reservation.tourId}:`, error);
-                return of(null);
-              })
+          // Obtener información de tours y imágenes CMS para cada reserva
+          const tourPromises = reservations.map((reservation) =>
+            forkJoin({
+              tour: this.toursService.getTourById(reservation.tourId).pipe(
+                catchError((error) => {
+                  console.warn(
+                    `Error obteniendo tour ${reservation.tourId}:`,
+                    error
+                  );
+                  return of(null);
+                })
+              ),
+              cmsTour: this.cmsTourService
+                .getAllTours({ tourId: reservation.tourId })
+                .pipe(
+                  map((cmsTours: ICMSTourResponse[]) =>
+                    cmsTours.length > 0 ? cmsTours[0] : null
+                  ),
+                  catchError((error) => {
+                    console.warn(
+                      `Error obteniendo CMS tour ${reservation.tourId}:`,
+                      error
+                    );
+                    return of(null);
+                  })
+                ),
+            }).pipe(
+              map(({ tour, cmsTour }) => ({ reservation, tour, cmsTour }))
             )
-          }).pipe(
-            map(({ tour, cmsTour }) => ({ reservation, tour, cmsTour }))
-          )
-        );
+          );
 
-        return forkJoin(tourPromises);
-      }),
-      map((reservationTourPairs: any[]) => {
-        // Mapear usando el servicio de mapeo con imágenes CMS
-        return this.dataMappingService.mapReservationsToBookingItems(
-          reservationTourPairs.map(pair => pair.reservation),
-          reservationTourPairs.map(pair => pair.tour),
-          'travel-history',
-          reservationTourPairs.map(pair => pair.cmsTour)
-        );
-      }),
-      catchError(error => {
-        console.error('Error obteniendo historial de viajes:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Error al cargar el historial de viajes'
-        });
-        return of([]);
-      })
-    ).subscribe({
-      next: (bookingItems: BookingItem[]) => {
-        this.bookingItems = bookingItems;
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Error en la suscripción:', error);
-        this.bookingItems = [];
-        this.loading = false;
-      }
-    });
+          return forkJoin(tourPromises);
+        }),
+        map((reservationTourPairs: any[]) => {
+          // Mapear usando el servicio de mapeo con imágenes CMS
+          return this.dataMappingService.mapReservationsToBookingItems(
+            reservationTourPairs.map((pair) => pair.reservation),
+            reservationTourPairs.map((pair) => pair.tour),
+            'travel-history',
+            reservationTourPairs.map((pair) => pair.cmsTour)
+          );
+        }),
+        catchError((error) => {
+          console.error('Error obteniendo historial de viajes:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al cargar el historial de viajes',
+          });
+          return of([]);
+        })
+      )
+      .subscribe({
+        next: (bookingItems: BookingItem[]) => {
+          this.bookingItems = bookingItems;
+          this.loading = false;
+          // Cargar documentación y notificaciones para todas las reservas
+          this.loadDocumentationAndNotifications();
+        },
+        error: (error) => {
+          console.error('Error en la suscripción:', error);
+          this.bookingItems = [];
+          this.loading = false;
+        },
+      });
   }
 
   /**
    * Carga presupuestos recientes usando servicios v2
    */
   private loadRecentBudgets(userId: number): void {
-    this.bookingsService.getRecentBudgets(userId).pipe(
-      switchMap((reservations: ReservationResponse[]) => {
-        if (!reservations || reservations.length === 0) {
-          return of([]);
-        }
+    this.bookingsService
+      .getRecentBudgets(userId)
+      .pipe(
+        switchMap((reservations: ReservationResponse[]) => {
+          if (!reservations || reservations.length === 0) {
+            return of([]);
+          }
 
-        // Obtener información de tours y imágenes CMS para cada presupuesto
-        const tourPromises = reservations.map(reservation => 
-          forkJoin({
-            tour: this.toursService.getTourById(reservation.tourId).pipe(
-              catchError(error => {
-                console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
-                return of(null);
-              })
-            ),
-            cmsTour: this.cmsTourService.getAllTours({ tourId: reservation.tourId }).pipe(
-              map((cmsTours: ICMSTourResponse[]) => cmsTours.length > 0 ? cmsTours[0] : null),
-              catchError(error => {
-                console.warn(`Error obteniendo CMS tour ${reservation.tourId}:`, error);
-                return of(null);
-              })
+          // Obtener información de tours y imágenes CMS para cada presupuesto
+          const tourPromises = reservations.map((reservation) =>
+            forkJoin({
+              tour: this.toursService.getTourById(reservation.tourId).pipe(
+                catchError((error) => {
+                  console.warn(
+                    `Error obteniendo tour ${reservation.tourId}:`,
+                    error
+                  );
+                  return of(null);
+                })
+              ),
+              cmsTour: this.cmsTourService
+                .getAllTours({ tourId: reservation.tourId })
+                .pipe(
+                  map((cmsTours: ICMSTourResponse[]) =>
+                    cmsTours.length > 0 ? cmsTours[0] : null
+                  ),
+                  catchError((error) => {
+                    console.warn(
+                      `Error obteniendo CMS tour ${reservation.tourId}:`,
+                      error
+                    );
+                    return of(null);
+                  })
+                ),
+            }).pipe(
+              map(({ tour, cmsTour }) => ({ reservation, tour, cmsTour }))
             )
-          }).pipe(
-            map(({ tour, cmsTour }) => ({ reservation, tour, cmsTour }))
-          )
-        );
+          );
 
-        return forkJoin(tourPromises);
-      }),
-      map((reservationTourPairs: any[]) => {
-        // Mapear usando el servicio de mapeo con imágenes CMS
-        return this.dataMappingService.mapReservationsToBookingItems(
-          reservationTourPairs.map(pair => pair.reservation),
-          reservationTourPairs.map(pair => pair.tour),
-          'recent-budgets',
-          reservationTourPairs.map(pair => pair.cmsTour)
-        );
-      }),
-      catchError(error => {
-        console.error('Error obteniendo presupuestos recientes:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Error al cargar los presupuestos recientes'
-        });
-        return of([]);
-      })
-    ).subscribe({
-      next: (bookingItems: BookingItem[]) => {
-        this.bookingItems = bookingItems;
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Error en la suscripción:', error);
-        this.bookingItems = [];
-        this.loading = false;
-      }
-    });
+          return forkJoin(tourPromises);
+        }),
+        map((reservationTourPairs: any[]) => {
+          // Mapear usando el servicio de mapeo con imágenes CMS
+          return this.dataMappingService.mapReservationsToBookingItems(
+            reservationTourPairs.map((pair) => pair.reservation),
+            reservationTourPairs.map((pair) => pair.tour),
+            'recent-budgets',
+            reservationTourPairs.map((pair) => pair.cmsTour)
+          );
+        }),
+        catchError((error) => {
+          console.error('Error obteniendo presupuestos recientes:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al cargar los presupuestos recientes',
+          });
+          return of([]);
+        })
+      )
+      .subscribe({
+        next: (bookingItems: BookingItem[]) => {
+          this.bookingItems = bookingItems;
+          this.loading = false;
+          // Cargar documentación y notificaciones para todas las reservas
+          this.loadDocumentationAndNotifications();
+        },
+        error: (error) => {
+          console.error('Error en la suscripción:', error);
+          this.bookingItems = [];
+          this.loading = false;
+        },
+      });
   }
-
-
 
   // Format date for budget display (Day Month format)
   formatShortDate(date: Date): string {
@@ -328,14 +398,12 @@ export class BookingListSectionV2Component implements OnInit {
     }, 0);
   }
 
-
   // Add this method to the component
   imageLoadError(item: BookingItem) {
     item.image = 'https://via.placeholder.com/300x200?text=Image+Error';
-          item.imageLoading = false;
-          item.imageLoaded = false;
+    item.imageLoading = false;
+    item.imageLoaded = false;
   }
-
 
   // ------------- ACTION METHODS -------------
   toggleContent() {
@@ -350,81 +418,114 @@ export class BookingListSectionV2Component implements OnInit {
     }
   }
 
-
   sendItem(item: BookingItem) {
     this.notificationLoading[item.id] = true;
-    //TODO: Implementar leyendo los datos de mysql
+
+    // Get the logged user's email
+    const userEmail = this.authService.getUserEmailValue();
+
+    if (!userEmail) {
+      this.notificationLoading[item.id] = false;
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudo obtener el email del usuario logueado',
+      });
+      return;
+    }
+
+    // Prepare the request body
+    const requestBody = {
+      event: 'BUDGET',
+      email: userEmail,
+    };
+
+    // Call the email service
+    this.emailSenderService
+      .sendReservationWithoutDocuments(parseInt(item.id, 10), requestBody)
+      .subscribe({
+        next: (response) => {
+          this.notificationLoading[item.id] = false;
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Éxito',
+            detail: 'Email enviado correctamente',
+          });
+        },
+        error: (error) => {
+          this.notificationLoading[item.id] = false;
+          console.error('Error sending email:', error);
+
+          let errorMessage = 'Error al enviar el email';
+          if (error.status === 500) {
+            errorMessage = 'Error interno del servidor. Inténtalo más tarde.';
+          } else if (error.status === 404) {
+            errorMessage = 'Reserva no encontrada.';
+          } else if (error.status === 403) {
+            errorMessage = 'No tienes permisos para enviar este email.';
+          }
+
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: errorMessage,
+          });
+        },
+      });
   }
 
-
   downloadItem(item: BookingItem) {
-    // TEMPORAL: Deshabilitar descarga hasta que la API esté disponible
-    this.messageService.add({
-      severity: 'warn',
-      summary: 'Función no disponible',
-      detail: 'La descarga de documentos no está disponible temporalmente. Contacta con soporte si necesitas el documento.',
-    });
-    return;
-
-    // Código original comentado hasta que la API funcione
-    /*
     this.downloadLoading[item.id] = true;
+
     this.messageService.add({
       severity: 'info',
       summary: 'Info',
-      detail: 'Generando documento...',
+      detail: 'Generando documento PDF...',
     });
 
-    // Intentar descarga con NotificationsServiceV2
-    this.notificationsService.downloadBookingDocument(item.id).subscribe({
-      next: (response) => {
-        this.downloadLoading[item.id] = false;
-        // Abrir el documento en una nueva pestaña
-        window.open(response.fileUrl, '_blank');
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Éxito',
-          detail: 'Documento descargado exitosamente',
-        });
-      },
-      error: (error) => {
-        console.error('Error con NotificationsServiceV2:', error);
-        
-        // Fallback: Intentar con BookingsServiceV2
-        this.bookingsService.downloadBookingDocument(item.id).subscribe({
-          next: (response) => {
-            this.downloadLoading[item.id] = false;
-            window.open(response.fileUrl, '_blank');
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Éxito',
-              detail: 'Documento descargado exitosamente',
-            });
-          },
-          error: (fallbackError) => {
-            this.downloadLoading[item.id] = false;
-            console.error('Error con BookingsServiceV2:', fallbackError);
-            
-            // Mostrar error final
-            let errorMessage = 'Error al descargar el documento';
-            if (fallbackError.status === 500) {
-              errorMessage = 'El documento no está disponible en este momento. Inténtalo más tarde.';
-            } else if (fallbackError.status === 404) {
-              errorMessage = 'Documento no encontrado.';
-            } else if (fallbackError.status === 403) {
-              errorMessage = 'No tienes permisos para descargar este documento.';
-            }
-            
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Error',
-              detail: errorMessage,
-            });
+    // Download PDF as blob
+    this.documentPDFService
+      .downloadReservationPDFAsBlob(parseInt(item.id, 10), 'BUDGET')
+      .subscribe({
+        next: (blob) => {
+          this.downloadLoading[item.id] = false;
+
+          // Create download link
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `presupuesto_${item.id}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Éxito',
+            detail: 'Documento PDF descargado exitosamente',
+          });
+        },
+        error: (error) => {
+          console.error('Error downloading PDF:', error);
+          this.downloadLoading[item.id] = false;
+
+          let errorMessage = 'Error al generar el documento PDF';
+          if (error.status === 500) {
+            errorMessage = 'Error interno del servidor. Inténtalo más tarde.';
+          } else if (error.status === 404) {
+            errorMessage = 'Documento no encontrado.';
+          } else if (error.status === 403) {
+            errorMessage = 'No tienes permisos para descargar este documento.';
           }
-        });
-      }
-    });
-    */
+
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: errorMessage,
+          });
+        },
+      });
   }
 
   reserveItem(item: BookingItem) {
@@ -436,7 +537,6 @@ export class BookingListSectionV2Component implements OnInit {
   trackById(index: number, item: BookingItem): string {
     return item.id;
   }
-
 
   // ------------- DYNAMIC CONFIGURATION METHODS -------------
 
@@ -467,37 +567,40 @@ export class BookingListSectionV2Component implements OnInit {
     }
   }
 
-
   // Button visibility methods
   shouldShowDownload(): boolean {
-    return this.listType === 'active-bookings' || this.listType === 'recent-budgets';
+    return (
+      this.listType === 'active-bookings' || this.listType === 'recent-budgets'
+    );
   }
 
   shouldShowSend(): boolean {
-    return this.listType === 'active-bookings' || this.listType === 'recent-budgets';
+    return (
+      this.listType === 'active-bookings' || this.listType === 'recent-budgets'
+    );
   }
-  
+
   shouldShowView(): boolean {
     return true; // Always show view button
   }
-  
+
   shouldShowReserve(): boolean {
     return this.listType === 'recent-budgets';
   }
-  
+
   // Button label methods
   getDownloadLabel(): string {
     return 'Descargar';
   }
-  
+
   getSendLabel(): string {
     return 'Enviar';
   }
-  
+
   getViewLabel(): string {
     return 'Ver detalle';
   }
-  
+
   getReserveLabel(): string {
     return 'Reservar';
   }
@@ -518,7 +621,7 @@ export class BookingListSectionV2Component implements OnInit {
     this.selectedBookingItem = item;
     this.pointsToUse = 0;
     this.pointsModalVisible = true;
-    
+
     // Cargar puntos del usuario
     this.loadUserPoints();
   }
@@ -555,9 +658,11 @@ export class BookingListSectionV2Component implements OnInit {
    * Verifica si se pueden aplicar los puntos
    */
   canApplyPoints(): boolean {
-    return this.pointsToUse > 0 && 
-           this.pointsToUse <= this.userPoints && 
-           this.pointsToUse <= (this.selectedBookingItem?.price || 0);
+    return (
+      this.pointsToUse > 0 &&
+      this.pointsToUse <= this.userPoints &&
+      this.pointsToUse <= (this.selectedBookingItem?.price || 0)
+    );
   }
 
   /**
@@ -577,9 +682,302 @@ export class BookingListSectionV2Component implements OnInit {
       this.messageService.add({
         severity: 'success',
         summary: 'Puntos aplicados',
-        detail: `Se han aplicado ${this.pointsToUse} puntos a la reserva`
+        detail: `Se han aplicado ${this.pointsToUse} puntos a la reserva`,
       });
       this.closePointsModal();
     }, 2000);
+  }
+
+  // ===== MÉTODOS PARA DOCUMENTACIÓN Y NOTIFICACIONES =====
+
+  /**
+   * Carga la documentación para una reserva específica
+   * @param reservationId - ID de la reserva
+   */
+  loadDocumentsForReservation(reservationId: string): void {
+    this.documentsLoading[reservationId] = true;
+
+    console.log('🔍 DEBUG: Loading documents for reservation:', reservationId);
+
+    this.documentationService
+      .getDocumentsByReservationId(parseInt(reservationId, 10))
+      .subscribe({
+        next: (documents: IDocumentReservationResponse[]) => {
+          console.log('🔍 DEBUG: Documents loaded successfully:', documents);
+          this.documents[reservationId] = documents;
+          this.documentsLoading[reservationId] = false;
+        },
+        error: (error) => {
+          console.error(
+            'Error loading documents for reservation:',
+            reservationId,
+            error
+          );
+          this.documents[reservationId] = [];
+          this.documentsLoading[reservationId] = false;
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Advertencia',
+            detail: 'No se pudieron cargar los documentos de la reserva',
+          });
+        },
+      });
+  }
+
+  /**
+   * Carga las notificaciones para una reserva específica
+   * @param reservationId - ID de la reserva
+   */
+  loadNotificationsForReservation(reservationId: string): void {
+    this.notificationsLoading[reservationId] = true;
+
+    console.log(
+      '🔍 DEBUG: Loading notifications for reservation:',
+      reservationId
+    );
+
+    this.notificationService
+      .getNotificationsByReservationId(parseInt(reservationId, 10))
+      .subscribe({
+        next: (notifications: INotification[]) => {
+          console.log(
+            '🔍 DEBUG: Notifications loaded successfully:',
+            notifications
+          );
+          this.notifications[reservationId] = notifications;
+          this.notificationsLoading[reservationId] = false;
+        },
+        error: (error) => {
+          console.error(
+            'Error loading notifications for reservation:',
+            reservationId,
+            error
+          );
+          this.notifications[reservationId] = [];
+          this.notificationsLoading[reservationId] = false;
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Advertencia',
+            detail: 'No se pudieron cargar las notificaciones de la reserva',
+          });
+        },
+      });
+  }
+
+  /**
+   * Carga documentación y notificaciones para todas las reservas
+   */
+  loadDocumentationAndNotifications(): void {
+    this.bookingItems.forEach((item) => {
+      this.loadDocumentsForReservation(item.id);
+      this.loadNotificationsForReservation(item.id);
+    });
+  }
+
+  /**
+   * Obtiene los documentos de una reserva específica
+   * @param reservationId - ID de la reserva
+   * @returns Array de documentos o array vacío
+   */
+  getDocumentsForReservation(
+    reservationId: string
+  ): IDocumentReservationResponse[] {
+    return this.documents[reservationId] || [];
+  }
+
+  /**
+   * Obtiene las notificaciones de una reserva específica
+   * @param reservationId - ID de la reserva
+   * @returns Array de notificaciones o array vacío
+   */
+  getNotificationsForReservation(reservationId: string): INotification[] {
+    return this.notifications[reservationId] || [];
+  }
+
+  /**
+   * Verifica si se están cargando documentos para una reserva
+   * @param reservationId - ID de la reserva
+   * @returns true si se están cargando documentos
+   */
+  isLoadingDocuments(reservationId: string): boolean {
+    return this.documentsLoading[reservationId] || false;
+  }
+
+  /**
+   * Verifica si se están cargando notificaciones para una reserva
+   * @param reservationId - ID de la reserva
+   * @returns true si se están cargando notificaciones
+   */
+  isLoadingNotifications(reservationId: string): boolean {
+    return this.notificationsLoading[reservationId] || false;
+  }
+
+  /**
+   * Obtiene el estado de carga de documentación y notificaciones para una reserva
+   * @param reservationId - ID de la reserva
+   * @returns true si se están cargando documentos o notificaciones
+   */
+  isLoadingDocumentationAndNotifications(reservationId: string): boolean {
+    return (
+      this.isLoadingDocuments(reservationId) ||
+      this.isLoadingNotifications(reservationId)
+    );
+  }
+
+  /**
+   * Formatea la fecha de creación de un documento
+   * @param dateString - Fecha en formato string
+   * @returns Fecha formateada
+   */
+  formatDocumentDate(dateString: string): string {
+    if (!dateString) return 'Fecha no disponible';
+
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch (error) {
+      return 'Fecha no válida';
+    }
+  }
+
+  /**
+   * Formatea la fecha de creación de una notificación
+   * @param dateString - Fecha en formato string
+   * @returns Fecha formateada
+   */
+  formatNotificationDate(dateString: string): string {
+    if (!dateString) return 'Fecha no disponible';
+
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch (error) {
+      return 'Fecha no válida';
+    }
+  }
+
+  /**
+   * Obtiene el estado de una notificación en texto legible
+   * @param notificationStatusId - ID del estado de la notificación
+   * @returns Estado en texto legible
+   */
+  getNotificationStatusText(notificationStatusId: number): string {
+    const statusMap: { [key: number]: string } = {
+      1: 'Pendiente',
+      2: 'Enviada',
+      3: 'Fallida',
+      4: 'Cancelada',
+    };
+    return statusMap[notificationStatusId] || 'Desconocido';
+  }
+
+  /**
+   * Obtiene el color del estado de una notificación
+   * @param notificationStatusId - ID del estado de la notificación
+   * @returns Color del estado
+   */
+  getNotificationStatusColor(notificationStatusId: number): string {
+    const colorMap: { [key: number]: string } = {
+      1: 'warning', // Pendiente
+      2: 'success', // Enviada
+      3: 'danger', // Fallida
+      4: 'secondary', // Cancelada
+    };
+    return colorMap[notificationStatusId] || 'secondary';
+  }
+
+  // ===== MÉTODOS DE PRUEBA Y DEBUG =====
+
+  /**
+   * Método de prueba para verificar que los servicios funcionan correctamente
+   * @param reservationId - ID de la reserva para probar
+   */
+  testServices(reservationId: string = '847'): void {
+    console.log('🧪 TEST: Testing services for reservation:', reservationId);
+
+    // Probar servicio de notificaciones
+    this.notificationService
+      .getNotificationsByReservationId(parseInt(reservationId, 10))
+      .subscribe({
+        next: (notifications) => {
+          console.log('✅ TEST: Notifications service working:', notifications);
+        },
+        error: (error) => {
+          console.error('❌ TEST: Notifications service error:', error);
+        },
+      });
+
+    // Probar servicio de documentación
+    this.documentationService
+      .getDocumentsByReservationId(parseInt(reservationId, 10))
+      .subscribe({
+        next: (documents) => {
+          console.log('✅ TEST: Documentation service working:', documents);
+        },
+        error: (error) => {
+          console.error('❌ TEST: Documentation service error:', error);
+        },
+      });
+  }
+
+  /**
+   * Método para probar manualmente la carga de datos
+   * @param reservationId - ID de la reserva
+   */
+  testLoadData(reservationId: string = '847'): void {
+    console.log('🧪 TEST: Testing data load for reservation:', reservationId);
+    this.loadDocumentsForReservation(reservationId);
+    this.loadNotificationsForReservation(reservationId);
+  }
+
+  /**
+   * Método para probar la llamada HTTP directa con fetch
+   * @param reservationId - ID de la reserva
+   */
+  testDirectHttpCall(reservationId: string = '847'): void {
+    console.log(
+      '🧪 TEST: Testing direct HTTP call with fetch for reservation:',
+      reservationId
+    );
+
+    const url = `https://documentation-dev.differentroads.es/api/Notification/by-reservation/${reservationId}`;
+
+    console.log('🧪 TEST: Making direct HTTP call to:', url);
+
+    fetch(url, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((response) => {
+        console.log('🧪 TEST: Fetch response status:', response.status);
+        console.log('🧪 TEST: Fetch response headers:', response.headers);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        console.log('✅ TEST: Direct fetch call successful:', data);
+      })
+      .catch((error) => {
+        console.error('❌ TEST: Direct fetch call failed:', error);
+      });
   }
 }

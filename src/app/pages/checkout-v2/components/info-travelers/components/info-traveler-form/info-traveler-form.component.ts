@@ -1698,6 +1698,100 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
+   * Verifica si el viajero está listo para continuar al siguiente paso del checkout
+   * 
+   * @returns true si todos los campos obligatorios son válidos y no hay cambios pendientes
+   * 
+   * Este método es usado por el componente padre (checkout) para determinar si
+   * puede habilitar el botón de "Continuar"
+   * 
+   * Condiciones:
+   * 1. ✅ Todos los campos obligatorios deben estar completos y ser válidos
+   * 2. ✅ No debe haber cambios pendientes (todo debe estar guardado en BD)
+   */
+  isReadyToContinue(): boolean {
+    if (!this.traveler) {
+      console.log('[isReadyToContinue] ❌ No hay viajero cargado');
+      return false;
+    }
+
+    // 1. Verificar que no haya cambios pendientes (todo está guardado)
+    if (this.hasPendingChanges()) {
+      console.log('[isReadyToContinue] ❌ Hay cambios pendientes sin guardar');
+      return false;
+    }
+
+    // 2. Verificar que todos los campos OBLIGATORIOS sean válidos
+    const mandatoryFieldsInvalid: string[] = [];
+    const mandatoryFieldsMissing: string[] = [];
+
+    this.departureReservationFields.forEach((depField) => {
+      if (this.isFieldMandatory(depField, this.traveler!.isLeadTraveler)) {
+        const fieldDetails = this.getReservationFieldDetails(depField.reservationFieldId);
+        
+        if (fieldDetails) {
+          const controlName = `${fieldDetails.code}_${this.traveler!.id}`;
+          const control = this.travelerForm.get(controlName);
+
+          if (!control) {
+            mandatoryFieldsMissing.push(`${fieldDetails.code} (control no encontrado)`);
+          } else if (control.invalid) {
+            mandatoryFieldsInvalid.push(`${fieldDetails.code} (${this.getControlErrorMessage(control, fieldDetails.code)})`);
+          } else if (!control.value || control.value === '') {
+            mandatoryFieldsMissing.push(`${fieldDetails.code} (vacío)`);
+          }
+        }
+      }
+    });
+
+    // Log de campos obligatorios con problemas
+    if (mandatoryFieldsInvalid.length > 0) {
+      console.log('[isReadyToContinue] ❌ Campos obligatorios inválidos:', mandatoryFieldsInvalid);
+    }
+    
+    if (mandatoryFieldsMissing.length > 0) {
+      console.log('[isReadyToContinue] ❌ Campos obligatorios faltantes:', mandatoryFieldsMissing);
+    }
+
+    // 3. Si hay algún campo obligatorio inválido o faltante, NO está listo
+    if (mandatoryFieldsInvalid.length > 0 || mandatoryFieldsMissing.length > 0) {
+      return false;
+    }
+
+    // ✅ Todo está OK: campos obligatorios completos, válidos y guardados
+    console.log('[isReadyToContinue] ✅ Viajero listo para continuar');
+    return true;
+  }
+
+  /**
+   * Obtiene el mensaje de error de un control para el log
+   */
+  private getControlErrorMessage(control: AbstractControl, fieldCode: string): string {
+    if (control.hasError('required')) {
+      return 'requerido';
+    }
+    if (control.hasError('email')) {
+      return 'email inválido';
+    }
+    if (control.hasError('pattern')) {
+      return 'patrón inválido';
+    }
+    if (control.hasError('minlength')) {
+      return 'muy corto';
+    }
+    if (control.hasError('maxlength')) {
+      return 'muy largo';
+    }
+    if (control.hasError('min')) {
+      return 'valor mínimo no alcanzado';
+    }
+    if (control.hasError('max')) {
+      return 'valor máximo excedido';
+    }
+    return 'inválido';
+  }
+
+  /**
    * Carga y rellena los datos del usuario autenticado en el formulario
    */
   loadAndFillUserData(): void {

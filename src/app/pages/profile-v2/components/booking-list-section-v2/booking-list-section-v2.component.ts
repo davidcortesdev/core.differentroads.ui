@@ -8,6 +8,7 @@ import { ToursServiceV2 } from '../../../../core/services/v2/tours-v2.service';
 import { DataMappingV2Service } from '../../../../core/services/v2/data-mapping-v2.service';
 import { CMSTourService, ICMSTourResponse } from '../../../../core/services/cms/cms-tour.service';
 import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
+import { PointsV2Service } from '../../../../core/services/v2/points-v2.service';
 import { switchMap, map, catchError, of, forkJoin } from 'rxjs';
 
 
@@ -41,7 +42,8 @@ export class BookingListSectionV2Component implements OnInit {
     private toursService: ToursServiceV2,
     private dataMappingService: DataMappingV2Service,
     private cmsTourService: CMSTourService,
-    private authService: AuthenticateService
+    private authService: AuthenticateService,
+    private pointsService: PointsV2Service
   ) {}
 
   ngOnInit() {
@@ -535,10 +537,25 @@ export class BookingListSectionV2Component implements OnInit {
   /**
    * Carga los puntos disponibles del usuario
    */
-  private loadUserPoints(): void {
-    // TODO: Implementar carga de puntos del usuario
-    // Por ahora usar un valor de ejemplo
-    this.userPoints = 150; // Este valor vendrá de la API de puntos
+  private async loadUserPoints(): Promise<void> {
+    try {
+      // Obtener el cognito:sub del usuario actual
+      const cognitoSub = this.authService.getCognitoIdValue();
+      if (!cognitoSub) {
+        console.warn('No se pudo obtener el cognito:sub del usuario');
+        this.userPoints = 0;
+        return;
+      }
+
+      // Obtener saldo de puntos del usuario
+      const balance = await this.pointsService.getLoyaltyBalance(cognitoSub);
+      this.userPoints = balance.availablePoints;
+      
+      console.log('✅ Puntos cargados:', this.userPoints);
+    } catch (error) {
+      console.error('❌ Error cargando puntos del usuario:', error);
+      this.userPoints = 0;
+    }
   }
 
   /**
@@ -563,23 +580,73 @@ export class BookingListSectionV2Component implements OnInit {
   /**
    * Aplica los puntos a la reserva
    */
-  applyPoints(): void {
+  async applyPoints(): Promise<void> {
     if (!this.canApplyPoints() || !this.selectedBookingItem) {
       return;
     }
 
     this.applyingPoints = true;
 
-    // TODO: Implementar llamada a la API para aplicar puntos
-    // Por ahora simular el proceso
-    setTimeout(() => {
+    try {
+      // Obtener el cognito:sub del usuario actual
+      const cognitoSub = this.authService.getCognitoIdValue();
+      if (!cognitoSub) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudo identificar al usuario'
+        });
+        this.applyingPoints = false;
+        return;
+      }
+
+      // Obtener el ID de la reserva del BookingItem
+      const reservationId = parseInt(this.selectedBookingItem.id, 10);
+      if (!reservationId || isNaN(reservationId)) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudo identificar la reserva'
+        });
+        this.applyingPoints = false;
+        return;
+      }
+
+      console.log('🔄 Aplicando puntos:', { reservationId, cognitoSub, pointsToUse: this.pointsToUse });
+
+      // Llamar al servicio para canjear puntos
+      const result = await this.pointsService.redeemPointsForReservation(
+        reservationId,
+        cognitoSub,
+        this.pointsToUse
+      );
+
+      this.applyingPoints = false;
+
+      if (result.success) {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Puntos aplicados',
+          detail: result.message
+        });
+        this.closePointsModal();
+        this.loadData(); // Recargar datos para mostrar el nuevo total
+      } else {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error al aplicar puntos',
+          detail: result.message
+        });
+      }
+
+    } catch (error) {
+      console.error('❌ Error aplicando puntos:', error);
       this.applyingPoints = false;
       this.messageService.add({
-        severity: 'success',
-        summary: 'Puntos aplicados',
-        detail: `Se han aplicado ${this.pointsToUse} puntos a la reserva`
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Error al procesar el canje de puntos. Por favor, inténtalo de nuevo.'
       });
-      this.closePointsModal();
-    }, 2000);
+    }
   }
 }

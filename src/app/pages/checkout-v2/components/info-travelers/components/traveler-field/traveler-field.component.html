@@ -17,7 +17,22 @@
     
     <!-- Campo de texto -->
     <ng-container *ngSwitchCase="'text'">
-      <ng-container *ngIf="fieldDetails.code !== 'phone'; else phoneField">
+      <!-- Campo de teléfono (code === 'phone') -->
+      <ng-container *ngIf="fieldDetails.code === 'phone'">
+        <input 
+          pInputText 
+          type="tel" 
+          [formControlName]="controlName"
+          [placeholder]="placeholder"
+          [ngClass]="{ 'p-invalid': hasError }"
+          (input)="onPhoneInput($event)" />
+        <small *ngIf="hasError" class="p-error">
+          {{ getErrorMessage(errors) }}
+        </small>
+      </ng-container>
+      
+      <!-- Campo de texto normal -->
+      <ng-container *ngIf="fieldDetails.code !== 'phone'">
         <div class="field-container">
           <input 
             pInputText 
@@ -46,20 +61,18 @@
       </small>
     </ng-container>
 
-    <!-- Campo de teléfono -->
+    <!-- Campo de teléfono (si fieldType es 'phone') -->
     <ng-container *ngSwitchCase="'phone'">
-      <ng-template #phoneField>
-        <input 
-          pInputText 
-          type="tel" 
-          [formControlName]="controlName"
-          [placeholder]="placeholder"
-          [ngClass]="{ 'p-invalid': hasError }"
-          (input)="onPhoneInput($event)" />
-        <small *ngIf="hasError" class="p-error">
-          {{ getErrorMessage(errors) }}
-        </small>
-      </ng-template>
+      <input 
+        pInputText 
+        type="tel" 
+        [formControlName]="controlName"
+        [placeholder]="placeholder"
+        [ngClass]="{ 'p-invalid': hasError }"
+        (input)="onPhoneInput($event)" />
+      <small *ngIf="hasError" class="p-error">
+        {{ getErrorMessage(errors) }}
+      </small>
     </ng-container>
 
     <!-- Campo de sexo (dropdown) -->
@@ -129,4 +142,3 @@
 
   </ng-container>
 </div>
-

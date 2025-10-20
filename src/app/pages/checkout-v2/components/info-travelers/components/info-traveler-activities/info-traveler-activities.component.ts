@@ -13,8 +13,6 @@ import { IReservationTravelerActivityPackResponse } from '../../../../../../core
 import { ActivityService } from '../../../../../../core/services/activity/activity.service';
 import { ReservationTravelerActivityService } from '../../../../../../core/services/reservation/reservation-traveler-activity.service';
 import { ReservationTravelerActivityPackService } from '../../../../../../core/services/reservation/reservation-traveler-activity-pack.service';
-import { ActivityPriceService } from '../../../../../../core/services/activity/activity-price.service';
-import { ActivityPackPriceService } from '../../../../../../core/services/activity/activity-pack-price.service';
 
 @Component({
   selector: 'app-info-traveler-activities',
@@ -36,8 +34,6 @@ export class InfoTravelerActivitiesComponent implements OnInit, OnDestroy {
   travelerActivities: IReservationTravelerActivityResponse[] = [];
   travelerActivityPacks: IReservationTravelerActivityPackResponse[] = [];
   
-  // Precios de actividades
-  activityPrices: { [activityId: number]: number } = {};
   
   // Memoria de elementos visibles desde la carga inicial
   visibleActivityIds: number[] = [];
@@ -57,9 +53,7 @@ export class InfoTravelerActivitiesComponent implements OnInit, OnDestroy {
     private messageService: MessageService,
     private activityService: ActivityService,
     private reservationTravelerActivityService: ReservationTravelerActivityService,
-    private reservationTravelerActivityPackService: ReservationTravelerActivityPackService,
-    private activityPriceService: ActivityPriceService,
-    private activityPackPriceService: ActivityPackPriceService
+    private reservationTravelerActivityPackService: ReservationTravelerActivityPackService
   ) {}
 
   ngOnInit(): void {
@@ -114,8 +108,6 @@ export class InfoTravelerActivitiesComponent implements OnInit, OnDestroy {
           this.travelerActivities = activities;
           this.travelerActivityPacks = activityPacks;
 
-          this.loadActivityPricesForTraveler(activities);
-          this.loadActivityPackPricesForTraveler(activityPacks);
 
           // Memorizar listas visibles solo en la primera carga
           if (!this.initializedVisible) {
@@ -135,94 +127,11 @@ export class InfoTravelerActivitiesComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Cargar precios de actividades individuales
-   */
-  private loadActivityPricesForTraveler(activities: IReservationTravelerActivityResponse[]): void {
-    if (!activities || activities.length === 0) {
-      return;
-    }
-
-    activities.forEach((travelerActivity) => {
-      const activity = this.optionalActivities.find(
-        (act) => act.id === travelerActivity.activityId
-      );
-
-      if (!activity) {
-        return;
-      }
-
-      this.activityPriceService
-        .getAll({
-          ActivityId: [travelerActivity.activityId],
-          DepartureId: this.departureId,
-          AgeGroupId: this.traveler.ageGroupId,
-        })
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: (prices) => {
-            if (prices && prices.length > 0) {
-              const price = prices[0];
-              const finalPrice = price.campaignPrice 
-                ? price.campaignPrice 
-                : price.basePrice;
-
-              this.activityPrices[travelerActivity.activityId] = finalPrice;
-            }
-          },
-          error: (error) => {
-            console.error('Error al cargar precio de actividad:', error);
-          }
-        });
-    });
-  }
-
-  /**
-   * Cargar precios de paquetes de actividades
-   */
-  private loadActivityPackPricesForTraveler(activityPacks: IReservationTravelerActivityPackResponse[]): void {
-    if (!activityPacks || activityPacks.length === 0) {
-      return;
-    }
-
-    activityPacks.forEach((travelerActivityPack) => {
-      this.activityPackPriceService
-        .getAll({
-          activityPackId: travelerActivityPack.activityPackId,
-          departureId: this.departureId,
-          ageGroupId: this.traveler.ageGroupId,
-        })
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: (prices) => {
-            if (prices && prices.length > 0) {
-              const price = prices[0];
-              const finalPrice = price.campaignPrice 
-                ? price.campaignPrice 
-                : price.basePrice;
-
-              this.activityPrices[travelerActivityPack.activityPackId] = finalPrice;
-            }
-          },
-          error: (error) => {
-            console.error('Error al cargar precio de paquete:', error);
-          }
-        });
-    });
-  }
-
-  /**
    * Emitir estado inicial de actividades
    */
   private emitInitialActivitiesState(): void {
     // En lugar de emitir item por item, emitimos un único evento de actualización
     this.activitiesAssignmentChange.emit();
-  }
-
-  /**
-   * Obtener precio de actividad
-   */
-  getActivityPrice(activityId: number): number | null {
-    return this.activityPrices[activityId] || null;
   }
 
   /**
@@ -265,12 +174,10 @@ export class InfoTravelerActivitiesComponent implements OnInit, OnDestroy {
     const activityName = this.getActivityName(activityId);
 
     if (activityName) {
-      const activityPrice = this.getActivityPrice(activityId) || 0;
-
       if (isSelected) {
-        this.createActivityAssignment(activityId, activityName, activityPrice);
+        this.createActivityAssignment(activityId, activityName);
       } else {
-        this.deactivateActivityAssignment(activityId, activityName, activityPrice);
+        this.deactivateActivityAssignment(activityId, activityName);
       }
     }
   }
@@ -278,7 +185,7 @@ export class InfoTravelerActivitiesComponent implements OnInit, OnDestroy {
   /**
    * Crear asignación de actividad
    */
-  private createActivityAssignment(activityId: number, activityName: string, activityPrice: number): void {
+  private createActivityAssignment(activityId: number, activityName: string): void {
     const key = `${this.traveler.id}_${activityId}`;
     
     if (this.savingActivities[key]) {
@@ -421,7 +328,7 @@ export class InfoTravelerActivitiesComponent implements OnInit, OnDestroy {
   /**
    * Eliminar asignación de actividad
    */
-  private deactivateActivityAssignment(activityId: number, activityName: string, activityPrice: number): void {
+  private deactivateActivityAssignment(activityId: number, activityName: string): void {
     const key = `${this.traveler.id}_${activityId}`;
     if (this.savingActivities[key]) {
       console.log('⏳ Eliminación de actividad en curso, esperando...');

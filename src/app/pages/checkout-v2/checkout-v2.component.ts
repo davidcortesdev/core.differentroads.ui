@@ -2110,7 +2110,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       }
     }
 
-    // Guardar datos de viajeros antes de continuar al paso de pago (targetStep === 3)
+    // Validar datos de viajeros antes de continuar al paso de pago (targetStep === 3)
     if (targetStep === 3) {
       if (!this.infoTravelers) {
         console.error('Componente infoTravelers no está disponible');
@@ -2124,7 +2124,22 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         return;
       }
 
-  
+      // ✅ NUEVO: Validar que todos los viajeros estén listos para continuar
+      console.log('=== Validando viajeros antes de continuar al pago ===');
+      const allTravelersReady = this.infoTravelers.canContinueToNextStep();
+
+      if (!allTravelersReady) {
+        // ❌ Algunos viajeros no están listos
+        console.log('❌ Validación de viajeros fallida: no se puede continuar');
+        
+        // Mostrar error específico indicando qué viajeros faltan
+        this.infoTravelers.showValidationError();
+        
+        return; // No continuar al siguiente paso
+      }
+
+      // ✅ Todos los viajeros están listos
+      console.log('✅ Validación de viajeros exitosa: todos los viajeros están listos');
     }
 
     // Navegar al siguiente paso

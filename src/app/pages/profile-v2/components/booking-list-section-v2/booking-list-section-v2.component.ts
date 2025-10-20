@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { BookingItem } from '../../../../core/models/v2/profile-v2.model';
@@ -18,7 +18,7 @@ import { switchMap, map, catchError, of, forkJoin } from 'rxjs';
   templateUrl: './booking-list-section-v2.component.html',
   styleUrls: ['./booking-list-section-v2.component.scss'],
 })
-export class BookingListSectionV2Component implements OnInit {
+export class BookingListSectionV2Component implements OnInit, OnChanges {
   @Input() userId: string = '';
   @Input() listType: 'active-bookings' | 'travel-history' | 'recent-budgets' = 'active-bookings';
 
@@ -47,7 +47,18 @@ export class BookingListSectionV2Component implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.loadData();
+    console.log('🔍 [BookingList] ngOnInit - userId:', this.userId, 'listType:', this.listType);
+    // Solo cargar si ya tenemos userId en la inicialización
+    if (this.userId) {
+      this.loadData();
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // Cargar datos cuando el userId cambie y tenga valor
+    if (changes['userId'] && changes['userId'].currentValue) {
+      this.loadData();
+    }
   }
 
   private loadData(): void {

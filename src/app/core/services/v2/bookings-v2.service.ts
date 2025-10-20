@@ -37,12 +37,16 @@ export class BookingsServiceV2 {
       .set('useExactMatchForStrings', 'false');
 
     return this.http.get<ReservationResponse[]>(this.API_URL, { params }).pipe(
-      // Filtrar solo reservas activas (status 5 = BOOKED, 6 = CONFIRMED)
-      map((reservations: ReservationResponse[]) => 
-        reservations.filter(reservation => 
-          reservation.reservationStatusId === 5 || reservation.reservationStatusId === 6
-        )
-      )
+      map((reservations: ReservationResponse[]) => {
+        
+        const filtered = reservations.filter(reservation => 
+          reservation.reservationStatusId === 5 || 
+          reservation.reservationStatusId === 6 || 
+          reservation.reservationStatusId === 11
+        );
+        
+        return filtered;
+      })
     );
   }
 
@@ -157,7 +161,9 @@ export class BookingsServiceV2 {
     return this.getReservationsByTravelerEmail(email).pipe(
       map((reservations: ReservationResponse[]) => 
         reservations.filter(reservation => 
-          reservation.reservationStatusId === 5 || reservation.reservationStatusId === 6
+          reservation.reservationStatusId === 5 || 
+          reservation.reservationStatusId === 6 || 
+          reservation.reservationStatusId === 11
         )
       )
     );

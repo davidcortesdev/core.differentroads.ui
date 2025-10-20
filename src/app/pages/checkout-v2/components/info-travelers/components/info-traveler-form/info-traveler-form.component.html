@@ -1,26 +1,10 @@
 <div class="traveler-form-container" *ngIf="!loading && !error && traveler">
   <!-- Encabezado del panel -->
   <div class="traveler-header">
-    <div class="header-top">
-      <p-panel class="user-button">
-        <i class="pi pi-user"></i>
-        <p class="user" style="display: inline; margin-left: 14px;">{{ getAgeGroupName() }}</p>
-      </p-panel>
-      
-      <!-- Botón para cargar datos del usuario autenticado -->
-      <button
-        *ngIf="canLoadUserData()"
-        pButton
-        type="button"
-        label="Cargar mis datos"
-        icon="pi pi-refresh"
-        [loading]="loadingUserData"
-        (click)="loadAndFillUserData()"
-        class="p-button-outlined p-button-sm load-user-data-button"
-        pTooltip="Cargar datos de tu perfil y rellenar el formulario"
-        tooltipPosition="top">
-      </button>
-    </div>
+    <p-panel class="user-button">
+      <i class="pi pi-user"></i>
+      <p class="user" style="display: inline; margin-left: 14px;">{{ getAgeGroupName() }}</p>
+    </p-panel>
     
     <p class="user-description">
       <i class="pi pi-exclamation-circle info-icon"></i>
@@ -150,25 +134,6 @@
       [itineraryId]="itineraryId!"
       (activitiesAssignmentChange)="dataUpdated.emit()">
     </app-info-traveler-activities>
-
-    <!-- Botón de guardado -->
-    <div class="form-row save-button-container">
-      <button
-        pButton
-        type="button"
-        label="Guardar datos del viajero"
-        icon="pi pi-save"
-        [loading]="savingData"
-        [disabled]="!hasPendingChanges() || savingData"
-        (click)="saveDataManually()"
-        class="p-button-success save-button"
-        pTooltip="Guarda los cambios realizados en este viajero"
-        tooltipPosition="top">
-      </button>
-      <span *ngIf="!hasPendingChanges()" class="no-changes-message">
-        <i class="pi pi-check-circle"></i> No hay cambios pendientes
-      </span>
-    </div>
   </form>
 </div>
 

@@ -48,9 +48,30 @@ $text-muted: #495057;
 .traveler-header {
   margin-bottom: 15px;
 
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 15px;
+
+    @include mobile {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
   .user-button {
     display: inline-block;
-    margin-bottom: 10px;
+  }
+
+  .load-user-data-button {
+    white-space: nowrap;
+    
+    @include mobile {
+      width: 100%;
+      margin-top: 10px;
+    }
   }
 
   .user-description {

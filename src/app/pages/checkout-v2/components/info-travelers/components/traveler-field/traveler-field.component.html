@@ -22,7 +22,7 @@
         <input 
           pInputText 
           type="tel" 
-          [formControlName]="controlName"
+          [formControl]="control"
           [placeholder]="placeholder"
           [ngClass]="{ 'p-invalid': hasError }"
           (input)="onPhoneInput($event)" />
@@ -36,7 +36,7 @@
         <div class="field-container">
           <input 
             pInputText 
-            [formControlName]="controlName"
+            [formControl]="control"
             [placeholder]="placeholder"
             [ngClass]="{ 'p-invalid': hasError }"
             (input)="onFieldInput()" />
@@ -52,7 +52,7 @@
       <input 
         pInputText 
         type="email" 
-        [formControlName]="controlName"
+        [formControl]="control"
         [placeholder]="placeholder"
         [ngClass]="{ 'p-invalid': hasError }"
         (input)="onFieldInput()" />
@@ -66,7 +66,7 @@
       <input 
         pInputText 
         type="tel" 
-        [formControlName]="controlName"
+        [formControl]="control"
         [placeholder]="placeholder"
         [ngClass]="{ 'p-invalid': hasError }"
         (input)="onPhoneInput($event)" />
@@ -99,7 +99,7 @@
     <!-- Campo de fecha -->
     <ng-container *ngSwitchCase="'date'">
       <p-datepicker 
-        [formControlName]="controlName"
+        [formControl]="control"
         [minDate]="minDate || undefined"
         [maxDate]="maxDate || undefined"
         showIcon 
@@ -118,7 +118,7 @@
     <!-- Campo de país (autocomplete) -->
     <ng-container *ngSwitchCase="'country'">
       <p-autocomplete 
-        [formControlName]="controlName"
+        [formControl]="control"
         [suggestions]="countryOptions" 
         field="name" 
         [placeholder]="placeholder" 
@@ -135,7 +135,7 @@
     <ng-container *ngSwitchCase="'checkbox'">
       <div class="checkbox-field">
         <p-checkbox 
-          [formControlName]="controlName"
+          [formControl]="control"
           binary="true" 
           [inputId]="controlName">
         </p-checkbox>

@@ -86,6 +86,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
   loading: boolean = false;
   error: string | null = null;
   showMoreFields: boolean = false;
+  loadingUserData: boolean = false;
 
   // Información personal del usuario autenticado
   currentPersonalInfo: PersonalInfo | null = null;
@@ -218,6 +219,13 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       takeUntil(this.destroy$)
     ).subscribe({
       next: (userData) => {
+        console.log('=== DATOS DEL USUARIO CARGADOS ===');
+        console.log('userData:', userData);
+        console.log('userData.sexo:', userData?.sexo);
+        console.log('userData.nombre:', userData?.nombre);
+        console.log('userData.email:', userData?.email);
+        console.log('===================================');
+        
         this.currentPersonalInfo = userData;
         
         // Cargar datos del viajero y configuración
@@ -315,7 +323,13 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
    * Inicializa el formulario del viajero
    */
   private initializeTravelerForm(): void {
+    console.log('=== initializeTravelerForm() INICIADO ===');
+    console.log('this.traveler:', this.traveler);
+    console.log('this.traveler.isLeadTraveler:', this.traveler?.isLeadTraveler);
+    console.log('this.currentPersonalInfo:', this.currentPersonalInfo);
+    
     if (!this.traveler) {
+      console.log('[ERROR] No hay traveler, saliendo');
       return;
     }
 
@@ -331,8 +345,10 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
         
         if (this.traveler!.isLeadTraveler && this.currentPersonalInfo) {
           controlValue = this.getUserDataForField(fieldDetails);
+          console.log(`[PRE-LLENADO] Campo: ${fieldDetails.code}, Nombre: ${fieldDetails.name}, Tipo: ${fieldDetails.fieldType}, Valor obtenido: "${controlValue}"`);
         } else {
           controlValue = this.getExistingFieldValue(this.traveler!.id, fieldDetails.id);
+          console.log(`[EXISTING] Campo: ${fieldDetails.code}, Valor existente: "${controlValue}"`);
         }
 
         // Para campos de fecha, convertir string a Date si es necesario
@@ -357,12 +373,27 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
           this.traveler!.isLeadTraveler
         );
 
+        const controlName = `${fieldDetails.code}_${this.traveler!.id}`;
         this.travelerForm.addControl(
-          `${fieldDetails.code}_${this.traveler!.id}`,
+          controlName,
           this.fb.control(controlValue, validators)
         );
+        
+        console.log(`[CONTROL CREADO] ${controlName} con valor: "${controlValue}"`);
       }
     });
+
+    console.log('=== FORMULARIO COMPLETO CREADO ===');
+    console.log('Valores del formulario:', this.travelerForm.value);
+    
+    // Log individual de cada control creado
+    Object.keys(this.travelerForm.controls).forEach((controlName) => {
+      const control = this.travelerForm.get(controlName);
+      const value = control?.value;
+      const isValid = control?.valid;
+      console.log(`  ${controlName}: "${value}" [válido: ${isValid}]`);
+    });
+    console.log('===================================');
 
     // Calcular fechas para los campos de fecha
     this.calculateTravelerFieldDates();
@@ -756,83 +787,114 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
   private getUserDataForField(fieldDetails: IReservationFieldResponse): string | null {
     const userData = this.currentPersonalInfo;
     if (!userData) {
+      console.log(`[getUserDataForField] No hay userData disponible para ${fieldDetails.code}`);
       return null;
     }
 
+    console.log(`[getUserDataForField] Buscando datos para campo: ${fieldDetails.code}`, userData);
     const fieldCode = fieldDetails.code;
+    
+    let returnValue: string | null = null;
     
     switch (fieldCode) {
       case 'email':
-        return userData.email || null;
+        returnValue = userData.email || null;
+        break;
       case 'phone':
       case 'telefono':
-        return userData.telefono || null;
+        returnValue = userData.telefono || null;
+        break;
       case 'firstname':
       case 'first_name':
       case 'name':
       case 'nombre':
-        return userData.nombre || null;
+        returnValue = userData.nombre || null;
+        break;
       case 'lastname':
       case 'last_name':
       case 'surname':
       case 'apellido':
-        return userData.apellido || null;
+      case 'apellidos':
+        returnValue = userData.apellido || null;
+        break;
       case 'birthdate':
       case 'fecha_nacimiento':
-        return userData.fechaNacimiento || null;
+        returnValue = userData.fechaNacimiento || null;
+        break;
       case 'dni':
       case 'national_id':
-        return userData.dni || null;
+        returnValue = userData.dni || null;
+        break;
+      case 'nationality':
       case 'country':
       case 'pais':
-        return userData.pais || null;
+        returnValue = userData.pais || null;
+        break;
       case 'city':
       case 'ciudad':
-        return userData.ciudad || null;
+        returnValue = userData.ciudad || null;
+        break;
       case 'postal_code':
       case 'codigo_postal':
-        return userData.codigoPostal || null;
+        returnValue = userData.codigoPostal || null;
+        break;
       case 'address':
       case 'direccion':
-        return userData.direccion || null;
+        returnValue = userData.direccion || null;
+        break;
+      case 'sex':
       case 'sexo':
-        return this.normalizeSexValue(userData.sexo);
+        returnValue = this.normalizeSexValue(userData.sexo);
+        break;
       default:
         const codeLower = (fieldCode || '').toLowerCase();
         switch (codeLower) {
           case 'sex':
           case 'gender':
-            return this.normalizeSexValue(userData.sexo);
+          case 'sexo':
+            returnValue = this.normalizeSexValue(userData.sexo);
+            break;
           default:
-            return null;
+            returnValue = null;
         }
     }
+    
+    console.log(`[getUserDataForField] Campo: ${fieldCode} → Valor retornado: "${returnValue}"`);
+    return returnValue;
   }
 
   /**
    * Normaliza el valor del sexo a formato corto (M, F)
    */
   private normalizeSexValue(sexValue: string | null | undefined): string | null {
+    console.log(`[normalizeSexValue] Entrada: "${sexValue}"`);
+    
     if (!sexValue) {
+      console.log(`[normalizeSexValue] Valor vacío, retornando null`);
       return null;
     }
 
     const sexUpper = sexValue.toUpperCase().trim();
+    console.log(`[normalizeSexValue] Valor en mayúsculas: "${sexUpper}"`);
     
     // Si ya está en formato corto, retornar tal cual
     if (sexUpper === 'M' || sexUpper === 'F') {
+      console.log(`[normalizeSexValue] Ya está en formato corto: "${sexUpper}"`);
       return sexUpper;
     }
 
     // Convertir valores completos a formato corto
     if (sexUpper === 'MASCULINO' || sexUpper === 'MALE' || sexUpper === 'HOMBRE') {
+      console.log(`[normalizeSexValue] Convertido a M`);
       return 'M';
     }
     if (sexUpper === 'FEMENINO' || sexUpper === 'FEMALE' || sexUpper === 'MUJER') {
+      console.log(`[normalizeSexValue] Convertido a F`);
       return 'F';
     }
 
     // Si no coincide con ninguno, retornar null
+    console.log(`[normalizeSexValue] No coincide con ningún valor conocido, retornando null`);
     return null;
   }
 
@@ -1386,6 +1448,231 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
    */
   trackByFieldId(index: number, field: IDepartureReservationFieldResponse): number {
     return field.reservationFieldId;
+  }
+
+  /**
+   * Verifica si se pueden cargar datos del usuario
+   */
+  canLoadUserData(): boolean {
+    return this.isUserAuthenticated();
+  }
+
+  /**
+   * Carga y rellena los datos del usuario autenticado en el formulario
+   */
+  loadAndFillUserData(): void {
+    console.log('=== loadAndFillUserData() INICIADO ===');
+    
+    if (!this.isUserAuthenticated()) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Advertencia',
+        detail: 'Debes estar autenticado para cargar tus datos',
+        life: 3000,
+      });
+      return;
+    }
+
+    this.loadingUserData = true;
+
+    this.checkoutUserDataService.getCurrentUserData().pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (userData) => {
+        console.log('Datos del usuario obtenidos para rellenar:', userData);
+        
+        if (!userData) {
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Advertencia',
+            detail: 'No se encontraron datos del usuario',
+            life: 3000,
+          });
+          this.loadingUserData = false;
+          return;
+        }
+
+        // Sobrescribir los valores del formulario con los datos del usuario
+        this.fillFormWithUserData(userData);
+        
+        this.loadingUserData = false;
+        
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Datos cargados',
+          detail: 'Los datos de tu perfil han sido cargados correctamente',
+          life: 3000,
+        });
+      },
+      error: (error) => {
+        console.error('Error al cargar datos del usuario:', error);
+        this.loadingUserData = false;
+        
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudieron cargar los datos de tu perfil',
+          life: 5000,
+        });
+      }
+    });
+  }
+
+  /**
+   * Rellena el formulario con los datos del usuario
+   */
+  private fillFormWithUserData(userData: PersonalInfo): void {
+    console.log('=== fillFormWithUserData() INICIADO ===');
+    
+    if (!this.traveler) {
+      return;
+    }
+
+    let fieldsUpdated = 0;
+
+    // Iterar sobre todos los campos del departure
+    this.departureReservationFields.forEach((field) => {
+      const fieldDetails = this.getReservationFieldDetails(field.reservationFieldId);
+      
+      if (fieldDetails) {
+        const controlName = `${fieldDetails.code}_${this.traveler!.id}`;
+        const control = this.travelerForm.get(controlName);
+        
+        if (control) {
+          // Obtener el valor del usuario para este campo
+          const userValue = this.getUserDataForFieldFromData(fieldDetails, userData);
+          
+          if (userValue !== null && userValue !== '') {
+            // Para campos de fecha, convertir string a Date
+            if (fieldDetails.fieldType === 'date' && typeof userValue === 'string') {
+              let parsedDate: Date | null = null;
+              
+              if (userValue.includes('-')) {
+                parsedDate = this.parseDateFromISO(userValue);
+              } else if (userValue.includes('/')) {
+                parsedDate = this.parseDateFromDDMMYYYY(userValue);
+              }
+              
+              if (parsedDate) {
+                control.setValue(parsedDate);
+                control.markAsDirty();
+                control.markAsTouched();
+                fieldsUpdated++;
+                console.log(`[RELLENADO] ${controlName} = ${parsedDate} (fecha)`);
+              }
+            } else {
+              // Para otros tipos de campos
+              control.setValue(userValue);
+              control.markAsDirty();
+              control.markAsTouched();
+              fieldsUpdated++;
+              console.log(`[RELLENADO] ${controlName} = "${userValue}"`);
+            }
+          }
+        }
+      }
+    });
+
+    console.log(`=== Total de campos actualizados: ${fieldsUpdated} ===`);
+    
+    // Actualizar validaciones
+    this.travelerForm.updateValueAndValidity();
+    this.validateFormInRealTime();
+    
+    // Log del estado final del formulario
+    console.log('=== ESTADO FINAL DEL FORMULARIO DESPUÉS DE CARGAR ===');
+    console.log('Valores del formulario completo:', this.travelerForm.value);
+    
+    // Log individual de cada input
+    Object.keys(this.travelerForm.controls).forEach((controlName) => {
+      const control = this.travelerForm.get(controlName);
+      const value = control?.value;
+      const isValid = control?.valid;
+      const isDirty = control?.dirty;
+      console.log(`  ${controlName}: "${value}" [válido: ${isValid}, dirty: ${isDirty}]`);
+    });
+    console.log('=====================================================');
+  }
+
+  /**
+   * Obtiene el valor de un campo desde los datos del usuario (versión con userData como parámetro)
+   */
+  private getUserDataForFieldFromData(fieldDetails: IReservationFieldResponse, userData: PersonalInfo): string | null {
+    if (!userData) {
+      return null;
+    }
+
+    const fieldCode = fieldDetails.code;
+    
+    console.log(`[getUserDataForFieldFromData] Procesando campo: ${fieldCode}`, userData);
+    
+    let returnValue: string | null = null;
+    
+    switch (fieldCode) {
+      case 'email':
+        returnValue = userData.email || null;
+        break;
+      case 'phone':
+      case 'telefono':
+        returnValue = userData.telefono || null;
+        break;
+      case 'firstname':
+      case 'first_name':
+      case 'name':
+      case 'nombre':
+        returnValue = userData.nombre || null;
+        break;
+      case 'lastname':
+      case 'last_name':
+      case 'surname':
+      case 'apellido':
+      case 'apellidos':
+        returnValue = userData.apellido || null;
+        break;
+      case 'birthdate':
+      case 'fecha_nacimiento':
+        returnValue = userData.fechaNacimiento || null;
+        break;
+      case 'dni':
+      case 'national_id':
+        returnValue = userData.dni || null;
+        break;
+      case 'nationality':
+      case 'country':
+      case 'pais':
+        returnValue = userData.pais || null;
+        break;
+      case 'city':
+      case 'ciudad':
+        returnValue = userData.ciudad || null;
+        break;
+      case 'postal_code':
+      case 'codigo_postal':
+        returnValue = userData.codigoPostal || null;
+        break;
+      case 'address':
+      case 'direccion':
+        returnValue = userData.direccion || null;
+        break;
+      case 'sex':
+      case 'sexo':
+        returnValue = this.normalizeSexValue(userData.sexo);
+        break;
+      default:
+        const codeLower = (fieldCode || '').toLowerCase();
+        switch (codeLower) {
+          case 'sex':
+          case 'gender':
+          case 'sexo':
+            returnValue = this.normalizeSexValue(userData.sexo);
+            break;
+          default:
+            returnValue = null;
+        }
+    }
+    
+    console.log(`[getUserDataForFieldFromData] Campo: ${fieldCode} → Valor: "${returnValue}"`);
+    return returnValue;
   }
 }
 

@@ -1,46 +1,46 @@
 <div class="traveler-activities" *ngIf="(travelerActivities && travelerActivities.length > 0) || (travelerActivityPacks && travelerActivityPacks.length > 0)">
   <h4>Actividades asignadas:</h4>
   <div class="activities-list">
-    <!-- Actividades individuales asignadas -->
-    <ng-container *ngFor="let travelerActivity of travelerActivities">
-      <div *ngIf="getActivityName(travelerActivity.activityId)" class="activity-item" style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0;">
+    <!-- Actividades individuales (memoria visible) -->
+    <ng-container *ngFor="let activityId of visibleActivityIds">
+      <div *ngIf="getActivityName(activityId)" class="activity-item" style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0;">
         <div class="activity-info">
-          <h5><strong>{{ getActivityName(travelerActivity.activityId) }}</strong></h5>
+          <h5><strong>{{ getActivityName(activityId) }}</strong></h5>
         </div>
         <div class="activity-toggle-container">
           <p-progressSpinner 
-            *ngIf="isSavingActivity(travelerActivity.activityId)"
+            *ngIf="isSavingActivity(activityId)"
             styleClass="activity-saving-spinner"
             [style]="{ width: '20px', height: '20px' }">
           </p-progressSpinner>
           <p-toggleSwitch 
-            *ngIf="!isSavingActivity(travelerActivity.activityId)"
-            [ngModel]="!isTravelerActivityDeleted(travelerActivity.activityId)"
-            [disabled]="isSavingActivity(travelerActivity.activityId)"
-            (ngModelChange)="onActivityToggleChange(travelerActivity.activityId, $event)"
+            *ngIf="!isSavingActivity(activityId)"
+            [ngModel]="!isTravelerActivityDeleted(activityId) && isCurrentlyAssigned(activityId)"
+            [disabled]="isSavingActivity(activityId)"
+            (ngModelChange)="onActivityToggleChange(activityId, $event)"
             [ngModelOptions]="{standalone: true}">
           </p-toggleSwitch>
         </div>
       </div>
     </ng-container>
 
-    <!-- Paquetes de actividades asignados -->
-    <ng-container *ngFor="let travelerActivityPack of travelerActivityPacks">
-      <div *ngIf="getActivityName(travelerActivityPack.activityPackId)" class="activity-item" style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0;">
+    <!-- Paquetes de actividades (memoria visible) -->
+    <ng-container *ngFor="let packId of visiblePackIds">
+      <div *ngIf="getActivityName(packId)" class="activity-item" style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0;">
         <div class="activity-info">
-          <h5><strong>{{ getActivityName(travelerActivityPack.activityPackId) }}</strong></h5>
+          <h5><strong>{{ getActivityName(packId) }}</strong></h5>
         </div>
         <div class="activity-toggle-container">
           <p-progressSpinner 
-            *ngIf="isSavingActivity(travelerActivityPack.activityPackId)"
+            *ngIf="isSavingActivity(packId)"
             styleClass="activity-saving-spinner"
             [style]="{ width: '20px', height: '20px' }">
           </p-progressSpinner>
           <p-toggleSwitch 
-            *ngIf="!isSavingActivity(travelerActivityPack.activityPackId)"
-            [ngModel]="!isTravelerActivityDeleted(travelerActivityPack.activityPackId)"
-            [disabled]="isSavingActivity(travelerActivityPack.activityPackId)"
-            (ngModelChange)="onActivityToggleChange(travelerActivityPack.activityPackId, $event)"
+            *ngIf="!isSavingActivity(packId)"
+            [ngModel]="!isTravelerActivityDeleted(packId) && isCurrentlyAssigned(packId)"
+            [disabled]="isSavingActivity(packId)"
+            (ngModelChange)="onActivityToggleChange(packId, $event)"
             [ngModelOptions]="{standalone: true}">
           </p-toggleSwitch>
         </div>

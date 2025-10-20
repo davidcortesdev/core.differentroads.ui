@@ -39,6 +39,11 @@ export class InfoTravelerActivitiesComponent implements OnInit, OnDestroy {
   // Precios de actividades
   activityPrices: { [activityId: number]: number } = {};
   
+  // Memoria de elementos visibles desde la carga inicial
+  visibleActivityIds: number[] = [];
+  visiblePackIds: number[] = [];
+  private initializedVisible: boolean = false;
+
   // Estados de control
   private deletedFromDB: { [activityId: number]: boolean } = {};
   private savingActivities: { [key: string]: boolean } = {};
@@ -111,6 +116,13 @@ export class InfoTravelerActivitiesComponent implements OnInit, OnDestroy {
 
           this.loadActivityPricesForTraveler(activities);
           this.loadActivityPackPricesForTraveler(activityPacks);
+
+          // Memorizar listas visibles solo en la primera carga
+          if (!this.initializedVisible) {
+            this.visibleActivityIds = Array.from(new Set(activities.map(a => a.activityId)));
+            this.visiblePackIds = Array.from(new Set(activityPacks.map(p => p.activityPackId)));
+            this.initializedVisible = true;
+          }
 
           this.loading = false;
           this.emitInitialActivitiesState();
@@ -214,6 +226,16 @@ export class InfoTravelerActivitiesComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Saber si una actividad (o pack) está actualmente asignada
+   */
+  isCurrentlyAssigned(activityId: number): boolean {
+    return (
+      this.travelerActivities.some(a => a.activityId === activityId) ||
+      this.travelerActivityPacks.some(p => p.activityPackId === activityId)
+    );
+  }
+
+  /**
    * Obtener nombre de actividad
    */
   getActivityName(activityId: number): string {
@@ -248,7 +270,7 @@ export class InfoTravelerActivitiesComponent implements OnInit, OnDestroy {
       if (isSelected) {
         this.createActivityAssignment(activityId, activityName, activityPrice);
       } else {
-        this.removeActivityAssignment(activityId, activityName, activityPrice);
+        this.deactivateActivityAssignment(activityId, activityName, activityPrice);
       }
     }
   }
@@ -311,6 +333,10 @@ export class InfoTravelerActivitiesComponent implements OnInit, OnDestroy {
               delete this.deletedFromDB[activityId];
             }
 
+            // Asegurar que permanezca visible
+            if (!this.visiblePackIds.includes(activityId)) {
+              this.visiblePackIds.push(activityId);
+            }
             this.activitiesAssignmentChange.emit();
 
             this.messageService.add({
@@ -324,6 +350,10 @@ export class InfoTravelerActivitiesComponent implements OnInit, OnDestroy {
             this.savingActivities[key] = false;
             console.error('❌ Error guardando actividad:', error);
             
+            // Asegurar que permanezca visible
+            if (!this.visibleActivityIds.includes(activityId)) {
+              this.visibleActivityIds.push(activityId);
+            }
             this.activitiesAssignmentChange.emit();
 
             this.messageService.add({
@@ -391,9 +421,8 @@ export class InfoTravelerActivitiesComponent implements OnInit, OnDestroy {
   /**
    * Eliminar asignación de actividad
    */
-  private removeActivityAssignment(activityId: number, activityName: string, activityPrice: number): void {
+  private deactivateActivityAssignment(activityId: number, activityName: string, activityPrice: number): void {
     const key = `${this.traveler.id}_${activityId}`;
-    
     if (this.savingActivities[key]) {
       console.log('⏳ Eliminación de actividad en curso, esperando...');
       return;
@@ -401,107 +430,52 @@ export class InfoTravelerActivitiesComponent implements OnInit, OnDestroy {
 
     this.savingActivities[key] = true;
 
-    const activity = this.optionalActivities.find((a) => a.id === activityId);
-    if (!activity) {
-      this.savingActivities[key] = false;
+    const packToDelete = this.travelerActivityPacks.find(p => p.activityPackId === activityId);
+    if (packToDelete) {
+      this.reservationTravelerActivityPackService
+        .delete(packToDelete.id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.savingActivities[key] = false;
+            // Quitar de asignadas, pero NO de visibles
+            this.travelerActivityPacks = this.travelerActivityPacks.filter(p => p.activityPackId !== activityId);
+            this.deletedFromDB[activityId] = true;
+            this.activitiesAssignmentChange.emit();
+          },
+          error: (error) => {
+            this.savingActivities[key] = false;
+            console.error('❌ Error eliminando pack actividad:', error);
+          }
+        });
       return;
     }
 
-    const isActivityPack = activity.type === 'pack';
-
-    if (isActivityPack) {
-      // Eliminar paquete de actividad
-      const packToDelete = this.travelerActivityPacks.find(
-        (pack) => pack.activityPackId === activityId
-      );
-
-      if (packToDelete) {
-        this.reservationTravelerActivityPackService
-          .delete(packToDelete.id)
-          .pipe(takeUntil(this.destroy$))
-          .subscribe({
-            next: () => {
-              this.savingActivities[key] = false;
-              
-              this.travelerActivityPacks = this.travelerActivityPacks.filter(
-                (pack) => pack.activityPackId !== activityId
-              );
-
-              this.deletedFromDB[activityId] = true;
-
-              this.activitiesAssignmentChange.emit();
-
-              this.messageService.add({
-                severity: 'success',
-                summary: 'Éxito',
-                detail: `Actividad "${activityName}" eliminada correctamente`,
-                life: 3000,
-              });
-            },
-            error: (error) => {
-              this.savingActivities[key] = false;
-              console.error('❌ Error eliminando actividad:', error);
-              
-              this.activitiesAssignmentChange.emit();
-
-              this.messageService.add({
-                severity: 'error',
-                summary: 'Error',
-                detail: 'Error al eliminar la actividad',
-                life: 5000,
-              });
-            }
-          });
-      } else {
-        this.savingActivities[key] = false;
-      }
-    } else {
-      // Eliminar actividad individual
-      const activityToDelete = this.travelerActivities.find(
-        (act) => act.activityId === activityId
-      );
-
-      if (activityToDelete) {
-        this.reservationTravelerActivityService
-          .delete(activityToDelete.id)
-          .pipe(takeUntil(this.destroy$))
-          .subscribe({
-            next: () => {
-              this.savingActivities[key] = false;
-              
-              this.travelerActivities = this.travelerActivities.filter(
-                (act) => act.activityId !== activityId
-              );
-
-              this.deletedFromDB[activityId] = true;
-
-              this.activitiesAssignmentChange.emit();
-
-              this.messageService.add({
-                severity: 'success',
-                summary: 'Éxito',
-                detail: `Actividad "${activityName}" eliminada correctamente`,
-                life: 3000,
-              });
-            },
-            error: (error) => {
-              this.savingActivities[key] = false;
-              console.error('❌ Error eliminando actividad:', error);
-              
-              this.activitiesAssignmentChange.emit();
-
-              this.messageService.add({
-                severity: 'error',
-                summary: 'Error',
-                detail: 'Error al eliminar la actividad',
-                life: 5000,
-              });
-            }
-          });
-      } else {
-        this.savingActivities[key] = false;
-      }
+    const activityToDelete = this.travelerActivities.find(a => a.activityId === activityId);
+    if (activityToDelete) {
+      this.reservationTravelerActivityService
+        .delete(activityToDelete.id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.savingActivities[key] = false;
+            // Quitar de asignadas, pero NO de visibles
+            this.travelerActivities = this.travelerActivities.filter(a => a.activityId !== activityId);
+            this.deletedFromDB[activityId] = true;
+            this.activitiesAssignmentChange.emit();
+          },
+          error: (error) => {
+            this.savingActivities[key] = false;
+            console.error('❌ Error eliminando actividad:', error);
+          }
+        });
+      return;
     }
+
+    // Si no hay registro, solo marcar borrado para reflejar estado
+    this.savingActivities[key] = false;
+    this.deletedFromDB[activityId] = true;
+    this.activitiesAssignmentChange.emit();
   }
 
   /**

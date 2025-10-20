@@ -13,6 +13,7 @@ import { IReservationTravelerActivityPackResponse } from '../../../../../../core
 import { ActivityService } from '../../../../../../core/services/activity/activity.service';
 import { ReservationTravelerActivityService } from '../../../../../../core/services/reservation/reservation-traveler-activity.service';
 import { ReservationTravelerActivityPackService } from '../../../../../../core/services/reservation/reservation-traveler-activity-pack.service';
+import { ReservationTravelerService, IReservationTravelerResponse as IReservationTraveler } from '../../../../../../core/services/reservation/reservation-traveler.service';
 
 @Component({
   selector: 'app-info-traveler-activities',
@@ -53,7 +54,8 @@ export class InfoTravelerActivitiesComponent implements OnInit, OnDestroy {
     private messageService: MessageService,
     private activityService: ActivityService,
     private reservationTravelerActivityService: ReservationTravelerActivityService,
-    private reservationTravelerActivityPackService: ReservationTravelerActivityPackService
+    private reservationTravelerActivityPackService: ReservationTravelerActivityPackService,
+    private reservationTravelerService: ReservationTravelerService
   ) {}
 
   ngOnInit(): void {
@@ -81,10 +83,76 @@ export class InfoTravelerActivitiesComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (activities) => {
           this.optionalActivities = activities;
+          // Primero, cargar todas las asignaciones de la reserva para rellenar la lista
+          this.populateVisibleFromReservation();
+          // Luego, cargar las asignaciones del viajero actual para marcar sus toggles
           this.loadTravelerActivities();
         },
         error: (error) => {
+          // Si falla la carga de catálogo, al menos continuar con asignaciones del viajero
+          this.populateVisibleFromReservation();
           this.loadTravelerActivities();
+        },
+      });
+  }
+
+  /**
+   * Rellenar listas visibles (actividades y packs) con todas las asignaciones de la reserva
+   */
+  private populateVisibleFromReservation(): void {
+    if (!this.reservationId) {
+      return;
+    }
+
+    this.reservationTravelerService
+      .getByReservation(this.reservationId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (travelers: IReservationTraveler[]) => {
+          if (!travelers || travelers.length === 0) {
+            return;
+          }
+
+          const requests = travelers.map((t) =>
+            forkJoin({
+              activities: this.reservationTravelerActivityService.getByReservationTraveler(t.id),
+              activityPacks: this.reservationTravelerActivityPackService.getByReservationTraveler(t.id),
+            })
+          );
+
+          forkJoin(requests)
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+              next: (results) => {
+                const activityIds = new Set<number>();
+                const packIds = new Set<number>();
+
+                results.forEach(({ activities, activityPacks }) => {
+                  activities?.forEach((a) => activityIds.add(a.activityId));
+                  activityPacks?.forEach((p) => packIds.add(p.activityPackId));
+                });
+
+                // Memorizar una sola vez si no estaba inicializado; si ya estaba, actualizar unión manteniendo memoria
+                if (!this.initializedVisible) {
+                  this.visibleActivityIds = Array.from(activityIds);
+                  this.visiblePackIds = Array.from(packIds);
+                  this.initializedVisible = true;
+                } else {
+                  const currentActivities = new Set(this.visibleActivityIds);
+                  const currentPacks = new Set(this.visiblePackIds);
+                  activityIds.forEach((id) => currentActivities.add(id));
+                  packIds.forEach((id) => currentPacks.add(id));
+                  this.visibleActivityIds = Array.from(currentActivities);
+                  this.visiblePackIds = Array.from(currentPacks);
+                }
+              },
+              error: (error) => {
+                console.error('Error al cargar asignaciones por reserva:', error);
+              },
+            });
+        },
+        error: (error) => {
+          console.error('Error al obtener viajeros de la reserva:', error);
         },
       });
   }

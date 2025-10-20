@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { FormGroup, ValidationErrors } from '@angular/forms';
 import { IReservationFieldResponse } from '../../../../../../core/services/reservation/reservation-field.service';
 
@@ -23,6 +23,11 @@ export class TravelerFieldComponent {
   @Output() phoneFieldChange = new EventEmitter<{ fieldCode: string; event: Event }>();
   @Output() dateFieldChange = new EventEmitter<{ fieldCode: string; value: Date }>();
   @Output() dateFieldBlur = new EventEmitter<string>();
+
+  // Sugerencias filtradas para sexOptions
+  filteredSexOptions: Array<{ label: string; value: string }> = [];
+
+  constructor(private cdr: ChangeDetectorRef) {}
 
   get controlName(): string {
     return `${this.fieldDetails.code}_${this.travelerId}`;
@@ -68,6 +73,25 @@ export class TravelerFieldComponent {
     return `Introduce tu ${this.fieldDetails.name.toLowerCase()}`;
   }
 
+  // Getter para el valor del sexo (convierte string a objeto)
+  get sexValue(): { label: string; value: string } | null {
+    const value = this.control?.value;
+    if (!value || typeof value !== 'string') {
+      return null;
+    }
+    
+    // Buscar el objeto correspondiente al valor string
+    const sexOption = this.sexOptions.find(opt => opt.value === value);
+    return sexOption || null;
+  }
+
+  // Setter para el valor del sexo (convierte objeto a string)
+  set sexValue(sexOption: { label: string; value: string } | null) {
+    if (this.control && sexOption) {
+      this.control.setValue(sexOption.value);
+    }
+  }
+
   onFieldInput(): void {
     this.fieldChange.emit(this.fieldDetails.code);
   }
@@ -82,6 +106,34 @@ export class TravelerFieldComponent {
 
   onDateBlur(): void {
     this.dateFieldBlur.emit(this.fieldDetails.code);
+  }
+
+  filterSexOptions(event: { query: string }): void {
+    const query = event.query ? event.query.toLowerCase() : '';
+    
+    if (!query) {
+      // Si no hay query, mostrar todas las opciones
+      this.filteredSexOptions = [...this.sexOptions];
+    } else {
+      // Filtrar opciones que coincidan con el query
+      this.filteredSexOptions = this.sexOptions.filter(option => 
+        option.label.toLowerCase().includes(query)
+      );
+    }
+    
+    this.cdr.markForCheck();
+  }
+
+  onSexSelect(event: { label: string; value: string }): void {
+    // El setter sexValue ya actualiza el control con el valor
+    // Solo necesitamos marcar como touched y dirty
+    if (this.control) {
+      this.control.markAsDirty();
+      this.control.markAsTouched();
+      this.control.updateValueAndValidity();
+    }
+    this.fieldChange.emit(this.fieldDetails.code);
+    this.cdr.markForCheck();
   }
 
   getErrorMessage(errors: ValidationErrors | null): string {

@@ -1,0 +1,132 @@
+<div class="form-column form-field"
+     [ngClass]="{ 
+       'half-width': fieldDetails.fieldType !== 'checkbox',
+       'full-width': fieldDetails.fieldType === 'checkbox',
+       'required-empty': isRequiredEmpty,
+       'field-valid': validationState === 'valid',
+       'field-invalid': validationState === 'invalid'
+     }">
+  
+  <!-- Label para todos los campos excepto checkbox -->
+  <label *ngIf="fieldDetails.fieldType !== 'checkbox'">
+    {{ fieldDetails.name }}<span *ngIf="isMandatory">*</span>
+  </label>
+
+  <!-- ngSwitch para renderizar el tipo de campo apropiado -->
+  <ng-container [ngSwitch]="fieldDetails.fieldType">
+    
+    <!-- Campo de texto -->
+    <ng-container *ngSwitchCase="'text'">
+      <ng-container *ngIf="fieldDetails.code !== 'phone'; else phoneField">
+        <div class="field-container">
+          <input 
+            pInputText 
+            [formControlName]="controlName"
+            [placeholder]="placeholder"
+            [ngClass]="{ 'p-invalid': hasError }"
+            (input)="onFieldInput()" />
+        </div>
+        <small *ngIf="hasError" class="p-error">
+          {{ getErrorMessage(errors) }}
+        </small>
+      </ng-container>
+    </ng-container>
+
+    <!-- Campo de email -->
+    <ng-container *ngSwitchCase="'email'">
+      <input 
+        pInputText 
+        type="email" 
+        [formControlName]="controlName"
+        [placeholder]="placeholder"
+        [ngClass]="{ 'p-invalid': hasError }"
+        (input)="onFieldInput()" />
+      <small *ngIf="hasError" class="p-error">
+        {{ getErrorMessage(errors) }}
+      </small>
+    </ng-container>
+
+    <!-- Campo de teléfono -->
+    <ng-container *ngSwitchCase="'phone'">
+      <ng-template #phoneField>
+        <input 
+          pInputText 
+          type="tel" 
+          [formControlName]="controlName"
+          [placeholder]="placeholder"
+          [ngClass]="{ 'p-invalid': hasError }"
+          (input)="onPhoneInput($event)" />
+        <small *ngIf="hasError" class="p-error">
+          {{ getErrorMessage(errors) }}
+        </small>
+      </ng-template>
+    </ng-container>
+
+    <!-- Campo de sexo (dropdown) -->
+    <ng-container *ngSwitchCase="'sex'">
+      <p-dropdown 
+        [formControlName]="controlName"
+        [options]="sexOptions" 
+        optionLabel="label" 
+        optionValue="value" 
+        placeholder="Seleccione"
+        [ngClass]="{ 'p-invalid': hasError }"
+        (onChange)="onFieldInput()">
+      </p-dropdown>
+      <small *ngIf="hasError" class="p-error">
+        {{ getErrorMessage(errors) }}
+      </small>
+    </ng-container>
+
+    <!-- Campo de fecha -->
+    <ng-container *ngSwitchCase="'date'">
+      <p-datepicker 
+        [formControlName]="controlName"
+        [minDate]="minDate || undefined"
+        [maxDate]="maxDate || undefined"
+        showIcon 
+        appendTo="body" 
+        placeholder="dd/mm/yyyy"
+        dateFormat="dd/mm/yy"
+        (onSelect)="onDateSelect($event)"
+        (onBlur)="onDateBlur()"
+        [ngClass]="{ 'p-invalid': hasError }">
+      </p-datepicker>
+      <small *ngIf="hasError" class="p-error">
+        {{ getErrorMessage(errors) }}
+      </small>
+    </ng-container>
+
+    <!-- Campo de país (autocomplete) -->
+    <ng-container *ngSwitchCase="'country'">
+      <p-autocomplete 
+        [formControlName]="controlName"
+        [suggestions]="countryOptions" 
+        field="name" 
+        [placeholder]="placeholder" 
+        appendTo="body" 
+        [dropdown]="true"
+        [ngClass]="{ 'p-invalid': hasError }">
+      </p-autocomplete>
+      <small *ngIf="hasError" class="p-error">
+        {{ getErrorMessage(errors) }}
+      </small>
+    </ng-container>
+
+    <!-- Campo de checkbox -->
+    <ng-container *ngSwitchCase="'checkbox'">
+      <div class="checkbox-field">
+        <p-checkbox 
+          [formControlName]="controlName"
+          binary="true" 
+          [inputId]="controlName">
+        </p-checkbox>
+        <label [for]="controlName" class="checkbox-label">
+          {{ fieldDetails.description }}<span *ngIf="isMandatory">*</span>
+        </label>
+      </div>
+    </ng-container>
+
+  </ng-container>
+</div>
+

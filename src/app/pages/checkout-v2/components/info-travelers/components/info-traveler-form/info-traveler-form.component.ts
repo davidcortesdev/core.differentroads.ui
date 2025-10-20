@@ -1354,5 +1354,12 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       existingFields: this.existingTravelerFields.length
     };
   }
+
+  /**
+   * TrackBy function para optimizar el renderizado de campos
+   */
+  trackByFieldId(index: number, field: IDepartureReservationFieldResponse): number {
+    return field.reservationFieldId;
+  }
 }
 

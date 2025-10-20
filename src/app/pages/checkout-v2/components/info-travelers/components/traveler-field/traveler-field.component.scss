@@ -1,0 +1,87 @@
+:host {
+  display: contents;
+}
+
+.form-field {
+  margin-bottom: 10px;
+  font-size: 14px;
+  position: relative;
+  
+  label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--background-azul);
+  }
+  
+  .field-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    
+    input, p-autocomplete, p-calendar, p-select, p-datepicker {
+      width: 100%;
+      flex: 1;
+    }
+  }
+  
+  input, p-autocomplete, p-calendar, p-select, p-datepicker {
+    width: 100%;
+  }
+  
+  &.field-valid .field-container input,
+  &.field-valid .field-container .p-inputtext {
+    border-bottom: 2px solid #28a745 !important;
+  }
+  
+  &.field-invalid .field-container input,
+  &.field-invalid .field-container .p-inputtext {
+    border-bottom: 2px solid #dc3545 !important;
+    background-color: rgba(220, 53, 69, 0.05) !important;
+  }
+
+  &.half-width {
+    flex: 0 0 48%;
+    max-width: 48%;
+    margin-right: 10px;
+    
+    @media (max-width: 480px) {
+      flex: 0 0 100%;
+      max-width: 100%;
+    }
+    
+    @media (max-width: 768px) {
+      flex: 1 1 100%;
+      margin-right: 0;
+    }
+  }
+  
+  &.full-width {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  
+  .checkbox-label {
+    margin-bottom: 0;
+    cursor: pointer;
+    line-height: 1.4;
+  }
+}
+
+@media (min-width: 577px) {
+  .form-field.half-width {
+    flex: 0 0 48% !important;
+    max-width: 48% !important;
+  }
+  
+  .form-field.full-width {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+}
+

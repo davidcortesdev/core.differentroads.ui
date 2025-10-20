@@ -1846,34 +1846,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   // Método auxiliar para logging detallado
   private logComponentState(): void {}
 
-  // Método para guardar todos los datos de los viajeros
-  private async saveTravelersData(): Promise<boolean> {
-    if (!this.infoTravelers) {
-      return true; // Si no hay componente, no hay nada que guardar
-    }
-
-    try {
-      // Validar que todos los campos obligatorios estén completados
-      if (!this.infoTravelers.validateFormAndShowToast()) {
-        // El toast ya se mostró automáticamente en validateFormAndShowToast()
-        return false; // No continuar si hay campos faltantes
-      }
-
-      // Llamar al método saveAllTravelersData del componente hijo y esperar a que se complete
-      await this.infoTravelers.saveAllTravelersData();
-      return true;
-    } catch (error) {
-      console.error('Error en saveTravelersData:', error);
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error al guardar',
-        detail: 'Error al guardar los datos de los viajeros',
-        life: 5000,
-      });
-      return false;
-    }
-  }
-
   // NUEVO: Método para guardar todos los datos del paso 0 (personaliza tu viaje)
   private async saveStep0Data(): Promise<boolean> {
     try {
@@ -2152,10 +2124,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         return;
       }
 
-      const saved = await this.saveTravelersData();
-      if (!saved) {
-        return; // No continuar si no se pudieron guardar los datos
-      }
+  
     }
 
     // Navegar al siguiente paso

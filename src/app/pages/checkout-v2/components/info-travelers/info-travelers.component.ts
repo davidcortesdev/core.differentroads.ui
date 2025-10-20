@@ -7,6 +7,8 @@ import {
   OnDestroy,
   OnChanges,
   SimpleChanges,
+  ViewChildren,
+  QueryList,
 } from '@angular/core';
 import { Subject, forkJoin } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -24,6 +26,7 @@ import {
   ReservationStatusService,
 } from '../../../../core/services/reservation/reservation-status.service';
 import { FlightSearchService, IBookingRequirements } from '../../../../core/services/flight/flight-search.service';
+import { InfoTravelerFormComponent } from './components/info-traveler-form/info-traveler-form.component';
 
 @Component({
   selector: 'app-info-travelers',
@@ -39,6 +42,10 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   @Output() activitiesAssignmentChange = new EventEmitter<void>();
   @Output() dataUpdated = new EventEmitter<void>();
   @Output() roomAssignmentsChange = new EventEmitter<{ [travelerId: number]: number }>();
+
+  // Referencias a los formularios de viajeros
+  @ViewChildren(InfoTravelerFormComponent)
+  travelerForms!: QueryList<InfoTravelerFormComponent>;
 
   // Estados de carga
   checkingReservationStatus: boolean = false;
@@ -320,5 +327,105 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   onTravelerDataUpdated(travelerId: number): void {
     console.log(`Datos del viajero ${travelerId} actualizados`);
     this.dataUpdated.emit();
+  }
+
+  /**
+   * Valida si todos los viajeros están listos para continuar al siguiente paso
+   * 
+   * @returns true si TODOS los viajeros tienen sus campos obligatorios completos, válidos y guardados
+   * 
+   * Este método itera sobre todos los formularios de viajeros y verifica que cada uno
+   * esté listo usando el método isReadyToContinue() de InfoTravelerFormComponent
+   * 
+   * Condiciones para estar listo:
+   * 1. ✅ Todos los campos obligatorios completos y válidos
+   * 2. ✅ No hay cambios pendientes (todo guardado en BD)
+   */
+  canContinueToNextStep(): boolean {
+    console.log('=== canContinueToNextStep() INICIADO ===');
+
+    // Verificar que haya formularios cargados
+    if (!this.travelerForms || this.travelerForms.length === 0) {
+      console.log('[canContinueToNextStep] ❌ No hay formularios de viajeros cargados');
+      return false;
+    }
+
+    const forms = this.travelerForms.toArray();
+    console.log(`[canContinueToNextStep] Verificando ${forms.length} viajero(s)...`);
+
+    // Verificar que TODOS los viajeros estén listos
+    const allReady = forms.every((form, index) => {
+      const isReady = form.isReadyToContinue();
+      const travelerNumber = index + 1;
+      
+      if (isReady) {
+        console.log(`[canContinueToNextStep] ✅ Viajero ${travelerNumber} (ID: ${form.travelerId}): LISTO`);
+      } else {
+        console.log(`[canContinueToNextStep] ❌ Viajero ${travelerNumber} (ID: ${form.travelerId}): NO LISTO`);
+      }
+      
+      return isReady;
+    });
+
+    if (allReady) {
+      console.log('[canContinueToNextStep] ✅ TODOS los viajeros están listos para continuar');
+    } else {
+      console.log('[canContinueToNextStep] ❌ ALGUNOS viajeros no están listos');
+    }
+
+    return allReady;
+  }
+
+  /**
+   * Obtiene información detallada sobre los viajeros que NO están listos
+   * 
+   * @returns Array con información de los viajeros que faltan por completar
+   * 
+   * Útil para mostrar mensajes de error específicos al usuario
+   */
+  getNotReadyTravelers(): { travelerNumber: number; travelerId: number }[] {
+    if (!this.travelerForms || this.travelerForms.length === 0) {
+      return [];
+    }
+
+    const notReady: { travelerNumber: number; travelerId: number }[] = [];
+
+    this.travelerForms.toArray().forEach((form, index) => {
+      if (!form.isReadyToContinue()) {
+        notReady.push({
+          travelerNumber: index + 1,
+          travelerId: form.travelerId || 0
+        });
+      }
+    });
+
+    return notReady;
+  }
+
+  /**
+   * Muestra un mensaje de error indicando qué viajeros faltan por completar
+   */
+  showValidationError(): void {
+    const notReady = this.getNotReadyTravelers();
+
+    if (notReady.length === 0) {
+      return;
+    }
+
+    let errorMessage = 'Por favor, completa todos los campos obligatorios de los viajeros antes de continuar.';
+
+    if (notReady.length === 1) {
+      errorMessage = `El Pasajero ${notReady[0].travelerNumber} tiene campos obligatorios incompletos o cambios sin guardar.`;
+    } else if (notReady.length > 1) {
+      const travelerNumbers = notReady.map(t => t.travelerNumber).join(', ');
+      errorMessage = `Los Pasajeros ${travelerNumbers} tienen campos obligatorios incompletos o cambios sin guardar.`;
+    }
+
+    this.messageService.add({
+      severity: 'warn',
+      summary: 'Atención',
+      detail: errorMessage,
+      life: 5000
+    });
   }
 }

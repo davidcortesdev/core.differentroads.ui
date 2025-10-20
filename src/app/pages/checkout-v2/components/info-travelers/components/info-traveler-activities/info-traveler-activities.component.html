@@ -2,7 +2,10 @@
   <h4>Actividades asignadas:</h4>
   <div class="activities-list">
     <!-- Actividades individuales (memoria visible) -->
+     {{visibleActivityIds | json}}
+     {{visiblePackIds | json}}
     <ng-container *ngFor="let activityId of visibleActivityIds">
+        {{getActivityName(activityId)}}
       <div *ngIf="getActivityName(activityId)" class="activity-item" style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0;">
         <div class="activity-info">
           <h5><strong>{{ getActivityName(activityId) }}</strong></h5>
@@ -26,6 +29,7 @@
 
     <!-- Paquetes de actividades (memoria visible) -->
     <ng-container *ngFor="let packId of visiblePackIds">
+        {{getActivityName(packId)}}
       <div *ngIf="getActivityName(packId)" class="activity-item" style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0;">
         <div class="activity-info">
           <h5><strong>{{ getActivityName(packId) }}</strong></h5>

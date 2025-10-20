@@ -82,13 +82,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   @Input() reservationId: number | null = null;
   @Input() itineraryId: number | null = null;
 
-  @Output() activitiesAssignmentChange = new EventEmitter<{
-    travelerId: number;
-    activityId: number;
-    isAssigned: boolean;
-    activityName: string;
-    activityPrice: number;
-  }>();
+  @Output() activitiesAssignmentChange = new EventEmitter<void>();
 
   @Output() formValidityChange = new EventEmitter<boolean>();
 
@@ -1110,13 +1104,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
             const activityPrice =
               this.getActivityPrice(traveler.id, activity.activityId) || 0;
 
-            this.activitiesAssignmentChange.emit({
-              travelerId: traveler.id,
-              activityId: activity.activityId,
-              isAssigned: true,
-              activityName,
-              activityPrice,
-            });
+            this.activitiesAssignmentChange.emit();
           }
         });
       }
@@ -1133,13 +1121,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
               this.getActivityPrice(traveler.id, activityPack.activityPackId) ||
               0;
 
-            this.activitiesAssignmentChange.emit({
-              travelerId: traveler.id,
-              activityId: activityPack.activityPackId,
-              isAssigned: true,
-              activityName,
-              activityPrice,
-            });
+            this.activitiesAssignmentChange.emit();
           }
         });
       }
@@ -1662,13 +1644,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
 
     if (isCurrentlyAssigned && !wasDeletedFromDB) {
       this.savingActivities[key] = false;
-      this.activitiesAssignmentChange.emit({
-        travelerId,
-        activityId,
-        isAssigned: true,
-        activityName,
-        activityPrice,
-      });
+      this.activitiesAssignmentChange.emit();
       return;
     }
 
@@ -1719,13 +1695,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
               delete this.deletedFromDB[travelerId][activityId];
             }
 
-            this.activitiesAssignmentChange.emit({
-              travelerId,
-              activityId,
-              isAssigned: true,
-              activityName,
-              activityPrice,
-            });
+            this.activitiesAssignmentChange.emit();
 
             this.messageService.add({
               severity: 'success',
@@ -1739,13 +1709,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
             console.error('❌ Error guardando actividad:', error);
             
             // Revertir UI en caso de error
-            this.activitiesAssignmentChange.emit({
-              travelerId,
-              activityId,
-              isAssigned: false,
-              activityName,
-              activityPrice,
-            });
+            this.activitiesAssignmentChange.emit();
 
             this.messageService.add({
               severity: 'error',
@@ -1799,13 +1763,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
               delete this.deletedFromDB[travelerId][activityId];
             }
 
-            this.activitiesAssignmentChange.emit({
-              travelerId,
-              activityId,
-              isAssigned: true,
-              activityName,
-              activityPrice,
-            });
+            this.activitiesAssignmentChange.emit();
 
             this.messageService.add({
               severity: 'success',
@@ -1819,13 +1777,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
             console.error('❌ Error guardando actividad:', error);
             
             // Revertir UI en caso de error
-            this.activitiesAssignmentChange.emit({
-              travelerId,
-              activityId,
-              isAssigned: false,
-              activityName,
-              activityPrice,
-            });
+            this.activitiesAssignmentChange.emit();
 
             this.messageService.add({
               severity: 'error',
@@ -1882,13 +1834,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
             }
             this.deletedFromDB[travelerId][activityId] = true;
 
-            this.activitiesAssignmentChange.emit({
-              travelerId,
-              activityId,
-              isAssigned: false,
-              activityName,
-              activityPrice,
-            });
+            this.activitiesAssignmentChange.emit();
 
             console.log(`✅ Actividad "${activityName}" deseleccionada`);
           },
@@ -1920,13 +1866,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
             }
             this.deletedFromDB[travelerId][activityId] = true;
 
-            this.activitiesAssignmentChange.emit({
-              travelerId,
-              activityId,
-              isAssigned: false,
-              activityName,
-              activityPrice,
-            });
+            this.activitiesAssignmentChange.emit();
 
             console.log(`✅ Actividad "${activityName}" deseleccionada`);
           },
@@ -1953,13 +1893,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       }
       this.deletedFromDB[travelerId][activityId] = true;
       
-      this.activitiesAssignmentChange.emit({
-        travelerId,
-        activityId,
-        isAssigned: false,
-        activityName,
-        activityPrice,
-      });
+      this.activitiesAssignmentChange.emit();
     }
   }
 
@@ -2937,5 +2871,13 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
    */
   private isUserAuthenticated(): boolean {
     return this.checkoutUserDataService.isUserAuthenticated();
+  }
+
+  /**
+   * Manejar cambios en asignaciones de actividades desde el componente hijo
+   */
+  onActivitiesAssignmentChange(): void {
+    // Re-emitir evento simple al contenedor superior
+    this.activitiesAssignmentChange.emit();
   }
 }

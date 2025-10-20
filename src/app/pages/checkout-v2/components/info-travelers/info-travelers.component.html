@@ -420,57 +420,14 @@
                   </ng-container>
                 </div>
                 
-                <!-- Actividades asignadas al viajero -->
-                <div class="traveler-activities" *ngIf="(travelerActivities[traveler.id] && travelerActivities[traveler.id].length > 0) || (travelerActivityPacks[traveler.id] && travelerActivityPacks[traveler.id].length > 0)">
-                  <h4>Actividades asignadas:</h4>
-                  <div class="activities-list">
-                    <!-- Actividades individuales asignadas -->
-                    <ng-container *ngFor="let travelerActivity of travelerActivities[traveler.id]">
-                      <div *ngIf="getActivityName(travelerActivity.activityId)" class="activity-item" style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0;">
-                        <div class="activity-info">
-                          <h5><strong>{{ getActivityName(travelerActivity.activityId) }}</strong> </h5>
-                        </div>
-                        <div class="activity-toggle-container">
-                          <p-progressSpinner 
-                            *ngIf="isSavingActivity(traveler.id, travelerActivity.activityId)"
-                            styleClass="activity-saving-spinner"
-                            [style]="{ width: '20px', height: '20px' }">
-                          </p-progressSpinner>
-                          <p-toggleSwitch 
-                            *ngIf="!isSavingActivity(traveler.id, travelerActivity.activityId)"
-                            [ngModel]="!isTravelerActivityDeleted(traveler.id, travelerActivity.activityId)"
-                            [disabled]="isSavingActivity(traveler.id, travelerActivity.activityId)"
-                            (ngModelChange)="onActivityToggleChange(traveler.id, travelerActivity.activityId, $event)"
-                            [ngModelOptions]="{standalone: true}">
-                          </p-toggleSwitch>
-                        </div>
-                      </div>
-                    </ng-container>
-                    
-                    <!-- Paquetes de actividades asignados -->
-                    <ng-container *ngFor="let travelerActivityPack of travelerActivityPacks[traveler.id]">
-                      <div *ngIf="getActivityName(travelerActivityPack.activityPackId)" class="activity-item" style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0;">
-                        <div class="activity-info">
-                          <h5><strong>{{ getActivityName(travelerActivityPack.activityPackId) }}</strong> </h5>
-                        </div>
-                        <div class="activity-toggle-container">
-                          <p-progressSpinner 
-                            *ngIf="isSavingActivity(traveler.id, travelerActivityPack.activityPackId)"
-                            styleClass="activity-saving-spinner"
-                            [style]="{ width: '20px', height: '20px' }">
-                          </p-progressSpinner>
-                          <p-toggleSwitch 
-                            *ngIf="!isSavingActivity(traveler.id, travelerActivityPack.activityPackId)"
-                            [ngModel]="!isTravelerActivityDeleted(traveler.id, travelerActivityPack.activityPackId)"
-                            [disabled]="isSavingActivity(traveler.id, travelerActivityPack.activityPackId)"
-                            (ngModelChange)="onActivityToggleChange(traveler.id, travelerActivityPack.activityPackId, $event)"
-                            [ngModelOptions]="{standalone: true}">
-                          </p-toggleSwitch>
-                        </div>
-                      </div>
-                    </ng-container>
-                  </div>
-                </div>
+                <!-- Actividades asignadas al viajero (extraído a componente hijo) -->
+                <app-info-traveler-activities
+                  [traveler]="traveler"
+                  [reservationId]="reservationId!"
+                  [departureId]="departureId!"
+                  [itineraryId]="itineraryId!"
+                  (activitiesAssignmentChange)="onActivitiesAssignmentChange()">
+                </app-info-traveler-activities>
                 </form>
               </ng-container>
               

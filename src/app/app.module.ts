@@ -161,6 +161,7 @@ import { FlightSectionV2Component } from './pages/checkout-v2/components/flight-
 import { ActivitiesOptionalsComponent } from './pages/checkout-v2/components/activities-optionals/activities-optionals.component';
 import { InfoTravelersComponent } from './pages/checkout-v2/components/info-travelers/info-travelers.component';
 import { InfoTravelersRoomComponent } from './pages/checkout-v2/components/info-travelers/components/info-travelers-room/info-travelers-room.component';
+import { InfoTravelerActivitiesComponent } from './pages/checkout-v2/components/info-travelers/components/info-traveler-activities/info-traveler-activities.component';
 import { PaymentManagementComponent } from './pages/checkout-v2/components/payment-management/payment-management.component';
 import { LoadingSectionComponent } from './pages/checkout-v2/components/payment-management/components/loading-section/loading-section.component';
 import { PointsRedemptionComponent } from './pages/checkout-v2/components/points-redemption/points-redemption.component';
@@ -335,6 +336,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     ActivitiesOptionalsComponent,
     InfoTravelersComponent,
     InfoTravelersRoomComponent,
+    InfoTravelerActivitiesComponent,
     PaymentManagementComponent,
     LoadingSectionComponent,
     PointsRedemptionComponent,

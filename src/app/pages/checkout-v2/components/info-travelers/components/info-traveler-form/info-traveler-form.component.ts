@@ -87,6 +87,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
   error: string | null = null;
   showMoreFields: boolean = false;
   loadingUserData: boolean = false;
+  savingData: boolean = false;
 
   // Información personal del usuario autenticado
   currentPersonalInfo: PersonalInfo | null = null;
@@ -1296,13 +1297,16 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       return [];
     }
 
+    console.log('=== collectFormData() INICIADO ===');
+    console.log('Total de controles en formulario:', Object.keys(this.travelerForm.controls).length);
+    console.log('Campos existentes en BD:', this.existingTravelerFields.length);
+
     const formData: ReservationTravelerFieldCreate[] = [];
 
     Object.keys(this.travelerForm.controls).forEach((controlName) => {
       const control = this.travelerForm.get(controlName);
 
-      // Solo procesar controles modificados (dirty)
-      if (control && control.dirty) {
+      if (control) {
         const { fieldCode } = this.parseFieldName(controlName);
 
         if (fieldCode) {
@@ -1310,35 +1314,58 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
           if (field) {
             const fieldDetails = this.getReservationFieldDetails(field.id);
             
-            let fieldValue = control.value?.toString() || '';
+            // Obtener valor actual del control
+            let currentValue = control.value?.toString() || '';
             if (fieldDetails?.fieldType === 'date' && control.value) {
               if (control.value instanceof Date) {
-                fieldValue = this.formatDateToDDMMYYYY(control.value);
+                currentValue = this.formatDateToDDMMYYYY(control.value);
               } else if (typeof control.value === 'string') {
                 if (control.value.includes('/')) {
-                  fieldValue = control.value;
+                  currentValue = control.value;
                 } else {
                   const date = new Date(control.value);
                   if (!isNaN(date.getTime())) {
-                    fieldValue = this.formatDateToDDMMYYYY(date);
+                    currentValue = this.formatDateToDDMMYYYY(date);
                   }
                 }
               }
             }
 
-            const fieldData: ReservationTravelerFieldCreate = {
-              id: 0,
-              reservationTravelerId: this.traveler!.id,
-              reservationFieldId: field.id,
-              value: fieldValue,
-            };
+            // Obtener valor guardado en BD
+            const existingField = this.existingTravelerFields.find(
+              (ef) =>
+                ef.reservationTravelerId === this.traveler!.id &&
+                ef.reservationFieldId === field.id
+            );
+            const existingValue = existingField ? existingField.value : '';
 
-            formData.push(fieldData);
+            // Guardar si:
+            // 1. El control está dirty (modificado)
+            // 2. Tiene un valor Y es diferente al guardado en BD
+            // 3. Tiene un valor Y no existe en BD
+            const hasValue = currentValue !== '' && currentValue !== null && currentValue !== undefined;
+            const isDifferent = currentValue !== existingValue;
+
+            if (control.dirty || (hasValue && isDifferent)) {
+              console.log(`[INCLUIR] ${fieldCode}: actual="${currentValue}" vs BD="${existingValue}" (dirty: ${control.dirty}, hasValue: ${hasValue}, isDifferent: ${isDifferent})`);
+              
+              const fieldData: ReservationTravelerFieldCreate = {
+                id: 0,
+                reservationTravelerId: this.traveler!.id,
+                reservationFieldId: field.id,
+                value: currentValue,
+              };
+
+              formData.push(fieldData);
+            } else {
+              console.log(`[SKIP] ${fieldCode}: actual="${currentValue}" vs BD="${existingValue}" (sin cambios)`);
+            }
           }
         }
       }
     });
 
+    console.log(`=== Total de campos a guardar: ${formData.length} ===`);
     return formData;
   }
 
@@ -1357,12 +1384,62 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
-   * Guarda los datos del viajero
+   * Guarda los datos del viajero manualmente (desde el botón)
+   */
+  async saveDataManually(): Promise<void> {
+    console.log('=== saveDataManually() INICIADO ===');
+    console.log('hasPendingChanges():', this.hasPendingChanges());
+    console.log('travelerForm.dirty:', this.travelerForm.dirty);
+    
+    if (!this.hasPendingChanges()) {
+      console.log('No hay cambios pendientes, saltando guardado');
+      this.messageService.add({
+        severity: 'info',
+        summary: 'Sin cambios',
+        detail: 'No hay cambios pendientes para guardar',
+        life: 3000,
+      });
+      return;
+    }
+
+    this.savingData = true;
+
+    try {
+      await this.saveData();
+      
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Datos guardados',
+        detail: 'Los datos del viajero han sido guardados correctamente',
+        life: 3000,
+      });
+      
+      console.log('=== Datos guardados exitosamente ===');
+    } catch (error) {
+      console.error('Error al guardar datos del viajero:', error);
+      
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error al guardar',
+        detail: 'No se pudieron guardar los datos del viajero. Por favor, intenta nuevamente.',
+        life: 5000,
+      });
+    } finally {
+      this.savingData = false;
+    }
+  }
+
+  /**
+   * Guarda los datos del viajero (método interno)
    */
   async saveData(): Promise<void> {
     const formData = this.collectFormData();
 
+    console.log('=== saveData() INICIADO ===');
+    console.log('Datos a guardar:', formData);
+
     if (formData.length === 0) {
+      console.log('No hay datos dirty para guardar');
       return;
     }
 
@@ -1375,6 +1452,8 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
         );
 
         if (existingField) {
+          console.log(`[UPDATE] Campo ID ${fieldData.reservationFieldId} con valor: "${fieldData.value}"`);
+          
           const updateData: ReservationTravelerFieldUpdate = {
             id: existingField.id,
             reservationTravelerId: fieldData.reservationTravelerId,
@@ -1386,13 +1465,17 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
             .update(existingField.id, updateData)
             .toPromise();
         } else {
+          console.log(`[CREATE] Campo ID ${fieldData.reservationFieldId} con valor: "${fieldData.value}"`);
+          
           return this.reservationTravelerFieldService
             .create(fieldData)
             .toPromise();
         }
       });
 
+      console.log(`Total de campos a guardar: ${savePromises.length}`);
       await Promise.all(savePromises);
+      console.log('✅ Todos los campos guardados exitosamente');
 
       // Recargar datos existentes después de guardar
       if (this.travelerId) {
@@ -1402,6 +1485,8 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
           .subscribe({
             next: (fields) => {
               this.existingTravelerFields = fields;
+              console.log('Campos existentes recargados:', fields.length);
+              
               // Marcar controles como pristine después de guardar
               Object.keys(this.travelerForm.controls).forEach((controlName) => {
                 const control = this.travelerForm.get(controlName);
@@ -1409,6 +1494,8 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
                   control.markAsPristine();
                 }
               });
+              
+              console.log('Formulario marcado como pristine');
             },
             error: (error) => {
               console.error('Error al recargar campos del viajero:', error);
@@ -1417,6 +1504,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       }
 
       this.dataUpdated.emit();
+      console.log('=== saveData() COMPLETADO ===');
     } catch (error) {
       console.error('Error al guardar datos del viajero:', error);
       throw error;
@@ -1455,6 +1543,68 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
    */
   canLoadUserData(): boolean {
     return this.isUserAuthenticated();
+  }
+
+  /**
+   * Verifica si hay cambios pendientes de guardar
+   * Compara valores del formulario con los datos guardados en BD
+   */
+  hasPendingChanges(): boolean {
+    if (!this.traveler) {
+      return false;
+    }
+
+    // Verificar si el formulario está dirty (modificado por el usuario)
+    if (this.travelerForm.dirty) {
+      console.log('[hasPendingChanges] Formulario dirty: true');
+      return true;
+    }
+
+    // Verificar si hay valores en el formulario diferentes a los guardados en BD
+    let hasDifferences = false;
+    const differences: string[] = [];
+
+    Object.keys(this.travelerForm.controls).forEach((controlName) => {
+      const control = this.travelerForm.get(controlName);
+
+      if (control && control.value) {
+        const { fieldCode } = this.parseFieldName(controlName);
+
+        if (fieldCode) {
+          const field = this.reservationFields.find((f) => f.code === fieldCode);
+          
+          if (field) {
+            const fieldDetails = this.getReservationFieldDetails(field.id);
+            
+            // Obtener valor actual
+            let currentValue = control.value?.toString() || '';
+            if (fieldDetails?.fieldType === 'date' && control.value instanceof Date) {
+              currentValue = this.formatDateToDDMMYYYY(control.value);
+            }
+
+            // Obtener valor guardado
+            const existingField = this.existingTravelerFields.find(
+              (ef) =>
+                ef.reservationTravelerId === this.traveler!.id &&
+                ef.reservationFieldId === field.id
+            );
+            const existingValue = existingField ? existingField.value : '';
+
+            // Si hay valor y es diferente al guardado
+            if (currentValue && currentValue !== existingValue) {
+              hasDifferences = true;
+              differences.push(`${fieldCode}: "${currentValue}" !== "${existingValue}"`);
+            }
+          }
+        }
+      }
+    });
+
+    if (hasDifferences) {
+      console.log('[hasPendingChanges] Diferencias encontradas:', differences);
+    }
+
+    return hasDifferences;
   }
 
   /**

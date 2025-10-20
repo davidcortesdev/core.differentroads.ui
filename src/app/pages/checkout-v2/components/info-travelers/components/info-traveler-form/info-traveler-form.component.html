@@ -144,6 +144,25 @@
       [itineraryId]="itineraryId!"
       (activitiesAssignmentChange)="dataUpdated.emit()">
     </app-info-traveler-activities>
+
+    <!-- Botón de guardado -->
+    <div class="form-row save-button-container">
+      <button
+        pButton
+        type="button"
+        label="Guardar datos del viajero"
+        icon="pi pi-save"
+        [loading]="savingData"
+        [disabled]="!hasPendingChanges() || savingData"
+        (click)="saveDataManually()"
+        class="p-button-success save-button"
+        pTooltip="Guarda los cambios realizados en este viajero"
+        tooltipPosition="top">
+      </button>
+      <span *ngIf="!hasPendingChanges()" class="no-changes-message">
+        <i class="pi pi-check-circle"></i> No hay cambios pendientes
+      </span>
+    </div>
   </form>
 </div>
 

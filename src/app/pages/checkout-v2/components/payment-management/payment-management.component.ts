@@ -437,16 +437,7 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
       this.messageService.add({
         severity: 'info',
         summary: 'Procesando pago',
-        detail: 'Actualizando estado de la reservación...',
-        life: 3000,
-      });
-
-      await this.updateReservationStatusToPrebooked();
-
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Reserva actualizada',
-        detail: 'Estado de la reservación actualizado correctamente. Procesando pago...',
+        detail: 'Procesando su pago...',
         life: 3000,
       });
 
@@ -464,12 +455,8 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
       
       let errorMessage = 'Ha ocurrido un error inesperado. Por favor, inténtelo nuevamente.';
       
-      if (error instanceof Error) {
-        if (error.message.includes('estado')) {
-          errorMessage = 'Error al actualizar el estado de la reservación. El pago no se procesará.';
-        } else if (error.message.includes('pago')) {
-          errorMessage = 'Error al procesar el pago. La reservación se mantendrá en su estado actual.';
-        }
+      if (error instanceof Error && error.message.includes('pago')) {
+        errorMessage = 'Error al procesar el pago. Por favor, inténtelo nuevamente.';
       }
 
       this.messageService.add({
@@ -480,38 +467,6 @@ export class PaymentManagementComponent implements OnInit, OnDestroy, OnChanges,
       });
     } finally {
       this.paymentState.isLoading = false;
-    }
-  }
-
-  private async updateReservationStatusToPrebooked(): Promise<boolean> {
-    try {
-      const reservationStatus = await firstValueFrom(
-        this.reservationStatusService.getByCode('PREBOOKED')
-      );
-      
-      if (!reservationStatus || reservationStatus.length === 0) {
-        throw new Error('No se pudo obtener el estado PREBOOKED');
-      }
-
-      const success = await firstValueFrom(
-        this.reservationService.updateStatus(this.reservationId!, reservationStatus[0].id)
-      );
-
-      if (success) {
-        return true;
-      } else {
-        throw new Error('La actualización del estado falló');
-      }
-
-    } catch (error) {
-      console.error('❌ Error al actualizar estado de reservación:', error);
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error al guardar reserva',
-        detail: 'No se pudo actualizar el estado de la reservación.',
-        life: 5000,
-      });
-      throw error;
     }
   }
 

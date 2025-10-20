@@ -9,7 +9,7 @@ import {
   SimpleChanges,
 } from '@angular/core';
 import { Subject, forkJoin, of } from 'rxjs';
-import { takeUntil, catchError } from 'rxjs/operators';
+import { takeUntil, catchError, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { MessageService } from 'primeng/api';
 import {
   DepartureReservationFieldService,
@@ -88,9 +88,13 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
   showMoreFields: boolean = false;
   loadingUserData: boolean = false;
   savingData: boolean = false;
+  autoSaving: boolean = false;
 
   // Información personal del usuario autenticado
   currentPersonalInfo: PersonalInfo | null = null;
+
+  // Subject para guardado automático con debounce
+  private autoSave$ = new Subject<void>();
 
   // Fechas calculadas para cada campo
   travelerFieldDates: {
@@ -193,6 +197,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    this.autoSave$.complete();
   }
 
   /**
@@ -400,6 +405,9 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     this.calculateTravelerFieldDates();
 
     this.loading = false;
+
+    // Inicializar guardado automático
+    this.initializeAutoSave();
 
     // Validación inicial
     setTimeout(() => {
@@ -1250,6 +1258,79 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
    */
   private validateFormInRealTime(): void {
     this.dataUpdated.emit();
+  }
+
+  /**
+   * Inicializa el guardado automático del formulario
+   */
+  private initializeAutoSave(): void {
+    console.log('=== Guardado automático inicializado ===');
+    
+    // Subscribirse a cambios del formulario con debounce de 2 segundos
+    this.travelerForm.valueChanges
+      .pipe(
+        debounceTime(2000),  // Esperar 2 segundos después del último cambio
+        distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr)),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => {
+        console.log('[AutoSave] Cambios detectados, iniciando guardado automático...');
+        this.performAutoSave();
+      });
+
+    // También subscribirse al Subject de autoguardado manual
+    this.autoSave$
+      .pipe(
+        debounceTime(2000),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => {
+        this.performAutoSave();
+      });
+  }
+
+  /**
+   * Ejecuta el guardado automático
+   */
+  private async performAutoSave(): Promise<void> {
+    // No auto-guardar si ya está guardando manualmente
+    if (this.savingData || this.loading) {
+      console.log('[AutoSave] Ya hay un guardado en curso, saltando...');
+      return;
+    }
+
+    // Verificar si hay cambios pendientes
+    if (!this.hasPendingChanges()) {
+      console.log('[AutoSave] No hay cambios pendientes');
+      return;
+    }
+
+    console.log('[AutoSave] Ejecutando guardado automático...');
+    this.autoSaving = true;
+
+    try {
+      await this.saveData();
+      console.log('[AutoSave] ✅ Guardado automático completado');
+      
+      // Toast sutil para no molestar al usuario
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Guardado automático',
+        detail: 'Tus cambios han sido guardados',
+        life: 2000,
+      });
+    } catch (error) {
+      console.error('[AutoSave] Error en guardado automático:', error);
+      
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error al guardar',
+        detail: 'No se pudieron guardar los cambios automáticamente',
+        life: 4000,
+      });
+    } finally {
+      this.autoSaving = false;
+    }
   }
 
   /**

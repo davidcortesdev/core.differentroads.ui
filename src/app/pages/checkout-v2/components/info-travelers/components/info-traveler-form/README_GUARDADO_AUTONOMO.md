@@ -1,8 +1,8 @@
-# Guardado Autónomo del Componente Info-Traveler-Form
+# Guardado Automático del Componente Info-Traveler-Form
 
 ## 📝 Descripción
 
-El componente `InfoTravelerFormComponent` ahora es **completamente autónomo** y gestiona su propio guardado de datos mediante un botón dedicado.
+El componente `InfoTravelerFormComponent` ahora tiene **guardado automático inteligente** que guarda los cambios automáticamente después de 2 segundos de inactividad, además de un botón manual para guardar inmediatamente.
 
 ## ✅ Implementación
 
@@ -64,7 +64,67 @@ if (currentValue && currentValue !== existingValue) {
 | Sin cambios | ❌ No | "Jaime" | "Jaime" | ❌ No |
 | Campo vacío | ❌ No | "" | "" | ❌ No |
 
-### 3. Flujo de Guardado
+### 3. Guardado Automático (AutoSave) ⭐ NUEVO
+
+El componente ahora guarda automáticamente los cambios después de 2 segundos de inactividad.
+
+#### Funcionamiento:
+
+```typescript
+initializeAutoSave() {
+  this.travelerForm.valueChanges
+    .pipe(
+      debounceTime(2000),  // Espera 2 segundos sin cambios
+      distinctUntilChanged()  // Solo si los valores cambiaron realmente
+    )
+    .subscribe(() => {
+      performAutoSave();  // Guarda automáticamente
+    });
+}
+```
+
+#### Características:
+
+- ⏱️ **Debounce de 2 segundos**: Espera que el usuario deje de escribir
+- 🔍 **Detección de cambios reales**: Solo guarda si los valores cambiaron
+- 🚫 **No interfiere con guardado manual**: Si ya está guardando, espera
+- 💾 **Toast sutil**: Notifica discretamente cuando guarda
+- 📊 **Logs completos**: Debugging detallado en consola
+
+#### Flujo:
+
+```
+Usuario escribe "Jaime"
+         ↓
+Usuario deja de escribir
+         ↓
+Espera 2 segundos... ⏱️
+         ↓
+[AutoSave] Cambios detectados
+         ↓
+performAutoSave()
+         ↓
+Guarda en BD automáticamente
+         ↓
+Toast: "Tus cambios han sido guardados" (2 seg)
+         ↓
+markAsPristine()
+         ↓
+Botón "Guardar" se deshabilita
+```
+
+#### Indicador Visual:
+
+```html
+<span class="autosaving-indicator">
+  <i class="pi pi-spin pi-spinner"></i>
+  Guardando automáticamente...
+</span>
+```
+
+Se muestra en el header mientras guarda automáticamente.
+
+### 4. Flujo de Guardado Manual
 
 ```typescript
 Usuario modifica un campo

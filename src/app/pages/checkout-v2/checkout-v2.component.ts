@@ -643,35 +643,13 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   /**
    * Maneja los cambios de asignación de actividades por viajero
    */
-  async onActivitiesAssignmentChange(event: {
-    travelerId: number;
-    activityId: number;
-    isAssigned: boolean;
-    activityName: string;
-    activityPrice: number;
-  }): Promise<void> {
-    // Inicializar el objeto para el viajero si no existe
-    if (!this.travelerActivities[event.travelerId]) {
-      this.travelerActivities[event.travelerId] = {};
-    }
-
-    // Actualizar el estado de la actividad para el viajero
-    this.travelerActivities[event.travelerId][event.activityId] =
-      event.isAssigned;
-
-    // Actualizar el conteo de actividades por actividad
-    this.updateActivitiesByTraveler(
-      event.activityId,
-      event.activityName,
-      event.activityPrice
-    );
-
-    // Forzar detección de cambios
-    this.cdr.detectChanges();
-
+  onActivitiesAssignmentChange(): void {
+    // Solo notificar que se ha actualizado - el componente hijo maneja su propio estado
+    console.log('Actividades actualizadas');
+    
     // ✅ Esperar a que terminen guardados pendientes en actividades antes de refrescar
     try {
-      await this.activitiesOptionals?.waitForPendingSaves?.();
+      this.activitiesOptionals?.waitForPendingSaves?.();
     } catch (err) {
       console.error('❌ Error esperando guardados de actividades:', err);
     }

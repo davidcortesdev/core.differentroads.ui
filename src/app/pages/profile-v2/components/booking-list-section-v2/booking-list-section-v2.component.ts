@@ -91,23 +91,18 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
    * Incluye reservas donde el usuario es titular + reservas donde aparece como viajero
    */
   private loadActiveBookings(userId: number): void {
-    // Obtener email del usuario actual
-    const userEmail = this.authService.getUserEmailValue();
-    
-    if (!userEmail) {
-      console.warn('No se pudo obtener el email del usuario');
-      this.bookingItems = [];
-      this.loading = false;
-      return;
-    }
+    this.authService.getUserEmail().subscribe(userEmail => {
+      if (!userEmail) {
+        this.bookingItems = [];
+        this.loading = false;
+        return;
+      }
 
-    // Combinar reservas del usuario como titular + reservas donde aparece como viajero
-    forkJoin({
-      userReservations: this.bookingsService.getActiveBookings(userId),
-      travelerReservations: this.bookingsService.getActiveBookingsByTravelerEmail(userEmail)
-    }).pipe(
+      forkJoin({
+        userReservations: this.bookingsService.getActiveBookings(userId),
+        travelerReservations: this.bookingsService.getActiveBookingsByTravelerEmail(userEmail)
+      }).pipe(
       switchMap(({ userReservations, travelerReservations }) => {
-        // Combinar y eliminar duplicados basándose en el ID de reserva
         const allReservations = [...userReservations, ...travelerReservations];
         const uniqueReservations = allReservations.filter((reservation, index, self) => 
           index === self.findIndex(r => r.id === reservation.id)
@@ -158,16 +153,17 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
         });
         return of([]);
       })
-    ).subscribe({
-      next: (bookingItems: BookingItem[]) => {
-        this.bookingItems = bookingItems;
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Error en la suscripción:', error);
-        this.bookingItems = [];
-        this.loading = false;
-      }
+      ).subscribe({
+        next: (bookingItems: BookingItem[]) => {
+          this.bookingItems = bookingItems;
+          this.loading = false;
+        },
+        error: (error) => {
+          console.error('Error obteniendo reservas activas:', error);
+          this.bookingItems = [];
+          this.loading = false;
+        }
+      });
     });
   }
 
@@ -557,9 +553,7 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       const balance = await this.pointsService.getLoyaltyBalance(cognitoSub);
       this.userPoints = balance.availablePoints;
       
-      console.log('✅ Puntos cargados:', this.userPoints);
     } catch (error) {
-      console.error('❌ Error cargando puntos del usuario:', error);
       this.userPoints = 0;
     }
   }
@@ -618,8 +612,6 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
         return;
       }
 
-      console.log('🔄 Aplicando puntos:', { reservationId, cognitoSub, pointsToUse: this.pointsToUse });
-
       // Llamar al servicio para canjear puntos
       const result = await this.pointsService.redeemPointsForReservation(
         reservationId,
@@ -646,7 +638,7 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       }
 
     } catch (error) {
-      console.error('❌ Error aplicando puntos:', error);
+      console.error('Error aplicando puntos:', error);
       this.applyingPoints = false;
       this.messageService.add({
         severity: 'error',

@@ -367,6 +367,9 @@ export class NewReservationComponent implements OnInit {
           // Disparar evento purchase cuando se visita la página de gracias tras compra exitosa
           this.trackPurchase();
 
+          // Generar puntos después del pago exitoso
+          this.generatePointsAfterPayment();
+
           // Si el pago está completado, verificar y reservar vuelos Amadeus
           setTimeout(() => {
             this.checkAndBookAmadeusFlight();
@@ -776,7 +779,7 @@ export class NewReservationComponent implements OnInit {
   }
 
   /**
-   * Genera puntos después del pago exitoso (3% del PVP)
+   * Genera puntos después del pago exitoso (3% del PVP) y cambia el estado de la reserva a BOOKED
    */
   private async generatePointsAfterPayment(): Promise<void> {
     try {
@@ -786,21 +789,24 @@ export class NewReservationComponent implements OnInit {
         return;
       }
 
-      // Obtener el cognito:sub del usuario principal
+      // 1. Cambiar estado de la reserva a BOOKED (5)
+      await this.updateReservationStatusToBooked();
+
+      // 2. Obtener el cognito:sub del usuario principal
       const cognitoSub = this.authService.getCognitoIdValue();
       if (!cognitoSub) {
         console.warn('No se puede generar puntos: usuario no autenticado');
         return;
       }
 
-      // Calcular puntos (3% del PVP)
+      // 3. Calcular puntos (3% del PVP)
       const pointsToGenerate = Math.floor(this.reservation.totalAmount * 0.03);
 
       if (pointsToGenerate <= 0) {
         return;
       }
 
-      // Crear transacción de acumulación de puntos
+      // 4. Crear transacción de acumulación de puntos
       const transaction = {
         travelerId: cognitoSub,
         points: pointsToGenerate,
@@ -812,7 +818,7 @@ export class NewReservationComponent implements OnInit {
 
       await this.pointsService.createLoyaltyTransaction(transaction);
 
-      // Mostrar mensaje al usuario
+      // 5. Mostrar mensaje al usuario
       this.messageService.add({
         severity: 'success',
         summary: 'Puntos generados',
@@ -823,6 +829,27 @@ export class NewReservationComponent implements OnInit {
     } catch (error) {
       console.error('Error generando puntos:', error);
       // No mostrar error al usuario para no interrumpir el flujo de pago
+    }
+  }
+
+  /**
+   * Actualiza el estado de la reserva a BOOKED (5) después del pago exitoso
+   */
+  private async updateReservationStatusToBooked(): Promise<void> {
+    try {
+      if (!this.reservation?.id) {
+        console.warn('No se puede actualizar estado: falta reservationId');
+        return;
+      }
+
+      // Cambiar estado a BOOKED (5)
+      await this.reservationService.updateStatus(this.reservation.id, 5).toPromise();
+      
+      console.log(`Reserva ${this.reservation.id} actualizada a estado BOOKED (5)`);
+      
+    } catch (error) {
+      console.error('Error actualizando estado de reserva a BOOKED:', error);
+      // No lanzar error para no interrumpir el flujo de pago
     }
   }
 }

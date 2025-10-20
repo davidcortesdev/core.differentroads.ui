@@ -169,76 +169,8 @@ h3.title {
   }
 }
 
-// ============================================
-// Campos de formulario
-// ============================================
-.form-field {
-  margin-bottom: 10px;
-  font-size: 14px;
-  position: relative;
-
-  label {
-    display: block;
-    margin-bottom: 5px;
-    color: $primary-color;
-  }
-
-  .field-container {
-    position: relative;
-    display: flex;
-    align-items: center;
-
-    input,
-    p-autocomplete,
-    p-calendar,
-    p-select,
-    p-datepicker {
-      width: 100%;
-      flex: 1;
-    }
-  }
-
-  input,
-  p-autocomplete,
-  p-calendar,
-  p-select,
-  p-datepicker {
-    width: 100%;
-  }
-
-  // Estados de validación
-  &.field-valid .field-container {
-    input,
-    .p-inputtext {
-      border-bottom: 2px solid $success-color !important;
-    }
-  }
-
-  &.field-invalid .field-container {
-    input,
-    .p-inputtext {
-      border-bottom: 2px solid $error-color !important;
-      background-color: rgba($error-color, 0.05) !important;
-    }
-  }
-}
-
-// ============================================
-// Checkbox
-// ============================================
-.checkbox-field {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin-bottom: 15px;
-
-  .checkbox-label {
-    margin-bottom: 0;
-    cursor: pointer;
-    line-height: 1.4;
-    font-size: 14px;
-  }
-}
+// Nota: Los estilos de .form-field y .checkbox-field
+// ahora están en traveler-field.component.scss
 
 // ============================================
 // Actividades de viajero

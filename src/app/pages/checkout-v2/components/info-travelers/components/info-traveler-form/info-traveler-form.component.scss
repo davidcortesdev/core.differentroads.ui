@@ -1,190 +1,185 @@
-:root {
-  --form-spacing: 10px;
-  --mobile-breakpoint: 768px;
+// ============================================
+// Variables
+// ============================================
+$mobile-breakpoint: 768px;
+$tablet-breakpoint: 577px;
+$small-mobile: 480px;
+
+// Colores
+$primary-color: var(--background-azul);
+$info-color: #0d6efd;
+$error-color: #dc3545;
+$background-light: #f8f9fa;
+$text-muted: #495057;
+
+// ============================================
+// Mixins
+// ============================================
+@mixin mobile {
+  @media (max-width: $mobile-breakpoint) {
+    @content;
+  }
 }
 
+@mixin tablet-up {
+  @media (min-width: $tablet-breakpoint) {
+    @content;
+  }
+}
+
+// ============================================
+// Host
+// ============================================
 :host {
   display: block;
   width: 100%;
 }
 
+// ============================================
+// Traveler Form Container
+// ============================================
 .traveler-form-container {
   width: 100%;
 }
 
+// ============================================
+// Traveler Header
+// ============================================
 .traveler-header {
   margin-bottom: 15px;
-  
+
   .user-button {
     display: inline-block;
     margin-bottom: 10px;
   }
-  
+
   .user-description {
     font-size: 14px;
-    color: var(--background-azul);
+    color: $primary-color;
     line-height: 1.5;
-    
+
     .info-icon {
       margin-right: 5px;
-      color: #0d6efd;
+      color: $info-color;
+    }
+
+    strong {
+      font-weight: 600;
     }
   }
 }
 
+// ============================================
+// Traveler Form (solo layout)
+// ============================================
 .traveler-form {
   margin-top: 15px;
   width: 100%;
-  
+
   .form-section {
     margin-bottom: 1rem;
   }
-  
+
   .form-row {
     display: flex;
     justify-content: space-between;
     margin-bottom: 15px;
     flex-wrap: wrap;
     gap: 10px;
-    flex-direction: row;
-    
-    @media (max-width: var(--mobile-breakpoint)) {
+
+    @include mobile {
       flex-direction: column;
     }
+
+    @include tablet-up {
+      flex-direction: row !important;
+    }
   }
-  
+
   .form-column {
     flex: 1;
     margin-right: 10px;
-    
+
     &:last-child {
       margin-right: 0;
     }
-    
-    @media (max-width: var(--mobile-breakpoint)) {
+
+    @include mobile {
       margin-right: 0;
     }
-    
+
     &.half-width {
       flex: 0 0 48%;
       max-width: 48%;
-      
-      @media (max-width: 480px) {
-        flex: 0 0 100%;
-        max-width: 100%;
-      }
-      
-      @media (max-width: var(--mobile-breakpoint)) {
+
+      @include mobile {
         flex: 1 1 100%;
         margin-right: 0;
       }
+
+      @include tablet-up {
+        flex: 0 0 48% !important;
+        max-width: 48% !important;
+      }
     }
-    
+
     &.full-width {
       flex: 0 0 100%;
       max-width: 100%;
+
+      @include tablet-up {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+      }
     }
   }
 }
 
-.form-field {
-  margin-bottom: 10px;
-  font-size: 14px;
-  position: relative;
-  
-  label {
-    display: block;
-    margin-bottom: 5px;
-    color: var(--background-azul);
-  }
-  
-  .field-container {
-    position: relative;
-    display: flex;
-    align-items: center;
-    
-    input, p-autocomplete, p-calendar, p-select, p-datepicker {
-      width: 100%;
-      flex: 1;
-    }
-  }
-  
-  input, p-autocomplete, p-calendar, p-select, p-datepicker {
-    width: 100%;
-  }
-  
-  &.checkbox-field {
-    display: flex;
-    align-items: center;
-    margin-bottom: 15px;
-    
-    .checkbox-label {
-      margin-left: 10px;
-      margin-bottom: 0;
-      cursor: pointer;
-      font-size: 14px;
-    }
-  }
-  
-  &.field-valid .field-container input,
-  &.field-valid .field-container .p-inputtext {
-    border-bottom: 2px solid #28a745 !important;
-  }
-  
-  &.field-invalid .field-container input,
-  &.field-invalid .field-container .p-inputtext {
-    border-bottom: 2px solid #dc3545 !important;
-    background-color: rgba(220, 53, 69, 0.05) !important;
-  }
-}
-
-.checkbox-field {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  
-  .checkbox-label {
-    margin-bottom: 0;
-    cursor: pointer;
-    line-height: 1.4;
-  }
-}
-
+// ============================================
+// Show More Button
+// ============================================
 .show-more-button {
   margin-top: -10px;
   margin-left: -1px;
-  color: var(--background-azul);
+  color: $primary-color;
   font-size: 0.9rem;
-  
+
   &:hover {
     background-color: rgba(0, 0, 0, 0.04);
   }
 }
 
+// ============================================
+// Datos Adicionales Info
+// ============================================
 .datos-adicionales-info {
   margin: 10px 0;
   padding: 10px;
-  background-color: #f8f9fa;
-  border-left: 3px solid #0d6efd;
+  background-color: $background-light;
+  border-left: 3px solid $info-color;
   border-radius: 4px;
-  
+
   .mensaje-info {
     margin: 0;
     font-size: 14px;
-    color: #495057;
+    color: $text-muted;
     line-height: 1.5;
-    
+
     .icono-info {
       margin-right: 5px;
-      color: #0d6efd;
+      color: $info-color;
     }
-    
+
     strong {
-      color: var(--background-azul);
+      color: $primary-color;
+      font-weight: 600;
     }
   }
 }
 
+// ============================================
+// Additional Fields con animación
+// ============================================
 .additional-fields {
   margin-top: 15px;
   animation: fadeIn 0.3s ease-in-out;
@@ -201,6 +196,9 @@
   }
 }
 
+// ============================================
+// Loading & Error States
+// ============================================
 .loading-indicator,
 .error-message {
   display: flex;
@@ -208,36 +206,18 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  
+
   p {
     margin-top: 10px;
-    color: var(--background-azul);
+    color: $primary-color;
   }
 }
 
 .error-message {
-  color: #dc3545;
-  
-  p {
-    color: #dc3545;
-  }
-}
+  color: $error-color;
 
-@media (min-width: 577px) {
-  .traveler-form .form-row {
-    display: flex;
-    flex-direction: row !important;
-    flex-wrap: wrap;
-  }
-  
-  .traveler-form .form-column.half-width {
-    flex: 0 0 48% !important;
-    max-width: 48% !important;
-  }
-  
-  .traveler-form .form-column.full-width {
-    flex: 0 0 100% !important;
-    max-width: 100% !important;
+  p {
+    color: $error-color;
   }
 }
 

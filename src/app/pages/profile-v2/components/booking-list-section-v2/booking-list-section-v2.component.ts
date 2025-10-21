@@ -477,7 +477,17 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
     if (this.listType === 'active-bookings') {
       this.router.navigate(['bookings', item.id]);
     } else if (this.listType === 'recent-budgets') {
-      this.router.navigate(['/checkout', item.id]);
+      // Para presupuestos, navegar al tour en lugar del checkout
+      if (item.tourID) {
+        this.router.navigate(['/tour', item.tourID]);
+      } else {
+        console.warn('No se encontró tourID para el presupuesto:', item);
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Información',
+          detail: 'No se pudo encontrar el tour asociado a este presupuesto.',
+        });
+      }
     }
   }
 

@@ -2045,21 +2045,33 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
       // Verificar autenticación para pasos que la requieren (solo en modo normal)
       if (targetStep >= 2) {
-        return new Promise((resolve) => {
-          this.authService.isLoggedIn().subscribe(async (isLoggedIn) => {
-            if (!isLoggedIn) {
-              // Usuario no está logueado, mostrar modal
-              sessionStorage.setItem('redirectUrl', window.location.pathname);
-              this.loginDialogVisible = true;
-              resolve();
-              return;
+        // ✅ MEJORADO: El servicio ahora espera automáticamente a que termine la verificación inicial
+        const isLoggedIn = await new Promise<boolean>((resolve) => {
+          const subscription = this.authService.isLoggedIn().subscribe({
+            next: (loggedIn) => {
+              resolve(loggedIn);
+              subscription.unsubscribe();
+            },
+            error: (error) => {
+              console.error('❌ Error al verificar autenticación:', error);
+              // En caso de error, asumir que no está logueado por seguridad
+              resolve(false);
+              subscription.unsubscribe();
             }
-            // Usuario está logueado, actualizar variable local y continuar con la validación normal
-            this.isAuthenticated = true;
-            await this.performStepValidation(targetStep);
-            resolve();
           });
         });
+
+        if (!isLoggedIn) {
+          // Usuario no está logueado, mostrar modal
+          sessionStorage.setItem('redirectUrl', window.location.pathname);
+          this.loginDialogVisible = true;
+          return;
+        }
+        
+        // Usuario está logueado, actualizar variable local y continuar con la validación normal
+        this.isAuthenticated = true;
+        await this.performStepValidation(targetStep);
+        return;
       }
 
       // Para el paso 0 (personalizar viaje) y paso 1 (vuelos), no se requiere autenticación
@@ -2284,29 +2296,41 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
-    // Lógica normal para modo no-standalone
-    this.authService.isLoggedIn().subscribe(async (isLoggedIn) => {
-      if (isLoggedIn) {
-        // Usuario está logueado, proceder normalmente
-        if (useFlightless) {
-          // Lógica para continuar sin vuelos - guardar como vuelo seleccionado
-          await this.handleFlightlessSelection();
-          await this.nextStepWithValidation(nextStep);
-        } else {
-          // Lógica normal
-          await this.nextStepWithValidation(nextStep);
+    // ✅ MEJORADO: El servicio ahora espera automáticamente a que termine la verificación inicial
+    const isLoggedIn = await new Promise<boolean>((resolve) => {
+      const subscription = this.authService.isLoggedIn().subscribe({
+        next: (loggedIn) => {
+          resolve(loggedIn);
+          subscription.unsubscribe();
+        },
+        error: (error) => {
+          console.error('❌ Error al verificar autenticación:', error);
+          resolve(false);
+          subscription.unsubscribe();
         }
-        // Solo llamar al callback si la validación fue exitosa
-        // La validación se maneja dentro de nextStepWithValidation
-      } else {
-        // Usuario no está logueado, mostrar modal
-        // Guardar la URL actual con el step en sessionStorage
-        const currentUrl = window.location.pathname;
-        const redirectUrl = `${currentUrl}?step=${this.activeIndex}`;
-        sessionStorage.setItem('redirectUrl', redirectUrl);
-        this.loginDialogVisible = true;
-      }
+      });
     });
+
+    if (isLoggedIn) {
+      // Usuario está logueado, proceder normalmente
+      if (useFlightless) {
+        // Lógica para continuar sin vuelos - guardar como vuelo seleccionado
+        await this.handleFlightlessSelection();
+        await this.nextStepWithValidation(nextStep);
+      } else {
+        // Lógica normal
+        await this.nextStepWithValidation(nextStep);
+      }
+      // Solo llamar al callback si la validación fue exitosa
+      // La validación se maneja dentro de nextStepWithValidation
+    } else {
+      // Usuario no está logueado, mostrar modal
+      // Guardar la URL actual con el step en sessionStorage
+      const currentUrl = window.location.pathname;
+      const redirectUrl = `${currentUrl}?step=${this.activeIndex}`;
+      sessionStorage.setItem('redirectUrl', redirectUrl);
+      this.loginDialogVisible = true;
+    }
   }
 
   /**

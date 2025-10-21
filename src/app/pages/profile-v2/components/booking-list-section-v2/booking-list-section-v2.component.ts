@@ -21,7 +21,6 @@ import {
   INotification,
 } from '../../../../core/services/documentation/notification.service';
 import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
-import { PointsV2Service } from '../../../../core/services/v2/points-v2.service';
 import { switchMap, map, catchError, of, forkJoin } from 'rxjs';
 
 @Component({
@@ -46,13 +45,6 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   notificationsLoading: { [key: string]: boolean } = {};
   documents: { [key: string]: IDocumentReservationResponse[] } = {};
   notifications: { [key: string]: INotification[] } = {};
-
-  // Propiedades para el modal de puntos
-  pointsModalVisible: boolean = false;
-  selectedBookingItem: BookingItem | null = null;
-  userPoints: number = 0;
-  pointsToUse: number = 0;
-  applyingPoints: boolean = false;
 
   constructor(
     private router: Router,
@@ -613,131 +605,6 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
 
   getReserveLabel(): string {
     return 'Reservar';
-  }
-
-  // ===== MÉTODOS PARA CANJE DE PUNTOS =====
-
-  /**
-   * Determina si debe mostrar el botón de usar puntos
-   */
-  shouldShowUsePoints(): boolean {
-    return this.listType === 'active-bookings';
-  }
-
-  /**
-   * Abre el modal para usar puntos
-   */
-  openPointsModal(item: BookingItem): void {
-    this.selectedBookingItem = item;
-    this.pointsToUse = 0;
-    this.pointsModalVisible = true;
-
-    // Cargar puntos del usuario
-    this.loadUserPoints();
-  }
-
-  /**
-   * Cierra el modal de puntos
-   */
-  closePointsModal(): void {
-    this.pointsModalVisible = false;
-    this.selectedBookingItem = null;
-    this.pointsToUse = 0;
-  }
-
-  /**
-   * Carga los puntos disponibles del usuario
-   */
-  private async loadUserPoints(): Promise<void> {
-    try {
-      // Obtener el cognito:sub del usuario actual
-      const cognitoSub = this.authService.getCognitoIdValue();
-      if (!cognitoSub) {
-        console.warn('No se pudo obtener el cognito:sub del usuario');
-        this.userPoints = 0;
-        return;
-      }
-
-      // Obtener saldo de puntos del usuario
-      const balance = await this.pointsService.getLoyaltyBalance(cognitoSub);
-      this.userPoints = balance.availablePoints;
-      
-    } catch (error) {
-      this.userPoints = 0;
-    }
-  }
-
-  /**
-   * Calcula el nuevo total después del descuento
-   */
-  calculateNewTotal(): number {
-    if (!this.selectedBookingItem || !this.selectedBookingItem.price) {
-      return 0;
-    }
-    return Math.max(0, this.selectedBookingItem.price - this.pointsToUse);
-  }
-
-  /**
-   * Verifica si se pueden aplicar los puntos
-   */
-  canApplyPoints(): boolean {
-    return (
-      this.pointsToUse > 0 &&
-      this.pointsToUse <= this.userPoints &&
-      this.pointsToUse <= (this.selectedBookingItem?.price || 0)
-    );
-  }
-
-  /**
-   * Aplica los puntos a la reserva
-   */
-  async applyPoints(): Promise<void> {
-    if (!this.canApplyPoints() || !this.selectedBookingItem) {
-      return;
-    }
-
-    this.applyingPoints = true;
-
-    try {
-      // Obtener el cognito:sub del usuario actual
-      const cognitoSub = this.authService.getCognitoIdValue();
-      if (!cognitoSub) {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'No se pudo identificar al usuario'
-        });
-        this.applyingPoints = false;
-        return;
-      }
-
-      // Obtener el ID de la reserva del BookingItem
-      const reservationId = parseInt(this.selectedBookingItem.id, 10);
-      if (!reservationId || isNaN(reservationId)) {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'No se pudo identificar la reserva'
-        });
-        this.applyingPoints = false;
-        return;
-      }
-
-      // Llamar al servicio para canjear puntos
-      const result = await this.pointsService.redeemPointsForReservation(
-        reservationId,
-        cognitoSub,
-        this.pointsToUse
-      );
-
-      this.applyingPoints = false;
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Puntos aplicados',
-        detail: `Se han aplicado ${this.pointsToUse} puntos a la reserva`,
-      });
-      this.closePointsModal();
-    }, 2000);
   }
 
   // ===== MÉTODOS PARA DOCUMENTACIÓN Y NOTIFICACIONES =====

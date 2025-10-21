@@ -31,6 +31,10 @@ export class AuthenticateService {
   // Nuevo BehaviorSubject para mantener el Cognito ID del usuario actual
   private currentUserCognitoId = new BehaviorSubject<string>('');
 
+  // ✅ NUEVO: Promise que se resuelve cuando termina la verificación inicial de autenticación
+  private authCheckPromise: Promise<void>;
+  private authCheckResolve!: () => void;
+
   userAttributesChanged: Subject<void> = new Subject<void>();
 
   constructor(
@@ -41,6 +45,11 @@ export class AuthenticateService {
     this.userPool = new CognitoUserPool({
       UserPoolId: environment.cognitoUserPoolId,
       ClientId: environment.cognitoAppClientId,
+    });
+
+    // ✅ NUEVO: Inicializar la Promise que se resolverá cuando termine checkAuthStatus
+    this.authCheckPromise = new Promise((resolve) => {
+      this.authCheckResolve = resolve;
     });
 
     // Comprobar el estado de autenticación al iniciar el servicio
@@ -72,12 +81,36 @@ export class AuthenticateService {
     } catch (error) {
       console.error('Error checking auth status:', error);
       this.isAuthenticated.next(false);
+    } finally {
+      // ✅ NUEVO: Resolver la Promise cuando termine la verificación (exitosa o fallida)
+      this.authCheckResolve();
     }
   }
 
+  // ✅ NUEVO: Método público para esperar a que termine la verificación inicial
+  async waitForAuthCheck(): Promise<void> {
+    return this.authCheckPromise;
+  }
+
   // Obtener el estado de autenticación como Observable
+  // ✅ MEJORADO: Ahora espera a que termine la verificación inicial
   isLoggedIn(): Observable<boolean> {
-    return this.isAuthenticated.asObservable();
+    return new Observable<boolean>(observer => {
+      // Esperar a que termine la verificación inicial
+      this.authCheckPromise.then(() => {
+        // Una vez completada, suscribirse al BehaviorSubject
+        const subscription = this.isAuthenticated.subscribe(value => {
+          observer.next(value);
+        });
+        
+        // Devolver función de cleanup
+        return () => subscription.unsubscribe();
+      }).catch(error => {
+        console.error('Error en verificación de autenticación:', error);
+        observer.next(false);
+        observer.complete();
+      });
+    });
   }
 
   // Obtener el email del usuario actual como Observable

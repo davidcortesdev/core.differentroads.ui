@@ -346,15 +346,27 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     this.departureReservationFields.forEach((field) => {
       const fieldDetails = this.getReservationFieldDetails(field.reservationFieldId);
       if (fieldDetails) {
-        // Para el viajero líder, usar datos del usuario autenticado
         let controlValue: string | Date | null = null;
         
-        if (this.traveler!.isLeadTraveler && this.currentPersonalInfo) {
-          controlValue = this.getUserDataForField(fieldDetails);
-          console.log(`[PRE-LLENADO] Campo: ${fieldDetails.code}, Nombre: ${fieldDetails.name}, Tipo: ${fieldDetails.fieldType}, Valor obtenido: "${controlValue}"`);
+        // 1️⃣ PRIMERO: Intentar cargar datos existentes de la BD
+        const existingValue = this.getExistingFieldValue(this.traveler!.id, fieldDetails.id);
+        
+        if (existingValue) {
+          // Si hay datos en BD, usarlos (tienen prioridad)
+          controlValue = existingValue;
+          console.log(`[BD] Campo: ${fieldDetails.code} → Valor de BD: "${controlValue}"`);
+        } else if (this.traveler!.isLeadTraveler && this.currentPersonalInfo) {
+          // 2️⃣ SEGUNDO: Si NO hay datos en BD Y es lead traveler, prellenar del perfil
+          const userValue = this.getUserDataForField(fieldDetails);
+          if (userValue) {
+            controlValue = userValue;
+            console.log(`[PERFIL] Campo: ${fieldDetails.code} → Pre-llenado desde perfil: "${controlValue}"`);
+          } else {
+            console.log(`[VACÍO] Campo: ${fieldDetails.code} → Sin datos en BD ni en perfil`);
+          }
         } else {
-          controlValue = this.getExistingFieldValue(this.traveler!.id, fieldDetails.id);
-          console.log(`[EXISTING] Campo: ${fieldDetails.code}, Valor existente: "${controlValue}"`);
+          // 3️⃣ TERCERO: No hay datos en BD y no es lead traveler (o no hay perfil)
+          console.log(`[VACÍO] Campo: ${fieldDetails.code} → Sin datos`);
         }
 
         // Para campos de fecha, convertir string a Date si es necesario

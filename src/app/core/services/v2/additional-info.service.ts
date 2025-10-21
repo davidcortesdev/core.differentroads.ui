@@ -538,37 +538,68 @@ export class AdditionalInfoService {
   /**
    * Envía el presupuesto por email a través del backend
    * 
-   * Endpoint: POST /api/budgets/share
-   * Descripción: Comparte un presupuesto con otra persona mediante email
+   * 📋 TODO: CONECTAR CON ENDPOINT DEL BACKEND
    * 
-   * @param budgetData Datos del presupuesto y destinatario
+   * Endpoint esperado: POST /api/budgets/share
+   * Request body: { 
+   *   tourId: string,
+   *   periodId: string, 
+   *   travelersData: object,
+   *   recipientEmail: string,
+   *   message?: string 
+   * }
+   * Response: { success: boolean, message: string, data: object }
+   * 
+   * Implementación actual: Mock que simula el envío exitoso
+   * Implementación pendiente: Descomentar el código que hace la llamada real al endpoint
+   * 
+   * @param budgetData Datos del presupuesto y email del destinatario
    * @returns Observable con la respuesta del servidor
    */
   sendBudgetByEmail(budgetData: any): Observable<any> {
-    return of({
-      success: true,
-      message: 'Email enviado correctamente',
-      data: { id: 'share_' + Date.now(), status: 'sent' }
-    });
-    
-    // TODO: Descomentar cuando el backend implemente el endpoint
+    // ✅ TODO: Implementar cuando el backend tenga disponible el endpoint POST /api/budgets/share
     /*
     return this.http.post(`${this.API_BASE_URL}/budgets/share`, budgetData).pipe(
       map((response: any) => ({
         success: true,
         message: 'Email enviado correctamente',
         data: response
-      }))
+      })),
+      catchError((error) => {
+        console.error('Error al enviar presupuesto por email:', error);
+        return of({
+          success: false,
+          message: 'Error al enviar el email. Inténtalo de nuevo.',
+          error: error
+        });
+      })
     );
     */
+    
+    // Placeholder temporal
+    return of({
+      success: false,
+      message: 'Funcionalidad pendiente de implementación'
+    });
   }
 
   /**
    * Descarga el presupuesto como PDF desde el backend
    * 
-   * Endpoint: POST /api/budgets/download
-   * Descripción: Genera y descarga un PDF del presupuesto
+   * 📋 TODO: CONECTAR CON ENDPOINT DEL BACKEND
+   * 
+   * Endpoint esperado: POST /api/budgets/download
+   * Request body: { 
+   *   tourId: string,
+   *   periodId: string,
+   *   travelersData: object,
+   *   totalPrice: number,
+   *   userEmail: string
+   * }
    * Response-Type: application/pdf (blob)
+   * 
+   * Implementación actual: Mock que simula la descarga de un PDF
+   * Implementación pendiente: Descomentar el código que hace la llamada real al endpoint
    * 
    * @param userEmail Email del usuario autenticado
    * @returns Observable con la respuesta del servidor
@@ -587,26 +618,7 @@ export class AdditionalInfoService {
     // Construcción de datos para la generación del PDF
     const downloadData = this.buildReservationData(null);
     
-    // Simular descarga de PDF
-    const fileName = `presupuesto-${this.tourId}-${Date.now()}.pdf`;
-    const mockContent = 'Presupuesto simulado - ' + new Date().toISOString();
-    const blob = new Blob([mockContent], { type: 'application/pdf' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-    
-    return of({
-      success: true,
-      message: 'Presupuesto descargado correctamente',
-      fileName: fileName
-    });
-    
-    // TODO: Descomentar cuando el backend implemente el endpoint
+    // ✅ TODO: Implementar cuando el backend tenga disponible el endpoint POST /api/budgets/download
     /*
     return this.http.post(`${this.API_BASE_URL}/budgets/download`, downloadData, { 
       responseType: 'blob' 
@@ -628,9 +640,23 @@ export class AdditionalInfoService {
           message: 'Presupuesto descargado correctamente',
           fileName: fileName
         };
+      }),
+      catchError((error) => {
+        console.error('Error al descargar presupuesto PDF:', error);
+        return of({
+          success: false,
+          message: 'Error al descargar el presupuesto. Inténtalo de nuevo.',
+          error: error
+        });
       })
     );
     */
+    
+    // Placeholder temporal
+    return of({
+      success: false,
+      message: 'Funcionalidad pendiente de implementación'
+    });
   }
 
   // ============================================

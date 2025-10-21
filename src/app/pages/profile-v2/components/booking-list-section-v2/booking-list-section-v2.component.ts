@@ -106,16 +106,49 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
    * Incluye reservas donde el usuario es titular + reservas donde aparece como viajero
    */
   private loadActiveBookings(userId: number): void {
-    // Obtener email del usuario actual
+    // Esperar hasta obtener el email del usuario con reintentos
+    this.waitForUserEmail(userId);
+  }
+
+  /**
+   * Espera hasta que el email del usuario esté disponible y luego carga las reservas
+   * Intenta hasta 10 veces con un delay de 300ms entre intentos
+   */
+  private waitForUserEmail(userId: number, attempt: number = 0): void {
+    const maxAttempts = 10;
+    const delayMs = 300;
+
     const userEmail = this.authService.getUserEmailValue();
 
-    if (!userEmail) {
-      console.warn('No se pudo obtener el email del usuario');
+    if (userEmail) {
+      // Email encontrado, proceder a cargar las reservas
+      console.log('✅ Email del usuario encontrado:', userEmail);
+      this.loadActiveBookingsWithEmail(userId, userEmail);
+    } else if (attempt < maxAttempts) {
+      // No se encontró el email, reintentar después del delay
+      console.log(`⏳ Esperando email del usuario (intento ${attempt + 1}/${maxAttempts})...`);
+      setTimeout(() => {
+        this.waitForUserEmail(userId, attempt + 1);
+      }, delayMs);
+    } else {
+      // Se alcanzó el máximo de intentos, mostrar error
+      console.error('❌ No se pudo obtener el email del usuario después de', maxAttempts, 'intentos');
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudo cargar las reservas. Por favor, recarga la página.',
+      });
       this.bookingItems = [];
       this.loading = false;
-      return;
     }
+  }
 
+  /**
+   * Carga las reservas activas una vez que el email está disponible
+   */
+  private loadActiveBookingsWithEmail(userId: number, userEmail: string): void {
+    console.log('🔍 DEBUG: loadActiveBookingsWithEmail llamado con userId:', userId, 'email:', userEmail);
+    
     // Combinar reservas del usuario como titular + reservas donde aparece como viajero
     forkJoin({
       userReservations: this.bookingsService.getActiveBookings(userId),
@@ -124,15 +157,23 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
     })
       .pipe(
         switchMap(({ userReservations, travelerReservations }) => {
+          console.log('📊 DEBUG: Reservas como titular:', userReservations.length);
+          console.log('📊 DEBUG: Reservas como viajero:', travelerReservations.length);
+          
           // Combinar y eliminar duplicados basándose en el ID de reserva
           const allReservations = [
             ...userReservations,
             ...travelerReservations,
           ];
+          
+          console.log('📊 DEBUG: Total combinado:', allReservations.length);
+          
           const uniqueReservations = allReservations.filter(
             (reservation, index, self) =>
               index === self.findIndex((r) => r.id === reservation.id)
           );
+          
+          console.log('📊 DEBUG: Después de eliminar duplicados:', uniqueReservations.length);
 
           if (uniqueReservations.length === 0) {
             return of([]);
@@ -210,16 +251,36 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
    * Incluye reservas donde el usuario es titular + reservas donde aparece como viajero
    */
   private loadTravelHistory(userId: number): void {
-    this.bookingsService
-      .getTravelHistory(userId)
+    const userEmail = this.authService.getUserEmailValue();
+    
+    if (!userEmail) {
+      this.bookingItems = [];
+      this.loading = false;
+      return;
+    }
+
+    forkJoin({
+      userReservations: this.bookingsService.getTravelHistory(userId),
+      travelerReservations: this.bookingsService.getTravelHistoryByTravelerEmail(userEmail)
+    })
       .pipe(
-        switchMap((reservations: ReservationResponse[]) => {
-          if (!reservations || reservations.length === 0) {
+        switchMap(({ userReservations, travelerReservations }) => {
+          const allReservations = [
+            ...userReservations,
+            ...travelerReservations
+          ];
+          
+          const uniqueReservations = allReservations.filter(
+            (reservation, index, self) =>
+              index === self.findIndex((r) => r.id === reservation.id)
+          );
+          
+          if (uniqueReservations.length === 0) {
             return of([]);
           }
 
           // Obtener información de tours y imágenes CMS para cada reserva
-          const tourPromises = reservations.map((reservation) =>
+          const tourPromises = uniqueReservations.map((reservation) =>
             forkJoin({
               tour: this.toursService.getTourById(reservation.tourId).pipe(
                 catchError((error) => {

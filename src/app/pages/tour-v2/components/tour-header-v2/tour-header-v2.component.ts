@@ -972,32 +972,32 @@ export class TourHeaderV2Component
     const reservationData: ReservationCreate = {
       id: 0,
       tkId: '',
-      reservationStatusId: 3, // 3 = BUDGET (presupuesto)
+      reservationStatusId: 1, // 1 = CART (carrito de compra)
       retailerId: environment.retaileriddefault,
       tourId: this.tourId!,
       departureId: this.selectedDeparture.id,
       userId: userId, // Usar el ID del usuario logueado o null
       totalPassengers: this.totalPassengers || 1,
       totalAmount: this.totalPriceWithActivities || 0,
-      budgetAt: new Date().toISOString(), // Fecha de creación del presupuesto
-      cartAt: '',
+      budgetAt: '',
+      cartAt: new Date().toISOString(), // Fecha de creación del carrito
       abandonedAt: '',
       reservedAt: '',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
-    console.log('📋 Intentando crear PRESUPUESTO con estado 3:', reservationData);
+    console.log('📋 Intentando crear RESERVA con estado 1 (CART):', reservationData);
 
     this.subscriptions.add(
       this.reservationService
         .create(reservationData)
         .pipe(
           switchMap((createdReservation: IReservationResponse) => {
-            console.log('✅ PRESUPUESTO creado exitosamente:', {
+            console.log('✅ RESERVA creada exitosamente:', {
               id: createdReservation.id,
               statusId: createdReservation.reservationStatusId,
-              budgetAt: createdReservation.budgetAt
+              cartAt: createdReservation.cartAt
             });
             const travelerObservables = [];
             let travelerNumber = 1;

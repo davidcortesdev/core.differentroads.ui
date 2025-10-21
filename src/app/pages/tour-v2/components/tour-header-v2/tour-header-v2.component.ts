@@ -972,26 +972,33 @@ export class TourHeaderV2Component
     const reservationData: ReservationCreate = {
       id: 0,
       tkId: '',
-      reservationStatusId: 1,
+      reservationStatusId: 3, // 3 = BUDGET (presupuesto)
       retailerId: environment.retaileriddefault,
       tourId: this.tourId!,
       departureId: this.selectedDeparture.id,
       userId: userId, // Usar el ID del usuario logueado o null
       totalPassengers: this.totalPassengers || 1,
       totalAmount: this.totalPriceWithActivities || 0,
-      budgetAt: '',
-      cartAt: new Date().toISOString(),
+      budgetAt: new Date().toISOString(), // Fecha de creación del presupuesto
+      cartAt: '',
       abandonedAt: '',
       reservedAt: '',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
+    console.log('📋 Intentando crear PRESUPUESTO con estado 3:', reservationData);
+
     this.subscriptions.add(
       this.reservationService
         .create(reservationData)
         .pipe(
           switchMap((createdReservation: IReservationResponse) => {
+            console.log('✅ PRESUPUESTO creado exitosamente:', {
+              id: createdReservation.id,
+              statusId: createdReservation.reservationStatusId,
+              budgetAt: createdReservation.budgetAt
+            });
             const travelerObservables = [];
             let travelerNumber = 1;
 
@@ -1000,7 +1007,7 @@ export class TourHeaderV2Component
               const isLeadTraveler = travelerNumber === 1;
 
               if (!this.ageGroupCategories.adults.id) {
-                console.error('❌ No se encontró age group para adultos');
+                console.error('No se encontró age group para adultos');
                 alert(
                   'Error: No se pudo determinar el grupo de edad para adultos.'
                 );
@@ -1025,7 +1032,7 @@ export class TourHeaderV2Component
             // Crear travelers para niños
             for (let i = 0; i < this.passengersData.children; i++) {
               if (!this.ageGroupCategories.children.id) {
-                console.error('❌ No se encontró age group para niños');
+                console.error('No se encontró age group para niños');
                 alert(
                   'Error: No se pudo determinar el grupo de edad para niños.'
                 );

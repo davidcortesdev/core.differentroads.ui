@@ -6,14 +6,69 @@ El componente `InfoTravelerFormComponent` tiene **guardado automático inteligen
 
 ---
 
+## 🔑 Orden de Prioridad de Datos
+
+Al inicializar el formulario, el componente sigue esta lógica de prioridad para cada campo:
+
+```
+1️⃣ PRIMERO: Datos guardados en ReservationTravelerField (Base de Datos)
+   ↓
+   ¿Existe valor en BD?
+   ↓
+   SÍ → ✅ Usar ese valor (PRIORIDAD MÁXIMA)
+   ↓
+   NO ↓
+   
+2️⃣ SEGUNDO: Datos del perfil del usuario (solo para Lead Traveler)
+   ↓
+   ¿Es Lead Traveler (Pasajero 1)?
+   ↓
+   SÍ → ✅ Pre-llenar desde perfil del usuario
+   ↓
+   NO ↓
+   
+3️⃣ TERCERO: Campo vacío
+   ✅ Dejar el campo sin valor
+```
+
+**Regla de oro**: Los datos guardados en la base de datos SIEMPRE tienen prioridad sobre los datos del perfil del usuario. El pre-llenado desde el perfil solo ocurre si el campo está vacío en BD.
+
+### 📚 Ejemplo Práctico
+
+**Escenario**: Lead Traveler con datos en BD y perfil de usuario
+
+```
+BD (ReservationTravelerField):
+  - Nombre: "Juan"
+  - Email: "juan@example.com"
+  - Teléfono: (vacío)
+  
+Perfil de Usuario:
+  - Nombre: "Jaime"
+  - Apellido: "Iserte"
+  - Email: "jiserte@differentroads.es"
+  - Teléfono: "+34123456789"
+  - Sexo: "Masculino"
+
+Resultado en el formulario:
+  ✅ Nombre: "Juan" (de BD - tiene prioridad)
+  ✅ Apellido: "Iserte" (de perfil - no estaba en BD)
+  ✅ Email: "juan@example.com" (de BD - tiene prioridad)
+  ✅ Teléfono: "+34123456789" (de perfil - no estaba en BD)
+  ✅ Sexo: "M" (de perfil normalizado - no estaba en BD)
+```
+
+---
+
 ## ✅ Características Principales
 
 1. **🤖 Guardado Automático**: Guarda cambios después de 2 segundos sin actividad
 2. **✅ Validación Previa**: Solo guarda campos que pasen las validaciones
 3. **🔍 Detección Inteligente**: Compara valores actuales con valores en BD
-4. **👤 Pre-llenado Automático**: Para el lead traveler, carga datos del perfil del usuario
+4. **👤 Pre-llenado Inteligente**: Para el lead traveler, SOLO pre-llena campos vacíos desde el perfil
 5. **🔔 Notificaciones Discretas**: Toast sutiles cuando guarda automáticamente
 6. **🔄 Indicador Visual**: Muestra "Guardando automáticamente..." en el header
+7. **📊 Prioridad de Datos**: BD primero, perfil de usuario segundo
 
 ---
 
@@ -48,10 +103,11 @@ if (currentValue && currentValue !== existingValue) {
 |-----------|-------|-------------|----------|--------|-----------|
 | Usuario escribe | ✅ Sí | "Jaime" | "" | ✅ Sí | ✅ **Sí** |
 | Usuario escribe | ✅ Sí | "Jaime" | "Juan" | ✅ Sí | ✅ **Sí** |
-| Cargar del perfil | ❌ No | "Jaime" | "" | ✅ Sí | ✅ **Sí** (diferente) |
+| Pre-llenado (Lead) | ❌ No | "Jaime" | "" | ✅ Sí | ✅ **Sí** (diferente) |
+| BD tiene prioridad | ❌ No | "Juan" | "Juan" | ✅ Sí | ❌ No (ya en BD) ⭐ |
 | Email inválido | ✅ Sí | "email@" | "" | ❌ No | ❌ **No** (inválido) ⭐ |
 | Fecha inválida | ✅ Sí | "99/99/9999" | "" | ❌ No | ❌ **No** (inválido) ⭐ |
-| Cargar del perfil | ❌ No | "Jaime" | "Jaime" | ✅ Sí | ❌ No (igual) |
+| Pre-llenado igual a BD | ❌ No | "Jaime" | "Jaime" | ✅ Sí | ❌ No (igual) |
 | Sin cambios | ❌ No | "Jaime" | "Jaime" | ✅ Sí | ❌ No |
 | Campo vacío | ❌ No | "" | "" | ✅ Sí | ❌ No |
 
@@ -384,18 +440,31 @@ Componente se monta con isLeadTraveler = true
          ↓
 loadAllData()
          ↓
-getUserDataForField() para cada campo
+initializeTravelerForm()
          ↓
-Campos se pre-rellenan automáticamente:
-  - Nombre: "Jaime" (del perfil)
-  - Apellido: "Iserte Navarro"
-  - Email: "jiserte@differentroads.es"
-  - Teléfono: "123456789"
-  - Sexo: "M" (normalizado de "Masculino")
+Para cada campo:
+  1️⃣ Buscar en ReservationTravelerField (BD)
+     ↓
+  ¿Existe en BD?
+     ↓
+  SÍ → Usar valor de BD (prioridad)
+     ↓
+  NO → ¿Es lead traveler?
+        ↓
+     SÍ → getUserDataForField() (prellenar del perfil)
+        ↓
+     NO → Dejar vacío
+         ↓
+Solo campos vacíos se pre-rellenan desde perfil:
+  - Nombre: "Jaime" (del perfil, si no está en BD)
+  - Apellido: "Iserte Navarro" (del perfil, si no está en BD)
+  - Email: "jiserte@differentroads.es" (del perfil, si no está en BD)
+  - Teléfono: "123456789" (del perfil, si no está en BD)
+  - Sexo: "M" (normalizado de "Masculino", si no está en BD)
          ↓
 Espera 2 segundos...
          ↓
-AutoSave: Guarda automáticamente en BD
+AutoSave: Guarda automáticamente en BD solo campos nuevos
          ↓
 Toast: "Tus cambios han sido guardados" ✅
 ```

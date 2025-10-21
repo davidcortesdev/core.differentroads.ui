@@ -6,19 +6,19 @@ import { environment } from '../../../../environments/environment';
 export interface TripTypeCreate {
   code: string;
   name: string;
-  description: string;
-  tkId: string;
-  isActive: boolean;
-  id: number;
+  description?: string;
+  tkId?: string;
+  isActive?: boolean;
+  color?: string;
 }
 
 export interface TripTypeUpdate {
   code: string;
   name: string;
-  description: string;
-  tkId: string;
-  isActive: boolean;
-  id: number;
+  description?: string;
+  tkId?: string;
+  isActive?: boolean;
+  color?: string;
 }
 
 export interface ITripTypeResponse {
@@ -27,6 +27,7 @@ export interface ITripTypeResponse {
   description: string;
   tkId: string;
   isActive: boolean;
+  color: string;
   id: number;
 }
 
@@ -34,12 +35,13 @@ export interface ITripTypeResponse {
  * Interfaz para los filtros disponibles en el método getAll.
  */
 export interface TripTypeFilters {
+  id?: number;
+  tkId?: string;
   code?: string;
   name?: string;
-  description?: string;
-  tkId?: string;
   isActive?: boolean;
-  id?: number;
+  color?: string;
+  useExactMatchForStrings?: boolean;
 }
 
 @Injectable({

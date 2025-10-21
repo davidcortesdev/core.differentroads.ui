@@ -1,0 +1,150 @@
+<div class="traveler-form-container" *ngIf="!loading && !error && traveler">
+  <!-- Encabezado del panel -->
+  <div class="traveler-header">
+    <p-panel class="user-button">
+      <i class="pi pi-user"></i>
+      <p class="user" style="display: inline; margin-left: 14px;">{{ getAgeGroupName() }}</p>
+    </p-panel>
+    
+    <p class="user-description">
+      <i class="pi pi-exclamation-circle info-icon"></i>
+      Introduce el nombre y el apellido tal y como aparecen en el documento de identificación. 
+      <strong>Los campos marcados con * son obligatorios.</strong>
+      
+      <!-- Indicador de autoguardado -->
+      <span *ngIf="autoSaving" class="autosaving-indicator">
+        <i class="pi pi-spin pi-spinner"></i>
+        Guardando automáticamente...
+      </span>
+    </p>
+  </div>
+
+  <!-- Formulario del viajero -->
+  <form [formGroup]="travelerForm" class="traveler-form">
+    <!-- Campos OBLIGATORIOS visibles siempre -->
+    <div class="form-section mandatory-fields">
+      <div class="form-row">
+        <!-- Generar campos obligatorios dinámicamente desde la API (excepto checkboxes) -->
+        <ng-container *ngFor="let field of departureReservationFields; trackBy: trackByFieldId">
+          <ng-container *ngIf="isFieldMandatory(field, traveler.isLeadTraveler) && getReservationFieldDetails(field.reservationFieldId) as fieldDetails">
+            <app-traveler-field
+              *ngIf="fieldDetails.fieldType !== 'checkbox'"
+              [fieldDetails]="fieldDetails"
+              [travelerId]="traveler.id"
+              [travelerForm]="travelerForm"
+              [isMandatory]="true"
+              [sexOptions]="sexOptions"
+              [countryOptions]="countryOptions"
+              [minDate]="getStoredMinDate(fieldDetails.code)"
+              [maxDate]="getStoredMaxDate(fieldDetails.code)"
+              (fieldChange)="onFieldChange($event)"
+              (phoneFieldChange)="onPhoneFieldChange($event.fieldCode, $event.event)"
+              (dateFieldChange)="onDateFieldChange($event.fieldCode, $event.value)"
+              (dateFieldBlur)="onDateFieldBlur($event)">
+            </app-traveler-field>
+          </ng-container>
+        </ng-container>
+      </div>
+
+      <!-- Campos de checkbox obligatorios van en filas separadas -->
+      <ng-container *ngFor="let field of departureReservationFields; trackBy: trackByFieldId">
+        <ng-container *ngIf="isFieldMandatory(field, traveler.isLeadTraveler) && getReservationFieldDetails(field.reservationFieldId) as fieldDetails">
+          <div class="form-row" *ngIf="fieldDetails.fieldType === 'checkbox'">
+            <app-traveler-field
+              [fieldDetails]="fieldDetails"
+              [travelerId]="traveler.id"
+              [travelerForm]="travelerForm"
+              [isMandatory]="true"
+              (fieldChange)="onFieldChange($event)">
+            </app-traveler-field>
+          </div>
+        </ng-container>
+      </ng-container>
+    </div>
+
+    <!-- Botón Ver más / Ver menos -->
+    <div class="form-row">
+      <div class="form-column">
+        <button
+          pButton
+          type="button"
+          [label]="showMoreFields ? 'Ver menos' : 'Ver más'"
+          [icon]="showMoreFields ? 'pi pi-chevron-up' : 'pi pi-chevron-down'"
+          (click)="toggleMoreFields()"
+          class="p-button-text p-button-sm show-more-button"
+        ></button>
+      </div>
+    </div>
+    
+    <!-- Mensaje debajo del botón Ver más / Ver menos -->
+    <div class="datos-adicionales-info">
+      <p class="mensaje-info">
+        <i class="pi pi-exclamation-circle icono-info"></i>
+        Completa tus datos pendientes antes de tu viaje. 
+        <strong>Puedes rellenarlos más tarde desde tu perfil.</strong>
+      </p>
+    </div>
+
+    <!-- Campos ADICIONALES visibles al hacer Ver más -->
+    <div class="additional-fields" *ngIf="showMoreFields">
+      <div class="form-row">
+        <!-- Generar campos NO obligatorios dinámicamente desde la API (excepto checkboxes) -->
+        <ng-container *ngFor="let field of departureReservationFields; trackBy: trackByFieldId">
+          <ng-container *ngIf="!isFieldMandatory(field, traveler.isLeadTraveler) && getReservationFieldDetails(field.reservationFieldId) as fieldDetails">
+            <app-traveler-field
+              *ngIf="fieldDetails.fieldType !== 'checkbox'"
+              [fieldDetails]="fieldDetails"
+              [travelerId]="traveler.id"
+              [travelerForm]="travelerForm"
+              [isMandatory]="false"
+              [sexOptions]="sexOptions"
+              [countryOptions]="countryOptions"
+              [minDate]="getStoredMinDate(fieldDetails.code)"
+              [maxDate]="getStoredMaxDate(fieldDetails.code)"
+              (fieldChange)="onFieldChange($event)"
+              (phoneFieldChange)="onPhoneFieldChange($event.fieldCode, $event.event)"
+              (dateFieldChange)="onDateFieldChange($event.fieldCode, $event.value)"
+              (dateFieldBlur)="onDateFieldBlur($event)">
+            </app-traveler-field>
+          </ng-container>
+        </ng-container>
+      </div>
+
+      <!-- Campos de checkbox opcionales van en filas separadas -->
+      <ng-container *ngFor="let field of departureReservationFields; trackBy: trackByFieldId">
+        <ng-container *ngIf="!isFieldMandatory(field, traveler.isLeadTraveler) && getReservationFieldDetails(field.reservationFieldId) as fieldDetails">
+          <div class="form-row" *ngIf="fieldDetails.fieldType === 'checkbox'">
+            <app-traveler-field
+              [fieldDetails]="fieldDetails"
+              [travelerId]="traveler.id"
+              [travelerForm]="travelerForm"
+              [isMandatory]="false"
+              (fieldChange)="onFieldChange($event)">
+            </app-traveler-field>
+          </div>
+        </ng-container>
+      </ng-container>
+    </div>
+    
+    <!-- Actividades asignadas al viajero -->
+    <app-info-traveler-activities
+      [traveler]="traveler"
+      [reservationId]="reservationId!"
+      [departureId]="departureId!"
+      [itineraryId]="itineraryId!"
+      (activitiesAssignmentChange)="dataUpdated.emit()">
+    </app-info-traveler-activities>
+  </form>
+</div>
+
+<!-- Indicador de carga -->
+<div *ngIf="loading" class="loading-indicator">
+  <p-progressSpinner></p-progressSpinner>
+  <p>Cargando información del viajero...</p>
+</div>
+
+<!-- Mensaje de error -->
+<div *ngIf="error" class="error-message">
+  <p>{{ error }}</p>
+</div>
+

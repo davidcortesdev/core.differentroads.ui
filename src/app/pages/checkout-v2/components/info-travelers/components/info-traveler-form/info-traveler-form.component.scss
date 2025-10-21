@@ -1,0 +1,245 @@
+// ============================================
+// Variables
+// ============================================
+$mobile-breakpoint: 768px;
+$tablet-breakpoint: 577px;
+$small-mobile: 480px;
+
+// Colores
+$primary-color: var(--background-azul);
+$info-color: #0d6efd;
+$error-color: #dc3545;
+$background-light: #f8f9fa;
+$text-muted: #495057;
+
+// ============================================
+// Mixins
+// ============================================
+@mixin mobile {
+  @media (max-width: $mobile-breakpoint) {
+    @content;
+  }
+}
+
+@mixin tablet-up {
+  @media (min-width: $tablet-breakpoint) {
+    @content;
+  }
+}
+
+// ============================================
+// Host
+// ============================================
+:host {
+  display: block;
+  width: 100%;
+}
+
+// ============================================
+// Traveler Form Container
+// ============================================
+.traveler-form-container {
+  width: 100%;
+}
+
+// ============================================
+// Traveler Header
+// ============================================
+.traveler-header {
+  margin-bottom: 15px;
+
+  .user-button {
+    display: inline-block;
+  }
+
+  .user-description {
+    font-size: 14px;
+    color: $primary-color;
+    line-height: 1.5;
+
+    .info-icon {
+      margin-right: 5px;
+      color: $info-color;
+    }
+
+    strong {
+      font-weight: 600;
+    }
+
+    .autosaving-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-left: 15px;
+      padding: 4px 10px;
+      background-color: #e7f3ff;
+      border-radius: 4px;
+      color: #0d6efd;
+      font-size: 13px;
+      font-weight: 500;
+      
+      i {
+        font-size: 12px;
+      }
+
+      @include mobile {
+        display: flex;
+        margin-left: 0;
+        margin-top: 10px;
+      }
+    }
+  }
+}
+
+// ============================================
+// Traveler Form (solo layout)
+// ============================================
+.traveler-form {
+  margin-top: 15px;
+  width: 100%;
+
+  .form-section {
+    margin-bottom: 1rem;
+  }
+
+  .form-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
+
+    @include mobile {
+      flex-direction: column;
+    }
+
+    @include tablet-up {
+      flex-direction: row !important;
+    }
+  }
+
+  .form-column {
+    flex: 1;
+    margin-right: 10px;
+
+    &:last-child {
+      margin-right: 0;
+    }
+
+    @include mobile {
+      margin-right: 0;
+    }
+
+    &.half-width {
+      flex: 0 0 48%;
+      max-width: 48%;
+
+      @include mobile {
+        flex: 1 1 100%;
+        margin-right: 0;
+      }
+
+      @include tablet-up {
+        flex: 0 0 48% !important;
+        max-width: 48% !important;
+      }
+    }
+
+    &.full-width {
+      flex: 0 0 100%;
+      max-width: 100%;
+
+      @include tablet-up {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+      }
+    }
+  }
+}
+
+// ============================================
+// Show More Button
+// ============================================
+.show-more-button {
+  margin-top: -10px;
+  margin-left: -1px;
+  color: $primary-color;
+  font-size: 0.9rem;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+  }
+}
+
+// ============================================
+// Datos Adicionales Info
+// ============================================
+.datos-adicionales-info {
+  margin: 10px 0;
+  padding: 10px;
+  background-color: $background-light;
+  border-left: 3px solid $info-color;
+  border-radius: 4px;
+
+  .mensaje-info {
+    margin: 0;
+    font-size: 14px;
+    color: $text-muted;
+    line-height: 1.5;
+
+    .icono-info {
+      margin-right: 5px;
+      color: $info-color;
+    }
+
+    strong {
+      color: $primary-color;
+      font-weight: 600;
+    }
+  }
+}
+
+// ============================================
+// Additional Fields con animación
+// ============================================
+.additional-fields {
+  margin-top: 15px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ============================================
+// Loading & Error States
+// ============================================
+.loading-indicator,
+.error-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+
+  p {
+    margin-top: 10px;
+    color: $primary-color;
+  }
+}
+
+.error-message {
+  color: $error-color;
+
+  p {
+    color: $error-color;
+  }
+}
+

@@ -112,3 +112,18 @@
 .versions-container {
   margin-left: 4rem;
 }
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  gap: 1rem;
+
+  p {
+    margin: 0;
+    color: var(--background-azul);
+    font-size: 0.9rem;
+  }
+}

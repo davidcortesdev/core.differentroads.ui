@@ -229,6 +229,7 @@ import { TourMapV2Component } from './shared/components/tour-map-v2/tour-map-v2.
 import { ImageCropperComponent } from './shared/components/image-cropper/image-cropper.component';
 import { SeoLinksComponent } from './shared/components/seo-links/seo-links.component';
 import { AdditionalInfoComponent } from './shared/components/additional-info/additional-info.component';
+import { EnvironmentBannerComponent } from './shared/components/environment-banner/environment-banner.component';
 
 // Tour Cards
 import { TourCardComponent } from './shared/components/tour-card/tour-card.component';
@@ -402,6 +403,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     ImageCropperComponent,
     SeoLinksComponent,
     AdditionalInfoComponent,
+    EnvironmentBannerComponent,
 
     // Tour Cards
     TourCardComponent,

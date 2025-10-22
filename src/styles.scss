@@ -182,6 +182,10 @@ body {
   margin: 0;
 }
 
+body.with-test-banner {
+  padding-top: 50px; /* Espacio para el banner de entorno de pruebas */
+}
+
 :root {
   --toast-z-index: 9999;
 }

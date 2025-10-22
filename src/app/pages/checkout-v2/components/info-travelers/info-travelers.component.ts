@@ -49,6 +49,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
 
   // Estados de carga
   checkingReservationStatus: boolean = false;
+  private isInitialized: boolean = false;
   
   travelers: IReservationTravelerResponse[] = [];
   ageGroups: IAgeGroupResponse[] = [];
@@ -78,14 +79,21 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   ) {}
 
   ngOnInit(): void {
-    if (this.departureId && this.reservationId) {
+    if (this.departureId && this.reservationId && !this.isInitialized) {
+      this.isInitialized = true;
       this.checkFlightSelectionStatus();
-    } else {
+    } else if (!this.departureId || !this.reservationId) {
       this.error = 'No se proporcionó un ID de departure o reservación válido';
     }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    // Solo procesar cambios si el componente aún no se ha inicializado
+    // Esto evita ejecutar la lógica múltiples veces
+    if (this.isInitialized) {
+      return;
+    }
+
     if (
       (changes['departureId'] && changes['departureId'].currentValue) ||
       (changes['reservationId'] && changes['reservationId'].currentValue)
@@ -97,6 +105,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         this.error = null;
         this.amadeusBookingRequirements = null;
         this.hasFlightSelected = false;
+        this.isInitialized = true;
         this.checkFlightSelectionStatus();
       }
     }
@@ -248,6 +257,9 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       this.error = null;
       this.amadeusBookingRequirements = null;
       this.hasFlightSelected = false;
+      // Permitir reload explícito reseteando la bandera
+      this.isInitialized = false;
+      this.isInitialized = true;
       this.checkFlightSelectionStatus();
     }
   }

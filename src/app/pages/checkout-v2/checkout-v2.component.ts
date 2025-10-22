@@ -111,9 +111,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   subtotal: number = 0;
   totalAmountCalculated: number = 0;
 
-  // Descuento por puntos
-  pointsDiscount: number = 0;
-
   // Flags para controlar eventos del funnel que se disparan solo una vez
   private viewCartEventFired: boolean = false;
   private viewFlightsInfoEventFired: boolean = false;
@@ -2184,12 +2181,17 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       .subscribe();
   }
 
+  // Bandera para evitar múltiples actualizaciones de userId
+  private isUpdatingUserId: boolean = false;
+
   /**
    * Verifica si el userId está vacío y el usuario está logueado, y actualiza la reservación si es necesario
    */
   private checkAndUpdateUserId(reservation: any): void {
     // Verificar si el userId está vacío
-    if (!reservation.userId) {
+    if (!reservation.userId && !this.isUpdatingUserId) {
+      this.isUpdatingUserId = true;
+      
       this.authService.getCognitoId().subscribe({
         next: (cognitoId) => {
           if (cognitoId) {
@@ -2202,6 +2204,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
                   // Actualizar la reservación con el userId correcto
                   this.updateReservationUserId(userId);
                 } else {
+                  this.isUpdatingUserId = false;
                 }
               },
               error: (error) => {
@@ -2209,13 +2212,16 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
                   '❌ Error buscando usuario por Cognito ID:',
                   error
                 );
+                this.isUpdatingUserId = false;
               },
             });
           } else {
+            this.isUpdatingUserId = false;
           }
         },
         error: (error) => {
           console.error('❌ Error obteniendo Cognito ID:', error);
+          this.isUpdatingUserId = false;
         },
       });
     }
@@ -2253,6 +2259,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         } else {
           console.error('❌ Error al actualizar userId en la reservación');
         }
+        this.isUpdatingUserId = false;
       },
       error: (error) => {
         console.error(
@@ -2265,6 +2272,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           detail: 'No se pudo asociar la reservación con tu cuenta de usuario.',
           life: 5000,
         });
+        this.isUpdatingUserId = false;
       },
     });
   }
@@ -2604,17 +2612,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       // Para otros steps, usar la navegación estándar
       this.onActiveIndexChange(stepNumber);
     }
-  }
-
-  /**
-   * Maneja el cambio de descuento por puntos
-   * @param discount Cantidad del descuento en euros
-   */
-  onPointsDiscountChange(discount: number): void {
-    this.pointsDiscount = discount;
-
-    // Actualizar el resumen del pedido para reflejar el descuento
-    this.forceSummaryUpdate();
   }
 
   /**

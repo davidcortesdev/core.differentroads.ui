@@ -61,7 +61,7 @@ export class CategoryPageComponent implements OnInit, OnDestroy {
       const tagName = this.formatSlug(this.subItemSlug);
       
       this.tagService
-        .getAll({ name: tagName, isActive: true })
+        .getAll({ name: tagName, isActive: true, useExactMatchForStrings: true })
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (tags) => {
@@ -84,7 +84,7 @@ export class CategoryPageComponent implements OnInit, OnDestroy {
       const categoryName = this.formatSlug(this.categorySlug);
       
       this.tagCategoryService
-        .getAll({ name: categoryName, isActive: true })
+        .getAll({ name: categoryName, isActive: true, useExactMatchForStrings: true })
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (categories) => {

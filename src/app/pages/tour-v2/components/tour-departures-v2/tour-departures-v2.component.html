@@ -223,7 +223,7 @@
                 </span>
 
                 <!-- Horarios de vuelos -->
-                <div class="flight-times" *ngIf="getFlightTimes(item.id)">
+                <div class="flight-times" *ngIf="flightTimesByDepartureId[item.id]">
                   <div *ngFor="let line of getFlightTimesLines(item.id)" class="flight-line">
                     {{ line }}
                   </div>

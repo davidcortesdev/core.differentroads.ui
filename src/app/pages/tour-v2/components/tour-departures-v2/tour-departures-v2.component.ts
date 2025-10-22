@@ -22,6 +22,7 @@ import {
   IDepartureResponse,
 } from '../../../../core/services/departure/departure.service';
 import { FlightsNetService } from '../../../../pages/checkout-v2/services/flightsNet.service';
+import { AirportCityCacheService } from '../../../../core/services/locations/airport-city-cache.service';
 import {
   ItineraryService,
   IItineraryResponse,
@@ -181,7 +182,8 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     private tourDeparturesPricesService: TourDeparturesPricesService,
     private messageService: MessageService,
     private analyticsService: AnalyticsService,
-    private flightsNetService: FlightsNetService
+    private flightsNetService: FlightsNetService,
+    private airportCityCacheService: AirportCityCacheService
   ) {
     this.updatePassengerText();
 
@@ -353,6 +355,19 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
         next: (pricesResponse: ITourDeparturesPriceResponse[]) => {
           this.departuresPrices = pricesResponse;
           this.pricesLoading = false;
+
+          // Recargar horarios de vuelos cuando se cargan los precios
+          if (this.filteredDepartures && this.filteredDepartures.length > 0) {
+            console.log(`🏙️ Ciudad seleccionada: ${this.selectedCity?.name}`);
+            console.log(`📊 Departures filtrados para ${this.selectedCity?.name}:`, this.filteredDepartures.map(d => ({ id: d.id, name: d.name })));
+            
+            // Cargar horarios para todos los departures filtrados
+            this.filteredDepartures.forEach(departure => {
+              if (departure.id) {
+                this.loadFlightTimes(departure.id);
+              }
+            });
+          }
 
           // Calcular precio si hay departure seleccionado
           if (this.selectedDepartureId) {
@@ -778,21 +793,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  private formatDate(dateString: string): string {
-    if (!dateString) return 'Fecha no disponible';
-
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('es-ES', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      });
-    } catch {
-      return dateString;
-    }
-  }
 
   get tripDuration(): number {
     if (!this.departureDetails) return 0;
@@ -903,7 +903,19 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       return [departure];
     }
 
-    return this.allDepartures.map((departure) => {
+    // Filtrar departures por la ciudad seleccionada
+    let filteredDepartures = this.allDepartures;
+    
+    if (this.selectedCity && this.selectedCity.activityId) {
+      // Filtrar por activityId de la ciudad seleccionada
+      filteredDepartures = this.allDepartures.filter(departure => {
+        // Aquí necesitamos la lógica de filtrado por ciudad
+        // Por ahora, devolvemos todos los departures para debugging
+        return true;
+      });
+    }
+
+    return filteredDepartures.map((departure) => {
       const adultPrice = this.getPriceForDeparture(departure.id);
 
       return {
@@ -948,6 +960,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
         this.departureDetails.id
       );
     }
+
 
     this.emitCityUpdate();
 
@@ -1223,7 +1236,8 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
   // Método para obtener horarios de vuelos
   getFlightTimes(departureId: number): string {
-    return this.flightTimesByDepartureId[departureId] || '';
+    const flightTimes = this.flightTimesByDepartureId[departureId] || '';
+    return flightTimes;
   }
 
   // Método para obtener líneas de vuelos separadas
@@ -1236,17 +1250,43 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
   // Cargar horarios de vuelos para un departure específico
   private loadFlightTimes(departureId: number): void {
+    console.log(`🔍 Cargando horarios de vuelos para departure ID: ${departureId}`);
+    
     this.flightsNetService.getFlights(departureId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (flightPacks: any[]) => {
+          console.log(`✅ Respuesta API para departure ${departureId}:`, flightPacks);
+          
           if (flightPacks && flightPacks.length > 0) {
-            const flightPack = flightPacks[0];
+            // Filtrar el flight pack correcto según la ciudad seleccionada
+            let selectedFlightPack = null;
             
-            if (flightPack.flights && flightPack.flights.length > 0) {
+            if (this.selectedCity && this.selectedCity.activityId) {
+              // Buscar el flight pack que coincida con la ciudad seleccionada
+              selectedFlightPack = flightPacks.find(pack => {
+                if (pack.flights && pack.flights.length > 0) {
+                  const outboundFlight = pack.flights.find((f: any) => f.flightTypeId === 4);
+                  return outboundFlight && outboundFlight.activityId === this.selectedCity?.activityId;
+                }
+                return false;
+              });
+            }
+            
+            // Si no se encuentra un pack específico, usar el primero (fallback)
+            if (!selectedFlightPack) {
+              selectedFlightPack = flightPacks[0];
+            }
+            
+            console.log(`📦 Flight pack seleccionado para departure ${departureId}:`, selectedFlightPack);
+            
+            if (selectedFlightPack && selectedFlightPack.flights && selectedFlightPack.flights.length > 0) {
               // Buscar vuelos de ida y vuelta
-              const outboundFlight = flightPack.flights.find((f: any) => f.flightTypeId === 4);
-              const returnFlight = flightPack.flights.find((f: any) => f.flightTypeId === 5);
+              const outboundFlight = selectedFlightPack.flights.find((f: any) => f.flightTypeId === 4);
+              const returnFlight = selectedFlightPack.flights.find((f: any) => f.flightTypeId === 5);
+              
+              console.log(`✈️ Vuelo de ida para departure ${departureId}:`, outboundFlight);
+              console.log(`🔄 Vuelo de vuelta para departure ${departureId}:`, returnFlight);
               
               if (outboundFlight) {
                 const depTime = this.formatTime(outboundFlight.departureTime || '');
@@ -1265,13 +1305,14 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
                   flightTimes += `\n${retDepTime} (${retDepIata}) → ${retArrTime} (${retArrIata})`;
                 }
                 
+                console.log(`⏰ Horarios finales para departure ${departureId}:`, flightTimes);
                 this.flightTimesByDepartureId[departureId] = flightTimes;
               }
             }
           }
         },
         error: (err: any) => {
-          console.warn('No se pudieron cargar horarios de vuelos para departure', departureId, err);
+          console.error(`Error cargando horarios de vuelos para departure ${departureId}:`, err);
         }
       });
   }
@@ -1291,9 +1332,39 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     }
     
     return date.toLocaleTimeString('es-ES', { 
-      hour: '2-digit', 
+      hour: '2-digit',
       minute: '2-digit',
       hour12: false 
     });
+  }
+
+  private formatDate(dateString: string): string {
+    if (!dateString) return '';
+
+    try {
+      // Parsear la fecha directamente sin agregar tiempo para evitar problemas de zona horaria
+      const [year, month, day] = dateString.split('-').map(Number);
+      
+      // Crear fecha usando los componentes individuales
+      const dateObj = new Date(year, month - 1, day); // month - 1 porque los meses van de 0-11
+
+      // Verificar que la fecha es válida
+      if (isNaN(dateObj.getTime())) {
+        return '';
+      }
+
+      // Formatear usando toLocaleDateString con opciones específicas
+      return dateObj
+        .toLocaleDateString('es-ES', {
+          weekday: 'short',
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        })
+        .replace(/^\w/, (c) => c.toUpperCase());
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return '';
+    }
   }
 }

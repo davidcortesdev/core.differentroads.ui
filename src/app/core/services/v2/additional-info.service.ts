@@ -152,7 +152,6 @@ export class AdditionalInfoService {
         if (!cognitoId) {
           console.warn('⚠️ No se encontró Cognito ID, creando presupuesto sin userId');
           const reservationData = this.buildReservationData(null);
-          console.log('📋 Creando PRESUPUESTO desde additional-info (sin userId):', reservationData);
           return this.reservationService.create(reservationData);
         }
         
@@ -160,15 +159,9 @@ export class AdditionalInfoService {
         return this.usersNetService.getUsersByCognitoId(cognitoId).pipe(
           map((users: any[]) => {
             const userId = users && users.length > 0 ? users[0].id : null;
-            console.log('👤 Usuario encontrado:', { cognitoId, userId });
             return userId;
           }),
           map((userId: number | null) => this.buildReservationData(userId)),
-          map((reservationData: ReservationCreate) => {
-            console.log('📋 Creando PRESUPUESTO desde additional-info:', reservationData);
-            console.log('📋 Datos completos enviados al backend:', JSON.stringify(reservationData, null, 2));
-            return reservationData;
-          }),
           switchMap((reservationData: ReservationCreate) => this.reservationService.create(reservationData))
         );
       }),

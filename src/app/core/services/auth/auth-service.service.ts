@@ -218,7 +218,7 @@ export class AuthenticateService {
       this.isAuthenticated.next(false);
       this.currentUserEmail.next('');
       this.currentUserCognitoId.next('');
-      window.location.href = '/home';
+      window.location.href = '/';
     }
   }
 
@@ -431,7 +431,7 @@ export class AuthenticateService {
       sessionStorage.removeItem('redirectUrl');
     } else {
       // Default navigation to home
-      this.router.navigate(['/home']);
+      this.router.navigate(['/']);
     }
   }
 

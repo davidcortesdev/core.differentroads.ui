@@ -1,45 +1,73 @@
 <div class="destination-page-container">
-  <!-- Header con breadcrumb -->
-  <div class="destination-header">
-    <div class="header-content">
-      <h1>{{ destinationSlug ? getDestinationName() : 'Destinos en ' + getContinentName() }}</h1>
-      <p class="breadcrumb">
-        <a routerLink="/">Inicio</a>
-        <span class="separator">/</span>
-        <span>Destinos</span>
-        <span class="separator">/</span>
-        <span>{{ getContinentName() }}</span>
-        <span class="separator" *ngIf="destinationSlug">/</span>
-        <span *ngIf="destinationSlug">{{ getDestinationName() }}</span>
-      </p>
+  <!-- Contenido principal unificado -->
+  <div class="page-content" *ngIf="!isLoading">
+    <!-- Header con breadcrumb -->
+    <div class="destination-header">
+      <div class="header-content">
+        <div class="breadcrumb">
+          <a routerLink="/">Inicio</a>
+          <span class="separator">/</span>
+          <span>Destinos</span>
+          <span class="separator">/</span>
+          <span>{{ getContinentName() }}</span>
+          <span class="separator" *ngIf="destinationSlug">/</span>
+          <span *ngIf="destinationSlug">{{ getDestinationName() }}</span>
+        </div>
+        
+        <div class="header-main">
+          <h1>{{ destinationSlug ? getDestinationName() : 'Destinos en ' + getContinentName() }}</h1>
+          <div class="header-subtitle">
+            <i class="pi pi-map-marker"></i>
+            <span>Descubre experiencias únicas</span>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <!-- Información de contexto -->
-  <div class="destination-info" *ngIf="!isLoading">
-    <div class="info-content">
-      <h2>Tours en {{ destinationSlug ? getDestinationName() : getContinentName() }}</h2>
-      <p class="tours-count" *ngIf="!isLoadingTours && tourIds.length > 0">
-        {{ tourIds.length }} {{ tourIds.length === 1 ? 'tour encontrado' : 'tours encontrados' }}
-      </p>
+    <!-- Información de contexto mejorada -->
+    <div class="destination-info">
+      <div class="info-content">
+        <div class="info-header">
+          <div class="info-title">
+            <h2>Tours y Viajes en {{ destinationSlug ? getDestinationName() : getContinentName() }}</h2>
+            <p class="info-description">
+              Encuentra la experiencia perfecta para tu próximo viaje. 
+              {{ destinationSlug ? 'Explora todos los tours disponibles para ' + getDestinationName() : 'Descubre los mejores destinos y actividades en ' + getContinentName() }}.
+            </p>
+          </div>
+          
+          <div class="info-stats" *ngIf="!isLoadingTours">
+            <div class="stat-item" *ngIf="tourIds.length > 0">
+              <div class="stat-number">{{ tourIds.length }}</div>
+              <div class="stat-label">{{ tourIds.length === 1 ? 'Tour disponible' : 'Tours disponibles' }}</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-icon">
+                <i class="pi pi-star-fill"></i>
+              </div>
+              <div class="stat-label">Experiencias únicas</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <!-- Grid de tours -->
-  <div class="tours-section" *ngIf="!isLoading">
-    <div *ngIf="isLoadingTours" class="loading-tours">
-      <p-progressSpinner [style]="{ width: '50px', height: '50px' }"></p-progressSpinner>
-      <p>Cargando tours...</p>
+    <!-- Grid de tours integrado -->
+    <div class="tours-section">
+      <div *ngIf="isLoadingTours" class="loading-tours">
+        <p-progressSpinner [style]="{ width: '50px', height: '50px' }"></p-progressSpinner>
+        <p>Cargando tours...</p>
+      </div>
+      
+      <app-tour-grid-v2
+        *ngIf="!isLoadingTours"
+        [tourIds]="tourIds"
+        [itemListId]="destinationSlug ? getDestinationName() : getContinentName()"
+        [itemListName]="destinationSlug ? getDestinationName() : getContinentName()"
+        [showScalapayPrice]="true"
+        [showFilters]="true"
+      ></app-tour-grid-v2>
     </div>
-    
-    <app-tour-grid-v2
-      *ngIf="!isLoadingTours"
-      [tourIds]="tourIds"
-      [itemListId]="destinationSlug ? getDestinationName() : getContinentName()"
-      [itemListName]="destinationSlug ? getDestinationName() : getContinentName()"
-      [showScalapayPrice]="true"
-      [showFilters]="true"
-    ></app-tour-grid-v2>
   </div>
 
   <!-- Estado de carga inicial -->

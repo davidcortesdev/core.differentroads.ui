@@ -9,8 +9,8 @@
   }
 
   .category-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: var(--background-azul);
+    color: var(--background-azul-color-letra);
     padding: 3rem 3.5rem 2rem;
     position: relative;
     overflow: hidden;
@@ -38,7 +38,7 @@
         opacity: 0.9;
 
         a {
-          color: white;
+          color: var(--background-azul-color-letra);
           text-decoration: none;
           font-weight: 500;
 
@@ -59,7 +59,7 @@
           font-size: 3rem;
           font-weight: 800;
           margin-bottom: 0.5rem;
-          color: white;
+          color: var(--background-azul-color-letra);
           text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
           line-height: 1.1;
         }
@@ -74,7 +74,7 @@
 
           i {
             font-size: 1.2rem;
-            color: #ffd700;
+            color: var(--primary-color-500);
           }
         }
       }
@@ -137,14 +137,14 @@
             .stat-number {
               font-size: 2rem;
               font-weight: 800;
-              color: var(--primary-color, #007bff);
+              color: var(--primary-color-500);
               margin-bottom: 0.25rem;
               line-height: 1;
             }
 
             .stat-icon {
               font-size: 2rem;
-              color: #ffd700;
+              color: var(--primary-color-500);
               margin-bottom: 0.25rem;
               display: flex;
               justify-content: center;

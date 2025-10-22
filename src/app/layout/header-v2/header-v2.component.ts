@@ -403,9 +403,14 @@ export class HeaderV2Component implements OnInit, OnDestroy {
             const menuTipoSlug = menuItem.menuTipoSlug || '';
             const menuItemSlug = menuItem.menuItemSlug || '';
 
+            // Ordenar países alfabéticamente por nombre
+            const sortedCountries = countries.sort((a, b) => 
+              a.name.localeCompare(b.name, 'es', { sensitivity: 'base' })
+            );
+
             return {
               ...menuItem,
-              items: countries.map((country: Location) => ({
+              items: sortedCountries.map((country: Location) => ({
                 label: country.name,
                 command: () => {
                   this.onMenuInteraction(country.name);
@@ -455,9 +460,14 @@ export class HeaderV2Component implements OnInit, OnDestroy {
             const menuTipoSlug = menuItem.menuTipoSlug || '';
             const menuItemSlug = menuItem.menuItemSlug || '';
 
+            // Ordenar tags alfabéticamente por nombre
+            const sortedTags = tags.sort((a, b) => 
+              a.name.localeCompare(b.name, 'es', { sensitivity: 'base' })
+            );
+
             return {
               ...menuItem,
-              items: tags.map((tag: ITagResponse) => ({
+              items: sortedTags.map((tag: ITagResponse) => ({
                 label: tag.name,
                 command: () => {
                   this.onMenuInteraction(tag.name);

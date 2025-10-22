@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Title } from '@angular/platform-browser';
+import { Title, Meta } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { LocationNetService, Location } from '../../core/services/locations/locationNet.service';
@@ -30,6 +30,7 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private titleService: Title,
+    private meta: Meta,
     private locationService: LocationNetService,
     private tourLocationService: TourLocationService
   ) {}
@@ -102,31 +103,53 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
   }
 
   private updatePageInfo(): void {
-    // Actualizar título
+    // Actualizar título y SEO
     let title: string;
+    let description: string;
+    let keywords: string;
     
     if (this.destinationSlug && this.destinationLocation) {
       // Si buscamos destino y lo encontramos
-      title = `${this.destinationLocation.name} - Different Roads`;
+      const destinationName = this.destinationLocation.name;
+      title = `${destinationName} - Different Roads`;
+      description = `Descubre los mejores tours y experiencias en ${destinationName}. Reserva tu viaje con Different Roads y vive aventuras únicas.`;
+      keywords = `viajar a ${destinationName}, tours ${destinationName}, viajes ${destinationName}, experiencias ${destinationName}`;
     } else if (this.destinationSlug) {
       // Si buscamos destino pero no lo encontramos
-      title = `${this.formatSlug(this.destinationSlug)} - Different Roads`;
+      const destinationName = this.formatSlug(this.destinationSlug);
+      title = `${destinationName} - Different Roads`;
+      description = `Descubre los mejores tours y experiencias en ${destinationName}. Reserva tu viaje con Different Roads y vive aventuras únicas.`;
+      keywords = `viajar a ${destinationName}, tours ${destinationName}, viajes ${destinationName}, experiencias ${destinationName}`;
     } else if (this.continentLocation) {
       // Si buscamos continente y lo encontramos
-      title = `Destinos en ${this.continentLocation.name} - Different Roads`;
+      const continentName = this.continentLocation.name;
+      title = `Destinos en ${continentName} - Different Roads`;
+      description = `Explora los mejores destinos de ${continentName}. Descubre tours únicos y experiencias inolvidables con Different Roads.`;
+      keywords = `viajar a ${continentName}, tours ${continentName}, viajes ${continentName}, destinos ${continentName}`;
     } else {
       // Si buscamos continente pero no lo encontramos
-      title = `Destinos en ${this.formatSlug(this.continentSlug)} - Different Roads`;
+      const continentName = this.formatSlug(this.continentSlug);
+      title = `Destinos en ${continentName} - Different Roads`;
+      description = `Explora los mejores destinos de ${continentName}. Descubre tours únicos y experiencias inolvidables con Different Roads.`;
+      keywords = `viajar a ${continentName}, tours ${continentName}, viajes ${continentName}, destinos ${continentName}`;
     }
     
+    // Actualizar título
     this.titleService.setTitle(title);
+    
+    // Actualizar meta descripción
+    this.meta.updateTag({ name: 'description', content: description });
+    
+    // Actualizar keywords SEO
+    this.meta.updateTag({ name: 'keywords', content: keywords });
 
     // Log para debug
     console.log('Datos de ubicación cargados:', {
       destinationId: this.destinationId,
       destinationName: this.destinationLocation?.name,
       continentId: this.continentId,
-      continentName: this.continentLocation?.name
+      continentName: this.continentLocation?.name,
+      seoKeywords: keywords
     });
 
     this.isLoading = false;

@@ -27,7 +27,7 @@ export class BookingsServiceV2 {
   }
 
   /**
-   * Obtiene reservas activas (Booked y RQ)
+   * Obtiene reservas activas (Booked, RQ y Prebooked)
    * @param userId - ID del usuario
    * @returns Observable de array de ReservationResponse
    */
@@ -38,12 +38,15 @@ export class BookingsServiceV2 {
 
     return this.http.get<ReservationResponse[]>(this.API_URL, { params }).pipe(
       map((reservations: ReservationResponse[]) => {
+        
         const filtered = reservations.filter(reservation => 
           reservation.reservationStatusId === 1 || 
           reservation.reservationStatusId === 2 || 
           reservation.reservationStatusId === 5 || 
-          reservation.reservationStatusId === 6
+          reservation.reservationStatusId === 6 ||
+          reservation.reservationStatusId === 11
         );
+        
         return filtered;
       })
     );
@@ -203,7 +206,8 @@ export class BookingsServiceV2 {
           reservation.reservationStatusId === 2 || 
           reservation.reservationStatusId === 5 || 
           reservation.reservationStatusId === 6 || 
-          reservation.reservationStatusId === 7
+          reservation.reservationStatusId === 7 ||
+          reservation.reservationStatusId === 11
         )
       )
     );

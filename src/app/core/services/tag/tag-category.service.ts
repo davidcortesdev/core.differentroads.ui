@@ -38,6 +38,7 @@ export interface TagCategoryFilters {
   description?: string;
   slug?: string;
   isActive?: boolean;
+  useExactMatchForStrings?: boolean;
 }
 
 @Injectable({

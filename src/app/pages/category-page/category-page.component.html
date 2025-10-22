@@ -1,43 +1,71 @@
 <div class="category-page-container">
-  <!-- Header con breadcrumb -->
-  <div class="category-header">
-    <div class="header-content">
-      <h1>{{ subItemSlug ? getTagName() : getCategoryName() }}</h1>
-      <p class="breadcrumb">
-        <a routerLink="/">Inicio</a>
-        <span class="separator">/</span>
-        <span>{{ getCategoryName() }}</span>
-        <span class="separator" *ngIf="subItemSlug">/</span>
-        <span *ngIf="subItemSlug">{{ getTagName() }}</span>
-      </p>
+  <!-- Contenido principal unificado -->
+  <div class="page-content" *ngIf="!isLoading">
+    <!-- Header con breadcrumb -->
+    <div class="category-header">
+      <div class="header-content">
+        <div class="breadcrumb">
+          <a routerLink="/">Inicio</a>
+          <span class="separator">/</span>
+          <span>{{ getCategoryName() }}</span>
+          <span class="separator" *ngIf="subItemSlug">/</span>
+          <span *ngIf="subItemSlug">{{ getTagName() }}</span>
+        </div>
+        
+        <div class="header-main">
+          <h1>{{ subItemSlug ? getTagName() : getCategoryName() }}</h1>
+          <div class="header-subtitle">
+            <i class="pi pi-map-marker"></i>
+            <span>Descubre experiencias únicas</span>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <!-- Información de contexto -->
-  <div class="category-info" *ngIf="!isLoading">
-    <div class="info-content">
-      <h2>Tours en {{ subItemSlug ? getTagName() : getCategoryName() }}</h2>
-      <p class="tours-count" *ngIf="!isLoadingTours && tourIds.length > 0">
-        {{ tourIds.length }} {{ tourIds.length === 1 ? 'tour encontrado' : 'tours encontrados' }}
-      </p>
+    <!-- Información de contexto mejorada -->
+    <div class="category-info">
+      <div class="info-content">
+        <div class="info-header">
+          <div class="info-title">
+            <h2>Tours y Viajes en {{ subItemSlug ? getTagName() : getCategoryName() }}</h2>
+            <p class="info-description">
+              Encuentra la experiencia perfecta para tu próximo viaje. 
+              {{ subItemSlug ? 'Explora todos los tours disponibles para ' + getTagName() : 'Descubre los mejores destinos y actividades en ' + getCategoryName() }}.
+            </p>
+          </div>
+          
+          <div class="info-stats" *ngIf="!isLoadingTours">
+            <div class="stat-item" *ngIf="tourIds.length > 0">
+              <div class="stat-number">{{ tourIds.length }}</div>
+              <div class="stat-label">{{ tourIds.length === 1 ? 'Tour disponible' : 'Tours disponibles' }}</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-icon">
+                <i class="pi pi-star-fill"></i>
+              </div>
+              <div class="stat-label">Experiencias únicas</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <!-- Grid de tours -->
-  <div class="tours-section" *ngIf="!isLoading">
-    <div *ngIf="isLoadingTours" class="loading-tours">
-      <p-progressSpinner [style]="{ width: '50px', height: '50px' }"></p-progressSpinner>
-      <p>Cargando tours...</p>
+    <!-- Grid de tours integrado -->
+    <div class="tours-section">
+      <div *ngIf="isLoadingTours" class="loading-tours">
+        <p-progressSpinner [style]="{ width: '50px', height: '50px' }"></p-progressSpinner>
+        <p>Cargando tours...</p>
+      </div>
+      
+      <app-tour-grid-v2
+        *ngIf="!isLoadingTours"
+        [tourIds]="tourIds"
+        [itemListId]="subItemSlug ? getTagName() : getCategoryName()"
+        [itemListName]="subItemSlug ? getTagName() : getCategoryName()"
+        [showScalapayPrice]="true"
+        [showFilters]="true"
+      ></app-tour-grid-v2>
     </div>
-    
-    <app-tour-grid-v2
-      *ngIf="!isLoadingTours"
-      [tourIds]="tourIds"
-      [itemListId]="subItemSlug ? getTagName() : getCategoryName()"
-      [itemListName]="subItemSlug ? getTagName() : getCategoryName()"
-      [showScalapayPrice]="true"
-      [showFilters]="true"
-    ></app-tour-grid-v2>
   </div>
 
   <!-- Estado de carga inicial -->

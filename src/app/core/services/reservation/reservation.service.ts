@@ -320,9 +320,28 @@ export class ReservationService {
 
   updateStatus(reservationId: number, statusId: number): Observable<boolean> {
     return this.getById(reservationId).pipe(
-      switchMap((reservation) => {
-        reservation.reservationStatusId = statusId;
-        return this.update(reservationId, reservation as ReservationUpdate);
+      switchMap((current) => {
+        const fullPayload: ReservationUpdate = {
+          id: current.id,
+          tkId: current.tkId,
+          reservationStatusId: statusId,
+          retailerId: current.retailerId,
+          tourId: current.tourId,
+          departureId: current.departureId,
+          userId: current.userId,
+          totalPassengers: current.totalPassengers,
+          totalAmount: current.totalAmount,
+          budgetAt: current.budgetAt || '',
+          cartAt: current.cartAt || '',
+          abandonedAt: current.abandonedAt || '',
+          reservedAt: current.reservedAt || '',
+          createdAt: current.createdAt,
+          updatedAt: new Date().toISOString(),
+        };
+
+        return this.http.put<boolean>(`${this.API_URL}/${reservationId}`, fullPayload, {
+          headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
+        });
       })
     );
   }

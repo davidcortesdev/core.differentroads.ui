@@ -1,11 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { map, catchError, switchMap } from 'rxjs/operators';
 import { MessageService } from 'primeng/api';
 import { AuthenticateService } from '../auth/auth-service.service';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { ReservationService, ReservationCreate, ReservationUpdate } from '../reservation/reservation.service';
+import { UsersNetService } from '../users/usersNet.service';
+import { environment } from '../../../../environments/environment';
 
 /**
  * Servicio para la gestión de presupuestos y funcionalidades adicionales
@@ -47,7 +49,8 @@ export class AdditionalInfoService {
     private authService: AuthenticateService,
     private analyticsService: AnalyticsService,
     private messageService: MessageService,
-    private reservationService: ReservationService
+    private reservationService: ReservationService,
+    private usersNetService: UsersNetService
   ) {}
 
   /**
@@ -115,25 +118,21 @@ export class AdditionalInfoService {
    * para crear una nueva reservación/presupuesto. Diferencia entre
    * contexto de tour (datos mínimos) y checkout (datos completos).
    * 
+   * @param userId - ID del usuario autenticado
    * @returns Objeto ReservationCreate con los datos estructurados para el backend
    */
-  private buildReservationData(): ReservationCreate {
-    const totalPassengers = this.travelersData ? 
-      (this.travelersData.adults || 0) + (this.travelersData.childs || 0) + (this.travelersData.babies || 0) : 0;
-
-    // Determinar si es contexto de checkout (datos completos) o tour (datos mínimos)
-    const isCheckoutContext = totalPassengers > 0 && this.totalPrice > 0;
-    
+  private buildReservationData(userId: number | null): ReservationCreate {
     return {
-      id: 0, // Se asignará en el backend
-      tkId: this.generateTokenId(),
-      reservationStatusId: isCheckoutContext ? 1 : 0, // 1=draft (checkout), 0=interest (tour)
-      retailerId: 1, // Default retailer - se puede configurar
+      id: 0,
+      tkId: '',
+      reservationStatusId: 3, // 3 = BUDGET (presupuesto)
+      retailerId: environment.retaileriddefault,
       tourId: parseInt(this.tourId) || 0,
       departureId: parseInt(this.periodId) || 0,
-      userId: null, // TODO: Obtener del usuario autenticado
-      totalPassengers: isCheckoutContext ? totalPassengers : 0,
-      totalAmount: isCheckoutContext ? this.totalPrice : 0,
+      userId: userId,
+      totalPassengers: this.travelersData ? 
+        (this.travelersData.adults || 0) + (this.travelersData.childs || 0) + (this.travelersData.babies || 0) : 1,
+      totalAmount: this.totalPrice || 0,
       budgetAt: new Date().toISOString(),
       cartAt: '',
       abandonedAt: '',
@@ -141,6 +140,43 @@ export class AdditionalInfoService {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
+  }
+  
+  /**
+   * Crea un nuevo presupuesto en el backend
+   * @returns Observable con la reserva creada
+   */
+  createBudget(): Observable<any> {
+    return this.authService.getCognitoId().pipe(
+      switchMap(cognitoId => {
+        if (!cognitoId) {
+          console.warn('⚠️ No se encontró Cognito ID, creando presupuesto sin userId');
+          const reservationData = this.buildReservationData(null);
+          console.log('📋 Creando PRESUPUESTO desde additional-info (sin userId):', reservationData);
+          return this.reservationService.create(reservationData);
+        }
+        
+        // Buscar el usuario por Cognito ID para obtener su ID en la base de datos
+        return this.usersNetService.getUsersByCognitoId(cognitoId).pipe(
+          map((users: any[]) => {
+            const userId = users && users.length > 0 ? users[0].id : null;
+            console.log('👤 Usuario encontrado:', { cognitoId, userId });
+            return userId;
+          }),
+          map((userId: number | null) => this.buildReservationData(userId)),
+          map((reservationData: ReservationCreate) => {
+            console.log('📋 Creando PRESUPUESTO desde additional-info:', reservationData);
+            console.log('📋 Datos completos enviados al backend:', JSON.stringify(reservationData, null, 2));
+            return reservationData;
+          }),
+          switchMap((reservationData: ReservationCreate) => this.reservationService.create(reservationData))
+        );
+      }),
+      catchError(error => {
+        console.error('Error en createBudget:', error);
+        throw error;
+      })
+    );
   }
 
   /**
@@ -205,7 +241,7 @@ export class AdditionalInfoService {
     }
 
     // Construcción de datos para el backend
-    const reservationData = this.buildReservationData();
+    const reservationData = this.buildReservationData(null);
     
     // TEMPORAL: Simular respuesta exitosa hasta que el backend implemente el endpoint
     return of({
@@ -502,37 +538,68 @@ export class AdditionalInfoService {
   /**
    * Envía el presupuesto por email a través del backend
    * 
-   * Endpoint: POST /api/budgets/share
-   * Descripción: Comparte un presupuesto con otra persona mediante email
+   * 📋 TODO: CONECTAR CON ENDPOINT DEL BACKEND
    * 
-   * @param budgetData Datos del presupuesto y destinatario
+   * Endpoint esperado: POST /api/budgets/share
+   * Request body: { 
+   *   tourId: string,
+   *   periodId: string, 
+   *   travelersData: object,
+   *   recipientEmail: string,
+   *   message?: string 
+   * }
+   * Response: { success: boolean, message: string, data: object }
+   * 
+   * Implementación actual: Mock que simula el envío exitoso
+   * Implementación pendiente: Descomentar el código que hace la llamada real al endpoint
+   * 
+   * @param budgetData Datos del presupuesto y email del destinatario
    * @returns Observable con la respuesta del servidor
    */
   sendBudgetByEmail(budgetData: any): Observable<any> {
-    return of({
-      success: true,
-      message: 'Email enviado correctamente',
-      data: { id: 'share_' + Date.now(), status: 'sent' }
-    });
-    
-    // TODO: Descomentar cuando el backend implemente el endpoint
+    // ✅ TODO: Implementar cuando el backend tenga disponible el endpoint POST /api/budgets/share
     /*
     return this.http.post(`${this.API_BASE_URL}/budgets/share`, budgetData).pipe(
       map((response: any) => ({
         success: true,
         message: 'Email enviado correctamente',
         data: response
-      }))
+      })),
+      catchError((error) => {
+        console.error('Error al enviar presupuesto por email:', error);
+        return of({
+          success: false,
+          message: 'Error al enviar el email. Inténtalo de nuevo.',
+          error: error
+        });
+      })
     );
     */
+    
+    // Placeholder temporal
+    return of({
+      success: false,
+      message: 'Funcionalidad pendiente de implementación'
+    });
   }
 
   /**
    * Descarga el presupuesto como PDF desde el backend
    * 
-   * Endpoint: POST /api/budgets/download
-   * Descripción: Genera y descarga un PDF del presupuesto
+   * 📋 TODO: CONECTAR CON ENDPOINT DEL BACKEND
+   * 
+   * Endpoint esperado: POST /api/budgets/download
+   * Request body: { 
+   *   tourId: string,
+   *   periodId: string,
+   *   travelersData: object,
+   *   totalPrice: number,
+   *   userEmail: string
+   * }
    * Response-Type: application/pdf (blob)
+   * 
+   * Implementación actual: Mock que simula la descarga de un PDF
+   * Implementación pendiente: Descomentar el código que hace la llamada real al endpoint
    * 
    * @param userEmail Email del usuario autenticado
    * @returns Observable con la respuesta del servidor
@@ -549,28 +616,9 @@ export class AdditionalInfoService {
     }
 
     // Construcción de datos para la generación del PDF
-    const downloadData = this.buildReservationData();
+    const downloadData = this.buildReservationData(null);
     
-    // Simular descarga de PDF
-    const fileName = `presupuesto-${this.tourId}-${Date.now()}.pdf`;
-    const mockContent = 'Presupuesto simulado - ' + new Date().toISOString();
-    const blob = new Blob([mockContent], { type: 'application/pdf' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-    
-    return of({
-      success: true,
-      message: 'Presupuesto descargado correctamente',
-      fileName: fileName
-    });
-    
-    // TODO: Descomentar cuando el backend implemente el endpoint
+    // ✅ TODO: Implementar cuando el backend tenga disponible el endpoint POST /api/budgets/download
     /*
     return this.http.post(`${this.API_BASE_URL}/budgets/download`, downloadData, { 
       responseType: 'blob' 
@@ -592,9 +640,23 @@ export class AdditionalInfoService {
           message: 'Presupuesto descargado correctamente',
           fileName: fileName
         };
+      }),
+      catchError((error) => {
+        console.error('Error al descargar presupuesto PDF:', error);
+        return of({
+          success: false,
+          message: 'Error al descargar el presupuesto. Inténtalo de nuevo.',
+          error: error
+        });
       })
     );
     */
+    
+    // Placeholder temporal
+    return of({
+      success: false,
+      message: 'Funcionalidad pendiente de implementación'
+    });
   }
 
   // ============================================

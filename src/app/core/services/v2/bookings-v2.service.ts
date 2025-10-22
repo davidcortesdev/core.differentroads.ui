@@ -37,12 +37,15 @@ export class BookingsServiceV2 {
       .set('useExactMatchForStrings', 'false');
 
     return this.http.get<ReservationResponse[]>(this.API_URL, { params }).pipe(
-      // Filtrar solo reservas activas (status 5 = BOOKED, 6 = CONFIRMED)
-      map((reservations: ReservationResponse[]) => 
-        reservations.filter(reservation => 
-          reservation.reservationStatusId === 5 || reservation.reservationStatusId === 6
-        )
-      )
+      map((reservations: ReservationResponse[]) => {
+        const filtered = reservations.filter(reservation => 
+          reservation.reservationStatusId === 1 || 
+          reservation.reservationStatusId === 2 || 
+          reservation.reservationStatusId === 5 || 
+          reservation.reservationStatusId === 6
+        );
+        return filtered;
+      })
     );
   }
 
@@ -58,11 +61,15 @@ export class BookingsServiceV2 {
 
     return this.http.get<ReservationResponse[]>(this.API_URL, { params }).pipe(
       // Filtrar solo historial (status 7 = PAID, 8 = CANCELLED)
-      map((reservations: ReservationResponse[]) => 
-        reservations.filter(reservation => 
+      map((reservations: ReservationResponse[]) => {
+
+        
+        const filtered = reservations.filter(reservation => 
           reservation.reservationStatusId === 7 || reservation.reservationStatusId === 8
-        )
-      )
+        );
+        
+        return filtered;
+      })
     );
   }
 
@@ -112,38 +119,73 @@ export class BookingsServiceV2 {
    * @returns Observable de array de ReservationResponse
    */
   getReservationsByTravelerEmail(email: string): Observable<ReservationResponse[]> {
-    console.log('🔍 DEBUG: Buscando reservas para email:', email);
-    
-    // Primero obtener todos los ReservationTraveler que tienen este email
-    const travelersUrl = `${environment.reservationsApiUrl}/ReservationTraveler`;
-    const travelersParams = new HttpParams()
+    // Obtener TODOS los campos de email (ReservationFieldId = 11)
+    const fieldsUrl = `${environment.reservationsApiUrl}/ReservationTravelerField`;
+    const fieldsParams = new HttpParams()
+      .set('ReservationFieldId', '11') // 11 = email
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<any[]>(travelersUrl, { params: travelersParams }).pipe(
-      switchMap((travelers: any[]) => {
-        console.log('🔍 DEBUG: Todos los travelers:', travelers);
+    return this.http.get<any[]>(fieldsUrl, { params: fieldsParams }).pipe(
+      switchMap((allFields: any[]) => {
         
-        // Filtrar viajeros que tienen el email en sus campos
-        const travelersWithEmail = travelers.filter(traveler => {
-          // Verificar si el viajero tiene campos con email
-          const hasEmail = this.hasEmailInFields(traveler, email);
-          console.log('🔍 DEBUG: Traveler', traveler.id, 'tiene email?', hasEmail);
-          return hasEmail;
-        });
-
-        console.log('🔍 DEBUG: Travelers con email:', travelersWithEmail);
-
-        // Obtener IDs únicos de reservas
-        const reservationIds = [...new Set(travelersWithEmail.map(t => t.reservationId))];
-        console.log('🔍 DEBUG: Reservation IDs:', reservationIds);
-        
-        if (reservationIds.length === 0) {
-          console.log('🔍 DEBUG: No se encontraron reservation IDs');
+        if (!allFields || allFields.length === 0) {
           return of([]);
         }
 
-        // Obtener todas las reservas de estos IDs
-        return this.getReservationsByIds(reservationIds);
+        // FILTRAR MANUALMENTE para asegurar coincidencia exacta con el email buscado
+        const exactMatchFields = allFields.filter((f: any) => {
+          const fieldEmail = f.value?.toLowerCase().trim();
+          const searchEmail = email.toLowerCase().trim();
+          return fieldEmail === searchEmail;
+        });
+        
+        if (exactMatchFields.length === 0) {
+          return of([]);
+        }
+
+        // Obtener los IDs de travelers únicos que tienen el email específico
+        const travelerIds = [...new Set(exactMatchFields.map((f: any) => f.reservationTravelerId))];
+
+        // Obtener TODOS los travelers y filtrar manualmente
+        const travelersUrl = `${environment.reservationsApiUrl}/ReservationTraveler`;
+        
+        return this.http.get<any[]>(travelersUrl).pipe(
+          switchMap((allTravelers: any[]) => {
+            
+            if (!allTravelers || allTravelers.length === 0) {
+              return of([]);
+            }
+            
+            // FILTRAR MANUALMENTE solo los travelers que están en nuestra lista de IDs
+            const filteredTravelers = allTravelers.filter(traveler => 
+              travelerIds.includes(traveler.id)
+            );
+            
+            // Obtener IDs únicos de reservas SOLO de los travelers que tienen el email
+            const reservationIds = [...new Set(filteredTravelers.map((t: any) => t.reservationId))].filter(id => id != null);
+            
+            if (reservationIds.length === 0) {
+              return of([]);
+            }
+
+            // Obtener TODAS las reservas y filtrar manualmente por IDs
+            return this.http.get<ReservationResponse[]>(this.API_URL).pipe(
+              map((allReservations: ReservationResponse[]) => {
+                
+                if (!allReservations || allReservations.length === 0) {
+                  return [];
+                }
+                
+                // FILTRAR MANUALMENTE solo las reservas que están en nuestra lista de IDs
+                const filteredReservations = allReservations.filter(reservation => 
+                  reservationIds.includes(reservation.id)
+                );
+                
+                return filteredReservations;
+              })
+            );
+          })
+        );
       })
     );
   }
@@ -157,7 +199,11 @@ export class BookingsServiceV2 {
     return this.getReservationsByTravelerEmail(email).pipe(
       map((reservations: ReservationResponse[]) => 
         reservations.filter(reservation => 
-          reservation.reservationStatusId === 5 || reservation.reservationStatusId === 6
+          reservation.reservationStatusId === 1 || 
+          reservation.reservationStatusId === 2 || 
+          reservation.reservationStatusId === 5 || 
+          reservation.reservationStatusId === 6 || 
+          reservation.reservationStatusId === 7
         )
       )
     );
@@ -170,40 +216,29 @@ export class BookingsServiceV2 {
    */
   getTravelHistoryByTravelerEmail(email: string): Observable<ReservationResponse[]> {
     return this.getReservationsByTravelerEmail(email).pipe(
-      map((reservations: ReservationResponse[]) => 
-        reservations.filter(reservation => 
+      map((reservations: ReservationResponse[]) => {
+      
+        const filtered = reservations.filter(reservation => 
           reservation.reservationStatusId === 7 || reservation.reservationStatusId === 8
-        )
-      )
+        );
+        
+        return filtered;
+      })
     );
   }
 
   /**
-   * Verifica si un viajero tiene el email especificado en sus campos
-   * @param traveler - Objeto del viajero
-   * @param email - Email a buscar
-   * @returns true si el viajero tiene el email
-   */
-  private hasEmailInFields(traveler: any, email: string): boolean {
-    // Si el viajero tiene campos, verificar si alguno contiene el email
-    if (traveler.fields && Array.isArray(traveler.fields)) {
-      return traveler.fields.some((field: any) => 
-        field.reservationFieldId === 11 && field.value === email
-      );
-    }
-    return false;
-  }
-
-  /**
-   * Obtiene reservas por sus IDs
-   * @param reservationIds - Array de IDs de reservas
+   * Obtiene presupuestos recientes donde un email aparece como viajero
+   * @param email - Email del viajero
    * @returns Observable de array de ReservationResponse
    */
-  private getReservationsByIds(reservationIds: number[]): Observable<ReservationResponse[]> {
-    const params = new HttpParams()
-      .set('Ids', reservationIds.join(','))
-      .set('useExactMatchForStrings', 'false');
-
-    return this.http.get<ReservationResponse[]>(this.API_URL, { params });
+  getRecentBudgetsByTravelerEmail(email: string): Observable<ReservationResponse[]> {
+    return this.getReservationsByTravelerEmail(email).pipe(
+      map((reservations: ReservationResponse[]) => 
+        reservations.filter(reservation => 
+          reservation.reservationStatusId === 3
+        )
+      )
+    );
   }
 }

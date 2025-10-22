@@ -21,6 +21,7 @@ import {
   DepartureService,
   IDepartureResponse,
 } from '../../../../core/services/departure/departure.service';
+import { FlightsNetService } from '../../../../pages/checkout-v2/services/flightsNet.service';
 import {
   ItineraryService,
   IItineraryResponse,
@@ -168,6 +169,9 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   selectedDepartureId: number | null = null;
   passengerText: string = '1 Adulto';
 
+  // Mapa de horarios de vuelos por departureId
+  flightTimesByDepartureId: { [departureId: number]: string } = {};
+
   constructor(
     private departureService: DepartureService,
     private itineraryService: ItineraryService,
@@ -176,7 +180,8 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     private ageGroupService: AgeGroupService,
     private tourDeparturesPricesService: TourDeparturesPricesService,
     private messageService: MessageService,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private flightsNetService: FlightsNetService
   ) {
     this.updatePassengerText();
 
@@ -634,6 +639,13 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
                 new Date(a.departureDate ?? '').getTime() -
                 new Date(b.departureDate ?? '').getTime()
             );
+
+          // Cargar horarios de vuelos para todos los departures
+          this.allDepartures.forEach(departure => {
+            if (departure.id) {
+              this.loadFlightTimes(departure.id);
+            }
+          });
 
           this.loading = false;
 
@@ -1207,5 +1219,81 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
   trackByDepartureId(index: number, item: any): any {
     return item.id; // Usar ID único para evitar re-renderizado innecesario
+  }
+
+  // Método para obtener horarios de vuelos
+  getFlightTimes(departureId: number): string {
+    return this.flightTimesByDepartureId[departureId] || '';
+  }
+
+  // Método para obtener líneas de vuelos separadas
+  getFlightTimesLines(departureId: number): string[] {
+    const flightTimes = this.flightTimesByDepartureId[departureId];
+    if (!flightTimes) return [];
+    
+    return flightTimes.split('\n');
+  }
+
+  // Cargar horarios de vuelos para un departure específico
+  private loadFlightTimes(departureId: number): void {
+    this.flightsNetService.getFlights(departureId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (flightPacks: any[]) => {
+          if (flightPacks && flightPacks.length > 0) {
+            const flightPack = flightPacks[0];
+            
+            if (flightPack.flights && flightPack.flights.length > 0) {
+              // Buscar vuelos de ida y vuelta
+              const outboundFlight = flightPack.flights.find((f: any) => f.flightTypeId === 4);
+              const returnFlight = flightPack.flights.find((f: any) => f.flightTypeId === 5);
+              
+              if (outboundFlight) {
+                const depTime = this.formatTime(outboundFlight.departureTime || '');
+                const depIata = outboundFlight.departureIATACode || '';
+                const arrTime = this.formatTime(outboundFlight.arrivalTime || '');
+                const arrIata = outboundFlight.arrivalIATACode || '';
+                
+                let flightTimes = `${depTime} (${depIata}) → ${arrTime} (${arrIata})`;
+                
+                if (returnFlight) {
+                  const retDepTime = this.formatTime(returnFlight.departureTime || '');
+                  const retDepIata = returnFlight.departureIATACode || '';
+                  const retArrTime = this.formatTime(returnFlight.arrivalTime || '');
+                  const retArrIata = returnFlight.arrivalIATACode || '';
+                  
+                  flightTimes += `\n${retDepTime} (${retDepIata}) → ${retArrTime} (${retArrIata})`;
+                }
+                
+                this.flightTimesByDepartureId[departureId] = flightTimes;
+              }
+            }
+          }
+        },
+        error: (err: any) => {
+          console.warn('No se pudieron cargar horarios de vuelos para departure', departureId, err);
+        }
+      });
+  }
+
+  private formatTime(timeString: string): string {
+    if (!timeString) return '';
+    
+    // Si ya es un formato de hora (HH:MM:SS), devolverlo directamente
+    if (timeString.match(/^\d{1,2}:\d{2}:\d{2}$/)) {
+      return timeString.substring(0, 5); // Tomar solo HH:MM
+    }
+    
+    // Si es una fecha completa, formatearla
+    const date = new Date(timeString);
+    if (isNaN(date.getTime())) {
+      return timeString; // Si no es una fecha válida, devolver el string original
+    }
+    
+    return date.toLocaleTimeString('es-ES', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: false 
+    });
   }
 }

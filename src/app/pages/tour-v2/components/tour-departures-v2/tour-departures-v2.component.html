@@ -222,6 +222,13 @@
                   {{ getTripTypeInfo(item.group)?.title }}
                 </span>
 
+                <!-- Horarios de vuelos -->
+                <div class="flight-times" *ngIf="getFlightTimes(item.id)">
+                  <div *ngFor="let line of getFlightTimesLines(item.id)" class="flight-line">
+                    {{ line }}
+                  </div>
+                </div>
+
                 <p-tag
                   severity="warn"
                   value="Lista de espera"

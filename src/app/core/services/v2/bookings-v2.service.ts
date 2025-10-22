@@ -38,7 +38,6 @@ export class BookingsServiceV2 {
 
     return this.http.get<ReservationResponse[]>(this.API_URL, { params }).pipe(
       map((reservations: ReservationResponse[]) => {
-        
         const filtered = reservations.filter(reservation => 
           reservation.reservationStatusId === 1 || 
           reservation.reservationStatusId === 2 || 

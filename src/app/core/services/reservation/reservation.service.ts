@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { map, Observable, switchMap } from 'rxjs';
+import { map, Observable, switchMap, catchError } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
   IReservationStatusResponse,

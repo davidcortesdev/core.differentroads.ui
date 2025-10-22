@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Title } from '@angular/platform-browser';
+import { Title, Meta } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { TagService, ITagResponse } from '../../core/services/tag/tag.service';
@@ -31,6 +31,7 @@ export class CategoryPageComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private titleService: Title,
+    private meta: Meta,
     private tagService: TagService,
     private tagCategoryService: TagCategoryService,
     private tourTagService: TourTagService
@@ -106,31 +107,63 @@ export class CategoryPageComponent implements OnInit, OnDestroy {
   }
 
   private updatePageInfo(): void {
-    // Actualizar título
+    // Actualizar título y SEO
     let title: string;
+    let description: string;
+    let keywords: string;
     
     if (this.subItemSlug && this.tagData) {
       // Si buscamos tag y lo encontramos
-      title = `${this.tagData.name} - Different Roads`;
+      const tagName = this.tagData.name;
+      const categoryName = this.getCategoryName();
+      title = `${tagName} - Different Roads`;
+      
+      // Generar keywords según el tipo de categoría
+      keywords = this.generateKeywordsForTag(categoryName, tagName);
+      description = this.generateDescriptionForTag(categoryName, tagName);
+      
     } else if (this.subItemSlug) {
       // Si buscamos tag pero no lo encontramos
-      title = `${this.formatSlug(this.subItemSlug)} - Different Roads`;
+      const tagName = this.formatSlug(this.subItemSlug);
+      const categoryName = this.getCategoryName();
+      title = `${tagName} - Different Roads`;
+      
+      keywords = this.generateKeywordsForTag(categoryName, tagName);
+      description = this.generateDescriptionForTag(categoryName, tagName);
+      
     } else if (this.categoryData) {
       // Si buscamos categoría y la encontramos
-      title = `${this.categoryData.name} - Different Roads`;
+      const categoryName = this.categoryData.name;
+      title = `${categoryName} - Different Roads`;
+      
+      keywords = this.generateKeywordsForCategory(categoryName);
+      description = this.generateDescriptionForCategory(categoryName);
+      
     } else {
       // Si buscamos categoría pero no la encontramos
-      title = `${this.formatSlug(this.categorySlug)} - Different Roads`;
+      const categoryName = this.formatSlug(this.categorySlug);
+      title = `${categoryName} - Different Roads`;
+      
+      keywords = this.generateKeywordsForCategory(categoryName);
+      description = this.generateDescriptionForCategory(categoryName);
     }
     
+    // Actualizar título
     this.titleService.setTitle(title);
+    
+    // Actualizar meta descripción
+    this.meta.updateTag({ name: 'description', content: description });
+    
+    // Actualizar keywords SEO
+    this.meta.updateTag({ name: 'keywords', content: keywords });
 
     // Log para debug
     console.log('Datos de categoría/tag cargados:', {
       tagId: this.tagId,
       tagName: this.tagData?.name,
       categoryId: this.categoryId,
-      categoryName: this.categoryData?.name
+      categoryName: this.categoryData?.name,
+      seoKeywords: keywords
     });
 
     this.isLoading = false;
@@ -223,6 +256,100 @@ export class CategoryPageComponent implements OnInit, OnDestroy {
    */
   getTagName(): string {
     return this.tagData?.name || this.formatSlug(this.subItemSlug);
+  }
+
+  /**
+   * Genera keywords SEO para categorías principales
+   */
+  private generateKeywordsForCategory(categoryName: string): string {
+    const normalizedCategory = categoryName.toLowerCase();
+    
+    if (normalizedCategory.includes('tipos') || normalizedCategory.includes('tipo')) {
+      return `tipos de viaje, viajes organizados, diferentes tipos de viaje, opciones de viaje`;
+    } else if (normalizedCategory.includes('mes') || normalizedCategory.includes('meses')) {
+      return `viajar por mes, mejores meses para viajar, cuándo viajar, temporada de viajes`;
+    } else if (normalizedCategory.includes('temporada')) {
+      return `viajes por temporada, vacaciones, viajes estacionales, mejores temporadas para viajar`;
+    } else {
+      return `${categoryName}, viajes ${categoryName.toLowerCase()}, tours ${categoryName.toLowerCase()}`;
+    }
+  }
+
+  /**
+   * Genera keywords SEO para tags específicos según el tipo de categoría
+   */
+  private generateKeywordsForTag(categoryName: string, tagName: string): string {
+    const normalizedCategory = categoryName.toLowerCase();
+    const normalizedTag = tagName.toLowerCase();
+    
+    if (normalizedCategory.includes('tipos') || normalizedCategory.includes('tipo')) {
+      // Patrón: "viajar + tipo de viaje"
+      if (normalizedTag.includes('grupo') || normalizedTag.includes('grupos')) {
+        return `viajes en grupo, viajar en grupo, tours grupales, viajes organizados en grupo`;
+      } else if (normalizedTag.includes('single') || normalizedTag.includes('solo')) {
+        return `viajar solo, viajes single, viajes individuales, viajar independiente`;
+      } else if (normalizedTag.includes('mixto')) {
+        return `viajes mixtos, tours mixtos, viajes combinados`;
+      } else if (normalizedTag.includes('medida') || normalizedTag.includes('personalizado')) {
+        return `viajes a medida, tours personalizados, viajes customizados`;
+      } else {
+        return `viajar ${normalizedTag}, viajes ${normalizedTag}, tours ${normalizedTag}`;
+      }
+    } else if (normalizedCategory.includes('mes') || normalizedCategory.includes('meses')) {
+      // Patrón: "viajar + mes"
+      return `viajar en ${normalizedTag}, viajes ${normalizedTag}, mejores destinos ${normalizedTag}, cuándo viajar ${normalizedTag}`;
+    } else if (normalizedCategory.includes('temporada')) {
+      // Patrón: "viaje + vacaciones"
+      if (normalizedTag.includes('navidad') || normalizedTag.includes('diciembre')) {
+        return `viajar navidad, viajes navideños, vacaciones navidad, viajes diciembre`;
+      } else if (normalizedTag.includes('verano')) {
+        return `viajes verano, vacaciones verano, viajar en verano, destinos verano`;
+      } else if (normalizedTag.includes('semana santa') || normalizedTag.includes('santa')) {
+        return `viajar semana santa, viajes semana santa, vacaciones semana santa`;
+      } else if (normalizedTag.includes('puente')) {
+        return `viajes puente, viajar en puente, vacaciones puente`;
+      } else {
+        return `viaje ${normalizedTag}, viajes ${normalizedTag}, vacaciones ${normalizedTag}`;
+      }
+    } else {
+      // Patrón genérico
+      return `viajar ${normalizedTag}, viajes ${normalizedTag}, tours ${normalizedTag}`;
+    }
+  }
+
+  /**
+   * Genera descripción SEO para categorías principales
+   */
+  private generateDescriptionForCategory(categoryName: string): string {
+    const normalizedCategory = categoryName.toLowerCase();
+    
+    if (normalizedCategory.includes('tipos') || normalizedCategory.includes('tipo')) {
+      return `Descubre los diferentes tipos de viaje disponibles en Different Roads. Desde viajes en grupo hasta experiencias personalizadas, encuentra la opción perfecta para ti.`;
+    } else if (normalizedCategory.includes('mes') || normalizedCategory.includes('meses')) {
+      return `Planifica tu viaje según el mes del año. Descubre los mejores destinos y experiencias para cada temporada con Different Roads.`;
+    } else if (normalizedCategory.includes('temporada')) {
+      return `Explora viajes organizados por temporada. Desde vacaciones de verano hasta escapadas navideñas, encuentra la experiencia perfecta para cada época del año.`;
+    } else {
+      return `Descubre ${categoryName} con Different Roads. Encuentra los mejores tours y experiencias de viaje para ${categoryName.toLowerCase()}.`;
+    }
+  }
+
+  /**
+   * Genera descripción SEO para tags específicos
+   */
+  private generateDescriptionForTag(categoryName: string, tagName: string): string {
+    const normalizedCategory = categoryName.toLowerCase();
+    const normalizedTag = tagName.toLowerCase();
+    
+    if (normalizedCategory.includes('tipos') || normalizedCategory.includes('tipo')) {
+      return `Descubre ${tagName} con Different Roads. Encuentra los mejores tours y experiencias de ${normalizedTag} para tu próximo viaje.`;
+    } else if (normalizedCategory.includes('mes') || normalizedCategory.includes('meses')) {
+      return `Planifica tu viaje en ${tagName}. Descubre los mejores destinos y experiencias para ${normalizedTag} con Different Roads.`;
+    } else if (normalizedCategory.includes('temporada')) {
+      return `Vive ${tagName} con Different Roads. Encuentra los mejores viajes y experiencias para ${normalizedTag} y crea recuerdos inolvidables.`;
+    } else {
+      return `Descubre ${tagName} con Different Roads. Encuentra los mejores tours y experiencias de ${normalizedTag} para tu próximo viaje.`;
+    }
   }
 
   formatSlug(slug: string): string {

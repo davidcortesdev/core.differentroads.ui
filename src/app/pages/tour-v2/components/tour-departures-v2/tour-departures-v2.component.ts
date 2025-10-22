@@ -358,9 +358,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
           // Recargar horarios de vuelos cuando se cargan los precios
           if (this.filteredDepartures && this.filteredDepartures.length > 0) {
-            console.log(`🏙️ Ciudad seleccionada: ${this.selectedCity?.name}`);
-            console.log(`📊 Departures filtrados para ${this.selectedCity?.name}:`, this.filteredDepartures.map(d => ({ id: d.id, name: d.name })));
-            
             // Cargar horarios para todos los departures filtrados
             this.filteredDepartures.forEach(departure => {
               if (departure.id) {
@@ -1250,14 +1247,10 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
   // Cargar horarios de vuelos para un departure específico
   private loadFlightTimes(departureId: number): void {
-    console.log(`🔍 Cargando horarios de vuelos para departure ID: ${departureId}`);
-    
     this.flightsNetService.getFlights(departureId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (flightPacks: any[]) => {
-          console.log(`✅ Respuesta API para departure ${departureId}:`, flightPacks);
-          
           if (flightPacks && flightPacks.length > 0) {
             // Filtrar el flight pack correcto según la ciudad seleccionada
             let selectedFlightPack = null;
@@ -1278,15 +1271,10 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
               selectedFlightPack = flightPacks[0];
             }
             
-            console.log(`📦 Flight pack seleccionado para departure ${departureId}:`, selectedFlightPack);
-            
             if (selectedFlightPack && selectedFlightPack.flights && selectedFlightPack.flights.length > 0) {
               // Buscar vuelos de ida y vuelta
               const outboundFlight = selectedFlightPack.flights.find((f: any) => f.flightTypeId === 4);
               const returnFlight = selectedFlightPack.flights.find((f: any) => f.flightTypeId === 5);
-              
-              console.log(`✈️ Vuelo de ida para departure ${departureId}:`, outboundFlight);
-              console.log(`🔄 Vuelo de vuelta para departure ${departureId}:`, returnFlight);
               
               if (outboundFlight) {
                 const depTime = this.formatTime(outboundFlight.departureTime || '');
@@ -1305,7 +1293,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
                   flightTimes += `\n${retDepTime} (${retDepIata}) → ${retArrTime} (${retArrIata})`;
                 }
                 
-                console.log(`⏰ Horarios finales para departure ${departureId}:`, flightTimes);
                 this.flightTimesByDepartureId[departureId] = flightTimes;
               }
             }

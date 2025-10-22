@@ -19,6 +19,7 @@ import { UsersNetService } from '../../../../core/services/users/usersNet.servic
 import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
 import { ConfirmationCodeComponent } from '../../../../shared/components/confirmation-code/confirmation-code.component';
 import { UserCreate, IUserResponse } from '../../../../core/models/users/user.model';
+import { environment } from '../../../../../environments/environment';
 @Component({
   selector: 'app-login-form',
   standalone: true,
@@ -127,6 +128,15 @@ export class LoginFormComponent implements OnInit {
           // Usuario encontrado por Cognito ID
           console.log('🎉 Usuario encontrado por Cognito ID:', users[0]);
           
+          // Verificar si debe redirigir a Tour Operation
+          if (this.shouldRedirectToTourOperation(users[0])) {
+            console.log('🔀 Usuario sin acceso web pero con acceso a Tour Operation');
+            // Disparar evento login antes de redirigir
+            this.trackLogin(method, users[0]);
+            this.redirectToTourOperation();
+            return;
+          }
+          
           // Verificar si tiene acceso a la web
           if (!users[0].hasWebAccess) {
             this.isLoading = false;
@@ -222,6 +232,13 @@ export class LoginFormComponent implements OnInit {
         // Obtener el usuario actualizado para verificar permisos
         this.usersNetService.getUserById(userId).subscribe({
           next: (user) => {
+            // Verificar si debe redirigir a Tour Operation
+            if (this.shouldRedirectToTourOperation(user)) {
+              console.log('🔀 Usuario sin acceso web pero con acceso a Tour Operation');
+              this.redirectToTourOperation();
+              return;
+            }
+            
             // Verificar si tiene acceso a la web
             if (!user.hasWebAccess) {
               this.isLoading = false;
@@ -280,6 +297,15 @@ export class LoginFormComponent implements OnInit {
     this.usersNetService.createUser(newUser).subscribe({
       next: (user) => {
         console.log('✅ Nuevo usuario creado exitosamente:', user);
+        
+        // Verificar si debe redirigir a Tour Operation
+        if (this.shouldRedirectToTourOperation(user)) {
+          console.log('🔀 Usuario sin acceso web pero con acceso a Tour Operation');
+          // Disparar evento login antes de redirigir
+          this.trackLogin(method, user);
+          this.redirectToTourOperation();
+          return;
+        }
         
         // Verificar si tiene acceso a la web
         if (!user.hasWebAccess) {
@@ -396,5 +422,21 @@ export class LoginFormComponent implements OnInit {
         user.cognitoId
       )
     );
+  }
+
+  /**
+   * Verifica si el usuario debe ser redirigido a la plataforma de tour operation
+   */
+  private shouldRedirectToTourOperation(user: IUserResponse): boolean {
+    return !user.hasWebAccess && user.hasTourOperationAccess;
+  }
+
+  /**
+   * Redirige al usuario a la plataforma de tour operation
+   */
+  private redirectToTourOperation(): void {
+    this.isLoading = false;
+    console.log('🔀 Redirigiendo a Tour Operation...');
+    window.location.href = environment.tourOperationUrl;
   }
 }

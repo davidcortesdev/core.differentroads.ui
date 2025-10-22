@@ -230,6 +230,7 @@ import { ImageCropperComponent } from './shared/components/image-cropper/image-c
 import { SeoLinksComponent } from './shared/components/seo-links/seo-links.component';
 import { AdditionalInfoComponent } from './shared/components/additional-info/additional-info.component';
 import { EnvironmentBannerComponent } from './shared/components/environment-banner/environment-banner.component';
+import { SeoManagerComponent } from './shared/components/seo-manager/seo-manager.component';
 
 // Tour Cards
 import { TourCardComponent } from './shared/components/tour-card/tour-card.component';
@@ -404,6 +405,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     SeoLinksComponent,
     AdditionalInfoComponent,
     EnvironmentBannerComponent,
+    SeoManagerComponent,
 
     // Tour Cards
     TourCardComponent,

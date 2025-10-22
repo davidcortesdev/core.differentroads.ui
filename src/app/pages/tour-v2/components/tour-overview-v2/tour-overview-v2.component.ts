@@ -437,69 +437,36 @@ export class TourOverviewV2Component implements OnInit {
     })) || [];
   }
 
-  // Manejar clic en país específico
-  onCountryClick(event: MouseEvent, fullCountryText: string): void {
-    event.preventDefault();
-    
-    const clickedCountry = this.getClickedCountry(event, fullCountryText);
-    if (clickedCountry) {
-      // Navegar a la búsqueda con el país específico
-      this.router.navigate(['/tours'], {
-        queryParams: {
-          destination: clickedCountry
-        }
-      });
-    }
+
+  /**
+   * Convierte un texto a formato slug (minúsculas, espacios a guiones, sin acentos)
+   * Copiado del header-v2.component.ts para mantener consistencia
+   */
+  private textToSlug(text: string): string {
+    return text
+      .toLowerCase()
+      .normalize('NFD') // Normalizar para separar caracteres base de diacríticos
+      .replace(/[\u0300-\u036f]/g, '') // Eliminar diacríticos (acentos)
+      .replace(/[^a-z0-9\s-]/g, '') // Eliminar caracteres especiales excepto espacios y guiones
+      .replace(/\s+/g, '-') // Reemplazar espacios por guiones
+      .replace(/-+/g, '-') // Reemplazar múltiples guiones por uno solo
+      .replace(/^-+|-+$/g, ''); // Eliminar guiones al inicio y final
   }
 
-  // Detectar qué país se clickeó basado en la posición del clic
-  private getClickedCountry(event: MouseEvent, fullText: string): string | null {
-    const target = event.target as HTMLElement;
-    const countries = fullText.split(',').map(c => c.trim()).filter(c => c);
+  /**
+   * Construye un slug completo para enlaces de destino
+   * Formato: /destino/:menuItemSlug para continentes
+   * Formato: /destino/:menuItemSlug/:destinationSlug para países
+   */
+  private buildDestinationSlug(continentName: string, countryName?: string): string {
+    const continentSlug = this.textToSlug(continentName);
     
-    if (countries.length === 1) {
-      return countries[0];
-    }
-
-    // Obtener la posición del clic dentro del elemento
-    const rect = target.getBoundingClientRect();
-    const clickX = event.clientX - rect.left;
-    
-    // Crear un elemento temporal para medir el ancho de cada país
-    const tempElement = document.createElement('span');
-    tempElement.style.visibility = 'hidden';
-    tempElement.style.position = 'absolute';
-    tempElement.style.fontSize = window.getComputedStyle(target).fontSize;
-    tempElement.style.fontFamily = window.getComputedStyle(target).fontFamily;
-    document.body.appendChild(tempElement);
-    
-    let currentX = 0;
-    let clickedCountry: string | null = null;
-    
-    for (let i = 0; i < countries.length; i++) {
-      const country = countries[i];
-      const separator = i < countries.length - 1 ? ', ' : '';
-      const textToMeasure = country + separator;
-      
-      tempElement.textContent = textToMeasure;
-      const textWidth = tempElement.offsetWidth;
-      
-      if (clickX >= currentX && clickX <= currentX + textWidth) {
-        // Verificar si el clic está específicamente en el nombre del país (no en la coma)
-        tempElement.textContent = country;
-        const countryWidth = tempElement.offsetWidth;
-        
-        if (clickX <= currentX + countryWidth) {
-          clickedCountry = country;
-          break;
-        }
-      }
-      
-      currentX += textWidth;
+    if (countryName) {
+      const countrySlug = this.textToSlug(countryName);
+      return `/destino/${continentSlug}/${countrySlug}`;
     }
     
-    document.body.removeChild(tempElement);
-    return clickedCountry;
+    return `/destino/${continentSlug}`;
   }
 
   get breadcrumbItems(): MenuItem[] {
@@ -508,28 +475,14 @@ export class TourOverviewV2Component implements OnInit {
     if (this.tour?.continent) {
       items.push({
         label: this.tour.continent,
-        command: (event) => {
-          if (event.originalEvent) {
-            this.onCountryClick(event.originalEvent as MouseEvent, this.tour.continent);
-          }
-        },
-        routerLink: ['/tours'],
-        queryParams: { destination: this.tour.continent },
-        queryParamsHandling: 'merge'
+        routerLink: [this.buildDestinationSlug(this.tour.continent)]
       });
     }
     
     if (this.tour?.country) {
       items.push({
         label: this.tour.country,
-        command: (event) => {
-          if (event.originalEvent) {
-            this.onCountryClick(event.originalEvent as MouseEvent, this.tour.country);
-          }
-        },
-        routerLink: ['/tours'],
-        queryParams: { destination: this.tour.country },
-        queryParamsHandling: 'merge'
+        routerLink: [this.buildDestinationSlug(this.tour.continent || '', this.tour.country)]
       });
     }
     

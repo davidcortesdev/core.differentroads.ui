@@ -208,9 +208,13 @@ import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { DestinationPageComponent } from './pages/destination-page/destination-page.component';
 import { CategoryPageComponent } from './pages/category-page/category-page.component';
 import { BasicPageComponent } from './pages/basic-page/basic-page.component';
-import { BasicPagePreviewComponent } from './pages/basic-page/basic-page-preview/basic-page-preview.component';
-import { TitleAndQuillComponent } from './pages/basic-page/components/title-and-quill/title-and-quill.component';
 import { ContentPageComponent } from './pages/content-page/content-page.component';
+import { PoliticaDePrivacidadComponent } from './pages/basic-page/components/politica-de-privacidad/politica-de-privacidad.component';
+import { ProgramaDePuntosComponent } from './pages/basic-page/components/programa-de-puntos/programa-de-puntos.component';
+import { CondicionesGeneralesComponent } from './pages/basic-page/components/condiciones-generales/condiciones-generales.component';
+import { AvisoLegalComponent } from './pages/basic-page/components/aviso-legal/aviso-legal.component';
+import { SobreNosotrosComponent } from './pages/basic-page/components/sobre-nosotros/sobre-nosotros.component';
+import { PorQueDifferentComponent } from './pages/basic-page/components/por-que-different/por-que-different.component';
 import { ReviewSurveyComponent } from './pages/review-survey/review-survey.component';
 import { ImageUploadModalComponent } from './pages/review-survey/image-upload-modal/image-upload-modal.component';
 
@@ -383,9 +387,13 @@ export function HttpLoaderFactory(http: HttpClient) {
     DestinationPageComponent,
     CategoryPageComponent,
     BasicPageComponent,
-    BasicPagePreviewComponent,
-    TitleAndQuillComponent,
     ContentPageComponent,
+    PoliticaDePrivacidadComponent,
+    ProgramaDePuntosComponent,
+    CondicionesGeneralesComponent,
+    AvisoLegalComponent,
+    SobreNosotrosComponent,
+    PorQueDifferentComponent,
     ReviewSurveyComponent,
     ImageUploadModalComponent,
 

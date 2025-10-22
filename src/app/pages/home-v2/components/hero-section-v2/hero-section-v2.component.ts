@@ -324,7 +324,7 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
       endDate,
       tripTypeId,
       fuzzyThreshold: 0.7,
-      tagScoreThreshold: 0.3,
+      tagScoreThreshold: 0.7,
       flexDays: this.dateFlexibility > 0 ? this.dateFlexibility : undefined,
     }).subscribe({ next: () => { }, error: () => { } });
   }

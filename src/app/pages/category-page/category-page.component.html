@@ -1,55 +1,77 @@
 <div class="category-page-container">
-  <div class="category-header">
-    <h1>{{ subItemSlug ? getTagName() : getCategoryName() }}</h1>
-    <p class="breadcrumb">
-      <a routerLink="/">Inicio</a>
-      <span class="separator">/</span>
-      <span>{{ getCategoryName() }}</span>
-      <span class="separator" *ngIf="subItemSlug">/</span>
-      <span *ngIf="subItemSlug">{{ getTagName() }}</span>
-    </p>
-  </div>
-
-  <div class="category-content" *ngIf="!isLoading">
-    <div class="content-info">
-      <p>Mostrando tours para <strong>{{ subItemSlug ? getTagName() : getCategoryName() }}</strong></p>
+  <!-- Contenido principal unificado -->
+  <div class="page-content" *ngIf="!isLoading">
+    <!-- Header con breadcrumb -->
+    <div class="category-header">
+      <div class="header-content">
+        <div class="breadcrumb">
+          <a routerLink="/">Inicio</a>
+          <span class="separator">/</span>
+          <span>{{ getCategoryName() }}</span>
+          <span class="separator" *ngIf="subItemSlug">/</span>
+          <span *ngIf="subItemSlug">{{ getTagName() }}</span>
+        </div>
+        
+        <div class="header-main">
+          <h1>{{ subItemSlug ? getTagName() : getCategoryName() }}</h1>
+          <div class="header-subtitle">
+            <i class="pi pi-map-marker"></i>
+            <span>Descubre experiencias únicas</span>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- TODO: Aquí irá el componente de tours filtrados por tag/categoría -->
-    <div class="tours-placeholder">
+    <!-- Información de contexto mejorada -->
+    <div class="category-info">
+      <div class="info-content">
+        <div class="info-header">
+          <div class="info-title">
+            <h2>Tours y Viajes en {{ subItemSlug ? getTagName() : getCategoryName() }}</h2>
+            <p class="info-description">
+              Encuentra la experiencia perfecta para tu próximo viaje. 
+              {{ subItemSlug ? 'Explora todos los tours disponibles para ' + getTagName() : 'Descubre los mejores destinos y actividades en ' + getCategoryName() }}.
+            </p>
+          </div>
+          
+          <div class="info-stats" *ngIf="!isLoadingTours">
+            <div class="stat-item" *ngIf="tourIds.length > 0">
+              <div class="stat-number">{{ tourIds.length }}</div>
+              <div class="stat-label">{{ tourIds.length === 1 ? 'Tour disponible' : 'Tours disponibles' }}</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-icon">
+                <i class="pi pi-star-fill"></i>
+              </div>
+              <div class="stat-label">Experiencias únicas</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grid de tours integrado -->
+    <div class="tours-section">
       <div *ngIf="isLoadingTours" class="loading-tours">
         <p-progressSpinner [style]="{ width: '50px', height: '50px' }"></p-progressSpinner>
         <p>Cargando tours...</p>
       </div>
       
-      <div *ngIf="!isLoadingTours">
-        <p>Componente de tours para categorías (en desarrollo)</p>
-        <p class="debug-info">
-          Categoría ID: {{ categoryId || 'No encontrado' }}<br>
-          Categoría: {{ getCategoryName() }}<br>
-          <ng-container *ngIf="subItemSlug">
-            Tag ID: {{ tagId || 'No encontrado' }}<br>
-            Tag: {{ getTagName() }}<br>
-          </ng-container>
-          <br>
-          <strong>Tours encontrados: {{ tourIds.length }}</strong><br>
-          <span *ngIf="tourIds.length > 0">IDs: {{ tourIds.join(', ') }}</span>
-        </p>
-
-        <!-- Grid de tours -->
-        <app-tour-grid-v2
-          [tourIds]="tourIds"
-          [itemListId]="subItemSlug ? getTagName() : getCategoryName()"
-          [itemListName]="subItemSlug ? getTagName() : getCategoryName()"
-          [showScalapayPrice]="true"
-          [showFilters]="true"
-        ></app-tour-grid-v2>
-      </div>
+      <app-tour-grid-v2
+        *ngIf="!isLoadingTours"
+        [tourIds]="tourIds"
+        [itemListId]="subItemSlug ? getTagName() : getCategoryName()"
+        [itemListName]="subItemSlug ? getTagName() : getCategoryName()"
+        [showScalapayPrice]="true"
+        [showFilters]="true"
+      ></app-tour-grid-v2>
     </div>
   </div>
 
+  <!-- Estado de carga inicial -->
   <div class="loading-state" *ngIf="isLoading">
     <p-progressSpinner></p-progressSpinner>
+    <p>Cargando información de la categoría...</p>
   </div>
 </div>
 

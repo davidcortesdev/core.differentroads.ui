@@ -152,7 +152,8 @@ export class SignUpFormComponent {
                       lastName: this.signUpForm.value.lastName,
                       phone: this.signUpForm.value.phone,
                       hasWebAccess: true,
-                      hasMiddleAccess: false
+                      hasMiddleAccess: false,
+                      retailerId: environment.retaileriddefault
                     };
 
                     if (existingUsers && existingUsers.length > 0) {

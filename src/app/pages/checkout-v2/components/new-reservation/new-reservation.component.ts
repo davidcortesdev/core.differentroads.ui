@@ -23,6 +23,7 @@ import {
 } from '../../../../core/services/flight/flight-search.service';
 import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
 import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
+import { PointsV2Service } from '../../../../core/services/v2/points-v2.service';
 import { Title } from '@angular/platform-browser';
 
 // Interfaz para información bancaria
@@ -113,7 +114,9 @@ export class NewReservationComponent implements OnInit {
     private flightSearchService: FlightSearchService,
     // SERVICIOS PARA ANALYTICS
     private analyticsService: AnalyticsService,
-    private authService: AuthenticateService
+    private authService: AuthenticateService,
+    // SERVICIO PARA PUNTOS
+    private pointsService: PointsV2Service
   ) {
     // Calcular la fecha del día siguiente
     const tomorrow = new Date();
@@ -137,12 +140,9 @@ export class NewReservationComponent implements OnInit {
       this.paymentId = params['paymentId']
         ? Number(params['paymentId'])
         : undefined;
-      console.log('Reservation ID obtenido:', this.reservationId);
-      console.log('Payment ID obtenido:', this.paymentId);
 
       // Validar si tiene paymentId válido
       this.hasPaymentId = !!this.paymentId && this.paymentId > 0;
-      console.log('hasPaymentId:', this.hasPaymentId);
     });
 
     // Iniciar carga de datos
@@ -202,7 +202,6 @@ export class NewReservationComponent implements OnInit {
     this.reservationService.getById(this.reservationId).subscribe({
       next: (reservation) => {
         this.reservation = reservation;
-        console.log('Datos de la reserva:', reservation);
 
         // Actualizar conceptos bancarios con ID de reserva
         this.updateBankConcepts();
@@ -224,7 +223,6 @@ export class NewReservationComponent implements OnInit {
    * Carga el nombre del lead traveler para el saludo
    */
   private loadLeadTravelerName(): void {
-    console.log('Cargando lead traveler para saludo...');
 
     this.reservationTravelerService
       .getByReservation(this.reservationId)
@@ -235,7 +233,6 @@ export class NewReservationComponent implements OnInit {
             (traveler) => traveler.isLeadTraveler
           );
           if (leadTraveler) {
-            console.log('Lead traveler encontrado:', leadTraveler);
             this.loadLeadTravelerFields(leadTraveler.id);
           }
         },
@@ -253,7 +250,6 @@ export class NewReservationComponent implements OnInit {
       .getByReservationTraveler(leadTravelerId)
       .subscribe({
         next: (fields) => {
-          console.log('Campos del lead traveler:', fields);
 
           let firstName = '';
           let lastName = '';
@@ -269,10 +265,6 @@ export class NewReservationComponent implements OnInit {
           });
 
           this.leadTravelerName = `${firstName} ${lastName}`.trim();
-          console.log(
-            'Nombre completo del lead traveler:',
-            this.leadTravelerName
-          );
 
           // Actualizar conceptos bancarios con el nombre
           this.updateBankConceptsWithName();
@@ -291,7 +283,6 @@ export class NewReservationComponent implements OnInit {
     this.bankInfo.forEach((bank) => {
       bank.concept = concept;
     });
-    console.log('Conceptos bancarios actualizados:', concept);
   }
 
   /**
@@ -304,7 +295,6 @@ export class NewReservationComponent implements OnInit {
     this.bankInfo.forEach((bank) => {
       bank.concept = concept;
     });
-    console.log('Conceptos bancarios actualizados con nombre:', concept);
   }
 
   /**
@@ -313,7 +303,6 @@ export class NewReservationComponent implements OnInit {
   private loadPayment(): void {
     // Validar que existe paymentId antes de cargar
     if (!this.paymentId || this.paymentId <= 0) {
-      console.log('No hay paymentId, saltando carga de información de pago');
       this.loading = false;
       return;
     }
@@ -321,22 +310,12 @@ export class NewReservationComponent implements OnInit {
     this.paymentService.getPaymentById(this.paymentId).subscribe({
       next: (payment: IPaymentResponse) => {
         this.payment = payment;
-        console.log('Datos del pago:', payment);
 
         // Cargar método de pago
         this.loadPaymentMethod(payment.paymentMethodId);
 
         // Cargar estado de pago
         this.loadPaymentStatus(payment.paymentStatusId);
-
-        // ✅ NUEVO: Verificar si el pago ya está completado al cargarlo
-        if (payment.paymentStatusId === this.successId) {
-          console.log(
-            '✅ Pago ya completado al cargar, verificando vuelos Amadeus...'
-          );
-          // No es necesario esperar aquí, loadPaymentStatus ya manejará la verificación
-        }
-
         this.loading = false;
       },
       error: (error) => {
@@ -353,7 +332,6 @@ export class NewReservationComponent implements OnInit {
     this.paymentMethodService.getPaymentMethodById(paymentMethodId).subscribe({
       next: (method) => {
         this.paymentMethod = method.name;
-        console.log('Método de pago cargado:', method);
 
         // Determinar el tipo de pago
         if (method.code === 'TRANSFER') {
@@ -379,7 +357,6 @@ export class NewReservationComponent implements OnInit {
       next: (status) => {
         this.paymentStatus = status.name;
         this.statusName = status.name;
-        console.log('Estado de pago cargado:', status);
 
         // Determinar el status
         if (status.code === 'PENDING') {
@@ -390,8 +367,10 @@ export class NewReservationComponent implements OnInit {
           // Disparar evento purchase cuando se visita la página de gracias tras compra exitosa
           this.trackPurchase();
 
-          // ✅ NUEVO: Si el pago está completado, verificar y reservar vuelos Amadeus
-          console.log('✅ Pago completado, verificando vuelos Amadeus...');
+          // Generar puntos después del pago exitoso
+          this.generatePointsAfterPayment();
+
+          // Si el pago está completado, verificar y reservar vuelos Amadeus
           setTimeout(() => {
             this.checkAndBookAmadeusFlight();
           }, 1000); // Pequeño delay para asegurar que la UI se actualice primero
@@ -409,20 +388,13 @@ export class NewReservationComponent implements OnInit {
    * Maneja el pago de Scalapay
    */
   private handleScalapayPayment(): void {
-    // ✅ NUEVO: Validar que el pago no esté ya completado antes de intentar capturar
+    // Validar que el pago no esté ya completado antes de intentar capturar
     if (this.payment?.paymentStatusId === this.successId) {
-      console.log('✅ Pago ya completado, no es necesario capturar de nuevo');
       // Llamar al servicio de vuelos ya que el pago está completado
       this.checkAndBookAmadeusFlight();
       return;
     }
 
-    if (this.payment?.transactionReference) {
-      console.log('🔄 Pago pendiente, procediendo con captura...');
-      this.captureOrder();
-    } else {
-      console.log('❌ No hay transaction reference disponible para captura');
-    }
   }
 
   /**
@@ -434,22 +406,17 @@ export class NewReservationComponent implements OnInit {
       return;
     }
 
-    // ✅ NUEVO: Validar que el pago no esté ya completado antes de capturar
+    // Validar que el pago no esté ya completado antes de capturar
     if (this.payment.paymentStatusId === this.successId) {
-      console.log('✅ Pago ya completado, no es necesario capturar de nuevo');
       // Llamar al servicio de vuelos ya que el pago está completado
       this.checkAndBookAmadeusFlight();
       return;
     }
 
-    console.log('🚀 Iniciando captura de orden Scalapay...');
-
     this.scalapayService
       .captureOrder(this.payment.transactionReference)
       .subscribe({
         next: (response: any) => {
-          console.log('Orden capturada exitosamente:', response);
-
           // Actualizar estado del pago
           if (this.payment) {
             this.payment.paymentStatusId = this.successId;
@@ -466,7 +433,10 @@ export class NewReservationComponent implements OnInit {
               'El pago se ha procesado correctamente'
             );
 
-            // ✅ NUEVO: Verificar y reservar vuelos Amadeus después del pago exitoso
+            // Generar puntos después del pago exitoso
+            this.generatePointsAfterPayment();
+
+            // Verificar y reservar vuelos Amadeus después del pago exitoso
             setTimeout(() => {
               this.checkAndBookAmadeusFlight();
             }, 1000); // Pequeño delay para asegurar que el mensaje se muestre primero
@@ -511,8 +481,6 @@ export class NewReservationComponent implements OnInit {
    * Maneja la subida del justificante de transferencia
    */
   handleVoucherUpload(response: any): void {
-    console.log('Voucher uploaded successfully:', response);
-
     if (this.payment && response.secure_url) {
       this.payment.attachmentUrl = response.secure_url;
       this.payment.paymentStatusId = this.pendingId; // Mantener como PENDING para revisión
@@ -574,39 +542,31 @@ export class NewReservationComponent implements OnInit {
   }
 
   /**
-   * ✅ NUEVO: Verifica si hay vuelos Amadeus seleccionados y procede con la reserva
+   * Verifica si hay vuelos Amadeus seleccionados y procede con la reserva
    */
   public checkAndBookAmadeusFlight(): void {
     if (!this.reservationId) {
-      console.log('❌ No hay reservationId disponible para verificar vuelos');
       return;
     }
-
-    console.log('🔍 Verificando si hay vuelos Amadeus seleccionados...');
 
     this.flightSearchService.getSelectionStatus(this.reservationId).subscribe({
       next: (hasSelection: boolean) => {
         this.hasAmadeusFlight = hasSelection;
-        console.log('✅ Estado de selección de vuelos:', hasSelection);
 
         if (hasSelection) {
-          console.log(
-            '✈️ Vuelo Amadeus detectado, procediendo con la reserva...'
-          );
           this.bookAmadeusFlight();
         } else {
-          console.log('ℹ️ No hay vuelos Amadeus seleccionados');
+          console.log('No hay vuelos Amadeus seleccionados');
         }
       },
       error: (error) => {
-        console.error('❌ Error al verificar estado de vuelos:', error);
         this.flightBookingError = true;
       },
     });
   }
 
   /**
-   * ✅ NUEVO: Realiza la reserva del vuelo Amadeus
+   * Realiza la reserva del vuelo Amadeus
    */
   private bookAmadeusFlight(): void {
     if (!this.reservationId) return;
@@ -614,11 +574,8 @@ export class NewReservationComponent implements OnInit {
     this.flightBookingLoading = true;
     this.flightBookingError = false;
 
-    console.log('🚀 Iniciando reserva de vuelo Amadeus...');
-
     this.flightSearchService.bookFlight(this.reservationId).subscribe({
       next: (response: IAmadeusFlightCreateOrderResponse) => {
-        console.log('✅ Reserva de vuelo exitosa:', response);
         this.flightBookingResponse = response;
         this.flightBookingLoading = false;
 
@@ -630,7 +587,7 @@ export class NewReservationComponent implements OnInit {
         );
       },
       error: (error) => {
-        console.error('❌ Error al reservar vuelo:', error);
+        console.error('Error al reservar vuelo:', error);
         this.flightBookingError = true;
         this.flightBookingLoading = false;
 
@@ -819,5 +776,80 @@ export class NewReservationComponent implements OnInit {
       );
     }
     return undefined;
+  }
+
+  /**
+   * Genera puntos después del pago exitoso (3% del PVP) y cambia el estado de la reserva a BOOKED
+   */
+  private async generatePointsAfterPayment(): Promise<void> {
+    try {
+      
+      if (!this.reservation?.id || !this.reservation?.totalAmount) {
+        console.warn('No se puede generar puntos: falta reservationId o totalAmount');
+        return;
+      }
+
+      // 1. Cambiar estado de la reserva a BOOKED (5)
+      await this.updateReservationStatusToBooked();
+
+      // 2. Obtener el cognito:sub del usuario principal
+      const cognitoSub = this.authService.getCognitoIdValue();
+      if (!cognitoSub) {
+        console.warn('No se puede generar puntos: usuario no autenticado');
+        return;
+      }
+
+      // 3. Calcular puntos (3% del PVP)
+      const pointsToGenerate = Math.floor(this.reservation.totalAmount * 0.03);
+
+      if (pointsToGenerate <= 0) {
+        return;
+      }
+
+      // 4. Crear transacción de acumulación de puntos
+      const transaction = {
+        travelerId: cognitoSub,
+        points: pointsToGenerate,
+        transactionType: 'ACUMULAR',
+        transactionCategory: 'VIAJE',
+        description: `Acumulación de ${pointsToGenerate} puntos por reserva #${this.reservation.id}`,
+        reservationId: this.reservation.id
+      };
+
+      await this.pointsService.createLoyaltyTransaction(transaction);
+
+      // 5. Mostrar mensaje al usuario
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Puntos generados',
+        detail: `Se han generado ${pointsToGenerate} puntos por tu compra`,
+        life: 5000,
+      });
+
+    } catch (error) {
+      console.error('Error generando puntos:', error);
+      // No mostrar error al usuario para no interrumpir el flujo de pago
+    }
+  }
+
+  /**
+   * Actualiza el estado de la reserva a BOOKED (5) después del pago exitoso
+   */
+  private async updateReservationStatusToBooked(): Promise<void> {
+    try {
+      if (!this.reservation?.id) {
+        console.warn('No se puede actualizar estado: falta reservationId');
+        return;
+      }
+
+      // Cambiar estado a BOOKED (5)
+      await this.reservationService.updateStatus(this.reservation.id, 5).toPromise();
+      
+      console.log(`Reserva ${this.reservation.id} actualizada a estado BOOKED (5)`);
+      
+    } catch (error) {
+      console.error('Error actualizando estado de reserva a BOOKED:', error);
+      // No lanzar error para no interrumpir el flujo de pago
+    }
   }
 }

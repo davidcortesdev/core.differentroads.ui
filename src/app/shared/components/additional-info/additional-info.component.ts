@@ -25,6 +25,9 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
   @Input() isAuthenticated: boolean = false;
   @Input() infoCards: any[] = []; // Para mostrar información adicional si es necesario
   @Input() context: 'checkout' | 'tour' = 'checkout'; // Contexto para aplicar estilos específicos
+  @Input() totalPrice: number = 0; // Precio total del tour
+  @Input() selectedActivities: any[] = []; // Actividades seleccionadas
+  @Input() totalPassengers: number = 1; // Total de pasajeros
   
   // Inputs para datos del tour (analytics)
   @Input() tourCountry: string = '';
@@ -108,11 +111,14 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
 
   /**
    * Calcula el precio total basado en los datos disponibles
+   * Incluye actividades como tour-header-v2
    */
   private calculateTotalPrice(): number {
-    // TODO: Implementar cálculo real del precio
-    // Por ahora retorna un valor por defecto
-    return 0;
+    const activitiesTotal = this.selectedActivities
+      .filter((activity) => activity.added)
+      .reduce((sum, activity) => sum + (activity.price || 0), 0);
+
+    return (this.totalPrice || 0) + activitiesTotal;
   }
 
   /**
@@ -274,12 +280,25 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
    * Crea un nuevo presupuesto
    */
   private createBudget(): void {
-    // Simular respuesta exitosa inmediatamente
-    this.loading = false;
-    this.additionalInfoService.showSuccess('Tour añadido a tus favoritos');
-    
-    // Disparar evento de analytics: add_to_wishlist
-    this.trackAddToWishlist();
+    // Delegar la creación al servicio
+    this.additionalInfoService.createBudget().subscribe({
+      next: (createdReservation) => {
+        this.loading = false;
+        this.additionalInfoService.showSuccess(
+          'Presupuesto guardado correctamente. Puedes verlo en tu perfil en el apartado "Presupuestos recientes".'
+        );
+        
+        // Disparar evento de analytics: add_to_wishlist
+        this.trackAddToWishlist();
+        
+        // No navegar al checkout, solo mostrar notificación
+      },
+      error: (error) => {
+        console.error('Error al crear presupuesto:', error);
+        this.loading = false;
+        this.additionalInfoService.showError('No se pudo guardar el presupuesto. Inténtalo de nuevo.');
+      }
+    });
   }
 
   /**

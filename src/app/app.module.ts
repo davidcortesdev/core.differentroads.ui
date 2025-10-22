@@ -166,10 +166,6 @@ import { InfoTravelersRoomComponent } from './pages/checkout-v2/components/info-
 import { InfoTravelerActivitiesComponent } from './pages/checkout-v2/components/info-travelers/components/info-traveler-activities/info-traveler-activities.component';
 import { PaymentManagementComponent } from './pages/checkout-v2/components/payment-management/payment-management.component';
 import { LoadingSectionComponent } from './pages/checkout-v2/components/payment-management/components/loading-section/loading-section.component';
-import { PointsRedemptionComponent } from './pages/checkout-v2/components/points-redemption/points-redemption.component';
-import { TravelersListComponent } from './pages/checkout-v2/components/points-redemption/components/travelers-list/travelers-list.component';
-import { MessagePointsComponent } from './pages/checkout-v2/components/points-redemption/components/message-points/message-points.component';
-import { BalanceInfoComponent } from './pages/checkout-v2/components/points-redemption/components/balance-info/balance-info.component';
 import { NewReservationComponent } from './pages/checkout-v2/components/new-reservation/new-reservation.component';
 import { TravelInfoComponent } from './pages/checkout-v2/components/new-reservation/travel-info/travel-info.component';
 import { TravelersInfoComponent } from './pages/checkout-v2/components/new-reservation/travelers-info/travelers-info.component';
@@ -233,6 +229,7 @@ import { TourMapV2Component } from './shared/components/tour-map-v2/tour-map-v2.
 import { ImageCropperComponent } from './shared/components/image-cropper/image-cropper.component';
 import { SeoLinksComponent } from './shared/components/seo-links/seo-links.component';
 import { AdditionalInfoComponent } from './shared/components/additional-info/additional-info.component';
+import { EnvironmentBannerComponent } from './shared/components/environment-banner/environment-banner.component';
 
 // Tour Cards
 import { TourCardComponent } from './shared/components/tour-card/tour-card.component';
@@ -343,10 +340,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     InfoTravelerActivitiesComponent,
     PaymentManagementComponent,
     LoadingSectionComponent,
-    PointsRedemptionComponent,
-    TravelersListComponent,
-    MessagePointsComponent,
-    BalanceInfoComponent,
     NewReservationComponent,
     TravelInfoComponent,
     TravelersInfoComponent,
@@ -410,6 +403,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     ImageCropperComponent,
     SeoLinksComponent,
     AdditionalInfoComponent,
+    EnvironmentBannerComponent,
 
     // Tour Cards
     TourCardComponent,

@@ -1,55 +1,49 @@
 <div class="category-page-container">
+  <!-- Header con breadcrumb -->
   <div class="category-header">
-    <h1>{{ subItemSlug ? getTagName() : getCategoryName() }}</h1>
-    <p class="breadcrumb">
-      <a routerLink="/">Inicio</a>
-      <span class="separator">/</span>
-      <span>{{ getCategoryName() }}</span>
-      <span class="separator" *ngIf="subItemSlug">/</span>
-      <span *ngIf="subItemSlug">{{ getTagName() }}</span>
-    </p>
-  </div>
-
-  <div class="category-content" *ngIf="!isLoading">
-    <div class="content-info">
-      <p>Mostrando tours para <strong>{{ subItemSlug ? getTagName() : getCategoryName() }}</strong></p>
-    </div>
-
-    <!-- TODO: Aquí irá el componente de tours filtrados por tag/categoría -->
-    <div class="tours-placeholder">
-      <div *ngIf="isLoadingTours" class="loading-tours">
-        <p-progressSpinner [style]="{ width: '50px', height: '50px' }"></p-progressSpinner>
-        <p>Cargando tours...</p>
-      </div>
-      
-      <div *ngIf="!isLoadingTours">
-        <p>Componente de tours para categorías (en desarrollo)</p>
-        <p class="debug-info">
-          Categoría ID: {{ categoryId || 'No encontrado' }}<br>
-          Categoría: {{ getCategoryName() }}<br>
-          <ng-container *ngIf="subItemSlug">
-            Tag ID: {{ tagId || 'No encontrado' }}<br>
-            Tag: {{ getTagName() }}<br>
-          </ng-container>
-          <br>
-          <strong>Tours encontrados: {{ tourIds.length }}</strong><br>
-          <span *ngIf="tourIds.length > 0">IDs: {{ tourIds.join(', ') }}</span>
-        </p>
-
-        <!-- Grid de tours -->
-        <app-tour-grid-v2
-          [tourIds]="tourIds"
-          [itemListId]="subItemSlug ? getTagName() : getCategoryName()"
-          [itemListName]="subItemSlug ? getTagName() : getCategoryName()"
-          [showScalapayPrice]="true"
-          [showFilters]="true"
-        ></app-tour-grid-v2>
-      </div>
+    <div class="header-content">
+      <h1>{{ subItemSlug ? getTagName() : getCategoryName() }}</h1>
+      <p class="breadcrumb">
+        <a routerLink="/">Inicio</a>
+        <span class="separator">/</span>
+        <span>{{ getCategoryName() }}</span>
+        <span class="separator" *ngIf="subItemSlug">/</span>
+        <span *ngIf="subItemSlug">{{ getTagName() }}</span>
+      </p>
     </div>
   </div>
 
+  <!-- Información de contexto -->
+  <div class="category-info" *ngIf="!isLoading">
+    <div class="info-content">
+      <h2>Tours en {{ subItemSlug ? getTagName() : getCategoryName() }}</h2>
+      <p class="tours-count" *ngIf="!isLoadingTours && tourIds.length > 0">
+        {{ tourIds.length }} {{ tourIds.length === 1 ? 'tour encontrado' : 'tours encontrados' }}
+      </p>
+    </div>
+  </div>
+
+  <!-- Grid de tours -->
+  <div class="tours-section" *ngIf="!isLoading">
+    <div *ngIf="isLoadingTours" class="loading-tours">
+      <p-progressSpinner [style]="{ width: '50px', height: '50px' }"></p-progressSpinner>
+      <p>Cargando tours...</p>
+    </div>
+    
+    <app-tour-grid-v2
+      *ngIf="!isLoadingTours"
+      [tourIds]="tourIds"
+      [itemListId]="subItemSlug ? getTagName() : getCategoryName()"
+      [itemListName]="subItemSlug ? getTagName() : getCategoryName()"
+      [showScalapayPrice]="true"
+      [showFilters]="true"
+    ></app-tour-grid-v2>
+  </div>
+
+  <!-- Estado de carga inicial -->
   <div class="loading-state" *ngIf="isLoading">
     <p-progressSpinner></p-progressSpinner>
+    <p>Cargando información de la categoría...</p>
   </div>
 </div>
 

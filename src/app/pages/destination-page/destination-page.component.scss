@@ -1,100 +1,148 @@
 .destination-page-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #f8f9fa;
 
   .destination-header {
-    margin-bottom: 2rem;
+    background-color: #fff;
+    padding: 2rem 3.5rem;
+    border-bottom: 1px solid #e9ecef;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
-    h1 {
-      font-size: 2.5rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-      color: var(--primary-color, #007bff);
-    }
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
 
-    .breadcrumb {
-      font-size: 0.9rem;
-      color: #666;
-
-      a {
+      h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
         color: var(--primary-color, #007bff);
-        text-decoration: none;
-
-        &:hover {
-          text-decoration: underline;
-        }
       }
 
-      .separator {
-        margin: 0 0.5rem;
+      .breadcrumb {
+        font-size: 0.9rem;
+        color: #666;
+        margin: 0;
+
+        a {
+          color: var(--primary-color, #007bff);
+          text-decoration: none;
+
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+
+        .separator {
+          margin: 0 0.5rem;
+        }
       }
     }
   }
 
-  .destination-content {
-    .content-info {
-      background-color: #f8f9fa;
-      padding: 1rem;
+  .destination-info {
+    background-color: #fff;
+    padding: 1.5rem 3.5rem;
+    border-bottom: 1px solid #e9ecef;
+
+    .info-content {
+      max-width: 1200px;
+      margin: 0 auto;
+
+      h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 0 0 0.5rem 0;
+        color: #333;
+      }
+
+      .tours-count {
+        font-size: 1rem;
+        color: #666;
+        margin: 0;
+      }
+    }
+  }
+
+  .tours-section {
+    padding: 0;
+    background-color: #f8f9fa;
+
+    .loading-tours {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      padding: 3rem;
+      background-color: #fff;
+      margin: 2rem 3.5rem;
       border-radius: 8px;
-      margin-bottom: 2rem;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
       p {
         margin: 0;
-        font-size: 1rem;
+        color: #666;
       }
     }
 
-    .tours-placeholder {
-      padding: 3rem;
-      background-color: #fff;
-      border: 2px dashed #dee2e6;
-      border-radius: 8px;
-      text-align: center;
-
-      .loading-tours {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 1rem;
-        padding: 2rem;
-      }
-
-      .debug-info {
-        margin-top: 1rem;
-        margin-bottom: 2rem;
-        padding: 1rem;
-        background-color: #f8f9fa;
-        border-radius: 4px;
-        font-family: monospace;
-        font-size: 0.9rem;
-        text-align: left;
-        display: inline-block;
-      }
-
-      app-tour-grid-v2 {
-        display: block;
-        margin-top: 2rem;
-      }
+    // El componente tour-grid-v2 ya tiene sus propios estilos para ocupar toda la pantalla
+    app-tour-grid-v2 {
+      display: block;
+      width: 100%;
     }
   }
 
   .loading-state {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    min-height: 300px;
+    min-height: 400px;
+    background-color: #fff;
+    margin: 2rem 3.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    p {
+      margin-top: 1rem;
+      color: #666;
+    }
   }
 }
 
 @media (max-width: 768px) {
   .destination-page-container {
-    padding: 1rem;
-
     .destination-header {
-      h1 {
-        font-size: 2rem;
+      padding: 1.5rem 1rem;
+
+      .header-content {
+        h1 {
+          font-size: 2rem;
+        }
       }
+    }
+
+    .destination-info {
+      padding: 1rem;
+
+      .info-content {
+        h2 {
+          font-size: 1.25rem;
+        }
+      }
+    }
+
+    .tours-section {
+      .loading-tours {
+        margin: 1rem;
+        padding: 2rem;
+      }
+    }
+
+    .loading-state {
+      margin: 1rem;
+      padding: 2rem;
     }
   }
 }

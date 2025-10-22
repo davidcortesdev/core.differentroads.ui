@@ -460,10 +460,23 @@ export class HeaderV2Component implements OnInit, OnDestroy {
             const menuTipoSlug = menuItem.menuTipoSlug || '';
             const menuItemSlug = menuItem.menuItemSlug || '';
 
-            // Ordenar tags alfabéticamente por nombre
-            const sortedTags = tags.sort((a, b) => 
-              a.name.localeCompare(b.name, 'es', { sensitivity: 'base' })
-            );
+            // Ordenar tags: meses cronológicamente, otros alfabéticamente
+            const sortedTags = tags.sort((a, b) => {
+              const monthOrderA = this.getMonthOrder(a.name);
+              const monthOrderB = this.getMonthOrder(b.name);
+              
+              // Si ambos son meses, ordenar cronológicamente
+              if (monthOrderA !== null && monthOrderB !== null) {
+                return monthOrderA - monthOrderB;
+              }
+              
+              // Si solo uno es mes, el mes va primero
+              if (monthOrderA !== null) return -1;
+              if (monthOrderB !== null) return 1;
+              
+              // Si ninguno es mes, ordenar alfabéticamente
+              return a.name.localeCompare(b.name, 'es', { sensitivity: 'base' });
+            });
 
             return {
               ...menuItem,
@@ -545,6 +558,21 @@ export class HeaderV2Component implements OnInit, OnDestroy {
       .replace(/\s+/g, '-') // Reemplazar espacios por guiones
       .replace(/-+/g, '-') // Reemplazar múltiples guiones por uno solo
       .replace(/^-+|-+$/g, ''); // Eliminar guiones al inicio y final
+  }
+
+  /**
+   * Detecta si un texto es un mes y devuelve su orden cronológico (1-12)
+   */
+  private getMonthOrder(monthName: string): number | null {
+    const months = [
+      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+    ];
+    
+    const normalizedMonth = monthName.toLowerCase().trim();
+    const monthIndex = months.indexOf(normalizedMonth);
+    
+    return monthIndex !== -1 ? monthIndex + 1 : null;
   }
 
   /**

@@ -123,7 +123,7 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
   private destroy$ = new Subject<void>();
   
   // ✅ DEBUG: Flag para controlar logs de debug (cambiar a false en producción)
-  private readonly DEBUG_MODE = true;
+  private readonly DEBUG_MODE = false;
 
   constructor(
     private readonly tourService: TourService,

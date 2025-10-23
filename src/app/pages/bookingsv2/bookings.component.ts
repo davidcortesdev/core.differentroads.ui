@@ -318,7 +318,7 @@ export class Bookingsv2Component implements OnInit {
           quantity: item.quantity,
           unitPrice: item.amount,
           value: item.total,
-          description: item.description,
+          description: item.description || undefined,
         });
       });
     }
@@ -331,7 +331,7 @@ export class Bookingsv2Component implements OnInit {
       date: reservation.reservedAt
         ? new Date(reservation.reservedAt).toLocaleDateString()
         : 'Fecha no disponible',
-      bookingCode: reservation.id.toString() || reservation.tkId,
+      bookingCode: reservation.id.toString() || reservation.tkId || 'N/A',
       bookingReference: reservation.tkId || '',
       status: this.getStatusText(reservation.reservationStatusId),
       retailer: 'Cargando...', // Temporal mientras cargamos el nombre real

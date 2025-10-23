@@ -123,7 +123,6 @@ export class AdditionalInfoService {
    */
   private buildReservationData(userId: number | null): ReservationCreate {
     return {
-      id: 0,
       tkId: '',
       reservationStatusId: 3, // 3 = BUDGET (presupuesto)
       retailerId: environment.retaileriddefault,
@@ -133,12 +132,6 @@ export class AdditionalInfoService {
       totalPassengers: this.travelersData ? 
         (this.travelersData.adults || 0) + (this.travelersData.childs || 0) + (this.travelersData.babies || 0) : 1,
       totalAmount: this.totalPrice || 0,
-      budgetAt: new Date().toISOString(),
-      cartAt: '',
-      abandonedAt: '',
-      reservedAt: '',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
     };
   }
   
@@ -291,7 +284,6 @@ export class AdditionalInfoService {
       (this.travelersData.adults || 0) + (this.travelersData.childs || 0) + (this.travelersData.babies || 0) : 0;
 
     return {
-      id: existingOrder.id || existingOrder._id,
       tkId: existingOrder.tkId || existingOrder.tokenId || this.generateTokenId(),
       reservationStatusId: existingOrder.reservationStatusId || 1,
       retailerId: existingOrder.retailerId || 1,
@@ -300,12 +292,6 @@ export class AdditionalInfoService {
       userId: existingOrder.userId || null,
       totalPassengers: totalPassengers,
       totalAmount: this.totalPrice || existingOrder.totalAmount || 0,
-      budgetAt: existingOrder.budgetAt || new Date().toISOString(),
-      cartAt: existingOrder.cartAt || '',
-      abandonedAt: existingOrder.abandonedAt || '',
-      reservedAt: existingOrder.reservedAt || '',
-      createdAt: existingOrder.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString()
     };
   }
 

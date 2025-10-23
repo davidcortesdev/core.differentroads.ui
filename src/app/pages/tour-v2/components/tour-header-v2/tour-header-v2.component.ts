@@ -970,7 +970,6 @@ export class TourHeaderV2Component
 
   private createReservation(userId: number | null): void {
     const reservationData: ReservationCreate = {
-      id: 0,
       tkId: '',
       reservationStatusId: 1, // 1 = CART (carrito de compra)
       retailerId: environment.retaileriddefault,
@@ -979,12 +978,6 @@ export class TourHeaderV2Component
       userId: userId, // Usar el ID del usuario logueado o null
       totalPassengers: this.totalPassengers || 1,
       totalAmount: this.totalPriceWithActivities || 0,
-      budgetAt: '',
-      cartAt: new Date().toISOString(), // Fecha de creación del carrito
-      abandonedAt: '',
-      reservedAt: '',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
     };
 
     console.log('📋 Intentando crear RESERVA con estado 1 (CART):', reservationData);

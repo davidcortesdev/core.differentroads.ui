@@ -68,9 +68,39 @@ export class BookingDocumentationV2Component implements OnInit {
     private messageService: MessageService,
     private reservationTKLogService: ReservationTKLogService
   ) {
-    // Detectar si estamos en ATC basándonos en la URL del sitio
-    this.isAtc = window.location.hostname.includes('middle-atc') ||
-                 window.location.hostname.includes('atc');
+    // Detectar si estamos en ATC
+    // Verificamos tanto la URL actual como la del padre (si estamos en iframe)
+    this.isAtc = this.detectIfAtc();
+  }
+
+  /**
+   * Detecta si la aplicación está corriendo en ATC
+   * Verifica tanto la URL actual como la del padre (para cuando está en iframe)
+   */
+  private detectIfAtc(): boolean {
+    try {
+      // Verificar la URL actual
+      const currentHostname = window.location.hostname;
+
+      // Verificar si estamos en un iframe y obtener la URL del padre
+      if (window.parent !== window) {
+        try {
+          const parentHostname = window.parent.location.hostname;
+          if (parentHostname.includes('middle-atc') || parentHostname.includes('atc')) {
+            return true;
+          }
+        } catch (e) {
+          // Si hay error de CORS, no podemos acceder al parent
+          // En este caso, verificamos solo nuestra propia URL
+        }
+      }
+
+      // Verificar nuestra propia URL
+      return currentHostname.includes('middle-atc') || currentHostname.includes('atc');
+    } catch (error) {
+      console.error('Error detectando si es ATC:', error);
+      return false;
+    }
   }
 
   ngOnInit(): void {

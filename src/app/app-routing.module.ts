@@ -50,7 +50,6 @@ import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { DestinationPageComponent } from './pages/destination-page/destination-page.component';
 import { CategoryPageComponent } from './pages/category-page/category-page.component';
 import { BasicPageComponent } from './pages/basic-page/basic-page.component';
-import { BasicPagePreviewComponent } from './pages/basic-page/basic-page-preview/basic-page-preview.component';
 import { ContentPageComponent } from './pages/content-page/content-page.component';
 import { ReviewSurveyComponent } from './pages/review-survey/review-survey.component';
 
@@ -141,7 +140,6 @@ const routes: Routes = [
       // ========================================
       // CONTENT PAGES ROUTES
       // ========================================
-      { path: 'preview/pages', component: BasicPagePreviewComponent },
       { path: 'pages/:slug', component: BasicPageComponent },
       { path: 'landing/:slug', component: ContentPageComponent },
       { path: 'collection/:slug', component: ContentPageComponent },

@@ -1,0 +1,61 @@
+.programa-puntos {
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  color: #333;
+
+  .brand-color {
+    color: #ea685c;
+  }
+
+  .brand-link {
+    color: #093642;
+    text-decoration: none;
+  }
+
+  h1 {
+    font-size: 2.2rem;
+    font-weight: 300;
+    text-align: center;
+    color: #333;
+  }
+
+  p {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #555;
+    margin-bottom: 15px;
+  }
+
+  h2 {
+    font-size: 1.4rem;
+    font-weight: 400;
+    margin-bottom: 20px;
+    color: #2c3e50;
+  }
+
+  ul {
+    padding-left: 20px;
+    margin-bottom: 20px;
+
+    li {
+      margin-bottom: 10px;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+  }
+
+  .decorative-divider {
+    text-align: center;
+    margin: 30px 0;
+
+    .circles {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+  }
+}

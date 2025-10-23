@@ -121,6 +121,9 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
   selectedMonthOption: string[] = [];
   
   private destroy$ = new Subject<void>();
+  
+  // ✅ DEBUG: Flag para controlar logs de debug (cambiar a false en producción)
+  private readonly DEBUG_MODE = false;
 
   constructor(
     private readonly tourService: TourService,
@@ -363,10 +366,17 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
     this.tours = [];
     this.allTours = [];
 
+    if (this.DEBUG_MODE) {
+      console.log('🔄 Cargando tours con IDs:', tourIdsToLoad);
+    }
+
     // Cargar tours secuencialmente y mostrarlos a medida que llegan
     of(...tourIdsToLoad)
       .pipe(
         concatMap((id: number) => {
+          if (this.DEBUG_MODE) {
+            console.log(`🔄 Procesando tour ID: ${id}`);
+          }
           // Combinar datos del TourNetService, CMSTourService y datos adicionales
           return forkJoin({
             tourData: this.tourService.getTourById(id),
@@ -392,9 +402,18 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
                   };
                 } | null
               ): TourDataV2 | null => {
-                if (!combinedData) return null;
+                if (!combinedData) {
+                  if (this.DEBUG_MODE) {
+                    console.warn(`⚠️ No se encontraron datos para tour ID: ${id}`);
+                  }
+                  return null;
+                }
 
-                return this.mapToTourDataV2(combinedData);
+                const mappedTour = this.mapToTourDataV2(combinedData);
+                if (this.DEBUG_MODE) {
+                  console.log(`✅ Tour mapeado - ID: ${mappedTour.id}, productStyleId: ${mappedTour.productStyleId}, isByDr: ${mappedTour.isByDr}`);
+                }
+                return mappedTour;
               }
             )
           );
@@ -410,15 +429,22 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
       )
       .subscribe({
         next: (accumulatedTours: TourDataV2[]) => {
+          if (this.DEBUG_MODE) {
+            console.log(`📊 Tours cargados: ${accumulatedTours.length}`);
+          }
           // Guardar todos los tours sin filtrar
           this.allTours = accumulatedTours;
           // Aplicar filtros y ordenamiento
           this.applyFiltersAndSort();
         },
         complete: () => {
+          if (this.DEBUG_MODE) {
+            console.log('✅ Carga de tours completada');
+          }
           this.isLoading = false;
         },
-        error: () => {
+        error: (error) => {
+          console.error('❌ Error en la carga de tours:', error);
           this.isLoading = false;
         }
       });
@@ -528,6 +554,11 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
     const cms = cmsArray && cmsArray.length > 0 ? cmsArray[0] : null;
     const additional = combinedData.additionalData;
 
+    // ✅ DEBUG: Log de datos del tour
+    if (this.DEBUG_MODE) {
+      console.log(`🔍 Mapeando tour - ID: ${tour.id}, productStyleId: ${tour.productStyleId}, name: ${tour.name}`);
+    }
+
     // Obtener precio: Usar minPrice del TourNetService
     let tourPrice = tour.minPrice || 0;
 
@@ -592,7 +623,16 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
     // Aplicar imagen como en TOUR-OVERVIEW-V2
     const imageUrl = cms?.imageUrl || '';
 
-    return {
+    // ✅ LÓGICA MEJORADA: Calcular isByDr basado en productStyleId
+    // Manejar casos donde productStyleId podría ser null o undefined
+    const isByDr = tour.productStyleId === 1;
+    
+    // ✅ DEBUG: Log de la lógica de isByDr (remover en producción)
+    if (this.DEBUG_MODE) {
+      console.log(`🎯 Tour ${tour.id} - productStyleId: ${tour.productStyleId}, isByDr: ${isByDr} (${isByDr ? 'GROUP' : 'NO GROUP'})`);
+    }
+
+    const mappedTour: TourDataV2 = {
       id: tour.id,
       imageUrl: imageUrl,
       title: tour.name || '',
@@ -605,7 +645,7 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
       nextDepartureDate: nextDepartureDate,
       itineraryDaysCount: itineraryDaysCount,
       itineraryDaysText: itineraryDaysText,
-      isByDr: true,
+      isByDr: isByDr, // ✅ isByDr es true cuando productStyleId es 1 (GROUP)
       webSlug:
         tour.slug ||
         tour.name?.toLowerCase().replace(/\s+/g, '-') ||
@@ -614,6 +654,9 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
       externalID: tour.tkId || '',
       continent: '',
       country: '',
+      productStyleId: tour.productStyleId, // ✅ Agregar productStyleId al objeto
     };
+
+    return mappedTour;
   }
 }

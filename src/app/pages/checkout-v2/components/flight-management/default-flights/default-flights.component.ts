@@ -422,7 +422,7 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
   }
 
   // ✅ MÉTODO NUEVO: Deseleccionar vuelo del departure sin guardar en BD (para sincronización con specific-search)
-  deselectDepartureFlightWithoutSaving(): void {
+  async deselectDepartureFlightWithoutSaving(): Promise<void> {
 
     
     if (this.selectedFlight && this.selectedFlight.id === this.departureActivityPackId) {
@@ -433,7 +433,14 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       // Deseleccionar el vuelo
       this.selectedFlight = null;
       
-      // Emitir el cambio
+      // Guardar la deselección en la base de datos ANTES de emitir el evento
+      try {
+        await this.saveFlightAssignmentsForAllTravelers(0, false); // 0 = sin vuelos, false = no deseleccionar specific-search
+      } catch (error) {
+        console.error('Error al guardar la deselección del departure en la base de datos:', error);
+      }
+      
+      // Emitir el cambio DESPUÉS de guardar
       this.flightSelectionChange.emit({ selectedFlight: null, totalPrice: 0 });
     } 
   }
@@ -503,17 +510,21 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       });
   }
 
-  selectFlight(flightPack: IFlightPackDTO): void {
+  async selectFlight(flightPack: IFlightPackDTO): Promise<void> {
 
     if (this.selectedFlight === flightPack) {
       // Deseleccionar vuelo
       this.selectedFlight = null;
 
-      // Emitir "Sin Vuelos" con precio 0
-      this.flightSelectionChange.emit({ selectedFlight: null, totalPrice: 0 });
+      // Guardar estado "sin vuelo" para todos los viajeros ANTES de emitir el evento
+      try {
+        await this.saveFlightAssignmentsForAllTravelers(0, true); // 0 = sin vuelos, true = deseleccionar specific-search
+      } catch (error) {
+        console.error('Error al guardar la deselección de vuelos en la base de datos:', error);
+      }
 
-      // Guardar estado "sin vuelo" para todos los viajeros
-      this.saveFlightAssignmentsForAllTravelers(0, true); // 0 = sin vuelos, true = deseleccionar specific-search
+      // Emitir "Sin Vuelos" con precio 0 DESPUÉS de guardar
+      this.flightSelectionChange.emit({ selectedFlight: null, totalPrice: 0 });
     } else {
       // Seleccionar nuevo vuelo
       this.selectedFlight = flightPack;
@@ -523,8 +534,14 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
           (price) => price.ageGroupId === this.travelers[0]?.ageGroupId
         )?.price || 0;
 
+      // Guardar asignaciones del vuelo seleccionado para todos los viajeros ANTES de emitir eventos
+      try {
+        await this.saveFlightAssignmentsForAllTravelers(flightPack.id, true); // flightPack.id, true = deseleccionar specific-search
+      } catch (error) {
+        console.error('Error al guardar la selección de vuelos en la base de datos:', error);
+      }
 
-      // Emitir eventos
+      // Emitir eventos DESPUÉS de guardar
       this.defaultFlightSelected.emit({
         selectedFlight: flightPack,
         totalPrice: basePrice,
@@ -534,9 +551,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
         selectedFlight: flightPack,
         totalPrice: basePrice,
       });
-
-      // Guardar asignaciones del vuelo seleccionado para todos los viajeros
-      this.saveFlightAssignmentsForAllTravelers(flightPack.id, true); // flightPack.id, true = deseleccionar specific-search
     }
   }
 

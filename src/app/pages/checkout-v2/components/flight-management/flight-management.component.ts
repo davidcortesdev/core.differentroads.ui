@@ -208,10 +208,10 @@ export class FlightManagementComponent implements OnInit, OnChanges {
     this.router.navigate(['/sign-up']);
   }
 
-  onFlightSelectionChange(flightData: {
+  async onFlightSelectionChange(flightData: {
     selectedFlight: IFlightPackDTO | null;
     totalPrice: number;
-  }): void {
+  }): Promise<void> {
 
     // NUEVO: Log específico para "Sin Vuelos"
     if (!flightData.selectedFlight) {
@@ -220,6 +220,16 @@ export class FlightManagementComponent implements OnInit, OnChanges {
     // NUEVO: Actualizar el vuelo seleccionado internamente
     this.selectedFlight = flightData.selectedFlight;
 
+    // Intentar guardar en la base de datos antes de emitir el evento
+    if (this.defaultFlightsComponent) {
+      try {
+        await this.defaultFlightsComponent.saveFlightAssignments();
+      } catch (error) {
+        console.error('Error al guardar las asignaciones de vuelos en la base de datos:', error);
+      }
+    }
+    
+    // Siempre emitir el evento después del intento de guardado
     this.flightSelectionChange.emit(flightData);
   }
 
@@ -236,10 +246,10 @@ export class FlightManagementComponent implements OnInit, OnChanges {
   }
 
     // NUEVO: Método para manejar la selección de vuelos desde default-flights
-  onDefaultFlightSelected(flightData: {
+  async onDefaultFlightSelected(flightData: {
     selectedFlight: IFlightPackDTO | null;
     totalPrice: number;
-  }): void {
+  }): Promise<void> {
     
     // Actualizar el vuelo seleccionado
     this.selectedFlight = flightData.selectedFlight;
@@ -256,16 +266,25 @@ export class FlightManagementComponent implements OnInit, OnChanges {
       });
     }
     
-    // Emitir el cambio al componente padre
+    // Intentar guardar en la base de datos antes de emitir el evento
+    if (this.defaultFlightsComponent) {
+      try {
+        await this.defaultFlightsComponent.saveFlightAssignments();
+      } catch (error) {
+        console.error('Error al guardar las asignaciones de vuelos en la base de datos:', error);
+      }
+    }
+    
+    // Siempre emitir el evento después del intento de guardado
     this.flightSelectionChange.emit(flightData);
   }
 
   // NUEVO: Método para manejar la selección de vuelos desde specific-search
-  onSpecificFlightSelected(flightData: {
+  async onSpecificFlightSelected(flightData: {
     selectedFlight: any | null; // Usar any para evitar conflictos de tipos
     totalPrice: number;
     shouldAssignNoFlight?: boolean; // NUEVO: Indicar si se debe asignar "sin vuelos"
-  }): void {
+  }): Promise<void> {
     
     // Convertir el vuelo al formato de FlightsNetService si existe
     const convertedFlight = flightData.selectedFlight ? this.convertFlightSearchToFlightsNet(flightData.selectedFlight) : null;
@@ -277,17 +296,34 @@ export class FlightManagementComponent implements OnInit, OnChanges {
     if (flightData.shouldAssignNoFlight && this.defaultFlightsComponent && this.reservationId) {
       // CORRECCIÓN: No deseleccionar vuelos de specific-search cuando asignamos "sin vuelos"
       // porque acabamos de hacer la selección
-      this.defaultFlightsComponent.saveFlightAssignmentsForAllTravelers(0, false);
+      try {
+        await this.defaultFlightsComponent.saveFlightAssignmentsForAllTravelers(0, false);
+      } catch (error) {
+        console.error('Error al asignar "sin vuelos" a todos los viajeros:', error);
+      }
     }
     
     // MODIFICADO: NO marcar "Sin Vuelos" automáticamente, solo deseleccionar el vuelo del departure
     if (this.isConsolidadorVuelosActive && this.defaultFlightsComponent && this.reservationId) {
       
-      // Usar el nuevo método que deselecciona sin guardar en BD
-      this.defaultFlightsComponent.deselectDepartureFlightWithoutSaving();
+      // Usar el nuevo método que deselecciona y guarda en BD
+      try {
+        await this.defaultFlightsComponent.deselectDepartureFlightWithoutSaving();
+      } catch (error) {
+        console.error('Error al deseleccionar el vuelo del departure:', error);
+      }
     }
     
-    // Emitir el cambio al componente padre con el vuelo convertido
+    // Intentar guardar en la base de datos antes de emitir el evento
+    if (this.specificSearchComponent) {
+      try {
+        await this.specificSearchComponent.saveFlightAssignments();
+      } catch (error) {
+        console.error('Error al guardar las asignaciones de vuelos en la base de datos:', error);
+      }
+    }
+    
+    // Siempre emitir el evento después del intento de guardado
     this.flightSelectionChange.emit({
       selectedFlight: convertedFlight,
       totalPrice: flightData.totalPrice
@@ -381,7 +417,10 @@ export class FlightManagementComponent implements OnInit, OnChanges {
     return baseObject;
   }
 
-  saveFlightAssignments(): void {
-    this.defaultFlightsComponent.saveFlightAssignments();
+  async saveFlightAssignments(): Promise<boolean> {
+    if (this.defaultFlightsComponent) {
+      return await this.defaultFlightsComponent.saveFlightAssignments();
+    }
+    return false;
   }
 }

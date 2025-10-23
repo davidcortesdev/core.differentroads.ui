@@ -424,6 +424,19 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     // Validación inicial
     setTimeout(() => {
       this.validateFormInRealTime();
+      
+      // ⭐ NUEVO: Disparar guardado automático si se pre-llenaron datos del usuario
+      if (this.traveler!.isLeadTraveler && this.currentPersonalInfo) {
+        console.log('[initializeTravelerForm] Verificando si hay datos pre-llenados del usuario para guardar...');
+        
+        // Verificar si hay cambios pendientes después de la inicialización
+        setTimeout(() => {
+          if (this.hasPendingChanges()) {
+            console.log('[initializeTravelerForm] Hay datos pre-llenados del usuario, disparando guardado automático...');
+            this.autoSave$.next();
+          }
+        }, 200);
+      }
     }, 50);
   }
 
@@ -1938,6 +1951,19 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       console.log(`  ${controlName}: "${value}" [válido: ${isValid}, dirty: ${isDirty}]`);
     });
     console.log('=====================================================');
+
+    // ⭐ NUEVO: Disparar guardado automático después de rellenar datos del usuario
+    if (fieldsUpdated > 0) {
+      console.log('[fillFormWithUserData] Disparando guardado automático después de rellenar datos del usuario...');
+      
+      // Usar setTimeout para asegurar que el formulario se haya actualizado completamente
+      setTimeout(() => {
+        // Disparar el Subject de autoguardado manual
+        this.autoSave$.next();
+        
+        console.log('[fillFormWithUserData] Guardado automático disparado correctamente');
+      }, 100);
+    }
   }
 
   /**

@@ -46,6 +46,12 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   documents: { [key: string]: IDocumentReservationResponse[] } = {};
   notifications: { [key: string]: INotification[] } = {};
 
+  // Propiedades para modal de descuento de puntos
+  pointsDiscountModalVisible: boolean = false;
+  selectedBookingItem: BookingItem | null = null;
+  availablePoints: number = 0;
+  pointsToUse: number = 0;
+
   constructor(
     private router: Router,
     private messageService: MessageService,
@@ -122,11 +128,9 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
 
     if (userEmail) {
       // Email encontrado, proceder a cargar las reservas
-      console.log('✅ Email del usuario encontrado:', userEmail);
       this.loadActiveBookingsWithEmail(userId, userEmail);
     } else if (attempt < maxAttempts) {
       // No se encontró el email, reintentar después del delay
-      console.log(`⏳ Esperando email del usuario (intento ${attempt + 1}/${maxAttempts})...`);
       setTimeout(() => {
         this.waitForUserEmail(userId, attempt + 1);
       }, delayMs);
@@ -661,6 +665,11 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
     return this.listType === 'recent-budgets';
   }
 
+  shouldShowPointsDiscount(item: BookingItem): boolean {
+    // Solo mostrar para reservas activas con reservationStatusId === 11 (prebooked)
+    return this.listType === 'active-bookings' && item.reservationStatusId === 11;
+  }
+
   // Button label methods
   getDownloadLabel(): string {
     return 'Descargar';
@@ -676,6 +685,10 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
 
   getReserveLabel(): string {
     return 'Reservar';
+  }
+
+  getPointsDiscountLabel(): string {
+    return 'Descontar Puntos';
   }
 
   // ===== MÉTODOS PARA DOCUMENTACIÓN Y NOTIFICACIONES =====
@@ -969,5 +982,79 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       .catch((error) => {
         console.error('❌ TEST: Direct fetch call failed:', error);
       });
+  }
+
+  // ===== MÉTODOS PARA DESCUENTO DE PUNTOS =====
+
+  /**
+   * Abre la modal de descuento de puntos
+   * @param item - Item de reserva seleccionado
+   */
+  openPointsDiscountModal(item: BookingItem): void {
+    this.selectedBookingItem = item;
+    this.pointsToUse = 0;
+    
+    // TODO: Obtener puntos disponibles del usuario
+    // Por ahora, simulamos con un valor fijo
+    this.availablePoints = 150; // Este valor vendrá del servicio de puntos
+    
+    this.pointsDiscountModalVisible = true;
+  }
+
+  /**
+   * Cierra la modal de descuento de puntos
+   */
+  closePointsDiscountModal(): void {
+    this.pointsDiscountModalVisible = false;
+    this.selectedBookingItem = null;
+    this.pointsToUse = 0;
+    this.availablePoints = 0;
+  }
+
+  /**
+   * Calcula el precio final después del descuento
+   * @returns Precio final
+   */
+  getFinalPrice(): number {
+    if (!this.selectedBookingItem || this.pointsToUse <= 0) {
+      return this.selectedBookingItem?.price || 0;
+    }
+    
+    const originalPrice = this.selectedBookingItem.price || 0;
+    const discount = this.pointsToUse; // 1 punto = 1 euro
+    const finalPrice = originalPrice - discount;
+    
+    return Math.max(0, finalPrice); // No permitir precio negativo
+  }
+
+  /**
+   * Aplica el descuento de puntos
+   */
+  applyPointsDiscount(): void {
+    if (!this.selectedBookingItem || this.pointsToUse <= 0 || this.pointsToUse > this.availablePoints) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pueden aplicar los puntos seleccionados',
+      });
+      return;
+    }
+
+    // TODO: Implementar la lógica real de descuento de puntos
+    // Por ahora, solo mostramos un mensaje de confirmación
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Descuento Aplicado',
+      detail: `Se han descontado ${this.pointsToUse} puntos del precio total`,
+    });
+
+    console.log('Aplicando descuento de puntos:', {
+      bookingId: this.selectedBookingItem.id,
+      pointsToUse: this.pointsToUse,
+      originalPrice: this.selectedBookingItem.price,
+      finalPrice: this.getFinalPrice()
+    });
+
+    this.closePointsDiscountModal();
   }
 }

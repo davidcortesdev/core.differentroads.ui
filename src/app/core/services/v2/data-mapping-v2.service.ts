@@ -39,6 +39,7 @@ export class DataMappingV2Service {
       reservationNumber: reservationNumber,
       creationDate: new Date(reservation.createdAt),
       status: this.mapReservationStatus(reservation.reservationStatusId),
+      reservationStatusId: reservation.reservationStatusId,
       departureDate: this.extractReservationDepartureDate(reservation),
       image: this.getImageFromCMS(cmsTour) || this.getDefaultImage(),
       passengers: reservation.totalPassengers,

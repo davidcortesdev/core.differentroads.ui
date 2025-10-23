@@ -377,3 +377,99 @@ $orange-red: #f66b5b;
         }
     }
 }
+
+// ===== ESTILOS PARA MODAL DE DESCUENTO DE PUNTOS =====
+
+.points-discount-content {
+    .booking-info {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        
+        h4 {
+            margin: 0 0 0.5rem 0;
+            color: #495057;
+            font-size: 1.1rem;
+        }
+        
+        p {
+            margin: 0.25rem 0;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+    }
+    
+    .points-section {
+        .points-available {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: #e8f5e8;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            
+            label {
+                color: #2d5a2d;
+                font-weight: 600;
+            }
+            
+            .points-value {
+                font-size: 1.2rem;
+                font-weight: bold;
+                color: #28a745;
+            }
+        }
+        
+        .points-input {
+            margin-bottom: 1.5rem;
+            
+            label {
+                display: block;
+                margin-bottom: 0.5rem;
+                font-weight: 600;
+                color: #495057;
+            }
+            
+            small {
+                display: block;
+                margin-top: 0.25rem;
+                color: #6c757d;
+            }
+        }
+        
+        .discount-calculation {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            
+            .calculation-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.5rem 0;
+                border-bottom: 1px solid #e9ecef;
+                
+                &:last-child {
+                    border-bottom: none;
+                }
+                
+                &.total {
+                    font-size: 1.1rem;
+                    background: #e8f5e8;
+                    margin: 0 -1rem -1rem -1rem;
+                    padding: 1rem;
+                    border-radius: 0 0 8px 8px;
+                    border-top: 2px solid #28a745;
+                }
+                
+                .discount-amount {
+                    color: #dc3545;
+                    font-weight: 600;
+                }
+            }
+        }
+    }
+}

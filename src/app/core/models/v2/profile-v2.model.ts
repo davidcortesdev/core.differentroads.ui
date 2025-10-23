@@ -14,6 +14,7 @@ export interface BookingItem {
     _id?: string; // For budgets compatibility
     creationDate: Date;
     status: string;
+    reservationStatusId?: number; // ID del estado de reserva para lógica de negocio
     departureDate: Date;
     image: string;
     passengers?: number;

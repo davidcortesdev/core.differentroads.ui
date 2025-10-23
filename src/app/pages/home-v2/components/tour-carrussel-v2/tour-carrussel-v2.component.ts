@@ -538,7 +538,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
                   nextDepartureDate: nextDepartureDate,
                   itineraryDaysCount: itineraryDaysCount,
                   itineraryDaysText: itineraryDaysText,
-                  isByDr: true, // Valor por defecto
+                  isByDr: tour.productStyleId === 1, // ✅ isByDr es true cuando productStyleId es 1 (GROUP)
                   webSlug:
                     tour.slug ||
                     tour.name?.toLowerCase().replace(/\s+/g, '-') ||
@@ -547,6 +547,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
                   externalID: tour.tkId || '',
                   continent: '', // TourNetService no tiene continent - pendiente de agregar
                   country: '', // TourNetService no tiene country - pendiente de agregar
+                  productStyleId: tour.productStyleId, // ✅ Agregar productStyleId al objeto
                 };
               }
             )

@@ -107,7 +107,154 @@
     </p-panel>
   </div>
 
-  <div class="notes-container">
+  <div class="tklogs-container" *ngIf="isAtc">
+    <p-panel header="Logs de Comunicación con TK">
+      <div class="tklogs-header">
+        <p-button
+          *ngIf="!showTkLogsTable && !tkLogsLoading && tkLogs.length > 0"
+          label="Ver Logs"
+          icon="pi pi-eye"
+          size="small"
+          severity="secondary"
+          (onClick)="showTkLogsTable = true"
+        ></p-button>
+        <p-button
+          *ngIf="showTkLogsTable"
+          label="Ocultar Logs"
+          icon="pi pi-eye-slash"
+          size="small"
+          severity="secondary"
+          (onClick)="showTkLogsTable = false"
+        ></p-button>
+      </div>
+
+      <!-- Loading indicator for TKLogs -->
+      <div *ngIf="tkLogsLoading" class="loading-container">
+        <p-progressSpinner></p-progressSpinner>
+        <p>Cargando logs de TK...</p>
+      </div>
+
+      <!-- No logs message -->
+      <div *ngIf="!tkLogsLoading && tkLogs.length === 0" class="no-logs-message">
+        <i class="pi pi-info-circle"></i>
+        <p>No hay logs de comunicación con TK para esta reserva</p>
+      </div>
+
+      <!-- TKLogs Table -->
+      <div *ngIf="showTkLogsTable && !tkLogsLoading && tkLogs.length > 0" class="tklogs-table-container">
+        <p-table
+          [value]="tkLogs"
+          [tableStyle]="{ 'min-width': '50rem' }"
+          styleClass="p-datatable-sm"
+          responsiveLayout="scroll"
+          [paginator]="true"
+          [rows]="5"
+          [rowsPerPageOptions]="[5, 10, 20]"
+          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} logs"
+        >
+          <!-- Table header -->
+          <ng-template #header>
+            <tr>
+              <th style="width: 4rem">Estado</th>
+              <th style="width: 8rem">Fecha Envío</th>
+              <th style="width: 4rem">HTTP Status</th>
+              <th style="width: 10rem">Contenido Respuesta</th>
+              <th style="width: 20rem">Error TK</th>
+              <th style="width: 15rem">Notas</th>
+            </tr>
+          </ng-template>
+
+          <!-- Table body -->
+          <ng-template #body let-log>
+            <tr>
+              <!-- Estado con icono y color -->
+              <td>
+                <div class="flex align-items-center gap-2">
+                  <i [class]="getLogIcon(getLogSeverity(log))"
+                     [ngClass]="getLogClass(getLogSeverity(log))"></i>
+                  <span [ngClass]="getLogClass(getLogSeverity(log))">
+                    {{ getLogSeverity(log) | titlecase }}
+                  </span>
+                </div>
+              </td>
+
+              <!-- Fecha de envío -->
+              <td>
+                <span [title]="log.sentAt">
+                  {{ formatDate(log.sentAt) }}
+                </span>
+              </td>
+
+              <!-- Código de estado HTTP -->
+              <td>
+                <p-tag
+                  [value]="log.httpStatusCode?.toString() || '-'"
+                  [severity]="log.httpStatusCode >= 400 ? 'danger' : (log.httpStatusCode >= 200 && log.httpStatusCode < 300 ? 'success' : 'warn')"
+                ></p-tag>
+              </td>
+
+              <!-- Contenido de respuesta -->
+              <td>
+                <span [title]="log.responseContent" class="response-content">
+                  {{ formatResponseContent(log.responseContent) }}
+                </span>
+              </td>
+
+              <!-- Error TK -->
+              <td>
+                <div *ngIf="log.tkErrorCode || log.tkErrorMessage; else noError" class="tk-error">
+                  <div *ngIf="log.tkErrorCode" class="error-code">
+                    <p-tag [value]="log.tkErrorCode" severity="danger" styleClass="error-tag"></p-tag>
+                  </div>
+                  <div *ngIf="log.tkErrorMessage" class="error-message">
+                    <span [pTooltip]="getFullErrorMessage(log)"
+                          tooltipPosition="top"
+                          [escape]="false"
+                          [showDelay]="300"
+                          [hideDelay]="100">
+                      {{ log.tkErrorMessage }}
+                    </span>
+                  </div>
+                </div>
+                <ng-template #noError>
+                  <span class="text-muted">-</span>
+                </ng-template>
+              </td>
+
+              <!-- Notas -->
+              <td>
+                <div *ngIf="log.notes; else noNotes" class="notes-content">
+                  <span [pTooltip]="log.notes"
+                        tooltipPosition="top"
+                        [escape]="false"
+                        [showDelay]="300"
+                        [hideDelay]="100">
+                    {{ log.notes }}
+                  </span>
+                </div>
+                <ng-template #noNotes>
+                  <span class="text-muted">-</span>
+                </ng-template>
+              </td>
+            </tr>
+          </ng-template>
+
+          <!-- Empty message -->
+          <ng-template #emptymessage>
+            <tr>
+              <td colspan="6" class="text-center">
+                No se encontraron logs de TK
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </p-panel>
+  </div>
+
+
+
+  <!-- <div class="notes-container">
     <p-panel header="Notas">
       <p-table
         #dt
@@ -155,5 +302,5 @@
         </ng-template>
       </p-table>
     </p-panel>
-  </div>
+  </div> -->
 </div>

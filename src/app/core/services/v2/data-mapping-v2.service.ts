@@ -101,11 +101,20 @@ export class DataMappingV2Service {
    */
   private mapReservationStatus(statusId: number): string {
     const statusMap: Record<number, string> = {
-      0: 'Budget',
-      1: 'Booked',
-      2: 'RQ',
-      3: 'Completed',
-      4: 'Cancelled'
+      1: 'Borrador',
+      2: 'Carrito en proceso',
+      3: 'Presupuesto generado',
+      4: 'Reserva pendiente de confirmación',
+      5: 'Reserva registrada sin pagos',
+      6: 'Reserva confirmada con pagos parciales',
+      7: 'Reserva pagada completamente',
+      8: 'Reserva cancelada',
+      9: 'Carrito abandonado sin conversión',
+      10: 'Error técnico',
+      11: 'Reserva pendiente de confirmación',
+      12: 'Reserva eliminada',
+      13: 'Reserva expirada',
+      14: 'Reserva suspendida'
     };
     return statusMap[statusId] || 'Unknown';
   }

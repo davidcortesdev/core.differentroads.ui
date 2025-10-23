@@ -107,6 +107,9 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   error: string | undefined;
   citiesLoading = false;
   pricesLoading = false;
+  
+  // Control de visibilidad del dataview
+  showDataview = false;
 
   // Propiedades para precios
   departuresPrices: ITourDeparturesPriceResponse[] = [];
@@ -200,6 +203,9 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       this.error = 'ID del tour no proporcionado';
       return;
     }
+
+    // Inicializar visibilidad del dataview
+    this.updateDataviewVisibility();
 
     this.loadCities();
     this.loadAgeGroups();
@@ -303,6 +309,9 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
             } else if (this.cities.length > 0) {
               this.selectedCity = this.cities[0];
             }
+            
+            // Actualizar visibilidad del dataview después de establecer la ciudad
+            this.updateDataviewVisibility();
           } else {
             // Si no hay ciudades "Sin Vuelos", usar ordenamiento alfabético normal
             this.cities = validCities.sort((a, b) =>
@@ -315,6 +324,9 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
             if (this.cities.length > 0) {
               this.selectedCity = this.cities[0];
             }
+            
+            // Actualizar visibilidad del dataview después de establecer la ciudad
+            this.updateDataviewVisibility();
           }
 
           if (this.cities.length === 0) {
@@ -947,6 +959,9 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   onCityChange(event: any): void {
     this.selectedCity = event;
 
+    // Controlar visibilidad del dataview basado en la selección de ciudad
+    this.updateDataviewVisibility();
+
     if (
       this.selectedCity &&
       this.selectedCity.activityId &&
@@ -967,6 +982,23 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
         this.calculateAndEmitPrice();
       }, 300);
     }
+  }
+
+  /**
+   * Actualiza la visibilidad del dataview basado en la selección de ciudad
+   */
+  private updateDataviewVisibility(): void {
+    if (!this.selectedCity) {
+      this.showDataview = false;
+      return;
+    }
+
+    // Mostrar dataview solo si NO es "sin vuelos"
+    const isSinVuelos = 
+      this.selectedCity.name.toLowerCase().includes('sin vuelos') ||
+      this.selectedCity.name.toLowerCase().includes('sin vuelo');
+    
+    this.showDataview = !isSinVuelos;
   }
 
   private emitCityUpdate(): void {

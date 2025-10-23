@@ -11,13 +11,6 @@ $orange-red: #f66b5b;
         gap: $g;
     }
 }
-@mixin b($s: 12px, $p: 6px 12px, $h: 30px) {
-    font-size: $s;
-    padding: $p;
-    border-radius: 20px;
-    height: $h;
-    @include f(row, center, center);
-}
 .active {
     --p-paginator-background: var(--background-azul-color-letra);
     margin: 0 15px;

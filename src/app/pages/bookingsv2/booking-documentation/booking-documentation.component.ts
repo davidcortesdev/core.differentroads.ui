@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import {
   DocumentationService,
   IDocumentReservationResponse,
@@ -66,44 +67,31 @@ export class BookingDocumentationV2Component implements OnInit {
     private documentationService: DocumentationService,
     private notificationService: NotificationService,
     private messageService: MessageService,
-    private reservationTKLogService: ReservationTKLogService
-  ) {
-    // Detectar si estamos en ATC
-    // Verificamos tanto la URL actual como la del padre (si estamos en iframe)
-    this.isAtc = this.detectIfAtc();
-  }
+    private reservationTKLogService: ReservationTKLogService,
+    private route: ActivatedRoute
+  ) {}
 
   /**
-   * Detecta si la aplicación está corriendo en ATC
-   * Verifica tanto la URL actual como la del padre (para cuando está en iframe)
+   * Detecta si la aplicación está corriendo en ATC mediante parámetros de URL
+   * Similar a cómo checkout-v2 detecta isTourOperator
    */
-  private detectIfAtc(): boolean {
-    try {
-      // Verificar la URL actual
-      const currentHostname = window.location.hostname;
-
-      // Verificar si estamos en un iframe y obtener la URL del padre
-      if (window.parent !== window) {
-        try {
-          const parentHostname = window.parent.location.hostname;
-          if (parentHostname.includes('middle-atc') || parentHostname.includes('atc')) {
-            return true;
-          }
-        } catch (e) {
-          // Si hay error de CORS, no podemos acceder al parent
-          // En este caso, verificamos solo nuestra propia URL
-        }
+  private detectIfAtc(): void {
+    // Leer parámetros de query string
+    this.route.queryParams.subscribe((params) => {
+      // Si viene el parámetro isATC=true, activar modo ATC
+      if (params['isATC'] === 'true' || params['isAtc'] === 'true') {
+        this.isAtc = true;
+        console.log('✅ ATC detectado desde parámetro URL');
       }
+    });
 
-      // Verificar nuestra propia URL
-      return currentHostname.includes('middle-atc') || currentHostname.includes('atc');
-    } catch (error) {
-      console.error('Error detectando si es ATC:', error);
-      return false;
-    }
+    console.log('🔍 isAtc:', this.isAtc);
   }
 
   ngOnInit(): void {
+    // Detectar si es ATC desde los parámetros de URL
+    this.detectIfAtc();
+
     if (this.bookingId) {
       this.loadNotificationStatuses();
       this.loadNotificationTypes();

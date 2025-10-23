@@ -12,3 +12,18 @@ p-iftaLabel {
     align-items: center;
     justify-content: center;
 }
+
+.custom-button {
+    background-color: #e25353;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.3s ease;
+}
+
+.custom-button.active {
+    background-color: var(--p-iftalabel-color);
+    color: white;
+}

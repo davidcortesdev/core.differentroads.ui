@@ -452,8 +452,15 @@ D        .p-select-panel,
     }
 }
 
+::ng-deep .custom-select-panel {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    left: 0 !important;
+}
 
-// Estilos para el overlay del select
+// Estilos más específicos para el overlay del select
 ::ng-deep .p-select-overlay,
 ::ng-deep .p-component-overlay,
 ::ng-deep .p-select-panel {

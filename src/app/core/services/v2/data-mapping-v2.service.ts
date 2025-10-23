@@ -65,7 +65,7 @@ export class DataMappingV2Service {
    * @param tours - Array de tours correspondientes
    * @param listType - Tipo de lista
    * @param cmsTours - Array de tours CMS con imágenes (opcional)
-   * @returns Array de BookingItem V2
+   * @returns Array de BookingItem V2 ordenado por fecha de creación (más recientes primero)
    */
   mapReservationsToBookingItems(
     reservations: ReservationResponse[],
@@ -73,7 +73,7 @@ export class DataMappingV2Service {
     listType: 'active-bookings' | 'travel-history' | 'recent-budgets' = 'active-bookings',
     cmsTours: (ICMSTourResponse | null)[] = []
   ): BookingItem[] {
-    return reservations.map((reservation, index) => 
+    const bookingItems = reservations.map((reservation, index) => 
       this.mapReservationToBookingItem(
         reservation, 
         tours[index] || null, 
@@ -81,6 +81,13 @@ export class DataMappingV2Service {
         cmsTours[index] || null
       )
     );
+
+    // Ordenar por fecha de creación (más recientes primero)
+    return bookingItems.sort((a, b) => {
+      const dateA = new Date(a.creationDate).getTime();
+      const dateB = new Date(b.creationDate).getTime();
+      return dateB - dateA; // Orden descendente (más recientes primero)
+    });
   }
 
   /**

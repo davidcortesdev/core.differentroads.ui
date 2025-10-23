@@ -1022,30 +1022,22 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
    */
   private loadUserPointsData(): void {
     this.loadingUserData = true;
-    const userId = this.authService.getUserEmailValue();
-    if (!userId) {
+    if (!this.userId) {
       this.messageService.add({
         severity: 'error',
         summary: 'Error',
-        detail: 'No se pudo obtener el email del usuario',
+        detail: 'No se pudo obtener el ID del usuario',
       });
       this.setDefaultCategory();
       this.loadingUserData = false;
       return;
     }
 
-    console.log('🔍 Cargando datos de puntos para usuario:', userId);
-
     // Obtener saldo de puntos del usuario
-    this.pointsService.getLoyaltyBalanceFromAPI(userId).subscribe({
+    this.pointsService.getLoyaltyBalanceFromAPI(this.userId).subscribe({
       next: (balance) => {
-        console.log('📊 Saldo de puntos obtenido:', balance);
-        if (balance && balance.availablePoints !== undefined) {
-          this.availablePoints = balance.availablePoints;
-        } else {
-          this.availablePoints = 0;
-          console.warn('⚠️ No se encontraron puntos disponibles para el usuario');
-        }
+        // Usar la misma lógica que points-section-v2
+        this.availablePoints = balance?.pointsAvailable || balance?.totalPoints || balance?.balance || 0;
         this.loadingUserData = false;
       },
       error: (error: any) => {
@@ -1061,33 +1053,23 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
     });
 
     // Obtener categoría del usuario
-    this.pointsService.getUserLoyaltyCategory(userId).then((userCategory: any) => {
-      console.log('👤 Categoría del usuario obtenida:', userCategory);
+    this.pointsService.getUserLoyaltyCategory(this.userId).then((userCategory: any) => {
       if (userCategory && userCategory.loyaltyCategoryId) {
         this.pointsService.getLoyaltyProgramCategory(userCategory.loyaltyCategoryId).then((category: any) => {
-          console.log('🏆 Detalles de categoría obtenidos:', category);
           if (category) {
             this.userCategory = this.mapCategoryNameToEnum(category.name);
             this.maxPointsForCategory = category.maxDiscountPerPurchase || 50;
             this.maxPointsPerReservation = Math.min(50, this.maxPointsForCategory);
-            console.log('✅ Categoría configurada:', {
-              category: this.userCategory,
-              maxForCategory: this.maxPointsForCategory,
-              maxForReservation: this.maxPointsPerReservation
-            });
           } else {
             this.setDefaultCategory();
           }
         }).catch((error: any) => {
-          console.error('❌ Error obteniendo detalles de categoría:', error);
           this.setDefaultCategory();
         });
       } else {
-        console.warn('⚠️ No se encontró categoría para el usuario, usando por defecto');
         this.setDefaultCategory();
       }
     }).catch((error: any) => {
-      console.error('❌ Error obteniendo categoría del usuario:', error);
       this.setDefaultCategory();
     });
   }
@@ -1155,18 +1137,17 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
 
     // Aplicar descuento usando el servicio real
     const reservationId = parseInt(this.selectedBookingItem.id, 10);
-    const userId = this.authService.getUserEmailValue();
 
-    if (!userId) {
+    if (!this.userId) {
       this.messageService.add({
         severity: 'error',
         summary: 'Error',
-        detail: 'No se pudo obtener el email del usuario',
+        detail: 'No se pudo obtener el ID del usuario',
       });
       return;
     }
 
-    this.pointsService.redeemPointsForReservation(reservationId, userId, this.pointsToUse)
+    this.pointsService.redeemPointsForReservation(reservationId, this.userId, this.pointsToUse)
       .then(result => {
         if (result.success) {
           this.messageService.add({

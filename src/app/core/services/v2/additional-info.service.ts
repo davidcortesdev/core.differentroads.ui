@@ -5,7 +5,8 @@ import { map, catchError, switchMap } from 'rxjs/operators';
 import { MessageService } from 'primeng/api';
 import { AuthenticateService } from '../auth/auth-service.service';
 import { AnalyticsService } from '../analytics/analytics.service';
-import { ReservationService, ReservationCreate, ReservationUpdate } from '../reservation/reservation.service';
+import { ReservationService, ReservationCreate, ReservationUpdate, ReservationCompleteCreate, IReservationTravelerData } from '../reservation/reservation.service';
+import { ReservationStatusService } from '../reservation/reservation-status.service';
 import { UsersNetService } from '../users/usersNet.service';
 import { environment } from '../../../../environments/environment';
 
@@ -43,6 +44,9 @@ export class AdditionalInfoService {
   private travelersData: any = null;
   private selectedFlight: any = null;
   private totalPrice: number = 0;
+  private selectedActivities: any[] = [];
+  private ageGroupCategories: any = null;
+  private selectedActivityPackId: number | null = null;
 
   constructor(
     private http: HttpClient,
@@ -50,7 +54,8 @@ export class AdditionalInfoService {
     private analyticsService: AnalyticsService,
     private messageService: MessageService,
     private reservationService: ReservationService,
-    private usersNetService: UsersNetService
+    private usersNetService: UsersNetService,
+    private reservationStatusService: ReservationStatusService
   ) {}
 
   /**
@@ -62,12 +67,18 @@ export class AdditionalInfoService {
     travelersData?: any;
     selectedFlight?: any;
     totalPrice?: number;
+    selectedActivities?: any[];
+    ageGroupCategories?: any;
+    selectedActivityPackId?: number | null;
   }): void {
     if (data.tourId) this.tourId = data.tourId;
     if (data.periodId) this.periodId = data.periodId;
     if (data.travelersData) this.travelersData = data.travelersData;
     if (data.selectedFlight) this.selectedFlight = data.selectedFlight;
     if (data.totalPrice) this.totalPrice = data.totalPrice;
+    if (data.selectedActivities) this.selectedActivities = data.selectedActivities;
+    if (data.ageGroupCategories) this.ageGroupCategories = data.ageGroupCategories;
+    if (data.selectedActivityPackId !== undefined) this.selectedActivityPackId = data.selectedActivityPackId;
   }
 
   /**
@@ -79,6 +90,9 @@ export class AdditionalInfoService {
     this.travelersData = null;
     this.selectedFlight = null;
     this.totalPrice = 0;
+    this.selectedActivities = [];
+    this.ageGroupCategories = null;
+    this.selectedActivityPackId = null;
   }
 
   /**
@@ -112,6 +126,101 @@ export class AdditionalInfoService {
   }
 
   /**
+   * ✅ MÉTODO NUEVO: Preparar datos de viajeros para createComplete
+   */
+  private prepareTravelersData(): IReservationTravelerData[] {
+    const travelersData: IReservationTravelerData[] = [];
+    let travelerNumber = 1;
+
+    // Si no hay datos de viajeros, crear un viajero por defecto
+    if (!this.travelersData) {
+      return [{
+        ageGroupId: 1, // ID por defecto para adultos
+        isLeadTraveler: true,
+        tkId: null,
+      }];
+    }
+
+    // Validar que existan los age groups necesarios
+    if (this.travelersData.adults > 0 && (!this.ageGroupCategories?.adults?.id)) {
+      throw new Error('Age group for adults not found');
+    }
+    if (this.travelersData.childs > 0 && (!this.ageGroupCategories?.children?.id)) {
+      throw new Error('Age group for children not found');
+    }
+    if (this.travelersData.babies > 0 && (!this.ageGroupCategories?.babies?.id)) {
+      throw new Error('Age group for babies not found');
+    }
+
+    // Crear viajeros para adultos
+    for (let i = 0; i < (this.travelersData.adults || 0); i++) {
+      const isLeadTraveler = travelerNumber === 1;
+      travelersData.push({
+        ageGroupId: this.ageGroupCategories?.adults?.id || 1,
+        isLeadTraveler: isLeadTraveler,
+        tkId: null,
+      });
+      travelerNumber++;
+    }
+
+    // Crear viajeros para niños
+    for (let i = 0; i < (this.travelersData.childs || 0); i++) {
+      travelersData.push({
+        ageGroupId: this.ageGroupCategories?.children?.id || 2,
+        isLeadTraveler: false,
+        tkId: null,
+      });
+      travelerNumber++;
+    }
+
+    // Crear viajeros para bebés
+    for (let i = 0; i < (this.travelersData.babies || 0); i++) {
+      travelersData.push({
+        ageGroupId: this.ageGroupCategories?.babies?.id || 3,
+        isLeadTraveler: false,
+        tkId: null,
+      });
+      travelerNumber++;
+    }
+
+    return travelersData;
+  }
+
+  /**
+   * ✅ MÉTODO NUEVO: Preparar datos de actividades para createComplete
+   */
+  private prepareActivitiesData(): {
+    activityIds: number[];
+    activityPackIds: number[];
+  } {
+    const activityIds: number[] = [];
+    const activityPackIds: number[] = [];
+
+    // Procesar actividades seleccionadas manualmente
+    if (this.selectedActivities && this.selectedActivities.length > 0) {
+      this.selectedActivities.forEach((activity) => {
+        if (activity.added) {
+          const activityId = parseInt(activity.id);
+          if (!isNaN(activityId) && activityId > 0) {
+            if (activity.type === 'act') {
+              activityIds.push(activityId);
+            } else if (activity.type === 'pack') {
+              activityPackIds.push(activityId);
+            }
+          }
+        }
+      });
+    }
+
+    // Procesar paquete automático del departure
+    if (this.selectedActivityPackId && this.selectedActivityPackId > 0) {
+      activityPackIds.push(this.selectedActivityPackId);
+    }
+
+    return { activityIds, activityPackIds };
+  }
+
+  /**
    * Construye los datos de reservación para el backend
    * 
    * Este método prepara la estructura de datos que el backend espera
@@ -136,7 +245,7 @@ export class AdditionalInfoService {
   }
   
   /**
-   * Crea un nuevo presupuesto en el backend
+   * ✅ MÉTODO MODIFICADO: Crea un nuevo presupuesto usando createComplete
    * @returns Observable con la reserva creada
    */
   createBudget(): Observable<any> {
@@ -144,8 +253,7 @@ export class AdditionalInfoService {
       switchMap(cognitoId => {
         if (!cognitoId) {
           console.warn('⚠️ No se encontró Cognito ID, creando presupuesto sin userId');
-          const reservationData = this.buildReservationData(null);
-          return this.reservationService.create(reservationData);
+          return this.createCompleteBudget(null);
         }
         
         // Buscar el usuario por Cognito ID para obtener su ID en la base de datos
@@ -154,8 +262,7 @@ export class AdditionalInfoService {
             const userId = users && users.length > 0 ? users[0].id : null;
             return userId;
           }),
-          map((userId: number | null) => this.buildReservationData(userId)),
-          switchMap((reservationData: ReservationCreate) => this.reservationService.create(reservationData))
+          switchMap((userId: number | null) => this.createCompleteBudget(userId))
         );
       }),
       catchError(error => {
@@ -163,6 +270,62 @@ export class AdditionalInfoService {
         throw error;
       })
     );
+  }
+
+  /**
+   * ✅ MÉTODO NUEVO: Crear presupuesto completo usando createComplete
+   */
+  private createCompleteBudget(userId: number | null): Observable<any> {
+    try {
+      // ✅ OBTENER ID DEL ESTADO BUDGET DINÁMICAMENTE
+      return this.reservationStatusService.getByCode('BUDGET').pipe(
+        switchMap((budgetStatuses) => {
+          if (!budgetStatuses || budgetStatuses.length === 0) {
+            throw new Error('BUDGET status not found');
+          }
+
+          const budgetStatusId = budgetStatuses[0].id;
+
+          // ✅ PREPARAR DATOS DE LA RESERVA
+          const reservationData: ReservationCreate = {
+            tkId: '',
+            reservationStatusId: budgetStatusId, // ✅ USAR ID DINÁMICO DE BUDGET
+            retailerId: environment.retaileriddefault,
+            tourId: parseInt(this.tourId) || 0,
+            departureId: parseInt(this.periodId) || 0,
+            userId: userId,
+            totalPassengers: this.travelersData ? 
+              (this.travelersData.adults || 0) + (this.travelersData.childs || 0) + (this.travelersData.babies || 0) : 1,
+            totalAmount: this.totalPrice || 0,
+          };
+
+          // ✅ PREPARAR DATOS DE VIAJEROS
+          const travelersData: IReservationTravelerData[] = this.prepareTravelersData();
+
+          // ✅ PREPARAR ACTIVIDADES Y PAQUETES
+          const { activityIds, activityPackIds } = this.prepareActivitiesData();
+
+          // ✅ CREAR RESERVA COMPLETA
+          const completeData: ReservationCompleteCreate = {
+            reservation: reservationData,
+            travelers: travelersData,
+            activityIds: activityIds.length > 0 ? activityIds : null,
+            activityPackIds: activityPackIds.length > 0 ? activityPackIds : null,
+          };
+
+          console.log('📋 Creando PRESUPUESTO COMPLETO (BUDGET):', completeData);
+
+          return this.reservationService.createComplete(completeData);
+        }),
+        catchError((error) => {
+          console.error('💥 Error en preparación de datos del presupuesto:', error);
+          throw error;
+        })
+      );
+    } catch (error) {
+      console.error('💥 Error en preparación de datos del presupuesto:', error);
+      throw error;
+    }
   }
 
   /**

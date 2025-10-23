@@ -52,6 +52,7 @@ import { environment } from '../../../../../environments/environment';
 import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 import { UsersNetService } from '../../../../core/services/users/usersNet.service';
 import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
+import { ReservationStatusService } from '../../../../core/services/reservation/reservation-status.service';
 
 // ✅ INTERFACES para tipado fuerte
 interface PassengersData {
@@ -152,7 +153,8 @@ export class TourHeaderV2Component
     private route: ActivatedRoute,
     private authService: AuthenticateService,
     private usersNetService: UsersNetService,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private reservationStatusService: ReservationStatusService
   ) {}
 
   ngOnInit() {
@@ -1050,91 +1052,107 @@ export class TourHeaderV2Component
 
   private createReservation(userId: number | null): void {
     try {
-      // ✅ PREPARAR DATOS DE LA RESERVA
-      const reservationData: ReservationCreate = {
-        tkId: '',
-        reservationStatusId: 1, // 1 = CART (carrito de compra)
-        retailerId: environment.retaileriddefault,
-        tourId: this.tourId!,
-        departureId: this.selectedDeparture.id,
-        userId: userId,
-        totalPassengers: this.totalPassengers || 1,
-        totalAmount: this.totalPriceWithActivities || 0,
-      };
-
-      // ✅ PREPARAR DATOS DE VIAJEROS
-      const travelersData: IReservationTravelerData[] = this.prepareTravelersData();
-
-      // ✅ PREPARAR ACTIVIDADES Y PAQUETES
-      const { activityIds, activityPackIds } = this.prepareActivitiesData();
-
-    // ✅ CREAR RESERVA COMPLETA
-    const completeData: ReservationCompleteCreate = {
-      reservation: reservationData,
-      travelers: travelersData,
-      activityIds: activityIds.length > 0 ? activityIds : null,
-      activityPackIds: activityPackIds.length > 0 ? activityPackIds : null,
-    };
-
-    console.log('📋 Creando RESERVA COMPLETA:', completeData);
-
-    this.subscriptions.add(
-      this.reservationService.createComplete(completeData).subscribe({
-        next: (createdReservation: IReservationResponse) => {
-          console.log('✅ RESERVA COMPLETA creada exitosamente:', {
-            id: createdReservation.id,
-            statusId: createdReservation.reservationStatusId,
-            cartAt: createdReservation.cartAt
-          });
-
-          // Disparar evento add_to_cart
-          this.trackAddToCart();
-
-          // Obtener contexto de la lista desde el state del router y pasarlo al checkout
-          const state = window.history.state;
-          const listId = state?.['listId'] || '';
-          const listName = state?.['listName'] || '';
-          
-          // Navegar al checkout pasando los datos por state (sin modificar URL)
-          this.router.navigate(['/checkout', createdReservation.id], {
-            state: {
-              listId: listId,
-              listName: listName
-            }
-          });
-        },
-        error: (error) => {
-          console.error('💥 Booking - Error fatal en el proceso:', {
-            error: error,
-            errorMessage: error.message,
-            errorStatus: error.status,
-          });
-
-          let errorMessage =
-            'Error al crear la reservación. Por favor, inténtalo de nuevo.';
-
-          // ✅ MENSAJES DE ERROR MÁS ESPECÍFICOS
-          if (error.status === 500) {
-            errorMessage =
-              'Error interno del servidor. Por favor, contacta al soporte técnico.';
-          } else if (error.status === 400) {
-            errorMessage =
-              'Datos inválidos. Por favor, verifica la información e inténtalo de nuevo.';
-          } else if (error.status === 404) {
-            errorMessage =
-              'Recurso no encontrado. Por favor, verifica que el tour y la fecha seleccionada sean válidos.';
-          } else if (error.status === 0 || !error.status) {
-            errorMessage =
-              'Sin conexión al servidor. Por favor, verifica tu conexión a internet.';
+      // ✅ OBTENER ID DEL ESTADO DRAFT DINÁMICAMENTE
+      this.reservationStatusService.getByCode('DRAFT').subscribe({
+        next: (draftStatuses) => {
+          if (!draftStatuses || draftStatuses.length === 0) {
+            throw new Error('DRAFT status not found');
           }
 
-          alert(errorMessage);
+          const draftStatusId = draftStatuses[0].id;
+
+          // ✅ PREPARAR DATOS DE LA RESERVA
+          const reservationData: ReservationCreate = {
+            tkId: '',
+            reservationStatusId: draftStatusId, // ✅ USAR ID DINÁMICO DE DRAFT
+            retailerId: environment.retaileriddefault,
+            tourId: this.tourId!,
+            departureId: this.selectedDeparture.id,
+            userId: userId,
+            totalPassengers: this.totalPassengers || 1,
+            totalAmount: this.totalPriceWithActivities || 0,
+          };
+
+          // ✅ PREPARAR DATOS DE VIAJEROS
+          const travelersData: IReservationTravelerData[] = this.prepareTravelersData();
+
+          // ✅ PREPARAR ACTIVIDADES Y PAQUETES
+          const { activityIds, activityPackIds } = this.prepareActivitiesData();
+
+          // ✅ CREAR RESERVA COMPLETA
+          const completeData: ReservationCompleteCreate = {
+            reservation: reservationData,
+            travelers: travelersData,
+            activityIds: activityIds.length > 0 ? activityIds : null,
+            activityPackIds: activityPackIds.length > 0 ? activityPackIds : null,
+          };
+
+          console.log('📋 Creando RESERVA COMPLETA (DRAFT):', completeData);
+
+          this.subscriptions.add(
+            this.reservationService.createComplete(completeData).subscribe({
+              next: (createdReservation: IReservationResponse) => {
+                console.log('✅ RESERVA COMPLETA creada exitosamente:', {
+                  id: createdReservation.id,
+                  statusId: createdReservation.reservationStatusId,
+                  cartAt: createdReservation.cartAt
+                });
+
+                // Disparar evento add_to_cart
+                this.trackAddToCart();
+
+                // Obtener contexto de la lista desde el state del router y pasarlo al checkout
+                const state = window.history.state;
+                const listId = state?.['listId'] || '';
+                const listName = state?.['listName'] || '';
+                
+                // Navegar al checkout pasando los datos por state (sin modificar URL)
+                this.router.navigate(['/checkout', createdReservation.id], {
+                  state: {
+                    listId: listId,
+                    listName: listName
+                  }
+                });
+              },
+              error: (error) => {
+                console.error('💥 Booking - Error fatal en el proceso:', {
+                  error: error,
+                  errorMessage: error.message,
+                  errorStatus: error.status,
+                });
+
+                let errorMessage =
+                  'Error al crear la reservación. Por favor, inténtalo de nuevo.';
+
+                // ✅ MENSAJES DE ERROR MÁS ESPECÍFICOS
+                if (error.status === 500) {
+                  errorMessage =
+                    'Error interno del servidor. Por favor, contacta al soporte técnico.';
+                } else if (error.status === 400) {
+                  errorMessage =
+                    'Datos inválidos. Por favor, verifica la información e inténtalo de nuevo.';
+                } else if (error.status === 404) {
+                  errorMessage =
+                    'Recurso no encontrado. Por favor, verifica que el tour y la fecha seleccionada sean válidos.';
+                } else if (error.status === 0 || !error.status) {
+                  errorMessage =
+                    'Sin conexión al servidor. Por favor, verifica tu conexión a internet.';
+                }
+
+                alert(errorMessage);
+              },
+              complete: () => {
+                this.isCreatingReservation = false;
+              },
+            })
+          );
         },
-        complete: () => {
+        error: (error) => {
+          console.error('💥 Error obteniendo estado DRAFT:', error);
           this.isCreatingReservation = false;
-        },
-      })
-    );
+          alert('Error al obtener el estado de reservación. Por favor, inténtalo de nuevo.');
+        }
+      });
     } catch (error) {
       console.error('💥 Booking - Error en preparación de datos:', error);
       this.isCreatingReservation = false;

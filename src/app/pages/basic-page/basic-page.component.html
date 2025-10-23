@@ -1,16 +1,25 @@
-<ng-container *ngIf="isLoading; else content">
-  <p>Loading...</p>
-</ng-container>
+<div class="basic-page-container">
+  <!-- Política de Privacidad -->
+  <app-politica-de-privacidad *ngIf="currentSlug === 'politica-de-privacidad'"></app-politica-de-privacidad>
 
-<ng-template #content>
-  <ng-container *ngIf="pageContent; else noData">
-    <app-title-and-quill
-      [title]="pageContent.title"
-      [description]="pageContent.description"
-    ></app-title-and-quill>
-  </ng-container>
+  <!-- Programa de Puntos -->
+  <app-programa-de-puntos *ngIf="currentSlug === 'programa-de-puntos'"></app-programa-de-puntos>
 
-  <ng-template #noData>
-    <p>Error: No se encontró la página</p>
-  </ng-template>
-</ng-template>
+  <!-- Condiciones Generales -->
+  <app-condiciones-generales *ngIf="currentSlug === 'condiciones-generales'"></app-condiciones-generales>
+
+  <!-- Aviso Legal -->
+  <app-aviso-legal *ngIf="currentSlug === 'aviso-legal'"></app-aviso-legal>
+
+  <!-- Sobre Nosotros -->
+  <app-sobre-nosotros *ngIf="currentSlug === 'sobre-nosotros'"></app-sobre-nosotros>
+
+  <!-- Por qué Different -->
+  <app-por-que-different *ngIf="currentSlug === 'por-que-different'"></app-por-que-different>
+
+  <!-- Mensaje de error si no se encuentra el componente -->
+  <div *ngIf="currentSlug && currentSlug !== 'politica-de-privacidad' && currentSlug !== 'programa-de-puntos' && currentSlug !== 'condiciones-generales' && currentSlug !== 'aviso-legal' && currentSlug !== 'sobre-nosotros' && currentSlug !== 'por-que-different'" class="not-found">
+    <h2>Página no encontrada</h2>
+    <p>La página "{{ currentSlug }}" no existe o aún no está disponible.</p>
+  </div>
+</div>

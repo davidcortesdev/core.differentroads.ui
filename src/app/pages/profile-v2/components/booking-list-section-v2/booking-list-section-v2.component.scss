@@ -11,13 +11,6 @@ $orange-red: #f66b5b;
         gap: $g;
     }
 }
-@mixin b($s: 12px, $p: 6px 12px, $h: 30px) {
-    font-size: $s;
-    padding: $p;
-    border-radius: 20px;
-    height: $h;
-    @include f(row, center, center);
-}
 .active {
     --p-paginator-background: var(--background-azul-color-letra);
     margin: 0 15px;
@@ -124,14 +117,6 @@ $orange-red: #f66b5b;
             strong {
                 font-size: 16px;
                 color: $a;
-            }
-            .state {
-                margin-left: 5px;
-                background-color: $a;
-                color: #fff !important;
-                padding: 1px 5px;
-                border-radius: 5px;
-                font-size: 0.7rem !important;
             }
         }
         .price {
@@ -373,6 +358,119 @@ $orange-red: #f66b5b;
             }
             .buttons {
                 margin-top: -10px;
+            }
+        }
+    }
+}
+
+// ===== ESTILOS PARA MODAL DE DESCUENTO DE PUNTOS =====
+// Usando variables CSS de PrimeNG para un diseño elegante y profesional
+
+.points-discount-content {
+    // Espaciado equilibrado
+    padding: 1.25rem !important;
+    
+    .booking-info {
+        background: var(--p-surface-50);
+        padding: 1rem !important;
+        border-radius: var(--p-border-radius);
+        margin-bottom: 1.25rem !important;
+        border: 1px solid var(--p-content-border-color);
+        
+        h4 {
+            margin: 0 0 0.75rem 0 !important;
+            color: var(--p-text-color);
+            font-size: var(--p-font-size);
+            font-weight: var(--p-font-weight-semibold);
+            line-height: 1.5;
+        }
+        
+        p {
+            margin: 0.5rem 0 !important;
+            color: var(--p-text-muted-color);
+            font-size: var(--p-font-size-sm);
+            line-height: 1.5;
+        }
+    }
+    
+    .points-section {
+        .points-available {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem !important;
+            background: var(--p-green-50);
+            border-radius: var(--p-border-radius);
+            margin-bottom: 1.25rem !important;
+            border: 1px solid var(--p-green-200);
+            
+            label {
+                color: var(--p-green-700);
+                font-weight: var(--p-font-weight-semibold);
+                font-size: var(--p-font-size);
+            }
+            
+            .points-value {
+                font-size: 1.25rem !important;
+                font-weight: var(--p-font-weight-bold);
+                color: var(--p-green-600);
+            }
+        }
+        
+        .points-input {
+            margin-bottom: 1.25rem !important;
+            
+            label {
+                display: block;
+                margin-bottom: 0.5rem !important;
+                font-weight: var(--p-font-weight-semibold);
+                color: var(--p-text-color);
+                font-size: var(--p-font-size);
+            }
+            
+            small {
+                display: block;
+                margin-top: 0.5rem !important;
+                color: var(--p-text-muted-color);
+                font-size: var(--p-font-size-sm);
+                line-height: 1.5;
+            }
+        }
+        
+        .discount-calculation {
+            background: var(--p-surface-0);
+            border: 1px solid var(--p-content-border-color);
+            border-radius: var(--p-border-radius);
+            padding: 1rem !important;
+            box-shadow: var(--p-shadow-1);
+            margin-top: 1.25rem !important;
+            
+            .calculation-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.5rem 0 !important;
+                border-bottom: 1px solid var(--p-content-border-color);
+                line-height: 1.5;
+                
+                &:last-child {
+                    border-bottom: none;
+                }
+                
+                &.total {
+                    font-size: var(--p-font-size-lg);
+                    background: var(--p-green-50);
+                    margin: 0.75rem -1rem -1rem -1rem !important;
+                    padding: 1rem !important;
+                    border-radius: 0 0 var(--p-border-radius) var(--p-border-radius);
+                    border-top: 2px solid var(--p-green-500);
+                    font-weight: var(--p-font-weight-semibold);
+                }
+                
+                .discount-amount {
+                    color: var(--p-red-500);
+                    font-weight: var(--p-font-weight-semibold);
+                }
             }
         }
     }

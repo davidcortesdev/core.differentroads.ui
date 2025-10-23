@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, forwardRef, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, forwardRef, OnInit, ViewEncapsulation } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
@@ -6,6 +6,7 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
   standalone: false,
   templateUrl: './datepicker-range-v2.component.html',
   styleUrls: ['./datepicker-range-v2.component.scss'],
+  encapsulation: ViewEncapsulation.None,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -31,6 +32,7 @@ export class DatepickerRangeV2Component implements OnInit {
   // Datos del rango
   rangeDates: Date[] | undefined;
   dateFlexibility: number = 0;
+  selectedFlexibility: number | null = null;
 
   // Presets de flexibilidad
   datePresets = [
@@ -55,6 +57,46 @@ export class DatepickerRangeV2Component implements OnInit {
    */
   applyDatePreset(flexibility: number): void {
     this.dateFlexibility = flexibility;
+    this.selectedFlexibility = flexibility;
+    
+    // Aplicar lógica de fechas si hay fechas seleccionadas
+    if (this.rangeDates && this.rangeDates.length > 0) {
+      this.applyFlexibilityToDates();
+    }
+    
+    this.flexibilityChange.emit(flexibility);
+  }
+
+  /**
+   * Aplicar flexibilidad a las fechas seleccionadas
+   */
+  private applyFlexibilityToDates(): void {
+    if (!this.rangeDates || this.rangeDates.length === 0 || this.dateFlexibility === 0) {
+      return;
+    }
+
+    const startDate = new Date(this.rangeDates[0]);
+    const endDate = this.rangeDates[1] ? new Date(this.rangeDates[1]) : new Date(startDate);
+    
+    // Aplicar flexibilidad a las fechas
+    const newStartDate = new Date(startDate);
+    newStartDate.setDate(newStartDate.getDate() - this.dateFlexibility);
+    
+    const newEndDate = new Date(endDate);
+    newEndDate.setDate(newEndDate.getDate() + this.dateFlexibility);
+    
+    // Actualizar las fechas
+    this.rangeDates = [newStartDate, newEndDate];
+    this.onChange(this.rangeDates);
+    this.datesChange.emit(this.rangeDates);
+  }
+
+  /**
+   * Manejar cambio de flexibilidad desde el selectButton
+   */
+  onFlexibilityChange(flexibility: number): void {
+    this.dateFlexibility = flexibility;
+    this.selectedFlexibility = flexibility;
     this.flexibilityChange.emit(flexibility);
   }
 

@@ -86,6 +86,7 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { ToolbarModule } from 'primeng/toolbar';
 import { TooltipModule } from 'primeng/tooltip';
 import { TextareaModule } from 'primeng/textarea';
+import { SelectButtonModule } from 'primeng/selectbutton';
 
 
 // ========================================
@@ -508,6 +509,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     ToolbarModule,
     TooltipModule,
     TextareaModule,
+    SelectButtonModule,
 
     // ========================================
     // STANDALONE COMPONENTS

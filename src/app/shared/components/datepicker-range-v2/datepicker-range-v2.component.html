@@ -15,15 +15,23 @@
       <!-- Template personalizado para la barra de botones -->
       <ng-template #footer>
         <div class="date-presets" role="group" aria-label="Presets de fechas rápidas">
-          <p-button 
-            *ngFor="let preset of datePresets"
-            size="small"
-            (click)="applyDatePreset(preset.value)"
-            [attr.aria-label]="'Seleccionar rango de ' + preset.label"
-            [title]="'Aplicar preset de ' + preset.label"
+          <p-selectButton 
+            [options]="datePresets"
+            [(ngModel)]="selectedFlexibility"
+            (ngModelChange)="onFlexibilityChange($event)"
+            optionLabel="label"
+            optionValue="value"
+            [multiple]="false"
           >
-            {{ preset.label }}
-          </p-button>
+  <ng-template let-option pTemplate="item">
+    <button 
+      type="button" 
+      class="custom-button" 
+      [ngClass]="{'active': option.value === selectedFlexibility}">
+      {{ option.label }}
+    </button>
+  </ng-template>
+</p-selectButton>
         </div>
         <div class="date-range-info" *ngIf="getDaysInRange() > 0">
           <small class="range-duration">

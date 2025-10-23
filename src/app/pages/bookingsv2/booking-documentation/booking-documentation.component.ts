@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import {
   DocumentationService,
   IDocumentReservationResponse,
@@ -10,8 +11,13 @@ import {
   INotificationStatusResponse,
   INotificationTypeResponse,
 } from '../../../core/services/documentation/notification.service';
+import {
+  ReservationTKLogService,
+  IReservationTKLogResponse,
+} from '../../../core/services/reservation/reservation-tk-log.service';
 import { MessageService } from 'primeng/api';
 import { BookingNote } from '../../../core/models/bookings/booking-note.model';
+import { catchError, of } from 'rxjs';
 
 type Severity =
   | 'success'
@@ -49,13 +55,43 @@ export class BookingDocumentationV2Component implements OnInit {
   // Add property for notes
   notes: BookingNote[] = [];
 
+  // TKLog table properties
+  tkLogs: IReservationTKLogResponse[] = [];
+  tkLogsLoading = false;
+  showTkLogsTable = false;
+
+  // Propiedad para detectar si es ATC
+  isAtc: boolean = false;
+
   constructor(
     private documentationService: DocumentationService,
     private notificationService: NotificationService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private reservationTKLogService: ReservationTKLogService,
+    private route: ActivatedRoute
   ) {}
 
+  /**
+   * Detecta si la aplicación está corriendo en ATC mediante parámetros de URL
+   * Similar a cómo checkout-v2 detecta isTourOperator
+   */
+  private detectIfAtc(): void {
+    // Leer parámetros de query string
+    this.route.queryParams.subscribe((params) => {
+      // Si viene el parámetro isATC=true, activar modo ATC
+      if (params['isATC'] === 'true' || params['isAtc'] === 'true') {
+        this.isAtc = true;
+        console.log('✅ ATC detectado desde parámetro URL');
+      }
+    });
+
+    console.log('🔍 isAtc:', this.isAtc);
+  }
+
   ngOnInit(): void {
+    // Detectar si es ATC desde los parámetros de URL
+    this.detectIfAtc();
+
     if (this.bookingId) {
       this.loadNotificationStatuses();
       this.loadNotificationTypes();
@@ -63,6 +99,11 @@ export class BookingDocumentationV2Component implements OnInit {
       this.loadDocuments();
       this.loadNotifications();
       this.loadNotes();
+
+      // Solo cargar TK logs si estamos en ATC
+      if (this.isAtc) {
+        this.loadTKLogs();
+      }
     }
   }
 
@@ -333,5 +374,146 @@ export class BookingDocumentationV2Component implements OnInit {
           console.error('❌ TEST: Documentation service error:', error);
         },
       });
+  }
+
+  /**
+   * Carga los logs de comunicación con TK para la reserva actual
+   */
+  private loadTKLogs(): void {
+    if (!this.bookingId) {
+      return;
+    }
+
+    const reservationIdNumber = parseInt(this.bookingId, 10);
+    if (isNaN(reservationIdNumber)) {
+      console.error('ID de reserva no válido:', this.bookingId);
+      return;
+    }
+
+    this.tkLogsLoading = true;
+    this.reservationTKLogService
+      .getByReservation(reservationIdNumber)
+      .pipe(
+        catchError((error) => {
+          console.error('Error al cargar logs de TK:', error);
+          this.tkLogsLoading = false;
+          return of([]);
+        })
+      )
+      .subscribe((logs: IReservationTKLogResponse[]) => {
+        this.tkLogs = logs;
+        this.tkLogsLoading = false;
+        this.showTkLogsTable = logs.length > 0;
+      });
+  }
+
+  /**
+   * Determina la severidad del log basándose en el estado
+   */
+  getLogSeverity(
+    log: IReservationTKLogResponse
+  ): 'success' | 'info' | 'warn' | 'error' {
+    // Si hay un error de TK, mostrar como error
+    if (log.tkErrorCode || log.tkErrorMessage) {
+      return 'error';
+    }
+
+    // Si el código de estado HTTP es un error (4xx o 5xx)
+    if (log.httpStatusCode >= 400) {
+      return 'error';
+    }
+
+    // Si el código de estado HTTP es exitoso (2xx)
+    if (log.httpStatusCode >= 200 && log.httpStatusCode < 300) {
+      return 'success';
+    }
+
+    // Si hay código de estado HTTP 3xx (redirección)
+    if (log.httpStatusCode >= 300 && log.httpStatusCode < 400) {
+      return 'warn';
+    }
+
+    // Por defecto, informativo
+    return 'info';
+  }
+
+  /**
+   * Formatea la fecha para mostrar en la tabla
+   */
+  formatDate(date: string): string {
+    if (!date) return '-';
+    return new Date(date).toLocaleString();
+  }
+
+  /**
+   * Formatea el contenido de respuesta truncándolo si es muy largo
+   */
+  formatResponseContent(content: string): string {
+    if (!content) return '-';
+    const maxLength = 60;
+    return content.length > maxLength
+      ? content.substring(0, maxLength) + '...'
+      : content;
+  }
+
+  /**
+   * Obtiene el icono apropiado según la severidad del log
+   */
+  getLogIcon(severity: string): string {
+    switch (severity) {
+      case 'success':
+        return 'pi pi-check-circle';
+      case 'error':
+        return 'pi pi-times-circle';
+      case 'warn':
+        return 'pi pi-exclamation-triangle';
+      default:
+        return 'pi pi-info-circle';
+    }
+  }
+
+  /**
+   * Obtiene la clase CSS apropiada según la severidad del log
+   */
+  getLogClass(severity: string): string {
+    switch (severity) {
+      case 'success':
+        return 'text-green-600';
+      case 'error':
+        return 'text-red-600';
+      case 'warn':
+        return 'text-orange-600';
+      default:
+        return 'text-blue-600';
+    }
+  }
+
+  /**
+   * Formatea el mensaje de error - ahora muestra el mensaje completo
+   */
+  formatErrorMessage(message: string): string {
+    if (!message) return '-';
+    return message; // Mostrar el mensaje completo
+  }
+
+  /**
+   * Obtiene el mensaje completo formateado para el tooltip del Error TK
+   */
+  getFullErrorMessage(log: IReservationTKLogResponse): string {
+    const parts: string[] = [];
+
+    if (log.tkErrorCode) {
+      parts.push(`<strong>Código de Error:</strong> ${log.tkErrorCode}`);
+    }
+
+    if (log.tkErrorMessage) {
+      parts.push(`<strong>Mensaje:</strong> ${log.tkErrorMessage}`);
+    }
+
+    if (parts.length === 0) {
+      return 'No hay información de error disponible';
+    }
+
+    return parts.join('<br><br>');
   }
 }

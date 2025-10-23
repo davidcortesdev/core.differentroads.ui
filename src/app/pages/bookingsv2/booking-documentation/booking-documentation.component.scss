@@ -72,6 +72,113 @@
     }
   }
 
+  .tklogs-container {
+    border: 1px solid #eaeaea;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    width: 100%;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .tklogs-header {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      gap: 0.5rem;
+    }
+
+    .no-logs-message {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      color: var(--background-azul);
+      text-align: center;
+
+      i {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        opacity: 0.6;
+      }
+
+      p {
+        margin: 0;
+        font-size: 0.9rem;
+      }
+    }
+
+    .tklogs-table-container {
+      padding: 1rem;
+
+      .response-content {
+        display: inline-block;
+        max-width: 200px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .tk-error {
+        .error-code {
+          margin-bottom: 0.25rem;
+        }
+
+        .error-message {
+          font-size: 0.85rem;
+          max-width: 300px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          display: block;
+        }
+      }
+
+      .notes-content {
+        font-size: 0.85rem;
+        max-width: 250px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
+      }
+
+      .text-muted {
+        color: #999;
+        font-style: italic;
+      }
+
+      .text-green-600 {
+        color: #16a34a;
+      }
+
+      .text-red-600 {
+        color: #dc2626;
+      }
+
+      .text-orange-600 {
+        color: #ea580c;
+      }
+
+      .text-blue-600 {
+        color: #2563eb;
+      }
+    }
+
+    .p-datatable th {
+      font-weight: 600;
+    }
+
+    .p-datatable-sm .p-datatable-tbody > tr > td {
+      padding: 0.5rem 1rem;
+    }
+  }
+
   .p-panel-header {
     border-bottom: 1px solid #eaeaea;
     padding: 1rem 1.5rem;

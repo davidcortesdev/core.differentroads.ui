@@ -1,0 +1,22 @@
+.basic-page-container {
+  padding: 20px;
+  min-height: 50vh;
+
+  .not-found {
+    text-align: center;
+    padding: 60px 20px;
+
+    h2 {
+      color: #e74c3c;
+      margin-bottom: 20px;
+      font-size: 2rem;
+    }
+
+    p {
+      color: #7f8c8d;
+      font-size: 1.1rem;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+  }
+}

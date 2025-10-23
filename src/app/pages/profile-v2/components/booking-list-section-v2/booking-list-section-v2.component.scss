@@ -379,24 +379,32 @@ $orange-red: #f66b5b;
 }
 
 // ===== ESTILOS PARA MODAL DE DESCUENTO DE PUNTOS =====
+// Usando variables CSS de PrimeNG para un diseño elegante y profesional
 
 .points-discount-content {
+    // Espaciado equilibrado
+    padding: 1.25rem !important;
+    
     .booking-info {
-        background: #f8f9fa;
-        padding: 1rem;
-        border-radius: 8px;
-        margin-bottom: 1.5rem;
+        background: var(--p-surface-50);
+        padding: 1rem !important;
+        border-radius: var(--p-border-radius);
+        margin-bottom: 1.25rem !important;
+        border: 1px solid var(--p-content-border-color);
         
         h4 {
-            margin: 0 0 0.5rem 0;
-            color: #495057;
-            font-size: 1.1rem;
+            margin: 0 0 0.75rem 0 !important;
+            color: var(--p-text-color);
+            font-size: var(--p-font-size);
+            font-weight: var(--p-font-weight-semibold);
+            line-height: 1.5;
         }
         
         p {
-            margin: 0.25rem 0;
-            color: #6c757d;
-            font-size: 0.9rem;
+            margin: 0.5rem 0 !important;
+            color: var(--p-text-muted-color);
+            font-size: var(--p-font-size-sm);
+            line-height: 1.5;
         }
     }
     
@@ -405,69 +413,78 @@ $orange-red: #f66b5b;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem;
-            background: #e8f5e8;
-            border-radius: 8px;
-            margin-bottom: 1rem;
+            padding: 1rem !important;
+            background: var(--p-green-50);
+            border-radius: var(--p-border-radius);
+            margin-bottom: 1.25rem !important;
+            border: 1px solid var(--p-green-200);
             
             label {
-                color: #2d5a2d;
-                font-weight: 600;
+                color: var(--p-green-700);
+                font-weight: var(--p-font-weight-semibold);
+                font-size: var(--p-font-size);
             }
             
             .points-value {
-                font-size: 1.2rem;
-                font-weight: bold;
-                color: #28a745;
+                font-size: 1.25rem !important;
+                font-weight: var(--p-font-weight-bold);
+                color: var(--p-green-600);
             }
         }
         
         .points-input {
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.25rem !important;
             
             label {
                 display: block;
-                margin-bottom: 0.5rem;
-                font-weight: 600;
-                color: #495057;
+                margin-bottom: 0.5rem !important;
+                font-weight: var(--p-font-weight-semibold);
+                color: var(--p-text-color);
+                font-size: var(--p-font-size);
             }
             
             small {
                 display: block;
-                margin-top: 0.25rem;
-                color: #6c757d;
+                margin-top: 0.5rem !important;
+                color: var(--p-text-muted-color);
+                font-size: var(--p-font-size-sm);
+                line-height: 1.5;
             }
         }
         
         .discount-calculation {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 1rem;
+            background: var(--p-surface-0);
+            border: 1px solid var(--p-content-border-color);
+            border-radius: var(--p-border-radius);
+            padding: 1rem !important;
+            box-shadow: var(--p-shadow-1);
+            margin-top: 1.25rem !important;
             
             .calculation-row {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                padding: 0.5rem 0;
-                border-bottom: 1px solid #e9ecef;
+                padding: 0.5rem 0 !important;
+                border-bottom: 1px solid var(--p-content-border-color);
+                line-height: 1.5;
                 
                 &:last-child {
                     border-bottom: none;
                 }
                 
                 &.total {
-                    font-size: 1.1rem;
-                    background: #e8f5e8;
-                    margin: 0 -1rem -1rem -1rem;
-                    padding: 1rem;
-                    border-radius: 0 0 8px 8px;
-                    border-top: 2px solid #28a745;
+                    font-size: var(--p-font-size-lg);
+                    background: var(--p-green-50);
+                    margin: 0.75rem -1rem -1rem -1rem !important;
+                    padding: 1rem !important;
+                    border-radius: 0 0 var(--p-border-radius) var(--p-border-radius);
+                    border-top: 2px solid var(--p-green-500);
+                    font-weight: var(--p-font-weight-semibold);
                 }
                 
                 .discount-amount {
-                    color: #dc3545;
-                    font-weight: 600;
+                    color: var(--p-red-500);
+                    font-weight: var(--p-font-weight-semibold);
                 }
             }
         }

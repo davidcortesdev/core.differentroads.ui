@@ -127,7 +127,7 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
   // NUEVO: Transformar datos del backend al formato del componente
   private updateSummaryData(summary: IReservationSummaryResponse): void {
     this.summary = summary.items?.map(item => ({
-      description: item.description,
+      description: item.description || undefined,
       qty: item.quantity,
       value: item.amount,
       isDiscount: item.description?.toLowerCase().includes('descuento') || false,

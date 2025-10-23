@@ -99,13 +99,15 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
     const tourId = this.tourId || (this.selectedDeparture?.tourId?.toString()) || '';
     const periodId = this.periodID || (this.selectedDeparture?.id?.toString()) || '';
     
-    
     this.additionalInfoService.setContextData({
       tourId: tourId,
       periodId: periodId,
       travelersData: this.travelersSelected,
       selectedFlight: this.selectedFlight,
-      totalPrice: this.calculateTotalPrice()
+      totalPrice: this.calculateTotalPrice(),
+      selectedActivities: this.selectedActivities,
+      ageGroupCategories: this.getAgeGroupCategories(),
+      selectedActivityPackId: this.getSelectedActivityPackId()
     });
   }
 
@@ -119,6 +121,29 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
       .reduce((sum, activity) => sum + (activity.price || 0), 0);
 
     return (this.totalPrice || 0) + activitiesTotal;
+  }
+
+  /**
+   * ✅ MÉTODO NUEVO: Obtener age group categories desde el contexto
+   * En el contexto de additional-info, estos datos pueden no estar disponibles
+   */
+  private getAgeGroupCategories(): any {
+    // En el contexto de additional-info, es posible que no tengamos age groups
+    // Por ahora retornamos valores por defecto que funcionarán para presupuestos básicos
+    return {
+      adults: { id: 1 }, // ID por defecto para adultos
+      children: { id: 2 }, // ID por defecto para niños
+      babies: { id: 3 } // ID por defecto para bebés
+    };
+  }
+
+  /**
+   * ✅ MÉTODO NUEVO: Obtener selected activity pack ID desde el contexto
+   */
+  private getSelectedActivityPackId(): number | null {
+    // En el contexto de additional-info, es posible que no tengamos este dato
+    // Por ahora retornamos null, pero se puede extender si es necesario
+    return null;
   }
 
   /**

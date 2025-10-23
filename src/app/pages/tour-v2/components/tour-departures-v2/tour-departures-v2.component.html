@@ -164,7 +164,6 @@
 
     <!-- DataView con datos REALES del departure -->
     <p-dataView
-      *ngIf="showDataview"
       #dv
       [value]="filteredDepartures"
       [rows]="5"
@@ -224,9 +223,16 @@
                 </span>
 
                 <!-- Horarios de vuelos -->
-                <div class="flight-times" *ngIf="flightTimesByDepartureId[item.id]">
+                <div class="flight-times" *ngIf="flightTimesByDepartureId[item.id] && !isSinVuelosSelected()">
                   <div *ngFor="let line of getFlightTimesLines(item.id)" class="flight-line">
                     {{ line }}
+                  </div>
+                </div>
+                
+                <!-- Mostrar "sin vuelos" cuando se selecciona esa opción -->
+                <div class="flight-times" *ngIf="isSinVuelosSelected()">
+                  <div class="flight-line">
+                    Sin vuelos
                   </div>
                 </div>
 

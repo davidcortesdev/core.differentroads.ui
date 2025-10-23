@@ -20,6 +20,8 @@ export interface TourDataV2 {
   // ✅ NUEVOS CAMPOS: Para analytics (continent, country)
   continent?: string;
   country?: string;
+  // ✅ NUEVO CAMPO: Para productStyleId
+  productStyleId?: number | null;
 }
 
 export enum TripTypeV2 {

@@ -3,8 +3,8 @@
       <app-personal-info-section-v2 [userId]="userId"></app-personal-info-section-v2>
     </div>
     <div class="column right-column">
-      <app-points-section-v2 [userId]="userId"></app-points-section-v2>
-      <app-booking-list-section-v2 [userId]="userId" [listType]="'active-bookings'"></app-booking-list-section-v2>
+      <app-points-section-v2 [userId]="userId" #pointsSection></app-points-section-v2>
+      <app-booking-list-section-v2 [userId]="userId" [listType]="'active-bookings'" [parentComponent]="this"></app-booking-list-section-v2>
       <app-booking-list-section-v2 [userId]="userId" [listType]="'travel-history'"></app-booking-list-section-v2>
       <app-booking-list-section-v2 [userId]="userId" [listType]="'recent-budgets'"></app-booking-list-section-v2>
       <app-review-section-v2 [userId]="userId"></app-review-section-v2>

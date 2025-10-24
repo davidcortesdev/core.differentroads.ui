@@ -33,6 +33,13 @@ export class PointsSectionV2Component implements OnInit {
     this.loadData();
   }
 
+  /**
+   * Método público para recargar los datos desde componentes externos
+   */
+  public reloadData(): void {
+    this.loadData();
+  }
+
   private loadData(): void {
     this.isLoading = true;
     

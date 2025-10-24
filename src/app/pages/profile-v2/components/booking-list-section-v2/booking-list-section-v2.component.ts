@@ -35,6 +35,7 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   @Input() userId: string = '';
   @Input() listType: 'active-bookings' | 'travel-history' | 'recent-budgets' =
     'active-bookings';
+  @Input() parentComponent?: any;  // Referencia al componente padre
 
   bookingItems: BookingItem[] = [];
   isExpanded: boolean = true;
@@ -1186,8 +1187,14 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
             detail: result.message,
           });
           
-          // Recargar datos para reflejar cambios
-          console.log('🔄 Recargando datos...');
+          // Recargar la sección de puntos en el componente padre
+          if (this.parentComponent && this.parentComponent.reloadPointsSection) {
+            this.parentComponent.reloadPointsSection();
+          } else {
+            console.warn('No se pudo recargar la sección de puntos (parentComponent no disponible)');
+          }
+          
+          // Recargar datos de reservas para reflejar cambios en precio
           this.loadData();
           
           // Cerrar modal
@@ -1201,7 +1208,7 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
         }
       })
       .catch(error => {
-        console.error('❌ Error aplicando descuento:', error);
+        console.error('Error aplicando descuento:', error);
         this.messageService.add({
           severity: 'error',
           summary: 'Error',

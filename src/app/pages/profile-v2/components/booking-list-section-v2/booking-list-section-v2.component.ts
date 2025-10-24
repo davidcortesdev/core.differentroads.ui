@@ -1112,10 +1112,19 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   }
 
   /**
-   * Aplica el descuento de puntos
+   * ✅ Aplica el descuento de puntos
    */
   applyPointsDiscount(): void {
+    console.log('🎯 applyPointsDiscount llamado');
+    console.log('📊 Datos:', {
+      selectedBookingItem: this.selectedBookingItem,
+      pointsToUse: this.pointsToUse,
+      userId: this.userId,
+      availablePoints: this.availablePoints
+    });
+
     if (!this.selectedBookingItem || this.pointsToUse <= 0) {
+      console.log('❌ Validación inicial fallida');
       this.messageService.add({
         severity: 'error',
         summary: 'Error',
@@ -1125,8 +1134,12 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
     }
 
     // Validar límites según las reglas del documento
+    console.log('🔍 Validando uso de puntos...');
     const validation = this.validatePointsUsage();
+    console.log('   Resultado de validación:', validation);
+    
     if (!validation.isValid) {
+      console.log('❌ Validación fallida:', validation.message);
       this.messageService.add({
         severity: 'error',
         summary: 'Error de validación',
@@ -1134,6 +1147,8 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       });
       return;
     }
+    
+    console.log('✅ Validación pasada, continuando...');
 
     // Aplicar descuento usando el servicio real
     const reservationId = parseInt(this.selectedBookingItem.id, 10);
@@ -1147,14 +1162,35 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       return;
     }
 
-    this.pointsService.redeemPointsForReservation(reservationId, this.userId, this.pointsToUse)
+    // ✅ Convertir userId a número
+    const userIdNumber = parseInt(this.userId, 10);
+    console.log('📝 IDs parseados:', { reservationId, userIdNumber });
+
+    if (isNaN(userIdNumber) || isNaN(reservationId)) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'IDs inválidos',
+      });
+      return;
+    }
+
+    console.log('🚀 Llamando a redeemPointsForReservation...');
+    this.pointsService.redeemPointsForReservation(reservationId, userIdNumber, this.pointsToUse)
       .then(result => {
+        console.log('✅ Resultado:', result);
         if (result.success) {
           this.messageService.add({
             severity: 'success',
             summary: 'Descuento Aplicado',
             detail: result.message,
           });
+          
+          // Recargar datos para reflejar cambios
+          console.log('🔄 Recargando datos...');
+          this.loadData();
+          
+          // Cerrar modal
           this.closePointsDiscountModal();
         } else {
           this.messageService.add({
@@ -1165,7 +1201,7 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
         }
       })
       .catch(error => {
-        console.error('Error aplicando descuento:', error);
+        console.error('❌ Error aplicando descuento:', error);
         this.messageService.add({
           severity: 'error',
           summary: 'Error',

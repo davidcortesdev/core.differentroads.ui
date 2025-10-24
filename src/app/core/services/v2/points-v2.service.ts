@@ -15,14 +15,17 @@ export interface PointsRedemptionConfig {
   totalDiscount: number;
 }
 
-// Interfaces para endpoints reales
+// Interfaces para endpoints reales - ESQUEMA CORRECTO DEL BACKEND
 export interface LoyaltyTransactionCreate {
-  travelerId: string;           // cognito:sub
-  points: number;                // Positivo = acumular, Negativo = canjear
-  transactionType: string;       // "ACUMULAR" | "CANJEAR"
-  transactionCategory: string;   // "VIAJE" | "DESCUENTO" | "BONO"
-  description: string;
-  reservationId: number;
+  userId: number;                // ID del usuario en la base de datos
+  transactionDate: string;       // Fecha de la transacción en formato ISO
+  transactionTypeId: number;     // ID del tipo de transacción (4 = REDEEM_BOOKING para canje)
+  points: number;                // Cantidad de puntos (negativo para canje)
+  amountBase: number;            // Monto base asociado
+  currency: string;              // Código de moneda (EUR, USD, etc.)
+  referenceType: string;         // Tipo de referencia ("RESERVATION", etc.)
+  referenceId: string;           // ID de la referencia como string
+  comment: string;               // Comentario o descripción
 }
 
 export interface LoyaltyTransaction {
@@ -36,13 +39,15 @@ export interface LoyaltyTransaction {
   createdAt: Date;
 }
 
+// ✅ Interface actualizada según esquema real del backend
 export interface LoyaltyBalance {
   id: number;
-  travelerId: string;
-  availablePoints: number;
-  totalEarned: number;
-  totalRedeemed: number;
-  lastUpdated: Date;
+  userId: number;                // ID del usuario (numérico)
+  pointsAvailable: number;       // ✅ Nombre correcto del campo en el backend
+  pointsTotalEarned: number;     // ✅ Nombre correcto del campo
+  pointsTotalRedeemed: number;   // ✅ Nombre correcto del campo
+  createdAt: string;             // ISO string
+  updatedAt: string;             // ISO string
 }
 
 export interface UserLoyaltyCategory {
@@ -1335,22 +1340,25 @@ export class PointsV2Service {
   // ===== MÉTODOS PARA ENDPOINTS REALES =====
 
   /**
-   * Canjea puntos de un usuario en una reserva específica
+   * ✅ Canjea puntos de un usuario en una reserva específica
    * @param reservationId ID de la reserva
-   * @param travelerId cognito:sub del usuario
+   * @param userId ID numérico del usuario en la base de datos
    * @param pointsToUse Puntos a canjear
    * @returns Resultado de la operación
    */
   async redeemPointsForReservation(
     reservationId: number,
-    travelerId: string,
+    userId: number,
     pointsToUse: number
   ): Promise<{ success: boolean; message: string }> {
     try {
-      console.log('🔄 Iniciando canje de puntos:', { reservationId, travelerId, pointsToUse });
+      console.log('🔄 Iniciando canje de puntos:', { reservationId, userId, pointsToUse });
 
       // 1. Validar estado de pago
+      console.log('1️⃣ Validando estado de pago...');
       const isPaid = await this.checkReservationPaymentStatus(reservationId);
+      console.log('   ✅ Estado de pago verificado:', isPaid ? 'PAGADA' : 'NO PAGADA');
+      
       if (isPaid) {
         return { 
           success: false, 
@@ -1359,37 +1367,48 @@ export class PointsV2Service {
       }
 
       // 2. Validar saldo disponible
-      const balance = await this.getLoyaltyBalance(travelerId);
-      if (balance.availablePoints < pointsToUse) {
+      console.log('2️⃣ Validando saldo disponible...');
+      const balance = await this.getLoyaltyBalance(userId.toString());
+      console.log('   ✅ Saldo obtenido:', balance);
+      
+      if (balance.pointsAvailable < pointsToUse) {
         return { 
           success: false, 
-          message: `No tienes suficientes puntos disponibles. Tienes ${balance.availablePoints} puntos.` 
+          message: `No tienes suficientes puntos disponibles. Tienes ${balance.pointsAvailable} puntos.` 
         };
       }
 
-      // 3. Validar límites
-      const validation = await this.validatePointsRedemption(travelerId, pointsToUse, reservationId);
-      if (!validation.isValid) {
+      // 3. Validar límites (máximo 50€ por reserva)
+      console.log('3️⃣ Validando límites...');
+      if (pointsToUse > 50) {
         return { 
           success: false, 
-          message: validation.message 
+          message: 'El máximo de puntos que puedes canjear por reserva es 50.' 
         };
       }
 
-      // 4. Crear transacción de canje
+      // 4. Crear transacción de canje con esquema correcto del backend
+      console.log('4️⃣ Creando transacción de canje...');
       const transaction: LoyaltyTransactionCreate = {
-        travelerId: travelerId,
-        points: -pointsToUse,  // Negativo para restar
-        transactionType: 'CANJEAR',
-        transactionCategory: 'DESCUENTO',
-        description: `Descuento de ${pointsToUse} puntos en reserva #${reservationId}`,
-        reservationId: reservationId
+        userId: userId,                              // ✅ ID numérico del usuario
+        transactionDate: new Date().toISOString(),   // ✅ Fecha actual en ISO
+        transactionTypeId: 4,                        // ✅ 4 = REDEEM_BOOKING (Canje por reserva)
+        points: -pointsToUse,                        // ✅ Negativo para restar puntos
+        amountBase: pointsToUse,                     // ✅ 1 punto = 1 euro
+        currency: 'EUR',                             // ✅ Moneda
+        referenceType: 'RESERVATION',                // ✅ Tipo de referencia
+        referenceId: reservationId.toString(),       // ✅ ID de reserva como string
+        comment: `Descuento de ${pointsToUse} puntos en reserva #${reservationId}` // ✅ Comentario
       };
+      console.log('   📦 Payload de transacción:', transaction);
 
-      await this.createLoyaltyTransaction(transaction);
+      const createdTransaction = await this.createLoyaltyTransaction(transaction);
+      console.log('   ✅ Transacción creada exitosamente:', createdTransaction);
 
       // 5. Actualizar total de la reserva
-      await this.updateReservationAmount(reservationId, -pointsToUse);
+      console.log('5️⃣ Actualizando total de la reserva...');
+      await this.updateReservationTotalAmount(reservationId, pointsToUse);
+      console.log('   ✅ Total de reserva actualizado');
 
       console.log('✅ Canje de puntos completado exitosamente');
 
@@ -1398,11 +1417,21 @@ export class PointsV2Service {
         message: `Se han aplicado ${pointsToUse} puntos correctamente. El descuento se ha aplicado a tu reserva.` 
       };
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error en canje de puntos:', error);
+      console.error('   Status:', error?.status);
+      console.error('   Error del servidor:', error?.error);
+      
+      // Mensaje de error más específico
+      let errorMessage = 'Error al procesar el canje de puntos. Por favor, inténtalo de nuevo.';
+      if (error?.error?.errors) {
+        const errors = Object.values(error.error.errors).flat();
+        errorMessage = `Error de validación: ${errors.join(', ')}`;
+      }
+      
       return { 
         success: false, 
-        message: 'Error al procesar el canje de puntos. Por favor, inténtalo de nuevo.' 
+        message: errorMessage
       };
     }
   }
@@ -1428,10 +1457,18 @@ export class PointsV2Service {
    * @param travelerId cognito:sub del usuario
    * @returns Saldo de puntos
    */
-  async getLoyaltyBalance(travelerId: string): Promise<LoyaltyBalance> {
+  /**
+   * ✅ Obtiene el saldo de puntos de un usuario
+   * @param userId ID del usuario (como string o número)
+   * @returns Saldo de puntos
+   */
+  async getLoyaltyBalance(userId: string): Promise<LoyaltyBalance> {
     try {
-      const url = `${this.AUTH_API_URL}/LoyaltyBalance?userId=${travelerId}`;
+      const url = `${this.AUTH_API_URL}/LoyaltyBalance?userId=${userId}`;
+      console.log('   📡 GET a:', url);
+      
       const response = await this.http.get<any>(url).toPromise();
+      console.log('   📦 Respuesta:', response);
       
       // Si la API devuelve un array, tomar el primer elemento
       if (Array.isArray(response) && response.length > 0) {
@@ -1440,14 +1477,15 @@ export class PointsV2Service {
       
       return response;
     } catch (error) {
-      console.error('Error obteniendo saldo de puntos:', error);
+      console.error('❌ Error obteniendo saldo de puntos:', error);
       return {
         id: 0,
-        travelerId: travelerId,
-        availablePoints: 0,
-        totalEarned: 0,
-        totalRedeemed: 0,
-        lastUpdated: new Date()
+        userId: parseInt(userId),
+        pointsAvailable: 0,
+        pointsTotalEarned: 0,
+        pointsTotalRedeemed: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
     }
   }
@@ -1514,31 +1552,78 @@ export class PointsV2Service {
   }
 
   /**
-   * Crea una transacción de puntos
+   * ✅ Crea una transacción de puntos
    * @param transaction Datos de la transacción
    * @returns Transacción creada
    */
   async createLoyaltyTransaction(transaction: LoyaltyTransactionCreate): Promise<LoyaltyTransaction> {
-    const url = `${this.AUTH_API_URL}/LoyaltyTransaction`;
-    const result = await this.http.post<LoyaltyTransaction>(url, transaction).toPromise();
-    if (!result) {
-      throw new Error('Error creando transacción de puntos');
+    try {
+      const url = `${this.AUTH_API_URL}/LoyaltyTransaction`;
+      console.log('   📡 POST a:', url);
+      console.log('   📦 Payload:', JSON.stringify(transaction, null, 2));
+      
+      const result = await this.http.post<LoyaltyTransaction>(url, transaction).toPromise();
+      
+      if (!result) {
+        throw new Error('No se recibió respuesta del servidor');
+      }
+      
+      console.log('   ✅ Respuesta del servidor:', result);
+      return result;
+    } catch (error: any) {
+      console.error('   ❌ Error en createLoyaltyTransaction:', error);
+      console.error('   Status:', error?.status);
+      console.error('   Errores de validación:', error?.error?.errors);
+      throw error;
     }
-    return result;
   }
 
   /**
-   * Actualiza el totalAmount de una reserva
+   * ✅ Actualiza el total de una reserva restando el descuento de puntos
    * @param reservationId ID de la reserva
-   * @param amountChange Cantidad a sumar/restar del totalAmount
+   * @param pointsDiscount Descuento en puntos a aplicar
    */
-  async updateReservationAmount(reservationId: number, amountChange: number): Promise<void> {
+  async updateReservationTotalAmount(reservationId: number, pointsDiscount: number): Promise<void> {
     try {
-      const url = `${this.RESERVATIONS_API_URL}/Reservation/${reservationId}/update-total-amount-by`;
-      await this.http.put(url, { amount: amountChange }).toPromise();
-      console.log('✅ TotalAmount actualizado:', { reservationId, amountChange });
-    } catch (error) {
-      console.error('❌ Error actualizando totalAmount:', error);
+      // 1. Obtener datos actuales de la reserva
+      console.log('   📡 Obteniendo datos de la reserva...');
+      const reservation = await this.getReservation(reservationId);
+      
+      if (!reservation) {
+        throw new Error('No se pudo obtener los datos de la reserva');
+      }
+      
+      console.log('   📦 Reserva actual:', reservation);
+      
+      // 2. Calcular nuevo total
+      const newTotalAmount = reservation.totalAmount - pointsDiscount;
+      console.log('   💰 Total actual:', reservation.totalAmount);
+      console.log('   💰 Descuento:', pointsDiscount);
+      console.log('   💰 Nuevo total:', newTotalAmount);
+      
+      // 3. Actualizar la reserva con el nuevo total
+      const updateData = {
+        tkId: reservation.tkId || null,
+        reservationStatusId: reservation.reservationStatusId,
+        retailerId: reservation.retailerId,
+        tourId: reservation.tourId,
+        departureId: reservation.departureId,
+        userId: reservation.userId,
+        totalPassengers: reservation.totalPassengers,
+        totalAmount: newTotalAmount  // ✅ Nuevo total con descuento aplicado
+      };
+      
+      const url = `${this.RESERVATIONS_API_URL}/Reservation/${reservationId}`;
+      console.log('   📡 PUT a:', url);
+      console.log('   📦 Payload:', updateData);
+      
+      await this.http.put(url, updateData).toPromise();
+      console.log('   ✅ Reserva actualizada exitosamente');
+      
+    } catch (error: any) {
+      console.error('❌ Error actualizando total de reserva:', error);
+      console.error('   Status:', error?.status);
+      console.error('   Error:', error?.error);
       throw error;
     }
   }

@@ -209,7 +209,7 @@ export class PointsV2Service {
    * @returns Clase CSS para colorear
    */
   getPointsClass(type: string): string {
-    return type === 'canjear' ? 'redemption-points' : 'income-points';
+    return type.toLowerCase() === 'canjear' ? 'redemption-points' : 'income-points';
   }
 
   // ===== GESTIÓN DE CATEGORÍAS DE VIAJERO =====

@@ -146,10 +146,7 @@
               [departureId]="departureId"
               [reservationId]="reservationId"
               [itineraryId]="itineraryId"
-              (activitiesAssignmentChange)="
-                onActivitiesAssignmentChange($event)
-              "
-              (roomAssignmentsChange)="onRoomAssignmentsChange($event)"
+              (dataUpdated)="onTravelerDataUpdated()"
               #infoTravelers
             >
             </app-info-travelers>

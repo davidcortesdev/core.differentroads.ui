@@ -638,24 +638,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
-   * Maneja los cambios de asignación de actividades por viajero
-   */
-  onActivitiesAssignmentChange(): void {
-    // Solo notificar que se ha actualizado - el componente hijo maneja su propio estado
-    console.log('Actividades actualizadas');
-    
-    // ✅ Esperar a que terminen guardados pendientes en actividades antes de refrescar
-    try {
-      this.activitiesOptionals?.waitForPendingSaves?.();
-    } catch (err) {
-      console.error('❌ Error esperando guardados de actividades:', err);
-    }
-
-    // ✅ Disparar actualización del summary inmediatamente
-    this.triggerSummaryRefresh();
-  }
-
-  /**
    * Maneja las actualizaciones de datos de viajeros (formularios y actividades)
    */
   onTravelerDataUpdated(): void {

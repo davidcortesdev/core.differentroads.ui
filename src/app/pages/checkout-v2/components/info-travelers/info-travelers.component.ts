@@ -39,9 +39,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   @Input() reservationId: number | null = null;
   @Input() itineraryId: number | null = null;
 
-  @Output() activitiesAssignmentChange = new EventEmitter<void>();
   @Output() dataUpdated = new EventEmitter<void>();
-  @Output() roomAssignmentsChange = new EventEmitter<{ [travelerId: number]: number }>();
 
   // Referencias a los formularios de viajeros
   @ViewChildren(InfoTravelerFormComponent)
@@ -317,20 +315,6 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         this.loadReservationStatuses();
       }
     });
-  }
-
-  /**
-   * NUEVO: Manejar cambios en asignaciones de habitaciones desde el componente hijo
-   */
-  onRoomAssignmentsChange(roomAssignments: { [travelerId: number]: number }): void {
-    this.roomAssignmentsChange.emit(roomAssignments);
-  }
-
-  /**
-   * Manejar cambios en asignaciones de actividades desde el componente hijo
-   */
-  onActivitiesAssignmentChange(): void {
-    this.activitiesAssignmentChange.emit();
   }
 
   /**

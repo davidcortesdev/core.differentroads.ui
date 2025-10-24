@@ -35,6 +35,10 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   @Input() userId: string = '';
   @Input() listType: 'active-bookings' | 'travel-history' | 'recent-budgets' =
     'active-bookings';
+  @Input() parentComponent?: any;  // Referencia al componente padre
+
+  // Almacenar qué reservas ya tienen puntos aplicados (clave: reservationId_userId)
+  private reservationsWithPointsRedeemed: Set<string> = new Set();
 
   bookingItems: BookingItem[] = [];
   isExpanded: boolean = true;
@@ -143,7 +147,7 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       }, delayMs);
     } else {
       // Se alcanzó el máximo de intentos, mostrar error
-      console.error('❌ No se pudo obtener el email del usuario después de', maxAttempts, 'intentos');
+      console.error('No se pudo obtener el email del usuario después de', maxAttempts, 'intentos');
       this.messageService.add({
         severity: 'error',
         summary: 'Error',
@@ -158,34 +162,30 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
    * Carga las reservas activas una vez que el email está disponible
    */
   private loadActiveBookingsWithEmail(userId: number, userEmail: string): void {
-    console.log('🔍 DEBUG: loadActiveBookingsWithEmail llamado con userId:', userId, 'email:', userEmail);
     
-    // Combinar reservas del usuario como titular + reservas donde aparece como viajero
+    // Cargar reservas Y transacciones de puntos EN PARALELO
     forkJoin({
-      userReservations: this.bookingsService.getActiveBookings(userId),
-      travelerReservations:
-        this.bookingsService.getActiveBookingsByTravelerEmail(userEmail),
+      reservationsData: forkJoin({
+        userReservations: this.bookingsService.getActiveBookings(userId),
+        travelerReservations: this.bookingsService.getActiveBookingsByTravelerEmail(userEmail),
+      }),
+      pointsTransactions: this.loadPointsTransactions()
     })
       .pipe(
-        switchMap(({ userReservations, travelerReservations }) => {
-          console.log('📊 DEBUG: Reservas como titular:', userReservations.length);
-          console.log('📊 DEBUG: Reservas como viajero:', travelerReservations.length);
+        switchMap(({ reservationsData }) => {
+          const { userReservations, travelerReservations } = reservationsData;
           
           // Combinar y eliminar duplicados basándose en el ID de reserva
           const allReservations = [
             ...userReservations,
             ...travelerReservations,
           ];
-          
-          console.log('📊 DEBUG: Total combinado:', allReservations.length);
-          
+                    
           const uniqueReservations = allReservations.filter(
             (reservation, index, self) =>
               index === self.findIndex((r) => r.id === reservation.id)
           );
           
-          console.log('📊 DEBUG: Después de eliminar duplicados:', uniqueReservations.length);
-
           if (uniqueReservations.length === 0) {
             return of([]);
           }
@@ -270,12 +270,18 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       return;
     }
 
+    // Cargar reservas Y transacciones de puntos EN PARALELO
     forkJoin({
-      userReservations: this.bookingsService.getTravelHistory(userId),
-      travelerReservations: this.bookingsService.getTravelHistoryByTravelerEmail(userEmail)
+      reservationsData: forkJoin({
+        userReservations: this.bookingsService.getTravelHistory(userId),
+        travelerReservations: this.bookingsService.getTravelHistoryByTravelerEmail(userEmail)
+      }),
+      pointsTransactions: this.loadPointsTransactions()
     })
       .pipe(
-        switchMap(({ userReservations, travelerReservations }) => {
+        switchMap(({ reservationsData }) => {
+          const { userReservations, travelerReservations } = reservationsData;
+          
           const allReservations = [
             ...userReservations,
             ...travelerReservations
@@ -622,6 +628,48 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
     return item.id;
   }
 
+  /**
+   * Carga las transacciones de puntos y actualiza el Set de reservas con puntos aplicados
+   * Retorna un Observable para poder sincronizarlo con la carga de reservas
+   */
+  private loadPointsTransactions() {
+    if (!this.userId) {
+      return of(null);
+    }
+
+    return this.pointsService.getLoyaltyTransactionsFromAPI(this.userId).pipe(
+      map((transactions) => {
+        // Filtrar transacciones de canje (transactionTypeId = 4)
+        const redemptionTransactions = transactions.filter(
+          t => t.transactionTypeId === 4 && t.referenceType === 'RESERVATION'
+        );
+
+        // Agregar las claves únicas (reservationId + userId) al Set
+        this.reservationsWithPointsRedeemed.clear();
+        redemptionTransactions.forEach(transaction => {
+          if (transaction.referenceId) {
+            const uniqueKey = `${transaction.referenceId}_${this.userId}`;
+            this.reservationsWithPointsRedeemed.add(uniqueKey);
+          }
+        });
+
+        return this.reservationsWithPointsRedeemed;
+      }),
+      catchError((error) => {
+        console.error('Error cargando transacciones de puntos:', error);
+        return of(new Set());
+      })
+    );
+  }
+
+  /**
+   * Verifica si este viajero específico ya ha canjeado puntos para esta reserva
+   */
+  hasPointsApplied(item: BookingItem): boolean {
+    const uniqueKey = `${item.id}_${this.userId}`;
+    return this.reservationsWithPointsRedeemed.has(uniqueKey);
+  }
+
   // ------------- DYNAMIC CONFIGURATION METHODS -------------
 
   // Get title based on list type
@@ -694,8 +742,8 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
     return 'Reservar';
   }
 
-  getPointsDiscountLabel(): string {
-    return 'Descontar Puntos';
+  getPointsDiscountLabel(item: BookingItem): string {
+    return this.hasPointsApplied(item) ? 'Puntos ya aplicados' : 'Descontar Puntos';
   }
 
   // ===== MÉTODOS PARA DOCUMENTACIÓN Y NOTIFICACIONES =====
@@ -707,13 +755,10 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   loadDocumentsForReservation(reservationId: string): void {
     this.documentsLoading[reservationId] = true;
 
-    console.log('🔍 DEBUG: Loading documents for reservation:', reservationId);
-
     this.documentationService
       .getDocumentsByReservationId(parseInt(reservationId, 10))
       .subscribe({
         next: (documents: IDocumentReservationResponse[]) => {
-          console.log('🔍 DEBUG: Documents loaded successfully:', documents);
           this.documents[reservationId] = documents;
           this.documentsLoading[reservationId] = false;
         },
@@ -750,10 +795,7 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       .getNotificationsByReservationId(parseInt(reservationId, 10))
       .subscribe({
         next: (notifications: INotification[]) => {
-          console.log(
-            '🔍 DEBUG: Notifications loaded successfully:',
-            notifications
-          );
+
           this.notifications[reservationId] = notifications;
           this.notificationsLoading[reservationId] = false;
         },
@@ -915,17 +957,15 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
    * @param reservationId - ID de la reserva para probar
    */
   testServices(reservationId: string = '847'): void {
-    console.log('🧪 TEST: Testing services for reservation:', reservationId);
-
     // Probar servicio de notificaciones
     this.notificationService
       .getNotificationsByReservationId(parseInt(reservationId, 10))
       .subscribe({
         next: (notifications) => {
-          console.log('✅ TEST: Notifications service working:', notifications);
+          console.log('TEST: Notifications service working:', notifications);
         },
         error: (error) => {
-          console.error('❌ TEST: Notifications service error:', error);
+          console.error('TEST: Notifications service error:', error);
         },
       });
 
@@ -934,10 +974,10 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       .getDocumentsByReservationId(parseInt(reservationId, 10))
       .subscribe({
         next: (documents) => {
-          console.log('✅ TEST: Documentation service working:', documents);
+          console.log('TEST: Documentation service working:', documents);
         },
         error: (error) => {
-          console.error('❌ TEST: Documentation service error:', error);
+          console.error('TEST: Documentation service error:', error);
         },
       });
   }
@@ -947,7 +987,6 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
    * @param reservationId - ID de la reserva
    */
   testLoadData(reservationId: string = '847'): void {
-    console.log('🧪 TEST: Testing data load for reservation:', reservationId);
     this.loadDocumentsForReservation(reservationId);
     this.loadNotificationsForReservation(reservationId);
   }
@@ -957,14 +996,9 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
    * @param reservationId - ID de la reserva
    */
   testDirectHttpCall(reservationId: string = '847'): void {
-    console.log(
-      '🧪 TEST: Testing direct HTTP call with fetch for reservation:',
-      reservationId
-    );
+
 
     const url = `https://documentation-dev.differentroads.es/api/Notification/by-reservation/${reservationId}`;
-
-    console.log('🧪 TEST: Making direct HTTP call to:', url);
 
     fetch(url, {
       method: 'GET',
@@ -974,8 +1008,6 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       },
     })
       .then((response) => {
-        console.log('🧪 TEST: Fetch response status:', response.status);
-        console.log('🧪 TEST: Fetch response headers:', response.headers);
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -983,12 +1015,6 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
 
         return response.json();
       })
-      .then((data) => {
-        console.log('✅ TEST: Direct fetch call successful:', data);
-      })
-      .catch((error) => {
-        console.error('❌ TEST: Direct fetch call failed:', error);
-      });
   }
 
   // ===== MÉTODOS PARA DESCUENTO DE PUNTOS =====
@@ -1041,7 +1067,7 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
         this.loadingUserData = false;
       },
       error: (error: any) => {
-        console.error('❌ Error cargando saldo de puntos:', error);
+        console.error('Error cargando saldo de puntos:', error);
         this.availablePoints = 0;
         this.loadingUserData = false;
         this.messageService.add({
@@ -1099,6 +1125,45 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
    * Calcula el precio final después del descuento
    * @returns Precio final
    */
+  getCategoryDisplayName(): string {
+    return this.pointsService.getCategoryDisplayName(this.userCategory);
+  }
+
+  /**
+   * Valida y limita el número de dígitos en el input de puntos
+   */
+  validatePointsInput(): void {
+    if (this.pointsToUse) {
+      // Limitar a 5 dígitos máximo (99999 puntos)
+      const pointsStr = this.pointsToUse.toString();
+      if (pointsStr.length > 5) {
+        this.pointsToUse = parseInt(pointsStr.substring(0, 5));
+      }
+      
+      // Asegurar que sea un número positivo
+      if (this.pointsToUse < 0) {
+        this.pointsToUse = 0;
+      }
+      
+      // No permitir valores mayores al disponible
+      if (this.pointsToUse > this.availablePoints) {
+        this.pointsToUse = this.availablePoints;
+      }
+    }
+  }
+
+  /**
+   * Verifica si el botón de aplicar descuento debe estar habilitado
+   */
+  isApplyDiscountButtonEnabled(): boolean {
+    if (!this.selectedBookingItem || this.pointsToUse <= 0) {
+      return false;
+    }
+
+    const validation = this.validatePointsUsage();
+    return validation.isValid;
+  }
+
   getFinalPrice(): number {
     if (!this.selectedBookingItem || this.pointsToUse <= 0) {
       return this.selectedBookingItem?.price || 0;
@@ -1124,8 +1189,8 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       return;
     }
 
-    // Validar límites según las reglas del documento
     const validation = this.validatePointsUsage();
+    
     if (!validation.isValid) {
       this.messageService.add({
         severity: 'error',
@@ -1135,7 +1200,6 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       return;
     }
 
-    // Aplicar descuento usando el servicio real
     const reservationId = parseInt(this.selectedBookingItem.id, 10);
 
     if (!this.userId) {
@@ -1147,7 +1211,18 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       return;
     }
 
-    this.pointsService.redeemPointsForReservation(reservationId, this.userId, this.pointsToUse)
+    const userIdNumber = parseInt(this.userId, 10);
+
+    if (isNaN(userIdNumber) || isNaN(reservationId)) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'IDs inválidos',
+      });
+      return;
+    }
+
+    this.pointsService.redeemPointsForReservation(reservationId, userIdNumber, this.pointsToUse)
       .then(result => {
         if (result.success) {
           this.messageService.add({
@@ -1155,6 +1230,20 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
             summary: 'Descuento Aplicado',
             detail: result.message,
           });
+          
+          // Marcar esta reserva como que ya tiene puntos aplicados para este viajero
+          const uniqueKey = `${this.selectedBookingItem!.id}_${this.userId}`;
+          this.reservationsWithPointsRedeemed.add(uniqueKey);
+          
+          // Recargar la sección de puntos en el componente padre
+          if (this.parentComponent && this.parentComponent.reloadPointsSection) {
+            this.parentComponent.reloadPointsSection();
+          }
+          
+          // Recargar datos de reservas para reflejar cambios en precio
+          this.loadData();
+          
+          // Cerrar modal
           this.closePointsDiscountModal();
         } else {
           this.messageService.add({

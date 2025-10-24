@@ -144,9 +144,9 @@ $orange-red: #f66b5b;
     .buttons {
         margin-top: 30px;
         @include f(column, space-between, stretch, 0.5rem);
-        width: 120%;
+        width: 100%;
         .top-buttons {
-            @include f(row, flex-start, center, 0.5rem);
+            @include f(column, flex-start, stretch, 0.5rem);
             width: 100%;
             justify-content: space-between;
         }
@@ -179,13 +179,13 @@ $orange-red: #f66b5b;
                 background-color: white !important;
                 color: $a !important;
                 border: 1.5px solid $a !important;
-                width: 110px !important;
+                width: 100% !important;
             }
             &.sendbtn {
                 background-color: $a !important;
                 color: white !important;
                 border: 1.5px solid $a !important;
-                width: 110px !important;
+                width: 100% !important;
             }
         }
     }
@@ -363,20 +363,14 @@ $orange-red: #f66b5b;
     }
 }
 
-// ===== ESTILOS PARA MODAL DE DESCUENTO DE PUNTOS =====
-// Usando variables CSS de PrimeNG para un diseño elegante y profesional
-
 .points-discount-content {
-    // Espaciado equilibrado
     padding: 1.25rem !important;
-    
     .booking-info {
         background: var(--p-surface-50);
         padding: 1rem !important;
         border-radius: var(--p-border-radius);
         margin-bottom: 1.25rem !important;
         border: 1px solid var(--p-content-border-color);
-        
         h4 {
             margin: 0 0 0.75rem 0 !important;
             color: var(--p-text-color);
@@ -384,7 +378,6 @@ $orange-red: #f66b5b;
             font-weight: var(--p-font-weight-semibold);
             line-height: 1.5;
         }
-        
         p {
             margin: 0.5rem 0 !important;
             color: var(--p-text-muted-color);
@@ -392,7 +385,6 @@ $orange-red: #f66b5b;
             line-height: 1.5;
         }
     }
-    
     .points-section {
         .points-available {
             display: flex;
@@ -407,16 +399,18 @@ $orange-red: #f66b5b;
             label {
                 color: var(--p-green-700);
                 font-weight: var(--p-font-weight-semibold);
-                font-size: var(--p-font-size);
             }
             
             .points-value {
-                font-size: 1.25rem !important;
-                font-weight: var(--p-font-weight-bold);
+                font-size: 1.25rem;
+                font-weight: bold;
                 color: var(--p-green-600);
             }
         }
-        
+
+        ::ng-deep .membership-message {
+            margin-bottom: 1.25rem;
+        }
         .points-input {
             margin-bottom: 1.25rem !important;
             
@@ -424,16 +418,12 @@ $orange-red: #f66b5b;
                 display: block;
                 margin-bottom: 0.5rem !important;
                 font-weight: var(--p-font-weight-semibold);
-                color: var(--p-text-color);
-                font-size: var(--p-font-size);
             }
             
             small {
                 display: block;
                 margin-top: 0.5rem !important;
                 color: var(--p-text-muted-color);
-                font-size: var(--p-font-size-sm);
-                line-height: 1.5;
             }
         }
         

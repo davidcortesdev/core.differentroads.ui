@@ -30,7 +30,7 @@ export interface DocumentInfo {
   providedIn: 'root'
 })
 export class DocumentService {
-  private readonly baseUrl = 'https://documentation-dev.differentroads.es/api';
+  private readonly baseUrl = environment.documentationApiUrl;
   
   constructor(private http: HttpClient) {}
 

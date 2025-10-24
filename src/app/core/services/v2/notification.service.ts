@@ -26,7 +26,7 @@ export interface NotificationResponse {
   providedIn: 'root'
 })
 export class NotificationService {
-  private readonly baseUrl = 'https://documentation-dev.differentroads.es/api';
+  private readonly baseUrl = environment.documentationApiUrl;
   
   constructor(private http: HttpClient) {}
 

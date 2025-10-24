@@ -6,8 +6,8 @@ import { MessageService } from 'primeng/api';
 // Interfaces
 import { IReservationTravelerResponse } from '../../../../../../core/services/reservation/reservation-traveler.service';
 import { IActivityResponse } from '../../../../../../core/services/activity/activity.service';
-import { IReservationTravelerActivityResponse } from '../../../../../../core/services/reservation/reservation-traveler-activity.service';
-import { IReservationTravelerActivityPackResponse } from '../../../../../../core/services/reservation/reservation-traveler-activity-pack.service';
+import { IReservationTravelerActivityResponse, ReservationTravelerActivityFilters } from '../../../../../../core/services/reservation/reservation-traveler-activity.service';
+import { IReservationTravelerActivityPackResponse, ReservationTravelerActivityPackFilters } from '../../../../../../core/services/reservation/reservation-traveler-activity-pack.service';
 
 // Servicios
 import { ActivityService } from '../../../../../../core/services/activity/activity.service';
@@ -76,28 +76,79 @@ export class InfoTravelerActivitiesComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Cargar actividades opcionales y luego las asignadas al viajero
+   * Cargar actividades opcionales basadas en las seleccionadas por cualquier viajero de la reserva
    */
   private loadOptionalActivitiesAndThenTravelerActivities(): void {
-    if (!this.itineraryId || !this.departureId) {
+    if (!this.itineraryId || !this.departureId || !this.reservationId) {
       return;
     }
 
     this.loading = true;
 
-    this.activityService
-      .getForItineraryWithPacks(this.itineraryId, this.departureId)
+    // Primero obtener todos los viajeros de la reserva
+    this.reservationTravelerService.getAll({ reservationId: this.reservationId })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (activities) => {
-          this.optionalActivities = activities;
-          // Cargar las asignaciones del viajero actual
-          this.loadTravelerActivities();
+        next: (travelers) => {
+          if (!travelers || travelers.length === 0) {
+            this.loading = false;
+            return;
+          }
+
+          // Crear requests para obtener actividades y packs de todos los viajeros
+          const activityRequests = travelers.map(traveler => 
+            this.reservationTravelerActivityService.getAll({ reservationTravelerId: traveler.id })
+          );
+          const packRequests = travelers.map(traveler => 
+            this.reservationTravelerActivityPackService.getAll({ reservationTravelerId: traveler.id })
+          );
+
+          // Ejecutar todas las llamadas en paralelo
+          forkJoin({
+            activities: forkJoin(activityRequests),
+            packs: forkJoin(packRequests)
+          })
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+              next: ({ activities, packs }) => {
+                // Aplanar arrays de arrays
+                const allActivities = activities.flat();
+                const allPacks = packs.flat();
+
+                // Obtener IDs únicos de actividades y packs seleccionados
+                const selectedActivityIds = new Set(allActivities.map(a => a.activityId));
+                const selectedPackIds = new Set(allPacks.map(p => p.activityPackId));
+
+                // Cargar catálogo completo de actividades
+                this.activityService
+                  .getForItineraryWithPacks(this.itineraryId, this.departureId)
+                  .pipe(takeUntil(this.destroy$))
+                  .subscribe({
+                    next: (allActivities) => {
+                      // Filtrar solo las actividades que han sido seleccionadas por algún viajero
+                      this.optionalActivities = allActivities.filter(activity => 
+                        selectedActivityIds.has(activity.id) || selectedPackIds.has(activity.id)
+                      );
+
+                      // Cargar las asignaciones del viajero actual
+                      this.loadTravelerActivities();
+                    },
+                    error: (error) => {
+                      console.error('Error al cargar catálogo de actividades:', error);
+                      this.loading = false;
+                    }
+                  });
+              },
+              error: (error) => {
+                console.error('Error al cargar actividades de viajeros:', error);
+                this.loading = false;
+              }
+            });
         },
         error: (error) => {
-          console.error('Error al cargar actividades opcionales:', error);
+          console.error('Error al cargar viajeros de la reserva:', error);
           this.loading = false;
-        },
+        }
       });
   }
 

@@ -64,15 +64,14 @@
                       <span *ngIf="traveler.price === 0">(No disponible)</span>
                     </span>
                   </div>
-                  <div class="">
+                  <div class="passenger-actions">
                     <p-button
-                      [label]="isAllTravelersHaveActivity(activity) ? 'Eliminar de todos' : 'Agregar a todos'"
-                      (click)="toggleActivityForAllTravelers(activity)"
+                      label="Agregar"
+                      (click)="onContinueActivity(activity.id)"
                       [rounded]="true"
                       [disabled]="isLoading"
                       [icon]="isLoading ? 'pi pi-spin pi-spinner' : ''"
                       [iconPos]="isLoading ? 'left' : 'right'"
-                      [styleClass]="isAllTravelersHaveActivity(activity) ? 'p-button-danger' : ''"
                     ></p-button>
                   </div>
                 </div>

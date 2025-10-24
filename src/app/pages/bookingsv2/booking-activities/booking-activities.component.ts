@@ -348,12 +348,12 @@ export class BookingActivitiesV2Component implements OnInit {
         const ageGroup = this.getAgeGroupName(traveler.ageGroupId);
         const price = this.getPriceForTraveler(activity, ageGroup);
 
-          return {
+        return {
           id: traveler.id,
-            selected: true,
-            ageGroup,
-            price,
-          };
+          selected: false, // Inicializar como NO seleccionado
+          ageGroup,
+          price,
+        };
       });
     }
   }
@@ -380,19 +380,51 @@ export class BookingActivitiesV2Component implements OnInit {
 
     this.isLoading = true;
 
-    // Aquí implementarías la lógica para guardar las actividades seleccionadas
-    // Por ahora solo simulamos el guardado
-    setTimeout(() => {
-      this.isLoading = false;
-      activity.showPassengers = false;
-      activity.isIncluded = true;
-      
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Éxito',
-        detail: 'Actividades guardadas correctamente',
+    // Guardar las actividades para los viajeros seleccionados
+    const savePromises = selectedTravelers.map((traveler) => {
+      if (activity.type === 'act') {
+        const createData = {
+          id: 0,
+          reservationTravelerId: traveler.id,
+          activityId: activityId
+        };
+        return firstValueFrom(this.reservationTravelerActivityService.create(createData));
+      } else if (activity.type === 'pack') {
+        const createData = {
+          id: 0,
+          reservationTravelerId: traveler.id,
+          activityPackId: activityId
+        };
+        return firstValueFrom(this.reservationTravelerActivityPackService.create(createData));
+      }
+      return Promise.resolve(null);
+    });
+
+    Promise.all(savePromises)
+      .then(() => {
+        this.isLoading = false;
+        activity.showPassengers = false;
+        activity.addedManually = false;
+        
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Éxito',
+          detail: `Actividad "${activity.name}" agregada correctamente a ${selectedTravelers.length} viajero(s)`,
+          life: 3000,
+        });
+        
+        // Recargar la página para actualizar los datos
+        this.reloadParentComponent();
+      })
+      .catch((error) => {
+        this.isLoading = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudieron guardar las actividades',
+          life: 3000,
+        });
       });
-    }, 1000);
   }
 
   getTravelerNameById(travelerId: number): string {

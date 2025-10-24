@@ -178,12 +178,17 @@
           id="pointsToUse"
           [(ngModel)]="pointsToUse" 
           [min]="0" 
-          [max]="availablePoints"
+          [max]="maxPointsForCategory"
           [maxFractionDigits]="0"
+          [useGrouping]="false"
+          [minFractionDigits]="0"
+          [showButtons]="false"
+          mode="decimal"
           placeholder="Ingresa los puntos a descontar"
-          styleClass="w-full">
+          styleClass="w-full"
+          inputStyleClass="points-input-field"
+          (ngModelChange)="validatePointsInput()">
         </p-inputNumber>
-        <small class="text-muted">Máximo disponible: {{ availablePoints }} puntos</small>
       </div>
       
       <div class="discount-calculation" *ngIf="pointsToUse > 0">
@@ -214,7 +219,7 @@
       label="Aplicar Descuento" 
       icon="pi pi-check" 
       styleClass="p-button-success" 
-      [disabled]="pointsToUse <= 0 || pointsToUse > availablePoints"
+      [disabled]="!isApplyDiscountButtonEnabled()"
       (click)="applyPointsDiscount()">
     </p-button>
   </ng-template>

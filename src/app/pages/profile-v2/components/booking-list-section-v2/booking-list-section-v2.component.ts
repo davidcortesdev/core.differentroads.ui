@@ -1129,6 +1129,41 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
     return this.pointsService.getCategoryDisplayName(this.userCategory);
   }
 
+  /**
+   * Valida y limita el número de dígitos en el input de puntos
+   */
+  validatePointsInput(): void {
+    if (this.pointsToUse) {
+      // Limitar a 5 dígitos máximo (99999 puntos)
+      const pointsStr = this.pointsToUse.toString();
+      if (pointsStr.length > 5) {
+        this.pointsToUse = parseInt(pointsStr.substring(0, 5));
+      }
+      
+      // Asegurar que sea un número positivo
+      if (this.pointsToUse < 0) {
+        this.pointsToUse = 0;
+      }
+      
+      // No permitir valores mayores al disponible
+      if (this.pointsToUse > this.availablePoints) {
+        this.pointsToUse = this.availablePoints;
+      }
+    }
+  }
+
+  /**
+   * Verifica si el botón de aplicar descuento debe estar habilitado
+   */
+  isApplyDiscountButtonEnabled(): boolean {
+    if (!this.selectedBookingItem || this.pointsToUse <= 0) {
+      return false;
+    }
+
+    const validation = this.validatePointsUsage();
+    return validation.isValid;
+  }
+
   getFinalPrice(): number {
     if (!this.selectedBookingItem || this.pointsToUse <= 0) {
       return this.selectedBookingItem?.price || 0;

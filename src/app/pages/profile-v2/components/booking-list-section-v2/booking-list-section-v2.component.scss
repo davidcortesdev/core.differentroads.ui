@@ -418,6 +418,10 @@ $orange-red: #f66b5b;
         ::ng-deep .membership-message {
             margin-bottom: 1.25rem;
         }
+
+        ::ng-deep .points-input-field {
+            text-align: right;
+        }
         
         .points-input {
             margin-bottom: 1.25rem !important;

@@ -26,7 +26,18 @@ export class UsersNetService {
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
-          params = params.set(key, value.toString());
+          if (key === 'Id' && Array.isArray(value)) {
+            // Si es un array, agregar cada ID como parámetro 'Id' separado
+            const uniqueIds = [...new Set(value)]; // Remover duplicados
+            uniqueIds.forEach(id => {
+              params = params.append('Id', id.toString());
+            });
+          } else if (key === 'Id' && typeof value === 'number') {
+            // Si es un solo ID
+            params = params.set('Id', value.toString());
+          } else {
+            params = params.set(key, value.toString());
+          }
         }
       });
     }

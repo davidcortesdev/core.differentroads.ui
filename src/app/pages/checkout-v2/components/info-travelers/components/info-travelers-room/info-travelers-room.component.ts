@@ -33,7 +33,7 @@ export class InfoTravelersRoomComponent implements OnInit, OnChanges, OnDestroy 
   @Input() reservationId: number | null = null;
   @Input() departureId: number | null = null; // NUEVO: ID del departure para obtener habitaciones
 
-  @Output() roomAssignmentsChange = new EventEmitter<{ [travelerId: number]: number }>();
+  @Output() dataUpdated = new EventEmitter<void>();
 
   // Propiedades para gestión de habitaciones
   roomAssignments: { [travelerId: number]: number } = {}; // travelerId -> roomId
@@ -186,7 +186,7 @@ export class InfoTravelersRoomComponent implements OnInit, OnChanges, OnDestroy 
     }
     
     // Emitir evento para notificar al componente padre (sin guardar automáticamente)
-    this.roomAssignmentsChange.emit(this.roomAssignments);
+    this.dataUpdated.emit();
   }
 
   /**
@@ -530,7 +530,7 @@ export class InfoTravelersRoomComponent implements OnInit, OnChanges, OnDestroy 
           });
 
           // Emitir evento para notificar al componente padre
-          this.roomAssignmentsChange.emit(this.roomAssignments);
+          this.dataUpdated.emit();
         },
         error: (error) => {
           this.saving = false;

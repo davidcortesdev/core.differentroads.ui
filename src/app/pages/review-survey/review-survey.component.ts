@@ -32,7 +32,7 @@ interface ReviewPayload {
   showOnHomePage?: boolean;
   showOnTourPage?: boolean;
   tourId: number;
-  travelerId: number;
+  userId: number;
   departureId: number;
   externalId?: string;
   reviewDate?: string;
@@ -58,6 +58,7 @@ interface TripInfo {
 interface Period {
   tourExternalID?: string;
 }
+
 
 @Component({
   selector: 'app-review-survey',
@@ -86,7 +87,7 @@ export class ReviewSurveyComponent implements OnInit {
   };
   formattedDate: string = '';
   periodExternalId: string = '';
-  travelerId: number | null = null;
+  userId: number | null = null;
   travelerData: Traveler | null = null;
   isSubmitting: boolean = false;
 
@@ -122,21 +123,21 @@ export class ReviewSurveyComponent implements OnInit {
 
       this.route.queryParams.subscribe((queryParams) => {
         if (queryParams['travelerId']) {
-          this.travelerId = parseInt(queryParams['travelerId'], 10);
-          this.checkTravelerExists(this.travelerId);
+          this.userId = parseInt(queryParams['travelerId'], 10);
+          this.checkTravelerExists(this.userId);
         }
       });
     });
   }
 
   /**
-   * Verifica si existe un viajero con el ID proporcionado
-   * @param travelerId ID del viajero a verificar
+   * Verifica si existe un user con el ID proporcionado
+   * @param userId ID del user a verificar
    */
-  checkTravelerExists(travelerId: number): void {
-    this.travelersNetService.getTravelerById(travelerId).subscribe({
+  checkTravelerExists(userId: number): void {
+    this.travelersNetService.getTravelerById(userId).subscribe({
       next: (traveler) => {
-        if (traveler && traveler.id !== travelerId) {
+        if (traveler && traveler.id !== userId) {
           return;
         }
         this.travelerData = traveler;
@@ -254,7 +255,7 @@ export class ReviewSurveyComponent implements OnInit {
       this.tripInfo.departureId = salida?.id || salida?.departureId || 0;
     }
 
-    const continueWithReview = (travelerId: number) => {
+    const continueWithReview = (userId: number) => {
       // Primero obtenemos el reviewStatusId para "DRAFT"
       this.reviewStatusService.getByCode('DRAFT').subscribe({
         next: (reviewStatuses) => {
@@ -282,7 +283,7 @@ export class ReviewSurveyComponent implements OnInit {
             showOnHomePage: false,
             showOnTourPage: false,
             tourId: this.tripInfo.tourId ?? 0,
-            travelerId: travelerId,
+            userId: userId,
             departureId: this.tripInfo.departureId || 0,
             externalId: this.periodExternalId,
             reviewDate: new Date().toISOString(),
@@ -337,7 +338,7 @@ export class ReviewSurveyComponent implements OnInit {
             showOnHomePage: false,
             showOnTourPage: false,
             tourId: this.tripInfo.tourId ?? 0,
-            travelerId: travelerId,
+            userId: userId,
             departureId: this.tripInfo.departureId || 0,
             externalId: this.periodExternalId,
             reviewDate: new Date().toISOString(),

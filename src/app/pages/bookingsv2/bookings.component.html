@@ -41,15 +41,18 @@
     <app-booking-details-view-v2
       [bookingImages]="bookingImages"
       [tourName]="bookingData.title"
+      [refreshTrigger]="summaryRefreshTrigger"
     >
     </app-booking-details-view-v2>
 
     <!-- Payment History - Versión actualizada que solo usa tripItems -->
     <app-booking-payment-history-v2
+      #paymentHistoryComponent
       [bookingID]="bookingId"
       [tripItems]="tripItems"
       [bookingTotal]="bookingTotal"
       [isTO]="isTO"
+      [refreshTrigger]="summaryRefreshTrigger"
       (registerPayment)="registerPayment($event)"
       (fileUploaded)="handleFileUploaded($event)"
     >
@@ -71,6 +74,7 @@
       *ngIf="reservation?.id"
       [reservationId]="reservation?.id || 0"
       [periodId]="reservation?.departureId?.toString() || ''"
+      (dataUpdated)="onActivitiesDataUpdated()"
     >
     </app-booking-activities-v2>
 

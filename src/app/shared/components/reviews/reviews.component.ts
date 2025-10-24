@@ -8,10 +8,11 @@ import {
 import { CAROUSEL_CONFIG } from '../../constants/carousel.constants';
 import { ReviewsService } from '../../../core/services/reviews/reviews.service';
 import { TourService } from '../../../core/services/tour/tour.service';
-import { TravelersNetService } from '../../../core/services/travelers/travelersNet.service';
+import { UsersNetService } from '../../../core/services/users/usersNet.service';
 import { Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
+import { IEnrichedReviewResponse } from '../../../core/models/reviews/review.model';
 
 @Component({
   selector: 'app-reviews',
@@ -21,13 +22,13 @@ import { catchError, map, switchMap } from 'rxjs/operators';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReviewsComponent implements OnInit {
-  @Input() reviews: any[] = []; // Para recibir reviews desde el componente padre
+  @Input() reviews: IEnrichedReviewResponse[] = []; // Para recibir reviews desde el componente padre
   @Input() tourId?: number;
   @Input() showOnHomePage?: boolean;
   @Input() showOnTourPage?: boolean;
   @Input() limit?: number;
 
-  enrichedReviews: any[] = []; // Mantener el nombre que usa el template
+  enrichedReviews: IEnrichedReviewResponse[] = []; // Mantener el nombre que usa el template
   loading = true;
   skeletonArray = Array(6).fill({});
   showFullReviewModal = false;
@@ -80,7 +81,7 @@ export class ReviewsComponent implements OnInit {
   constructor(
     private reviewsService: ReviewsService,
     private tourService: TourService,
-    private travelersNetService: TravelersNetService,
+    private usersNetService: UsersNetService,
     private cdr: ChangeDetectorRef,
     private router: Router
   ) {}
@@ -144,9 +145,9 @@ export class ReviewsComponent implements OnInit {
         }
 
         // Mapear reviews al formato esperado
-        const mappedReviews = reviews.map(review => ({
+        const mappedReviews = reviews.map((review: IEnrichedReviewResponse) => ({
           ...review,
-          traveler: 'Usuario desconocido', // Se enriquecerá después
+          traveler: review.traveler,
           tour: 'Tour', // Se enriquecerá después con tourService
           review: review.text,
           score: review.rating,
@@ -220,36 +221,54 @@ export class ReviewsComponent implements OnInit {
     });
   }
 
-  private enrichWithTravelerNames(reviews: any[]) {
-    // Extraer todos los traveler IDs únicos para reviews que no tienen travelerName
-    const travelerIds = [...new Set(reviews
+  private enrichWithTravelerNames(reviews: IEnrichedReviewResponse[]) {
+    // Extraer todos los user IDs únicos para reviews que no tienen travelerName
+    const userIds = [...new Set(reviews
       .filter(review => !review.traveler || review.traveler === 'Usuario desconocido')
-      .map(review => review.travelerId)
+      .map(review => review.userId)
       .filter(id => id)
     )];
 
-    if (travelerIds.length === 0) {
+    if (userIds.length === 0) {
       return of(reviews);
     }
 
-    // Obtener todos los travelers en una sola consulta
-    return this.travelersNetService.getAll({
-      id: travelerIds
-    }).pipe(
-      map(travelers => {
-        // Crear un mapa para acceso rápido a los travelers por ID
-        const travelersMap = new Map(travelers.map(t => [t.id, t]));
+    // Obtener todos los users en llamadas individuales
+    const userObservables = userIds.map(id => 
+      this.usersNetService.getUserById(id).pipe(
+        catchError(error => {
+          console.error(`❌ Error fetching user ${id}:`, error);
+          return of(null); // Retorna null en caso de error para no romper el forkJoin
+        })
+      )
+    );
 
-        // Mapear reviews con nombres de travelers
-        return reviews.map(review => ({
-          ...review,
-          traveler: review.traveler || travelersMap.get(review.travelerId)?.name || 'Usuario desconocido'
-        }));
+    return forkJoin(userObservables).pipe(
+      map(users => {
+        // Filtrar usuarios nulos y crear un mapa para acceso rápido a los users por ID
+        const usersMap = new Map(users.filter(user => user !== null).map(t => [t!.id, t]));
+
+        // Mapear reviews con nombres de users
+        return reviews.map((review: IEnrichedReviewResponse) => {
+          const user = usersMap.get(review.userId);
+          let travelerName = 'Usuario desconocido';
+
+          if (user) {
+            travelerName = user.name || 'Usuario desconocido';
+            if (user.lastName) {
+              travelerName += ` ${user.lastName}`;
+            }
+          }
+          return {
+            ...review,
+            traveler: review.traveler || travelerName
+          };
+        });
       }),
       catchError(error => {
-        console.error('❌ Error fetching travelers:', error);
+        console.error('❌ Error processing users with individual calls:', error);
         // Fallback: mantener nombres existentes o asignar por defecto
-        return of(reviews.map(review => ({
+        return of(reviews.map((review: IEnrichedReviewResponse) => ({
           ...review,
           traveler: review.traveler || 'Usuario desconocido'
         })));
@@ -257,7 +276,7 @@ export class ReviewsComponent implements OnInit {
     );
   }
 
-  private enrichReviewsWithTourData(reviews: any[]): void {
+  private enrichReviewsWithTourData(reviews: IEnrichedReviewResponse[]): void {
     // Obtener IDs únicos de tours
     const uniqueTourIds = [...new Set(reviews.map(review => review.tourId).filter(id => id))];
     
@@ -333,9 +352,9 @@ export class ReviewsComponent implements OnInit {
         if (reviews.length === 0) {
           return of([]);
         }
-        const mappedReviews = reviews.map(review => ({
+        const mappedReviews = reviews.map((review: IEnrichedReviewResponse) => ({
           ...review,
-          traveler: 'Usuario desconocido', // Se enriquecerá después
+          traveler: review.traveler || 'Usuario desconocido', // Se enriquecerá después
           tour: 'Tour', // Se enriquecerá después con tourService
           review: review.text,
           score: review.rating,
@@ -362,19 +381,19 @@ export class ReviewsComponent implements OnInit {
   }
 
   /**
-   * Obtiene reviews por ID de traveler
-   * @param travelerId ID del traveler
+   * Obtiene reviews por ID de user
+   * @param userId ID del user
    */
-  loadReviewsByTraveler(travelerId: number): void {
+  loadReviewsByTraveler(userId: number): void {
     this.loading = true;
-    this.reviewsService.getByTravelerId(travelerId).pipe(
+    this.reviewsService.getByUserId(userId).pipe(
       switchMap(reviews => {
         if (reviews.length === 0) {
           return of([]);
         }
-        const mappedReviews = reviews.map(review => ({
+        const mappedReviews = reviews.map((review: IEnrichedReviewResponse) => ({
           ...review,
-          traveler: 'Usuario desconocido', // Se enriquecerá después
+          traveler: review.traveler, // Se enriquecerá después
           tour: 'Tour', // Se enriquecerá después con tourService
           review: review.text,
           score: review.rating,

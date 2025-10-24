@@ -45,7 +45,7 @@ export interface UserUpdate {
 
 // Filtros para la búsqueda de usuarios según el swagger
 export interface UserFilter {
-  Id?: number;
+  Id?: number | number[];
   Name?: string;
   Email?: string;
   CognitoId?: string;

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { MessageService } from 'primeng/api';
 import { catchError, of, forkJoin, firstValueFrom, map } from 'rxjs';
@@ -68,6 +68,7 @@ interface ActivityWithPrice extends IActivityResponse {
 export class BookingActivitiesV2Component implements OnInit {
   @Input() periodId!: string;
   @Input() reservationId!: number;
+  @Output() dataUpdated = new EventEmitter<void>();
 
   // Estado del componente
   availableActivities: ActivityWithPrice[] = [];
@@ -413,6 +414,9 @@ export class BookingActivitiesV2Component implements OnInit {
           life: 3000,
         });
         
+        // Emitir evento al componente padre
+        this.emitDataUpdated();
+        
         // Recargar la página para actualizar los datos
         this.reloadParentComponent();
       })
@@ -530,6 +534,7 @@ export class BookingActivitiesV2Component implements OnInit {
             detail: `La actividad "${activity.name}" ha sido agregada correctamente`,
             life: 3000,
           });
+          this.emitDataUpdated();
           this.reloadParentComponent();
       },
       error: (error) => {
@@ -558,6 +563,7 @@ export class BookingActivitiesV2Component implements OnInit {
             detail: `El paquete "${activity.name}" ha sido agregado correctamente`,
             life: 3000,
           });
+          this.emitDataUpdated();
           this.reloadParentComponent();
         },
         error: (error) => {
@@ -594,6 +600,7 @@ export class BookingActivitiesV2Component implements OnInit {
               detail: `La actividad "${activity.name}" ha sido removida correctamente`,
               life: 3000,
             });
+            this.emitDataUpdated();
             this.reloadParentComponent();
           },
           error: (error) => {
@@ -621,6 +628,7 @@ export class BookingActivitiesV2Component implements OnInit {
               detail: `El paquete "${activity.name}" ha sido removido correctamente`,
               life: 3000,
             });
+            this.emitDataUpdated();
             this.reloadParentComponent();
           },
           error: (error) => {
@@ -687,6 +695,7 @@ export class BookingActivitiesV2Component implements OnInit {
                 detail: `La actividad "${activity.name}" ha sido agregada correctamente`,
                 life: 3000,
               });
+              this.emitDataUpdated();
               this.reloadParentComponent();
             })
             .catch((error) => {
@@ -786,6 +795,7 @@ export class BookingActivitiesV2Component implements OnInit {
                 detail: `La actividad "${activity.name}" ha sido removida correctamente`,
                 life: 3000,
               });
+              this.emitDataUpdated();
               this.reloadParentComponent();
             })
             .catch((error) => {
@@ -806,6 +816,13 @@ export class BookingActivitiesV2Component implements OnInit {
           });
         },
       });
+  }
+
+  /**
+   * Emite evento al componente padre indicando que los datos han sido actualizados
+   */
+  private emitDataUpdated(): void {
+    this.dataUpdated.emit();
   }
 
   /**

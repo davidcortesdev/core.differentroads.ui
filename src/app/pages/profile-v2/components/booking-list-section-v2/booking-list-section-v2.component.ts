@@ -37,6 +37,9 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
     'active-bookings';
   @Input() parentComponent?: any;  // Referencia al componente padre
 
+  // Almacenar qué reservas ya tienen puntos aplicados (clave: reservationId_userId)
+  private reservationsWithPointsRedeemed: Set<string> = new Set();
+
   bookingItems: BookingItem[] = [];
   isExpanded: boolean = true;
   loading: boolean = false;
@@ -160,14 +163,18 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
    */
   private loadActiveBookingsWithEmail(userId: number, userEmail: string): void {
     
-    // Combinar reservas del usuario como titular + reservas donde aparece como viajero
+    // Cargar reservas Y transacciones de puntos EN PARALELO
     forkJoin({
-      userReservations: this.bookingsService.getActiveBookings(userId),
-      travelerReservations:
-        this.bookingsService.getActiveBookingsByTravelerEmail(userEmail),
+      reservationsData: forkJoin({
+        userReservations: this.bookingsService.getActiveBookings(userId),
+        travelerReservations: this.bookingsService.getActiveBookingsByTravelerEmail(userEmail),
+      }),
+      pointsTransactions: this.loadPointsTransactions()
     })
       .pipe(
-        switchMap(({ userReservations, travelerReservations }) => {
+        switchMap(({ reservationsData }) => {
+          const { userReservations, travelerReservations } = reservationsData;
+          
           // Combinar y eliminar duplicados basándose en el ID de reserva
           const allReservations = [
             ...userReservations,
@@ -263,12 +270,18 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       return;
     }
 
+    // Cargar reservas Y transacciones de puntos EN PARALELO
     forkJoin({
-      userReservations: this.bookingsService.getTravelHistory(userId),
-      travelerReservations: this.bookingsService.getTravelHistoryByTravelerEmail(userEmail)
+      reservationsData: forkJoin({
+        userReservations: this.bookingsService.getTravelHistory(userId),
+        travelerReservations: this.bookingsService.getTravelHistoryByTravelerEmail(userEmail)
+      }),
+      pointsTransactions: this.loadPointsTransactions()
     })
       .pipe(
-        switchMap(({ userReservations, travelerReservations }) => {
+        switchMap(({ reservationsData }) => {
+          const { userReservations, travelerReservations } = reservationsData;
+          
           const allReservations = [
             ...userReservations,
             ...travelerReservations
@@ -615,6 +628,48 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
     return item.id;
   }
 
+  /**
+   * Carga las transacciones de puntos y actualiza el Set de reservas con puntos aplicados
+   * Retorna un Observable para poder sincronizarlo con la carga de reservas
+   */
+  private loadPointsTransactions() {
+    if (!this.userId) {
+      return of(null);
+    }
+
+    return this.pointsService.getLoyaltyTransactionsFromAPI(this.userId).pipe(
+      map((transactions) => {
+        // Filtrar transacciones de canje (transactionTypeId = 4)
+        const redemptionTransactions = transactions.filter(
+          t => t.transactionTypeId === 4 && t.referenceType === 'RESERVATION'
+        );
+
+        // Agregar las claves únicas (reservationId + userId) al Set
+        this.reservationsWithPointsRedeemed.clear();
+        redemptionTransactions.forEach(transaction => {
+          if (transaction.referenceId) {
+            const uniqueKey = `${transaction.referenceId}_${this.userId}`;
+            this.reservationsWithPointsRedeemed.add(uniqueKey);
+          }
+        });
+
+        return this.reservationsWithPointsRedeemed;
+      }),
+      catchError((error) => {
+        console.error('Error cargando transacciones de puntos:', error);
+        return of(new Set());
+      })
+    );
+  }
+
+  /**
+   * Verifica si este viajero específico ya ha canjeado puntos para esta reserva
+   */
+  hasPointsApplied(item: BookingItem): boolean {
+    const uniqueKey = `${item.id}_${this.userId}`;
+    return this.reservationsWithPointsRedeemed.has(uniqueKey);
+  }
+
   // ------------- DYNAMIC CONFIGURATION METHODS -------------
 
   // Get title based on list type
@@ -687,8 +742,8 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
     return 'Reservar';
   }
 
-  getPointsDiscountLabel(): string {
-    return 'Descontar Puntos';
+  getPointsDiscountLabel(item: BookingItem): string {
+    return this.hasPointsApplied(item) ? 'Puntos ya aplicados' : 'Descontar Puntos';
   }
 
   // ===== MÉTODOS PARA DOCUMENTACIÓN Y NOTIFICACIONES =====
@@ -1136,6 +1191,10 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
             summary: 'Descuento Aplicado',
             detail: result.message,
           });
+          
+          // Marcar esta reserva como que ya tiene puntos aplicados para este viajero
+          const uniqueKey = `${this.selectedBookingItem!.id}_${this.userId}`;
+          this.reservationsWithPointsRedeemed.add(uniqueKey);
           
           // Recargar la sección de puntos en el componente padre
           if (this.parentComponent && this.parentComponent.reloadPointsSection) {

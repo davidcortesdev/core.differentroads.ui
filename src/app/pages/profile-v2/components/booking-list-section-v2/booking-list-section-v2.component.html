@@ -120,9 +120,10 @@
                     styleClass="p-button-rounded" 
                     (click)="reserveItem(item)"></p-button>
                   <p-button *ngIf="shouldShowPointsDiscount(item)" 
-                    [label]="getPointsDiscountLabel()" 
-                    styleClass="p-button-rounded p-button-success" 
-                    icon="pi pi-gift"
+                    [label]="getPointsDiscountLabel(item)" 
+                    [styleClass]="hasPointsApplied(item) ? 'p-button-rounded p-button-secondary' : 'p-button-rounded p-button-success'" 
+                    [icon]="hasPointsApplied(item) ? 'pi pi-check' : 'pi pi-gift'"
+                    [disabled]="hasPointsApplied(item)"
                     (click)="openPointsDiscountModal(item)"></p-button>
                 </div>
               </div>

@@ -35,12 +35,6 @@ export class InfoTravelerActivitiesComponent implements OnInit, OnDestroy {
   travelerActivities: IReservationTravelerActivityResponse[] = [];
   travelerActivityPacks: IReservationTravelerActivityPackResponse[] = [];
   
-  
-  // Memoria de elementos visibles desde la carga inicial (compartida entre todas las instancias)
-  private static visibleActivityIds: number[] = [];
-  private static visiblePackIds: number[] = [];
-  private static initializedVisible: boolean = false;
-
   // Estados de control
   private deletedFromDB: { [activityId: number]: boolean } = {};
   private savingActivities: { [key: string]: boolean } = {};
@@ -67,13 +61,18 @@ export class InfoTravelerActivitiesComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  // Getters para acceder a las propiedades estáticas desde el template
-  get visibleActivityIds(): number[] {
-    return InfoTravelerActivitiesComponent.visibleActivityIds;
+  /**
+   * Obtener actividades individuales visibles
+   */
+  get visibleActivities(): IActivityResponse[] {
+    return this.optionalActivities.filter(activity => activity.type !== 'pack');
   }
 
-  get visiblePackIds(): number[] {
-    return InfoTravelerActivitiesComponent.visiblePackIds;
+  /**
+   * Obtener paquetes de actividades visibles
+   */
+  get visibleActivityPacks(): IActivityResponse[] {
+    return this.optionalActivities.filter(activity => activity.type === 'pack');
   }
 
   /**
@@ -92,76 +91,12 @@ export class InfoTravelerActivitiesComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (activities) => {
           this.optionalActivities = activities;
-          // Primero, cargar todas las asignaciones de la reserva para rellenar la lista
-          this.populateVisibleFromReservation();
-          // Luego, cargar las asignaciones del viajero actual para marcar sus toggles
+          // Cargar las asignaciones del viajero actual
           this.loadTravelerActivities();
         },
         error: (error) => {
-          // Si falla la carga de catálogo, al menos continuar con asignaciones del viajero
-          this.populateVisibleFromReservation();
-          this.loadTravelerActivities();
-        },
-      });
-  }
-
-  /**
-   * Rellenar listas visibles (actividades y packs) con todas las asignaciones de la reserva
-   */
-  private populateVisibleFromReservation(): void {
-    if (!this.reservationId) {
-      return;
-    }
-
-    this.reservationTravelerService
-      .getByReservation(this.reservationId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (travelers: IReservationTraveler[]) => {
-          if (!travelers || travelers.length === 0) {
-            return;
-          }
-
-          const requests = travelers.map((t) =>
-            forkJoin({
-              activities: this.reservationTravelerActivityService.getByReservationTraveler(t.id),
-              activityPacks: this.reservationTravelerActivityPackService.getByReservationTraveler(t.id),
-            })
-          );
-
-          forkJoin(requests)
-            .pipe(takeUntil(this.destroy$))
-            .subscribe({
-              next: (results) => {
-                const activityIds = new Set<number>();
-                const packIds = new Set<number>();
-
-                results.forEach(({ activities, activityPacks }) => {
-                  activities?.forEach((a) => activityIds.add(a.activityId));
-                  activityPacks?.forEach((p) => packIds.add(p.activityPackId));
-                });
-
-                // Memorizar una sola vez si no estaba inicializado; si ya estaba, actualizar unión manteniendo memoria
-                if (!InfoTravelerActivitiesComponent.initializedVisible) {
-                  InfoTravelerActivitiesComponent.visibleActivityIds = Array.from(activityIds);
-                  InfoTravelerActivitiesComponent.visiblePackIds = Array.from(packIds);
-                  InfoTravelerActivitiesComponent.initializedVisible = true;
-                } else {
-                  const currentActivities = new Set(InfoTravelerActivitiesComponent.visibleActivityIds);
-                  const currentPacks = new Set(InfoTravelerActivitiesComponent.visiblePackIds);
-                  activityIds.forEach((id) => currentActivities.add(id));
-                  packIds.forEach((id) => currentPacks.add(id));
-                  InfoTravelerActivitiesComponent.visibleActivityIds = Array.from(currentActivities);
-                  InfoTravelerActivitiesComponent.visiblePackIds = Array.from(currentPacks);
-                }
-              },
-              error: (error) => {
-                // Error al cargar asignaciones por reserva
-              },
-            });
-        },
-        error: (error) => {
-          // Error al obtener viajeros de la reserva
+          console.error('Error al cargar actividades opcionales:', error);
+          this.loading = false;
         },
       });
   }
@@ -184,19 +119,11 @@ export class InfoTravelerActivitiesComponent implements OnInit, OnDestroy {
         next: ({ activities, activityPacks }) => {
           this.travelerActivities = activities;
           this.travelerActivityPacks = activityPacks;
-
-
-          // Memorizar listas visibles solo en la primera carga
-          if (!InfoTravelerActivitiesComponent.initializedVisible) {
-            InfoTravelerActivitiesComponent.visibleActivityIds = Array.from(new Set(activities.map(a => a.activityId)));
-            InfoTravelerActivitiesComponent.visiblePackIds = Array.from(new Set(activityPacks.map(p => p.activityPackId)));
-            InfoTravelerActivitiesComponent.initializedVisible = true;
-          }
-
           this.loading = false;
           this.emitInitialActivitiesState();
         },
         error: (error) => {
+          console.error('Error al cargar actividades del viajero:', error);
           this.loading = false;
         }
       });
@@ -315,10 +242,6 @@ export class InfoTravelerActivitiesComponent implements OnInit, OnDestroy {
               delete this.deletedFromDB[activityId];
             }
 
-            // Asegurar que permanezca visible
-            if (!InfoTravelerActivitiesComponent.visiblePackIds.includes(activityId)) {
-              InfoTravelerActivitiesComponent.visiblePackIds.push(activityId);
-            }
             this.activitiesAssignmentChange.emit();
 
             this.messageService.add({
@@ -331,10 +254,6 @@ export class InfoTravelerActivitiesComponent implements OnInit, OnDestroy {
           error: (error) => {
             this.savingActivities[key] = false;
             
-            // Asegurar que permanezca visible
-            if (!InfoTravelerActivitiesComponent.visibleActivityIds.includes(activityId)) {
-              InfoTravelerActivitiesComponent.visibleActivityIds.push(activityId);
-            }
             this.activitiesAssignmentChange.emit();
 
             this.messageService.add({

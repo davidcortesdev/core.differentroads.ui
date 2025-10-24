@@ -363,19 +363,14 @@ $orange-red: #f66b5b;
     }
 }
 
-// ===== ESTILOS PARA MODAL DE DESCUENTO DE PUNTOS =====
-
 .points-discount-content {
-    // Espaciado equilibrado
     padding: 1.25rem !important;
-    
     .booking-info {
         background: var(--p-surface-50);
         padding: 1rem !important;
         border-radius: var(--p-border-radius);
         margin-bottom: 1.25rem !important;
         border: 1px solid var(--p-content-border-color);
-        
         h4 {
             margin: 0 0 0.75rem 0 !important;
             color: var(--p-text-color);
@@ -383,7 +378,6 @@ $orange-red: #f66b5b;
             font-weight: var(--p-font-weight-semibold);
             line-height: 1.5;
         }
-        
         p {
             margin: 0.5rem 0 !important;
             color: var(--p-text-muted-color);
@@ -391,7 +385,6 @@ $orange-red: #f66b5b;
             line-height: 1.5;
         }
     }
-    
     .points-section {
         .points-available {
             display: flex;
@@ -418,11 +411,6 @@ $orange-red: #f66b5b;
         ::ng-deep .membership-message {
             margin-bottom: 1.25rem;
         }
-
-        ::ng-deep .points-input-field {
-            text-align: right;
-        }
-        
         .points-input {
             margin-bottom: 1.25rem !important;
             
@@ -430,16 +418,12 @@ $orange-red: #f66b5b;
                 display: block;
                 margin-bottom: 0.5rem !important;
                 font-weight: var(--p-font-weight-semibold);
-                color: var(--p-text-color);
-                font-size: var(--p-font-size);
             }
             
             small {
                 display: block;
                 margin-top: 0.5rem !important;
                 color: var(--p-text-muted-color);
-                font-size: var(--p-font-size-sm);
-                line-height: 1.5;
             }
         }
         

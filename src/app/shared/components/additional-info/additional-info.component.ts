@@ -250,12 +250,41 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
 
     this.loading = true;
 
-    // Simular descarga exitosa inmediatamente
-    this.loading = false;
-    this.additionalInfoService.showSuccess('Presupuesto descargado correctamente');
+    // Obtener el ID de la reserva desde el contexto
+    const reservationId = this.getReservationId();
     
-    // Disparar evento de analytics: file_download
-    this.trackFileDownload();
+    if (!reservationId) {
+      // En modo tour, no hay reserva existente, necesitamos crear una primero
+      if (this.context === 'tour') {
+        this.createBudgetAndDownload();
+        return;
+      } else {
+        this.loading = false;
+        this.additionalInfoService.showError(
+          'No se encontró información de la reserva para descargar el presupuesto.'
+        );
+        return;
+      }
+    }
+
+    // Usar el nuevo método para descargar el presupuesto
+    this.additionalInfoService.downloadBudgetPDF(reservationId).subscribe({
+      next: (response) => {
+        this.loading = false;
+        if (response.success) {
+          this.additionalInfoService.showSuccess(response.message);
+          // Disparar evento de analytics: file_download
+          this.trackFileDownload();
+        } else {
+          this.additionalInfoService.showError(response.message);
+        }
+      },
+      error: (error) => {
+        this.loading = false;
+        console.error('Error al descargar presupuesto:', error);
+        this.additionalInfoService.showError('Error al descargar el presupuesto. Inténtalo de nuevo.');
+      }
+    });
   }
 
   /**
@@ -398,20 +427,51 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
       periodDates: this.periodDates,
       flightInfo: this.selectedFlight?.name || 'Sin vuelo',
       travelers: this.travelersSelected,
-      reservationId: this.existingOrder?._id || null,
+      reservationId: this.getReservationId(),
       isShareMode: true
     };
 
-    // Simular envío exitoso inmediatamente
-    this.loading = false;
-    this.additionalInfoService.showSuccess(
-      `Presupuesto compartido exitosamente con ${formData.recipientEmail}`
-    );
+    // Obtener el ID de la reserva
+    const reservationId = this.getReservationId();
     
-    // Disparar evento de analytics: share
-    this.trackShare();
-    
-    this.handleCloseModal();
+    if (!reservationId) {
+      // En modo tour, no hay reserva existente, necesitamos crear una primero
+      if (this.context === 'tour') {
+        this.createBudgetAndShare(formData);
+        return;
+      } else {
+        this.loading = false;
+        this.additionalInfoService.showError(
+          'No se encontró información de la reserva para compartir el presupuesto.'
+        );
+        return;
+      }
+    }
+
+    // Usar el nuevo método para enviar el presupuesto por email
+    this.additionalInfoService.sendBudgetByEmail(
+      reservationId,
+      formData.recipientEmail,
+      formData.recipientName,
+      formData.message
+    ).subscribe({
+      next: (response) => {
+        this.loading = false;
+        if (response.success) {
+          this.additionalInfoService.showSuccess(response.message);
+          // Disparar evento de analytics: share
+          this.trackShare();
+        } else {
+          this.additionalInfoService.showError(response.message);
+        }
+        this.handleCloseModal();
+      },
+      error: (error) => {
+        this.loading = false;
+        console.error('Error al compartir presupuesto:', error);
+        this.additionalInfoService.showError('Error al compartir el presupuesto. Inténtalo de nuevo.');
+      }
+    });
   }
 
   /**
@@ -426,28 +486,45 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
       periodDates: this.periodDates,
       flightInfo: this.selectedFlight?.name || 'Sin vuelo',
       travelers: this.travelersSelected,
-      reservationId: this.existingOrder?._id || null
+      reservationId: this.getReservationId()
     };
 
-    const downloadSub = this.additionalInfoService.downloadBudgetPDF(
-      JSON.stringify(budgetData)
-    ).subscribe({
+    // Obtener el ID de la reserva
+    const reservationId = this.getReservationId();
+    
+    if (!reservationId) {
+      // En modo tour, no hay reserva existente, necesitamos crear una primero
+      if (this.context === 'tour') {
+        this.createBudgetAndDownloadWithEmail(formData);
+        return;
+      } else {
+        this.loading = false;
+        this.additionalInfoService.showError(
+          'No se encontró información de la reserva para descargar el presupuesto.'
+        );
+        return;
+      }
+    }
+
+    const downloadSub = this.additionalInfoService.downloadBudgetPDF(reservationId).subscribe({
       next: (response) => {
         this.loading = false;
 
-        if (response instanceof Blob) {
-          this.downloadPDFFromBlob(response, `presupuesto-${this.tourName}.pdf`);
-        } else if (response.pdfUrl) {
-          this.downloadPDFFromURL(response.pdfUrl, response.fileName);
+        if (response.success) {
+          this.additionalInfoService.showSuccess(
+            `Presupuesto descargado y enviado a ${formData.recipientEmail}`
+          );
+          // Disparar evento de analytics: file_download
+          this.trackFileDownload();
+        } else {
+          this.additionalInfoService.showError(response.message);
         }
-
-        this.additionalInfoService.showSuccess(
-          `Presupuesto descargado y enviado a ${formData.recipientEmail}`
-        );
+        
         this.handleCloseModal();
       },
-      error: () => {
+      error: (error) => {
         this.loading = false;
+        console.error('Error al descargar presupuesto:', error);
         this.additionalInfoService.showError(
           'Ha ocurrido un error al descargar el presupuesto. Por favor, inténtalo de nuevo.'
         );
@@ -602,5 +679,156 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
       'Presupuesto',
       this.userEmail
     );
+  }
+
+  /**
+   * Obtiene el ID de la reserva desde el contexto actual
+   * @returns ID de la reserva o null si no está disponible
+   */
+  private getReservationId(): number | null {
+    // Intentar obtener el ID desde existingOrder (modo actualización)
+    if (this.existingOrder && (this.existingOrder._id || this.existingOrder.ID)) {
+      const id = this.existingOrder._id || this.existingOrder.ID;
+      return typeof id === 'string' ? parseInt(id, 10) : id;
+    }
+
+    // En modo creación, no tenemos ID de reserva aún
+    // Se podría implementar lógica adicional según sea necesario
+    return null;
+  }
+
+  /**
+   * Crea un presupuesto y luego procede con la descarga
+   */
+  private createBudgetAndDownload(): void {
+    // Actualizar datos del contexto antes de crear la reserva
+    this.setContextData();
+    
+    this.additionalInfoService.createBudget().subscribe({
+      next: (createdReservation) => {
+        // Una vez creada la reserva, proceder con la descarga
+        const reservationId = createdReservation.id || createdReservation.ID;
+        if (reservationId) {
+          this.additionalInfoService.downloadBudgetPDF(reservationId).subscribe({
+            next: (response) => {
+              this.loading = false;
+              if (response.success) {
+                this.additionalInfoService.showSuccess(response.message);
+                // Disparar evento de analytics: file_download
+                this.trackFileDownload();
+              } else {
+                this.additionalInfoService.showError(response.message);
+              }
+            },
+            error: (error) => {
+              this.loading = false;
+              console.error('Error al descargar presupuesto:', error);
+              this.additionalInfoService.showError('Error al descargar el presupuesto. Inténtalo de nuevo.');
+            }
+          });
+        } else {
+          this.loading = false;
+          this.additionalInfoService.showError('No se pudo obtener el ID de la reserva creada.');
+        }
+      },
+      error: (error) => {
+        this.loading = false;
+        console.error('Error al crear presupuesto:', error);
+        this.additionalInfoService.showError('No se pudo crear el presupuesto. Inténtalo de nuevo.');
+      }
+    });
+  }
+
+  /**
+   * Crea un presupuesto y luego procede con compartir
+   */
+  private createBudgetAndShare(formData: any): void {
+    // Actualizar datos del contexto antes de crear la reserva
+    this.setContextData();
+    
+    this.additionalInfoService.createBudget().subscribe({
+      next: (createdReservation) => {
+        // Una vez creada la reserva, proceder con compartir
+        const reservationId = createdReservation.id || createdReservation.ID;
+        if (reservationId) {
+          this.additionalInfoService.sendBudgetByEmail(
+            reservationId,
+            formData.recipientEmail,
+            formData.recipientName,
+            formData.message
+          ).subscribe({
+            next: (response) => {
+              this.loading = false;
+              if (response.success) {
+                this.additionalInfoService.showSuccess(response.message);
+                // Disparar evento de analytics: share
+                this.trackShare();
+              } else {
+                this.additionalInfoService.showError(response.message);
+              }
+              this.handleCloseModal();
+            },
+            error: (error) => {
+              this.loading = false;
+              console.error('Error al compartir presupuesto:', error);
+              this.additionalInfoService.showError('Error al compartir el presupuesto. Inténtalo de nuevo.');
+            }
+          });
+        } else {
+          this.loading = false;
+          this.additionalInfoService.showError('No se pudo obtener el ID de la reserva creada.');
+        }
+      },
+      error: (error) => {
+        this.loading = false;
+        console.error('Error al crear presupuesto:', error);
+        this.additionalInfoService.showError('No se pudo crear el presupuesto. Inténtalo de nuevo.');
+      }
+    });
+  }
+
+  /**
+   * Crea un presupuesto y luego procede con la descarga y envío por email
+   */
+  private createBudgetAndDownloadWithEmail(formData: any): void {
+    // Actualizar datos del contexto antes de crear la reserva
+    this.setContextData();
+    
+    this.additionalInfoService.createBudget().subscribe({
+      next: (createdReservation) => {
+        // Una vez creada la reserva, proceder con la descarga
+        const reservationId = createdReservation.id || createdReservation.ID;
+        if (reservationId) {
+          this.additionalInfoService.downloadBudgetPDF(reservationId).subscribe({
+            next: (response) => {
+              this.loading = false;
+              if (response.success) {
+                this.additionalInfoService.showSuccess(
+                  `Presupuesto descargado y enviado a ${formData.recipientEmail}`
+                );
+                // Disparar evento de analytics: file_download
+                this.trackFileDownload();
+              } else {
+                this.additionalInfoService.showError(response.message);
+              }
+              this.handleCloseModal();
+            },
+            error: (error) => {
+              this.loading = false;
+              console.error('Error al descargar presupuesto:', error);
+              this.additionalInfoService.showError('Error al descargar el presupuesto. Inténtalo de nuevo.');
+            }
+          });
+        } else {
+          this.loading = false;
+          this.additionalInfoService.showError('No se pudo obtener el ID de la reserva creada.');
+        }
+      },
+      error: (error) => {
+        this.loading = false;
+        console.error('Error al crear presupuesto:', error);
+        this.additionalInfoService.showError('No se pudo crear el presupuesto. Inténtalo de nuevo.');
+      }
+    });
   }
 }

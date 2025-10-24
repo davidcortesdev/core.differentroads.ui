@@ -19,9 +19,11 @@ import {
 import {
   NotificationService,
   INotification,
-} from '../../../../core/services/documentation/notification.service';
-import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
-import { switchMap, map, catchError, of, forkJoin } from 'rxjs';
+  } from '../../../../core/services/documentation/notification.service';
+  import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
+  import { PointsV2Service } from '../../../../core/services/v2/points-v2.service';
+  import { TravelerCategory } from '../../../../core/models/v2/profile-v2.model';
+  import { switchMap, map, catchError, of, forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-booking-list-section-v2',
@@ -46,6 +48,16 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   documents: { [key: string]: IDocumentReservationResponse[] } = {};
   notifications: { [key: string]: INotification[] } = {};
 
+  // Propiedades para modal de descuento de puntos
+  pointsDiscountModalVisible: boolean = false;
+  selectedBookingItem: BookingItem | null = null;
+  availablePoints: number = 0;
+  pointsToUse: number = 0;
+  userCategory: TravelerCategory = TravelerCategory.TROTAMUNDOS;
+  maxPointsPerReservation: number = 50; // Límite por reserva según documento
+  maxPointsForCategory: number = 50; // Límite según categoría del usuario
+  loadingUserData: boolean = false;
+
   constructor(
     private router: Router,
     private messageService: MessageService,
@@ -57,7 +69,8 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
     private emailSenderService: EmailSenderService,
     private documentationService: DocumentationService,
     private notificationService: NotificationService,
-    private authService: AuthenticateService
+    private authService: AuthenticateService,
+    private pointsService: PointsV2Service
   ) {}
 
   ngOnInit() {
@@ -122,11 +135,9 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
 
     if (userEmail) {
       // Email encontrado, proceder a cargar las reservas
-      console.log('✅ Email del usuario encontrado:', userEmail);
       this.loadActiveBookingsWithEmail(userId, userEmail);
     } else if (attempt < maxAttempts) {
       // No se encontró el email, reintentar después del delay
-      console.log(`⏳ Esperando email del usuario (intento ${attempt + 1}/${maxAttempts})...`);
       setTimeout(() => {
         this.waitForUserEmail(userId, attempt + 1);
       }, delayMs);
@@ -661,6 +672,11 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
     return this.listType === 'recent-budgets';
   }
 
+  shouldShowPointsDiscount(item: BookingItem): boolean {
+    // Solo mostrar para reservas activas con reservationStatusId === 11 (prebooked)
+    return this.listType === 'active-bookings' && item.reservationStatusId === 11;
+  }
+
   // Button label methods
   getDownloadLabel(): string {
     return 'Descargar';
@@ -676,6 +692,10 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
 
   getReserveLabel(): string {
     return 'Reservar';
+  }
+
+  getPointsDiscountLabel(): string {
+    return 'Descontar Puntos';
   }
 
   // ===== MÉTODOS PARA DOCUMENTACIÓN Y NOTIFICACIONES =====
@@ -969,5 +989,265 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       .catch((error) => {
         console.error('❌ TEST: Direct fetch call failed:', error);
       });
+  }
+
+  // ===== MÉTODOS PARA DESCUENTO DE PUNTOS =====
+
+  /**
+   * Abre la modal de descuento de puntos
+   * @param item - Item de reserva seleccionado
+   */
+  openPointsDiscountModal(item: BookingItem): void {
+    this.selectedBookingItem = item;
+    this.pointsToUse = 0;
+    
+    // Obtener puntos reales del usuario
+    this.loadUserPointsData();
+    
+    this.pointsDiscountModalVisible = true;
+  }
+
+  /**
+   * Cierra la modal de descuento de puntos
+   */
+  closePointsDiscountModal(): void {
+    this.pointsDiscountModalVisible = false;
+    this.selectedBookingItem = null;
+    this.pointsToUse = 0;
+    this.availablePoints = 0;
+  }
+
+  /**
+   * Carga los datos de puntos del usuario
+   */
+  private loadUserPointsData(): void {
+    this.loadingUserData = true;
+    if (!this.userId) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudo obtener el ID del usuario',
+      });
+      this.setDefaultCategory();
+      this.loadingUserData = false;
+      return;
+    }
+
+    // Obtener saldo de puntos del usuario
+    this.pointsService.getLoyaltyBalanceFromAPI(this.userId).subscribe({
+      next: (balance) => {
+        // Usar la misma lógica que points-section-v2
+        this.availablePoints = balance?.pointsAvailable || balance?.totalPoints || balance?.balance || 0;
+        this.loadingUserData = false;
+      },
+      error: (error: any) => {
+        console.error('❌ Error cargando saldo de puntos:', error);
+        this.availablePoints = 0;
+        this.loadingUserData = false;
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Advertencia',
+          detail: 'No se pudieron cargar los puntos del usuario. Usando valor por defecto.',
+        });
+      }
+    });
+
+    // Obtener categoría del usuario
+    this.pointsService.getUserLoyaltyCategory(this.userId).then((userCategory: any) => {
+      if (userCategory && userCategory.loyaltyCategoryId) {
+        this.pointsService.getLoyaltyProgramCategory(userCategory.loyaltyCategoryId).then((category: any) => {
+          if (category) {
+            this.userCategory = this.mapCategoryNameToEnum(category.name);
+            this.maxPointsForCategory = category.maxDiscountPerPurchase || 50;
+            this.maxPointsPerReservation = Math.min(50, this.maxPointsForCategory);
+          } else {
+            this.setDefaultCategory();
+          }
+        }).catch((error: any) => {
+          this.setDefaultCategory();
+        });
+      } else {
+        this.setDefaultCategory();
+      }
+    }).catch((error: any) => {
+      this.setDefaultCategory();
+    });
+  }
+
+  /**
+   * Mapea el nombre de categoría a enum
+   */
+  private mapCategoryNameToEnum(categoryName: string): TravelerCategory {
+    const categoryMap: { [key: string]: TravelerCategory } = {
+      'Trotamundos': TravelerCategory.TROTAMUNDOS,
+      'Viajero': TravelerCategory.VIAJERO,
+      'Nómada': TravelerCategory.NOMADA
+    };
+    return categoryMap[categoryName] || TravelerCategory.TROTAMUNDOS;
+  }
+
+  /**
+   * Establece la categoría por defecto
+   */
+  private setDefaultCategory(): void {
+    this.userCategory = TravelerCategory.TROTAMUNDOS;
+    this.maxPointsForCategory = 50;
+    this.maxPointsPerReservation = 50;
+  }
+
+  /**
+   * Calcula el precio final después del descuento
+   * @returns Precio final
+   */
+  getFinalPrice(): number {
+    if (!this.selectedBookingItem || this.pointsToUse <= 0) {
+      return this.selectedBookingItem?.price || 0;
+    }
+    
+    const originalPrice = this.selectedBookingItem.price || 0;
+    const discount = this.pointsToUse; // 1 punto = 1 euro
+    const finalPrice = originalPrice - discount;
+    
+    return Math.max(0, finalPrice); // No permitir precio negativo
+  }
+
+  /**
+   * Aplica el descuento de puntos
+   */
+  applyPointsDiscount(): void {
+    if (!this.selectedBookingItem || this.pointsToUse <= 0) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Debes seleccionar una cantidad de puntos válida',
+      });
+      return;
+    }
+
+    // Validar límites según las reglas del documento
+    const validation = this.validatePointsUsage();
+    if (!validation.isValid) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error de validación',
+        detail: validation.message,
+      });
+      return;
+    }
+
+    // Aplicar descuento usando el servicio real
+    const reservationId = parseInt(this.selectedBookingItem.id, 10);
+
+    if (!this.userId) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudo obtener el ID del usuario',
+      });
+      return;
+    }
+
+    this.pointsService.redeemPointsForReservation(reservationId, this.userId, this.pointsToUse)
+      .then(result => {
+        if (result.success) {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Descuento Aplicado',
+            detail: result.message,
+          });
+          this.closePointsDiscountModal();
+        } else {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: result.message,
+          });
+        }
+      })
+      .catch(error => {
+        console.error('Error aplicando descuento:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Error al procesar el descuento. Inténtalo de nuevo.',
+        });
+      });
+  }
+
+  /**
+   * Valida el uso de puntos según las reglas del documento
+   */
+  private validatePointsUsage(): { isValid: boolean; message: string } {
+    // 1. Validar saldo disponible
+    if (this.pointsToUse > this.availablePoints) {
+      return {
+        isValid: false,
+        message: `No tienes suficientes puntos. Disponibles: ${this.availablePoints}`
+      };
+    }
+
+    // 2. Validar límite por reserva (50€ máximo por reserva según documento)
+    if (this.pointsToUse > this.maxPointsPerReservation) {
+      return {
+        isValid: false,
+        message: `Máximo ${this.maxPointsPerReservation} puntos por reserva según las reglas`
+      };
+    }
+
+    // 3. Validar límite por categoría
+    if (this.pointsToUse > this.maxPointsForCategory) {
+      const categoryName = this.pointsService.getCategoryDisplayName(this.userCategory);
+      return {
+        isValid: false,
+        message: `Como ${categoryName} puedes usar máximo ${this.maxPointsForCategory} puntos por reserva`
+      };
+    }
+
+    // 4. Validar que no exceda el precio de la reserva
+    if (this.selectedBookingItem && this.pointsToUse > (this.selectedBookingItem.price || 0)) {
+      return {
+        isValid: false,
+        message: 'No puedes canjear más puntos que el precio total de la reserva'
+      };
+    }
+
+    return { isValid: true, message: '' };
+  }
+
+  /**
+   * Calcula el máximo de puntos permitidos según todas las reglas
+   */
+  getMaxAllowedPoints(): number {
+    if (!this.selectedBookingItem) return 0;
+
+    const reservationPrice = this.selectedBookingItem.price || 0;
+    const limits = [
+      this.availablePoints,                    // Puntos disponibles
+      this.maxPointsPerReservation,           // Límite por reserva (50€)
+      this.maxPointsForCategory,              // Límite por categoría
+      reservationPrice                        // No exceder el precio de la reserva
+    ];
+
+    return Math.min(...limits);
+  }
+
+  /**
+   * Verifica si el usuario tiene puntos suficientes
+   */
+  hasEnoughPoints(): boolean {
+    return this.availablePoints > 0;
+  }
+
+  /**
+   * Obtiene el mensaje de estado de puntos
+   */
+  getPointsStatusMessage(): string {
+    if (this.availablePoints === 0) {
+      return 'No tienes puntos disponibles para canjear';
+    } else if (this.availablePoints < this.maxPointsPerReservation) {
+      return `Tienes ${this.availablePoints} puntos. Puedes usar hasta ${this.availablePoints} en esta reserva.`;
+    } else {
+      return `Tienes ${this.availablePoints} puntos. Puedes usar hasta ${this.maxPointsPerReservation} en esta reserva.`;
+    }
   }
 }

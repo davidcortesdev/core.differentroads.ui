@@ -20,7 +20,7 @@ export interface ReviewFilters {
   showOnHomePage?: boolean;
   showOnTourPage?: boolean;
   tourId?: number;
-  travelerId?: number;
+  userId?: number;
   departureId?: number;
   externalId?: string;
   reviewDate?: string;
@@ -43,7 +43,7 @@ export interface ReviewCreate {
   showOnHomePage?: boolean;
   showOnTourPage?: boolean;
   tourId: number;
-  travelerId: number;
+  userId: number;
   departureId: number;
   externalId?: string;
   reviewDate?: string;
@@ -66,7 +66,7 @@ export interface ReviewUpdate {
   showOnHomePage?: boolean;
   showOnTourPage?: boolean;
   tourId?: number;
-  travelerId?: number;
+  userId?: number;
   departureId?: number;
   externalId?: string;
   reviewDate?: string;
@@ -90,7 +90,7 @@ export interface IReviewResponse {
   showOnHomePage: boolean;
   showOnTourPage: boolean;
   tourId: number;
-  travelerId: number;
+  userId: number;
   departureId: number;
   externalId: string;
   reviewDate: string;
@@ -270,13 +270,13 @@ export class ReviewsService {
   }
 
   /**
-   * Obtiene reviews por Traveler ID.
-   * @param travelerId ID del viajero.
+   * Obtiene reviews por User ID.
+   * @param userId ID del viajero.
    * @param additionalFilters Filtros adicionales opcionales.
    * @returns Lista de reviews del viajero.
    */
-  getByTravelerId(travelerId: number, additionalFilters?: Partial<ReviewFilters>): Observable<IReviewResponse[]> {
-    const filters: ReviewFilters = { travelerId, ...additionalFilters };
+  getByUserId(userId: number, additionalFilters?: Partial<ReviewFilters>): Observable<IReviewResponse[]> {
+    const filters: ReviewFilters = { userId, ...additionalFilters };
     return this.getAll(filters);
   }
 
@@ -291,7 +291,7 @@ export class ReviewsService {
   }
 
   /**
-   * Obtiene reviews para mostrar en la página del tour.
+   * Obtiene reviews para mostrar en la página del  tour.
    * @param tourId ID del tour (opcional).
    * @param additionalFilters Filtros adicionales opcionales.
    * @returns Lista de reviews para tour page.

@@ -33,7 +33,7 @@
         <td>{{ point.category }}</td>
         <td>{{ point.concept }}</td>
         <td>{{ point.tour }}</td>
-        <td [ngClass]="getPointsClass(point.type)" class="points-column">{{ getFormattedPoints(point) }}</td>
+        <td class="points-column">{{ getFormattedPoints(point) }}</td>
       </tr>
     </ng-template>
   </p-table>

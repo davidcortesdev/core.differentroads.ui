@@ -120,9 +120,10 @@
                     styleClass="p-button-rounded" 
                     (click)="reserveItem(item)"></p-button>
                   <p-button *ngIf="shouldShowPointsDiscount(item)" 
-                    [label]="getPointsDiscountLabel()" 
-                    styleClass="p-button-rounded p-button-success" 
-                    icon="pi pi-gift"
+                    [label]="getPointsDiscountLabel(item)" 
+                    [styleClass]="hasPointsApplied(item) ? 'p-button-rounded p-button-secondary' : 'p-button-rounded p-button-success'" 
+                    [icon]="hasPointsApplied(item) ? 'pi pi-check' : 'pi pi-gift'"
+                    [disabled]="hasPointsApplied(item)"
                     (click)="openPointsDiscountModal(item)"></p-button>
                 </div>
               </div>
@@ -164,18 +165,30 @@
         <span class="points-value">{{ availablePoints }}</span>
       </div>
       
+      <p-message severity="info" styleClass="w-full membership-message">
+        <ng-template pTemplate="messageicon">
+          <i class="pi pi-star-fill"></i>
+        </ng-template>
+        <span><strong>{{ getCategoryDisplayName() }}</strong> - Límite por reserva: <strong>{{ maxPointsForCategory }} puntos</strong></span>
+      </p-message>
+      
       <div class="points-input">
         <label for="pointsToUse">Puntos a Descontar:</label>
         <p-inputNumber 
           id="pointsToUse"
           [(ngModel)]="pointsToUse" 
           [min]="0" 
-          [max]="availablePoints"
+          [max]="maxPointsForCategory"
           [maxFractionDigits]="0"
+          [useGrouping]="false"
+          [minFractionDigits]="0"
+          [showButtons]="false"
+          mode="decimal"
           placeholder="Ingresa los puntos a descontar"
-          styleClass="w-full">
+          styleClass="w-full"
+          inputStyleClass="points-input-field"
+          (ngModelChange)="validatePointsInput()">
         </p-inputNumber>
-        <small class="text-muted">Máximo: {{ availablePoints }} puntos</small>
       </div>
       
       <div class="discount-calculation" *ngIf="pointsToUse > 0">
@@ -206,7 +219,7 @@
       label="Aplicar Descuento" 
       icon="pi pi-check" 
       styleClass="p-button-success" 
-      [disabled]="pointsToUse <= 0 || pointsToUse > availablePoints"
+      [disabled]="!isApplyDiscountButtonEnabled()"
       (click)="applyPointsDiscount()">
     </p-button>
   </ng-template>

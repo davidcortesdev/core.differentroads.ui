@@ -656,6 +656,16 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
+   * Maneja las actualizaciones de datos de viajeros (formularios y actividades)
+   */
+  onTravelerDataUpdated(): void {
+    console.log('📝 Datos de viajeros actualizados');
+    
+    // ✅ Disparar actualización del summary inmediatamente
+    this.triggerSummaryRefresh();
+  }
+
+  /**
    * Manejar cambios en asignaciones de habitaciones
    */
   onRoomAssignmentsChange(roomAssignments: {

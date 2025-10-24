@@ -8,6 +8,8 @@ import { AnalyticsService } from '../analytics/analytics.service';
 import { ReservationService, ReservationCreate, ReservationUpdate, ReservationCompleteCreate, IReservationTravelerData } from '../reservation/reservation.service';
 import { ReservationStatusService } from '../reservation/reservation-status.service';
 import { UsersNetService } from '../users/usersNet.service';
+import { NotificationService } from './notification.service';
+import { DocumentService } from './document.service';
 import { environment } from '../../../../environments/environment';
 
 /**
@@ -55,7 +57,9 @@ export class AdditionalInfoService {
     private messageService: MessageService,
     private reservationService: ReservationService,
     private usersNetService: UsersNetService,
-    private reservationStatusService: ReservationStatusService
+    private reservationStatusService: ReservationStatusService,
+    private notificationService: NotificationService,
+    private documentService: DocumentService
   ) {}
 
   /**
@@ -677,129 +681,6 @@ export class AdditionalInfoService {
     });
   }
 
-  /**
-   * Envía el presupuesto por email a través del backend
-   * 
-   * 📋 TODO: CONECTAR CON ENDPOINT DEL BACKEND
-   * 
-   * Endpoint esperado: POST /api/budgets/share
-   * Request body: { 
-   *   tourId: string,
-   *   periodId: string, 
-   *   travelersData: object,
-   *   recipientEmail: string,
-   *   message?: string 
-   * }
-   * Response: { success: boolean, message: string, data: object }
-   * 
-   * Implementación actual: Mock que simula el envío exitoso
-   * Implementación pendiente: Descomentar el código que hace la llamada real al endpoint
-   * 
-   * @param budgetData Datos del presupuesto y email del destinatario
-   * @returns Observable con la respuesta del servidor
-   */
-  sendBudgetByEmail(budgetData: any): Observable<any> {
-    // ✅ TODO: Implementar cuando el backend tenga disponible el endpoint POST /api/budgets/share
-    /*
-    return this.http.post(`${this.API_BASE_URL}/budgets/share`, budgetData).pipe(
-      map((response: any) => ({
-        success: true,
-        message: 'Email enviado correctamente',
-        data: response
-      })),
-      catchError((error) => {
-        console.error('Error al enviar presupuesto por email:', error);
-        return of({
-          success: false,
-          message: 'Error al enviar el email. Inténtalo de nuevo.',
-          error: error
-        });
-      })
-    );
-    */
-    
-    // Placeholder temporal
-    return of({
-      success: false,
-      message: 'Funcionalidad pendiente de implementación'
-    });
-  }
-
-  /**
-   * Descarga el presupuesto como PDF desde el backend
-   * 
-   * 📋 TODO: CONECTAR CON ENDPOINT DEL BACKEND
-   * 
-   * Endpoint esperado: POST /api/budgets/download
-   * Request body: { 
-   *   tourId: string,
-   *   periodId: string,
-   *   travelersData: object,
-   *   totalPrice: number,
-   *   userEmail: string
-   * }
-   * Response-Type: application/pdf (blob)
-   * 
-   * Implementación actual: Mock que simula la descarga de un PDF
-   * Implementación pendiente: Descomentar el código que hace la llamada real al endpoint
-   * 
-   * @param userEmail Email del usuario autenticado
-   * @returns Observable con la respuesta del servidor
-   */
-  downloadBudgetPDF(userEmail: string): Observable<any> {
-    // Validación previa de datos requeridos
-    const validation = this.validateContextData();
-    
-    if (!validation.valid) {
-      return of({ 
-        success: false, 
-        message: validation.message || 'Datos incompletos para descargar el presupuesto'
-      });
-    }
-
-    // Construcción de datos para la generación del PDF
-    const downloadData = this.buildReservationData(null);
-    
-    // ✅ TODO: Implementar cuando el backend tenga disponible el endpoint POST /api/budgets/download
-    /*
-    return this.http.post(`${this.API_BASE_URL}/budgets/download`, downloadData, { 
-      responseType: 'blob' 
-    }).pipe(
-      map((blob: Blob) => {
-        // Procesamiento del blob PDF recibido del backend
-        const fileName = `presupuesto-${this.tourId}-${Date.now()}.pdf`;
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        
-        return {
-          success: true,
-          message: 'Presupuesto descargado correctamente',
-          fileName: fileName
-        };
-      }),
-      catchError((error) => {
-        console.error('Error al descargar presupuesto PDF:', error);
-        return of({
-          success: false,
-          message: 'Error al descargar el presupuesto. Inténtalo de nuevo.',
-          error: error
-        });
-      })
-    );
-    */
-    
-    // Placeholder temporal
-    return of({
-      success: false,
-      message: 'Funcionalidad pendiente de implementación'
-    });
-  }
 
   // ============================================
   // MÉTODOS PARA OBTENER DATOS DEL TOUR
@@ -851,6 +732,177 @@ export class AdditionalInfoService {
   private getTourDuration(): string | undefined {
     // Si no hay datos reales, no devolver nada
     return undefined;
+  }
+
+  // ============================================
+  // MÉTODOS PARA MANEJAR PRESUPUESTOS CON NUEVOS ENDPOINTS
+  // ============================================
+
+  /**
+   * Envía notificación de presupuesto usando el nuevo endpoint
+   * @param reservationId ID de la reserva
+   * @param email Email del destinatario
+   * @returns Observable con la respuesta
+   */
+  sendBudgetNotification(reservationId: number, email: string): Observable<any> {
+    return this.notificationService.sendBudgetNotification(reservationId, email);
+  }
+
+  /**
+   * Obtiene o genera un documento de presupuesto
+   * @param reservationId ID de la reserva
+   * @returns Observable con el blob del documento
+   */
+  getBudgetDocument(reservationId: number): Observable<Blob> {
+    return this.documentService.getBudgetDocument(reservationId);
+  }
+
+  /**
+   * Descarga un presupuesto como PDF
+   * @param reservationId ID de la reserva
+   * @param fileName Nombre del archivo (opcional)
+   * @returns Observable con el resultado de la descarga
+   */
+  downloadBudgetPDF(reservationId: number, fileName?: string): Observable<any> {
+    return this.getBudgetDocument(reservationId).pipe(
+      map((blob: Blob) => {
+        const finalFileName = fileName || `presupuesto-${reservationId}-${new Date().toISOString().slice(0, 10)}.pdf`;
+        this.documentService.downloadDocument(blob, finalFileName);
+        
+        return {
+          success: true,
+          message: 'Presupuesto descargado correctamente',
+          fileName: finalFileName
+        };
+      }),
+      catchError((error) => {
+        console.error('Error al descargar presupuesto:', error);
+        return of({
+          success: false,
+          message: 'Error al descargar el presupuesto. Inténtalo de nuevo.',
+          error: error
+        });
+      })
+    );
+  }
+
+  /**
+   * Envía un presupuesto por email usando notificaciones
+   * @param reservationId ID de la reserva
+   * @param recipientEmail Email del destinatario
+   * @param recipientName Nombre del destinatario (opcional)
+   * @param message Mensaje personalizado (opcional)
+   * @returns Observable con la respuesta
+   */
+  sendBudgetByEmail(reservationId: number, recipientEmail: string, recipientName?: string, message?: string): Observable<any> {
+    return this.sendBudgetNotification(reservationId, recipientEmail).pipe(
+      map((response) => {
+        if (response.success) {
+          return {
+            success: true,
+            message: `Presupuesto enviado exitosamente a ${recipientEmail}`,
+            data: response
+          };
+        } else {
+          return {
+            success: false,
+            message: 'Error al enviar el presupuesto por email',
+            data: response
+          };
+        }
+      }),
+      catchError((error) => {
+        console.error('Error al enviar presupuesto por email:', error);
+        return of({
+          success: false,
+          message: 'Error al enviar el presupuesto por email. Inténtalo de nuevo.',
+          error: error
+        });
+      })
+    );
+  }
+
+  /**
+   * Procesa el envío de presupuesto con datos del formulario
+   * @param budgetData Datos del formulario de compartir
+   * @returns Observable con la respuesta
+   */
+  processBudgetShare(budgetData: any): Observable<any> {
+    const reservationId = budgetData.reservationId || this.getReservationIdFromContext();
+    
+    if (!reservationId) {
+      return of({
+        success: false,
+        message: 'No se encontró información de la reserva'
+      });
+    }
+
+    return this.sendBudgetByEmail(
+      reservationId,
+      budgetData.recipientEmail,
+      budgetData.recipientName,
+      budgetData.message
+    );
+  }
+
+  /**
+   * Procesa la descarga de presupuesto con datos del formulario
+   * @param budgetData Datos del formulario de descarga
+   * @returns Observable con la respuesta
+   */
+  processBudgetDownload(budgetData: any): Observable<any> {
+    const reservationId = budgetData.reservationId || this.getReservationIdFromContext();
+    
+    if (!reservationId) {
+      return of({
+        success: false,
+        message: 'No se encontró información de la reserva'
+      });
+    }
+
+    const fileName = budgetData.tourName ? 
+      `presupuesto-${budgetData.tourName.replace(/[^a-zA-Z0-9]/g, '_')}-${new Date().toISOString().slice(0, 10)}.pdf` :
+      undefined;
+
+    return this.downloadBudgetPDF(reservationId, fileName);
+  }
+
+  /**
+   * Obtiene el ID de reserva desde el contexto actual
+   * @returns ID de la reserva o null si no está disponible
+   */
+  private getReservationIdFromContext(): number | null {
+    // Intentar obtener el ID desde los datos del contexto
+    // Esto puede venir de existingOrder o de otros datos disponibles
+    return null; // Por ahora retornamos null, se puede implementar según la lógica específica
+  }
+
+  /**
+   * Método unificado para manejar presupuestos (crear, actualizar, descargar, compartir)
+   * @param action Acción a realizar: 'create', 'update', 'download', 'share'
+   * @param data Datos necesarios para la acción
+   * @returns Observable con la respuesta
+   */
+  handleBudgetAction(action: 'create' | 'update' | 'download' | 'share', data: any): Observable<any> {
+    switch (action) {
+      case 'create':
+        return this.createBudget();
+      
+      case 'update':
+        return this.updateExistingBudget(data.existingOrder, data.userEmail);
+      
+      case 'download':
+        return this.processBudgetDownload(data);
+      
+      case 'share':
+        return this.processBudgetShare(data);
+      
+      default:
+        return of({
+          success: false,
+          message: 'Acción no válida'
+        });
+    }
   }
 
 }

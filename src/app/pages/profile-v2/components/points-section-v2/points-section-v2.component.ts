@@ -104,9 +104,16 @@ export class PointsSectionV2Component implements OnInit {
     this.totalPoints = balance?.pointsAvailable || balance?.totalPoints || balance?.balance || 0;
 
     // Procesar transacciones
-    this.points = transactions && transactions.length > 0 
+    let mappedTransactions = transactions && transactions.length > 0 
       ? this.mapApiTransactionsToPoints(transactions) 
       : [];
+
+    // Ordenar por fecha descendente (más recientes primero)
+    this.points = mappedTransactions.sort((a, b) => {
+      const dateA = a.date ? a.date.getTime() : 0;
+      const dateB = b.date ? b.date.getTime() : 0;
+      return dateB - dateA;
+    });
 
     // Procesar historial de viajes
     this.currentTrips = travelHistory && travelHistory.length > 0 

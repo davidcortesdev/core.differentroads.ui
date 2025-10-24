@@ -1113,19 +1113,10 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   }
 
   /**
-   * ✅ Aplica el descuento de puntos
+   * Aplica el descuento de puntos
    */
   applyPointsDiscount(): void {
-    console.log('🎯 applyPointsDiscount llamado');
-    console.log('📊 Datos:', {
-      selectedBookingItem: this.selectedBookingItem,
-      pointsToUse: this.pointsToUse,
-      userId: this.userId,
-      availablePoints: this.availablePoints
-    });
-
     if (!this.selectedBookingItem || this.pointsToUse <= 0) {
-      console.log('❌ Validación inicial fallida');
       this.messageService.add({
         severity: 'error',
         summary: 'Error',
@@ -1134,13 +1125,9 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       return;
     }
 
-    // Validar límites según las reglas del documento
-    console.log('🔍 Validando uso de puntos...');
     const validation = this.validatePointsUsage();
-    console.log('   Resultado de validación:', validation);
     
     if (!validation.isValid) {
-      console.log('❌ Validación fallida:', validation.message);
       this.messageService.add({
         severity: 'error',
         summary: 'Error de validación',
@@ -1148,10 +1135,7 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       });
       return;
     }
-    
-    console.log('✅ Validación pasada, continuando...');
 
-    // Aplicar descuento usando el servicio real
     const reservationId = parseInt(this.selectedBookingItem.id, 10);
 
     if (!this.userId) {
@@ -1163,9 +1147,7 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       return;
     }
 
-    // ✅ Convertir userId a número
     const userIdNumber = parseInt(this.userId, 10);
-    console.log('📝 IDs parseados:', { reservationId, userIdNumber });
 
     if (isNaN(userIdNumber) || isNaN(reservationId)) {
       this.messageService.add({
@@ -1176,10 +1158,8 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       return;
     }
 
-    console.log('🚀 Llamando a redeemPointsForReservation...');
     this.pointsService.redeemPointsForReservation(reservationId, userIdNumber, this.pointsToUse)
       .then(result => {
-        console.log('✅ Resultado:', result);
         if (result.success) {
           this.messageService.add({
             severity: 'success',
@@ -1190,8 +1170,6 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
           // Recargar la sección de puntos en el componente padre
           if (this.parentComponent && this.parentComponent.reloadPointsSection) {
             this.parentComponent.reloadPointsSection();
-          } else {
-            console.warn('No se pudo recargar la sección de puntos (parentComponent no disponible)');
           }
           
           // Recargar datos de reservas para reflejar cambios en precio

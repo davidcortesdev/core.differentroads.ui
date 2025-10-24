@@ -39,13 +39,13 @@ export interface LoyaltyTransaction {
   createdAt: Date;
 }
 
-// ✅ Interface actualizada según esquema real del backend
+// Interface actualizada según esquema real del backend
 export interface LoyaltyBalance {
   id: number;
   userId: number;                // ID del usuario (numérico)
-  pointsAvailable: number;       // ✅ Nombre correcto del campo en el backend
-  pointsTotalEarned: number;     // ✅ Nombre correcto del campo
-  pointsTotalRedeemed: number;   // ✅ Nombre correcto del campo
+  pointsAvailable: number;       // Nombre correcto del campo en el backend
+  pointsTotalEarned: number;     // Nombre correcto del campo
+  pointsTotalRedeemed: number;   // Nombre correcto del campo
   createdAt: string;             // ISO string
   updatedAt: string;             // ISO string
 }
@@ -1352,8 +1352,7 @@ export class PointsV2Service {
     pointsToUse: number
   ): Promise<{ success: boolean; message: string }> {
     try {
-
-      // 1. Validar estado de pago
+      // Validar estado de pago
       const isPaid = await this.checkReservationPaymentStatus(reservationId);
       
       if (isPaid) {
@@ -1363,7 +1362,7 @@ export class PointsV2Service {
         };
       }
 
-      // 2. Validar saldo disponible
+      // Validar saldo disponible
       const balance = await this.getLoyaltyBalance(userId.toString());
       
       if (balance.pointsAvailable < pointsToUse) {
@@ -1373,7 +1372,7 @@ export class PointsV2Service {
         };
       }
 
-      // 3. Validar límites (máximo 50€ por reserva)
+      // Validar límites (máximo 50 euros por reserva)
       if (pointsToUse > 50) {
         return { 
           success: false, 
@@ -1381,25 +1380,25 @@ export class PointsV2Service {
         };
       }
 
-      // 4. Crear transacción de canje con esquema correcto del backend
+      // Crear transacción de canje con esquema correcto del backend
       const transaction: LoyaltyTransactionCreate = {
-        userId: userId,                              // ID numérico del usuario
-        transactionDate: new Date().toISOString(),   // Fecha actual en ISO
-        transactionTypeId: 4,                        // 4 = REDEEM_BOOKING (Canje por reserva)
-        points: -pointsToUse,                        // Negativo para restar puntos
-        amountBase: pointsToUse,                     // 1 punto = 1 euro
-        currency: 'EUR',                             // Moneda
-        referenceType: 'RESERVATION',                // Tipo de referencia
-        referenceId: reservationId.toString(),       // ID de reserva como string
-        comment: `Descuento de ${pointsToUse} puntos en reserva #${reservationId}` // Comentario
+        userId: userId,
+        transactionDate: new Date().toISOString(),
+        transactionTypeId: 4,  // REDEEM_BOOKING (Canje por reserva)
+        points: -pointsToUse,
+        amountBase: pointsToUse,
+        currency: 'EUR',
+        referenceType: 'RESERVATION',
+        referenceId: reservationId.toString(),
+        comment: `Descuento de ${pointsToUse} puntos en reserva #${reservationId}`
       };
 
       const createdTransaction = await this.createLoyaltyTransaction(transaction);
 
-      // 5. Actualizar el saldo de puntos del usuario en LoyaltyBalance
+      // Actualizar el saldo de puntos del usuario en LoyaltyBalance
       await this.updateLoyaltyBalance(userId, balance, pointsToUse);
 
-      // 6. Actualizar total de la reserva
+      // Actualizar total de la reserva
       await this.updateReservationTotalAmount(reservationId, pointsToUse);
 
       return { 
@@ -1597,17 +1596,14 @@ export class PointsV2Service {
    */
   async updateReservationTotalAmount(reservationId: number, pointsDiscount: number): Promise<void> {
     try {
-      // 1. Obtener datos actuales de la reserva
       const reservation = await this.getReservation(reservationId);
       
       if (!reservation) {
         throw new Error('No se pudo obtener los datos de la reserva');
       }
       
-      // 2. Calcular nuevo total
       const newTotalAmount = reservation.totalAmount - pointsDiscount;
       
-      // 3. Actualizar la reserva con el nuevo total
       const updateData = {
         tkId: reservation.tkId || null,
         reservationStatusId: reservation.reservationStatusId,
@@ -1616,17 +1612,14 @@ export class PointsV2Service {
         departureId: reservation.departureId,
         userId: reservation.userId,
         totalPassengers: reservation.totalPassengers,
-        totalAmount: newTotalAmount  // Nuevo total con descuento aplicado
+        totalAmount: newTotalAmount
       };
       
       const url = `${this.RESERVATIONS_API_URL}/Reservation/${reservationId}`;
-      
       await this.http.put(url, updateData).toPromise();
       
     } catch (error: any) {
       console.error('Error actualizando total de reserva:', error);
-      console.error('Status:', error?.status);
-      console.error('Error:', error?.error);
       throw error;
     }
   }

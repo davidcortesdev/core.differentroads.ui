@@ -50,6 +50,9 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
   isDownloadMode: boolean = false;
   isShareMode: boolean = false;
 
+  // ID de la reserva generada para evitar crear múltiples reservas
+  private generatedReservationId: number | null = null;
+
   // Configuración de diálogos
   dialogBreakpoints = { '1199px': '80vw', '575px': '90vw' };
   dialogStyle = { width: '50vw' };
@@ -169,6 +172,16 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
     this.subscription.unsubscribe();
     // Limpiar datos del contexto
     this.additionalInfoService.clearContextData();
+    // Limpiar ID de reserva generada
+    this.generatedReservationId = null;
+  }
+
+  /**
+   * Limpia el ID de la reserva generada
+   * Útil cuando el usuario cambia de tour o quiere empezar de nuevo
+   */
+  clearGeneratedReservationId(): void {
+    this.generatedReservationId = null;
   }
 
   /**
@@ -692,8 +705,12 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
       return typeof id === 'string' ? parseInt(id, 10) : id;
     }
 
+    // Si hay una reserva generada previamente, usar esa
+    if (this.generatedReservationId) {
+      return this.generatedReservationId;
+    }
+
     // En modo creación, no tenemos ID de reserva aún
-    // Se podría implementar lógica adicional según sea necesario
     return null;
   }
 
@@ -706,9 +723,12 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
     
     this.additionalInfoService.createBudget().subscribe({
       next: (createdReservation) => {
-        // Una vez creada la reserva, proceder con la descarga
+        // Una vez creada la reserva, guardar el ID y proceder con la descarga
         const reservationId = createdReservation.id || createdReservation.ID;
         if (reservationId) {
+          // Guardar el ID de la reserva generada para futuras operaciones
+          this.generatedReservationId = reservationId;
+          
           this.additionalInfoService.downloadBudgetPDF(reservationId).subscribe({
             next: (response) => {
               this.loading = false;
@@ -748,9 +768,12 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
     
     this.additionalInfoService.createBudget().subscribe({
       next: (createdReservation) => {
-        // Una vez creada la reserva, proceder con compartir
+        // Una vez creada la reserva, guardar el ID y proceder con compartir
         const reservationId = createdReservation.id || createdReservation.ID;
         if (reservationId) {
+          // Guardar el ID de la reserva generada para futuras operaciones
+          this.generatedReservationId = reservationId;
+          
           this.additionalInfoService.sendBudgetByEmail(
             reservationId,
             formData.recipientEmail,
@@ -796,9 +819,12 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
     
     this.additionalInfoService.createBudget().subscribe({
       next: (createdReservation) => {
-        // Una vez creada la reserva, proceder con la descarga
+        // Una vez creada la reserva, guardar el ID y proceder con la descarga
         const reservationId = createdReservation.id || createdReservation.ID;
         if (reservationId) {
+          // Guardar el ID de la reserva generada para futuras operaciones
+          this.generatedReservationId = reservationId;
+          
           this.additionalInfoService.downloadBudgetPDF(reservationId).subscribe({
             next: (response) => {
               this.loading = false;

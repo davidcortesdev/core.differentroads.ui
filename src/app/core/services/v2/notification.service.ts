@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 
 export interface NotificationRequest {
@@ -9,9 +10,15 @@ export interface NotificationRequest {
   email: string;
 }
 
+export interface NotificationProcessResponse {
+  jobId: string;
+  message: string;
+}
+
 export interface NotificationResponse {
   success: boolean;
-  message?: string;
+  message: string;
+  jobId?: string;
   notificationId?: string;
 }
 
@@ -36,7 +43,18 @@ export class NotificationService {
       'Content-Type': 'application/json'
     });
 
-    return this.http.post<NotificationResponse>(url, notificationData, { headers });
+    return this.http.post<NotificationProcessResponse>(url, notificationData, { headers }).pipe(
+      map(response => {
+        // El endpoint devuelve { jobId: string, message: string }
+        // Transformar a la interfaz NotificationResponse
+        return {
+          success: true, // Si llegamos aquí, la petición fue exitosa
+          message: response.message,
+          jobId: response.jobId,
+          notificationId: response.jobId // Usar jobId como notificationId
+        };
+      })
+    );
   }
 
   /**

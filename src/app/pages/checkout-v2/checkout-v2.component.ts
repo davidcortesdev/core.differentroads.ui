@@ -648,19 +648,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
-   * Manejar cambios en asignaciones de habitaciones
-   */
-  onRoomAssignmentsChange(roomAssignments: {
-    [travelerId: number]: number;
-  }): void {
-    // Forzar detección de cambios
-    this.cdr.detectChanges();
-
-    // Disparar actualización del summary inmediatamente
-    this.triggerSummaryRefresh();
-  }
-
-  /**
    * Actualiza el conteo de actividades por actividad
    */
   private updateActivitiesByTraveler(

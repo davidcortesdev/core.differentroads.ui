@@ -4,10 +4,9 @@
     <div class="payment-column-left">
       <p-panel header="Resumen del viaje">
         <app-summary-table
-          [summary]="tripItems"
-          [descriptionField]="'description'"
-          [qtyField]="'quantity'"
-          [valueField]="'unitPrice'"
+          [reservationId]="bookingID"
+          [refreshTrigger]="refreshTrigger"
+          [isAuthenticated]="false"
           [showPointsSection]="false"
           [showTotalSection]="false"
           [showFlightSection]="false"

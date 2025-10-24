@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { MessageService } from 'primeng/api';
 import { catchError, of, forkJoin, firstValueFrom, map } from 'rxjs';
@@ -68,6 +68,7 @@ interface ActivityWithPrice extends IActivityResponse {
 export class BookingActivitiesV2Component implements OnInit {
   @Input() periodId!: string;
   @Input() reservationId!: number;
+  @Output() dataUpdated = new EventEmitter<void>();
 
   // Estado del componente
   availableActivities: ActivityWithPrice[] = [];
@@ -348,12 +349,12 @@ export class BookingActivitiesV2Component implements OnInit {
         const ageGroup = this.getAgeGroupName(traveler.ageGroupId);
         const price = this.getPriceForTraveler(activity, ageGroup);
 
-          return {
+        return {
           id: traveler.id,
-            selected: true,
-            ageGroup,
-            price,
-          };
+          selected: false, // Inicializar como NO seleccionado
+          ageGroup,
+          price,
+        };
       });
     }
   }
@@ -380,19 +381,51 @@ export class BookingActivitiesV2Component implements OnInit {
 
     this.isLoading = true;
 
-    // Aquí implementarías la lógica para guardar las actividades seleccionadas
-    // Por ahora solo simulamos el guardado
-    setTimeout(() => {
-      this.isLoading = false;
-      activity.showPassengers = false;
-      activity.isIncluded = true;
-      
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Éxito',
-        detail: 'Actividades guardadas correctamente',
+    // Guardar las actividades para los viajeros seleccionados
+    const savePromises = selectedTravelers.map((traveler) => {
+      if (activity.type === 'act') {
+        const createData = {
+          id: 0,
+          reservationTravelerId: traveler.id,
+          activityId: activityId
+        };
+        return firstValueFrom(this.reservationTravelerActivityService.create(createData));
+      } else if (activity.type === 'pack') {
+        const createData = {
+          id: 0,
+          reservationTravelerId: traveler.id,
+          activityPackId: activityId
+        };
+        return firstValueFrom(this.reservationTravelerActivityPackService.create(createData));
+      }
+      return Promise.resolve(null);
+    });
+
+    Promise.all(savePromises)
+      .then(() => {
+        this.isLoading = false;
+        activity.showPassengers = false;
+        activity.addedManually = false;
+        
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Éxito',
+          detail: `Actividad "${activity.name}" agregada correctamente a ${selectedTravelers.length} viajero(s)`,
+          life: 3000,
+        });
+        
+        // Emitir evento al componente padre
+        this.emitDataUpdated();
+      })
+      .catch((error) => {
+        this.isLoading = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudieron guardar las actividades',
+          life: 3000,
+        });
       });
-    }, 1000);
   }
 
   getTravelerNameById(travelerId: number): string {
@@ -498,7 +531,7 @@ export class BookingActivitiesV2Component implements OnInit {
             detail: `La actividad "${activity.name}" ha sido agregada correctamente`,
             life: 3000,
           });
-          this.reloadParentComponent();
+          this.emitDataUpdated();
       },
       error: (error) => {
         this.messageService.add({
@@ -526,7 +559,7 @@ export class BookingActivitiesV2Component implements OnInit {
             detail: `El paquete "${activity.name}" ha sido agregado correctamente`,
             life: 3000,
           });
-          this.reloadParentComponent();
+          this.emitDataUpdated();
         },
         error: (error) => {
           this.messageService.add({
@@ -562,7 +595,7 @@ export class BookingActivitiesV2Component implements OnInit {
               detail: `La actividad "${activity.name}" ha sido removida correctamente`,
               life: 3000,
             });
-            this.reloadParentComponent();
+            this.emitDataUpdated();
           },
           error: (error) => {
             this.messageService.add({
@@ -589,7 +622,7 @@ export class BookingActivitiesV2Component implements OnInit {
               detail: `El paquete "${activity.name}" ha sido removido correctamente`,
               life: 3000,
             });
-            this.reloadParentComponent();
+            this.emitDataUpdated();
           },
           error: (error) => {
             this.messageService.add({
@@ -655,7 +688,7 @@ export class BookingActivitiesV2Component implements OnInit {
                 detail: `La actividad "${activity.name}" ha sido agregada correctamente`,
                 life: 3000,
               });
-              this.reloadParentComponent();
+              this.emitDataUpdated();
             })
             .catch((error) => {
               this.messageService.add({
@@ -754,7 +787,7 @@ export class BookingActivitiesV2Component implements OnInit {
                 detail: `La actividad "${activity.name}" ha sido removida correctamente`,
                 life: 3000,
               });
-              this.reloadParentComponent();
+              this.emitDataUpdated();
             })
             .catch((error) => {
               this.messageService.add({
@@ -777,13 +810,32 @@ export class BookingActivitiesV2Component implements OnInit {
   }
 
   /**
-   * Recarga la página completa
+   * Emite evento al componente padre indicando que los datos han sido actualizados
    */
-  private reloadParentComponent(): void {
-    
-    // Recargar la página completa para asegurar que todos los datos estén actualizados
-    window.location.reload();
+  private emitDataUpdated(): void {
+    this.dataUpdated.emit();
+    // Recargar los datos del componente para actualizar el estado
+    this.reloadComponentData();
   }
+
+  /**
+   * Recarga los datos del componente para actualizar el estado
+   */
+  private reloadComponentData(): void {
+    // Resetear el estado de carga de actividades por viajero
+    this.activitiesByTravelerLoaded = false;
+    
+    // Limpiar datos existentes
+    this.travelerActivities = {};
+    this.travelerActivityPacks = {};
+    this.travelerNames = {};
+    
+    // Recargar actividades por viajero
+    if (this.reservationId) {
+      this.loadActivitiesByTraveler();
+    }
+  }
+
 
   /**
    * Determina si se debe mostrar el precio de la actividad

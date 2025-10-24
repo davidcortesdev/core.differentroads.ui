@@ -165,6 +165,13 @@
         <span class="points-value">{{ availablePoints }}</span>
       </div>
       
+      <p-message severity="info" styleClass="w-full membership-message">
+        <ng-template pTemplate="messageicon">
+          <i class="pi pi-star-fill"></i>
+        </ng-template>
+        <span><strong>{{ getCategoryDisplayName() }}</strong> - Límite por reserva: <strong>{{ maxPointsForCategory }} puntos</strong></span>
+      </p-message>
+      
       <div class="points-input">
         <label for="pointsToUse">Puntos a Descontar:</label>
         <p-inputNumber 
@@ -176,7 +183,7 @@
           placeholder="Ingresa los puntos a descontar"
           styleClass="w-full">
         </p-inputNumber>
-        <small class="text-muted">Máximo: {{ availablePoints }} puntos</small>
+        <small class="text-muted">Máximo disponible: {{ availablePoints }} puntos</small>
       </div>
       
       <div class="discount-calculation" *ngIf="pointsToUse > 0">

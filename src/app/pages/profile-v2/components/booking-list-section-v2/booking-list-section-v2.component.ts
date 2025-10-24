@@ -1125,6 +1125,10 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
    * Calcula el precio final después del descuento
    * @returns Precio final
    */
+  getCategoryDisplayName(): string {
+    return this.pointsService.getCategoryDisplayName(this.userCategory);
+  }
+
   getFinalPrice(): number {
     if (!this.selectedBookingItem || this.pointsToUse <= 0) {
       return this.selectedBookingItem?.price || 0;

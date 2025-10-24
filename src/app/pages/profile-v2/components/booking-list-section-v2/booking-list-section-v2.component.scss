@@ -406,14 +406,17 @@ $orange-red: #f66b5b;
             label {
                 color: var(--p-green-700);
                 font-weight: var(--p-font-weight-semibold);
-                font-size: var(--p-font-size);
             }
             
             .points-value {
-                font-size: 1.25rem !important;
-                font-weight: var(--p-font-weight-bold);
+                font-size: 1.25rem;
+                font-weight: bold;
                 color: var(--p-green-600);
             }
+        }
+
+        ::ng-deep .membership-message {
+            margin-bottom: 1.25rem;
         }
         
         .points-input {

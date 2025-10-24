@@ -416,9 +416,6 @@ export class BookingActivitiesV2Component implements OnInit {
         
         // Emitir evento al componente padre
         this.emitDataUpdated();
-        
-        // Recargar la página para actualizar los datos
-        this.reloadParentComponent();
       })
       .catch((error) => {
         this.isLoading = false;
@@ -535,7 +532,6 @@ export class BookingActivitiesV2Component implements OnInit {
             life: 3000,
           });
           this.emitDataUpdated();
-          this.reloadParentComponent();
       },
       error: (error) => {
         this.messageService.add({
@@ -564,7 +560,6 @@ export class BookingActivitiesV2Component implements OnInit {
             life: 3000,
           });
           this.emitDataUpdated();
-          this.reloadParentComponent();
         },
         error: (error) => {
           this.messageService.add({
@@ -601,7 +596,6 @@ export class BookingActivitiesV2Component implements OnInit {
               life: 3000,
             });
             this.emitDataUpdated();
-            this.reloadParentComponent();
           },
           error: (error) => {
             this.messageService.add({
@@ -629,7 +623,6 @@ export class BookingActivitiesV2Component implements OnInit {
               life: 3000,
             });
             this.emitDataUpdated();
-            this.reloadParentComponent();
           },
           error: (error) => {
             this.messageService.add({
@@ -696,7 +689,6 @@ export class BookingActivitiesV2Component implements OnInit {
                 life: 3000,
               });
               this.emitDataUpdated();
-              this.reloadParentComponent();
             })
             .catch((error) => {
               this.messageService.add({
@@ -796,7 +788,6 @@ export class BookingActivitiesV2Component implements OnInit {
                 life: 3000,
               });
               this.emitDataUpdated();
-              this.reloadParentComponent();
             })
             .catch((error) => {
               this.messageService.add({
@@ -823,16 +814,28 @@ export class BookingActivitiesV2Component implements OnInit {
    */
   private emitDataUpdated(): void {
     this.dataUpdated.emit();
+    // Recargar los datos del componente para actualizar el estado
+    this.reloadComponentData();
   }
 
   /**
-   * Recarga la página completa
+   * Recarga los datos del componente para actualizar el estado
    */
-  private reloadParentComponent(): void {
+  private reloadComponentData(): void {
+    // Resetear el estado de carga de actividades por viajero
+    this.activitiesByTravelerLoaded = false;
     
-    // Recargar la página completa para asegurar que todos los datos estén actualizados
-    window.location.reload();
+    // Limpiar datos existentes
+    this.travelerActivities = {};
+    this.travelerActivityPacks = {};
+    this.travelerNames = {};
+    
+    // Recargar actividades por viajero
+    if (this.reservationId) {
+      this.loadActivitiesByTraveler();
+    }
   }
+
 
   /**
    * Determina si se debe mostrar el precio de la actividad

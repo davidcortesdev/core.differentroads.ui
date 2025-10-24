@@ -146,7 +146,7 @@ export class PointsSectionV2Component implements OnInit {
         concept: transaction.comment || transaction.concept || transaction.description || 'Sin concepto',
         tour: transaction.tourName || transaction.tour || transaction.comment || 'Tour no especificado',
         points: Math.abs(transaction.points || 0),
-        type: isEarned ? 'Acumular' : 'Canjear',
+        type: isEarned ? 'acumular' : 'canjear',
         amount: transaction.amountBase || transaction.amount || 0,
         date: new Date(transaction.transactionDate || transaction.date || transaction.createdAt),
         status: transaction.status || 'Confirmed'

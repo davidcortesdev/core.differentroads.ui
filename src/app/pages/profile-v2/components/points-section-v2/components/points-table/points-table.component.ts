@@ -21,8 +21,4 @@ export class PointsTableComponent implements OnInit {
   getFormattedPoints(point: PointsRecord): string {
     return this.pointsService.getFormattedPoints(point);
   }
-
-  getPointsClass(type: string): string {
-    return this.pointsService.getPointsClass(type);
-  }
 }

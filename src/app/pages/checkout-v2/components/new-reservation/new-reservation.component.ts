@@ -807,6 +807,9 @@ export class NewReservationComponent implements OnInit {
       }
 
       // 4. Crear transacción de acumulación de puntos
+      // TODO: Actualizar a nuevo esquema del backend cuando tengamos el userId numérico
+      // Por ahora comentado para evitar errores de compilación
+      /* 
       const transaction = {
         travelerId: cognitoSub,
         points: pointsToGenerate,
@@ -817,6 +820,9 @@ export class NewReservationComponent implements OnInit {
       };
 
       await this.pointsService.createLoyaltyTransaction(transaction);
+      */
+      
+      console.log('⚠️ Acumulación de puntos temporalmente deshabilitada - pendiente de actualizar a nuevo esquema');
 
       // 5. Mostrar mensaje al usuario
       this.messageService.add({

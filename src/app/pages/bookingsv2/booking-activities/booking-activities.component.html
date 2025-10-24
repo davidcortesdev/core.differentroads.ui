@@ -26,10 +26,7 @@
                 ></div>
                 <div class="activity-actions">
                   <button
-                    *ngIf="
-                      !activity.showPassengers &&
-                      !activity.isIncluded
-                    "
+                    *ngIf="!hasAnyTravelerWithActivity(activity.id)"
                     pButton
                     type="button"
                     label="Añadir"
@@ -37,15 +34,12 @@
                     (click)="toggleAddActivity(activity.id)"
                   ></button>
                   <button
-                    *ngIf="
-                      activity.showPassengers || activity.isIncluded
-                    "
+                    *ngIf="hasAnyTravelerWithActivity(activity.id)"
                     pButton
                     type="button"
                     label="Añadida"
                     class="p-button-rounded p-button-outlined"
                     (click)="toggleAddActivity(activity.id)"
-                    [disabled]="!activity.addedManually"
                   ></button>
                 </div>
                 
@@ -84,42 +78,29 @@
                 </div>
 
                 <!-- Sección para mostrar viajeros y sus actividades -->
-                <div *ngIf="!activity.showPassengers && hasAnyTravelerWithActivity(activity.id)" class="traveler-activities">
+                <div *ngIf="hasAnyTravelerWithActivity(activity.id)" class="traveler-activities">
                   <h4>Viajeros:</h4>
                   <div class="activities-list">
                     <ng-container *ngFor="let traveler of travelers">
-                      <div *ngIf="hasTravelerActivity(traveler.id, activity.id)" class="traveler-section">
-                      <div class="traveler-item" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee;">
-                        <div class="traveler-info">
-                          <span>{{ getTravelerNameById(traveler.id) }}</span>
-                          <span class="activity-status" style="margin-left: 10px; color: #28a745; font-size: 0.9em;">
-                            ✓ Actividad seleccionada
-                          </span>
+                      <div class="traveler-section">
+                        <div class="traveler-item" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee;">
+                          <div class="traveler-info">
+                            <span>{{ getTravelerNameById(traveler.id) }}</span>
+                            <span *ngIf="hasTravelerActivity(traveler.id, activity.id)" class="activity-status" style="margin-left: 10px; color: #28a745; font-size: 0.9em;">
+                              ✓ Actividad seleccionada
+                            </span>
+                            <span *ngIf="!hasTravelerActivity(traveler.id, activity.id)" class="activity-status" style="margin-left: 10px; color: #666; font-size: 0.9em;">
+                              - Sin actividad
+                            </span>
+                          </div>
+                          <div class="traveler-actions">
+                            <p-toggleSwitch 
+                              [ngModel]="hasTravelerActivity(traveler.id, activity.id)"
+                              (ngModelChange)="onActivityToggleChange(traveler.id, activity.id, $event)"
+                              [ngModelOptions]="{standalone: true}">
+                            </p-toggleSwitch>
+                          </div>
                         </div>
-                        <div class="traveler-actions">
-                          <!-- Actividades individuales asignadas -->
-                          <ng-container *ngFor="let travelerActivity of (travelerActivities[traveler.id] || [])">
-                            <div *ngIf="travelerActivity.activityId === activity.id">
-                              <p-toggleSwitch 
-                                [ngModel]="true"
-                                (ngModelChange)="onActivityToggleChange(traveler.id, travelerActivity.activityId, $event)"
-                                [ngModelOptions]="{standalone: true}">
-                              </p-toggleSwitch>
-                            </div>
-                          </ng-container>
-                          
-                          <!-- Paquetes de actividades asignados -->
-                          <ng-container *ngFor="let travelerActivityPack of (travelerActivityPacks[traveler.id] || [])">
-                            <div *ngIf="travelerActivityPack.activityPackId === activity.id">
-                              <p-toggleSwitch 
-                                [ngModel]="true"
-                                (ngModelChange)="onActivityToggleChange(traveler.id, travelerActivityPack.activityPackId, $event)"
-                                [ngModelOptions]="{standalone: true}">
-                              </p-toggleSwitch>
-                            </div>
-                          </ng-container>
-                        </div>
-                      </div>
                       </div>
                     </ng-container>
                   </div>

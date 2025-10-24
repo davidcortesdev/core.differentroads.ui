@@ -349,3 +349,67 @@
     }
   }
 }
+
+.traveler-activities {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+
+  h4 {
+    margin: 0 0 1rem 0;
+    color: var(--background-azul);
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .activities-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .traveler-section {
+    .traveler-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .traveler-info {
+        display: flex;
+        align-items: center;
+        flex: 1;
+
+        span:first-child {
+          font-weight: 500;
+          color: var(--background-azul);
+        }
+
+        .activity-status {
+          margin-left: 10px;
+          font-size: 0.9em;
+          
+          &.selected {
+            color: #28a745;
+          }
+          
+          &.not-selected {
+            color: #666;
+          }
+        }
+      }
+
+      .traveler-actions {
+        display: flex;
+        align-items: center;
+      }
+    }
+  }
+}

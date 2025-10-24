@@ -144,7 +144,7 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       }, delayMs);
     } else {
       // Se alcanzó el máximo de intentos, mostrar error
-      console.error('❌ No se pudo obtener el email del usuario después de', maxAttempts, 'intentos');
+      console.error('No se pudo obtener el email del usuario después de', maxAttempts, 'intentos');
       this.messageService.add({
         severity: 'error',
         summary: 'Error',
@@ -159,7 +159,6 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
    * Carga las reservas activas una vez que el email está disponible
    */
   private loadActiveBookingsWithEmail(userId: number, userEmail: string): void {
-    console.log('🔍 DEBUG: loadActiveBookingsWithEmail llamado con userId:', userId, 'email:', userEmail);
     
     // Combinar reservas del usuario como titular + reservas donde aparece como viajero
     forkJoin({
@@ -169,24 +168,17 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
     })
       .pipe(
         switchMap(({ userReservations, travelerReservations }) => {
-          console.log('📊 DEBUG: Reservas como titular:', userReservations.length);
-          console.log('📊 DEBUG: Reservas como viajero:', travelerReservations.length);
-          
           // Combinar y eliminar duplicados basándose en el ID de reserva
           const allReservations = [
             ...userReservations,
             ...travelerReservations,
           ];
-          
-          console.log('📊 DEBUG: Total combinado:', allReservations.length);
-          
+                    
           const uniqueReservations = allReservations.filter(
             (reservation, index, self) =>
               index === self.findIndex((r) => r.id === reservation.id)
           );
           
-          console.log('📊 DEBUG: Después de eliminar duplicados:', uniqueReservations.length);
-
           if (uniqueReservations.length === 0) {
             return of([]);
           }
@@ -708,13 +700,10 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   loadDocumentsForReservation(reservationId: string): void {
     this.documentsLoading[reservationId] = true;
 
-    console.log('🔍 DEBUG: Loading documents for reservation:', reservationId);
-
     this.documentationService
       .getDocumentsByReservationId(parseInt(reservationId, 10))
       .subscribe({
         next: (documents: IDocumentReservationResponse[]) => {
-          console.log('🔍 DEBUG: Documents loaded successfully:', documents);
           this.documents[reservationId] = documents;
           this.documentsLoading[reservationId] = false;
         },
@@ -751,10 +740,7 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       .getNotificationsByReservationId(parseInt(reservationId, 10))
       .subscribe({
         next: (notifications: INotification[]) => {
-          console.log(
-            '🔍 DEBUG: Notifications loaded successfully:',
-            notifications
-          );
+
           this.notifications[reservationId] = notifications;
           this.notificationsLoading[reservationId] = false;
         },
@@ -916,17 +902,15 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
    * @param reservationId - ID de la reserva para probar
    */
   testServices(reservationId: string = '847'): void {
-    console.log('🧪 TEST: Testing services for reservation:', reservationId);
-
     // Probar servicio de notificaciones
     this.notificationService
       .getNotificationsByReservationId(parseInt(reservationId, 10))
       .subscribe({
         next: (notifications) => {
-          console.log('✅ TEST: Notifications service working:', notifications);
+          console.log('TEST: Notifications service working:', notifications);
         },
         error: (error) => {
-          console.error('❌ TEST: Notifications service error:', error);
+          console.error('TEST: Notifications service error:', error);
         },
       });
 
@@ -935,10 +919,10 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       .getDocumentsByReservationId(parseInt(reservationId, 10))
       .subscribe({
         next: (documents) => {
-          console.log('✅ TEST: Documentation service working:', documents);
+          console.log('TEST: Documentation service working:', documents);
         },
         error: (error) => {
-          console.error('❌ TEST: Documentation service error:', error);
+          console.error('TEST: Documentation service error:', error);
         },
       });
   }
@@ -948,7 +932,6 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
    * @param reservationId - ID de la reserva
    */
   testLoadData(reservationId: string = '847'): void {
-    console.log('🧪 TEST: Testing data load for reservation:', reservationId);
     this.loadDocumentsForReservation(reservationId);
     this.loadNotificationsForReservation(reservationId);
   }
@@ -958,14 +941,9 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
    * @param reservationId - ID de la reserva
    */
   testDirectHttpCall(reservationId: string = '847'): void {
-    console.log(
-      '🧪 TEST: Testing direct HTTP call with fetch for reservation:',
-      reservationId
-    );
+
 
     const url = `https://documentation-dev.differentroads.es/api/Notification/by-reservation/${reservationId}`;
-
-    console.log('🧪 TEST: Making direct HTTP call to:', url);
 
     fetch(url, {
       method: 'GET',
@@ -975,8 +953,6 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       },
     })
       .then((response) => {
-        console.log('🧪 TEST: Fetch response status:', response.status);
-        console.log('🧪 TEST: Fetch response headers:', response.headers);
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -984,12 +960,6 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
 
         return response.json();
       })
-      .then((data) => {
-        console.log('✅ TEST: Direct fetch call successful:', data);
-      })
-      .catch((error) => {
-        console.error('❌ TEST: Direct fetch call failed:', error);
-      });
   }
 
   // ===== MÉTODOS PARA DESCUENTO DE PUNTOS =====
@@ -1042,7 +1012,7 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
         this.loadingUserData = false;
       },
       error: (error: any) => {
-        console.error('❌ Error cargando saldo de puntos:', error);
+        console.error('Error cargando saldo de puntos:', error);
         this.availablePoints = 0;
         this.loadingUserData = false;
         this.messageService.add({

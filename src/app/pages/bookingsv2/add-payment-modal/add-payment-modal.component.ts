@@ -148,15 +148,30 @@ export class AddPaymentModalComponent implements OnInit {
           await this.processScalapayPayment();
           break;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error procesando pago:', error);
       this.processingPayment = false;
       
+      let errorMessage = 'Ha ocurrido un error al procesar el pago. Por favor, inténtelo nuevamente.';
+      
+      // Proporcionar mensajes más específicos según el tipo de error
+      if (error?.status === 500) {
+        errorMessage = 'Error del servidor de pagos. Por favor, contacte con soporte.';
+      } else if (error?.status === 400) {
+        errorMessage = 'Los datos del pago no son válidos. Verifique la información e intente nuevamente.';
+      } else if (error?.status === 404) {
+        errorMessage = 'No se encontró la reserva. Por favor, recargue la página e intente nuevamente.';
+      } else if (error?.error?.message) {
+        errorMessage = error.error.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
       this.messageService.add({
         severity: 'error',
-        summary: 'Error',
-        detail: 'Ha ocurrido un error al procesar el pago. Por favor, inténtelo nuevamente.',
-        life: 5000,
+        summary: 'Error al procesar el pago',
+        detail: errorMessage,
+        life: 7000,
       });
     }
   }
@@ -264,17 +279,38 @@ export class AddPaymentModalComponent implements OnInit {
       // Obtener URL base
       const baseUrl = (window.location.href).replace(this.router.url, '');
 
+      console.log('🔵 Scalapay - Iniciando proceso de pago:', {
+        reservationId: this.reservationId,
+        amount: this.customPaymentAmount,
+        baseUrl: baseUrl
+      });
+
       // Crear orden en Scalapay
       const response = await this.scalapayService.createOrder(this.reservationId, baseUrl).toPromise();
 
+      console.log('✅ Scalapay - Respuesta recibida:', response);
+
       if (response?.checkoutUrl) {
+        console.log('🔗 Scalapay - Redirigiendo a:', response.checkoutUrl);
         // Redirigir a Scalapay para completar el pago
         window.location.href = response.checkoutUrl;
       } else {
         throw new Error('No se pudo obtener la URL de checkout de Scalapay');
       }
-    } catch (error) {
-      console.error('Error procesando pago con Scalapay:', error);
+    } catch (error: any) {
+      console.error('❌ Scalapay - Error completo:', {
+        error: error,
+        status: error?.status,
+        statusText: error?.statusText,
+        message: error?.message,
+        errorDetails: error?.error
+      });
+      
+      // Si es error 500, agregar más contexto
+      if (error?.status === 500) {
+        throw new Error('El servicio de Scalapay no está disponible temporalmente. Por favor, intente con otro método de pago o contacte con soporte.');
+      }
+      
       throw error;
     }
   }

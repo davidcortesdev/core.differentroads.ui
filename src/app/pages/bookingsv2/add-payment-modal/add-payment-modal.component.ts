@@ -1,4 +1,12 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { MessageService } from 'primeng/api';
+import { NewScalapayService } from '../../checkout-v2/services/newScalapay.service';
+import { PaymentsNetService } from '../../checkout-v2/services/paymentsNet.service';
+import { PaymentStatusNetService } from '../../checkout-v2/services/paymentStatusNet.service';
+import { PaymentMethodNetService } from '../../checkout-v2/services/paymentMethodNet.service';
+import { NewRedsysService, IFormData } from '../../checkout-v2/services/newRedsys.service';
+import { CurrencyService } from '../../../core/services/masterdata/currency.service';
 
 export interface PaymentInfo {
   totalPrice: number;
@@ -17,7 +25,7 @@ export interface PaymentData {
   styleUrls: ['./add-payment-modal.component.scss'],
   standalone: false,
 })
-export class AddPaymentModalComponent {
+export class AddPaymentModalComponent implements OnInit {
   @Input() visible: boolean = false;
   @Input() paymentInfo: PaymentInfo = { totalPrice: 0, pendingAmount: 0, paidAmount: 0 };
   @Input() reservationId: number = 0;
@@ -31,7 +39,54 @@ export class AddPaymentModalComponent {
   paymentAmountError: string = '';
   processingPayment: boolean = false;
 
-  constructor() {}
+  // Payment IDs
+  transferMethodId: number = 0;
+  redsysMethodId: number = 0;
+  pendingStatusId: number = 0;
+
+  constructor(
+    private readonly router: Router,
+    private readonly messageService: MessageService,
+    private readonly scalapayService: NewScalapayService,
+    private readonly paymentsService: PaymentsNetService,
+    private readonly paymentStatusService: PaymentStatusNetService,
+    private readonly paymentMethodService: PaymentMethodNetService,
+    private readonly redsysService: NewRedsysService,
+    private readonly currencyService: CurrencyService
+  ) {}
+
+  ngOnInit(): void {
+    this.loadPaymentIds();
+  }
+
+  private loadPaymentIds(): void {
+    this.paymentMethodService.getPaymentMethodByCode('TRANSFER').subscribe({
+      next: (methods: any) => {
+        if (methods && methods.length > 0) {
+          this.transferMethodId = methods[0].id;
+        }
+      },
+      error: (error: any) => console.error('Error loading transfer method:', error)
+    });
+
+    this.paymentMethodService.getPaymentMethodByCode('REDSYS').subscribe({
+      next: (methods: any) => {
+        if (methods && methods.length > 0) {
+          this.redsysMethodId = methods[0].id;
+        }
+      },
+      error: (error: any) => console.error('Error loading redsys method:', error)
+    });
+
+    this.paymentStatusService.getPaymentStatusByCode('PENDING').subscribe({
+      next: (statuses: any) => {
+        if (statuses && statuses.length > 0) {
+          this.pendingStatusId = statuses[0].id;
+        }
+      },
+      error: (error: any) => console.error('Error loading pending status:', error)
+    });
+  }
 
   closeDialog(): void {
     this.visible = false;
@@ -74,84 +129,154 @@ export class AddPaymentModalComponent {
     );
   }
 
-  processCustomPayment(): void {
+  async processCustomPayment(): Promise<void> {
     if (!this.isPaymentFormValid()) {
       return;
     }
 
     this.processingPayment = true;
 
-    console.log('Procesando pago:', {
-      amount: this.customPaymentAmount,
-      method: this.selectedPaymentMethod,
-      reservationId: this.reservationId
-    });
-
-    // Simular proceso de pago
-    setTimeout(() => {
+    try {
       switch (this.selectedPaymentMethod) {
         case 'card':
-          this.processCardPayment();
+          await this.processCardPayment();
           break;
         case 'transfer':
-          this.processTransferBankPayment();
+          await this.processTransferBankPayment();
           break;
         case 'scalapay':
-          this.processScalapayPayment();
+          await this.processScalapayPayment();
           break;
       }
-    }, 500);
+    } catch (error) {
+      console.error('Error procesando pago:', error);
+      this.processingPayment = false;
+      
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Ha ocurrido un error al procesar el pago. Por favor, inténtelo nuevamente.',
+        life: 5000,
+      });
+    }
   }
 
-  private processCardPayment(): void {
-    console.log('Procesando pago con tarjeta (Redsys):', this.customPaymentAmount);
-    
-    // TODO: Implementar integración real con Redsys
-    // Similar a processCreditCardPayment del checkout
-    
-    // Por ahora, emitir evento
-    this.processingPayment = false;
-    this.paymentProcessed.emit({
-      amount: this.customPaymentAmount,
-      method: 'card'
-    });
-    this.closeDialog();
-    
-    alert(`Pago con tarjeta de ${this.formatCurrency(this.customPaymentAmount)} procesado (simulado)`);
+  private async processCardPayment(): Promise<void> {
+    try {
+      const currencyId = await this.currencyService.getCurrencyIdByCode('EUR').toPromise();
+
+      if (!currencyId) {
+        throw new Error('No se pudo obtener el ID de la moneda EUR');
+      }
+
+      // Crear el pago en la base de datos
+      const response = await this.paymentsService.create({
+        reservationId: this.reservationId,
+        amount: this.customPaymentAmount,
+        paymentDate: new Date(),
+        paymentMethodId: this.redsysMethodId,
+        paymentStatusId: this.pendingStatusId,
+        currencyId: currencyId
+      }).toPromise();
+
+      if (!response) {
+        throw new Error('Error al crear el pago');
+      }
+
+      // Generar los datos del formulario para Redsys
+      const formData: IFormData | undefined = await this.redsysService.generateFormData(
+        response.id, 
+        "https://www.differentroads.es/"
+      ).toPromise();
+      
+      if (formData) {
+        // Enviar el formulario a Redsys
+        await this.enviarFormARedsys(formData);
+      } else {
+        throw new Error('No se pudieron generar los datos del formulario de Redsys');
+      }
+    } catch (error) {
+      console.error('Error procesando pago con tarjeta:', error);
+      throw error;
+    }
   }
 
-  private processTransferBankPayment(): void {
-    console.log('Procesando pago por transferencia bancaria:', this.customPaymentAmount);
-    
-    // TODO: Implementar lógica de transferencia con upload de justificante
-    // Similar a processTransferPayment del checkout
-    
-    // Por ahora, emitir evento
-    this.processingPayment = false;
-    this.paymentProcessed.emit({
-      amount: this.customPaymentAmount,
-      method: 'transfer'
-    });
-    this.closeDialog();
-    
-    alert(`Pago por transferencia de ${this.formatCurrency(this.customPaymentAmount)} registrado (simulado)`);
+  private async enviarFormARedsys(formData: IFormData): Promise<void> {
+    // Crear formulario dinámico para enviar a Redsys
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = 'https://sis-t.redsys.es:25443/sis/realizarPago';
+
+    const input1 = document.createElement('input');
+    input1.type = 'hidden';
+    input1.name = 'Ds_SignatureVersion';
+    input1.value = formData.ds_SignatureVersion;
+    form.appendChild(input1);
+
+    const input2 = document.createElement('input');
+    input2.type = 'hidden';
+    input2.name = 'Ds_MerchantParameters';
+    input2.value = formData.ds_MerchantParameters;
+    form.appendChild(input2);
+
+    const input3 = document.createElement('input');
+    input3.type = 'hidden';
+    input3.name = 'Ds_Signature';
+    input3.value = formData.ds_Signature;
+    form.appendChild(input3);
+
+    document.body.appendChild(form);
+    form.submit();
   }
 
-  private processScalapayPayment(): void {
-    console.log('Procesando pago con Scalapay:', this.customPaymentAmount);
-    
-    // TODO: Implementar integración real con Scalapay
-    // Similar a processInstallmentPayment del checkout
-    
-    // Por ahora, emitir evento
-    this.processingPayment = false;
-    this.paymentProcessed.emit({
-      amount: this.customPaymentAmount,
-      method: 'scalapay'
-    });
-    this.closeDialog();
-    
-    alert(`Pago con Scalapay de ${this.formatCurrency(this.customPaymentAmount)} procesado (simulado)`);
+  private async processTransferBankPayment(): Promise<void> {
+    try {
+      const currencyId = await this.currencyService.getCurrencyIdByCode('EUR').toPromise();
+
+      if (!currencyId) {
+        throw new Error('No se pudo obtener el ID de la moneda EUR');
+      }
+
+      // Crear el pago por transferencia
+      const response = await this.paymentsService.create({
+        reservationId: this.reservationId,
+        amount: this.customPaymentAmount,
+        paymentDate: new Date(),
+        paymentMethodId: this.transferMethodId,
+        paymentStatusId: this.pendingStatusId,
+        currencyId: currencyId
+      }).toPromise();
+
+      if (!response) {
+        throw new Error('Error al crear el pago por transferencia');
+      }
+
+      // Navegar a la página de confirmación/subida de comprobante
+      this.router.navigate([`/reservation/${this.reservationId}/${response.id}`]);
+    } catch (error) {
+      console.error('Error procesando transferencia bancaria:', error);
+      throw error;
+    }
+  }
+
+  private async processScalapayPayment(): Promise<void> {
+    try {
+      // Obtener URL base
+      const baseUrl = (window.location.href).replace(this.router.url, '');
+
+      // Crear orden en Scalapay
+      const response = await this.scalapayService.createOrder(this.reservationId, baseUrl).toPromise();
+
+      if (response?.checkoutUrl) {
+        // Redirigir a Scalapay para completar el pago
+        window.location.href = response.checkoutUrl;
+      } else {
+        throw new Error('No se pudo obtener la URL de checkout de Scalapay');
+      }
+    } catch (error) {
+      console.error('Error procesando pago con Scalapay:', error);
+      throw error;
+    }
   }
 
   formatCurrency(amount: number): string {

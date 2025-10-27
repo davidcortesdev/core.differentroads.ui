@@ -48,7 +48,6 @@ export class PaymentManagementComponent
 
   // Outputs
   @Output() paymentCompleted = new EventEmitter<PaymentOption>();
-  @Output() backRequested = new EventEmitter<void>();
   @Output() navigateToStep = new EventEmitter<number>();
 
   // Payment IDs
@@ -361,10 +360,6 @@ export class PaymentManagementComponent
     if (dropdown === 'main' && !this.dropdownStates.main) {
       this.dropdownStates.paymentMethods = false;
     }
-  }
-
-  goBack(): void {
-    this.backRequested.emit();
   }
 
   handlePriceChangeDecision(continueWithNewPrice: boolean): void {

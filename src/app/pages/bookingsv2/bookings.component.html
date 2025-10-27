@@ -54,7 +54,7 @@
       [isTO]="isTO"
       [refreshTrigger]="summaryRefreshTrigger"
       [reservationId]="reservation?.id || 0"
-      [departureDate]="reservation?.departureDate || ''"
+      [departureDate]="departureDate"
       (registerPayment)="registerPayment($event)"
       (fileUploaded)="handleFileUploaded($event)"
     >

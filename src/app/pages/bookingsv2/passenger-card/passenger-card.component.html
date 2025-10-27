@@ -24,207 +24,38 @@
         <h3>{{ passenger.name }} {{ passenger.surname }}</h3>
       </div>
 
-      <div class="detail-row" *ngIf="shouldShowField('phone')">
-        <span class="detail-label">Teléfono:</span>
-        <span class="detail-value" *ngIf="passenger.phone">{{
-          passenger.phone
-        }}</span>
-        <span class="detail-value" *ngIf="!passenger.phone">
-          <i
-            class="pi pi-info-circle"
-            pTooltip="Este dato no es obligatorio para realizar la reserva"
-          ></i>
-        </span>
-      </div>
-
-      <div class="detail-row" *ngIf="shouldShowField('email')">
-        <span class="detail-label">Email:</span>
-        <span class="detail-value" *ngIf="passenger.email">{{
-          passenger.email
-        }}</span>
-        <span class="detail-value" *ngIf="!passenger.email">
-          <i
-            class="pi pi-info-circle"
-            pTooltip="Este dato no es obligatorio para realizar la reserva"
-          ></i>
-        </span>
-      </div>
-
-      <p-divider
-        *ngIf="shouldShowField('gender') || shouldShowField('birthDate')"
-      ></p-divider>
-
-      <div class="detail-row" *ngIf="shouldShowField('gender')">
-        <span class="detail-label">
-          Sexo:
-          <span *ngIf="isFieldRequired('gender')" class="required-indicator">*</span>
-        </span>
-        <span class="detail-value" *ngIf="passenger.gender">
-          {{ getGenderLabel(passenger.gender) }}
-        </span>
-        <span class="detail-value" *ngIf="!passenger.gender">
-          <i
-            class="pi pi-info-circle"
-            [pTooltip]="isFieldRequired('gender') ? 'Este campo es obligatorio' : 'Este dato no es obligatorio para realizar la reserva'"
-            [ngClass]="{ 'required-field': isFieldRequired('gender') }"
-          ></i>
-        </span>
-      </div>
-
-      <div class="detail-row" *ngIf="shouldShowField('birthDate')">
-        <span class="detail-label">
-          Fecha de nacimiento:
-          <span *ngIf="isFieldRequired('birthDate')" class="required-indicator">*</span>
-        </span>
-        <span
-          class="detail-value"
-          [ngClass]="{ 
-            'pending-value': !passenger.birthDate,
-            'required-field': isFieldRequired('birthDate') && !passenger.birthDate
-          }"
-        >
-          {{
-            passenger.birthDate ? formatDate(passenger.birthDate) : "Pendiente"
-          }}
-        </span>
-      </div>
-
-      <div class="detail-row" *ngIf="shouldShowField('ciudad')">
-        <span class="detail-label">Ciudad:</span>
-        <span class="detail-value" *ngIf="passenger.ciudad">{{
-          passenger.ciudad
-        }}</span>
-        <span class="detail-value" *ngIf="!passenger.ciudad">
-          <i
-            class="pi pi-info-circle"
-            pTooltip="Este dato no es obligatorio para realizar la reserva"
-          ></i>
-        </span>
-      </div>
-
-      <div class="detail-row" *ngIf="shouldShowField('codigoPostal')">
-        <span class="detail-label">Código postal:</span>
-        <span class="detail-value" *ngIf="passenger.codigoPostal">{{
-          passenger.codigoPostal
-        }}</span>
-        <span class="detail-value" *ngIf="!passenger.codigoPostal">
-          <i
-            class="pi pi-info-circle"
-            pTooltip="Este dato no es obligatorio para realizar la reserva"
-          ></i>
-        </span>
-      </div>
-
-      <div class="detail-row" *ngIf="shouldShowField('nationality')">
-        <span class="detail-label">Nacionalidad:</span>
-        <span
-          class="detail-value"
-          [ngClass]="{ 'pending-value': !passenger.nationality }"
-          >{{ passenger.nationality || "Pendiente" }}</span
-        >
-      </div>
-
-      <p-divider
-        *ngIf="
-          shouldShowField('dni') ||
-          shouldShowField('minorIdIssueDate') ||
-          shouldShowField('minorIdExpirationDate')
-        "
-      ></p-divider>
-
-      <div class="detail-row" *ngIf="shouldShowField('dni')">
-        <span class="detail-label">DNI:</span>
-        <span class="detail-value" *ngIf="passenger.dni">{{
-          passenger.dni
-        }}</span>
-        <span class="detail-value" *ngIf="!passenger.dni">
-          <i
-            class="pi pi-info-circle"
-            pTooltip="Este dato no es obligatorio para realizar la reserva"
-          ></i>
-        </span>
-      </div>
-
-      <div class="detail-row" *ngIf="shouldShowField('minorIdIssueDate')">
-        <span class="detail-label">Fecha de expedición DNI:</span>
-        <span class="detail-value" *ngIf="passenger.minorIdIssueDate">
-          {{ formatDate(passenger.minorIdIssueDate || "") }}
-        </span>
-        <span class="detail-value" *ngIf="!passenger.minorIdIssueDate">
-          <i
-            class="pi pi-info-circle"
-            pTooltip="Este dato no es obligatorio para realizar la reserva"
-          ></i>
-        </span>
-      </div>
-
-      <div class="detail-row" *ngIf="shouldShowField('minorIdExpirationDate')">
-        <span class="detail-label">Fecha de caducidad DNI:</span>
-        <span class="detail-value" *ngIf="passenger.minorIdExpirationDate">
-          {{ formatDate(passenger.minorIdExpirationDate || "") }}
-        </span>
-        <span class="detail-value" *ngIf="!passenger.minorIdExpirationDate">
-          <i
-            class="pi pi-info-circle"
-            pTooltip="Este dato no es obligatorio para realizar la reserva"
-          ></i>
-        </span>
-      </div>
-
-      <p-divider
-        *ngIf="
-          shouldShowField('passportID') ||
-          shouldShowField('documentExpeditionDate') ||
-          shouldShowField('documentExpirationDate')
-        "
-      ></p-divider>
-
-      <div class="detail-row" *ngIf="shouldShowField('passportID')">
-        <span class="detail-label">Pasaporte:</span>
-        <span class="detail-value" *ngIf="passenger.passportID">{{
-          passenger.passportID
-        }}</span>
-        <span class="detail-value" *ngIf="!passenger.passportID">
-          <i
-            class="pi pi-info-circle"
-            pTooltip="Este dato no es obligatorio para realizar la reserva"
-          ></i>
-        </span>
-      </div>
-
-      <div class="detail-row" *ngIf="shouldShowField('documentExpeditionDate')">
-        <span class="detail-label">Fecha de expedición:</span>
-        <span
-          class="detail-value"
-          [ngClass]="{ 'pending-value': !passenger.documentExpeditionDate }"
-        >
-          {{
-            passenger.documentExpeditionDate
-              ? formatDate(passenger.documentExpeditionDate || "")
-              : "Pendiente"
-          }}
-        </span>
-      </div>
-
-      <div class="detail-row" *ngIf="shouldShowField('documentExpirationDate')">
-        <span class="detail-label">Fecha de caducidad:</span>
-        <span class="detail-value" *ngIf="passenger.documentExpirationDate">
-          {{ formatDate(passenger.documentExpirationDate || "") }}
-        </span>
-        <span class="detail-value" *ngIf="!passenger.documentExpirationDate">
-          <i
-            class="pi pi-info-circle"
-            pTooltip="Este dato no es obligatorio para realizar la reserva"
-          ></i>
-        </span>
-      </div>
-
-      <p-divider *ngIf="shouldShowField('comfortPlan')"></p-divider>
-
-      <div class="detail-row" *ngIf="shouldShowField('comfortPlan')">
-        <span class="detail-label">Seguro:</span>
-        <span class="detail-value">{{ getComfortPlanValue() }}</span>
-      </div>
+      <!-- Campos generados dinámicamente desde departureReservationFields (COMPLETAMENTE DINÁMICO) -->
+      <ng-container *ngFor="let drf of departureReservationFields">
+        <ng-container *ngIf="getReservationFieldDetails(drf.reservationFieldId) as fieldDetails">
+          <!-- Excluir campos que ya se muestran en el header (name, surname) -->
+          <div class="detail-row" *ngIf="fieldDetails.code !== 'name' && fieldDetails.code !== 'surname'">
+            <span class="detail-label">
+              {{ fieldDetails.name }}:
+              <span *ngIf="drf.mandatoryTypeId === 2 || (drf.mandatoryTypeId === 3 && isLeadTraveler)" class="required-indicator">*</span>
+            </span>
+            
+            <!-- Mostrar valor del campo (con formato especial para sexo y fechas) -->
+            <span class="detail-value" *ngIf="getPassengerFieldValue(fieldDetails.code)">
+              <ng-container *ngIf="fieldDetails.fieldType === 'date'">
+                {{ formatDate(getPassengerFieldValue(fieldDetails.code) || "") }}
+              </ng-container>
+              <ng-container *ngIf="fieldDetails.code === 'sex'">
+                {{ getGenderLabel(getPassengerFieldValue(fieldDetails.code)) }}
+              </ng-container>
+              <ng-container *ngIf="fieldDetails.fieldType !== 'date' && fieldDetails.code !== 'sex'">
+                {{ getPassengerFieldValue(fieldDetails.code) }}
+              </ng-container>
+            </span>
+            
+            <!-- Mostrar icono de info si no hay valor -->
+            <span class="detail-value" *ngIf="!getPassengerFieldValue(fieldDetails.code)">
+              <i class="pi pi-info-circle"
+                [pTooltip]="(drf.mandatoryTypeId === 2 || (drf.mandatoryTypeId === 3 && isLeadTraveler)) ? 'Este campo es obligatorio' : 'Este dato no es obligatorio para realizar la reserva'"
+                [ngClass]="{ 'required-field': drf.mandatoryTypeId === 2 || (drf.mandatoryTypeId === 3 && isLeadTraveler) }"></i>
+            </span>
+          </div>
+        </ng-container>
+      </ng-container>
     </div>
   </div>
 

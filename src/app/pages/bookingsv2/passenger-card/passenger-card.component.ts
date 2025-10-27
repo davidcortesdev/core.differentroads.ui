@@ -42,6 +42,7 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
   }[] = [];
 
   @Input() availableFields: IReservationFieldResponse[] = [];
+  @Input() departureReservationFields: IDepartureReservationFieldResponse[] = []; // NUEVO: Campos configurados para este departure
   @Input() mandatoryFields: IDepartureReservationFieldResponse[] = [];
   @Input() isLeadTraveler: boolean = false;
 
@@ -334,6 +335,18 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
   }
 
   getPassengerTypeLabel(type: string): string {
+    // Si el tipo es 'lead', mostrar "Líder de reserva"
+    if (type === 'lead' || type === 'líder') {
+      return 'Líder de reserva';
+    }
+    
+    // Si el tipo es 'passenger1', 'passenger2', etc., extraer el número
+    const passengerMatch = type.match(/passenger(\d+)/);
+    if (passengerMatch) {
+      return `Pasajero ${passengerMatch[1]}`;
+    }
+    
+    // Tipos tradicionales por si acaso
     const types: { [key: string]: string } = {
       adult: 'Adulto',
       child: 'Niño',
@@ -407,19 +420,87 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
     return this.passenger.comfortPlan || 'Básico';
   }
 
+  /**
+   * Obtener detalles del campo de reservación (igual que checkout)
+   */
+  getReservationFieldDetails(reservationFieldId: number): IReservationFieldResponse | null {
+    return this.availableFields.find((field) => field.id === reservationFieldId) || null;
+  }
+
+  /**
+   * Helper para verificar si hay campos de departure configurados
+   */
+  hasDepartureFields(): boolean {
+    return this.departureReservationFields && this.departureReservationFields.length > 0;
+  }
+
+  /**
+   * Obtener valor del campo para un pasajero
+   */
+  getPassengerFieldValue(fieldCode: string): any {
+    const mapping: { [key: string]: string } = {
+      'name': 'name',
+      'surname': 'surname',
+      'email': 'email',
+      'phone': 'phone',
+      'sex': 'gender',
+      'birthdate': 'birthDate',
+      'dni': 'dni',
+      'passport': 'passportID',
+      'nationality': 'nationality',
+      'document_type': 'documentType',
+      'room': 'room',
+      'ciudad': 'ciudad',
+      'codigoPostal': 'codigoPostal'
+    };
+    
+    const passengerKey = mapping[fieldCode] || fieldCode;
+    return this.passenger[passengerKey];
+  }
+
+  /**
+   * Obtener label del campo
+   */
+  getFieldLabel(fieldCode: string): string {
+    const labels: { [key: string]: string } = {
+      'name': 'Nombre',
+      'surname': 'Apellidos',
+      'email': 'Email',
+      'phone': 'Teléfono',
+      'sex': 'Sexo',
+      'birthdate': 'Fecha de nacimiento',
+      'dni': 'DNI',
+      'passport': 'Pasaporte',
+      'nationality': 'Nacionalidad',
+      'document_type': 'Tipo de documento',
+      'room': 'Habitación',
+      'ciudad': 'Ciudad',
+      'codigoPostal': 'Código postal'
+    };
+    
+    return labels[fieldCode] || fieldCode;
+  }
+
   shouldShowField(fieldKey: string): boolean {
-    if (this.availableFields && this.availableFields.length > 0) {
+    if (this.departureReservationFields && this.departureReservationFields.length > 0) {
       const fieldCode = this.getFieldCodeFromKey(fieldKey);
+      
       const availableField = this.availableFields.find(field => 
         field.code.toLowerCase() === fieldCode.toLowerCase()
       );
       
-      // Si encontramos el campo en availableFields, mostrarlo siempre
-      if (availableField) {
-        return true;
+      if (!availableField) {
+        return false;
       }
+      
+      const isDepartureField = this.departureReservationFields.some(
+        drf => drf.reservationFieldId === availableField.id
+      );
+      
+      return isDepartureField;
     }
 
+    // Fallback al método anterior si no hay departureReservationFields
     const originalKey = this.getOriginalKey(fieldKey);
     if (!originalKey) return false;
 
@@ -436,11 +517,20 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
       'surname': 'surname',
       'email': 'email',
       'phone': 'phone',
-      'gender': 'sex',  // ✅ CORREGIDO: gender -> sex
+      'gender': 'sex',  // ✅ El código del campo es 'sex' en BD
       'birthDate': 'birthdate',
       'documentType': 'document_type',
       'passportID': 'passport',
-      'nationality': 'nationality'
+      'nationality': 'nationality',
+      'dni': 'dni',  // ✅ Agregado campo DNI
+      'room': 'room',  // ✅ Agregado campo habitación
+      'ciudad': 'ciudad',  // ✅ Agregado campo ciudad
+      'codigoPostal': 'codigoPostal',  // ✅ Agregado campo código postal
+      'minorIdIssueDate': 'minorIdIssueDate',  // ✅ Agregado fecha expedición DNI
+      'minorIdExpirationDate': 'minorIdExpirationDate',  // ✅ Agregado fecha caducidad DNI
+      'documentExpeditionDate': 'documentExpeditionDate',  // ✅ Agregado fecha expedición pasaporte
+      'documentExpirationDate': 'documentExpirationDate',  // ✅ Agregado fecha caducidad pasaporte
+      'comfortPlan': 'comfortPlan'  // ✅ Agregado plan de seguro
     };
     return mapping[fieldKey] || fieldKey;
   }
@@ -473,7 +563,8 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
   }
 
   isFieldRequired(fieldKey: string): boolean {
-    if (!this.mandatoryFields || this.mandatoryFields.length === 0) {
+    // Usar departureReservationFields para determinar si es obligatorio
+    if (!this.departureReservationFields || this.departureReservationFields.length === 0) {
       return false;
     }
 
@@ -486,15 +577,15 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
       return false;
     }
 
-    const mandatoryField = this.mandatoryFields.find(field => 
+    const departureField = this.departureReservationFields.find(field => 
       field.reservationFieldId === availableField.id
     );
 
-    if (!mandatoryField) {
+    if (!departureField) {
       return false;
     }
 
-    switch (mandatoryField.mandatoryTypeId) {
+    switch (departureField.mandatoryTypeId) {
       case 1: // Opcional
         return false;
       case 2: // Siempre obligatorio
@@ -507,7 +598,8 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
   }
 
   getFieldMandatoryType(fieldKey: string): number | null {
-    if (!this.mandatoryFields || this.mandatoryFields.length === 0) {
+    // Usar departureReservationFields
+    if (!this.departureReservationFields || this.departureReservationFields.length === 0) {
       return null;
     }
 
@@ -520,11 +612,11 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
       return null;
     }
 
-    const mandatoryField = this.mandatoryFields.find(field => 
+    const departureField = this.departureReservationFields.find(field => 
       field.reservationFieldId === availableField.id
     );
 
-    return mandatoryField ? mandatoryField.mandatoryTypeId : null;
+    return departureField ? departureField.mandatoryTypeId : null;
   }
 
   getMandatoryTypeDescription(fieldKey: string): string {

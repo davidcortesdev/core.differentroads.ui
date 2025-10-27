@@ -491,8 +491,14 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   }
 
   viewItem(item: BookingItem) {
+    console.log('🔍 ViewItem called with:', { listType: this.listType, item });
+    
     if (this.listType === 'active-bookings') {
-      this.router.navigate(['bookings', item.id]);
+      console.log('📍 Navigating to bookings detail:', item.id);
+      this.router.navigate(['/bookings', item.id]).then(
+        success => console.log('✅ Navigation successful:', success),
+        error => console.error('❌ Navigation failed:', error)
+      );
     } else if (this.listType === 'recent-budgets') {
       // Para presupuestos, navegar al tour en lugar del checkout
       if (item.tourID) {

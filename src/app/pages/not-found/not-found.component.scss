@@ -1,10 +1,10 @@
 .not-found-container {
   position: relative;
   width: 100%;
-  min-height: 100vh;
+  height: calc(100vh - 148px); // Altura fija ajustada para el header
   background-image: url('/1920x1080-error-404-v1.jpg');
   background-size: cover;
-  background-position: center;
+  background-position: center center;
   background-repeat: no-repeat;
   display: flex;
   align-items: center;

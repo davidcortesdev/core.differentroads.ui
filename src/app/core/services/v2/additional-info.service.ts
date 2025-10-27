@@ -8,7 +8,7 @@ import { AnalyticsService } from '../analytics/analytics.service';
 import { ReservationService, ReservationCreate, ReservationUpdate, ReservationCompleteCreate, IReservationTravelerData } from '../reservation/reservation.service';
 import { ReservationStatusService } from '../reservation/reservation-status.service';
 import { UsersNetService } from '../users/usersNet.service';
-import { NotificationService } from './notification.service';
+import { NotificationServicev2 } from './notification.service';
 import { DocumentService } from './document.service';
 import { environment } from '../../../../environments/environment';
 
@@ -58,7 +58,7 @@ export class AdditionalInfoService {
     private reservationService: ReservationService,
     private usersNetService: UsersNetService,
     private reservationStatusService: ReservationStatusService,
-    private notificationService: NotificationService,
+    private notificationService: NotificationServicev2,
     private documentService: DocumentService
   ) {}
 

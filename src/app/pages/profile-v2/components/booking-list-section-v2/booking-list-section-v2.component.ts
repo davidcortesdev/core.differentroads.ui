@@ -480,7 +480,7 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
 
   // Add this method to the component
   imageLoadError(item: BookingItem) {
-    item.image = 'https://via.placeholder.com/300x200?text=Image+Error';
+    item.image = 'https://picsum.photos/300/200';
     item.imageLoading = false;
     item.imageLoaded = false;
   }
@@ -492,7 +492,7 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
 
   viewItem(item: BookingItem) {
     if (this.listType === 'active-bookings') {
-      this.router.navigate(['bookings', item.id]);
+      this.router.navigate(['/bookings', item.id]);
     } else if (this.listType === 'recent-budgets') {
       // Para presupuestos, navegar al tour en lugar del checkout
       if (item.tourID) {

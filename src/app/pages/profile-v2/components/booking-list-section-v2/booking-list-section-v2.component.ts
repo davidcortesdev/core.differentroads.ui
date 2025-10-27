@@ -16,6 +16,7 @@ import {
   DocumentationService,
   IDocumentReservationResponse,
 } from '../../../../core/services/documentation/documentation.service';
+import { DocumentServicev2 } from '../../../../core/services/v2/document.service';
 import {
   NotificationService,
   INotification,
@@ -76,6 +77,7 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
     private documentPDFService: DocumentPDFService,
     private emailSenderService: EmailSenderService,
     private documentationService: DocumentationService,
+    private documentServicev2: DocumentServicev2,
     private notificationService: NotificationService,
     private notificationServicev2: NotificationServicev2,
     private authService: AuthenticateService,
@@ -625,7 +627,7 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
 
   downloadItem(item: BookingItem) {
     if (this.listType === 'recent-budgets') {
-      this.downloadBudgetDocument(item);
+      this.downloadBudgetDocument();
       return;
     }
     this.downloadLoading[item.id] = true;
@@ -681,9 +683,47 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       });
   }
 
-  downloadBudgetDocument(item: BookingItem): void {
-    // TODO: Implementar la lógica para descargar presupuesto
-    console.log('Descargar presupuesto para el item:', item);
+  downloadBudgetDocument(): void {
+    const BUDGET_ID = 13760; // ID predeterminado para el presupuesto
+    this.downloadLoading[BUDGET_ID] = true;
+
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Info',
+      detail: 'Generando presupuesto PDF...',
+    });
+
+    this.documentServicev2.getBudgetDocument(BUDGET_ID).subscribe({
+      next: (blob) => {
+        this.downloadLoading[BUDGET_ID] = false;
+        const fileName = `presupuesto_${BUDGET_ID}.pdf`;
+        this.documentServicev2.downloadDocument(blob, fileName);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Éxito',
+          detail: 'Presupuesto PDF descargado exitosamente',
+        });
+      },
+      error: (error) => {
+        console.error('Error downloading budget PDF:', error);
+        this.downloadLoading[BUDGET_ID] = false;
+
+        let errorMessage = 'Error al generar el presupuesto PDF';
+        if (error.status === 500) {
+          errorMessage = 'Error interno del servidor. Inténtalo más tarde.';
+        } else if (error.status === 404) {
+          errorMessage = 'Presupuesto no encontrado.';
+        } else if (error.status === 403) {
+          errorMessage = 'No tienes permisos para descargar este presupuesto.';
+        }
+
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: errorMessage,
+        });
+      },
+    });
   }
 
   reserveItem(item: BookingItem) {

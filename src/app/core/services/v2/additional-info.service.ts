@@ -9,7 +9,7 @@ import { ReservationService, ReservationCreate, ReservationUpdate, ReservationCo
 import { ReservationStatusService } from '../reservation/reservation-status.service';
 import { UsersNetService } from '../users/usersNet.service';
 import { NotificationServicev2 } from './notification.service';
-import { DocumentService } from './document.service';
+import { DocumentServicev2 } from './document.service';
 import { environment } from '../../../../environments/environment';
 
 /**
@@ -59,7 +59,7 @@ export class AdditionalInfoService {
     private usersNetService: UsersNetService,
     private reservationStatusService: ReservationStatusService,
     private notificationService: NotificationServicev2,
-    private documentService: DocumentService
+    private documentService: DocumentServicev2
   ) {}
 
   /**

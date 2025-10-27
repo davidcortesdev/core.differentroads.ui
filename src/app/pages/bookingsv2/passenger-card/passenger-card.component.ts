@@ -334,6 +334,18 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
   }
 
   getPassengerTypeLabel(type: string): string {
+    // Si el tipo es 'lead', mostrar "Líder de reserva"
+    if (type === 'lead' || type === 'líder') {
+      return 'Líder de reserva';
+    }
+    
+    // Si el tipo es 'passenger1', 'passenger2', etc., extraer el número
+    const passengerMatch = type.match(/passenger(\d+)/);
+    if (passengerMatch) {
+      return `Pasajero ${passengerMatch[1]}`;
+    }
+    
+    // Tipos tradicionales por si acaso
     const types: { [key: string]: string } = {
       adult: 'Adulto',
       child: 'Niño',

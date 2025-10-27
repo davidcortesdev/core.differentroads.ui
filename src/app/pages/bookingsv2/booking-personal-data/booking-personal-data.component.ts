@@ -58,6 +58,9 @@ export class BookingPersonalDataV2Component implements OnInit {
   // Array para almacenar los campos obligatorios por departure
   mandatoryFields: IDepartureReservationFieldResponse[] = [];
   
+  // Array para almacenar los campos configurados para este departure (igual que checkout)
+  departureReservationFields: IDepartureReservationFieldResponse[] = [];
+  
   // Información del perfil del usuario para rellenar campos vacíos
   currentUserData: PersonalInfo | null = null;
 
@@ -94,6 +97,7 @@ export class BookingPersonalDataV2Component implements OnInit {
     }).subscribe({
       next: ({ mandatoryFields, availableFields }: { mandatoryFields: IDepartureReservationFieldResponse[], availableFields: IReservationFieldResponse[] }) => {
         this.mandatoryFields = mandatoryFields;
+        this.departureReservationFields = mandatoryFields;
         this.availableFields = availableFields;
         
         // Una vez cargados los campos, cargar los datos de pasajeros
@@ -286,6 +290,24 @@ export class BookingPersonalDataV2Component implements OnInit {
                 passengerData.passportID = field.value;
               } else if (normalizedCode === 'nationality' || normalizedCode === 'nacionalidad') {
                 passengerData.nationality = field.value;
+              } else if (normalizedCode === 'dni') {
+                passengerData.dni = field.value;
+              } else if (normalizedCode === 'room' || normalizedCode === 'habitacion') {
+                passengerData.room = field.value;
+              } else if (normalizedCode === 'ciudad' || normalizedCode === 'city') {
+                passengerData.ciudad = field.value;
+              } else if (normalizedCode === 'codigopostal' || normalizedCode === 'postal_code' || normalizedCode === 'codigo_postal') {
+                passengerData.codigoPostal = field.value;
+              } else if (normalizedCode === 'minoridissuedate' || normalizedCode === 'minor_id_issue_date') {
+                passengerData.minorIdIssueDate = field.value;
+              } else if (normalizedCode === 'minoridexpirationdate' || normalizedCode === 'minor_id_expiration_date') {
+                passengerData.minorIdExpirationDate = field.value;
+              } else if (normalizedCode === 'documentexpeditiondate' || normalizedCode === 'document_expedition_date') {
+                passengerData.documentExpeditionDate = field.value;
+              } else if (normalizedCode === 'documentexpirationdate' || normalizedCode === 'document_expiration_date') {
+                passengerData.documentExpirationDate = field.value;
+              } else if (normalizedCode === 'comfortplan' || normalizedCode === 'comfort_plan') {
+                passengerData.comfortPlan = field.value;
               } else {
                 // Mapeo por nombre si el código no coincide
                 if (normalizedName.includes('nombre') && !passengerData.name) {
@@ -300,7 +322,6 @@ export class BookingPersonalDataV2Component implements OnInit {
                   passengerData.birthDate = field.value;
                 } else if (normalizedName.includes('sexo') && !passengerData.gender) {
                   passengerData.gender = field.value;
-                } else {
                 }
               }
             });
@@ -340,6 +361,13 @@ export class BookingPersonalDataV2Component implements OnInit {
   private getFieldCode(fieldId: number, fields: IReservationFieldResponse[]): string {
     const field = fields.find(f => f.id === fieldId);
     return field ? field.code : '';
+  }
+
+  /**
+   * Obtener detalles del campo de reservación (igual que checkout)
+   */
+  getReservationFieldDetails(reservationFieldId: number): IReservationFieldResponse | null {
+    return this.availableFields.find((field) => field.id === reservationFieldId) || null;
   }
 
   /**
@@ -512,6 +540,7 @@ export class BookingPersonalDataV2Component implements OnInit {
 
   /**
    * Mapea los datos del pasajero a códigos de campo
+   * IMPORTANTE: Los códigos deben coincidir exactamente con los de la BD
    */
   private getFieldMappings(passenger: PassengerData): { [key: string]: any } {
     return {
@@ -519,11 +548,20 @@ export class BookingPersonalDataV2Component implements OnInit {
       'surname': passenger.surname,
       'email': passenger.email,
       'phone': passenger.phone,
-      'gender': passenger.gender,
+      'sex': passenger.gender, // ✅ El código del campo es 'sex' en BD (no 'gender')
       'birthdate': passenger.birthDate,
       'document_type': passenger.documentType,
       'passport': passenger.passportID,
-      'nationality': passenger.nationality
+      'nationality': passenger.nationality,
+      'room': passenger.room,
+      'dni': passenger.dni,
+      'ciudad': passenger.ciudad,
+      'codigoPostal': passenger.codigoPostal,
+      'minorIdIssueDate': passenger.minorIdIssueDate,
+      'minorIdExpirationDate': passenger.minorIdExpirationDate,
+      'documentExpeditionDate': passenger.documentExpeditionDate,
+      'documentExpirationDate': passenger.documentExpirationDate,
+      'comfortPlan': passenger.comfortPlan
     };
   }
 }

@@ -237,7 +237,7 @@ export class ReviewsComponent implements OnInit {
     const userObservables = userIds.map(id => 
       this.usersNetService.getUserById(id).pipe(
         catchError(error => {
-          console.error(`❌ Error fetching user ${id}:`, error);
+          console.error(`Error fetching user ${id}:`, error);
           return of(null); // Retorna null en caso de error para no romper el forkJoin
         })
       )
@@ -266,7 +266,7 @@ export class ReviewsComponent implements OnInit {
         });
       }),
       catchError(error => {
-        console.error('❌ Error processing users with individual calls:', error);
+        console.error('Error processing users with individual calls:', error);
         // Fallback: mantener nombres existentes o asignar por defecto
         return of(reviews.map((review: IEnrichedReviewResponse) => ({
           ...review,

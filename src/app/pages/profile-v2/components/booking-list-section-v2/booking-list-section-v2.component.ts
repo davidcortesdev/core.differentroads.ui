@@ -624,6 +624,10 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   }
 
   downloadItem(item: BookingItem) {
+    if (this.listType === 'recent-budgets') {
+      this.downloadBudgetDocument(item);
+      return;
+    }
     this.downloadLoading[item.id] = true;
 
     this.messageService.add({
@@ -675,6 +679,11 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
           });
         },
       });
+  }
+
+  downloadBudgetDocument(item: BookingItem): void {
+    // TODO: Implementar la lógica para descargar presupuesto
+    console.log('Descargar presupuesto para el item:', item);
   }
 
   reserveItem(item: BookingItem) {

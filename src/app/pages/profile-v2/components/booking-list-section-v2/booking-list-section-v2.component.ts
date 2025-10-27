@@ -480,7 +480,7 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
 
   // Add this method to the component
   imageLoadError(item: BookingItem) {
-    item.image = 'https://via.placeholder.com/300x200?text=Image+Error';
+    item.image = 'https://picsum.photos/300/200';
     item.imageLoading = false;
     item.imageLoaded = false;
   }

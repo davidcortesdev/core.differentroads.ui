@@ -491,21 +491,10 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   }
 
   viewItem(item: BookingItem) {
-    console.log('🔍 viewItem called:', { 
-      listType: this.listType, 
-      itemId: item.id,
-      reservationStatusId: item.reservationStatusId,
-      fullItem: item 
-    });
-    
     if (this.listType === 'active-bookings') {
-      console.log('📍 Navegando a /bookings/' + item.id);
-      
       this.router.navigate(['/bookings', item.id]).then(
         (success) => {
-          console.log('✅ Navegación exitosa:', success);
           if (!success) {
-            console.error('❌ La navegación retornó false');
             this.messageService.add({
               severity: 'error',
               summary: 'Error de navegación',
@@ -515,7 +504,6 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
           }
         },
         (error) => {
-          console.error('❌ Error en la navegación:', error);
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
@@ -529,7 +517,6 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       if (item.tourID) {
         this.router.navigate(['/tour', item.tourID]);
       } else {
-        console.warn('No se encontró tourID para el presupuesto:', item);
         this.messageService.add({
           severity: 'warn',
           summary: 'Información',

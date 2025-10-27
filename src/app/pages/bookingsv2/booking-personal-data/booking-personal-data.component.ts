@@ -71,18 +71,48 @@ export class BookingPersonalDataV2Component implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    if (this.periodId) {
-      this.loadMandatoryFields();
-    }
-    
-    if (this.reservationId) {
-      this.loadPassengerData();
-    }
+    // Cargar todos los campos disponibles y obligatorios antes de cargar pasajeros
+    this.loadAllFieldsConfiguration();
   }
 
+  /**
+   * Carga la configuración completa de campos (igual que checkout)
+   */
+  private loadAllFieldsConfiguration(): void {
+    const departureId = this.periodId ? parseInt(this.periodId) : null;
+
+    // Cargar campos obligatorios y campos disponibles en paralelo
+    forkJoin({
+      mandatoryFields: departureId 
+        ? this.departureReservationFieldService.getByDeparture(departureId).pipe(
+            catchError(() => of([]))
+          )
+        : of([]),
+      availableFields: this.reservationFieldService.getAllOrdered().pipe(
+        catchError(() => of([]))
+      )
+    }).subscribe({
+      next: ({ mandatoryFields, availableFields }: { mandatoryFields: IDepartureReservationFieldResponse[], availableFields: IReservationFieldResponse[] }) => {
+        this.mandatoryFields = mandatoryFields;
+        this.availableFields = availableFields;
+        
+        // Una vez cargados los campos, cargar los datos de pasajeros
+        if (this.reservationId) {
+          this.loadPassengerData();
+        }
+      },
+      error: (error) => {
+        console.error('Error al cargar configuración de campos:', error);
+        // Continuar cargando pasajeros aunque falle la configuración
+        if (this.reservationId) {
+          this.loadPassengerData();
+        }
+      }
+    });
+  }
 
   /**
-   * Carga los campos obligatorios para el departure
+   * Carga los campos obligatorios para el departure (LEGACY - ya no se usa)
    */
   loadMandatoryFields(): void {
     const departureId = parseInt(this.periodId);
@@ -204,8 +234,7 @@ export class BookingPersonalDataV2Component implements OnInit {
         return forkJoin(fieldObservables).pipe(
           map((fields: IReservationFieldResponse[]) => {
             
-            // Almacenar los campos disponibles para uso posterior
-            this.availableFields = [...this.availableFields, ...fields];
+            // NO sobrescribir availableFields - ya se cargaron todos en loadAllFieldsConfiguration()
             
             // Crear un mapa de fieldId -> fieldName y fieldCode
             const fieldMap = new Map<number, {name: string, code: string}>();

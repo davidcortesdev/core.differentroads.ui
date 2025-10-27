@@ -66,8 +66,8 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
   };
 
   genderOptions = [
-    { label: 'Masculino', value: 'Male' },
-    { label: 'Femenino', value: 'Female' },
+    { label: 'Masculino', value: 'M' },
+    { label: 'Femenino', value: 'F' },
   ];
 
   constructor(

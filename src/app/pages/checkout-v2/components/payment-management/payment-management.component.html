@@ -6,6 +6,41 @@
 
 <!-- Main Content -->
 <div class="container" *ngIf="!isLoading">
+  <!-- Points Information Card -->
+  <div class="mb-4">
+    <p-card>
+      <ng-template pTemplate="header">
+        <div class="bg-primary p-4" style="border-radius: 6px 6px 0 0;">
+          <div class="flex align-items-center gap-3">
+            <h3 style="margin: 0; padding-left: 2rem; padding-top: 1rem; color: #002B57;">Información sobre puntos</h3>
+          </div>
+        </div>
+      </ng-template>
+      
+      <div>
+        <p style="padding: 1rem; margin: 0; padding-top: 0; line-height: 1.6;">
+          Tanto tú como los viajeros que tengan email registrado en los datos de la reserva recibirán esta reserva en su perfil. 
+        </p>
+        <p style="padding: 1rem; margin: 0; padding-top: 0; line-height: 1.6;">  
+          Además, cada viajero con email acumulará automáticamente <strong class="text-primary">el 3% del importe de su viaje en puntos</strong>, 
+          que podrán utilizarse como descuento en futuras reservas.
+        </p>
+        
+        <p style="padding: 0 1rem 1rem 1rem; margin: 0; line-height: 1.6;">
+          Si ya dispones de <strong class="text-primary">puntos acumulados</strong>, podrás aplicarlos como descuento en esta reserva 
+          antes de realizar el pago.
+        </p>
+        
+        <p-message 
+          icon="pi pi-exclamation-triangle"
+          severity="warn" 
+          styleClass="w-full"
+          [text]="'Importante: Una vez confirmado el pago, ya no será posible descontar puntos de esta reserva.'">
+        </p-message>
+      </div>
+    </p-card>
+  </div>
+
   <!-- Payment Type Selection -->
   <section class="payment-type-section">
     <div class="header-container" (click)="toggleDropdown('main')">

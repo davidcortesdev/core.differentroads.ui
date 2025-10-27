@@ -77,22 +77,36 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   }
 
   ngOnInit(): void {
-    if (this.bookingID) {
-      //TODO: Implementar leyendo los datos de mysql
-    }
+    this.calculatePaymentInfo();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    // Actualizar paymentInfo si cambia bookingTotal
+    if (changes['bookingTotal']) {
+      this.calculatePaymentInfo();
+    }
+    
     if (changes['refreshTrigger'] && changes['refreshTrigger'].currentValue) {
       console.log('🔄 Refrescando datos de pagos por trigger...');
       this.refreshPayments();
     }
   }
 
+  private calculatePaymentInfo(): void {
+    // Usar bookingTotal de la reserva real
+    this.paymentInfo = {
+      totalPrice: this.bookingTotal || 0,
+      pendingAmount: this.bookingTotal || 0, // Por defecto todo está pendiente
+      paidAmount: 0, // TODO: calcular desde pagos reales cuando se implementen
+    };
+  }
+
   public refreshPayments(): void {
     if (this.bookingID) {
       //TODO: Implementar leyendo los datos de mysql
       console.log('Refrescando datos de pagos...');
+      // Recalcular paymentInfo
+      this.calculatePaymentInfo();
     }
   }
 
@@ -175,6 +189,10 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   onPaymentCompleted(paymentOption: any): void {
     console.log('Pago completado:', paymentOption);
     this.displayPaymentManagementDialog = false;
+    
+    // Emitir evento para que el padre actualice los datos
+    this.registerPayment.emit(paymentOption.amount || 0);
+    
     // Refrescar la información de pagos
     this.refreshPayments();
   }

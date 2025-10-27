@@ -594,6 +594,14 @@ export class Bookingsv2Component implements OnInit {
       detail: `Se ha registrado un pago de ${amount}€`,
       life: 3000,
     });
+
+    // Recargar los datos de la reserva para obtener los montos actualizados
+    if (this.bookingId) {
+      this.loadBookingData(this.bookingId);
+    }
+    
+    // Disparar trigger de refresh para actualizar el resumen
+    this.summaryRefreshTrigger = Date.now();
   }
 
   sendReminder(): void {

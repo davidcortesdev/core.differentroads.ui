@@ -45,11 +45,11 @@
                 }}</span>
               </div>
             </div>
-            <div class="payment-buttons" *ngIf="paymentInfo.pendingAmount > 0">
+            <div class="payment-buttons" *ngIf="paymentInfo.totalPrice > 0">
               <p-button
-                label="Realizar pago"
-                icon="pi pi-dollar"
-                styleClass="p-button-success"
+                label="Añadir pago"
+                icon="pi pi-plus-circle"
+                styleClass="p-button-rounded p-button-success p-button-lg"
                 (onClick)="navigateToPayment()"
               ></p-button>
             </div>

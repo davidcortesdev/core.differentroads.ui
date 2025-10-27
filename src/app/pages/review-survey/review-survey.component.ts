@@ -24,6 +24,7 @@ import {
 import { ItineraryService, IItineraryResponse } from '../../core/services/itinerary/itinerary.service';
 import { ReviewImageService } from '../../core/services/reviews/review-image.service';
 import { Title } from '@angular/platform-browser';
+import { MessageService } from 'primeng/api';
 
 interface ReviewPayload {
   text: string;
@@ -114,7 +115,8 @@ export class ReviewSurveyComponent implements OnInit {
     private cloudinaryService: CloudinaryService,
     private departureService: DepartureService,
     private itineraryService: ItineraryService,
-    private usersNetService: UsersNetService
+    private usersNetService: UsersNetService,
+    private messageService: MessageService
   ) {}
 
   rawDepartureInfo: any = null;
@@ -236,16 +238,24 @@ export class ReviewSurveyComponent implements OnInit {
     const comentarioValue = this.comentarioInputRef.nativeElement.value;
 
     if (!nombreValue || !emailValue || !comentarioValue) {
-      alert(
-        'Por favor, completa todos los campos: Nombre, Email y Comentario.'
-      );
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Advertencia',
+        detail: 'Por favor, completa todos los campos: Nombre, Email y Comentario.',
+        life: 3000,
+      });
       this.isSubmitting = false;
       return;
     }
 
     // Verificar que todas las calificaciones tengan un valor
     if (Object.values(this.ratings).some((rating) => rating === 0)) {
-      alert('Por favor, valora todas las categorías con estrellas.');
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Advertencia',
+        detail: 'Por favor, valora todas las categorías con estrellas.',
+        life: 3000,
+      });
       this.isSubmitting = false;
       return;
     }
@@ -312,6 +322,12 @@ export class ReviewSurveyComponent implements OnInit {
                     error: (imageError) => {
                       // Aún limpiamos el formulario aunque falle el guardado de imágenes
                       this.cleanupForm();
+                      this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: 'Error al subir algunas imágenes.',
+                        life: 3000,
+                      });
                     },
                   });
               } else {
@@ -321,6 +337,12 @@ export class ReviewSurveyComponent implements OnInit {
             },
             error: (err: any) => {
               this.isSubmitting = false;
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Error al enviar la review. Por favor, intente de nuevo.',
+                life: 5000,
+              });
             },
           });
         },
@@ -367,6 +389,12 @@ export class ReviewSurveyComponent implements OnInit {
                     error: (imageError) => {
                       // Aún limpiamos el formulario aunque falle el guardado de imágenes
                       this.cleanupForm();
+                      this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: 'Error al subir algunas imágenes.',
+                        life: 3000,
+                      });
                     },
                   });
               } else {
@@ -376,15 +404,16 @@ export class ReviewSurveyComponent implements OnInit {
             },
             error: (err: any) => {
               this.isSubmitting = false;
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Error al enviar la review. Por favor, intente de nuevo.',
+                life: 5000,
+              });
             },
           });
         },
       });
-    };
-
-    const travelerFilter = {
-      email: emailValue,
-      name: nombreValue,
     };
 
     this.usersNetService.getUsersByEmail(emailValue).subscribe({
@@ -393,13 +422,23 @@ export class ReviewSurveyComponent implements OnInit {
           const userMatch = users[0];
           continueWithReview(userMatch.id);
         } else {
-          alert('Usuario no encontrado. Por favor, regístrese o use un email válido.');
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Usuario no encontrado. Por favor, use un email válido.',
+            life: 5000,
+          });
           this.isSubmitting = false;
         }
       },
       error: (error) => {
         console.error('Error al buscar usuario por email', error);
-        alert('Ocurrió un error al verificar el usuario. Por favor, intente de nuevo.');
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Ocurrió un error al verificar el usuario. Por favor, intente de nuevo.',
+          life: 5000,
+        });
         this.isSubmitting = false;
       },
     });

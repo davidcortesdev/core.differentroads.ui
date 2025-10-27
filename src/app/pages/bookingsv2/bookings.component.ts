@@ -444,7 +444,12 @@ export class Bookingsv2Component implements OnInit {
 
         // Actualizar la fecha de salida en bookingImages
         if (this.bookingImages.length > 0 && departure.departureDate) {
-          this.bookingImages[0].departureDate = departure.departureDate;
+          try {
+            const date = new Date(departure.departureDate);
+            this.bookingImages[0].departureDate = date.toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' });
+          } catch {
+            this.bookingImages[0].departureDate = departure.departureDate;
+          }
         }
       },
       error: (error) => {
@@ -457,6 +462,17 @@ export class Bookingsv2Component implements OnInit {
   // Actualizar información de las imágenes
   updateBookingImages(reservation: IReservationResponse): void {
     if (this.bookingImages.length > 0) {
+      // Formatear fechas para mostrarlas correctamente
+      const formatDate = (dateString: string): string => {
+        if (!dateString) return '';
+        try {
+          const date = new Date(dateString);
+          return date.toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' });
+        } catch {
+          return dateString;
+        }
+      };
+
       // Inicializar con valores básicos (los nombres se actualizarán en loadTourData y loadRetailerData)
       this.bookingImages[0] = {
         ...this.bookingImages[0],
@@ -464,9 +480,9 @@ export class Bookingsv2Component implements OnInit {
         tourName: 'Cargando...',
         imageUrl: 'https://picsum.photos/400/200', // Imagen temporal
         retailer: 'Cargando...',
-        // Guardar fechas como ISO strings para que el pipe date pueda procesarlas
-        creationDate: reservation.createdAt || '',
-        departureDate: reservation.reservedAt || '',
+        // Formatear fechas para mostrar
+        creationDate: formatDate(reservation.createdAt || ''),
+        departureDate: formatDate(reservation.reservedAt || ''),
         passengers: reservation.totalPassengers,
         price: reservation.totalAmount,
       };

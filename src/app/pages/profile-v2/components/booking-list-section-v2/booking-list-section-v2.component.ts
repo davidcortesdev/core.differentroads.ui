@@ -491,8 +491,39 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   }
 
   viewItem(item: BookingItem) {
+    console.log('🔍 viewItem called:', { 
+      listType: this.listType, 
+      itemId: item.id,
+      reservationStatusId: item.reservationStatusId,
+      fullItem: item 
+    });
+    
     if (this.listType === 'active-bookings') {
-      this.router.navigate(['/bookings', item.id]);
+      console.log('📍 Navegando a /bookings/' + item.id);
+      
+      this.router.navigate(['/bookings', item.id]).then(
+        (success) => {
+          console.log('✅ Navegación exitosa:', success);
+          if (!success) {
+            console.error('❌ La navegación retornó false');
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error de navegación',
+              detail: 'No se pudo acceder al detalle de la reserva. Por favor, recargue la página.',
+              life: 5000
+            });
+          }
+        },
+        (error) => {
+          console.error('❌ Error en la navegación:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Ha ocurrido un error al intentar acceder al detalle de la reserva.',
+            life: 5000
+          });
+        }
+      );
     } else if (this.listType === 'recent-budgets') {
       // Para presupuestos, navegar al tour en lugar del checkout
       if (item.tourID) {

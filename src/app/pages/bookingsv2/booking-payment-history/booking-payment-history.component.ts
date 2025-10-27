@@ -30,8 +30,10 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   @Input() bookingID: string = '';
   @Input() bookingTotal: number = 0;
   @Input() tripItems: TripItemData[] = [];
-  @Input() isTO: boolean = false; // Add this line to receive isTO from parent
-  @Input() refreshTrigger: any = null; // Trigger para refrescar el resumen
+  @Input() isTO: boolean = false;
+  @Input() refreshTrigger: any = null;
+  @Input() reservationId: number = 0; // NUEVO: Para payment-management
+  @Input() departureDate: string = ''; // NUEVO: Para payment-management
 
   @Output() registerPayment = new EventEmitter<number>();
 
@@ -39,6 +41,9 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   paymentHistory: Payment[] = [];
   paymentForm: FormGroup;
   displayPaymentModal: boolean = false;
+  
+  // NUEVO: Modal para payment-management
+  displayPaymentManagementDialog: boolean = false;
 
   displayReviewModal: boolean = false;
   selectedReviewVoucherUrl: string = '';
@@ -159,7 +164,19 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   }
 
   navigateToPayment(): void {
-    this.router.navigate([`/payment/${this.bookingID}/`]);
+    // Abrir modal de payment-management en lugar de navegar
+    this.displayPaymentManagementDialog = true;
+  }
+  
+  closePaymentDialog(): void {
+    this.displayPaymentManagementDialog = false;
+  }
+  
+  onPaymentCompleted(paymentOption: any): void {
+    console.log('Pago completado:', paymentOption);
+    this.displayPaymentManagementDialog = false;
+    // Refrescar la información de pagos
+    this.refreshPayments();
   }
 
   formatDateForDisplay(dateStr: string): string {

@@ -435,21 +435,27 @@ export class Bookingsv2Component implements OnInit {
   private loadDepartureData(departureId: number): void {
     this.departureService.getById(departureId).subscribe({
       next: (departure) => {
-        // Actualizar la fecha de salida en bookingData
+        // Helper para formatear fechas de forma consistente
+        const formatDate = (dateString: string): string => {
+          if (!dateString) return '';
+          try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' });
+          } catch {
+            return dateString;
+          }
+        };
+
+        // Actualizar la fecha de salida en bookingData (sin formatear para mantener ISO)
         if (departure.departureDate) {
           this.bookingData.date = departure.departureDate;
-          // También actualizar la propiedad departureDate del componente
+          // Guardar la fecha sin formatear para componentes que la necesiten
           this.departureDate = departure.departureDate;
         }
 
-        // Actualizar la fecha de salida en bookingImages
+        // Actualizar la fecha de salida en bookingImages (formateada para display)
         if (this.bookingImages.length > 0 && departure.departureDate) {
-          try {
-            const date = new Date(departure.departureDate);
-            this.bookingImages[0].departureDate = date.toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' });
-          } catch {
-            this.bookingImages[0].departureDate = departure.departureDate;
-          }
+          this.bookingImages[0].departureDate = formatDate(departure.departureDate);
         }
       },
       error: (error) => {

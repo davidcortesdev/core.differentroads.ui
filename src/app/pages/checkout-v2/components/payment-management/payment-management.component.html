@@ -318,15 +318,6 @@
   <!-- Action Buttons -->
   <footer class="buttons-container">
     <p-button 
-      label="Regresar" 
-      severity="secondary" 
-      icon="pi pi-arrow-left" 
-      styleClass="back-button" 
-      [disabled]="isLoading" 
-      (click)="goBack()">
-    </p-button>
-    
-    <p-button 
       [label]="buttonLabel" 
       styleClass="payment-button" 
       [disabled]="isLoading || !isPaymentValid" 

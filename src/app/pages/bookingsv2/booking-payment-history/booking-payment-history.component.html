@@ -211,25 +211,10 @@
   </div>
 </p-dialog>
 
-<!-- NUEVO: Modal con componente payment-management (igual que checkout paso 4) -->
-<p-dialog
-  header="Realizar pago"
-  [(visible)]="displayPaymentManagementDialog"
-  [modal]="true"
-  [draggable]="false"
-  [resizable]="false"
-  [closable]="true"
-  [style]="{ width: '90vw', maxWidth: '800px' }"
-  styleClass="payment-management-dialog"
-  (onHide)="closePaymentDialog()"
->
-  <app-payment-management
-    [totalPrice]="paymentInfo.pendingAmount"
-    [reservationId]="reservationId"
-    [departureDate]="departureDate"
-    [showTransfer25Option]="isTO"
-    [isTourOperator]="isTO"
-    (paymentCompleted)="onPaymentCompleted($event)"
-  >
-  </app-payment-management>
-</p-dialog>
+<!-- NUEVO: Modal para añadir pago -->
+<app-add-payment-modal
+  [(visible)]="displayAddPaymentModal"
+  [paymentInfo]="paymentInfo"
+  [reservationId]="reservationId"
+  (paymentProcessed)="onPaymentProcessed($event)">
+</app-add-payment-modal>

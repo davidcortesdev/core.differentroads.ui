@@ -1,0 +1,166 @@
+<p-dialog
+  header="Añadir pago"
+  [(visible)]="visible"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="true"
+  [style]="{ width: '90vw', maxWidth: '600px' }"
+  styleClass="add-payment-dialog"
+  (onHide)="closeDialog()"
+>
+  <div class="add-payment-container">
+    <!-- Información de saldo pendiente -->
+    <div class="pending-info mb-4">
+      <div class="info-row">
+        <span class="label">Total de la reserva:</span>
+        <span class="value">{{ formatCurrency(paymentInfo.totalPrice) }}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Pagado:</span>
+        <span class="value paid">{{ formatCurrency(paymentInfo.paidAmount) }}</span>
+      </div>
+      <div class="info-row">
+        <span class="label">Pendiente:</span>
+        <span class="value pending">{{ formatCurrency(paymentInfo.pendingAmount) }}</span>
+      </div>
+    </div>
+
+    <p-divider></p-divider>
+
+    <!-- Input de cantidad -->
+    <div class="amount-input-section mb-4">
+      <label for="paymentAmount" class="input-label">
+        Cantidad a pagar <span class="required">*</span>
+      </label>
+      <div class="p-inputgroup">
+        <input
+          id="paymentAmount"
+          type="number"
+          pInputText
+          [(ngModel)]="customPaymentAmount"
+          [min]="1"
+          [max]="paymentInfo.pendingAmount"
+          (ngModelChange)="validatePaymentAmount()"
+          placeholder="Introduce la cantidad"
+          class="payment-amount-input"
+        />
+        <span class="p-inputgroup-addon">€</span>
+      </div>
+      <small class="help-text" *ngIf="customPaymentAmount">
+        Importe: {{ formatCurrency(customPaymentAmount) }}
+      </small>
+      <small class="error-text" *ngIf="paymentAmountError">
+        {{ paymentAmountError }}
+      </small>
+    </div>
+
+    <!-- Selección de método de pago -->
+    <div class="payment-method-section">
+      <label class="section-label">Método de pago <span class="required">*</span></label>
+      
+      <div class="payment-methods-grid">
+        <!-- Tarjeta bancaria -->
+        <div 
+          class="payment-method-option"
+          [ngClass]="{ 'selected': selectedPaymentMethod === 'card' }"
+          (click)="selectPaymentMethodType('card')">
+          <p-radioButton 
+            name="paymentMethodType" 
+            value="card" 
+            [(ngModel)]="selectedPaymentMethod">
+          </p-radioButton>
+          <div class="method-info">
+            <i class="pi pi-credit-card method-icon"></i>
+            <span class="method-label">Tarjeta bancaria</span>
+          </div>
+        </div>
+
+        <!-- Transferencia bancaria -->
+        <div 
+          class="payment-method-option"
+          [ngClass]="{ 'selected': selectedPaymentMethod === 'transfer' }"
+          (click)="selectPaymentMethodType('transfer')">
+          <p-radioButton 
+            name="paymentMethodType" 
+            value="transfer" 
+            [(ngModel)]="selectedPaymentMethod">
+          </p-radioButton>
+          <div class="method-info">
+            <i class="pi pi-building method-icon"></i>
+            <span class="method-label">Transferencia bancaria</span>
+          </div>
+        </div>
+
+        <!-- Scalapay -->
+        <div 
+          class="payment-method-option"
+          [ngClass]="{ 'selected': selectedPaymentMethod === 'scalapay' }"
+          (click)="selectPaymentMethodType('scalapay')">
+          <p-radioButton 
+            name="paymentMethodType" 
+            value="scalapay" 
+            [(ngModel)]="selectedPaymentMethod">
+          </p-radioButton>
+          <div class="method-info">
+            <img src="assets/images/scalapay.svg" alt="Scalapay" class="scalapay-logo">
+            <span class="method-label">Pagar a plazos</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Información adicional según método seleccionado -->
+    <div class="method-additional-info mt-3" *ngIf="selectedPaymentMethod">
+      <p-message 
+        *ngIf="selectedPaymentMethod === 'card'" 
+        severity="info" 
+        styleClass="w-full">
+        <ng-template pTemplate="messageicon">
+          <i class="pi pi-info-circle"></i>
+        </ng-template>
+        <span>Serás redirigido a la pasarela de pago segura de Redsys.</span>
+      </p-message>
+
+      <p-message 
+        *ngIf="selectedPaymentMethod === 'transfer'" 
+        severity="info" 
+        styleClass="w-full">
+        <ng-template pTemplate="messageicon">
+          <i class="pi pi-info-circle"></i>
+        </ng-template>
+        <span>Deberás realizar la transferencia y adjuntar el justificante de pago.</span>
+      </p-message>
+
+      <p-message 
+        *ngIf="selectedPaymentMethod === 'scalapay'" 
+        severity="info" 
+        styleClass="w-full">
+        <ng-template pTemplate="messageicon">
+          <i class="pi pi-info-circle"></i>
+        </ng-template>
+        <span>Paga en 3 cuotas sin intereses. Serás redirigido a Scalapay para completar el pago.</span>
+      </p-message>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="dialog-footer">
+      <p-button 
+        label="Cancelar" 
+        icon="pi pi-times" 
+        styleClass="p-button-text" 
+        (onClick)="closeDialog()">
+      </p-button>
+      <p-button 
+        label="Proceder al pago" 
+        icon="pi pi-check" 
+        styleClass="p-button-success" 
+        [disabled]="!isPaymentFormValid()"
+        [loading]="processingPayment"
+        (onClick)="processCustomPayment()">
+      </p-button>
+    </div>
+  </ng-template>
+</p-dialog>
+

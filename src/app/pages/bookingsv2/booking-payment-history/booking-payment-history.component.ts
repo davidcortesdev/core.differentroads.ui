@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import {
   Payment,
 } from '../../../core/models/bookings/payment.model';
+import { PaymentData } from '../add-payment-modal/add-payment-modal.component';
 
 // Interfaces existentes
 interface TripItemData {
@@ -42,8 +43,8 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   paymentForm: FormGroup;
   displayPaymentModal: boolean = false;
   
-  // NUEVO: Modal para payment-management
-  displayPaymentManagementDialog: boolean = false;
+  // NUEVO: Modal para añadir pago
+  displayAddPaymentModal: boolean = false;
 
   displayReviewModal: boolean = false;
   selectedReviewVoucherUrl: string = '';
@@ -178,20 +179,15 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   }
 
   navigateToPayment(): void {
-    // Abrir modal de payment-management en lugar de navegar
-    this.displayPaymentManagementDialog = true;
+    // Abrir modal de añadir pago
+    this.displayAddPaymentModal = true;
   }
-  
-  closePaymentDialog(): void {
-    this.displayPaymentManagementDialog = false;
-  }
-  
-  onPaymentCompleted(paymentOption: any): void {
-    console.log('Pago completado:', paymentOption);
-    this.displayPaymentManagementDialog = false;
+
+  onPaymentProcessed(paymentData: PaymentData): void {
+    console.log('Pago procesado:', paymentData);
     
     // Emitir evento para que el padre actualice los datos
-    this.registerPayment.emit(paymentOption.amount || 0);
+    this.registerPayment.emit(paymentData.amount);
     
     // Refrescar la información de pagos
     this.refreshPayments();

@@ -25,6 +25,7 @@
             [travelerId]="pass._id || ''"
             [reservationFields]="reservationFields"
             [availableFields]="availableFields"
+            [departureReservationFields]="departureReservationFields"
             [mandatoryFields]="mandatoryFields"
             [isLeadTraveler]="pass.type === 'lead'"
             (passengerUpdated)="updatePassenger($event)"

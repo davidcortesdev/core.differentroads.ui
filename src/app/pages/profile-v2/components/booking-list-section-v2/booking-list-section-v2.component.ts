@@ -712,8 +712,9 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
     );
   }
 
-  shouldShowView(): boolean {
-    return true; // Always show view button
+  shouldShowView(item: BookingItem): boolean {
+    // No mostrar botón de ver detalle si el estado es 3 (budget/presupuesto reservado)
+    return item.reservationStatusId !== 3;
   }
 
   shouldShowReserve(): boolean {

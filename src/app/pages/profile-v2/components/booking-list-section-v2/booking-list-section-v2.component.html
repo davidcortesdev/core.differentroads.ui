@@ -111,7 +111,7 @@
                     (click)="sendItem(item)"></p-button>
                 </div>
                 <div class="bottom-buttons">
-                  <p-button *ngIf="shouldShowView()" 
+                  <p-button *ngIf="shouldShowView(item)" 
                     [label]="getViewLabel()" 
                     styleClass="p-button-rounded" 
                     (click)="viewItem(item)"></p-button>

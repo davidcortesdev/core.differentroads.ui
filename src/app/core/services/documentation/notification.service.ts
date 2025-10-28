@@ -96,7 +96,6 @@ export class NotificationService {
     reservationId: number
   ): Observable<INotification[]> {
     const url = `${this.API_URL}/by-reservation/${reservationId}`;
-    console.log('🔍 DEBUG: NotificationService - Making request to:', url);
     return this.http.get<INotification[]>(url);
   }
 

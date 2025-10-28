@@ -81,11 +81,8 @@ export class BookingDocumentationV2Component implements OnInit {
       // Si viene el parámetro isATC=true, activar modo ATC
       if (params['isATC'] === 'true' || params['isAtc'] === 'true') {
         this.isAtc = true;
-        console.log('✅ ATC detectado desde parámetro URL');
       }
     });
-
-    console.log('🔍 isAtc:', this.isAtc);
   }
 
   ngOnInit(): void {
@@ -117,7 +114,6 @@ export class BookingDocumentationV2Component implements OnInit {
       next: (statuses: INotificationStatusResponse[]) => {
         this.notificationStatuses = statuses;
         this.statusesLoading = false;
-        console.log('📊 Notification statuses loaded:', statuses);
       },
       error: (error) => {
         console.error('❌ Error loading notification statuses:', error);
@@ -137,7 +133,6 @@ export class BookingDocumentationV2Component implements OnInit {
       next: (types: INotificationTypeResponse[]) => {
         this.notificationTypes = types;
         this.typesLoading = false;
-        console.log('📋 Notification types loaded:', types);
       },
       error: (error) => {
         console.error('❌ Error loading notification types:', error);
@@ -157,7 +152,6 @@ export class BookingDocumentationV2Component implements OnInit {
       next: (types: IDocumentTypeResponse[]) => {
         this.documentTypes = types;
         this.documentTypesLoading = false;
-        console.log('📄 Document types loaded:', types);
       },
       error: (error) => {
         console.error('❌ Error loading document types:', error);
@@ -179,7 +173,6 @@ export class BookingDocumentationV2Component implements OnInit {
         next: (documents: any[]) => {
           this.apiDocuments = documents;
           this.documentsLoading = false;
-          console.log('📄 Documents loaded:', documents);
         },
         error: (error) => {
           console.error('❌ Error loading documents:', error);
@@ -206,7 +199,6 @@ export class BookingDocumentationV2Component implements OnInit {
         next: (notifications: INotification[]) => {
           this.apiNotifications = notifications;
           this.notificationsLoading = false;
-          console.log('📧 Notifications loaded:', notifications);
         },
         error: (error) => {
           console.error('❌ Error loading notifications:', error);
@@ -227,7 +219,6 @@ export class BookingDocumentationV2Component implements OnInit {
   loadNotes(): void {
     // Inicializar array vacío como estaba antes
     this.notes = [];
-    console.log('📝 Notes loaded:', this.notes);
   }
 
   /**

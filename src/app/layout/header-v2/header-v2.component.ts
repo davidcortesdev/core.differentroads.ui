@@ -676,71 +676,11 @@ export class HeaderV2Component implements OnInit, OnDestroy {
   }
 
   /**
-   * Navega al perfil del usuario usando su ID real de la base de datos
+   * Navega al perfil del usuario
+   * Ya no necesita userId porque el componente obtiene el usuario desde el servicio de autenticación
    */
   private navigateToUserProfile(): void {
-    this.isNavigatingManually = true;
-    
-    // Usar el userId que ya tenemos almacenado si está disponible
-    if (this.currentUserId) {
-      this.router.navigate(['/profile', this.currentUserId]).finally(() => {
-        this.isNavigatingManually = false;
-      });
-      return;
-    }
-    
-    // Si no tenemos el userId, obtenerlo
-    this.authService.getUserEmail().pipe(
-      takeUntil(this.destroy$),
-      switchMap((email: string) => {
-        if (email) {
-          return this.usersNetService.getUsersByEmail(email);
-        } else {
-          return of([]);
-        }
-      })
-    ).subscribe({
-      next: (users: any[]) => {
-        // SOLO navegar si es una navegación manual (usuario hizo clic)
-        if (!this.isNavigatingManually) {
-          return;
-        }
-        
-        if (users && users.length > 0) {
-          const user = users[0];
-          const userId = user?.id;
-          
-          this.currentUserId = userId || '';
-          
-          if (userId) {
-            this.router.navigate(['/profile', userId]).finally(() => {
-              this.isNavigatingManually = false;
-            });
-          }
-        } else {
-          const cognitoId = this.authService.getCognitoIdValue();
-          if (cognitoId) {
-            this.router.navigate(['/profile', cognitoId]).finally(() => {
-              this.isNavigatingManually = false;
-            });
-          }
-        }
-      },
-      error: (error) => {
-        // SOLO navegar si es una navegación manual
-        if (!this.isNavigatingManually) {
-          return;
-        }
-        
-        console.error('Error obteniendo usuario:', error);
-        const cognitoId = this.authService.getCognitoIdValue();
-        if (cognitoId) {
-          this.router.navigate(['/profile', cognitoId]).finally(() => {
-            this.isNavigatingManually = false;
-          });
-        }
-      }
-    });
+    this.router.navigate(['/profile']);
   }
 
 

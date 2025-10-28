@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { MembershipCard, PointsRecord, TravelerCategory, TravelerPointsSummary } from '../../../../core/models/v2/profile-v2.model';
 import { PointsV2Service } from '../../../../core/services/v2/points-v2.service';
 import { BookingsServiceV2 } from '../../../../core/services/v2/bookings-v2.service';
@@ -10,7 +10,7 @@ import { BookingsServiceV2 } from '../../../../core/services/v2/bookings-v2.serv
   templateUrl: './points-section-v2.component.html',
   styleUrls: ['./points-section-v2.component.scss'],
 })
-export class PointsSectionV2Component implements OnInit {
+export class PointsSectionV2Component implements OnInit, OnChanges {
   @Input() userId: string = '';
   
   points: PointsRecord[] = [];
@@ -30,7 +30,15 @@ export class PointsSectionV2Component implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadData();
+    if (this.userId) {
+      this.loadData();
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['userId'] && changes['userId'].currentValue) {
+      this.loadData();
+    }
   }
 
   /**

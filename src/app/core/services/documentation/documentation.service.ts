@@ -127,10 +127,6 @@ export class DocumentationService {
   getDocumentsByReservationId(
     reservationId: number
   ): Observable<IDocumentReservationResponse[]> {
-    console.log(
-      '🔍 DEBUG: DocumentationService - Getting documents for reservation:',
-      reservationId
-    );
 
     const params = new HttpParams().set(
       'ReservationId',

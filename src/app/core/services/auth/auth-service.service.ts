@@ -369,7 +369,6 @@ export class AuthenticateService {
             [item.Name]: item.Value,
           }));
           formattedResult = Object.assign({}, ...formattedResult);
-          console.log('User attributes: ', formattedResult);
 
           if (formattedResult.email) {
             this.currentUserEmail.next(formattedResult.email);

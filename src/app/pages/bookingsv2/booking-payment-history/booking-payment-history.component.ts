@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import {
   Payment,
 } from '../../../core/models/bookings/payment.model';
+import { PaymentData } from '../add-payment-modal/add-payment-modal.component';
 
 // Interfaces existentes
 interface TripItemData {
@@ -30,8 +31,10 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   @Input() bookingID: string = '';
   @Input() bookingTotal: number = 0;
   @Input() tripItems: TripItemData[] = [];
-  @Input() isTO: boolean = false; // Add this line to receive isTO from parent
-  @Input() refreshTrigger: any = null; // Trigger para refrescar el resumen
+  @Input() isTO: boolean = false;
+  @Input() refreshTrigger: any = null;
+  @Input() reservationId: number = 0; // NUEVO: Para payment-management
+  @Input() departureDate: string = ''; // NUEVO: Para payment-management
 
   @Output() registerPayment = new EventEmitter<number>();
 
@@ -39,6 +42,9 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   paymentHistory: Payment[] = [];
   paymentForm: FormGroup;
   displayPaymentModal: boolean = false;
+  
+  // NUEVO: Modal para añadir pago
+  displayAddPaymentModal: boolean = false;
 
   displayReviewModal: boolean = false;
   selectedReviewVoucherUrl: string = '';
@@ -72,22 +78,36 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   }
 
   ngOnInit(): void {
-    if (this.bookingID) {
-      //TODO: Implementar leyendo los datos de mysql
-    }
+    this.calculatePaymentInfo();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    // Actualizar paymentInfo si cambia bookingTotal
+    if (changes['bookingTotal']) {
+      this.calculatePaymentInfo();
+    }
+    
     if (changes['refreshTrigger'] && changes['refreshTrigger'].currentValue) {
       console.log('🔄 Refrescando datos de pagos por trigger...');
       this.refreshPayments();
     }
   }
 
+  private calculatePaymentInfo(): void {
+    // Usar bookingTotal de la reserva real
+    this.paymentInfo = {
+      totalPrice: this.bookingTotal || 0,
+      pendingAmount: this.bookingTotal || 0, // Por defecto todo está pendiente
+      paidAmount: 0, // TODO: calcular desde pagos reales cuando se implementen
+    };
+  }
+
   public refreshPayments(): void {
     if (this.bookingID) {
       //TODO: Implementar leyendo los datos de mysql
       console.log('Refrescando datos de pagos...');
+      // Recalcular paymentInfo
+      this.calculatePaymentInfo();
     }
   }
 
@@ -159,7 +179,18 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   }
 
   navigateToPayment(): void {
-    this.router.navigate([`/payment/${this.bookingID}/`]);
+    // Abrir modal de añadir pago
+    this.displayAddPaymentModal = true;
+  }
+
+  onPaymentProcessed(paymentData: PaymentData): void {
+    console.log('Pago procesado:', paymentData);
+    
+    // Emitir evento para que el padre actualice los datos
+    this.registerPayment.emit(paymentData.amount);
+    
+    // Refrescar la información de pagos
+    this.refreshPayments();
   }
 
   formatDateForDisplay(dateStr: string): string {

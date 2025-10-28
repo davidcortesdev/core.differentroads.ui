@@ -171,7 +171,7 @@ export class TourHighlightsV2Component implements OnInit, OnChanges {
   }
 
   private getHighlightImage(highlight: ITourHighlightResponse): string {
-    const defaultImage = 'https://via.placeholder.com/300x200/4CAF50/white?text=Highlight';
+    const defaultImage = 'https://picsum.photos/300/200';
     return (highlight as any).imageUrl || defaultImage;
   }
 

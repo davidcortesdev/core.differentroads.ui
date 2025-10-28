@@ -89,32 +89,46 @@
               paymentHistory && paymentHistory.length > 0 ? '' : 'empty-panel'
             "
           >
-            <div *ngFor="let item of paymentHistory" class="history-item">
-              <span class="date">{{ item.createdAt | date }}</span>
-              <span class="status">
-                <span class="status-text">
-                  {{ getStatusText(item.status) }}
-                </span>
-                <button
-                  *ngIf="
-                    isTO &&
-                    item.status === 'PENDING_REVIEW' &&
-                    item?.vouchers?.length
-                  "
-                  type="button"
-                  class="p-button p-component p-button-text"
-                  (click)="showReviewModal(item)"
-                >
-                  Ver
-                </button>
-              </span>
-              <span class="amount">{{ item.amount | currencyFormat }}</span>
+            <!-- Loading state -->
+            <div *ngIf="isLoadingPayments" class="loading-container">
+              <p-progressSpinner></p-progressSpinner>
             </div>
-            <div
-              *ngIf="!paymentHistory || paymentHistory.length === 0"
-              class="empty-message"
-            >
-              No hay ningun pago registrado
+
+            <!-- Payment history list -->
+            <div *ngIf="!isLoadingPayments">
+              <div *ngFor="let item of paymentHistory" class="history-item">
+                <span class="method" *ngIf="item.method">
+                  <i class="pi pi-credit-card"></i> {{ item.method }}
+                </span>
+                <span class="amount">{{ item.amount | currencyFormat }}</span>
+                <span class="status">
+                  <span class="status-text">
+                    {{ getStatusText(item.status) }}
+                  </span>
+                  <button
+                    *ngIf="
+                      isTO &&
+                      item.status === 'PENDING_REVIEW' &&
+                      item?.vouchers && item.vouchers.length > 0
+                    "
+                    type="button"
+                    class="p-button p-component p-button-text"
+                    (click)="showReviewModal(item)"
+                  >
+                    Ver
+                  </button>
+                </span>
+                <span class="notes" *ngIf="item.notes">
+                  <i class="pi pi-comment"></i> {{ item.notes }}
+                </span>
+                <span class="date">{{ item.createdAt | date }}</span>
+              </div>
+              <div
+                *ngIf="!paymentHistory || paymentHistory.length === 0"
+                class="empty-message"
+              >
+                No hay ningun pago registrado
+              </div>
             </div>
           </p-panel>
         </div>

@@ -1,9 +1,11 @@
-import { Component, OnInit, Inject, ViewChild } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Component, OnInit, OnDestroy, Inject, ViewChild, ErrorHandler } from '@angular/core';
+import { Router, ActivatedRoute, NavigationEnd, NavigationStart, NavigationCancel, NavigationError, Event } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Flight } from '../../core/models/tours/flight.model';
 import { finalize } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 import {
   Payment,
   PaymentStatus,
@@ -114,12 +116,14 @@ export interface PassengerData {
   styleUrls: ['./bookings.component.scss'],
   providers: [MessageService],
 })
-export class Bookingsv2Component implements OnInit {
+export class Bookingsv2Component implements OnInit, OnDestroy {
   @ViewChild('paymentHistoryComponent') paymentHistoryComponent: any;
   
   // ID de la reserva actual
   bookingId: string = '';
   isLoading: boolean = false;
+  private routerSubscription?: Subscription;
+  private routeSubscription?: Subscription;
   
   // Trigger para refrescar el resumen
   summaryRefreshTrigger: any = null;
@@ -227,16 +231,35 @@ export class Bookingsv2Component implements OnInit {
     this.messageService.clear();
 
     // Obtenemos el ID de la URL
-    this.route.params.subscribe((params) => {
+    this.routeSubscription = this.route.params.subscribe((params) => {
       if (params['id']) {
-        this.bookingId = params['id'];
-        this.loadBookingData(this.bookingId);
+        const newBookingId = params['id'];
+        
+        // Solo cargar si es diferente del actual
+        if (newBookingId !== this.bookingId) {
+          this.bookingId = newBookingId;
+          this.loadBookingData(this.bookingId);
+        }
       }
     });
   }
 
+  ngOnDestroy(): void {
+    // Limpiar suscripciones
+    if (this.routerSubscription) {
+      this.routerSubscription.unsubscribe();
+    }
+    if (this.routeSubscription) {
+      this.routeSubscription.unsubscribe();
+    }
+  }
+
   // Método para cargar los datos de la reserva
   loadBookingData(id: string): void {
+    if (this.isLoading) {
+      return;
+    }
+    
     this.isLoading = true;
 
     // Convertir el ID de string a number
@@ -272,6 +295,7 @@ export class Bookingsv2Component implements OnInit {
           // Los datos de pasajeros ahora se cargan directamente en el componente booking-personal-data
         },
         error: (error) => {
+          console.error('Error cargando datos de reserva:', error);
           this.messageService.add({
             key: 'center',
             severity: 'error',

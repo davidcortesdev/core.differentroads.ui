@@ -491,19 +491,32 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   }
 
   viewItem(item: BookingItem) {
+    console.log('🟣 [BookingList] viewItem llamado con item.id:', item.id);
+    console.log('🟣 [BookingList] URL actual antes de navegar:', window.location.href);
+    console.log('🟣 [BookingList] listType:', this.listType);
+    
     if (this.listType === 'active-bookings') {
+      console.log('🟣 [BookingList] Navegando a /bookings/' + item.id);
+      
       this.router.navigate(['/bookings', item.id]).then(
         (success) => {
+          console.log('🟣 [BookingList] Navigate promise resolved, success:', success);
+          console.log('🟣 [BookingList] URL después de navegar:', window.location.href);
+          
           if (!success) {
+            console.error('🔴 [BookingList] ❌ Navegación fallida (success=false)');
             this.messageService.add({
               severity: 'error',
               summary: 'Error de navegación',
               detail: 'No se pudo acceder al detalle de la reserva. Por favor, recargue la página.',
               life: 5000
             });
+          } else {
+            console.log('🟣 [BookingList] ✅ Navegación exitosa');
           }
         },
         (error) => {
+          console.error('🔴 [BookingList] ❌ Error en navigate promise:', error);
           this.messageService.add({
             severity: 'error',
             summary: 'Error',

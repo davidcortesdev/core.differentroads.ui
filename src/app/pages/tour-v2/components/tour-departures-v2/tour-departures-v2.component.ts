@@ -1354,4 +1354,17 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       return '';
     }
   }
+
+  /**
+   * Verifica si la ciudad seleccionada es "sin vuelos"
+   * @returns true si se seleccionó "sin vuelos"
+   */
+  isSinVuelosSelected(): boolean {
+    if (!this.selectedCity) {
+      return false;
+    }
+
+    return this.selectedCity.name.toLowerCase().includes('sin vuelos') ||
+           this.selectedCity.name.toLowerCase().includes('sin vuelo');
+  }
 }

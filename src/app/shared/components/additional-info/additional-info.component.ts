@@ -50,6 +50,9 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
   isDownloadMode: boolean = false;
   isShareMode: boolean = false;
 
+  // ID de la reserva generada para evitar crear múltiples reservas
+  private generatedReservationId: number | null = null;
+
   // Configuración de diálogos
   dialogBreakpoints = { '1199px': '80vw', '575px': '90vw' };
   dialogStyle = { width: '50vw' };
@@ -99,13 +102,15 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
     const tourId = this.tourId || (this.selectedDeparture?.tourId?.toString()) || '';
     const periodId = this.periodID || (this.selectedDeparture?.id?.toString()) || '';
     
-    
     this.additionalInfoService.setContextData({
       tourId: tourId,
       periodId: periodId,
       travelersData: this.travelersSelected,
       selectedFlight: this.selectedFlight,
-      totalPrice: this.calculateTotalPrice()
+      totalPrice: this.calculateTotalPrice(),
+      selectedActivities: this.selectedActivities,
+      ageGroupCategories: this.getAgeGroupCategories(),
+      selectedActivityPackId: this.getSelectedActivityPackId()
     });
   }
 
@@ -119,6 +124,29 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
       .reduce((sum, activity) => sum + (activity.price || 0), 0);
 
     return (this.totalPrice || 0) + activitiesTotal;
+  }
+
+  /**
+   * ✅ MÉTODO NUEVO: Obtener age group categories desde el contexto
+   * En el contexto de additional-info, estos datos pueden no estar disponibles
+   */
+  private getAgeGroupCategories(): any {
+    // En el contexto de additional-info, es posible que no tengamos age groups
+    // Por ahora retornamos valores por defecto que funcionarán para presupuestos básicos
+    return {
+      adults: { id: 1 }, // ID por defecto para adultos
+      children: { id: 2 }, // ID por defecto para niños
+      babies: { id: 3 } // ID por defecto para bebés
+    };
+  }
+
+  /**
+   * ✅ MÉTODO NUEVO: Obtener selected activity pack ID desde el contexto
+   */
+  private getSelectedActivityPackId(): number | null {
+    // En el contexto de additional-info, es posible que no tengamos este dato
+    // Por ahora retornamos null, pero se puede extender si es necesario
+    return null;
   }
 
   /**
@@ -144,6 +172,16 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
     this.subscription.unsubscribe();
     // Limpiar datos del contexto
     this.additionalInfoService.clearContextData();
+    // Limpiar ID de reserva generada
+    this.generatedReservationId = null;
+  }
+
+  /**
+   * Limpia el ID de la reserva generada
+   * Útil cuando el usuario cambia de tour o quiere empezar de nuevo
+   */
+  clearGeneratedReservationId(): void {
+    this.generatedReservationId = null;
   }
 
   /**
@@ -225,12 +263,41 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
 
     this.loading = true;
 
-    // Simular descarga exitosa inmediatamente
-    this.loading = false;
-    this.additionalInfoService.showSuccess('Presupuesto descargado correctamente');
+    // Obtener el ID de la reserva desde el contexto
+    const reservationId = this.getReservationId();
     
-    // Disparar evento de analytics: file_download
-    this.trackFileDownload();
+    if (!reservationId) {
+      // En modo tour, no hay reserva existente, necesitamos crear una primero
+      if (this.context === 'tour') {
+        this.createBudgetAndDownload();
+        return;
+      } else {
+        this.loading = false;
+        this.additionalInfoService.showError(
+          'No se encontró información de la reserva para descargar el presupuesto.'
+        );
+        return;
+      }
+    }
+
+    // Usar el nuevo método para descargar el presupuesto
+    this.additionalInfoService.downloadBudgetPDF(reservationId).subscribe({
+      next: (response) => {
+        this.loading = false;
+        if (response.success) {
+          this.additionalInfoService.showSuccess(response.message);
+          // Disparar evento de analytics: file_download
+          this.trackFileDownload();
+        } else {
+          this.additionalInfoService.showError(response.message);
+        }
+      },
+      error: (error) => {
+        this.loading = false;
+        console.error('Error al descargar presupuesto:', error);
+        this.additionalInfoService.showError('Error al descargar el presupuesto. Inténtalo de nuevo.');
+      }
+    });
   }
 
   /**
@@ -373,20 +440,51 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
       periodDates: this.periodDates,
       flightInfo: this.selectedFlight?.name || 'Sin vuelo',
       travelers: this.travelersSelected,
-      reservationId: this.existingOrder?._id || null,
+      reservationId: this.getReservationId(),
       isShareMode: true
     };
 
-    // Simular envío exitoso inmediatamente
-    this.loading = false;
-    this.additionalInfoService.showSuccess(
-      `Presupuesto compartido exitosamente con ${formData.recipientEmail}`
-    );
+    // Obtener el ID de la reserva
+    const reservationId = this.getReservationId();
     
-    // Disparar evento de analytics: share
-    this.trackShare();
-    
-    this.handleCloseModal();
+    if (!reservationId) {
+      // En modo tour, no hay reserva existente, necesitamos crear una primero
+      if (this.context === 'tour') {
+        this.createBudgetAndShare(formData);
+        return;
+      } else {
+        this.loading = false;
+        this.additionalInfoService.showError(
+          'No se encontró información de la reserva para compartir el presupuesto.'
+        );
+        return;
+      }
+    }
+
+    // Usar el nuevo método para enviar el presupuesto por email
+    this.additionalInfoService.sendBudgetByEmail(
+      reservationId,
+      formData.recipientEmail,
+      formData.recipientName,
+      formData.message
+    ).subscribe({
+      next: (response) => {
+        this.loading = false;
+        if (response.success) {
+          this.additionalInfoService.showSuccess(response.message);
+          // Disparar evento de analytics: share
+          this.trackShare();
+        } else {
+          this.additionalInfoService.showError(response.message);
+        }
+        this.handleCloseModal();
+      },
+      error: (error) => {
+        this.loading = false;
+        console.error('Error al compartir presupuesto:', error);
+        this.additionalInfoService.showError('Error al compartir el presupuesto. Inténtalo de nuevo.');
+      }
+    });
   }
 
   /**
@@ -401,28 +499,45 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
       periodDates: this.periodDates,
       flightInfo: this.selectedFlight?.name || 'Sin vuelo',
       travelers: this.travelersSelected,
-      reservationId: this.existingOrder?._id || null
+      reservationId: this.getReservationId()
     };
 
-    const downloadSub = this.additionalInfoService.downloadBudgetPDF(
-      JSON.stringify(budgetData)
-    ).subscribe({
+    // Obtener el ID de la reserva
+    const reservationId = this.getReservationId();
+    
+    if (!reservationId) {
+      // En modo tour, no hay reserva existente, necesitamos crear una primero
+      if (this.context === 'tour') {
+        this.createBudgetAndDownloadWithEmail(formData);
+        return;
+      } else {
+        this.loading = false;
+        this.additionalInfoService.showError(
+          'No se encontró información de la reserva para descargar el presupuesto.'
+        );
+        return;
+      }
+    }
+
+    const downloadSub = this.additionalInfoService.downloadBudgetPDF(reservationId).subscribe({
       next: (response) => {
         this.loading = false;
 
-        if (response instanceof Blob) {
-          this.downloadPDFFromBlob(response, `presupuesto-${this.tourName}.pdf`);
-        } else if (response.pdfUrl) {
-          this.downloadPDFFromURL(response.pdfUrl, response.fileName);
+        if (response.success) {
+          this.additionalInfoService.showSuccess(
+            `Presupuesto descargado y enviado a ${formData.recipientEmail}`
+          );
+          // Disparar evento de analytics: file_download
+          this.trackFileDownload();
+        } else {
+          this.additionalInfoService.showError(response.message);
         }
-
-        this.additionalInfoService.showSuccess(
-          `Presupuesto descargado y enviado a ${formData.recipientEmail}`
-        );
+        
         this.handleCloseModal();
       },
-      error: () => {
+      error: (error) => {
         this.loading = false;
+        console.error('Error al descargar presupuesto:', error);
         this.additionalInfoService.showError(
           'Ha ocurrido un error al descargar el presupuesto. Por favor, inténtalo de nuevo.'
         );
@@ -577,5 +692,169 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
       'Presupuesto',
       this.userEmail
     );
+  }
+
+  /**
+   * Obtiene el ID de la reserva desde el contexto actual
+   * @returns ID de la reserva o null si no está disponible
+   */
+  private getReservationId(): number | null {
+    // Intentar obtener el ID desde existingOrder (modo actualización)
+    if (this.existingOrder && (this.existingOrder._id || this.existingOrder.ID)) {
+      const id = this.existingOrder._id || this.existingOrder.ID;
+      return typeof id === 'string' ? parseInt(id, 10) : id;
+    }
+
+    // Si hay una reserva generada previamente, usar esa
+    if (this.generatedReservationId) {
+      return this.generatedReservationId;
+    }
+
+    // En modo creación, no tenemos ID de reserva aún
+    return null;
+  }
+
+  /**
+   * Crea un presupuesto y luego procede con la descarga
+   */
+  private createBudgetAndDownload(): void {
+    // Actualizar datos del contexto antes de crear la reserva
+    this.setContextData();
+    
+    this.additionalInfoService.createBudget().subscribe({
+      next: (createdReservation) => {
+        // Una vez creada la reserva, guardar el ID y proceder con la descarga
+        const reservationId = createdReservation.id || createdReservation.ID;
+        if (reservationId) {
+          // Guardar el ID de la reserva generada para futuras operaciones
+          this.generatedReservationId = reservationId;
+          
+          this.additionalInfoService.downloadBudgetPDF(reservationId).subscribe({
+            next: (response) => {
+              this.loading = false;
+              if (response.success) {
+                this.additionalInfoService.showSuccess(response.message);
+                // Disparar evento de analytics: file_download
+                this.trackFileDownload();
+              } else {
+                this.additionalInfoService.showError(response.message);
+              }
+            },
+            error: (error) => {
+              this.loading = false;
+              console.error('Error al descargar presupuesto:', error);
+              this.additionalInfoService.showError('Error al descargar el presupuesto. Inténtalo de nuevo.');
+            }
+          });
+        } else {
+          this.loading = false;
+          this.additionalInfoService.showError('No se pudo obtener el ID de la reserva creada.');
+        }
+      },
+      error: (error) => {
+        this.loading = false;
+        console.error('Error al crear presupuesto:', error);
+        this.additionalInfoService.showError('No se pudo crear el presupuesto. Inténtalo de nuevo.');
+      }
+    });
+  }
+
+  /**
+   * Crea un presupuesto y luego procede con compartir
+   */
+  private createBudgetAndShare(formData: any): void {
+    // Actualizar datos del contexto antes de crear la reserva
+    this.setContextData();
+    
+    this.additionalInfoService.createBudget().subscribe({
+      next: (createdReservation) => {
+        // Una vez creada la reserva, guardar el ID y proceder con compartir
+        const reservationId = createdReservation.id || createdReservation.ID;
+        if (reservationId) {
+          // Guardar el ID de la reserva generada para futuras operaciones
+          this.generatedReservationId = reservationId;
+          
+          this.additionalInfoService.sendBudgetByEmail(
+            reservationId,
+            formData.recipientEmail,
+            formData.recipientName,
+            formData.message
+          ).subscribe({
+            next: (response) => {
+              this.loading = false;
+              if (response.success) {
+                this.additionalInfoService.showSuccess(response.message);
+                // Disparar evento de analytics: share
+                this.trackShare();
+              } else {
+                this.additionalInfoService.showError(response.message);
+              }
+              this.handleCloseModal();
+            },
+            error: (error) => {
+              this.loading = false;
+              console.error('Error al compartir presupuesto:', error);
+              this.additionalInfoService.showError('Error al compartir el presupuesto. Inténtalo de nuevo.');
+            }
+          });
+        } else {
+          this.loading = false;
+          this.additionalInfoService.showError('No se pudo obtener el ID de la reserva creada.');
+        }
+      },
+      error: (error) => {
+        this.loading = false;
+        console.error('Error al crear presupuesto:', error);
+        this.additionalInfoService.showError('No se pudo crear el presupuesto. Inténtalo de nuevo.');
+      }
+    });
+  }
+
+  /**
+   * Crea un presupuesto y luego procede con la descarga y envío por email
+   */
+  private createBudgetAndDownloadWithEmail(formData: any): void {
+    // Actualizar datos del contexto antes de crear la reserva
+    this.setContextData();
+    
+    this.additionalInfoService.createBudget().subscribe({
+      next: (createdReservation) => {
+        // Una vez creada la reserva, guardar el ID y proceder con la descarga
+        const reservationId = createdReservation.id || createdReservation.ID;
+        if (reservationId) {
+          // Guardar el ID de la reserva generada para futuras operaciones
+          this.generatedReservationId = reservationId;
+          
+          this.additionalInfoService.downloadBudgetPDF(reservationId).subscribe({
+            next: (response) => {
+              this.loading = false;
+              if (response.success) {
+                this.additionalInfoService.showSuccess(
+                  `Presupuesto descargado y enviado a ${formData.recipientEmail}`
+                );
+                // Disparar evento de analytics: file_download
+                this.trackFileDownload();
+              } else {
+                this.additionalInfoService.showError(response.message);
+              }
+              this.handleCloseModal();
+            },
+            error: (error) => {
+              this.loading = false;
+              console.error('Error al descargar presupuesto:', error);
+              this.additionalInfoService.showError('Error al descargar el presupuesto. Inténtalo de nuevo.');
+            }
+          });
+        } else {
+          this.loading = false;
+          this.additionalInfoService.showError('No se pudo obtener el ID de la reserva creada.');
+        }
+      },
+      error: (error) => {
+        this.loading = false;
+        console.error('Error al crear presupuesto:', error);
+        this.additionalInfoService.showError('No se pudo crear el presupuesto. Inténtalo de nuevo.');
+      }
+    });
   }
 }

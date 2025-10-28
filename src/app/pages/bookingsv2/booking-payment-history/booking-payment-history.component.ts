@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, OnChanges, SimpleChanges } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
@@ -26,11 +26,12 @@ interface PaymentInfo {
   styleUrls: ['./booking-payment-history.component.scss'],
   standalone: false,
 })
-export class BookingPaymentHistoryV2Component implements OnInit {
+export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   @Input() bookingID: string = '';
   @Input() bookingTotal: number = 0;
   @Input() tripItems: TripItemData[] = [];
   @Input() isTO: boolean = false; // Add this line to receive isTO from parent
+  @Input() refreshTrigger: any = null; // Trigger para refrescar el resumen
 
   @Output() registerPayment = new EventEmitter<number>();
 
@@ -76,9 +77,17 @@ export class BookingPaymentHistoryV2Component implements OnInit {
     }
   }
 
-  private refreshPayments(): void {
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['refreshTrigger'] && changes['refreshTrigger'].currentValue) {
+      console.log('🔄 Refrescando datos de pagos por trigger...');
+      this.refreshPayments();
+    }
+  }
+
+  public refreshPayments(): void {
     if (this.bookingID) {
       //TODO: Implementar leyendo los datos de mysql
+      console.log('Refrescando datos de pagos...');
     }
   }
 

@@ -1,9 +1,5 @@
 $azul: var(--background-azul);
 $primary: var(--p-primary-color);
-// Adding the paginator background variable
-:host {
-    --p-paginator-background: white;
-}
 
 @mixin flex($justify: center, $align: center) {
     display: flex;
@@ -348,15 +344,6 @@ $primary: var(--p-primary-color);
     @include flex;
     margin-top: 1rem;
 }
-.ml-2 {
-    margin-left: 0.5rem;
-}
-.ml-auto {
-    margin-left: auto;
-}
-.p-3 {
-    padding: 1rem;
-}
 
 @media screen and (max-width: 1023px) {
     .t-dep {
@@ -561,25 +548,4 @@ $primary: var(--p-primary-color);
             margin: 0 0.5rem;
         }
     }
-}
-
-// Trip type tags in expanded row
-.trip-type-tag {
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: white;
-}
-
-.trip-type-tag-group {
-    background-color: var(--color-group);
-}
-
-.trip-type-tag-single {
-    background-color: var(--color-single);
-}
-
-.trip-type-tag-private {
-    background-color: var(--color-private);
 }

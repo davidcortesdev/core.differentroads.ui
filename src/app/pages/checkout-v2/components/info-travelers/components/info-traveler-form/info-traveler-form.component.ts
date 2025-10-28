@@ -89,12 +89,16 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
   loadingUserData: boolean = false;
   savingData: boolean = false;
   autoSaving: boolean = false;
+  isInitializing: boolean = false; // Nuevo: controlar estado de inicialización
 
   // Información personal del usuario autenticado
   currentPersonalInfo: PersonalInfo | null = null;
 
   // Subject para guardado automático con debounce
   private autoSave$ = new Subject<void>();
+  
+  // Flag para evitar múltiples guardados simultáneos
+  private isAutoSavingInProgress: boolean = false;
 
   // Fechas calculadas para cada campo
   travelerFieldDates: {
@@ -198,6 +202,8 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     this.destroy$.next();
     this.destroy$.complete();
     this.autoSave$.complete();
+    this.isAutoSavingInProgress = false;
+    this.isInitializing = false;
   }
 
   /**
@@ -339,6 +345,9 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       return;
     }
 
+    // Marcar que estamos inicializando para evitar autoguardado prematuro
+    this.isInitializing = true;
+
     // Limpiar formulario existente
     this.travelerForm = this.fb.group({});
 
@@ -392,10 +401,16 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
         );
 
         const controlName = `${fieldDetails.code}_${this.traveler!.id}`;
-        this.travelerForm.addControl(
-          controlName,
-          this.fb.control(controlValue, validators)
-        );
+        const control = this.fb.control(controlValue, validators);
+
+        // ⭐ NUEVO: Si el valor viene del perfil del usuario (no de BD), marcarlo como dirty
+        if (this.traveler!.isLeadTraveler && this.currentPersonalInfo && !existingValue && controlValue) {
+          control.markAsDirty();
+          control.markAsTouched();
+          console.log(`[PRE-LLENADO] ${fieldDetails.code} marcado como dirty desde perfil del usuario`);
+        }
+
+        this.travelerForm.addControl(controlName, control);
         
         console.log(`[CONTROL CREADO] ${controlName} con valor: "${controlValue}"`);
       }
@@ -418,13 +433,29 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
 
     this.loading = false;
 
+    // Finalizar inicialización
+    this.isInitializing = false;
+
     // Inicializar guardado automático
     this.initializeAutoSave();
 
     // Validación inicial
     setTimeout(() => {
       this.validateFormInRealTime();
-    }, 50);
+      
+      // ⭐ CORREGIDO: Solo disparar autoguardado si hay datos pre-llenados Y no estamos inicializando
+      if (this.traveler!.isLeadTraveler && this.currentPersonalInfo && !this.isInitializing) {
+        console.log('[initializeTravelerForm] Verificando si hay datos pre-llenados del usuario para guardar...');
+        
+        // Verificar si hay cambios pendientes después de la inicialización
+        setTimeout(() => {
+          if (this.hasPendingChanges()) {
+            console.log('[initializeTravelerForm] Hay datos pre-llenados del usuario, disparando guardado automático...');
+            this.autoSave$.next();
+          }
+        }, 500); // Aumentar delay para asegurar que la inicialización termine
+      }
+    }, 100); // Aumentar delay inicial
   }
 
   /**
@@ -1305,9 +1336,9 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
    * Ejecuta el guardado automático
    */
   private async performAutoSave(): Promise<void> {
-    // No auto-guardar si ya está guardando manualmente
-    if (this.savingData || this.loading) {
-      console.log('[AutoSave] Ya hay un guardado en curso, saltando...');
+    // No auto-guardar si ya está guardando manualmente, cargando, inicializando o ya hay un autoguardado en progreso
+    if (this.savingData || this.loading || this.isInitializing || this.isAutoSavingInProgress) {
+      console.log('[AutoSave] Ya hay un guardado en curso, cargando, inicializando o autoguardado en progreso, saltando...');
       return;
     }
 
@@ -1319,6 +1350,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
 
     console.log('[AutoSave] Ejecutando guardado automático...');
     this.autoSaving = true;
+    this.isAutoSavingInProgress = true;
 
     try {
       await this.saveData();
@@ -1342,6 +1374,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       });
     } finally {
       this.autoSaving = false;
+      this.isAutoSavingInProgress = false;
     }
   }
 
@@ -1433,16 +1466,17 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
             const existingValue = existingField ? existingField.value : '';
 
             // Guardar si:
-            // 1. El control está dirty (modificado)
+            // 1. El control está dirty (modificado por el usuario)
             // 2. Tiene un valor Y es diferente al guardado en BD
-            // 3. Tiene un valor Y no existe en BD
-            // 4. ⭐ NUEVO: El control es VÁLIDO
+            // 3. El control es VÁLIDO
+            // 4. ⭐ NUEVO: No estamos inicializando
             const hasValue = currentValue !== '' && currentValue !== null && currentValue !== undefined;
             const isDifferent = currentValue !== existingValue;
             const isValid = control.valid;
+            const isUserModified = control.dirty || control.touched;
 
-            if ((control.dirty || (hasValue && isDifferent)) && isValid) {
-              console.log(`[INCLUIR] ${fieldCode}: actual="${currentValue}" vs BD="${existingValue}" (dirty: ${control.dirty}, hasValue: ${hasValue}, isDifferent: ${isDifferent}, valid: ${isValid})`);
+            if (isUserModified && hasValue && isDifferent && isValid && !this.isInitializing) {
+              console.log(`[INCLUIR] ${fieldCode}: actual="${currentValue}" vs BD="${existingValue}" (dirty: ${control.dirty}, touched: ${control.touched}, hasValue: ${hasValue}, isDifferent: ${isDifferent}, valid: ${isValid})`);
               
               const fieldData: ReservationTravelerFieldCreate = {
                 id: 0,
@@ -1452,10 +1486,12 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
               };
 
               formData.push(fieldData);
-            } else if (!isValid && (control.dirty || (hasValue && isDifferent))) {
+            } else if (!isValid && isUserModified && hasValue && isDifferent) {
               console.log(`[SKIP-INVALID] ${fieldCode}: actual="${currentValue}" (campo inválido, no se guardará)`);
+            } else if (this.isInitializing) {
+              console.log(`[SKIP-INITIALIZING] ${fieldCode}: actual="${currentValue}" (inicializando, no se guardará)`);
             } else {
-              console.log(`[SKIP] ${fieldCode}: actual="${currentValue}" vs BD="${existingValue}" (sin cambios)`);
+              console.log(`[SKIP] ${fieldCode}: actual="${currentValue}" vs BD="${existingValue}" (sin cambios del usuario)`);
             }
           }
         }
@@ -1645,10 +1681,10 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
   /**
    * Verifica si hay cambios pendientes de guardar
    * Compara valores del formulario con los datos guardados en BD
-   * Solo considera campos VÁLIDOS
+   * Solo considera campos VÁLIDOS y que han sido modificados por el usuario
    */
   hasPendingChanges(): boolean {
-    if (!this.traveler) {
+    if (!this.traveler || this.isInitializing) {
       return false;
     }
 
@@ -1685,11 +1721,11 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
 
             // Si hay valor y es diferente al guardado
             if (currentValue && currentValue !== existingValue) {
-              // ⭐ NUEVO: Solo considerar si el campo es VÁLIDO
-              if (control.valid) {
+              // ⭐ MEJORADO: Solo considerar si el campo es VÁLIDO Y ha sido modificado por el usuario
+              if (control.valid && (control.dirty || control.touched)) {
                 hasDifferences = true;
                 differences.push(`${fieldCode}: "${currentValue}" !== "${existingValue}"`);
-              } else {
+              } else if (!control.valid) {
                 invalidFields.push(`${fieldCode}: inválido`);
               }
             }
@@ -1938,6 +1974,22 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       console.log(`  ${controlName}: "${value}" [válido: ${isValid}, dirty: ${isDirty}]`);
     });
     console.log('=====================================================');
+
+    // ⭐ CORREGIDO: Solo disparar autoguardado si no estamos inicializando y hay cambios
+    if (fieldsUpdated > 0 && !this.isInitializing) {
+      console.log('[fillFormWithUserData] Disparando guardado automático después de rellenar datos del usuario...');
+      
+      // Usar setTimeout para asegurar que el formulario se haya actualizado completamente
+      setTimeout(() => {
+        // Solo disparar si aún hay cambios pendientes y no estamos inicializando
+        if (this.hasPendingChanges() && !this.isInitializing) {
+          this.autoSave$.next();
+          console.log('[fillFormWithUserData] Guardado automático disparado correctamente');
+        } else {
+          console.log('[fillFormWithUserData] No se dispara autoguardado - sin cambios pendientes o inicializando');
+        }
+      }, 200); // Aumentar delay para evitar condiciones de carrera
+    }
   }
 
   /**

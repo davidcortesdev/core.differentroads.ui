@@ -1,4 +1,4 @@
-import { Component, OnInit, Inject } from '@angular/core';
+import { Component, OnInit, Inject, ViewChild } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -115,9 +115,14 @@ export interface PassengerData {
   providers: [MessageService],
 })
 export class Bookingsv2Component implements OnInit {
+  @ViewChild('paymentHistoryComponent') paymentHistoryComponent: any;
+  
   // ID de la reserva actual
   bookingId: string = '';
   isLoading: boolean = false;
+  
+  // Trigger para refrescar el resumen
+  summaryRefreshTrigger: any = null;
   reservation: IReservationResponse | null = null; // Objeto de reserva completo
   reservationSummary: IReservationSummaryResponse | null = null; // Resumen de la reserva
   availableActivities: BookingActivity[] = []; // Array para actividades disponibles
@@ -318,7 +323,7 @@ export class Bookingsv2Component implements OnInit {
           quantity: item.quantity,
           unitPrice: item.amount,
           value: item.total,
-          description: item.description,
+          description: item.description || undefined,
         });
       });
     }
@@ -331,7 +336,7 @@ export class Bookingsv2Component implements OnInit {
       date: reservation.reservedAt
         ? new Date(reservation.reservedAt).toLocaleDateString()
         : 'Fecha no disponible',
-      bookingCode: reservation.id.toString() || reservation.tkId,
+      bookingCode: reservation.id.toString() || reservation.tkId || 'N/A',
       bookingReference: reservation.tkId || '',
       status: this.getStatusText(reservation.reservationStatusId),
       retailer: 'Cargando...', // Temporal mientras cargamos el nombre real
@@ -704,5 +709,21 @@ export class Bookingsv2Component implements OnInit {
     } catch (e) {
       return dateStr;
     }
+  }
+
+  /**
+   * Método para disparar la actualización del resumen del pedido
+   */
+  triggerSummaryRefresh(): void {
+    this.summaryRefreshTrigger = { timestamp: Date.now() };
+  }
+
+  /**
+   * Maneja el evento de actualización de datos de actividades
+   */
+  onActivitiesDataUpdated(): void {
+    console.log('🎯 Las actividades se han actualizado');
+    // Disparar actualización del summary inmediatamente
+    this.triggerSummaryRefresh();
   }
 }

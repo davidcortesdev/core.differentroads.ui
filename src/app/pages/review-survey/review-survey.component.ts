@@ -4,20 +4,27 @@ import { ReviewsService } from '../../core/services/reviews/reviews.service';
 import { ReviewStatusService } from '../../core/services/reviews/review-status.service';
 import { PeriodsService } from '../../core/services/departure/periods.service';
 import { DatePipe } from '@angular/common';
+import { forkJoin } from 'rxjs';
+import { switchMap, catchError } from 'rxjs/operators';
 import {
   TourService,
+  ITourResponse,
 } from '../../core/services/tour/tour.service';
 import {
   TravelersNetService,
   Traveler,
 } from '../../core/services/travelers/travelersNet.service';
+import { UsersNetService } from '../../core/services/users/usersNet.service';
+import { IUserResponse } from '../../core/models/users/user.model';
 import { CloudinaryService } from '../../core/services/media/cloudinary.service';
 import {
   DepartureService,
   IDepartureResponse,
 } from '../../core/services/departure/departure.service';
+import { ItineraryService, IItineraryResponse } from '../../core/services/itinerary/itinerary.service';
 import { ReviewImageService } from '../../core/services/reviews/review-image.service';
 import { Title } from '@angular/platform-browser';
+import { MessageService } from 'primeng/api';
 
 interface ReviewPayload {
   text: string;
@@ -32,7 +39,7 @@ interface ReviewPayload {
   showOnHomePage?: boolean;
   showOnTourPage?: boolean;
   tourId: number;
-  travelerId: number;
+  userId: number;
   departureId: number;
   externalId?: string;
   reviewDate?: string;
@@ -58,6 +65,7 @@ interface TripInfo {
 interface Period {
   tourExternalID?: string;
 }
+
 
 @Component({
   selector: 'app-review-survey',
@@ -86,8 +94,8 @@ export class ReviewSurveyComponent implements OnInit {
   };
   formattedDate: string = '';
   periodExternalId: string = '';
-  travelerId: number | null = null;
-  travelerData: Traveler | null = null;
+  userId: number | null = null;
+  userData: IUserResponse | null = null;
   isSubmitting: boolean = false;
 
   // Configuración de imágenes
@@ -105,7 +113,10 @@ export class ReviewSurveyComponent implements OnInit {
     private tourService: TourService,
     private travelersNetService: TravelersNetService,
     private cloudinaryService: CloudinaryService,
-    private departureService: DepartureService
+    private departureService: DepartureService,
+    private itineraryService: ItineraryService,
+    private usersNetService: UsersNetService,
+    private messageService: MessageService
   ) {}
 
   rawDepartureInfo: any = null;
@@ -115,39 +126,69 @@ export class ReviewSurveyComponent implements OnInit {
       console.log('params', params);
       if (params['periodTkId']) {
         this.periodExternalId = params['periodTkId'];
-        this.loadTripInfoFromPeriod(this.periodExternalId);
-        this.getTourIdFromExternalId(this.periodExternalId);
-        this.loadRawDepartureInfo(this.periodExternalId);
+
+        this.departureService.getAll({ tkId: this.periodExternalId }).pipe(
+          switchMap((departures: IDepartureResponse[]) => {
+            if (departures && departures.length > 0) {
+              const departure = departures[0];
+              this.rawDepartureInfo = departure;
+              this.tripInfo.departureId = departure.id;
+              this.tripInfo.date = departure.departureDate || 'Fecha no disponible';
+              this.formattedDate = this.datePipe.transform(this.tripInfo.date, 'yyyy/MM/dd') || '';
+
+              return this.itineraryService.getById(departure.itineraryId);
+            } else {
+              throw new Error('No departures found');
+            }
+          }),
+          switchMap((itinerary: IItineraryResponse) => {
+            this.tripInfo.tourId = itinerary.tourId;
+            return this.tourService.getById(itinerary.tourId);
+          }),
+          catchError((error) => {
+            console.error('Error during trip info loading:', error);
+            this.setErrorTripInfo();
+            return [];
+          })
+        ).subscribe({
+          next: (tour: ITourResponse) => {
+            this.tripInfo.title = tour.name || 'Título no disponible';
+          },
+          error: (error) => {
+            this.setErrorTripInfo();
+          }
+        });
+
       }
 
       this.route.queryParams.subscribe((queryParams) => {
         if (queryParams['travelerId']) {
-          this.travelerId = parseInt(queryParams['travelerId'], 10);
-          this.checkTravelerExists(this.travelerId);
+          this.userId = parseInt(queryParams['travelerId'], 10);
+          this.checkTravelerExists(this.userId);
         }
       });
     });
   }
 
   /**
-   * Verifica si existe un viajero con el ID proporcionado
-   * @param travelerId ID del viajero a verificar
+   * Verifica si existe un user con el ID proporcionado
+   * @param userId ID del user a verificar
    */
-  checkTravelerExists(travelerId: number): void {
-    this.travelersNetService.getTravelerById(travelerId).subscribe({
-      next: (traveler) => {
-        if (traveler && traveler.id !== travelerId) {
+  checkTravelerExists(userId: number): void {
+    this.usersNetService.getUserById(userId).subscribe({
+      next: (user) => {
+        if (user && user.id !== userId) {
           return;
         }
-        this.travelerData = traveler;
+        this.userData = user;
         if (this.nombreInputRef && this.emailInputRef) {
-          this.nombreInputRef.nativeElement.value = traveler.name || '';
-          this.emailInputRef.nativeElement.value = traveler.email || '';
+          this.nombreInputRef.nativeElement.value = user.name || '';
+          this.emailInputRef.nativeElement.value = user.email || '';
         } else {
           setTimeout(() => {
             if (this.nombreInputRef && this.emailInputRef) {
-              this.nombreInputRef.nativeElement.value = traveler.name || '';
-              this.emailInputRef.nativeElement.value = traveler.email || '';
+              this.nombreInputRef.nativeElement.value = user.name || '';
+              this.emailInputRef.nativeElement.value = user.email || '';
             }
           }, 500);
         }
@@ -156,36 +197,6 @@ export class ReviewSurveyComponent implements OnInit {
         // Error silencioso para no afectar la UX
       },
     });
-  }
-
-  /**
-   * Obtiene toda la información cruda de la departure usando el TKId (externalId)
-   */
-  loadRawDepartureInfo(externalId: string): void {
-    // Usar el DepartureService para obtener la información por tkId
-    this.departureService.getAll({ tkId: externalId }).subscribe({
-      next: (departures: IDepartureResponse[]) => {
-        if (departures && departures.length > 0) {
-          this.rawDepartureInfo = departures[0];
-
-          // Asignar el departureId al tripInfo
-          if (this.rawDepartureInfo.id) {
-            this.tripInfo.departureId = this.rawDepartureInfo.id;
-          }
-        }
-      },
-      error: (error: any) => {
-        // Error silencioso para no afectar la UX
-      },
-    });
-  }
-
-  loadTripInfoFromPeriod(externalId: string): void {
-   
-  }
-
-  getTourIdFromExternalId(externalId: string): void {
-    //TODO: Revisar si hace falta obtener la información de la departure
   }
 
   private setErrorTripInfo(): void {
@@ -227,16 +238,24 @@ export class ReviewSurveyComponent implements OnInit {
     const comentarioValue = this.comentarioInputRef.nativeElement.value;
 
     if (!nombreValue || !emailValue || !comentarioValue) {
-      alert(
-        'Por favor, completa todos los campos: Nombre, Email y Comentario.'
-      );
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Advertencia',
+        detail: 'Por favor, completa todos los campos: Nombre, Email y Comentario.',
+        life: 3000,
+      });
       this.isSubmitting = false;
       return;
     }
 
     // Verificar que todas las calificaciones tengan un valor
     if (Object.values(this.ratings).some((rating) => rating === 0)) {
-      alert('Por favor, valora todas las categorías con estrellas.');
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Advertencia',
+        detail: 'Por favor, valora todas las categorías con estrellas.',
+        life: 3000,
+      });
       this.isSubmitting = false;
       return;
     }
@@ -254,7 +273,7 @@ export class ReviewSurveyComponent implements OnInit {
       this.tripInfo.departureId = salida?.id || salida?.departureId || 0;
     }
 
-    const continueWithReview = (travelerId: number) => {
+    const continueWithReview = (userId: number) => {
       // Primero obtenemos el reviewStatusId para "DRAFT"
       this.reviewStatusService.getByCode('DRAFT').subscribe({
         next: (reviewStatuses) => {
@@ -279,10 +298,10 @@ export class ReviewSurveyComponent implements OnInit {
             guideRating: this.ratings.guideRating,
             priceQualityRating: this.ratings.priceQualityRating,
             overallTourRating: this.ratings.overallTourRating,
-            showOnHomePage: false,
-            showOnTourPage: false,
+            showOnHomePage: true,
+            showOnTourPage: true,
             tourId: this.tripInfo.tourId ?? 0,
-            travelerId: travelerId,
+            userId: userId,
             departureId: this.tripInfo.departureId || 0,
             externalId: this.periodExternalId,
             reviewDate: new Date().toISOString(),
@@ -303,6 +322,12 @@ export class ReviewSurveyComponent implements OnInit {
                     error: (imageError) => {
                       // Aún limpiamos el formulario aunque falle el guardado de imágenes
                       this.cleanupForm();
+                      this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: 'Error al subir algunas imágenes.',
+                        life: 3000,
+                      });
                     },
                   });
               } else {
@@ -312,6 +337,12 @@ export class ReviewSurveyComponent implements OnInit {
             },
             error: (err: any) => {
               this.isSubmitting = false;
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Error al enviar la review. Por favor, intente de nuevo.',
+                life: 5000,
+              });
             },
           });
         },
@@ -334,10 +365,10 @@ export class ReviewSurveyComponent implements OnInit {
             guideRating: this.ratings.guideRating,
             priceQualityRating: this.ratings.priceQualityRating,
             overallTourRating: this.ratings.overallTourRating,
-            showOnHomePage: false,
-            showOnTourPage: false,
+            showOnHomePage: true,
+            showOnTourPage: true,
             tourId: this.tripInfo.tourId ?? 0,
-            travelerId: travelerId,
+            userId: userId,
             departureId: this.tripInfo.departureId || 0,
             externalId: this.periodExternalId,
             reviewDate: new Date().toISOString(),
@@ -358,6 +389,12 @@ export class ReviewSurveyComponent implements OnInit {
                     error: (imageError) => {
                       // Aún limpiamos el formulario aunque falle el guardado de imágenes
                       this.cleanupForm();
+                      this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: 'Error al subir algunas imágenes.',
+                        life: 3000,
+                      });
                     },
                   });
               } else {
@@ -367,55 +404,42 @@ export class ReviewSurveyComponent implements OnInit {
             },
             error: (err: any) => {
               this.isSubmitting = false;
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Error al enviar la review. Por favor, intente de nuevo.',
+                life: 5000,
+              });
             },
           });
         },
       });
     };
 
-    const travelerFilter = {
-      email: emailValue,
-      name: nombreValue,
-    };
-
-    this.travelersNetService.getTravelers(travelerFilter).subscribe({
-      next: (travelers) => {
-        const travelerMatch = travelers.find(
-          (t) => t.email === emailValue && t.name === nombreValue
-        );
-        if (travelerMatch) {
-          continueWithReview(travelerMatch.id);
+    this.usersNetService.getUsersByEmail(emailValue).subscribe({
+      next: (users) => {
+        if (users && users.length > 0) {
+          const userMatch = users[0];
+          continueWithReview(userMatch.id);
         } else {
-          const newTraveler: Partial<Traveler> = {
-            name: nombreValue,
-            email: emailValue,
-            code: emailValue.split('@')[0],
-          };
-          this.travelersNetService.createTraveler(newTraveler).subscribe({
-            next: (traveler) => {
-              continueWithReview(traveler.id);
-            },
-            error: (error) => {
-              continueWithReview(0);
-              this.isSubmitting = false;
-            },
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Usuario no encontrado. Por favor, use un email válido.',
+            life: 5000,
           });
+          this.isSubmitting = false;
         }
       },
       error: (error) => {
-        const newTraveler: Partial<Traveler> = {
-          name: nombreValue,
-          email: emailValue,
-        };
-        this.travelersNetService.createTraveler(newTraveler).subscribe({
-          next: (traveler) => {
-            continueWithReview(traveler.id);
-          },
-          error: (createError) => {
-            continueWithReview(0);
-            this.isSubmitting = false;
-          },
+        console.error('Error al buscar usuario por email', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Ocurrió un error al verificar el usuario. Por favor, intente de nuevo.',
+          life: 5000,
         });
+        this.isSubmitting = false;
       },
     });
   }

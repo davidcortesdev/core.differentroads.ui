@@ -5,8 +5,11 @@ import { map, catchError, switchMap } from 'rxjs/operators';
 import { MessageService } from 'primeng/api';
 import { AuthenticateService } from '../auth/auth-service.service';
 import { AnalyticsService } from '../analytics/analytics.service';
-import { ReservationService, ReservationCreate, ReservationUpdate } from '../reservation/reservation.service';
+import { ReservationService, ReservationCreate, ReservationUpdate, ReservationCompleteCreate, IReservationTravelerData } from '../reservation/reservation.service';
+import { ReservationStatusService } from '../reservation/reservation-status.service';
 import { UsersNetService } from '../users/usersNet.service';
+import { NotificationService } from './notification.service';
+import { DocumentService } from './document.service';
 import { environment } from '../../../../environments/environment';
 
 /**
@@ -43,6 +46,9 @@ export class AdditionalInfoService {
   private travelersData: any = null;
   private selectedFlight: any = null;
   private totalPrice: number = 0;
+  private selectedActivities: any[] = [];
+  private ageGroupCategories: any = null;
+  private selectedActivityPackId: number | null = null;
 
   constructor(
     private http: HttpClient,
@@ -50,7 +56,10 @@ export class AdditionalInfoService {
     private analyticsService: AnalyticsService,
     private messageService: MessageService,
     private reservationService: ReservationService,
-    private usersNetService: UsersNetService
+    private usersNetService: UsersNetService,
+    private reservationStatusService: ReservationStatusService,
+    private notificationService: NotificationService,
+    private documentService: DocumentService
   ) {}
 
   /**
@@ -62,12 +71,18 @@ export class AdditionalInfoService {
     travelersData?: any;
     selectedFlight?: any;
     totalPrice?: number;
+    selectedActivities?: any[];
+    ageGroupCategories?: any;
+    selectedActivityPackId?: number | null;
   }): void {
     if (data.tourId) this.tourId = data.tourId;
     if (data.periodId) this.periodId = data.periodId;
     if (data.travelersData) this.travelersData = data.travelersData;
     if (data.selectedFlight) this.selectedFlight = data.selectedFlight;
     if (data.totalPrice) this.totalPrice = data.totalPrice;
+    if (data.selectedActivities) this.selectedActivities = data.selectedActivities;
+    if (data.ageGroupCategories) this.ageGroupCategories = data.ageGroupCategories;
+    if (data.selectedActivityPackId !== undefined) this.selectedActivityPackId = data.selectedActivityPackId;
   }
 
   /**
@@ -79,6 +94,9 @@ export class AdditionalInfoService {
     this.travelersData = null;
     this.selectedFlight = null;
     this.totalPrice = 0;
+    this.selectedActivities = [];
+    this.ageGroupCategories = null;
+    this.selectedActivityPackId = null;
   }
 
   /**
@@ -112,6 +130,101 @@ export class AdditionalInfoService {
   }
 
   /**
+   * ✅ MÉTODO NUEVO: Preparar datos de viajeros para createComplete
+   */
+  private prepareTravelersData(): IReservationTravelerData[] {
+    const travelersData: IReservationTravelerData[] = [];
+    let travelerNumber = 1;
+
+    // Si no hay datos de viajeros, crear un viajero por defecto
+    if (!this.travelersData) {
+      return [{
+        ageGroupId: 1, // ID por defecto para adultos
+        isLeadTraveler: true,
+        tkId: null,
+      }];
+    }
+
+    // Validar que existan los age groups necesarios
+    if (this.travelersData.adults > 0 && (!this.ageGroupCategories?.adults?.id)) {
+      throw new Error('Age group for adults not found');
+    }
+    if (this.travelersData.childs > 0 && (!this.ageGroupCategories?.children?.id)) {
+      throw new Error('Age group for children not found');
+    }
+    if (this.travelersData.babies > 0 && (!this.ageGroupCategories?.babies?.id)) {
+      throw new Error('Age group for babies not found');
+    }
+
+    // Crear viajeros para adultos
+    for (let i = 0; i < (this.travelersData.adults || 0); i++) {
+      const isLeadTraveler = travelerNumber === 1;
+      travelersData.push({
+        ageGroupId: this.ageGroupCategories?.adults?.id || 1,
+        isLeadTraveler: isLeadTraveler,
+        tkId: null,
+      });
+      travelerNumber++;
+    }
+
+    // Crear viajeros para niños
+    for (let i = 0; i < (this.travelersData.childs || 0); i++) {
+      travelersData.push({
+        ageGroupId: this.ageGroupCategories?.children?.id || 2,
+        isLeadTraveler: false,
+        tkId: null,
+      });
+      travelerNumber++;
+    }
+
+    // Crear viajeros para bebés
+    for (let i = 0; i < (this.travelersData.babies || 0); i++) {
+      travelersData.push({
+        ageGroupId: this.ageGroupCategories?.babies?.id || 3,
+        isLeadTraveler: false,
+        tkId: null,
+      });
+      travelerNumber++;
+    }
+
+    return travelersData;
+  }
+
+  /**
+   * ✅ MÉTODO NUEVO: Preparar datos de actividades para createComplete
+   */
+  private prepareActivitiesData(): {
+    activityIds: number[];
+    activityPackIds: number[];
+  } {
+    const activityIds: number[] = [];
+    const activityPackIds: number[] = [];
+
+    // Procesar actividades seleccionadas manualmente
+    if (this.selectedActivities && this.selectedActivities.length > 0) {
+      this.selectedActivities.forEach((activity) => {
+        if (activity.added) {
+          const activityId = parseInt(activity.id);
+          if (!isNaN(activityId) && activityId > 0) {
+            if (activity.type === 'act') {
+              activityIds.push(activityId);
+            } else if (activity.type === 'pack') {
+              activityPackIds.push(activityId);
+            }
+          }
+        }
+      });
+    }
+
+    // Procesar paquete automático del departure
+    if (this.selectedActivityPackId && this.selectedActivityPackId > 0) {
+      activityPackIds.push(this.selectedActivityPackId);
+    }
+
+    return { activityIds, activityPackIds };
+  }
+
+  /**
    * Construye los datos de reservación para el backend
    * 
    * Este método prepara la estructura de datos que el backend espera
@@ -123,7 +236,6 @@ export class AdditionalInfoService {
    */
   private buildReservationData(userId: number | null): ReservationCreate {
     return {
-      id: 0,
       tkId: '',
       reservationStatusId: 3, // 3 = BUDGET (presupuesto)
       retailerId: environment.retaileriddefault,
@@ -133,17 +245,11 @@ export class AdditionalInfoService {
       totalPassengers: this.travelersData ? 
         (this.travelersData.adults || 0) + (this.travelersData.childs || 0) + (this.travelersData.babies || 0) : 1,
       totalAmount: this.totalPrice || 0,
-      budgetAt: new Date().toISOString(),
-      cartAt: '',
-      abandonedAt: '',
-      reservedAt: '',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
     };
   }
   
   /**
-   * Crea un nuevo presupuesto en el backend
+   * ✅ MÉTODO MODIFICADO: Crea un nuevo presupuesto usando createComplete
    * @returns Observable con la reserva creada
    */
   createBudget(): Observable<any> {
@@ -151,8 +257,7 @@ export class AdditionalInfoService {
       switchMap(cognitoId => {
         if (!cognitoId) {
           console.warn('⚠️ No se encontró Cognito ID, creando presupuesto sin userId');
-          const reservationData = this.buildReservationData(null);
-          return this.reservationService.create(reservationData);
+          return this.createCompleteBudget(null);
         }
         
         // Buscar el usuario por Cognito ID para obtener su ID en la base de datos
@@ -161,8 +266,7 @@ export class AdditionalInfoService {
             const userId = users && users.length > 0 ? users[0].id : null;
             return userId;
           }),
-          map((userId: number | null) => this.buildReservationData(userId)),
-          switchMap((reservationData: ReservationCreate) => this.reservationService.create(reservationData))
+          switchMap((userId: number | null) => this.createCompleteBudget(userId))
         );
       }),
       catchError(error => {
@@ -170,6 +274,62 @@ export class AdditionalInfoService {
         throw error;
       })
     );
+  }
+
+  /**
+   * ✅ MÉTODO NUEVO: Crear presupuesto completo usando createComplete
+   */
+  private createCompleteBudget(userId: number | null): Observable<any> {
+    try {
+      // ✅ OBTENER ID DEL ESTADO BUDGET DINÁMICAMENTE
+      return this.reservationStatusService.getByCode('BUDGET').pipe(
+        switchMap((budgetStatuses) => {
+          if (!budgetStatuses || budgetStatuses.length === 0) {
+            throw new Error('BUDGET status not found');
+          }
+
+          const budgetStatusId = budgetStatuses[0].id;
+
+          // ✅ PREPARAR DATOS DE LA RESERVA
+          const reservationData: ReservationCreate = {
+            tkId: '',
+            reservationStatusId: budgetStatusId, // ✅ USAR ID DINÁMICO DE BUDGET
+            retailerId: environment.retaileriddefault,
+            tourId: parseInt(this.tourId) || 0,
+            departureId: parseInt(this.periodId) || 0,
+            userId: userId,
+            totalPassengers: this.travelersData ? 
+              (this.travelersData.adults || 0) + (this.travelersData.childs || 0) + (this.travelersData.babies || 0) : 1,
+            totalAmount: this.totalPrice || 0,
+          };
+
+          // ✅ PREPARAR DATOS DE VIAJEROS
+          const travelersData: IReservationTravelerData[] = this.prepareTravelersData();
+
+          // ✅ PREPARAR ACTIVIDADES Y PAQUETES
+          const { activityIds, activityPackIds } = this.prepareActivitiesData();
+
+          // ✅ CREAR RESERVA COMPLETA
+          const completeData: ReservationCompleteCreate = {
+            reservation: reservationData,
+            travelers: travelersData,
+            activityIds: activityIds.length > 0 ? activityIds : null,
+            activityPackIds: activityPackIds.length > 0 ? activityPackIds : null,
+          };
+
+          console.log('📋 Creando PRESUPUESTO COMPLETO (BUDGET):', completeData);
+
+          return this.reservationService.createComplete(completeData);
+        }),
+        catchError((error) => {
+          console.error('💥 Error en preparación de datos del presupuesto:', error);
+          throw error;
+        })
+      );
+    } catch (error) {
+      console.error('💥 Error en preparación de datos del presupuesto:', error);
+      throw error;
+    }
   }
 
   /**
@@ -291,7 +451,6 @@ export class AdditionalInfoService {
       (this.travelersData.adults || 0) + (this.travelersData.childs || 0) + (this.travelersData.babies || 0) : 0;
 
     return {
-      id: existingOrder.id || existingOrder._id,
       tkId: existingOrder.tkId || existingOrder.tokenId || this.generateTokenId(),
       reservationStatusId: existingOrder.reservationStatusId || 1,
       retailerId: existingOrder.retailerId || 1,
@@ -300,12 +459,6 @@ export class AdditionalInfoService {
       userId: existingOrder.userId || null,
       totalPassengers: totalPassengers,
       totalAmount: this.totalPrice || existingOrder.totalAmount || 0,
-      budgetAt: existingOrder.budgetAt || new Date().toISOString(),
-      cartAt: existingOrder.cartAt || '',
-      abandonedAt: existingOrder.abandonedAt || '',
-      reservedAt: existingOrder.reservedAt || '',
-      createdAt: existingOrder.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString()
     };
   }
 
@@ -528,129 +681,6 @@ export class AdditionalInfoService {
     });
   }
 
-  /**
-   * Envía el presupuesto por email a través del backend
-   * 
-   * 📋 TODO: CONECTAR CON ENDPOINT DEL BACKEND
-   * 
-   * Endpoint esperado: POST /api/budgets/share
-   * Request body: { 
-   *   tourId: string,
-   *   periodId: string, 
-   *   travelersData: object,
-   *   recipientEmail: string,
-   *   message?: string 
-   * }
-   * Response: { success: boolean, message: string, data: object }
-   * 
-   * Implementación actual: Mock que simula el envío exitoso
-   * Implementación pendiente: Descomentar el código que hace la llamada real al endpoint
-   * 
-   * @param budgetData Datos del presupuesto y email del destinatario
-   * @returns Observable con la respuesta del servidor
-   */
-  sendBudgetByEmail(budgetData: any): Observable<any> {
-    // ✅ TODO: Implementar cuando el backend tenga disponible el endpoint POST /api/budgets/share
-    /*
-    return this.http.post(`${this.API_BASE_URL}/budgets/share`, budgetData).pipe(
-      map((response: any) => ({
-        success: true,
-        message: 'Email enviado correctamente',
-        data: response
-      })),
-      catchError((error) => {
-        console.error('Error al enviar presupuesto por email:', error);
-        return of({
-          success: false,
-          message: 'Error al enviar el email. Inténtalo de nuevo.',
-          error: error
-        });
-      })
-    );
-    */
-    
-    // Placeholder temporal
-    return of({
-      success: false,
-      message: 'Funcionalidad pendiente de implementación'
-    });
-  }
-
-  /**
-   * Descarga el presupuesto como PDF desde el backend
-   * 
-   * 📋 TODO: CONECTAR CON ENDPOINT DEL BACKEND
-   * 
-   * Endpoint esperado: POST /api/budgets/download
-   * Request body: { 
-   *   tourId: string,
-   *   periodId: string,
-   *   travelersData: object,
-   *   totalPrice: number,
-   *   userEmail: string
-   * }
-   * Response-Type: application/pdf (blob)
-   * 
-   * Implementación actual: Mock que simula la descarga de un PDF
-   * Implementación pendiente: Descomentar el código que hace la llamada real al endpoint
-   * 
-   * @param userEmail Email del usuario autenticado
-   * @returns Observable con la respuesta del servidor
-   */
-  downloadBudgetPDF(userEmail: string): Observable<any> {
-    // Validación previa de datos requeridos
-    const validation = this.validateContextData();
-    
-    if (!validation.valid) {
-      return of({ 
-        success: false, 
-        message: validation.message || 'Datos incompletos para descargar el presupuesto'
-      });
-    }
-
-    // Construcción de datos para la generación del PDF
-    const downloadData = this.buildReservationData(null);
-    
-    // ✅ TODO: Implementar cuando el backend tenga disponible el endpoint POST /api/budgets/download
-    /*
-    return this.http.post(`${this.API_BASE_URL}/budgets/download`, downloadData, { 
-      responseType: 'blob' 
-    }).pipe(
-      map((blob: Blob) => {
-        // Procesamiento del blob PDF recibido del backend
-        const fileName = `presupuesto-${this.tourId}-${Date.now()}.pdf`;
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        
-        return {
-          success: true,
-          message: 'Presupuesto descargado correctamente',
-          fileName: fileName
-        };
-      }),
-      catchError((error) => {
-        console.error('Error al descargar presupuesto PDF:', error);
-        return of({
-          success: false,
-          message: 'Error al descargar el presupuesto. Inténtalo de nuevo.',
-          error: error
-        });
-      })
-    );
-    */
-    
-    // Placeholder temporal
-    return of({
-      success: false,
-      message: 'Funcionalidad pendiente de implementación'
-    });
-  }
 
   // ============================================
   // MÉTODOS PARA OBTENER DATOS DEL TOUR
@@ -702,6 +732,177 @@ export class AdditionalInfoService {
   private getTourDuration(): string | undefined {
     // Si no hay datos reales, no devolver nada
     return undefined;
+  }
+
+  // ============================================
+  // MÉTODOS PARA MANEJAR PRESUPUESTOS CON NUEVOS ENDPOINTS
+  // ============================================
+
+  /**
+   * Envía notificación de presupuesto usando el nuevo endpoint
+   * @param reservationId ID de la reserva
+   * @param email Email del destinatario
+   * @returns Observable con la respuesta
+   */
+  sendBudgetNotification(reservationId: number, email: string): Observable<any> {
+    return this.notificationService.sendBudgetNotification(reservationId, email);
+  }
+
+  /**
+   * Obtiene o genera un documento de presupuesto
+   * @param reservationId ID de la reserva
+   * @returns Observable con el blob del documento
+   */
+  getBudgetDocument(reservationId: number): Observable<Blob> {
+    return this.documentService.getBudgetDocument(reservationId);
+  }
+
+  /**
+   * Descarga un presupuesto como PDF
+   * @param reservationId ID de la reserva
+   * @param fileName Nombre del archivo (opcional)
+   * @returns Observable con el resultado de la descarga
+   */
+  downloadBudgetPDF(reservationId: number, fileName?: string): Observable<any> {
+    return this.getBudgetDocument(reservationId).pipe(
+      map((blob: Blob) => {
+        const finalFileName = fileName || `presupuesto-${reservationId}-${new Date().toISOString().slice(0, 10)}.pdf`;
+        this.documentService.downloadDocument(blob, finalFileName);
+        
+        return {
+          success: true,
+          message: 'Presupuesto descargado correctamente',
+          fileName: finalFileName
+        };
+      }),
+      catchError((error) => {
+        console.error('Error al descargar presupuesto:', error);
+        return of({
+          success: false,
+          message: 'Error al descargar el presupuesto. Inténtalo de nuevo.',
+          error: error
+        });
+      })
+    );
+  }
+
+  /**
+   * Envía un presupuesto por email usando notificaciones
+   * @param reservationId ID de la reserva
+   * @param recipientEmail Email del destinatario
+   * @param recipientName Nombre del destinatario (opcional)
+   * @param message Mensaje personalizado (opcional)
+   * @returns Observable con la respuesta
+   */
+  sendBudgetByEmail(reservationId: number, recipientEmail: string, recipientName?: string, message?: string): Observable<any> {
+    return this.sendBudgetNotification(reservationId, recipientEmail).pipe(
+      map((response) => {
+        if (response.success) {
+          return {
+            success: true,
+            message: `Presupuesto enviado exitosamente a ${recipientEmail}`,
+            data: response
+          };
+        } else {
+          return {
+            success: false,
+            message: 'Error al enviar el presupuesto por email',
+            data: response
+          };
+        }
+      }),
+      catchError((error) => {
+        console.error('Error al enviar presupuesto por email:', error);
+        return of({
+          success: false,
+          message: 'Error al enviar el presupuesto por email. Inténtalo de nuevo.',
+          error: error
+        });
+      })
+    );
+  }
+
+  /**
+   * Procesa el envío de presupuesto con datos del formulario
+   * @param budgetData Datos del formulario de compartir
+   * @returns Observable con la respuesta
+   */
+  processBudgetShare(budgetData: any): Observable<any> {
+    const reservationId = budgetData.reservationId || this.getReservationIdFromContext();
+    
+    if (!reservationId) {
+      return of({
+        success: false,
+        message: 'No se encontró información de la reserva'
+      });
+    }
+
+    return this.sendBudgetByEmail(
+      reservationId,
+      budgetData.recipientEmail,
+      budgetData.recipientName,
+      budgetData.message
+    );
+  }
+
+  /**
+   * Procesa la descarga de presupuesto con datos del formulario
+   * @param budgetData Datos del formulario de descarga
+   * @returns Observable con la respuesta
+   */
+  processBudgetDownload(budgetData: any): Observable<any> {
+    const reservationId = budgetData.reservationId || this.getReservationIdFromContext();
+    
+    if (!reservationId) {
+      return of({
+        success: false,
+        message: 'No se encontró información de la reserva'
+      });
+    }
+
+    const fileName = budgetData.tourName ? 
+      `presupuesto-${budgetData.tourName.replace(/[^a-zA-Z0-9]/g, '_')}-${new Date().toISOString().slice(0, 10)}.pdf` :
+      undefined;
+
+    return this.downloadBudgetPDF(reservationId, fileName);
+  }
+
+  /**
+   * Obtiene el ID de reserva desde el contexto actual
+   * @returns ID de la reserva o null si no está disponible
+   */
+  private getReservationIdFromContext(): number | null {
+    // Intentar obtener el ID desde los datos del contexto
+    // Esto puede venir de existingOrder o de otros datos disponibles
+    return null; // Por ahora retornamos null, se puede implementar según la lógica específica
+  }
+
+  /**
+   * Método unificado para manejar presupuestos (crear, actualizar, descargar, compartir)
+   * @param action Acción a realizar: 'create', 'update', 'download', 'share'
+   * @param data Datos necesarios para la acción
+   * @returns Observable con la respuesta
+   */
+  handleBudgetAction(action: 'create' | 'update' | 'download' | 'share', data: any): Observable<any> {
+    switch (action) {
+      case 'create':
+        return this.createBudget();
+      
+      case 'update':
+        return this.updateExistingBudget(data.existingOrder, data.userEmail);
+      
+      case 'download':
+        return this.processBudgetDownload(data);
+      
+      case 'share':
+        return this.processBudgetShare(data);
+      
+      default:
+        return of({
+          success: false,
+          message: 'Acción no válida'
+        });
+    }
   }
 
 }

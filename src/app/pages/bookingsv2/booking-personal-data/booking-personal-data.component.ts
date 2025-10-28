@@ -21,8 +21,10 @@ import {
   ReservationTravelerFieldCreate,
   ReservationTravelerFieldUpdate 
 } from '../../../core/services/reservation/reservation-traveler-field.service';
-import { forkJoin, Observable } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { CheckoutUserDataService } from '../../../core/services/v2/checkout-user-data.service';
+import { PersonalInfo } from '../../../core/models/v2/profile-v2.model';
+import { forkJoin, Observable, of } from 'rxjs';
+import { map, switchMap, catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-booking-personal-data-v2',
@@ -55,28 +57,66 @@ export class BookingPersonalDataV2Component implements OnInit {
 
   // Array para almacenar los campos obligatorios por departure
   mandatoryFields: IDepartureReservationFieldResponse[] = [];
+  
+  // Array para almacenar los campos configurados para este departure (igual que checkout)
+  departureReservationFields: IDepartureReservationFieldResponse[] = [];
+  
+  // Información del perfil del usuario para rellenar campos vacíos
+  currentUserData: PersonalInfo | null = null;
 
   constructor(
     private fb: FormBuilder,
     private reservationTravelerService: ReservationTravelerService,
     private reservationTravelerFieldService: ReservationTravelerFieldService,
     private reservationFieldService: ReservationFieldService,
-    private departureReservationFieldService: DepartureReservationFieldService
+    private departureReservationFieldService: DepartureReservationFieldService,
+    private checkoutUserDataService: CheckoutUserDataService
   ) {}
 
   ngOnInit(): void {
-    if (this.periodId) {
-      this.loadMandatoryFields();
-    }
-    
-    if (this.reservationId) {
-      this.loadPassengerData();
-    }
+    // Cargar todos los campos disponibles y obligatorios antes de cargar pasajeros
+    this.loadAllFieldsConfiguration();
   }
 
+  /**
+   * Carga la configuración completa de campos (igual que checkout)
+   */
+  private loadAllFieldsConfiguration(): void {
+    const departureId = this.periodId ? parseInt(this.periodId) : null;
+
+    // Cargar campos obligatorios y campos disponibles en paralelo
+    forkJoin({
+      mandatoryFields: departureId 
+        ? this.departureReservationFieldService.getByDeparture(departureId).pipe(
+            catchError(() => of([]))
+          )
+        : of([]),
+      availableFields: this.reservationFieldService.getAllOrdered().pipe(
+        catchError(() => of([]))
+      )
+    }).subscribe({
+      next: ({ mandatoryFields, availableFields }: { mandatoryFields: IDepartureReservationFieldResponse[], availableFields: IReservationFieldResponse[] }) => {
+        this.mandatoryFields = mandatoryFields;
+        this.departureReservationFields = mandatoryFields;
+        this.availableFields = availableFields;
+        
+        // Una vez cargados los campos, cargar los datos de pasajeros
+        if (this.reservationId) {
+          this.loadPassengerData();
+        }
+      },
+      error: (error) => {
+        console.error('Error al cargar configuración de campos:', error);
+        // Continuar cargando pasajeros aunque falle la configuración
+        if (this.reservationId) {
+          this.loadPassengerData();
+        }
+      }
+    });
+  }
 
   /**
-   * Carga los campos obligatorios para el departure
+   * Carga los campos obligatorios para el departure (LEGACY - ya no se usa)
    */
   loadMandatoryFields(): void {
     const departureId = parseInt(this.periodId);
@@ -101,24 +141,41 @@ export class BookingPersonalDataV2Component implements OnInit {
     this.loading = true;
     this.passengers = [];
 
-    // Paso 1: Obtener los viajeros de la reserva
-    this.reservationTravelerService.getByReservation(this.reservationId).subscribe({
-      next: (travelers) => {
+    // Paso 0: Cargar datos del perfil del usuario si está autenticado
+    const userDataObservable = this.checkoutUserDataService.getCurrentUserData().pipe(
+      catchError((error) => {
+        console.warn('No se pudieron cargar los datos del usuario:', error);
+        return of(null);
+      })
+    );
+
+    userDataObservable.subscribe({
+      next: (userData) => {
+        this.currentUserData = userData;
         
-        if (travelers.length === 0) {
-          this.loading = false;
-          return;
-        }
+        // Paso 1: Obtener los viajeros de la reserva
+        this.reservationTravelerService.getByReservation(this.reservationId).subscribe({
+          next: (travelers) => {
+            
+            if (travelers.length === 0) {
+              this.loading = false;
+              return;
+            }
 
-        // Paso 2: Para cada viajero, obtener sus campos
-        const travelerDataObservables = travelers.map(traveler => 
-          this.loadTravelerData(traveler)
-        );
+            // Paso 2: Para cada viajero, obtener sus campos
+            const travelerDataObservables = travelers.map((traveler, index) => 
+              this.loadTravelerData(traveler, index)
+            );
 
-        forkJoin(travelerDataObservables).subscribe({
-          next: (travelerDataList) => {
-            this.passengers = travelerDataList.filter(data => data !== null) as PassengerData[];
-            this.loading = false;
+            forkJoin(travelerDataObservables).subscribe({
+              next: (travelerDataList) => {
+                this.passengers = travelerDataList.filter(data => data !== null) as PassengerData[];
+                this.loading = false;
+              },
+              error: (error) => {
+                this.loading = false;
+              }
+            });
           },
           error: (error) => {
             this.loading = false;
@@ -126,6 +183,7 @@ export class BookingPersonalDataV2Component implements OnInit {
         });
       },
       error: (error) => {
+        console.error('Error al cargar datos del usuario:', error);
         this.loading = false;
       }
     });
@@ -134,32 +192,57 @@ export class BookingPersonalDataV2Component implements OnInit {
   /**
    * Carga los datos de un viajero específico
    */
-  private loadTravelerData(traveler: IReservationTravelerResponse): Observable<PassengerData | null> {
+  private loadTravelerData(traveler: IReservationTravelerResponse, passengerIndex: number): Observable<PassengerData | null> {
     // Obtener los campos del viajero
     return this.reservationTravelerFieldService.getByReservationTraveler(traveler.id).pipe(
       switchMap((travelerFields) => {
         
-        if (travelerFields.length === 0) {
-          return new Observable<PassengerData | null>(observer => observer.next(null));
+        // Obtener los IDs únicos de los campos para obtener sus nombres
+        const fieldIds = travelerFields.length > 0 
+          ? [...new Set(travelerFields.map(field => field.reservationFieldId))]
+          : [];
+        
+        // Si no hay campos, devolver pasajero con datos vacíos
+        if (fieldIds.length === 0) {
+          const emptyPassenger: PassengerData = {
+            id: traveler.id,
+            name: '',
+            surname: '',
+            documentType: 'DNI',
+            passportID: '',
+            birthDate: '',
+            email: '',
+            phone: '',
+            type: traveler.isLeadTraveler ? 'lead' : `passenger${passengerIndex + 1}`,
+            _id: traveler.id.toString()
+          };
+          
+          // Rellenar con datos del perfil si es lead traveler
+          if (traveler.isLeadTraveler && this.currentUserData) {
+            if (this.currentUserData.nombre) emptyPassenger.name = this.currentUserData.nombre;
+            if (this.currentUserData.apellido) emptyPassenger.surname = this.currentUserData.apellido;
+            if (this.currentUserData.email) emptyPassenger.email = this.currentUserData.email;
+            if (this.currentUserData.telefono) emptyPassenger.phone = this.currentUserData.telefono;
+            if (this.currentUserData.fechaNacimiento) emptyPassenger.birthDate = this.currentUserData.fechaNacimiento;
+            if (this.currentUserData.sexo) emptyPassenger.gender = this.currentUserData.sexo;
+          }
+          
+          return of(emptyPassenger);
         }
 
-        // Obtener los IDs únicos de los campos para obtener sus nombres
-        const fieldIds = [...new Set(travelerFields.map(field => field.reservationFieldId))];
-        
-        // Obtener los nombres de los campos
+        // Obtener los detalles de los campos
         const fieldObservables = fieldIds.map(fieldId => 
           this.reservationFieldService.getById(fieldId)
         );
 
         return forkJoin(fieldObservables).pipe(
-          map((fields) => {
+          map((fields: IReservationFieldResponse[]) => {
             
-            // Almacenar los campos disponibles para uso posterior
-            this.availableFields = [...this.availableFields, ...fields];
+            // NO sobrescribir availableFields - ya se cargaron todos en loadAllFieldsConfiguration()
             
             // Crear un mapa de fieldId -> fieldName y fieldCode
             const fieldMap = new Map<number, {name: string, code: string}>();
-            fields.forEach(field => {
+            fields.forEach((field: IReservationFieldResponse) => {
               fieldMap.set(field.id, {name: field.name, code: field.code});
             });
 
@@ -173,7 +256,7 @@ export class BookingPersonalDataV2Component implements OnInit {
               birthDate: '',
               email: '',
               phone: '',
-              type: traveler.isLeadTraveler ? 'lead' : 'adult',
+              type: traveler.isLeadTraveler ? 'lead' : `passenger${passengerIndex + 1}`,
               _id: traveler.id.toString()
             };
 
@@ -207,6 +290,24 @@ export class BookingPersonalDataV2Component implements OnInit {
                 passengerData.passportID = field.value;
               } else if (normalizedCode === 'nationality' || normalizedCode === 'nacionalidad') {
                 passengerData.nationality = field.value;
+              } else if (normalizedCode === 'dni') {
+                passengerData.dni = field.value;
+              } else if (normalizedCode === 'room' || normalizedCode === 'habitacion') {
+                passengerData.room = field.value;
+              } else if (normalizedCode === 'ciudad' || normalizedCode === 'city') {
+                passengerData.ciudad = field.value;
+              } else if (normalizedCode === 'codigopostal' || normalizedCode === 'postal_code' || normalizedCode === 'codigo_postal') {
+                passengerData.codigoPostal = field.value;
+              } else if (normalizedCode === 'minoridissuedate' || normalizedCode === 'minor_id_issue_date') {
+                passengerData.minorIdIssueDate = field.value;
+              } else if (normalizedCode === 'minoridexpirationdate' || normalizedCode === 'minor_id_expiration_date') {
+                passengerData.minorIdExpirationDate = field.value;
+              } else if (normalizedCode === 'documentexpeditiondate' || normalizedCode === 'document_expedition_date') {
+                passengerData.documentExpeditionDate = field.value;
+              } else if (normalizedCode === 'documentexpirationdate' || normalizedCode === 'document_expiration_date') {
+                passengerData.documentExpirationDate = field.value;
+              } else if (normalizedCode === 'comfortplan' || normalizedCode === 'comfort_plan') {
+                passengerData.comfortPlan = field.value;
               } else {
                 // Mapeo por nombre si el código no coincide
                 if (normalizedName.includes('nombre') && !passengerData.name) {
@@ -221,10 +322,31 @@ export class BookingPersonalDataV2Component implements OnInit {
                   passengerData.birthDate = field.value;
                 } else if (normalizedName.includes('sexo') && !passengerData.gender) {
                   passengerData.gender = field.value;
-                } else {
                 }
               }
             });
+
+            // Rellenar campos vacíos con datos del perfil del usuario (solo para el primer pasajero/lead traveler)
+            if (traveler.isLeadTraveler && this.currentUserData) {
+              if (!passengerData.name && this.currentUserData.nombre) {
+                passengerData.name = this.currentUserData.nombre;
+              }
+              if (!passengerData.surname && this.currentUserData.apellido) {
+                passengerData.surname = this.currentUserData.apellido;
+              }
+              if (!passengerData.email && this.currentUserData.email) {
+                passengerData.email = this.currentUserData.email;
+              }
+              if (!passengerData.phone && this.currentUserData.telefono) {
+                passengerData.phone = this.currentUserData.telefono;
+              }
+              if (!passengerData.birthDate && this.currentUserData.fechaNacimiento) {
+                passengerData.birthDate = this.currentUserData.fechaNacimiento;
+              }
+              if (!passengerData.gender && this.currentUserData.sexo) {
+                passengerData.gender = this.currentUserData.sexo;
+              }
+            }
 
             return passengerData;
           })
@@ -239,6 +361,13 @@ export class BookingPersonalDataV2Component implements OnInit {
   private getFieldCode(fieldId: number, fields: IReservationFieldResponse[]): string {
     const field = fields.find(f => f.id === fieldId);
     return field ? field.code : '';
+  }
+
+  /**
+   * Obtener detalles del campo de reservación (igual que checkout)
+   */
+  getReservationFieldDetails(reservationFieldId: number): IReservationFieldResponse | null {
+    return this.availableFields.find((field) => field.id === reservationFieldId) || null;
   }
 
   /**
@@ -411,6 +540,7 @@ export class BookingPersonalDataV2Component implements OnInit {
 
   /**
    * Mapea los datos del pasajero a códigos de campo
+   * IMPORTANTE: Los códigos deben coincidir exactamente con los de la BD
    */
   private getFieldMappings(passenger: PassengerData): { [key: string]: any } {
     return {
@@ -418,11 +548,20 @@ export class BookingPersonalDataV2Component implements OnInit {
       'surname': passenger.surname,
       'email': passenger.email,
       'phone': passenger.phone,
-      'gender': passenger.gender,
+      'sex': passenger.gender, // ✅ El código del campo es 'sex' en BD (no 'gender')
       'birthdate': passenger.birthDate,
       'document_type': passenger.documentType,
       'passport': passenger.passportID,
-      'nationality': passenger.nationality
+      'nationality': passenger.nationality,
+      'room': passenger.room,
+      'dni': passenger.dni,
+      'ciudad': passenger.ciudad,
+      'codigoPostal': passenger.codigoPostal,
+      'minorIdIssueDate': passenger.minorIdIssueDate,
+      'minorIdExpirationDate': passenger.minorIdExpirationDate,
+      'documentExpeditionDate': passenger.documentExpeditionDate,
+      'documentExpirationDate': passenger.documentExpirationDate,
+      'comfortPlan': passenger.comfortPlan
     };
   }
 }

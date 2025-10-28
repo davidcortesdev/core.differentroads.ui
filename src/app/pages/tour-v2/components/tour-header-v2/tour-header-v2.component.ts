@@ -28,6 +28,8 @@ import {
   ReservationService,
   ReservationCreate,
   IReservationResponse,
+  ReservationCompleteCreate,
+  IReservationTravelerData,
 } from '../../../../core/services/reservation/reservation.service';
 import {
   ReservationTravelerService,
@@ -50,6 +52,7 @@ import { environment } from '../../../../../environments/environment';
 import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 import { UsersNetService } from '../../../../core/services/users/usersNet.service';
 import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
+import { ReservationStatusService } from '../../../../core/services/reservation/reservation-status.service';
 
 // ✅ INTERFACES para tipado fuerte
 interface PassengersData {
@@ -150,7 +153,8 @@ export class TourHeaderV2Component
     private route: ActivatedRoute,
     private authService: AuthenticateService,
     private usersNetService: UsersNetService,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private reservationStatusService: ReservationStatusService
   ) {}
 
   ngOnInit() {
@@ -968,192 +972,201 @@ export class TourHeaderV2Component
     };
   }
 
+  // ✅ MÉTODO NUEVO: Preparar datos de viajeros para createComplete
+  private prepareTravelersData(): IReservationTravelerData[] {
+    const travelersData: IReservationTravelerData[] = [];
+    let travelerNumber = 1;
+
+    // Validar que existan los age groups necesarios
+    if (this.passengersData.adults > 0 && !this.ageGroupCategories.adults.id) {
+      throw new Error('Age group for adults not found');
+    }
+    if (this.passengersData.children > 0 && !this.ageGroupCategories.children.id) {
+      throw new Error('Age group for children not found');
+    }
+    if (this.passengersData.babies > 0 && !this.ageGroupCategories.babies.id) {
+      throw new Error('Age group for babies not found');
+    }
+
+    // Crear viajeros para adultos
+    for (let i = 0; i < this.passengersData.adults; i++) {
+      const isLeadTraveler = travelerNumber === 1;
+      travelersData.push({
+        ageGroupId: this.ageGroupCategories.adults.id!,
+        isLeadTraveler: isLeadTraveler,
+        tkId: null,
+      });
+      travelerNumber++;
+    }
+
+    // Crear viajeros para niños
+    for (let i = 0; i < this.passengersData.children; i++) {
+      travelersData.push({
+        ageGroupId: this.ageGroupCategories.children.id!,
+        isLeadTraveler: false,
+        tkId: null,
+      });
+      travelerNumber++;
+    }
+
+    // Crear viajeros para bebés
+    for (let i = 0; i < this.passengersData.babies; i++) {
+      travelersData.push({
+        ageGroupId: this.ageGroupCategories.babies.id!,
+        isLeadTraveler: false,
+        tkId: null,
+      });
+      travelerNumber++;
+    }
+
+    return travelersData;
+  }
+
+  // ✅ MÉTODO NUEVO: Preparar datos de actividades para createComplete
+  private prepareActivitiesData(): {
+    activityIds: number[];
+    activityPackIds: number[];
+  } {
+    const activityIds: number[] = [];
+    const activityPackIds: number[] = [];
+
+    // Procesar actividades seleccionadas manualmente
+    this.addedActivities.forEach((activity) => {
+      const activityId = parseInt(activity.id);
+      if (!isNaN(activityId) && activityId > 0) {
+        if (activity.type === 'act') {
+          activityIds.push(activityId);
+        } else if (activity.type === 'pack') {
+          activityPackIds.push(activityId);
+        }
+      }
+    });
+
+    // Procesar paquete automático del departure
+    if (this.selectedActivityPackId && this.selectedActivityPackId > 0) {
+      activityPackIds.push(this.selectedActivityPackId);
+    }
+
+    return { activityIds, activityPackIds };
+  }
+
   private createReservation(userId: number | null): void {
-    const reservationData: ReservationCreate = {
-      id: 0,
-      tkId: '',
-      reservationStatusId: 1, // 1 = CART (carrito de compra)
-      retailerId: environment.retaileriddefault,
-      tourId: this.tourId!,
-      departureId: this.selectedDeparture.id,
-      userId: userId, // Usar el ID del usuario logueado o null
-      totalPassengers: this.totalPassengers || 1,
-      totalAmount: this.totalPriceWithActivities || 0,
-      budgetAt: '',
-      cartAt: new Date().toISOString(), // Fecha de creación del carrito
-      abandonedAt: '',
-      reservedAt: '',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    try {
+      // ✅ OBTENER ID DEL ESTADO DRAFT DINÁMICAMENTE
+      this.reservationStatusService.getByCode('DRAFT').subscribe({
+        next: (draftStatuses) => {
+          if (!draftStatuses || draftStatuses.length === 0) {
+            throw new Error('DRAFT status not found');
+          }
 
-    console.log('📋 Intentando crear RESERVA con estado 1 (CART):', reservationData);
+          const draftStatusId = draftStatuses[0].id;
 
-    this.subscriptions.add(
-      this.reservationService
-        .create(reservationData)
-        .pipe(
-          switchMap((createdReservation: IReservationResponse) => {
-            console.log('✅ RESERVA creada exitosamente:', {
-              id: createdReservation.id,
-              statusId: createdReservation.reservationStatusId,
-              cartAt: createdReservation.cartAt
-            });
-            const travelerObservables = [];
-            let travelerNumber = 1;
+          // ✅ PREPARAR DATOS DE LA RESERVA
+          const reservationData: ReservationCreate = {
+            tkId: '',
+            reservationStatusId: draftStatusId, // ✅ USAR ID DINÁMICO DE DRAFT
+            retailerId: environment.retaileriddefault,
+            tourId: this.tourId!,
+            departureId: this.selectedDeparture.id,
+            userId: userId,
+            totalPassengers: this.totalPassengers || 1,
+            totalAmount: this.totalPriceWithActivities || 0,
+          };
 
-            // Crear travelers para adultos
-            for (let i = 0; i < this.passengersData.adults; i++) {
-              const isLeadTraveler = travelerNumber === 1;
+          // ✅ PREPARAR DATOS DE VIAJEROS
+          const travelersData: IReservationTravelerData[] = this.prepareTravelersData();
 
-              if (!this.ageGroupCategories.adults.id) {
-                console.error('No se encontró age group para adultos');
-                alert(
-                  'Error: No se pudo determinar el grupo de edad para adultos.'
-                );
+          // ✅ PREPARAR ACTIVIDADES Y PAQUETES
+          const { activityIds, activityPackIds } = this.prepareActivitiesData();
+
+          // ✅ CREAR RESERVA COMPLETA
+          const completeData: ReservationCompleteCreate = {
+            reservation: reservationData,
+            travelers: travelersData,
+            activityIds: activityIds.length > 0 ? activityIds : null,
+            activityPackIds: activityPackIds.length > 0 ? activityPackIds : null,
+          };
+
+          console.log('📋 Creando RESERVA COMPLETA (DRAFT):', completeData);
+
+          this.subscriptions.add(
+            this.reservationService.createComplete(completeData).subscribe({
+              next: (createdReservation: IReservationResponse) => {
+                console.log('✅ RESERVA COMPLETA creada exitosamente:', {
+                  id: createdReservation.id,
+                  statusId: createdReservation.reservationStatusId,
+                  cartAt: createdReservation.cartAt
+                });
+
+                // Disparar evento add_to_cart
+                this.trackAddToCart();
+
+                // Obtener contexto de la lista desde el state del router y pasarlo al checkout
+                const state = window.history.state;
+                const listId = state?.['listId'] || '';
+                const listName = state?.['listName'] || '';
+                
+                // Navegar al checkout pasando los datos por state (sin modificar URL)
+                this.router.navigate(['/checkout', createdReservation.id], {
+                  state: {
+                    listId: listId,
+                    listName: listName
+                  }
+                });
+              },
+              error: (error) => {
+                console.error('💥 Booking - Error fatal en el proceso:', {
+                  error: error,
+                  errorMessage: error.message,
+                  errorStatus: error.status,
+                });
+
+                let errorMessage =
+                  'Error al crear la reservación. Por favor, inténtalo de nuevo.';
+
+                // ✅ MENSAJES DE ERROR MÁS ESPECÍFICOS
+                if (error.status === 500) {
+                  errorMessage =
+                    'Error interno del servidor. Por favor, contacta al soporte técnico.';
+                } else if (error.status === 400) {
+                  errorMessage =
+                    'Datos inválidos. Por favor, verifica la información e inténtalo de nuevo.';
+                } else if (error.status === 404) {
+                  errorMessage =
+                    'Recurso no encontrado. Por favor, verifica que el tour y la fecha seleccionada sean válidos.';
+                } else if (error.status === 0 || !error.status) {
+                  errorMessage =
+                    'Sin conexión al servidor. Por favor, verifica tu conexión a internet.';
+                }
+
+                alert(errorMessage);
+              },
+              complete: () => {
                 this.isCreatingReservation = false;
-                throw new Error('Age group for adults not found');
-              }
-
-              const travelerData: ReservationTravelerCreate = {
-                reservationId: createdReservation.id,
-                travelerNumber: travelerNumber,
-                isLeadTraveler: isLeadTraveler,
-                tkId: '',
-                ageGroupId: this.ageGroupCategories.adults.id,
-              };
-
-              travelerObservables.push(
-                this.reservationTravelerService.create(travelerData)
-              );
-              travelerNumber++;
-            }
-
-            // Crear travelers para niños
-            for (let i = 0; i < this.passengersData.children; i++) {
-              if (!this.ageGroupCategories.children.id) {
-                console.error('No se encontró age group para niños');
-                alert(
-                  'Error: No se pudo determinar el grupo de edad para niños.'
-                );
-                this.isCreatingReservation = false;
-                throw new Error('Age group for children not found');
-              }
-
-              const travelerData: ReservationTravelerCreate = {
-                reservationId: createdReservation.id,
-                travelerNumber: travelerNumber,
-                isLeadTraveler: false,
-                tkId: '',
-                ageGroupId: this.ageGroupCategories.children.id,
-              };
-
-              travelerObservables.push(
-                this.reservationTravelerService.create(travelerData)
-              );
-              travelerNumber++;
-            }
-
-            // Crear travelers para bebés
-            for (let i = 0; i < this.passengersData.babies; i++) {
-              if (!this.ageGroupCategories.babies.id) {
-                console.error('❌ No se encontró age group para bebés');
-                alert(
-                  'Error: No se pudo determinar el grupo de edad para bebés.'
-                );
-                this.isCreatingReservation = false;
-                throw new Error('Age group for babies not found');
-              }
-
-              const travelerData: ReservationTravelerCreate = {
-                reservationId: createdReservation.id,
-                travelerNumber: travelerNumber,
-                isLeadTraveler: false,
-                tkId: '',
-                ageGroupId: this.ageGroupCategories.babies.id,
-              };
-
-              travelerObservables.push(
-                this.reservationTravelerService.create(travelerData)
-              );
-              travelerNumber++;
-            }
-
-            if (travelerObservables.length === 0) {
-              throw new Error('No travelers to create');
-            }
-
-            return forkJoin(travelerObservables).pipe(
-              map((createdTravelers) => {
-                return {
-                  reservation: createdReservation,
-                  travelers: createdTravelers,
-                };
-              })
-            );
-          }),
-          // ✅ USAR MÉTODO MODIFICADO para servicios separados
-          switchMap(({ reservation, travelers }) => {
-            return this.processActivitiesForTravelers(travelers).pipe(
-              map((activityResults) => ({
-                reservation,
-                travelers,
-                activityResults,
-              }))
-            );
-          })
-        )
-        .subscribe({
-          next: ({ reservation, travelers, activityResults }) => {
-
-            // Disparar evento add_to_cart
-            this.trackAddToCart();
-
-            // Obtener contexto de la lista desde el state del router y pasarlo al checkout
-            const state = window.history.state;
-            const listId = state?.['listId'] || '';
-            const listName = state?.['listName'] || '';
-            
-            // Navegar al checkout pasando los datos por state (sin modificar URL)
-            this.router.navigate(['/checkout', reservation.id], {
-              state: {
-                listId: listId,
-                listName: listName
-              }
-            });
-          },
-          error: (error) => {
-            console.error('💥 Booking - Error fatal en el proceso:', {
-              error: error,
-              errorMessage: error.message,
-              errorStatus: error.status,
-            });
-
-            let errorMessage =
-              'Error al crear la reservación. Por favor, inténtalo de nuevo.';
-
-            // ✅ MENSAJES DE ERROR MÁS ESPECÍFICOS
-            if (error.status === 500) {
-              errorMessage =
-                'Error interno del servidor. Por favor, contacta al soporte técnico.';
-            } else if (error.status === 400) {
-              errorMessage =
-                'Datos inválidos. Por favor, verifica la información e inténtalo de nuevo.';
-            } else if (error.status === 404) {
-              errorMessage =
-                'Recurso no encontrado. Por favor, verifica que el tour y la fecha seleccionada sean válidos.';
-            } else if (error.status === 0 || !error.status) {
-              errorMessage =
-                'Sin conexión al servidor. Por favor, verifica tu conexión a internet.';
-            }
-
-            alert(errorMessage);
-          },
-          complete: () => {
-            this.isCreatingReservation = false;
-          },
-        })
-    );
+              },
+            })
+          );
+        },
+        error: (error) => {
+          console.error('💥 Error obteniendo estado DRAFT:', error);
+          this.isCreatingReservation = false;
+          alert('Error al obtener el estado de reservación. Por favor, inténtalo de nuevo.');
+        }
+      });
+    } catch (error) {
+      console.error('💥 Booking - Error en preparación de datos:', error);
+      this.isCreatingReservation = false;
+      
+      let errorMessage = 'Error al preparar los datos de la reservación.';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Age group')) {
+          errorMessage = 'Error: No se pudo determinar el grupo de edad. Por favor, verifica la información e inténtalo de nuevo.';
+        }
+      }
+      
+      alert(errorMessage);
+    }
   }
 
 

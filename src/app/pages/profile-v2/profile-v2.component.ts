@@ -1,7 +1,8 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Title } from '@angular/platform-browser';
+import { PointsSectionV2Component } from './components/points-section-v2/points-section-v2.component';
 
 
 @Component({
@@ -11,6 +12,8 @@ import { Title } from '@angular/platform-browser';
   styleUrl: './profile-v2.component.scss',
 })
 export class ProfileV2Component implements OnInit, OnDestroy {
+  @ViewChild('pointsSection') pointsSection?: PointsSectionV2Component;
+  
   userId: string = '';
   private routeSubscription: Subscription = new Subscription();
 
@@ -31,5 +34,15 @@ export class ProfileV2Component implements OnInit, OnDestroy {
   ngOnDestroy() {
     // Limpiar suscripción para evitar memory leaks
     this.routeSubscription.unsubscribe();
+  }
+
+  /**
+   * Método para recargar la sección de puntos
+   * Puede ser llamado desde componentes hijos
+   */
+  public reloadPointsSection(): void {
+    if (this.pointsSection) {
+      this.pointsSection.reloadData();
+    }
   }
 }

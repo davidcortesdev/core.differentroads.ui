@@ -275,7 +275,7 @@ $azul: var(--background-azul);
   .buttons-container {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     gap: 1rem;
     margin-top: 2rem;
 
@@ -283,13 +283,14 @@ $azul: var(--background-azul);
       margin-top: 1.75rem;
     }
 
-    .back-button {
-      flex-shrink: 0;
-    }
-
     .payment-button {
-      flex-grow: 1;
+      flex-shrink: 0;
       max-width: 300px;
+      
+      @include mobile {
+        width: 100%;
+        max-width: 100%;
+      }
     }
   }
 }
@@ -315,10 +316,6 @@ $azul: var(--background-azul);
         @include responsive-font(0.9rem, 0.95rem, 1rem);
       }
     }
-  }
-
-  .back-button.p-button {
-    @include button-styles;
   }
 
   .p-checkbox .p-checkbox-box.p-focus {

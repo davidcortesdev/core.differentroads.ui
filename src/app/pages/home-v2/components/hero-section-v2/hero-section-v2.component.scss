@@ -460,6 +460,11 @@ D        .p-select-panel,
     left: 0 !important;
 }
 
-::ng-deep .p-select-items-wrapper {
+// Estilos más específicos para el overlay del select
+::ng-deep .p-select-overlay,
+::ng-deep .p-component-overlay,
+::ng-deep .p-select-panel {
     width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
 }

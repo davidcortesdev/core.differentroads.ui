@@ -24,20 +24,13 @@ export class BookingFlightsV2Component implements OnInit, OnChanges {
   constructor(private reservationFlightService: ReservationFlightService) {}
 
   ngOnInit(): void {
-    console.log('🛫 BookingFlightsV2Component - ngOnInit()');
-    console.log('📊 Reservation ID received:', this.reservationId);
-    
     if (this.reservationId) {
       this.loadFlightData();
-    } else {
-      console.warn('⚠️ No reservation ID provided');
     }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['reservationId'] && changes['reservationId'].currentValue) {
-      console.log('🔄 BookingFlightsV2Component - ngOnChanges()');
-      console.log('📊 Reservation ID changed:', changes['reservationId']);
       this.loadFlightData();
     }
   }
@@ -107,44 +100,25 @@ export class BookingFlightsV2Component implements OnInit, OnChanges {
     }
 
     this.isLoading = true;
-    console.log('🔄 Loading flight data for reservation ID:', this.reservationId);
 
     this.reservationFlightService.getSelectedFlightPack(this.reservationId)
       .subscribe({
         next: (flightPacks: IFlightPackDTO | IFlightPackDTO[]) => {
-          console.log('✅ Flight packs received:', flightPacks);
-          console.log('📊 Flight packs type:', typeof flightPacks);
-          console.log('📊 Is array:', Array.isArray(flightPacks));
-          
           // Manejar tanto arrays como objetos individuales
           let flightPackData: IFlightPackDTO | null = null;
           
           if (Array.isArray(flightPacks)) {
-            console.log('📊 Flight packs length:', flightPacks.length);
             if (flightPacks.length > 0) {
               flightPackData = flightPacks[0];
             }
           } else if (flightPacks && typeof flightPacks === 'object') {
-            console.log('📊 Single flight pack received');
             flightPackData = flightPacks as IFlightPackDTO;
           }
           
           if (flightPackData) {
             this.flightPackData = flightPackData;
-            console.log('📦 Selected flight pack data:', this.flightPackData);
-            console.log('✈️ Flights in pack:', this.flightPackData.flights);
-            console.log('✈️ Flights count:', this.flightPackData.flights?.length);
-            
             this.flight = this.mapFlightPackToFlight(this.flightPackData);
-            console.log('🔄 Mapped flight result:', this.flight);
-            console.log('🔄 Flight outbound segments:', this.flight.outbound?.segments);
-            console.log('🔄 Flight inbound segments:', this.flight.inbound?.segments);
-            console.log('🔄 Has valid flight data:', this.hasValidFlightData());
-            
-            this.logFlightIdentifiers();
-            this.validateFlightData();
           } else {
-            console.warn('⚠️ No flight packs found for reservation');
             this.flight = this.createEmptyFlight();
           }
           
@@ -163,10 +137,7 @@ export class BookingFlightsV2Component implements OnInit, OnChanges {
    * GENÉRICO: No depende de valores específicos, solo de patrones lógicos
    */
   private mapFlightPackToFlight(flightPack: IFlightPackDTO): Flight {
-    console.log('🔄 Mapping flight pack to Flight format:', flightPack);
-
     if (!flightPack.flights || flightPack.flights.length === 0) {
-      console.warn('⚠️ No flights found in flight pack');
       return this.createEmptyFlight();
     }
 
@@ -174,16 +145,8 @@ export class BookingFlightsV2Component implements OnInit, OnChanges {
     const sortedFlights = [...flightPack.flights].sort((a, b) => {
       const dateA = new Date(a.departureDate || a.date || '').getTime();
       const dateB = new Date(b.departureDate || b.date || '').getTime();
-      console.log(`📅 Comparing: ${a.name} (${dateA}) vs ${b.name} (${dateB})`);
       return dateA - dateB;
     });
-
-    console.log('📅 Sorted flights by date:', sortedFlights.map(f => ({
-      name: f.name,
-      flightTypeId: f.flightTypeId, 
-      date: f.departureDate || f.date,
-      route: `${f.departureCity} → ${f.arrivalCity}`
-    })));
 
     let outboundFlights: any[] = [];
     let inboundFlights: any[] = [];
@@ -194,20 +157,15 @@ export class BookingFlightsV2Component implements OnInit, OnChanges {
       // 🥇 PRIORIDAD 1: Un solo vuelo = siempre outbound
       outboundFlights = sortedFlights;
       inboundFlights = [];
-      console.log('✅ STRATEGY 1: Single flight -> Outbound only');
     } 
     else if (sortedFlights.length === 2) {
       // 🥈 PRIORIDAD 2: Dos vuelos = CRONOLÓGICO (primero=outbound, segundo=inbound)
       outboundFlights = [sortedFlights[0]]; // El MÁS TEMPRANO
       inboundFlights = [sortedFlights[1]];   // El MÁS TARDÍO
-      console.log('✅ STRATEGY 2: Two flights -> CHRONOLOGICAL ORDER');
-      console.log(`   Outbound: ${sortedFlights[0].name} (${sortedFlights[0].departureDate})`);
-      console.log(`   Inbound:  ${sortedFlights[1].name} (${sortedFlights[1].departureDate})`);
     }
     else {
       // 🥉 PRIORIDAD 3: Múltiples vuelos - analizar patrones
       const flightTypes = [...new Set(sortedFlights.map(f => f.flightTypeId))];
-      console.log('🏷️ Unique flight types found:', flightTypes);
       
       if (flightTypes.length === 2) {
         // Sub-estrategia A: Dos tipos diferentes, agrupar por tipo
@@ -216,14 +174,12 @@ export class BookingFlightsV2Component implements OnInit, OnChanges {
         
         outboundFlights = sortedFlights.filter(f => f.flightTypeId === minType);
         inboundFlights = sortedFlights.filter(f => f.flightTypeId === maxType);
-        console.log(`✅ STRATEGY 3A: Grouped by flightTypeId: ${minType}=Outbound, ${maxType}=Inbound`);
       }
       else {
         // Sub-estrategia B: Dividir cronológicamente por la mitad
         const midPoint = Math.ceil(sortedFlights.length / 2);
         outboundFlights = sortedFlights.slice(0, midPoint);
         inboundFlights = sortedFlights.slice(midPoint);
-        console.log(`✅ STRATEGY 3B: Split chronologically: First ${midPoint} flights=Outbound, Rest=Inbound`);
       }
     }
 
@@ -232,21 +188,10 @@ export class BookingFlightsV2Component implements OnInit, OnChanges {
       const outboundDate = new Date(outboundFlights[0].departureDate || outboundFlights[0].date);
       const inboundDate = new Date(inboundFlights[0].departureDate || inboundFlights[0].date);
       
-      console.log(`🔍 DATE VALIDATION:`);
-      console.log(`   Outbound date: ${outboundDate.toISOString()}`);
-      console.log(`   Inbound date:  ${inboundDate.toISOString()}`);
-      
       if (inboundDate < outboundDate) {
-        console.log('🔄 CORRECTION: Swapping flights - inbound was earlier than outbound');
         [outboundFlights, inboundFlights] = [inboundFlights, outboundFlights];
-      } else {
-        console.log('✅ VALIDATION: Dates are correct - outbound before inbound');
       }
     }
-
-    console.log('✈️ FINAL CLASSIFICATION:');
-    console.log('   Outbound flights:', outboundFlights.map(f => f.name));
-    console.log('   Inbound flights:', inboundFlights.map(f => f.name));
 
     const mappedFlight: Flight = {
       id: flightPack.id.toString(),
@@ -275,7 +220,6 @@ export class BookingFlightsV2Component implements OnInit, OnChanges {
       priceData: this.mapAgeGroupPricesToPriceData(flightPack.ageGroupPrices || [])
     };
 
-    console.log('✅ Mapped flight completed');
     return mappedFlight;
   }
 
@@ -294,8 +238,6 @@ export class BookingFlightsV2Component implements OnInit, OnChanges {
    */
   private mapFlightsToSegments(flights: any[]): any[] {
     if (!flights || flights.length === 0) return [];
-
-    console.log('🔄 Mapping flights to segments:', flights);
 
     return flights.map((flight, index) => {
       const segment = {
@@ -317,7 +259,6 @@ export class BookingFlightsV2Component implements OnInit, OnChanges {
         }
       };
       
-      console.log(`  Segment ${index + 1} mapped:`, segment);
       return segment;
     });
   }
@@ -464,120 +405,10 @@ export class BookingFlightsV2Component implements OnInit, OnChanges {
    * Registra todos los identificadores de vuelos para rastrear su origen
    */
   private logFlightIdentifiers(): void {
-    if (!this.flight) {
-      console.warn('⚠️ No flight data available to log identifiers');
-      return;
-    }
-
-    console.log('🔍 === FLIGHT IDENTIFIERS TRACE (V2 GENERIC) ===');
-    
-    // Identificadores principales del vuelo
-    console.log('🆔 Flight Main Identifiers:');
-    console.log('  - id:', this.flight.id);
-    console.log('  - externalID:', this.flight.externalID);
-    console.log('  - source:', this.flight.source);
-    console.log('  - name:', this.flight.name);
-    console.log('  - price:', this.flight.price);
-
-    // Log del flight pack original
-    if (this.flightPackData) {
-      console.log('📦 Original Flight Pack Data:');
-      console.log('  - flightPackId:', this.flightPackData.id);
-      console.log('  - code:', this.flightPackData.code);
-      console.log('  - tkId:', this.flightPackData.tkId);
-      console.log('  - itineraryId:', this.flightPackData.itineraryId);
-    }
-
-    // Identificadores de outbound
-    if (this.flight.outbound) {
-      console.log('✈️ Outbound Identifiers:');
-      console.log('  - activityID:', this.flight.outbound.activityID);
-      console.log('  - serviceCombinationID:', this.flight.outbound.serviceCombinationID);
-      console.log('  - date:', this.flight.outbound.date);
-      console.log('  - name:', this.flight.outbound.name);
-      console.log('  - availability:', this.flight.outbound.availability);
-      console.log('  - activityName:', this.flight.outbound.activityName);
-      
-      // Log de segmentos outbound
-      if (this.flight.outbound.segments && this.flight.outbound.segments.length > 0) {
-        console.log('  - segments count:', this.flight.outbound.segments.length);
-        this.flight.outbound.segments.forEach((segment, index) => {
-          console.log(`    Segment ${index + 1}:`);
-          console.log(`      - flightNumber: ${segment.flightNumber}`);
-          console.log(`      - departureCity: ${segment.departureCity} (${segment.departureIata})`);
-          console.log(`      - arrivalCity: ${segment.arrivalCity} (${segment.arrivalIata})`);
-          console.log(`      - airline: ${segment.airline?.name} (${segment.airline?.code})`);
-          console.log(`      - order: ${segment.order}`);
-          console.log(`      - numNights: ${segment.numNights}`);
-          console.log(`      - differential: ${segment.differential}`);
-        });
-      } else {
-        console.log('  - segments: No outbound segments found');
-      }
-    } else {
-      console.log('✈️ Outbound: No outbound data');
-    }
-
-    // Identificadores de inbound
-    if (this.flight.inbound) {
-      console.log('🔄 Inbound Identifiers:');
-      console.log('  - activityID:', this.flight.inbound.activityID);
-      console.log('  - serviceCombinationID:', this.flight.inbound.serviceCombinationID);
-      console.log('  - date:', this.flight.inbound.date);
-      console.log('  - name:', this.flight.inbound.name);
-      console.log('  - availability:', this.flight.inbound.availability);
-      console.log('  - activityName:', this.flight.inbound.activityName);
-      
-      // Log de segmentos inbound
-      if (this.flight.inbound.segments && this.flight.inbound.segments.length > 0) {
-        console.log('  - segments count:', this.flight.inbound.segments.length);
-        this.flight.inbound.segments.forEach((segment, index) => {
-          console.log(`    Segment ${index + 1}:`);
-          console.log(`      - flightNumber: ${segment.flightNumber}`);
-          console.log(`      - departureCity: ${segment.departureCity} (${segment.departureIata})`);
-          console.log(`      - arrivalCity: ${segment.arrivalCity} (${segment.arrivalIata})`);
-          console.log(`      - airline: ${segment.airline?.name} (${segment.airline?.code})`);
-          console.log(`      - order: ${segment.order}`);
-          console.log(`      - numNights: ${segment.numNights}`);
-          console.log(`      - differential: ${segment.differential}`);
-        });
-      } else {
-        console.log('  - segments: No inbound segments found');
-      }
-    } else {
-      console.log('🔄 Inbound: No inbound data');
-    }
-
-    // Log de priceData si existe
-    if (this.flight.priceData && this.flight.priceData.length > 0) {
-      console.log('💰 Price Data:');
-      this.flight.priceData.forEach((price, index) => {
-        console.log(`  Price ${index + 1}:`, price);
-      });
-    }
-
-    console.log('🔍 === END FLIGHT IDENTIFIERS TRACE (V2 GENERIC) ===');
+    // Método vaciado - los logs han sido removidos
   }
 
   private validateFlightData(): void {
-    if (!this.flight) {
-      console.error('❌ Flight data is undefined or null');
-      return;
-    }
-
-    console.log('✅ Validating flight data...');
-
-    // Validar que los segmentos tengan la información necesaria
-    if (this.flight.outbound?.segments?.length) {
-      const firstSegment = this.flight.outbound.segments[0];
-      console.log('✈️ Outbound first segment:', firstSegment);
-    }
-
-    if (this.flight.inbound?.segments?.length) {
-      const firstSegment = this.flight.inbound.segments[0];
-      console.log('🔄 Inbound first segment:', firstSegment);
-    }
-
-    console.log('✅ Flight data validation completed');
+    // Método vaciado - los logs han sido removidos
   }
 }

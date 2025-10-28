@@ -369,7 +369,6 @@ export class AuthenticateService {
             [item.Name]: item.Value,
           }));
           formattedResult = Object.assign({}, ...formattedResult);
-          console.log('User attributes: ', formattedResult);
 
           if (formattedResult.email) {
             this.currentUserEmail.next(formattedResult.email);
@@ -397,15 +396,15 @@ export class AuthenticateService {
   }
 
   // Navegar al perfil del usuario
-  navigateToProfile(userId: string) {
-    this.router.navigate(['/profile', userId]).then(success => {
+  navigateToProfile() {
+    this.router.navigate(['/profile']).then(success => {
       if (!success) {
         // Si la navegación falla, intentar con la ruta absoluta
-        window.location.href = `/profile/${userId}`;
+        window.location.href = `/profile`;
       }
     }).catch(error => {
       // En caso de error, usar navegación directa
-      window.location.href = `/profile/${userId}`;
+      window.location.href = `/profile`;
     });
   }
 

@@ -1,8 +1,12 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { switchMap, map, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { Title } from '@angular/platform-browser';
 import { PointsSectionV2Component } from './components/points-section-v2/points-section-v2.component';
+import { AuthenticateService } from '../../core/services/auth/auth-service.service';
+import { UsersNetService } from '../../core/services/users/usersNet.service';
+import { IUserResponse } from '../../core/models/users/user.model';
 
 
 @Component({
@@ -15,25 +19,56 @@ export class ProfileV2Component implements OnInit, OnDestroy {
   @ViewChild('pointsSection') pointsSection?: PointsSectionV2Component;
   
   userId: string = '';
-  private routeSubscription: Subscription = new Subscription();
+  isLoadingUserId: boolean = true;
+  private authSubscription?: Subscription;
 
   constructor(
-    private route: ActivatedRoute,
-    private titleService: Title
+    private titleService: Title,
+    private authenticateService: AuthenticateService,
+    private usersNetService: UsersNetService
   ) {}
 
   ngOnInit() {
     this.titleService.setTitle('Mi Perfil - Different Roads');
-    // Suscribirse a cambios en los parámetros de la ruta
-    this.routeSubscription = this.route.paramMap.subscribe(params => {
-      const routeUserId = params.get('userId');
-      this.userId = routeUserId ? routeUserId : '';
+    
+    // Obtener el userId del usuario logueado a través del cognitoId
+    this.authSubscription = this.authenticateService.getCognitoId().pipe(
+      switchMap(cognitoId => {
+        if (!cognitoId) {
+          console.warn('⚠️ No se encontró Cognito ID');
+          return of([]);
+        }
+        
+        // Buscar el usuario por Cognito ID para obtener su ID en la base de datos
+        return this.usersNetService.getUsersByCognitoId(cognitoId);
+      }),
+      map((users: IUserResponse[]) => {
+        // Extraer el userId del primer usuario encontrado
+        const userId = users && users.length > 0 ? users[0].id : null;
+        return userId ? userId.toString() : '';
+      }),
+      catchError(error => {
+        console.error('Error obteniendo el usuario:', error);
+        return of(''); // Retornar string vacío en caso de error
+      })
+    ).subscribe({
+      next: (userId) => {
+        this.userId = userId;
+        this.isLoadingUserId = false;
+      },
+      error: (error) => {
+        console.error('Error crítico en la obtención del usuario:', error);
+        this.isLoadingUserId = false;
+        // El userId permanecerá como string vacío, activando el estado de error
+      }
     });
   }
 
   ngOnDestroy() {
-    // Limpiar suscripción para evitar memory leaks
-    this.routeSubscription.unsubscribe();
+    // Limpiar suscripciones para evitar memory leaks
+    if (this.authSubscription) {
+      this.authSubscription.unsubscribe();
+    }
   }
 
   /**

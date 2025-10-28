@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { ReviewV2 } from '../../../../core/models/v2/profile-v2.model';
 
 
@@ -9,7 +9,7 @@ import { ReviewV2 } from '../../../../core/models/v2/profile-v2.model';
   styleUrls: ['./review-section-v2.component.scss'],
 })
 
-export class ReviewSectionV2Component implements OnInit {
+export class ReviewSectionV2Component implements OnInit, OnChanges {
   @Input() userId: string = '';
   reviewsCards: ReviewV2[] = [];
   loading = false;
@@ -18,7 +18,15 @@ export class ReviewSectionV2Component implements OnInit {
   constructor() {}
 
   ngOnInit(): void {
-    this.generateMockData();
+    if (this.userId) {
+      this.generateMockData();
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['userId'] && changes['userId'].currentValue) {
+      this.generateMockData();
+    }
   }
 
   private generateMockData(): void {

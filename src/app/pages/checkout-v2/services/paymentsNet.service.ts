@@ -120,6 +120,7 @@ export class PaymentsNetService {
       params.paymentStatusId = filter.paymentStatusId.toString();
     if (filter.paymentDate)
       params.paymentDate = filter.paymentDate.toISOString();
+    params.useExactMatchForStrings = false;
     return this.http.get<IPaymentResponse[]>(
       `${this.API_URL}/ReservationPayment`,
       { params }

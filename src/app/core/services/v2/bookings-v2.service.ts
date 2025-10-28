@@ -1,8 +1,19 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { map, Observable, switchMap, of } from 'rxjs';
+import { map, Observable, switchMap, of, forkJoin } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import { ReservationResponse } from '../../models/v2/profile-v2.model';
+import { Payment, PaymentStatus, IPaymentVoucher, VoucherReviewStatus } from '../../models/bookings/payment.model';
+import { PaymentsNetService, IPaymentResponse } from '../../../pages/checkout-v2/services/paymentsNet.service';
+import { PaymentStatusNetService, IPaymentStatusResponse } from '../../../pages/checkout-v2/services/paymentStatusNet.service';
+import { PaymentMethodNetService, IPaymentMethodResponse } from '../../../pages/checkout-v2/services/paymentMethodNet.service';
+
+export interface PaymentInfo {
+  totalPrice: number;
+  pendingAmount: number;
+  paidAmount: number;
+}
 
 
 @Injectable({
@@ -10,8 +21,20 @@ import { ReservationResponse } from '../../models/v2/profile-v2.model';
 })
 export class BookingsServiceV2 {
   private readonly API_URL = `${environment.reservationsApiUrl}/Reservation`;
+  
+  // Caché para estados y métodos de pago
+  private paymentStatusMap: { [key: number]: string } = {};
+  private paymentMethodMap: { [key: number]: string } = {};
+  private statusAndMethodsLoaded = false;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private paymentsNetService: PaymentsNetService,
+    private paymentStatusService: PaymentStatusNetService,
+    private paymentMethodService: PaymentMethodNetService
+  ) {
+    this.loadPaymentStatusAndMethods();
+  }
 
   /**
    * Obtiene reservas por ID de usuario
@@ -243,5 +266,148 @@ export class BookingsServiceV2 {
         )
       )
     );
+  }
+
+  /**
+   * Carga los estados y métodos de pago una sola vez
+   */
+  private loadPaymentStatusAndMethods(): void {
+    if (this.statusAndMethodsLoaded) {
+      return;
+    }
+
+    forkJoin({
+      statuses: this.paymentStatusService.getAllPaymentStatuses().pipe(
+        catchError(() => of([]))
+      ),
+      methods: this.paymentMethodService.getAllPaymentMethods().pipe(
+        catchError(() => of([]))
+      )
+    }).subscribe(({ statuses, methods }) => {
+      statuses.forEach((status: IPaymentStatusResponse) => {
+        this.paymentStatusMap[status.id] = status.name;
+      });
+      methods.forEach((method: IPaymentMethodResponse) => {
+        this.paymentMethodMap[method.id] = method.name;
+      });
+      this.statusAndMethodsLoaded = true;
+    });
+  }
+
+  /**
+   * Obtiene los pagos de una reserva desde la API
+   */
+  getPaymentsByReservationId(reservationId: number, bookingID: string): Observable<Payment[]> {
+    if (!reservationId || reservationId <= 0) {
+      return of([]);
+    }
+
+    return this.paymentsNetService.getAll({ reservationId })
+      .pipe(
+        map((payments: IPaymentResponse[]) => this.mapPaymentsToPaymentModel(payments, bookingID)),
+        catchError((error) => {
+          console.error('Error cargando pagos:', error);
+          return of([]);
+        })
+      );
+  }
+
+  /**
+   * Mapea los pagos de la API al modelo Payment del componente
+   */
+  private mapPaymentsToPaymentModel(payments: IPaymentResponse[], bookingID: string): Payment[] {
+    const mappedPayments = payments.map((payment) => {
+      const mappedPayment: Payment = {
+        bookingID: bookingID,
+        amount: payment.amount,
+        publicID: payment.transactionReference || payment.id.toString(),
+        externalID: payment.transactionReference,
+        status: this.mapPaymentStatus(payment.paymentStatusId),
+        method: this.paymentMethodMap[payment.paymentMethodId] || 'Desconocido',
+        paymentMethodId: payment.paymentMethodId,
+        notes: payment.notes,
+        createdAt: new Date(payment.paymentDate).toISOString(),
+        updatedAt: new Date(payment.paymentDate).toISOString(),
+      };
+
+      // Agregar vouchers si hay archivo adjunto
+      if (payment.attachmentUrl) {
+        const voucher: IPaymentVoucher = {
+          fileUrl: payment.attachmentUrl,
+          metadata: {},
+          uploadDate: new Date(payment.paymentDate),
+          reviewStatus: VoucherReviewStatus.PENDING,
+          id: payment.id.toString()
+        };
+        mappedPayment.vouchers = [voucher];
+      }
+
+      return mappedPayment;
+    });
+
+    // Ordenar por fecha (más recientes primero)
+    return mappedPayments.sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return dateB - dateA;
+    });
+  }
+
+  /**
+   * Mapea el ID de estado de pago a PaymentStatus enum
+   */
+  private mapPaymentStatus(paymentStatusId: number): PaymentStatus {
+    const statusName = this.paymentStatusMap[paymentStatusId];
+    if (!statusName) return PaymentStatus.PENDING;
+
+    // Mapear nombres de estado a PaymentStatus enum
+    const statusMapping: { [key: string]: PaymentStatus } = {
+      'Completado': PaymentStatus.COMPLETED,
+      'Pendiente': PaymentStatus.PENDING,
+      'Pendiente de revisión': PaymentStatus.PENDING_REVIEW,
+      'Rechazado': PaymentStatus.CANCELLED,
+      'Cancelado': PaymentStatus.CANCELLED,
+      'Fallido': PaymentStatus.FAILED,
+    };
+
+    return statusMapping[statusName] || PaymentStatus.PENDING;
+  }
+
+  /**
+   * Calcula la información de pagos (total, pendiente, pagado)
+   */
+  calculatePaymentInfo(payments: Payment[], bookingTotal: number): PaymentInfo {
+    // Calcular el total pagado desde paymentHistory
+    const totalPaid = payments
+      .filter(p => p.status === PaymentStatus.COMPLETED)
+      .reduce((sum, p) => sum + p.amount, 0);
+    
+    return {
+      totalPrice: bookingTotal || 0,
+      pendingAmount: Math.max(0, (bookingTotal || 0) - totalPaid),
+      paidAmount: totalPaid,
+    };
+  }
+
+  /**
+   * Obtiene el texto del estado de un pago
+   */
+  getPaymentStatusText(status: PaymentStatus | string): string {
+    const paymentStatus = typeof status === 'string' ? status as PaymentStatus : status;
+    
+    switch (paymentStatus) {
+      case PaymentStatus.COMPLETED:
+        return 'Completado';
+      case PaymentStatus.PENDING:
+        return 'Pendiente';
+      case PaymentStatus.PENDING_REVIEW:
+        return 'Pendiente de revisión';
+      case PaymentStatus.CANCELLED:
+        return 'Cancelado';
+      case PaymentStatus.FAILED:
+        return 'Fallido';
+      default:
+        return String(status);
+    }
   }
 }

@@ -104,7 +104,7 @@ const routes: Routes = [
       // ========================================
       // PROFILE ROUTES
       // ========================================
-      { path: 'profile/:userId', component: ProfileV2Component },
+      { path: 'profile', component: ProfileV2Component },
 
       // ========================================
       // TOUR ROUTES

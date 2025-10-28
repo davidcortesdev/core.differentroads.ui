@@ -1,9 +1,11 @@
-import { Component, OnInit, Inject, ViewChild } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Component, OnInit, OnDestroy, Inject, ViewChild, ErrorHandler } from '@angular/core';
+import { Router, ActivatedRoute, NavigationEnd, NavigationStart, NavigationCancel, NavigationError, Event } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Flight } from '../../core/models/tours/flight.model';
 import { finalize } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 import {
   Payment,
   PaymentStatus,
@@ -114,18 +116,21 @@ export interface PassengerData {
   styleUrls: ['./bookings.component.scss'],
   providers: [MessageService],
 })
-export class Bookingsv2Component implements OnInit {
+export class Bookingsv2Component implements OnInit, OnDestroy {
   @ViewChild('paymentHistoryComponent') paymentHistoryComponent: any;
   
   // ID de la reserva actual
   bookingId: string = '';
   isLoading: boolean = false;
+  private routerSubscription?: Subscription;
+  private routeSubscription?: Subscription;
   
   // Trigger para refrescar el resumen
   summaryRefreshTrigger: any = null;
   reservation: IReservationResponse | null = null; // Objeto de reserva completo
   reservationSummary: IReservationSummaryResponse | null = null; // Resumen de la reserva
   availableActivities: BookingActivity[] = []; // Array para actividades disponibles
+  departureDate: string = ''; // Fecha de salida del departure
 
   // Datos básicos que se actualizarán dinámicamente
   bookingData: BookingData = {
@@ -226,16 +231,35 @@ export class Bookingsv2Component implements OnInit {
     this.messageService.clear();
 
     // Obtenemos el ID de la URL
-    this.route.params.subscribe((params) => {
+    this.routeSubscription = this.route.params.subscribe((params) => {
       if (params['id']) {
-        this.bookingId = params['id'];
-        this.loadBookingData(this.bookingId);
+        const newBookingId = params['id'];
+        
+        // Solo cargar si es diferente del actual
+        if (newBookingId !== this.bookingId) {
+          this.bookingId = newBookingId;
+          this.loadBookingData(this.bookingId);
+        }
       }
     });
   }
 
+  ngOnDestroy(): void {
+    // Limpiar suscripciones
+    if (this.routerSubscription) {
+      this.routerSubscription.unsubscribe();
+    }
+    if (this.routeSubscription) {
+      this.routeSubscription.unsubscribe();
+    }
+  }
+
   // Método para cargar los datos de la reserva
   loadBookingData(id: string): void {
+    if (this.isLoading) {
+      return;
+    }
+    
     this.isLoading = true;
 
     // Convertir el ID de string a number
@@ -271,6 +295,7 @@ export class Bookingsv2Component implements OnInit {
           // Los datos de pasajeros ahora se cargan directamente en el componente booking-personal-data
         },
         error: (error) => {
+          console.error('Error cargando datos de reserva:', error);
           this.messageService.add({
             key: 'center',
             severity: 'error',
@@ -354,14 +379,23 @@ export class Bookingsv2Component implements OnInit {
 
   // Método para obtener el texto del estado
   private getStatusText(statusId: number): string {
-    const statusMap: { [key: number]: string } = {
-      1: 'Pendiente',
-      2: 'Confirmada',
-      3: 'Cancelada',
-      4: 'Completada',
-      5: 'Abandonada',
+    const statusMap: Record<number, string> = {
+      1: 'Borrador',
+      2: 'Carrito en proceso',
+      3: 'Presupuesto generado',
+      4: 'Reserva pendiente de confirmación',
+      5: 'Reserva registrada sin pagos',
+      6: 'Reserva confirmada con pagos parciales',
+      7: 'Reserva pagada completamente',
+      8: 'Reserva cancelada',
+      9: 'Carrito abandonado sin conversión',
+      10: 'Error técnico',
+      11: 'Reserva pendiente de confirmación',
+      12: 'Reserva eliminada',
+      13: 'Reserva expirada',
+      14: 'Reserva suspendida'
     };
-    return statusMap[statusId] || 'Desconocido';
+    return statusMap[statusId] || 'Unknown';
   }
 
   // Método para cargar datos del tour
@@ -434,14 +468,27 @@ export class Bookingsv2Component implements OnInit {
   private loadDepartureData(departureId: number): void {
     this.departureService.getById(departureId).subscribe({
       next: (departure) => {
-        // Actualizar la fecha de salida en bookingData
+        // Helper para formatear fechas de forma consistente
+        const formatDate = (dateString: string): string => {
+          if (!dateString) return '';
+          try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' });
+          } catch {
+            return dateString;
+          }
+        };
+
+        // Actualizar la fecha de salida en bookingData (sin formatear para mantener ISO)
         if (departure.departureDate) {
           this.bookingData.date = departure.departureDate;
+          // Guardar la fecha sin formatear para componentes que la necesiten
+          this.departureDate = departure.departureDate;
         }
 
-        // Actualizar la fecha de salida en bookingImages
+        // Actualizar la fecha de salida en bookingImages (formateada para display)
         if (this.bookingImages.length > 0 && departure.departureDate) {
-          this.bookingImages[0].departureDate = departure.departureDate;
+          this.bookingImages[0].departureDate = formatDate(departure.departureDate);
         }
       },
       error: (error) => {
@@ -454,6 +501,17 @@ export class Bookingsv2Component implements OnInit {
   // Actualizar información de las imágenes
   updateBookingImages(reservation: IReservationResponse): void {
     if (this.bookingImages.length > 0) {
+      // Formatear fechas para mostrarlas correctamente
+      const formatDate = (dateString: string): string => {
+        if (!dateString) return '';
+        try {
+          const date = new Date(dateString);
+          return date.toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' });
+        } catch {
+          return dateString;
+        }
+      };
+
       // Inicializar con valores básicos (los nombres se actualizarán en loadTourData y loadRetailerData)
       this.bookingImages[0] = {
         ...this.bookingImages[0],
@@ -461,12 +519,9 @@ export class Bookingsv2Component implements OnInit {
         tourName: 'Cargando...',
         imageUrl: 'https://picsum.photos/400/200', // Imagen temporal
         retailer: 'Cargando...',
-        creationDate: reservation.createdAt
-          ? new Date(reservation.createdAt).toLocaleDateString()
-          : '',
-        departureDate: reservation.reservedAt
-          ? new Date(reservation.reservedAt).toLocaleDateString()
-          : '',
+        // Formatear fechas para mostrar
+        creationDate: formatDate(reservation.createdAt || ''),
+        departureDate: formatDate(reservation.reservedAt || ''),
         passengers: reservation.totalPassengers,
         price: reservation.totalAmount,
       };
@@ -594,6 +649,14 @@ export class Bookingsv2Component implements OnInit {
       detail: `Se ha registrado un pago de ${amount}€`,
       life: 3000,
     });
+
+    // Recargar los datos de la reserva para obtener los montos actualizados
+    if (this.bookingId) {
+      this.loadBookingData(this.bookingId);
+    }
+    
+    // Disparar trigger de refresh para actualizar el resumen
+    this.summaryRefreshTrigger = Date.now();
   }
 
   sendReminder(): void {

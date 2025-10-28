@@ -56,6 +56,7 @@ export class HeaderV2Component implements OnInit, OnDestroy {
   chipImage = '';
   readonly chipAlt = 'Avatar image';
   currentUserId: string = ''; // Almacenar el userId real del usuario
+  private isNavigatingManually: boolean = false; // Flag para prevenir navegaciones automáticas
 
   constructor(
     private authService: AuthenticateService,
@@ -675,43 +676,11 @@ export class HeaderV2Component implements OnInit, OnDestroy {
   }
 
   /**
-   * Navega al perfil del usuario usando su ID real de la base de datos
+   * Navega al perfil del usuario
+   * Ya no necesita userId porque el componente obtiene el usuario desde el servicio de autenticación
    */
   private navigateToUserProfile(): void {
-    this.authService.getUserEmail().pipe(
-      takeUntil(this.destroy$),
-      switchMap((email: string) => {
-        if (email) {
-          return this.usersNetService.getUsersByEmail(email);
-        } else {
-          return of([]);
-        }
-      })
-    ).subscribe({
-      next: (users: any[]) => {
-        if (users && users.length > 0) {
-          const user = users[0];
-          const userId = user?.id;
-          
-          this.currentUserId = userId || '';
-          
-          if (userId) {
-            this.router.navigate(['/profile', userId]);
-          }
-        } else {
-          const cognitoId = this.authService.getCognitoIdValue();
-          if (cognitoId) {
-            this.router.navigate(['/profile', cognitoId]);
-          }
-        }
-      },
-      error: (error) => {
-        const cognitoId = this.authService.getCognitoIdValue();
-        if (cognitoId) {
-          this.router.navigate(['/profile', cognitoId]);
-        }
-      }
-    });
+    this.router.navigate(['/profile']);
   }
 
 

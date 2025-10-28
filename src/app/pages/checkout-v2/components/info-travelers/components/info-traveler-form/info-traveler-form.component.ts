@@ -479,11 +479,11 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
         validators.push(Validators.email);
         break;
       case 'phone':
-        validators.push(Validators.pattern(/^(\+\d{1,3})?\s?\d{6,14}$/));
+        validators.push(this.phoneValidator());
         break;
       case 'text':
         if (fieldDetails.code === 'phone') {
-          validators.push(Validators.pattern(/^(\+\d{1,3})?\s?\d{6,14}$/));
+          validators.push(this.phoneValidator());
         } else {
           validators.push(Validators.minLength(2));
           validators.push(Validators.maxLength(50));
@@ -528,8 +528,35 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
-   * Validador personalizado para fechas
+   * Validador personalizado para teléfono
+   * Permite números internacionales con código de país y espacios
    */
+  private phoneValidator() {
+    return (control: AbstractControl): ValidationErrors | null => {
+      if (!control.value) {
+        return null; // Si está vacío, required validator se encarga
+      }
+
+      const phoneValue = control.value.toString().trim();
+      if (!phoneValue) {
+        return null;
+      }
+
+      // Normalizar el teléfono eliminando espacios y guiones
+      const normalizedPhone = phoneValue.replace(/[\s-]/g, '');
+      
+      // Patrón que acepta: +código_país (1-3 dígitos) + número (6-14 dígitos)
+      // También acepta solo el número sin código de país
+      const phoneRegex = /^(\+\d{1,3})?\d{6,14}$/;
+      
+      if (!phoneRegex.test(normalizedPhone)) {
+        return { pattern: true };
+      }
+
+      return null;
+    };
+  }
+
   private dateValidator() {
     return (control: AbstractControl): ValidationErrors | null => {
       if (!control.value) {
@@ -1170,14 +1197,29 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     const input = event.target as HTMLInputElement;
-    const filteredValue = input.value.replace(/[^\d+\s-]/g, '');
-    input.value = filteredValue;
+    // Permitir números, +, espacios y guiones
+    let filtered = input.value.replace(/[^\d+\s-]/g, '');
+    
+    // Si hay un +, asegurarse de que esté solo al inicio
+    const plusIndex = filtered.indexOf('+');
+    if (plusIndex > 0) {
+      // Si hay un + que no está al inicio, eliminarlo
+      filtered = filtered.replace(/\+/g, '');
+    } else if (plusIndex === 0 && filtered.indexOf('+', 1) > 0) {
+      // Si hay múltiples +, mantener solo el primero
+      filtered = filtered.substring(0, 1) + filtered.substring(1).replace(/\+/g, '');
+    }
+    
+    // Limitar la longitud total (considerando +, espacios y guiones)
+    filtered = filtered.slice(0, 20);
+    
+    input.value = filtered;
 
     const controlName = `${fieldCode}_${this.traveler.id}`;
     const control = this.travelerForm.get(controlName);
 
     if (control) {
-      control.setValue(filteredValue);
+      control.setValue(filtered);
       control.markAsDirty();
       control.markAsTouched();
       

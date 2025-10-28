@@ -53,6 +53,8 @@
       [bookingTotal]="bookingTotal"
       [isTO]="isTO"
       [refreshTrigger]="summaryRefreshTrigger"
+      [reservationId]="reservation?.id || 0"
+      [departureDate]="departureDate"
       (registerPayment)="registerPayment($event)"
       (fileUploaded)="handleFileUploaded($event)"
     >

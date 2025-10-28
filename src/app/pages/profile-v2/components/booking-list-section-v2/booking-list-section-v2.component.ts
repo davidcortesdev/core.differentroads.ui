@@ -805,10 +805,6 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   loadNotificationsForReservation(reservationId: string): void {
     this.notificationsLoading[reservationId] = true;
 
-    console.log(
-      '🔍 DEBUG: Loading notifications for reservation:',
-      reservationId
-    );
 
     this.notificationService
       .getNotificationsByReservationId(parseInt(reservationId, 10))

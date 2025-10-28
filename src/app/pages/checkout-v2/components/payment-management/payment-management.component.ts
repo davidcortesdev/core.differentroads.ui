@@ -468,19 +468,55 @@ export class PaymentManagementComponent
 
   private async updateReservationStatusToPrebooked(): Promise<boolean> {
     try {
-      const reservationStatus = await firstValueFrom(
+      console.log('🔄 Verificando estado actual de la reserva...');
+      
+      // 1. Obtener la reserva actual
+      const currentReservation = await firstValueFrom(
+        this.reservationService.getById(this.reservationId!)
+      );
+      
+      // 2. Obtener los estados permitidos (CART y BUDGET)
+      const [cartStatus, budgetStatus] = await Promise.all([
+        firstValueFrom(this.reservationStatusService.getByCode('CART')),
+        firstValueFrom(this.reservationStatusService.getByCode('BUDGET'))
+      ]);
+      
+      if (!cartStatus || cartStatus.length === 0 || !budgetStatus || budgetStatus.length === 0) {
+        throw new Error('No se pudieron obtener los estados CART o BUDGET');
+      }
+      
+      const allowedStatusIds = [cartStatus[0].id, budgetStatus[0].id];
+      
+      // 3. Verificar si el estado actual es CART o BUDGET
+      if (!allowedStatusIds.includes(currentReservation.reservationStatusId)) {
+        console.log('⚠️ La reserva no está en estado CART o BUDGET. Estado actual ID:', currentReservation.reservationStatusId);
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Estado de reserva',
+          detail: 'La reserva no se encuentra en un estado que permita realizar el pago.',
+          life: 5000,
+        });
+        return false;
+      }
+      
+      console.log('✅ Estado actual válido, procediendo a actualizar a PREBOOKED');
+      
+      // 4. Obtener el estado PREBOOKED
+      const prebookedStatus = await firstValueFrom(
         this.reservationStatusService.getByCode('PREBOOKED')
       );
       
-      if (!reservationStatus || reservationStatus.length === 0) {
+      if (!prebookedStatus || prebookedStatus.length === 0) {
         throw new Error('No se pudo obtener el estado PREBOOKED');
       }
 
+      // 5. Actualizar el estado a PREBOOKED
       const success = await firstValueFrom(
-        this.reservationService.updateStatus(this.reservationId!, reservationStatus[0].id)
+        this.reservationService.updateStatus(this.reservationId!, prebookedStatus[0].id)
       );
 
       if (success) {
+        console.log('✅ Estado de reservación actualizado correctamente a PREBOOKED');
         return true;
       } else {
         throw new Error('La actualización del estado falló');

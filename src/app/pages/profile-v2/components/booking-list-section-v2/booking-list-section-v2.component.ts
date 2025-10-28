@@ -703,44 +703,39 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
 
   downloadBudgetDocument(): void {
     const BUDGET_ID = 13760; // ID predeterminado para el presupuesto
-    this.downloadLoading[BUDGET_ID] = true;
-
-    this.messageService.add({
-      severity: 'info',
-      summary: 'Info',
-      detail: 'Generando presupuesto PDF...',
-    });
-
-    this.documentServicev2.getBudgetDocument(BUDGET_ID).subscribe({
-      next: (blob) => {
-        this.downloadLoading[BUDGET_ID] = false;
-        const fileName = `presupuesto_${BUDGET_ID}.pdf`;
-        this.documentServicev2.downloadDocument(blob, fileName);
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Éxito',
-          detail: 'Presupuesto PDF descargado exitosamente',
+    const TYPE_DOCUMENT = 'BUDGET';
+    this.documentServicev2.getDocumentInfo(BUDGET_ID, TYPE_DOCUMENT).subscribe({
+      next: (documentInfo) => {
+        const fileName = documentInfo.fileName;
+        
+        this.documentServicev2.getDocument(fileName).subscribe({
+          next: (blob) => {
+            
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+          },
+          error: (error) => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error al descargar documento',
+              detail: 'No se pudo descargar el documento. Por favor, inténtalo más tarde.'
+            });
+          }
         });
       },
       error: (error) => {
-        console.error('Error downloading budget PDF:', error);
-        this.downloadLoading[BUDGET_ID] = false;
-
-        let errorMessage = 'Error al generar el presupuesto PDF';
-        if (error.status === 500) {
-          errorMessage = 'Error interno del servidor. Inténtalo más tarde.';
-        } else if (error.status === 404) {
-          errorMessage = 'Presupuesto no encontrado.';
-        } else if (error.status === 403) {
-          errorMessage = 'No tienes permisos para descargar este presupuesto.';
-        }
-
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
-          detail: errorMessage,
+          summary: 'Error al obtener información del documento',
+          detail: 'No se pudo obtener la información del documento. Por favor, inténtalo más tarde.'
         });
-      },
+      }
     });
   }
 

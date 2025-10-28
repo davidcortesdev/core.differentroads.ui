@@ -3,8 +3,16 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
   Payment,
+  PaymentStatus,
+  IPaymentVoucher,
+  VoucherReviewStatus,
 } from '../../../core/models/bookings/payment.model';
 import { PaymentData } from '../add-payment-modal/add-payment-modal.component';
+import { PaymentsNetService, IPaymentResponse } from '../../../pages/checkout-v2/services/paymentsNet.service';
+import { PaymentStatusNetService } from '../../../pages/checkout-v2/services/paymentStatusNet.service';
+import { PaymentMethodNetService } from '../../../pages/checkout-v2/services/paymentMethodNet.service';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 // Interfaces existentes
 interface TripItemData {
@@ -68,9 +76,16 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   approveMessage: string | null = null;
   isApproveSuccess: boolean = false;
 
+  isLoadingPayments: boolean = false;
+  paymentStatusMap: { [key: number]: string } = {};
+  paymentMethodMap: { [key: number]: string } = {};
+
   constructor(
     private fb: FormBuilder,
-    private router: Router
+    private router: Router,
+    private paymentsNetService: PaymentsNetService,
+    private paymentStatusService: PaymentStatusNetService,
+    private paymentMethodService: PaymentMethodNetService
   ) {
     this.paymentForm = this.fb.group({
       amount: [0, [Validators.required, Validators.min(1)]],
@@ -79,6 +94,8 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
 
   ngOnInit(): void {
     this.calculatePaymentInfo();
+    this.loadPaymentStatusAndMethods();
+    this.loadPayments();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -87,26 +104,129 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
       this.calculatePaymentInfo();
     }
     
+    // Cargar pagos si cambia reservationId
+    if (changes['reservationId'] && changes['reservationId'].currentValue) {
+      this.loadPayments();
+    }
+    
     if (changes['refreshTrigger'] && changes['refreshTrigger'].currentValue) {
-      console.log('🔄 Refrescando datos de pagos por trigger...');
       this.refreshPayments();
     }
   }
 
   private calculatePaymentInfo(): void {
+    // Calcular el total pagado desde paymentHistory
+    const totalPaid = this.paymentHistory
+      .filter(p => p.status === PaymentStatus.COMPLETED)
+      .reduce((sum, p) => sum + p.amount, 0);
+    
     // Usar bookingTotal de la reserva real
     this.paymentInfo = {
       totalPrice: this.bookingTotal || 0,
-      pendingAmount: this.bookingTotal || 0, // Por defecto todo está pendiente
-      paidAmount: 0, // TODO: calcular desde pagos reales cuando se implementen
+      pendingAmount: Math.max(0, (this.bookingTotal || 0) - totalPaid),
+      paidAmount: totalPaid,
     };
   }
 
+  private loadPaymentStatusAndMethods(): void {
+    // Cargar estados de pago
+    this.paymentStatusService.getAllPaymentStatuses().pipe(
+      catchError(() => of([]))
+    ).subscribe(statuses => {
+      statuses.forEach(status => {
+        this.paymentStatusMap[status.id] = status.name;
+      });
+    });
+
+    // Cargar métodos de pago
+    this.paymentMethodService.getAllPaymentMethods().pipe(
+      catchError(() => of([]))
+    ).subscribe(methods => {
+      methods.forEach(method => {
+        this.paymentMethodMap[method.id] = method.name;
+      });
+    });
+  }
+
+  private loadPayments(): void {
+    if (!this.reservationId || this.reservationId <= 0) {
+      return;
+    }
+
+    this.isLoadingPayments = true;
+
+    this.paymentsNetService.getAll({ reservationId: this.reservationId })
+      .pipe(
+        catchError((error) => {
+          console.error('Error cargando pagos:', error);
+          this.paymentHistory = [];
+          this.isLoadingPayments = false;
+          return of([]);
+        })
+      )
+      .subscribe((payments: IPaymentResponse[]) => {
+        // Mapear los pagos de la API al formato del componente
+        this.paymentHistory = payments.map((payment) => {
+          const mappedPayment: Payment = {
+            bookingID: this.bookingID,
+            amount: payment.amount,
+            publicID: payment.transactionReference || payment.id.toString(),
+            externalID: payment.transactionReference,
+            status: this.mapPaymentStatus(payment.paymentStatusId),
+            method: this.paymentMethodMap[payment.paymentMethodId] || 'Desconocido',
+            createdAt: new Date(payment.paymentDate).toISOString(),
+            updatedAt: new Date(payment.paymentDate).toISOString(),
+          };
+
+          // Agregar vouchers si hay archivo adjunto
+          if (payment.attachmentUrl) {
+            const voucher: IPaymentVoucher = {
+              fileUrl: payment.attachmentUrl,
+              metadata: {},
+              uploadDate: new Date(payment.paymentDate),
+              reviewStatus: VoucherReviewStatus.PENDING,
+              id: payment.id.toString()
+            };
+            mappedPayment.vouchers = [voucher];
+          }
+
+          return mappedPayment;
+        });
+
+        // Ordenar por fecha (más recientes primero)
+        this.paymentHistory.sort((a, b) => {
+          const dateA = new Date(a.createdAt).getTime();
+          const dateB = new Date(b.createdAt).getTime();
+          return dateB - dateA;
+        });
+
+        // Recalcular la información de pagos
+        this.calculatePaymentInfo();
+        this.isLoadingPayments = false;
+      });
+  }
+
+  private mapPaymentStatus(paymentStatusId: number): PaymentStatus {
+    const statusName = this.paymentStatusMap[paymentStatusId];
+    if (!statusName) return PaymentStatus.PENDING;
+
+    // Mapear nombres de estado a PaymentStatus enum
+    const statusMapping: { [key: string]: PaymentStatus } = {
+      'Completado': PaymentStatus.COMPLETED,
+      'Pendiente': PaymentStatus.PENDING,
+      'Pendiente de revisión': PaymentStatus.PENDING_REVIEW,
+      'Rechazado': PaymentStatus.CANCELLED,
+      'Fallido': PaymentStatus.FAILED,
+    };
+
+    return statusMapping[statusName] || PaymentStatus.PENDING;
+  }
+
   public refreshPayments(): void {
-    if (this.bookingID) {
-      //TODO: Implementar leyendo los datos de mysql
-      console.log('Refrescando datos de pagos...');
-      // Recalcular paymentInfo
+    if (this.reservationId) {
+      this.loadPayments();
+    } else {
+      // Recalcular paymentInfo si no hay reservationId
       this.calculatePaymentInfo();
     }
   }
@@ -206,20 +326,23 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
     }
   }
 
-  getStatusText(status: string): string {
-    switch (status) {
-      case 'COMPLETED':
+  getStatusText(status: PaymentStatus | string): string {
+    // Si es string, convertir a PaymentStatus
+    const paymentStatus = typeof status === 'string' ? status as PaymentStatus : status;
+    
+    switch (paymentStatus) {
+      case PaymentStatus.COMPLETED:
         return 'Completado';
-      case 'PENDING':
+      case PaymentStatus.PENDING:
         return 'Pendiente';
-      case 'PENDING_REVIEW':
+      case PaymentStatus.PENDING_REVIEW:
         return 'Pendiente de revisión';
-      case 'REJECTED':
-        return 'Rechazado';
-      case 'FAILED':
+      case PaymentStatus.CANCELLED:
+        return 'Cancelado';
+      case PaymentStatus.FAILED:
         return 'Fallido';
       default:
-        return status;
+        return String(status);
     }
   }
 }

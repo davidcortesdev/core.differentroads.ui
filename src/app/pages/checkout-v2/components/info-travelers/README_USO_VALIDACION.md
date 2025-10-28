@@ -6,18 +6,22 @@ Este documento explica cómo usar los métodos de validación implementados en `
 
 ## 🎯 Métodos Disponibles
 
-### 1. `canContinueToNextStep(): boolean`
+### 1. `canContinueToNextStep(): Promise<boolean>`
 
 **Descripción:**
 Valida si TODOS los viajeros están listos para continuar al siguiente paso del checkout.
 
 **Retorna:**
-- `true` → Todos los viajeros están listos (campos obligatorios completos, válidos y guardados)
-- `false` → Algunos viajeros NO están listos
+- `Promise<boolean>` → `true` si todos los viajeros están listos, `false` en caso contrario
+
+**Características:**
+- Si no todos están listos en la primera verificación, realiza hasta 3 reintentos adicionales (4 intentos en total)
+- Espera 1 segundo entre cada intento para permitir que las operaciones asíncronas pendientes se completen
 
 **Uso:**
 ```typescript
-if (this.infoTravelersComponent.canContinueToNextStep()) {
+const allReady = await this.infoTravelersComponent.canContinueToNextStep();
+if (allReady) {
   // ✅ Continuar al siguiente paso
   this.router.navigate(['/checkout/payment']);
 } else {
@@ -59,7 +63,7 @@ Muestra un mensaje de error (toast) indicando qué viajeros faltan por completar
 
 **Uso:**
 ```typescript
-if (!this.infoTravelersComponent.canContinueToNextStep()) {
+if (!(await this.infoTravelersComponent.canContinueToNextStep())) {
   this.infoTravelersComponent.showValidationError();
 }
 ```
@@ -95,7 +99,7 @@ export class CheckoutV2Component {
     console.log('=== Validando viajeros antes de continuar ===');
 
     // Verificar que todos los viajeros estén listos
-    if (this.infoTravelersComponent.canContinueToNextStep()) {
+    if (await this.infoTravelersComponent.canContinueToNextStep()) {
       // ✅ Todos los viajeros están listos, continuar
       console.log('✅ Validación exitosa, continuando al siguiente paso');
       this.router.navigate(['/checkout/payment']);
@@ -141,7 +145,7 @@ export class CheckoutV2Component {
 // checkout-v2.component.ts
 
 onContinueClick(): void {
-  if (!this.infoTravelersComponent.canContinueToNextStep()) {
+  if (!(await this.infoTravelersComponent.canContinueToNextStep())) {
     // Obtener viajeros no listos
     const notReady = this.infoTravelersComponent.getNotReadyTravelers();
     
@@ -196,7 +200,7 @@ export class CheckoutV2Component implements AfterViewInit {
       .subscribe(() => {
         // Esperar un tick para que el autoguardado termine
         setTimeout(() => {
-          this.canContinue = this.infoTravelersComponent.canContinueToNextStep();
+          this.canContinue = await this.infoTravelersComponent.canContinueToNextStep();
           console.log(`[canContinue] actualizado: ${this.canContinue}`);
         }, 2500); // 2.5s para dar tiempo al debounce (2s) + guardado
       });
@@ -232,7 +236,7 @@ export class CheckoutV2Component implements AfterViewInit {
 
 async saveReservation(): Promise<void> {
   // 1. Validar que todos los viajeros estén listos
-  if (!this.infoTravelersComponent.canContinueToNextStep()) {
+  if (!(await this.infoTravelersComponent.canContinueToNextStep())) {
     this.messageService.add({
       severity: 'error',
       summary: 'Error',

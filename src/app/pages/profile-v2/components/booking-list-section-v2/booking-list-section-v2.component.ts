@@ -480,7 +480,7 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
 
   // Add this method to the component
   imageLoadError(item: BookingItem) {
-    item.image = 'https://via.placeholder.com/300x200?text=Image+Error';
+    item.image = 'https://picsum.photos/300/200';
     item.imageLoading = false;
     item.imageLoaded = false;
   }
@@ -492,13 +492,31 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
 
   viewItem(item: BookingItem) {
     if (this.listType === 'active-bookings') {
-      this.router.navigate(['bookings', item.id]);
+      this.router.navigate(['/bookings', item.id]).then(
+        (success) => {
+          if (!success) {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error de navegación',
+              detail: 'No se pudo acceder al detalle de la reserva. Por favor, recargue la página.',
+              life: 5000
+            });
+          }
+        },
+        (error) => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Ha ocurrido un error al intentar acceder al detalle de la reserva.',
+            life: 5000
+          });
+        }
+      );
     } else if (this.listType === 'recent-budgets') {
       // Para presupuestos, navegar al tour en lugar del checkout
       if (item.tourID) {
         this.router.navigate(['/tour', item.tourID]);
       } else {
-        console.warn('No se encontró tourID para el presupuesto:', item);
         this.messageService.add({
           severity: 'warn',
           summary: 'Información',
@@ -787,10 +805,6 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   loadNotificationsForReservation(reservationId: string): void {
     this.notificationsLoading[reservationId] = true;
 
-    console.log(
-      '🔍 DEBUG: Loading notifications for reservation:',
-      reservationId
-    );
 
     this.notificationService
       .getNotificationsByReservationId(parseInt(reservationId, 10))

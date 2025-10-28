@@ -1,10 +1,344 @@
 {
   "routes": [
     {
-      "route": "/scalapay-api/v2/orders123412412",
-      "methods": ["POST", "GET"],
-      "redirect": "https://integration.api.scalapay.com/v2/orders4124124",
-      "statusCode": 302
+      "route": "/viajes-seniority",
+      "redirect": "/tipo-de-viajero/senior",
+      "statusCode": 301
+    },
+    {
+      "route": "/viajes-para-singles",
+      "redirect": "/tipo-de-viajero/viajeros-singles",
+      "statusCode": 301
+    },
+    {
+      "route": "/viajes-grupo-privado",
+      "redirect": "/tipo-de-viajero/viajeros-grupo",
+      "statusCode": 301
+    },
+    {
+      "route": "/viajes-en-grupo",
+      "redirect": "/tipo-de-viajero/viajeros-grupo",
+      "statusCode": 301
+    },
+    {
+      "route": "/viajes",
+      "redirect": "/destino",
+      "statusCode": 301
+    },
+    {
+      "route": "/tipo-de-viaje/single",
+      "redirect": "/tipo-de-viajero/viajeros-singles",
+      "statusCode": 301
+    },
+    {
+      "route": "/tipo-de-viaje/grupo-privados",
+      "redirect": "/tipo-de-viajero/viajeros-grupo",
+      "statusCode": 301
+    },
+    {
+      "route": "/tipo-de-viaje/grupo",
+      "redirect": "/tipo-de-viajero/viajeros-grupo",
+      "statusCode": 301
+    },
+    {
+      "route": "/tipo-de-viaje/beyond-different",
+      "redirect": "/tipo-de-viajero",
+      "statusCode": 301
+    },
+    {
+      "route": "/temporada/septiembre",
+      "redirect": "/viaja-por-es/septiembre",
+      "statusCode": 301
+    },
+    {
+      "route": "/temporada/octubre",
+      "redirect": "/viaja-por-mes/octubre",
+      "statusCode": 301
+    },
+    {
+      "route": "/temporada/marzo",
+      "redirect": "/viaja-por-mes/marzo",
+      "statusCode": 301
+    },
+    {
+      "route": "/temporada/diciembre",
+      "redirect": "/viaja-por-mes/diciembre",
+      "statusCode": 301
+    },
+    {
+      "route": "/temporada/abril",
+      "redirect": "/viaja-por-mes/abril",
+      "statusCode": 301
+    },
+    {
+      "route": "/region/europa",
+      "redirect": "/destino/europa",
+      "statusCode": 301
+    },
+    {
+      "route": "/region/asia",
+      "redirect": "/destino/asia",
+      "statusCode": 301
+    },
+    {
+      "route": "/region/america",
+      "redirect": "/destino/america",
+      "statusCode": 301
+    },
+    {
+      "route": "/region/africa",
+      "redirect": "/destino/africa",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/zanzibar",
+      "redirect": "/destino/africa/zanzibar",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/vietnam",
+      "redirect": "/destino/asia/vietnam",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/uzbekistan",
+      "redirect": "/destino/asia/uzbekistan",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/tours",
+      "redirect": "/destino",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/tanzania",
+      "redirect": "/destino/africa/tanzania",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/tailandia",
+      "redirect": "/destino/asia/tailandia",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/suiza",
+      "redirect": "/destino/europa/suiza",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/suecia",
+      "redirect": "/destino/europa/suecia",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/sri-lanka",
+      "redirect": "/destino/asia/sri-lanka",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/singapur",
+      "redirect": "/destino/asia/singapur",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/republica-checa",
+      "redirect": "/destino/europa/suecia",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/portugal",
+      "redirect": "/destino/europa/republica-checa",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/polonia",
+      "redirect": "/destino/europa/polonia",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/peru",
+      "redirect": "/destino/america/peru",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/panama",
+      "redirect": "/destino/america/panama",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/paises-balticos",
+      "redirect": "/destino/europa/paises-balticos",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/paises-bajos",
+      "redirect": "/destino/europa/holanda",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/noruega",
+      "redirect": "/destino/europa/noruega",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/kenia",
+      "redirect": "/destino/africa/kenia",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/jordania",
+      "redirect": "/destino/asia/jordania",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/japon",
+      "redirect": "/destino/asia/japon",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/italia",
+      "redirect": "/destino/europa/italia",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/islandia",
+      "redirect": "/destino/europa/islandia",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/irlanda",
+      "redirect": "/destino/europa/irlanda",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/indonesia",
+      "redirect": "/destino/asia/indonesia",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/india",
+      "redirect": "/destino/europa/hungria",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/hungria",
+      "redirect": "/destino/europa/hungria",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/grecia",
+      "redirect": "/destino/europa/grecia",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/francia",
+      "redirect": "/destino/europa/francia",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/eslovenia",
+      "redirect": "/destino/europa/eslovenia",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/escocia",
+      "redirect": "/destino/europa/escocia",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/emiratos-arabes-unidos",
+      "redirect": "/destino/asia/emiratos-arabes",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/egipto",
+      "redirect": "/destino/africa/egipto",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/dubai",
+      "redirect": "/destino/asia/dubai",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/croacia",
+      "redirect": "/destino/europa/croacia",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/costa-rica",
+      "redirect": "/destino/america/costa-rica",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/colombia",
+      "redirect": "/destino/america/colombia",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/china",
+      "redirect": "/destino/asia/china",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/canada",
+      "redirect": "/destino/america/canada",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/belgica",
+      "redirect": "/destino/europa/belgica",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/austria",
+      "redirect": "/destino/europa/austria",
+      "statusCode": 301
+    },
+    {
+      "route": "/destino/argentina",
+      "redirect": "/destino/america/argentina",
+      "statusCode": 301
+    },
+    {
+      "route": "/reset-password",
+      "redirect": "/forget-password",
+      "statusCode": 301
+    },
+    {
+      "route": "/perfil",
+      "redirect": "/profile",
+      "statusCode": 301
+    },
+    {
+      "route": "/politica-privacidad",
+      "redirect": "/pages/politica-de-privacidad",
+      "statusCode": 301
+    },
+    {
+      "route": "/programa-de-puntos",
+      "redirect": "/pages/programa-de-puntos",
+      "statusCode": 301
+    },
+    {
+      "route": "/aviso-legal",
+      "redirect": "/pages/aviso-legal",
+      "statusCode": 301
+    },
+    {
+      "route": "/somos-different",
+      "redirect": "/pages/sobre-nosotros",
+      "statusCode": 301
+    },
+    {
+      "route": "/terminos-reservas",
+      "redirect": "/pages/condiciones-generales",
+      "statusCode": 301
+    },
+    {
+      "route": "/preguntas-frecuentes",
+      "redirect": "/pages/por-que-different",
+      "statusCode": 301
     }
   ],
   "navigationFallback": {

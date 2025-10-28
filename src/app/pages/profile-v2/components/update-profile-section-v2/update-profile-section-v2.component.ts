@@ -93,7 +93,10 @@ export class UpdateProfileSectionV2Component{
   // Validaciones de campos
   onTelefonoInput(event: any) {
     const input = event.target as HTMLInputElement;
-    input.value = this.updateProfileService.validateTelefonoInput(input.value);
+    const filteredValue = this.updateProfileService.validateTelefonoInput(input.value);
+    input.value = filteredValue;
+    // Actualizar también el modelo
+    this.personalInfo.telefono = filteredValue;
     this.clearFieldError('telefono');
   }
 

@@ -108,40 +108,40 @@
       <!-- Nombre destinatario (solo modo compartir) -->
       <div class="form-field" *ngIf="isShareMode">
         <label for="recipientName">Nombre del destinatario</label>
-        <input
-          id="recipientName"
-          type="text"
-          pInputText
-          formControlName="recipientName"
-          placeholder="Nombre (opcional)"
-          class="w-full"
-        />
+        <div class="proximity-message">
+          <i class="pi pi-clock"></i>
+          <span>Próximamente</span>
+        </div>
       </div>
 
       <!-- Mensaje personalizado -->
-      <div class="form-field">
-        <label for="message">
-          {{ isShareMode ? 'Mensaje personalizado' : 'Comentarios adicionales' }}
-        </label>
+      <div class="form-field" *ngIf="!isShareMode">
+        <label for="message">Comentarios adicionales</label>
         <textarea
           id="message"
           pTextarea
           formControlName="message"
           [rows]="4"
-          [placeholder]="isShareMode ? 'Escribe un mensaje para acompañar el presupuesto (opcional)' : 'Añade cualquier comentario (opcional)'"
+          placeholder="Añade cualquier comentario (opcional)"
           class="w-full"
         ></textarea>
       </div>
 
+      <!-- Mensaje personalizado para modo compartir -->
+      <div class="form-field" *ngIf="isShareMode">
+        <label for="message">Mensaje personalizado</label>
+        <div class="proximity-message">
+          <i class="pi pi-clock"></i>
+          <span>Próximamente</span>
+        </div>
+      </div>
+
       <!-- Opciones adicionales para compartir -->
       <div class="form-field" *ngIf="isShareMode">
-        <div class="checkbox-field">
-          <p-checkbox
-            formControlName="includeDetails"
-            [binary]="true"
-            inputId="includeDetails"
-          ></p-checkbox>
-          <label for="includeDetails">Incluir detalles completos del itinerario</label>
+        <label>Incluir detalles completos del itinerario</label>
+        <div class="proximity-message">
+          <i class="pi pi-clock"></i>
+          <span>Próximamente</span>
         </div>
       </div>
 
@@ -169,7 +169,7 @@
       [label]="isShareMode ? 'Compartir' : 'Enviar'" 
       [icon]="isShareMode ? 'pi pi-share-alt' : 'pi pi-send'"
       (onClick)="onSubmitShare()"
-      [disabled]="!shareForm.valid || loading"
+      [disabled]="(isShareMode ? !shareForm.get('recipientEmail')?.valid : !shareForm.valid) || loading"
       [loading]="loading"
     ></p-button>
   </ng-template>

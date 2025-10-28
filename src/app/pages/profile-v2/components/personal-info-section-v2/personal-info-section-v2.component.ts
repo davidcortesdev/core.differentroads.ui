@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { PersonalInfo } from '../../../../core/models/v2/profile-v2.model';
 import { PersonalInfoV2Service } from '../../../../core/services/v2/personal-info-v2.service';
 
@@ -10,7 +10,7 @@ import { PersonalInfoV2Service } from '../../../../core/services/v2/personal-inf
   templateUrl: './personal-info-section-v2.component.html',
   styleUrl: './personal-info-section-v2.component.scss',
 })
-export class PersonalInfoSectionV2Component implements OnInit {
+export class PersonalInfoSectionV2Component implements OnInit, OnChanges {
   @Input() userId: string = '';
   personalInfo!: PersonalInfo;
   private originalPersonalInfo!: PersonalInfo; // Para almacenar datos originales
@@ -36,7 +36,15 @@ export class PersonalInfoSectionV2Component implements OnInit {
   constructor(private personalInfoService: PersonalInfoV2Service) {}
 
   ngOnInit() {
-    this.loadUserData();
+    if (this.userId) {
+      this.loadUserData();
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['userId'] && changes['userId'].currentValue) {
+      this.loadUserData();
+    }
   }
   
   loadUserData() {

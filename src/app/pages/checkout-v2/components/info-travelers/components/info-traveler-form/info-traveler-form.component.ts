@@ -1298,9 +1298,11 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
 
   /**
    * Validación en tiempo real del formulario
+   * NOTA: Se eliminó la emisión de dataUpdated para evitar notificaciones innecesarias al padre
    */
   private validateFormInRealTime(): void {
-    this.dataUpdated.emit();
+    // Removed: this.dataUpdated.emit(); 
+    // La validación ocurre internamente sin notificar al padre
   }
 
   /**
@@ -1636,7 +1638,8 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
           });
       }
 
-      this.dataUpdated.emit();
+      // Removed: this.dataUpdated.emit(); 
+      // No notificar al padre después de guardar para evitar actualizaciones innecesarias
       console.log('=== saveData() COMPLETADO ===');
     } catch (error) {
       console.error('Error al guardar datos del viajero:', error);

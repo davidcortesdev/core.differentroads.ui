@@ -296,9 +296,13 @@ export class UpdateProfileV2Service {
 
     // Validación de teléfono
     if (personalInfo.telefono?.trim()) {
-      const phoneRegex = /^[0-9]{9}$/;
-      if (!phoneRegex.test(personalInfo.telefono)) {
-        errors['telefono'] = 'El teléfono debe tener 9 dígitos';
+      // Normalizar el teléfono eliminando espacios y guiones para la validación
+      const normalizedPhone = personalInfo.telefono.trim().replace(/[\s-]/g, '');
+      // Patrón que acepta: +código_país (1-3 dígitos) + número (6-14 dígitos)
+      // También acepta solo el número sin código de país
+      const phoneRegex = /^(\+\d{1,3})?\d{6,14}$/;
+      if (!phoneRegex.test(normalizedPhone)) {
+        errors['telefono'] = 'Ingresa un número de teléfono válido. Puede incluir código de país.';
         isValid = false;
       }
     }
@@ -346,11 +350,27 @@ export class UpdateProfileV2Service {
 
   /**
    * Valida y filtra el input de teléfono
+   * Permite números, +, espacios y guiones
    * @param value - Valor del input
    * @returns Valor filtrado
    */
   validateTelefonoInput(value: string): string {
-    return value.replace(/\D/g, '').slice(0, 10);
+    // Permitir números, +, espacios y guiones
+    // El + solo puede estar al inicio
+    let filtered = value.replace(/[^\d+\s-]/g, '');
+    
+    // Si hay un +, asegurarse de que esté solo al inicio
+    const plusIndex = filtered.indexOf('+');
+    if (plusIndex > 0) {
+      // Si hay un + que no está al inicio, eliminarlo
+      filtered = filtered.replace(/\+/g, '');
+    } else if (plusIndex === 0 && filtered.indexOf('+', 1) > 0) {
+      // Si hay múltiples +, mantener solo el primero
+      filtered = filtered.substring(0, 1) + filtered.substring(1).replace(/\+/g, '');
+    }
+    
+    // Limitar la longitud total (considerando +, espacios y guiones)
+    return filtered.slice(0, 20);
   }
 
   /**

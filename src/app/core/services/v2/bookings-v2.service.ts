@@ -324,6 +324,8 @@ export class BookingsServiceV2 {
         externalID: payment.transactionReference,
         status: this.mapPaymentStatus(payment.paymentStatusId),
         method: this.paymentMethodMap[payment.paymentMethodId] || 'Desconocido',
+        paymentMethodId: payment.paymentMethodId,
+        notes: payment.notes,
         createdAt: new Date(payment.paymentDate).toISOString(),
         updatedAt: new Date(payment.paymentDate).toISOString(),
       };

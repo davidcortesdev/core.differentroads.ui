@@ -877,9 +877,8 @@ export class BookingActivitiesV2Component implements OnInit {
       return activity.imageUrl;
     }
     
-    // Si no hay imagen, mostrar el alt o el nombre de la actividad
-    const altText = activity.imageAlt || activity.name || 'Actividad sin imagen';
-    return `https://via.placeholder.com/400x200/cccccc/666666?text=${encodeURIComponent(altText)}`;
+    // Si no hay imagen, usar picsum como placeholder
+    return 'https://picsum.photos/400/200';
   }
 
   // Método para sanitizar y limpiar la descripción si contiene etiquetas HTML

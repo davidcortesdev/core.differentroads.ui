@@ -126,6 +126,7 @@ export class Bookingsv2Component implements OnInit {
   reservation: IReservationResponse | null = null; // Objeto de reserva completo
   reservationSummary: IReservationSummaryResponse | null = null; // Resumen de la reserva
   availableActivities: BookingActivity[] = []; // Array para actividades disponibles
+  departureDate: string = ''; // Fecha de salida del departure
 
   // Datos básicos que se actualizarán dinámicamente
   bookingData: BookingData = {
@@ -437,6 +438,8 @@ export class Bookingsv2Component implements OnInit {
         // Actualizar la fecha de salida en bookingData
         if (departure.departureDate) {
           this.bookingData.date = departure.departureDate;
+          // También actualizar la propiedad departureDate del componente
+          this.departureDate = departure.departureDate;
         }
 
         // Actualizar la fecha de salida en bookingImages
@@ -461,12 +464,9 @@ export class Bookingsv2Component implements OnInit {
         tourName: 'Cargando...',
         imageUrl: 'https://picsum.photos/400/200', // Imagen temporal
         retailer: 'Cargando...',
-        creationDate: reservation.createdAt
-          ? new Date(reservation.createdAt).toLocaleDateString()
-          : '',
-        departureDate: reservation.reservedAt
-          ? new Date(reservation.reservedAt).toLocaleDateString()
-          : '',
+        // Guardar fechas como ISO strings para que el pipe date pueda procesarlas
+        creationDate: reservation.createdAt || '',
+        departureDate: reservation.reservedAt || '',
         passengers: reservation.totalPassengers,
         price: reservation.totalAmount,
       };
@@ -594,6 +594,14 @@ export class Bookingsv2Component implements OnInit {
       detail: `Se ha registrado un pago de ${amount}€`,
       life: 3000,
     });
+
+    // Recargar los datos de la reserva para obtener los montos actualizados
+    if (this.bookingId) {
+      this.loadBookingData(this.bookingId);
+    }
+    
+    // Disparar trigger de refresh para actualizar el resumen
+    this.summaryRefreshTrigger = Date.now();
   }
 
   sendReminder(): void {

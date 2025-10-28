@@ -4,6 +4,9 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { Order } from '../../../core/models/orders/order.model';
 import { AdditionalInfoService } from '../../../core/services/v2/additional-info.service';
+import { ReservationService } from '../../../core/services/reservation/reservation.service';
+import { ReservationStatusService } from '../../../core/services/reservation/reservation-status.service';
+import { switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-additional-info',
@@ -53,6 +56,9 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
 
   // ID de la reserva generada para evitar crear múltiples reservas
   private generatedReservationId: number | null = null;
+  
+  // Flag para controlar si ya se actualizó el estado a BUDGET (solo una vez)
+  private budgetStatusUpdated: boolean = false;
 
   // Configuración de diálogos
   dialogBreakpoints = { '1199px': '80vw', '575px': '90vw' };
@@ -82,7 +88,9 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
   constructor(
     private additionalInfoService: AdditionalInfoService,
     private router: Router,
-    private formBuilder: FormBuilder
+    private formBuilder: FormBuilder,
+    private reservationService: ReservationService,
+    private reservationStatusService: ReservationStatusService
   ) {
     // Inicializar formulario
     this.initializeForm();
@@ -175,6 +183,8 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
     this.additionalInfoService.clearContextData();
     // Limpiar ID de reserva generada
     this.generatedReservationId = null;
+    // Resetear flag de estado actualizado
+    this.budgetStatusUpdated = false;
   }
 
   /**
@@ -183,6 +193,7 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
    */
   clearGeneratedReservationId(): void {
     this.generatedReservationId = null;
+    this.budgetStatusUpdated = false; // Resetear para permitir nueva actualización
   }
 
   /**
@@ -337,9 +348,11 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
 
     if (this.isUpdateMode) {
       // Modo actualización (desde checkout)
+      // Cambia el estado de la reserva existente de 'Cart' o similar a 'BUDGET'
       this.updateBudget();
     } else {
       // Modo creación (desde tour detail)
+      // Crea una nueva reserva con estado 'BUDGET'
       this.createBudget();
     }
   }
@@ -371,6 +384,7 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
 
   /**
    * Actualiza un presupuesto existente
+   * El estado se actualiza automáticamente a BUDGET al obtener el ID de la reserva
    */
   private updateBudget(): void {
     if (!this.existingOrder) {
@@ -379,10 +393,17 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Simular respuesta exitosa inmediatamente
+    // Obtener ID de reserva (esto automáticamente actualiza el estado a BUDGET si es necesario)
+    const reservationId = this.getReservationId();
+    if (!reservationId) {
+      this.additionalInfoService.showError('No se pudo obtener el ID de la reserva.');
+      this.loading = false;
+      return;
+    }
+
+    // Mostrar mensaje de éxito
     this.loading = false;
     this.additionalInfoService.showSuccess('Presupuesto actualizado correctamente');
-    
     // Disparar evento de analytics: add_to_wishlist (también en modo actualización)
     this.trackAddToWishlist();
   }
@@ -697,13 +718,21 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
 
   /**
    * Obtiene el ID de la reserva desde el contexto actual
+   * Si es modo checkout, actualiza el estado a BUDGET la primera vez
    * @returns ID de la reserva o null si no está disponible
    */
   private getReservationId(): number | null {
     // Intentar obtener el ID desde existingOrder (modo actualización)
     if (this.existingOrder && (this.existingOrder._id || this.existingOrder.ID || this.existingOrder.id)) {
       const id = this.existingOrder._id || this.existingOrder.ID || this.existingOrder.id;
-      return typeof id === 'string' ? parseInt(id, 10) : id;
+      const reservationId = typeof id === 'string' ? parseInt(id, 10) : id;
+      
+      // Si es modo checkout y aún no se ha actualizado el estado, hacerlo ahora
+      if (this.isUpdateMode && !this.budgetStatusUpdated) {
+        this.updateStatusToBudget(reservationId);
+      }
+      
+      return reservationId;
     }
 
     // Si hay una reserva generada previamente, usar esa
@@ -713,6 +742,37 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
 
     // En modo creación, no tenemos ID de reserva aún
     return null;
+  }
+
+  /**
+   * Actualiza el estado de la reserva a BUDGET (solo una vez)
+   */
+  private updateStatusToBudget(reservationId: number): void {
+    this.budgetStatusUpdated = true; // Marcar como actualizado para evitar múltiples llamadas
+    
+    this.reservationStatusService.getByCode('BUDGET').subscribe({
+      next: (budgetStatuses) => {
+        if (budgetStatuses && budgetStatuses.length > 0) {
+          const budgetStatusId = budgetStatuses[0].id;
+          
+          this.reservationService.updateStatus(reservationId, budgetStatusId).subscribe({
+            next: (success) => {
+              if (success) {
+                console.log('✅ Estado de reserva actualizado a BUDGET:', reservationId);
+              } else {
+                console.warn('⚠️ No se pudo actualizar el estado de la reserva:', reservationId);
+              }
+            },
+            error: (error) => {
+              console.error('❌ Error al actualizar estado de reserva:', error);
+            }
+          });
+        }
+      },
+      error: (error) => {
+        console.error('❌ Error al obtener estado BUDGET:', error);
+      }
+    });
   }
 
   /**

@@ -431,11 +431,21 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
    * Maneja el envío del formulario de compartir/descargar
    */
   onSubmitShare(): void {
-    if (this.shareForm.invalid) {
-      Object.keys(this.shareForm.controls).forEach(key => {
-        this.shareForm.get(key)?.markAsTouched();
-      });
-      return;
+    // En modo compartir, solo validar el email
+    if (this.isShareMode) {
+      const emailControl = this.shareForm.get('recipientEmail');
+      if (!emailControl || emailControl.invalid) {
+        emailControl?.markAsTouched();
+        return;
+      }
+    } else {
+      // En modo descarga, validar todo el formulario
+      if (this.shareForm.invalid) {
+        Object.keys(this.shareForm.controls).forEach(key => {
+          this.shareForm.get(key)?.markAsTouched();
+        });
+        return;
+      }
     }
 
     this.loading = true;

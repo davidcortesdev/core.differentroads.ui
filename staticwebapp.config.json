@@ -7,6 +7,11 @@
       "statusCode": 302
     },
     {
+      "route": "/home",
+      "redirect": "/",
+      "statusCode": 301
+    },
+    {
       "route": "/viajes-seniority",
       "redirect": "/tipo-de-viajero/senior",
       "statusCode": 301
@@ -53,7 +58,7 @@
     },
     {
       "route": "/temporada/septiembre",
-      "redirect": "/viaja-por-es/septiembre",
+      "redirect": "/viaja-por-mes/septiembre",
       "statusCode": 301
     },
     {
@@ -74,6 +79,41 @@
     {
       "route": "/temporada/abril",
       "redirect": "/viaja-por-mes/abril",
+      "statusCode": 301
+    },
+    {
+      "route": "/temporada/enero",
+      "redirect": "/viaja-por-mes/enero",
+      "statusCode": 301
+    },
+    {
+      "route": "/temporada/febrero",
+      "redirect": "/viaja-por-mes/febrero",
+      "statusCode": 301
+    },
+    {
+      "route": "/temporada/mayo",
+      "redirect": "/viaja-por-mes/mayo",
+      "statusCode": 301
+    },
+    {
+      "route": "/temporada/junio",
+      "redirect": "/viaja-por-mes/junio",
+      "statusCode": 301
+    },
+    {
+      "route": "/temporada/julio",
+      "redirect": "/viaja-por-mes/julio",
+      "statusCode": 301
+    },
+    {
+      "route": "/temporada/agosto",
+      "redirect": "/viaja-por-mes/agosto",
+      "statusCode": 301
+    },
+    {
+      "route": "/temporada/noviembre",
+      "redirect": "/viaja-por-mes/noviembre",
       "statusCode": 301
     },
     {
@@ -113,7 +153,7 @@
     },
     {
       "route": "/destino/tours",
-      "redirect": "/destino",
+      "redirect": "/tours",
       "statusCode": 301
     },
     {

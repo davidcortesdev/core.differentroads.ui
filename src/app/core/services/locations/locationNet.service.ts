@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, catchError, map, of } from 'rxjs';
+import { Observable, catchError, map, of, shareReplay, tap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
 export interface Location {
@@ -46,6 +46,11 @@ export interface LocationRelationshipType {
 })
 export class LocationNetService {
   private apiUrl = environment.locationsApiUrl;
+  
+  // Cache para ubicaciones individuales
+  private locationCache = new Map<number, Location>();
+  // Cache para observables en curso para evitar múltiples llamadas simultáneas
+  private locationObservableCache = new Map<number, Observable<Location>>();
 
   constructor(private http: HttpClient) { }
 
@@ -89,13 +94,40 @@ export class LocationNetService {
   }
 
   getLocationById(id: number): Observable<Location> {
-    return this.http.get<Location>(`${this.apiUrl}/location/${id}`)
+    // Verificar si la ubicación ya está en cache
+    if (this.locationCache.has(id)) {
+      return of(this.locationCache.get(id)!);
+    }
+
+    // Verificar si ya hay una llamada en curso para este ID
+    if (this.locationObservableCache.has(id)) {
+      return this.locationObservableCache.get(id)!;
+    }
+
+    // Crear nueva llamada HTTP y configurar cache
+    const locationObservable = this.http.get<Location>(`${this.apiUrl}/location/${id}`)
       .pipe(
+        tap(location => {
+          // Guardar en cache solo si la respuesta es válida
+          if (location && location.id) {
+            this.locationCache.set(id, location);
+          }
+          // Limpiar el observable cache una vez completado
+          this.locationObservableCache.delete(id);
+        }),
         catchError(error => {
           console.error(`Error obteniendo ubicación con ID ${id}:`, error);
+          // Limpiar el observable cache en caso de error
+          this.locationObservableCache.delete(id);
           return of({} as Location);
-        })
+        }),
+        shareReplay(1)
       );
+
+    // Guardar el observable en cache para evitar múltiples llamadas simultáneas
+    this.locationObservableCache.set(id, locationObservable);
+    
+    return locationObservable;
   }
 
   // Métodos para LocationType
@@ -196,6 +228,13 @@ export class LocationNetService {
   updateLocation(location: Location): Observable<Location> {
     return this.http.put<Location>(`${this.apiUrl}/location/${location.id}`, location)
       .pipe(
+        tap(updatedLocation => {
+          // Invalidar cache y actualizar con la nueva información
+          this.invalidateLocationCache(location.id);
+          if (updatedLocation && updatedLocation.id) {
+            this.locationCache.set(updatedLocation.id, updatedLocation);
+          }
+        }),
         catchError(error => {
           console.error(`Error actualizando ubicación con ID ${location.id}:`, error);
           return of({} as Location);
@@ -224,6 +263,12 @@ export class LocationNetService {
   createLocation(location: Location): Observable<Location> {
     return this.http.post<Location>(`${this.apiUrl}/location`, location)
       .pipe(
+        tap(createdLocation => {
+          // Agregar la nueva ubicación al cache
+          if (createdLocation && createdLocation.id) {
+            this.locationCache.set(createdLocation.id, createdLocation);
+          }
+        }),
         catchError(error => {
           console.error('Error creando ubicación:', error);
           return of({} as Location);
@@ -235,6 +280,10 @@ export class LocationNetService {
   deleteLocation(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/location/${id}`)
       .pipe(
+        tap(() => {
+          // Invalidar cache cuando se elimina exitosamente
+          this.invalidateLocationCache(id);
+        }),
         catchError(error => {
           console.error(`Error eliminando ubicación con ID ${id}:`, error);
           return of({ success: false, error });
@@ -288,5 +337,35 @@ export class LocationNetService {
           return of(false);
         })
       );
+  }
+
+  // Métodos de gestión de cache para ubicaciones
+  
+  /**
+   * Limpia completamente el cache de ubicaciones
+   */
+  clearLocationCache(): void {
+    this.locationCache.clear();
+    this.locationObservableCache.clear();
+  }
+
+  /**
+   * Invalida una ubicación específica del cache
+   * Útil cuando se actualiza o elimina una ubicación
+   */
+  invalidateLocationCache(id: number): void {
+    this.locationCache.delete(id);
+    this.locationObservableCache.delete(id);
+  }
+
+  /**
+   * Obtiene información del estado actual del cache
+   * Útil para debugging o monitoreo
+   */
+  getLocationCacheInfo(): { cachedLocations: number, pendingRequests: number } {
+    return {
+      cachedLocations: this.locationCache.size,
+      pendingRequests: this.locationObservableCache.size
+    };
   }
 }

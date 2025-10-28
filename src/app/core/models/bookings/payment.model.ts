@@ -12,6 +12,8 @@ export interface Payment {
   vouchers?: IPaymentVoucher[];
   createdAt: string;
   updatedAt: string;
+  notes?: string;
+  paymentMethodId?: number;
 }
 
 export interface IPaymentVoucher {

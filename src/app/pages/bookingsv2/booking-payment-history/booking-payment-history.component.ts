@@ -3,8 +3,10 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
   Payment,
+  PaymentStatus,
 } from '../../../core/models/bookings/payment.model';
 import { PaymentData } from '../add-payment-modal/add-payment-modal.component';
+import { BookingsServiceV2, PaymentInfo } from '../../../core/services/v2/bookings-v2.service';
 
 // Interfaces existentes
 interface TripItemData {
@@ -15,11 +17,6 @@ interface TripItemData {
 
 // Actualizamos la interfaz para incluir identificadores de pago y voucher
 
-interface PaymentInfo {
-  totalPrice: number;
-  pendingAmount: number;
-  paidAmount: number;
-}
 
 @Component({
   selector: 'app-booking-payment-history-v2',
@@ -68,9 +65,12 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   approveMessage: string | null = null;
   isApproveSuccess: boolean = false;
 
+  isLoadingPayments: boolean = false;
+
   constructor(
     private fb: FormBuilder,
-    private router: Router
+    private router: Router,
+    private bookingsService: BookingsServiceV2
   ) {
     this.paymentForm = this.fb.group({
       amount: [0, [Validators.required, Validators.min(1)]],
@@ -79,6 +79,7 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
 
   ngOnInit(): void {
     this.calculatePaymentInfo();
+    this.loadPayments();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -87,26 +88,50 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
       this.calculatePaymentInfo();
     }
     
+    // Cargar pagos si cambia reservationId
+    if (changes['reservationId'] && changes['reservationId'].currentValue) {
+      this.loadPayments();
+    }
+    
     if (changes['refreshTrigger'] && changes['refreshTrigger'].currentValue) {
-      console.log('🔄 Refrescando datos de pagos por trigger...');
       this.refreshPayments();
     }
   }
 
   private calculatePaymentInfo(): void {
-    // Usar bookingTotal de la reserva real
-    this.paymentInfo = {
-      totalPrice: this.bookingTotal || 0,
-      pendingAmount: this.bookingTotal || 0, // Por defecto todo está pendiente
-      paidAmount: 0, // TODO: calcular desde pagos reales cuando se implementen
-    };
+    this.paymentInfo = this.bookingsService.calculatePaymentInfo(
+      this.paymentHistory,
+      this.bookingTotal
+    );
+  }
+
+  private loadPayments(): void {
+    if (!this.reservationId || this.reservationId <= 0) {
+      return;
+    }
+
+    this.isLoadingPayments = true;
+
+    this.bookingsService.getPaymentsByReservationId(this.reservationId, this.bookingID)
+      .subscribe({
+        next: (payments) => {
+          this.paymentHistory = payments;
+          this.calculatePaymentInfo();
+          this.isLoadingPayments = false;
+        },
+        error: (error) => {
+          console.error('Error cargando pagos:', error);
+          this.paymentHistory = [];
+          this.isLoadingPayments = false;
+        }
+      });
   }
 
   public refreshPayments(): void {
-    if (this.bookingID) {
-      //TODO: Implementar leyendo los datos de mysql
-      console.log('Refrescando datos de pagos...');
-      // Recalcular paymentInfo
+    if (this.reservationId) {
+      this.loadPayments();
+    } else {
+      // Recalcular paymentInfo si no hay reservationId
       this.calculatePaymentInfo();
     }
   }
@@ -206,20 +231,7 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
     }
   }
 
-  getStatusText(status: string): string {
-    switch (status) {
-      case 'COMPLETED':
-        return 'Completado';
-      case 'PENDING':
-        return 'Pendiente';
-      case 'PENDING_REVIEW':
-        return 'Pendiente de revisión';
-      case 'REJECTED':
-        return 'Rechazado';
-      case 'FAILED':
-        return 'Fallido';
-      default:
-        return status;
-    }
+  getStatusText(status: PaymentStatus | string): string {
+    return this.bookingsService.getPaymentStatusText(status);
   }
 }

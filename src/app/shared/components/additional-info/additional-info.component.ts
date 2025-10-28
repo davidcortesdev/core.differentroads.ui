@@ -13,7 +13,8 @@ import { AdditionalInfoService } from '../../../core/services/v2/additional-info
 })
 export class AdditionalInfoComponent implements OnInit, OnDestroy {
   // Inputs para recibir datos del contexto donde se use (tour-v2 o checkout-v2)
-  @Input() existingOrder: Order | null = null;
+  // Puede ser Order (desde el contexto de profile) o IReservationResponse (desde checkout)
+  @Input() existingOrder: any | null = null;
   @Input() tourId: string = ''; // ID del tour
   @Input() tourName: string = '';
   @Input() periodName: string = '';
@@ -700,8 +701,8 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
    */
   private getReservationId(): number | null {
     // Intentar obtener el ID desde existingOrder (modo actualización)
-    if (this.existingOrder && (this.existingOrder._id || this.existingOrder.ID)) {
-      const id = this.existingOrder._id || this.existingOrder.ID;
+    if (this.existingOrder && (this.existingOrder._id || this.existingOrder.ID || this.existingOrder.id)) {
+      const id = this.existingOrder._id || this.existingOrder.ID || this.existingOrder.id;
       return typeof id === 'string' ? parseInt(id, 10) : id;
     }
 

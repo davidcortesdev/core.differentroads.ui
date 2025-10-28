@@ -1,6 +1,12 @@
 {
   "routes": [
     {
+      "route": "/scalapay-api/v2/orders",
+      "methods": ["POST", "GET"],
+      "redirect": "https://integration.api.scalapay.com/v2/orders",
+      "statusCode": 302
+    },
+    {
       "route": "/viajes-seniority",
       "redirect": "/tipo-de-viajero/senior",
       "statusCode": 301

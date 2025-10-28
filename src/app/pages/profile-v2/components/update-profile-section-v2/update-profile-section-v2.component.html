@@ -109,6 +109,7 @@
         <p-floatlabel variant="on">
           <input
             pInputText
+            type="tel"
             id="telefono"
             [(ngModel)]="personalInfo.telefono"
             name="telefono"
@@ -116,7 +117,7 @@
             [class.error]="hasFieldError('telefono')"
             styleClass="p-inputtext-sm"
           />
-          <label for="telefono">Teléfono</label>
+          <label for="telefono">Teléfono *</label>
           <small class="error-message" *ngIf="hasFieldError('telefono')">
             {{ getFieldError('telefono') }}
           </small>

@@ -21,6 +21,7 @@
       [bookingReference]="bookingData.bookingReference"
       [status]="bookingData.status"
       [statusId]="reservation?.reservationStatusId || 0"
+      [isATC]="isATC"
       (cancelBooking)="cancelBooking()"
       (backEvent)="goBack()"
     >

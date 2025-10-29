@@ -20,6 +20,7 @@
       [bookingCode]="bookingData.bookingCode"
       [bookingReference]="bookingData.bookingReference"
       [status]="bookingData.status"
+      [statusId]="reservation?.reservationStatusId || 0"
       (cancelBooking)="cancelBooking()"
       (backEvent)="goBack()"
     >

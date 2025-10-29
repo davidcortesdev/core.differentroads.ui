@@ -10,6 +10,7 @@ export class BookingCodeSectionV2Component implements OnInit {
   @Input() bookingCode: string = '';
   @Input() bookingReference: string = '';
   @Input() status: string = '';
+  @Input() statusId: number = 0;
   
   // Add the new event emitter for back button
   @Output() backEvent = new EventEmitter<void>();
@@ -27,5 +28,13 @@ export class BookingCodeSectionV2Component implements OnInit {
 
   onCancelBooking(): void {
     this.cancelBooking.emit();
+  }
+
+  get isCancelled(): boolean {
+    return this.statusId === 8;
+  }
+
+  get cancelButtonLabel(): string {
+    return this.isCancelled ? 'Cancelada' : 'Cancelar reserva';
   }
 }

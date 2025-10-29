@@ -1,73 +1,330 @@
 .container {
     background: var(--light-blue-50);
     padding: 0.1rem 0;
+}
 
-    :host ::ng-deep {
-        .p-toast {
-            position: fixed;
-            z-index: 9999;
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
 
-            @media (max-width: 480px) {
-                width: 90% !important;
-                left: 50% !important;
-                top: 20px !important;
-                transform: translateX(-50%) !important;
-            }
-
-            @media (min-width: 481px) and (max-width: 768px) {
-                top: 20px !important;
-                right: 20px !important;
-                width: auto !important;
-                max-width: 400px !important;
-            }
-
-            @media (min-width: 769px) {
-                top: 20px !important;
-                right: 20px !important;
-                width: auto !important;
-                max-width: 350px !important;
-            }
-        }
-    }
-
-    :host {
-        color: var(--background-azul);
-
-        ::ng-deep {
-            /* Apply to all child components */
-            * {
-                color: var(--background-azul);
-            }
-
-            /* Exceptions for elements that should maintain their original colors */
-            .p-button,
-            .p-tag,
-            button,
-            [class*="p-button"] {
-                /* These elements should keep their original colors */
-                color: inherit;
-            }
-        }
-    }
-
-    .booking-container {
-        display: flex;
-        flex-direction: column;
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 1rem;
-        background-color: red;
-        color: var(--background-azul);
+// ============================================
+// ESTILOS PARA EL MODAL DE CANCELACIÓN
+// ============================================
+:host ::ng-deep {
+    // Toast styles
+    .p-toast {
+        position: fixed;
+        z-index: 9999;
 
         @media (max-width: 480px) {
-            padding: 0.5rem;
+            width: 90% !important;
+            left: 50% !important;
+            top: 20px !important;
+            transform: translateX(-50%) !important;
+        }
+
+        @media (min-width: 481px) and (max-width: 768px) {
+            top: 20px !important;
+            right: 20px !important;
+            width: auto !important;
+            max-width: 400px !important;
+        }
+
+        @media (min-width: 769px) {
+            top: 20px !important;
+            right: 20px !important;
+            width: auto !important;
+            max-width: 350px !important;
         }
     }
-    .loading-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        color: var(--background-azul);
+
+    // Modal de cancelación - Estilos modernos y limpios
+    .cancel-reservation-dialog {
+        .p-dialog {
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            margin-top: 5rem; // Separación del menú superior
+        }
+
+        .p-dialog-header {
+            background: var(--background-azul);
+            color: white;
+            padding: 1.75rem 2rem;
+            border-bottom: none;
+            
+            .p-dialog-title {
+                font-size: 1.5rem;
+                font-weight: 700;
+                color: white;
+                letter-spacing: -0.025em;
+            }
+
+            .p-dialog-header-icon {
+                color: white;
+                width: 2rem;
+                height: 2rem;
+                
+                &:hover {
+                    background-color: rgba(255, 255, 255, 0.1);
+                }
+            }
+        }
+
+        .p-dialog-content {
+            padding: 2rem;
+            background: #ffffff;
+
+            // Estilos para los campos del formulario
+            .p-field {
+                margin-bottom: 1.5rem;
+
+                &:last-child {
+                    margin-bottom: 0;
+                }
+
+                label {
+                    display: block;
+                    font-size: 0.875rem;
+                    font-weight: 600;
+                    color: #374151;
+                    margin-bottom: 0.5rem;
+                    letter-spacing: 0.025em;
+                    text-transform: uppercase;
+
+                    .text-red-500 {
+                        color: #ef4444;
+                        margin-left: 4px;
+                    }
+                }
+
+                textarea{
+                    width: 100%;
+                    padding: 0.875rem 1rem;
+                    font-size: 1rem;
+                    line-height: 1.6;
+                    color: #1f2937;
+                    background: #f9fafb;
+                    border: 2px solid #e5e7eb;
+                    border-radius: 8px;
+                    resize: none;
+                    transition: all 0.2s ease;
+                    font-family: inherit;
+
+                    &::placeholder {
+                        color: #9ca3af;
+                    }
+
+                    &:hover {
+                        border-color: #d1d5db;
+                        background: #ffffff;
+                    }
+
+                    &:focus {
+                        outline: none;
+                        border-color: #ee5a24;
+                        background: #ffffff;
+                        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+                    }
+                }
+
+                // Textarea
+                textarea.p-inputtextarea {
+                    width: 100%;
+                    padding: 0.875rem 1rem;
+                    font-size: 1rem;
+                    line-height: 1.6;
+                    color: #1f2937;
+                    background: #f9fafb;
+                    border: 2px solid #e5e7eb;
+                    border-radius: 8px;
+                    resize: none;
+                    transition: all 0.2s ease;
+                    font-family: inherit;
+
+                    &::placeholder {
+                        color: #9ca3af;
+                    }
+
+                    &:hover {
+                        border-color: #d1d5db;
+                        background: #ffffff;
+                    }
+
+                    &:focus {
+                        outline: none;
+                        border-color: #667eea;
+                        background: #ffffff;
+                        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+                    }
+                }
+
+                // InputNumber
+                .p-inputnumber {
+                    width: 100%;
+
+                    input {
+                        width: 100%;
+                        padding: 0.875rem 1rem;
+                        font-size: 1rem;
+                        font-weight: 500;
+                        color: #1f2937;
+                        background: #f9fafb;
+                        border: 2px solid #e5e7eb;
+                        border-radius: 8px;
+                        transition: all 0.2s ease;
+
+                        &:hover {
+                            border-color: #d1d5db;
+                            background: #ffffff;
+                        }
+
+                        &:focus {
+                            outline: none;
+                            border-color: #667eea;
+                            background: #ffffff;
+                            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+                        }
+                    }
+
+                    .p-inputnumber-button {
+                        background: #f3f4f6;
+                        border-color: #e5e7eb;
+                        color: #6b7280;
+
+                        &:hover {
+                            background: #e5e7eb;
+                            border-color: #d1d5db;
+                        }
+                    }
+                }
+
+                // Mensajes de error
+                small.p-error {
+                    display: block;
+                    margin-top: 0.5rem;
+                    font-size: 0.8125rem;
+                    font-weight: 500;
+                    color: #ef4444;
+                    padding-left: 0.25rem;
+                }
+            }
+
+            // Separador antes de los botones
+            .border-top-1 {
+                border-top: 1px solid #e5e7eb;
+                margin-top: 1.5rem;
+                padding-top: 1.5rem;
+            }
+
+            // Container de botones
+            .flex.justify-content-end {
+                display: flex;
+                gap: 0.75rem;
+                align-items: center;
+
+                .p-button {
+                    padding: 0.75rem 1.75rem;
+                    font-size: 0.9375rem;
+                    font-weight: 600;
+                    border-radius: 8px;
+                    transition: all 0.2s ease;
+                    border: none;
+                    letter-spacing: 0.025em;
+
+                    .p-button-icon {
+                        font-size: 1rem;
+                    }
+
+                    // Botón cancelar (secundario)
+                    &.p-button-text.p-button-secondary {
+                        color: #6b7280;
+                        background: transparent;
+
+                        &:hover {
+                            background: #f3f4f6;
+                            color: #374151;
+                        }
+
+                        &:active {
+                            background: #e5e7eb;
+                        }
+                    }
+
+                    // Botón confirmar (danger)
+                    &.p-button-danger {
+                        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+                        color: white;
+                        box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3);
+
+                        &:hover:not(:disabled) {
+                            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+                            box-shadow: 0 6px 8px -1px rgba(239, 68, 68, 0.4);
+                            transform: translateY(-1px);
+                        }
+
+                        &:active:not(:disabled) {
+                            transform: translateY(0);
+                            box-shadow: 0 2px 4px -1px rgba(239, 68, 68, 0.3);
+                        }
+
+                        &:disabled {
+                            opacity: 0.5;
+                            cursor: not-allowed;
+                            background: #9ca3af;
+                            box-shadow: none;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Responsive
+        @media (max-width: 576px) {
+            .p-dialog {
+                width: 95vw !important;
+                max-width: none !important;
+            }
+
+            .p-dialog-header {
+                padding: 1.25rem 1.5rem;
+
+                .p-dialog-title {
+                    font-size: 1.25rem;
+                }
+            }
+
+            .p-dialog-content {
+                padding: 1.5rem;
+
+                .p-field {
+                    margin-bottom: 1.25rem;
+
+                    label {
+                        font-size: 0.8125rem;
+                    }
+
+                    textarea.p-inputtextarea,
+                    .p-inputnumber input {
+                        padding: 0.75rem 0.875rem;
+                        font-size: 0.9375rem;
+                    }
+                }
+
+                .flex.justify-content-end {
+                    flex-direction: column;
+                    gap: 0.5rem;
+
+                    .p-button {
+                        width: 100%;
+                        padding: 0.875rem;
+                        font-size: 0.9375rem;
+                    }
+                }
+            }
+        }
     }
 }

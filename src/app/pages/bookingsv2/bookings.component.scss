@@ -13,32 +13,32 @@
 // ============================================
 // ESTILOS PARA EL MODAL DE CANCELACIÓN
 // ============================================
-:host ::ng-deep {
+    :host ::ng-deep {
     // Toast styles
-    .p-toast {
-        position: fixed;
-        z-index: 9999;
+        .p-toast {
+            position: fixed;
+            z-index: 9999;
 
-        @media (max-width: 480px) {
-            width: 90% !important;
-            left: 50% !important;
-            top: 20px !important;
-            transform: translateX(-50%) !important;
-        }
+            @media (max-width: 480px) {
+                width: 90% !important;
+                left: 50% !important;
+                top: 20px !important;
+                transform: translateX(-50%) !important;
+            }
 
-        @media (min-width: 481px) and (max-width: 768px) {
-            top: 20px !important;
-            right: 20px !important;
-            width: auto !important;
-            max-width: 400px !important;
-        }
+            @media (min-width: 481px) and (max-width: 768px) {
+                top: 20px !important;
+                right: 20px !important;
+                width: auto !important;
+                max-width: 400px !important;
+            }
 
-        @media (min-width: 769px) {
-            top: 20px !important;
-            right: 20px !important;
-            width: auto !important;
-            max-width: 350px !important;
-        }
+            @media (min-width: 769px) {
+                top: 20px !important;
+                right: 20px !important;
+                width: auto !important;
+                max-width: 350px !important;
+            }
     }
 
     // Modal de cancelación - Estilos modernos y limpios
@@ -232,7 +232,7 @@
 
             // Container de botones
             .flex.justify-content-end {
-                display: flex;
+        display: flex;
                 gap: 0.75rem;
                 align-items: center;
 
@@ -325,7 +325,7 @@
                 }
 
                 .flex.justify-content-end {
-                    flex-direction: column;
+        flex-direction: column;
                     gap: 0.5rem;
 
                     .p-button {

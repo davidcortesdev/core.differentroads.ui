@@ -639,7 +639,7 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
         // Enviar mensaje al iframe padre (ATC)
         window.parent.postMessage({
           type: 'cancel_reservation_request',
-          comentario: comentario,
+          comment: comentario, // El campo se llama "comment" en el backend
           cancelationFee: cancelationFee,
           reservationId: this.reservation?.id
         }, '*');

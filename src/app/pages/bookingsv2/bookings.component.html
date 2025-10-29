@@ -145,6 +145,7 @@
     [resizable]="false"
     [closeOnEscape]="true"
     styleClass="cancel-reservation-dialog"
+    [maskStyleClass]="'cancel-reservation-dialog'"
   >
     <form [formGroup]="cancelForm" (ngSubmit)="onSubmitCancellation()">
       <div class="p-fluid">

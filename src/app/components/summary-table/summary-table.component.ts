@@ -126,17 +126,31 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
 
   // NUEVO: Transformar datos del backend al formato del componente
   private updateSummaryData(summary: IReservationSummaryResponse): void {
-    this.summary = summary.items?.map(item => ({
-      description: item.description || undefined,
-      qty: item.quantity,
-      value: item.amount,
-      isDiscount: item.description?.toLowerCase().includes('descuento') || false,
-      // NUEVO: Agregar flag para identificar seguros básicos incluidos
-      isBasicInsuranceIncluded: 
-        item.description?.toLowerCase().includes('seguro básico') &&
-        item.amount === 0 &&
-        item.included === true
-    })) || [];
+    this.summary = summary.items
+      ?.map(item => ({
+        description: item.description || undefined,
+        qty: item.quantity,
+        value: item.amount,
+        isDiscount: item.description?.toLowerCase().includes('descuento') || false,
+        // NUEVO: Agregar flag para identificar seguros básicos incluidos
+        isBasicInsuranceIncluded: 
+          item.description?.toLowerCase().includes('seguro básico') &&
+          item.amount === 0 &&
+          item.included === true
+      }))
+      // Filtrar items con cantidad 0 (excepto seguros básicos incluidos y descuentos)
+      .filter(item => {
+        // Mantener seguros básicos incluidos aunque tengan cantidad 0
+        if (item.isBasicInsuranceIncluded) {
+          return true;
+        }
+        // Mantener descuentos aunque tengan valores especiales
+        if (item.isDiscount) {
+          return true;
+        }
+        // Filtrar items con cantidad 0 o menor
+        return item.qty && item.qty > 0;
+      }) || [];
 
     // Agregar descuento por puntos si existe
     if (this.pointsDiscount > 0) {

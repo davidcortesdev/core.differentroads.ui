@@ -378,18 +378,30 @@ export class ReservationService {
   cancelReservation(
     reservationId: number,
     canceledBy: number,
-    comment?: string,
+    comment: string,
     cancelationFee?: number
   ): Observable<boolean> {
-    const body = {
-      comment: comment || '',
-      cancelationFee: cancelationFee || 0
-    };
+    // Intentar con query parameters en lugar de body
+    const params = new HttpParams()
+      .set('comment', comment)
+      .set('cancelationFee', (cancelationFee || 0).toString());
+    
+    const url = `${environment.reservationsApiUrl}/ReservationsSyncs/cancel-reservation/${reservationId}/${canceledBy}`;
+    
+    console.log('🔥 Cancel Reservation Request (Query Params):', {
+      url,
+      reservationId,
+      canceledBy,
+      comment,
+      cancelationFee,
+      fullUrl: `${url}?comment=${encodeURIComponent(comment)}&cancelationFee=${cancelationFee || 0}`
+    });
     
     return this.http.put<boolean>(
-      `${environment.reservationsApiUrl}/ReservationsSyncs/cancel-reservation/${reservationId}/${canceledBy}`,
-      body,
+      url,
+      null, // Sin body
       {
+        params: params,
         headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
       }
     );

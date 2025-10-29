@@ -628,8 +628,20 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
 
   onSubmitCancellation(): void {
     if (this.cancelForm.valid) {
-      const comentario = this.cancelForm.get('comentario')?.value;
+      const comentario = this.cancelForm.get('comentario')?.value?.trim();
       const cancelationFee = this.cancelForm.get('cancelationFee')?.value;
+      
+      // Validar que el comentario no esté vacío
+      if (!comentario) {
+        this.messageService.add({
+          key: 'center',
+          severity: 'error',
+          summary: 'Error',
+          detail: 'El comentario es requerido',
+          life: 3000,
+        });
+        return;
+      }
       
       // Verificar si viene desde ATC
       const urlParams = new URLSearchParams(window.location.search);

@@ -337,7 +337,7 @@ export class InsuranceComponent implements OnInit, OnChanges {
   }
 
   // Guardar asignaciones de seguro
-  async saveInsuranceAssignments(): Promise<boolean> {
+  async saveInsuranceAssignments(silentMode: boolean = false): Promise<boolean> {
     if (!this.reservationId) {
       return false;
     }
@@ -351,8 +351,11 @@ export class InsuranceComponent implements OnInit, OnChanges {
 
     this.isSaving = true;
     this.errorMsg = null;
-    this.saveStatusChange.emit({ saving: true });
-    this.showSavingToast();
+    
+    if (!silentMode) {
+      this.saveStatusChange.emit({ saving: true });
+      this.showSavingToast();
+    }
 
     try {
       // Asegurar que tenemos travelers cargados
@@ -404,34 +407,40 @@ export class InsuranceComponent implements OnInit, OnChanges {
 
       this.hasUnsavedChanges = false;
       this.isSaving = false;
-      this.showSuccessToast();
-      this.saveStatusChange.emit({ saving: false, success: true });
-      this.saveCompleted.emit({ component: 'insurance', success: true });
+      
+      if (!silentMode) {
+        this.showSuccessToast();
+        this.saveStatusChange.emit({ saving: false, success: true });
+        this.saveCompleted.emit({ component: 'insurance', success: true });
+      }
+      
       return true;
     } catch (error) {
-      console.error(
-        '🛡️ [INSURANCE] ❌ ERROR saving insurance assignments:',
-        error
-      );
       this.errorMsg =
         'Error al guardar las asignaciones de seguro. Por favor, inténtalo de nuevo.';
       this.isSaving = false;
+      
       this.messageService.add({
         severity: 'error',
         summary: 'Error al guardar seguros',
         detail: 'No se pudo actualizar el seguro seleccionado',
         life: 5000,
       });
-      this.saveStatusChange.emit({
-        saving: false,
-        success: false,
-        error: 'Error al guardar seguros',
-      });
-      this.saveCompleted.emit({
-        component: 'insurance',
-        success: false,
-        error: 'Error al guardar seguros',
-      });
+      
+      // Los eventos solo se emiten si no está en modo silencioso
+      if (!silentMode) {
+        this.saveStatusChange.emit({
+          saving: false,
+          success: false,
+          error: 'Error al guardar seguros',
+        });
+        this.saveCompleted.emit({
+          component: 'insurance',
+          success: false,
+          error: 'Error al guardar seguros',
+        });
+      }
+      
       return false;
     }
   }
@@ -541,6 +550,73 @@ export class InsuranceComponent implements OnInit, OnChanges {
     return this.hasUnsavedChanges;
   }
 
+  /**
+   * Método para recargar viajeros y actualizar asignaciones cuando cambia el número de viajeros
+   */
+  async reloadOnTravelersChange(): Promise<void> {
+    if (!this.reservationId) {
+      return;
+    }
+
+    try {
+      // Recargar la lista de viajeros desde el backend
+      this.existingTravelers = await this.reservationTravelerService
+        .getByReservationOrdered(this.reservationId)
+        .toPromise() || [];
+
+      // Si hay un seguro seleccionado, actualizar las asignaciones para que incluyan a todos los viajeros
+      if (this.selectedInsurance && this.existingTravelers.length > 0) {
+        // Primero, recargar las asignaciones actuales
+        await this.loadExistingInsuranceAssignmentsForUpdate();
+        
+        // Marcar como cambios pendientes para forzar el guardado
+        this.hasUnsavedChanges = true;
+        
+        // Guardar las asignaciones en modo silencioso (sin mostrar toasts)
+        const success = await this.saveInsuranceAssignments(true);
+        
+        if (success) {
+          // Emitir cambio para actualizar el precio en el resumen
+          this.emitInsuranceChange();
+        }
+      }
+    } catch (error) {
+      // Error al recargar viajeros
+    }
+  }
+
+  /**
+   * Método auxiliar para recargar asignaciones sin mostrar errores en toast
+   * Se usa cuando se actualizan los viajeros para evitar notificaciones innecesarias
+   */
+  private async loadExistingInsuranceAssignmentsForUpdate(): Promise<void> {
+    if (!this.existingTravelers.length || !this.insurances.length) {
+      return;
+    }
+
+    try {
+      const travelerIds = this.existingTravelers.map((t) => t.id);
+      const insuranceIds = this.insurances.map((i) => i.id);
+
+      // Buscar asignaciones existentes
+      const assignmentPromises = travelerIds.map((travelerId) => {
+        return this.reservationTravelerActivityService
+          .getByReservationTraveler(travelerId)
+          .toPromise();
+      });
+
+      const allAssignments = await Promise.all(assignmentPromises);
+      
+      // Filtrar solo las asignaciones que corresponden a seguros
+      const allAssignmentsFlat = allAssignments.flat().filter(a => a !== null && a !== undefined);
+      this.currentInsuranceAssignments = allAssignmentsFlat.filter(
+        (assignment) => assignment && insuranceIds.includes(assignment.activityId)
+      );
+    } catch (error) {
+      // Error al cargar asignaciones para actualización
+    }
+  }
+
   // Método para verificar que las asignaciones se guardaron correctamente
   async verifyInsuranceAssignments(): Promise<boolean> {
     if (!this.reservationId || !this.existingTravelers.length) {
@@ -587,7 +663,6 @@ export class InsuranceComponent implements OnInit, OnChanges {
         return !hasAssignments;
       }
     } catch (error) {
-      console.error('🛡️ [INSURANCE] ❌ Error verificando asignaciones:', error);
       return false;
     }
   }

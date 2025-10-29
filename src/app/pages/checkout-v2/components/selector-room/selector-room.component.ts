@@ -1302,8 +1302,33 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
         })
         .filter((room) => room.qty > 0);
 
+      // Si no hay habitaciones seleccionadas, eliminar todas las asignaciones existentes
       if (selectedRoomsWithQty.length === 0) {
-        return false;
+        // Eliminar todas las asignaciones de habitaciones de todos los viajeros
+        const deletePromises = currentTravelers.map((traveler) =>
+          firstValueFrom(
+            this.reservationTravelerAccommodationService.deleteByReservationTraveler(
+              traveler.id
+            )
+          )
+        );
+
+        // Ejecutar eliminaciones
+        await Promise.all(deletePromises);
+
+        // Limpiar asignaciones locales
+        this.currentRoomAssignments = [];
+        this.existingTravelerAccommodations = [];
+
+        // Actualizar estado de éxito
+        this.showSuccessToast();
+        this.updateStatusAfterSave(true);
+
+        // Emitir que se actualizaron las habitaciones
+        this.emitRoomsUpdated();
+
+        this.saving = false;
+        return true;
       }
 
       // Generar distribución rápidamente

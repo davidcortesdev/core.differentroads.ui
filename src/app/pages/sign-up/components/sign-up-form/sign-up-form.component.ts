@@ -19,6 +19,7 @@ import { AnalyticsService } from '../../../../core/services/analytics/analytics.
 import { ConfirmationCodeComponent } from '../../../../shared/components/confirmation-code/confirmation-code.component';
 import { IUserResponse } from '../../../../core/models/users/user.model';
 import { environment } from '../../../../../environments/environment';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-sign-up-form',
@@ -79,7 +80,8 @@ export class SignUpFormComponent {
     private authService: AuthenticateService,
     private usersNetService: UsersNetService,
     private hubspotService: HubspotService,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private messageService: MessageService // <--- INYECTAR!
   ) {
     this.signUpForm = this.fb.group(
       {
@@ -94,13 +96,17 @@ export class SignUpFormComponent {
     );
   }
 
+  showToastError(msg: string) {
+    this.messageService.add({ severity: 'error', summary: 'Error', detail: msg });
+  }
+
   signInWithGoogle(): void {
     this.isLoading = true;
     this.authService.handleGoogleSignIn().then(() => {
       this.isLoading = false;
     }).catch((error) => {
       this.isLoading = false;
-      this.errorMessage = 'Error al iniciar sesión con Google';
+      this.showToastError('Error al iniciar sesión con Google');
       console.error(error);
     });
   }
@@ -113,7 +119,7 @@ export class SignUpFormComponent {
 
   onSubmit() {
     if (this.signUpForm.invalid) {
-      this.errorMessage = 'Por favor, corrige los errores en el formulario.';
+      this.showToastError('Por favor, corrige los errores en el formulario.');
       return;
     }
 
@@ -187,7 +193,7 @@ export class SignUpFormComponent {
                           },
                           error: (error: unknown) => {
                             this.isLoading = false;
-                            this.errorMessage = error instanceof Error ? error.message : 'Error al actualizar usuario';
+                            this.showToastError(error instanceof Error ? error.message : 'Error al actualizar usuario');
                           }
                         });
                     } else {
@@ -211,25 +217,25 @@ export class SignUpFormComponent {
                           },
                           error: (error: unknown) => {
                             this.isLoading = false;
-                            this.errorMessage = error instanceof Error ? error.message : 'Registro fallido';
+                            this.showToastError(error instanceof Error ? error.message : 'Registro fallido');
                           }
                         });
                     }
                   },
                   error: (error: unknown) => {
                     this.isLoading = false;
-                    this.errorMessage = error instanceof Error ? error.message : 'Error al verificar usuario existente';
+                    this.showToastError(error instanceof Error ? error.message : 'Error al verificar usuario existente');
                   }
                 });
             })
             .catch((error) => {
               this.isLoading = false;
-              this.errorMessage = error instanceof Error ? error.message : 'Registro fallido';
+              this.showToastError(error instanceof Error ? error.message : 'Registro fallido');
             });
         },
         error: (hubspotError) => {
           this.isLoading = false;
-          this.errorMessage = 'Error al crear el contacto en Hubspot';
+          this.showToastError('Error al crear el contacto en Hubspot');
           console.error('Error al crear contacto en Hubspot:', hubspotError);
         }
       });
@@ -274,6 +280,10 @@ export class SignUpFormComponent {
   }
 
   onErrorMessageChange(message: string): void {
+    // Mostrar error de confirmación solo en Toast si no estamos en el paso intermedio
+    if (!this.isConfirming) {
+      this.showToastError(message);
+    }
     this.errorMessage = message;
   }
 

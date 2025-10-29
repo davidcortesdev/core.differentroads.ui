@@ -20,6 +20,8 @@
       [bookingCode]="bookingData.bookingCode"
       [bookingReference]="bookingData.bookingReference"
       [status]="bookingData.status"
+      [statusId]="reservation?.reservationStatusId || 0"
+      [isATC]="isATC"
       (cancelBooking)="cancelBooking()"
       (backEvent)="goBack()"
     >
@@ -131,6 +133,87 @@
           label="Registrar pago"
           [disabled]="paymentForm.invalid"
         ></button>
+      </div>
+    </form>
+  </p-dialog>
+
+  <!-- Modal de cancelación de reserva -->
+  <p-dialog
+    header="Cancelar Reserva"
+    [(visible)]="displayCancelModal"
+    [modal]="true"
+    [style]="{ width: '580px', maxWidth: '95vw' }"
+    [draggable]="false"
+    [resizable]="false"
+    [closeOnEscape]="true"
+    styleClass="cancel-reservation-dialog"
+    [maskStyleClass]="'cancel-reservation-dialog'"
+  >
+    <form [formGroup]="cancelForm" (ngSubmit)="onSubmitCancellation()">
+      <div class="p-fluid">
+        <!-- Campo de comentario -->
+        <div class="p-field">
+          <label for="comentario">
+            Motivo de cancelación <span class="text-red-500">*</span>
+          </label>
+          <textarea
+            pInputTextarea
+            id="comentario"
+            formControlName="comentario"
+            rows="5"
+            placeholder="Describa el motivo de la cancelación de esta reserva..."
+            [autoResize]="false"
+          ></textarea>
+          <small
+            *ngIf="cancelForm.get('comentario')?.invalid && cancelForm.get('comentario')?.touched"
+            class="p-error"
+          >
+            Por favor, ingrese el motivo de la cancelación
+          </small>
+        </div>
+        
+        <!-- Campo de tarifa -->
+        <div class="p-field">
+          <label for="cancelationFee">
+            Tarifa de cancelación <span class="text-red-500">*</span>
+          </label>
+          <p-inputNumber
+            inputId="cancelationFee"
+            formControlName="cancelationFee"
+            mode="currency"
+            currency="EUR"
+            locale="es-ES"
+            [min]="0"
+            [minFractionDigits]="2"
+            [maxFractionDigits]="2"
+            placeholder="0,00 €"
+          >
+          </p-inputNumber>
+          <small
+            *ngIf="cancelForm.get('cancelationFee')?.invalid && cancelForm.get('cancelationFee')?.touched"
+            class="p-error"
+          >
+            Ingrese la tarifa de cancelación (puede ser 0)
+          </small>
+        </div>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="flex justify-content-end border-top-1">
+        <p-button
+          label="Cancelar"
+          icon="pi pi-times"
+          (onClick)="hideCancelModal()"
+          styleClass="p-button-text p-button-secondary"
+        ></p-button>
+        <p-button
+          label="Confirmar Cancelación"
+          icon="pi pi-check"
+          type="submit"
+          styleClass="p-button-danger"
+          [disabled]="cancelForm.invalid"
+          [loading]="isLoading"
+        ></p-button>
       </div>
     </form>
   </p-dialog>

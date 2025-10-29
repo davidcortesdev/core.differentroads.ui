@@ -125,6 +125,9 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
   private routerSubscription?: Subscription;
   private routeSubscription?: Subscription;
   
+  // Detectar si viene desde ATC
+  isATC: boolean = false;
+  
   // Trigger para refrescar el resumen
   summaryRefreshTrigger: any = null;
   reservation: IReservationResponse | null = null; // Objeto de reserva completo
@@ -206,6 +209,10 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
   paymentForm: FormGroup;
   displayPaymentModal: boolean = false;
 
+  // Modal de cancelación
+  cancelForm: FormGroup;
+  displayCancelModal: boolean = false;
+
   // Nueva propiedad para almacenar el total de la reserva
   bookingTotal: number = 0;
 
@@ -224,11 +231,21 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
     this.paymentForm = this.fb.group({
       amount: [0, [Validators.required, Validators.min(1)]],
     });
+    
+    this.cancelForm = this.fb.group({
+      comentario: ['', [Validators.required]],
+      cancelationFee: [0, [Validators.required, Validators.min(0)]],
+    });
   }
 
   ngOnInit(): void {
     this.titleService.setTitle('Mis Reservas - Different Roads');
     this.messageService.clear();
+
+    // Detectar si viene desde ATC
+    this.route.queryParams.subscribe((queryParams) => {
+      this.isATC = queryParams['isATC'] === 'true';
+    });
 
     // Obtenemos el ID de la URL
     this.routeSubscription = this.route.params.subscribe((params) => {
@@ -608,15 +625,112 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
   }
 
   cancelBooking(): void {
-    if (this.isTO) {
-      this.messageService.add({
-        key: 'center',
-        severity: 'warn',
-        summary: 'Cancelación',
-        detail:
-          'Procesando cancelación de reserva ' + this.bookingData.bookingCode,
-        life: 3000,
-      });
+    // Abrir el modal de cancelación
+    this.displayCancelModal = true;
+  }
+
+  hideCancelModal(): void {
+    this.displayCancelModal = false;
+    this.cancelForm.reset({ comentario: '', cancelationFee: 0 });
+  }
+
+  onSubmitCancellation(): void {
+    if (this.cancelForm.valid) {
+      const comentario = this.cancelForm.get('comentario')?.value?.trim();
+      const cancelationFee = this.cancelForm.get('cancelationFee')?.value;
+      
+      // Validar que el comentario no esté vacío
+      if (!comentario) {
+        this.messageService.add({
+          key: 'center',
+          severity: 'error',
+          summary: 'Error',
+          detail: 'El comentario es requerido',
+          life: 3000,
+        });
+        return;
+      }
+      
+      // Verificar si viene desde ATC
+      if (this.isATC && window.parent && window.parent !== window) {
+        // Enviar mensaje al iframe padre (ATC)
+        window.parent.postMessage({
+          type: 'cancel_reservation_request',
+          comment: comentario, // El campo se llama "comment" en el backend
+          cancelationFee: cancelationFee,
+          reservationId: this.reservation?.id
+        }, '*');
+        
+        // Cerrar el modal y mostrar mensaje de confirmación
+        this.hideCancelModal();
+        this.messageService.add({
+          key: 'center',
+          severity: 'info',
+          summary: 'Solicitud enviada',
+          detail: 'La solicitud de cancelación ha sido enviada a ATC',
+          life: 3000,
+        });
+        
+        return; // NO continuar con la cancelación normal
+      }
+
+      // Si NO viene desde ATC, hacer la cancelación normal con canceledBy=1
+      const reservationId = this.reservation?.id;
+      if (!reservationId) {
+        this.messageService.add({
+          key: 'center',
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se puede cancelar la reserva: ID no disponible',
+          life: 3000,
+        });
+        return;
+      }
+
+      this.isLoading = true;
+      this.reservationService
+        .cancelReservation(reservationId, 1, comentario, cancelationFee)
+        .pipe(
+          finalize(() => {
+            this.isLoading = false;
+          })
+        )
+        .subscribe({
+          next: (success) => {
+            this.hideCancelModal();
+            if (success) {
+              this.messageService.add({
+                key: 'center',
+                severity: 'success',
+                summary: 'Cancelación exitosa',
+                detail: 'La reserva ha sido cancelada correctamente',
+                life: 3000,
+              });
+              
+              // Recargar los datos de la reserva
+              this.loadBookingData(this.bookingId);
+            } else {
+              this.messageService.add({
+                key: 'center',
+                severity: 'error',
+                summary: 'Error',
+                detail: 'No se pudo cancelar la reserva',
+                life: 3000,
+              });
+            }
+          },
+          error: (error) => {
+            this.hideCancelModal();
+            console.error('Error al cancelar la reserva:', error);
+            this.messageService.add({
+              key: 'center',
+              severity: 'error',
+              summary: 'Error',
+              detail: 'Ocurrió un error al cancelar la reserva',
+              life: 3000,
+            });
+          },
+        });
     }
   }
 

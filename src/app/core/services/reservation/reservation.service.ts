@@ -366,4 +366,32 @@ export class ReservationService {
   enqueueSync(reservationId: number): Observable<boolean> {
     return this.http.post<boolean>(`${environment.reservationsApiUrl}/ReservationsSyncs/${reservationId}/enqueue`, {});
   }
+
+  /**
+   * Cancela una reservación.
+   * @param reservationId ID de la reservación a cancelar.
+   * @param canceledBy Indica quién cancela: 1 si viene de UI directo, 2 si viene desde ATC.
+   * @param comment Comentario sobre la cancelación.
+   * @param cancelationFee Tarifa de cancelación.
+   * @returns Resultado de la operación.
+   */
+  cancelReservation(
+    reservationId: number,
+    canceledBy: number,
+    comment: string,
+    cancelationFee?: number
+  ): Observable<boolean> {
+    const params = new HttpParams()
+      .set('comment', comment)
+      .set('cancelationFee', (cancelationFee || 0).toString());
+    
+    return this.http.put<boolean>(
+      `${environment.reservationsApiUrl}/ReservationsSyncs/cancel-reservation/${reservationId}/${canceledBy}`,
+      null,
+      {
+        params: params,
+        headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
+      }
+    );
+  }
 }

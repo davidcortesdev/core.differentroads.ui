@@ -386,7 +386,7 @@ export class ReservationService {
       cancelationFee: cancelationFee || 0
     };
     
-    return this.http.post<boolean>(
+    return this.http.put<boolean>(
       `${environment.reservationsApiUrl}/ReservationsSyncs/cancel-reservation/${reservationId}/${canceledBy}`,
       body,
       {

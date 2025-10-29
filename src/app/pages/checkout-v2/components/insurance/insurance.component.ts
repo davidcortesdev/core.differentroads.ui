@@ -82,6 +82,7 @@ export class InsuranceComponent implements OnInit, OnChanges {
   errorMsg: string | null = null;
   userHasMadeSelection: boolean = false;
   private saveTimeout: ReturnType<typeof setTimeout> | null = null;
+  private isReloadingTravelers: boolean = false;
 
   constructor(
     private activityService: ActivityService,
@@ -134,22 +135,16 @@ export class InsuranceComponent implements OnInit, OnChanges {
                     this.insurances = activities;
                     this.loadPrices();
                   },
-                  error: (error) => {
-                    console.error(
-                      '🛡️ [INSURANCE] ❌ Error loading insurance activities:',
-                      error
-                    );
+                  error: () => {
+                    // Error loading insurance activities
                   },
                 });
             } else {
               this.insurances = [];
             }
           },
-          error: (error) => {
-            console.error(
-              '🛡️ [INSURANCE] ❌ Error loading insurance groups:',
-              error
-            );
+          error: () => {
+            // Error loading insurance groups
           },
         });
     }
@@ -177,11 +172,7 @@ export class InsuranceComponent implements OnInit, OnChanges {
             // Cargar asignaciones existentes después de cargar precios
             this.loadExistingInsuranceAssignments();
           },
-          error: (error) => {
-            console.error(
-              '🛡️ [INSURANCE] ❌ Error loading insurance prices:',
-              error
-            );
+          error: () => {
             // Si no hay precios, seleccionar el primer seguro
             this.selectDefaultInsurance();
             this.loadExistingInsuranceAssignments();
@@ -227,11 +218,8 @@ export class InsuranceComponent implements OnInit, OnChanges {
           this.existingTravelers = travelers;
           this.loadExistingInsuranceAssignments();
         },
-        error: (error) => {
-          console.error(
-            '🛡️ [INSURANCE] ❌ Error loading existing travelers:',
-            error
-          );
+        error: () => {
+          // Error loading existing travelers
         },
       });
   }
@@ -264,11 +252,8 @@ export class InsuranceComponent implements OnInit, OnChanges {
         // Determinar el seguro seleccionado basado en las asignaciones existentes
         this.determineSelectedInsurance();
       },
-      error: (error) => {
-        console.error(
-          '🛡️ [INSURANCE] ❌ Error loading existing insurance assignments:',
-          error
-        );
+      error: () => {
+        // Error loading existing insurance assignments
       },
     });
   }
@@ -363,16 +348,13 @@ export class InsuranceComponent implements OnInit, OnChanges {
             .toPromise()) || [];
       }
 
+      // Si no hay viajeros, simplemente limpiar asignaciones sin mostrar error
+      // (esto puede ocurrir temporalmente durante la carga o al eliminar todos los viajeros)
       if (!this.existingTravelers.length) {
-        this.errorMsg = 'No se encontraron viajeros para asignar el seguro.';
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: this.errorMsg,
-          life: 5000,
-        });
+        this.currentInsuranceAssignments = [];
+        this.hasUnsavedChanges = false;
         this.isSaving = false;
-        return false;
+        return true;
       }
 
       // Eliminar asignaciones existentes de seguros
@@ -416,19 +398,19 @@ export class InsuranceComponent implements OnInit, OnChanges {
       this.saveCompleted.emit({ component: 'insurance', success: true });
       return true;
     } catch (error) {
-      console.error(
-        '🛡️ [INSURANCE] ❌ ERROR saving insurance assignments:',
-        error
-      );
       this.errorMsg =
         'Error al guardar las asignaciones de seguro. Por favor, inténtalo de nuevo.';
       this.isSaving = false;
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error al guardar seguros',
-        detail: 'No se pudo actualizar el seguro seleccionado',
-        life: 5000,
-      });
+      // Solo mostrar error si el usuario hizo una selección manual y falló
+      // No mostrar errores por operaciones automáticas (añadir/quitar viajeros)
+      if (this.userHasMadeSelection) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error al guardar seguros',
+          detail: 'No se pudo actualizar el seguro seleccionado',
+          life: 5000,
+        });
+      }
       this.saveStatusChange.emit({
         saving: false,
         success: false,
@@ -531,41 +513,82 @@ export class InsuranceComponent implements OnInit, OnChanges {
 
   /**
    * Método para recargar viajeros y actualizar asignaciones cuando cambia el número de viajeros
+   * Incluye protección contra ejecuciones concurrentes
    */
   async reloadOnTravelersChange(): Promise<void> {
-    console.log('🛡️ [INSURANCE] Recargando viajeros después de actualización...');
-    
     if (!this.reservationId) {
-      console.log('🛡️ [INSURANCE] ❌ No hay reservationId');
       return;
     }
+
+    // Protección contra ejecuciones concurrentes
+    // Si ya se está ejecutando una recarga, ignorar esta llamada
+    if (this.isReloadingTravelers) {
+      return;
+    }
+
+    this.isReloadingTravelers = true;
 
     try {
       // Recargar la lista de viajeros desde el backend
       this.existingTravelers = await this.reservationTravelerService
         .getByReservationOrdered(this.reservationId)
         .toPromise() || [];
-      
-      console.log(`🛡️ [INSURANCE] ✅ Viajeros recargados: ${this.existingTravelers.length}`);
 
       // Si hay un seguro seleccionado, actualizar las asignaciones para que incluyan a todos los viajeros
-      if (this.selectedInsurance) {
-        console.log(`🛡️ [INSURANCE] Actualizando asignaciones para seguro: ${this.selectedInsurance.name}`);
+      if (this.selectedInsurance && this.existingTravelers.length > 0) {
+        // Primero, recargar las asignaciones actuales del backend para evitar intentar
+        // eliminar asignaciones de viajeros que ya no existen
+        await this.reloadCurrentInsuranceAssignments();
         
         // Marcar como cambios pendientes para forzar el guardado
+        // Pero NO marcar como selección manual del usuario
+        const wasUserSelection = this.userHasMadeSelection;
         this.hasUnsavedChanges = true;
         
         // Guardar las asignaciones (esto creará asignaciones para los nuevos viajeros)
-        const success = await this.saveInsuranceAssignments();
+        await this.saveInsuranceAssignments();
         
-        if (success) {
-          console.log('🛡️ [INSURANCE] ✅ Asignaciones actualizadas correctamente');
-        } else {
-          console.log('🛡️ [INSURANCE] ❌ Error al actualizar asignaciones');
-        }
+        // Restaurar el flag de selección del usuario
+        this.userHasMadeSelection = wasUserSelection;
       }
     } catch (error) {
-      console.error('🛡️ [INSURANCE] ❌ Error al recargar viajeros:', error);
+      // Error al recargar viajeros - silencioso
+    } finally {
+      // Siempre liberar el flag para permitir futuras ejecuciones
+      this.isReloadingTravelers = false;
+    }
+  }
+
+  /**
+   * Método auxiliar para recargar las asignaciones actuales desde el backend
+   */
+  private async reloadCurrentInsuranceAssignments(): Promise<void> {
+    if (!this.existingTravelers.length || !this.insurances.length) {
+      this.currentInsuranceAssignments = [];
+      return;
+    }
+
+    try {
+      const travelerIds = this.existingTravelers.map((t) => t.id);
+      const insuranceIds = this.insurances.map((i) => i.id);
+
+      // Buscar asignaciones existentes
+      const assignmentPromises = travelerIds.map((travelerId) => {
+        return this.reservationTravelerActivityService
+          .getByReservationTraveler(travelerId)
+          .toPromise();
+      });
+
+      const allAssignments = await Promise.all(assignmentPromises);
+      
+      // Filtrar solo las asignaciones que corresponden a seguros
+      const allAssignmentsFlat = allAssignments.flat().filter(a => a !== null && a !== undefined);
+      this.currentInsuranceAssignments = allAssignmentsFlat.filter(
+        (assignment) => assignment && insuranceIds.includes(assignment.activityId)
+      );
+    } catch (error) {
+      // Error al recargar asignaciones - usar array vacío
+      this.currentInsuranceAssignments = [];
     }
   }
 
@@ -615,7 +638,6 @@ export class InsuranceComponent implements OnInit, OnChanges {
         return !hasAssignments;
       }
     } catch (error) {
-      console.error('🛡️ [INSURANCE] ❌ Error verificando asignaciones:', error);
       return false;
     }
   }

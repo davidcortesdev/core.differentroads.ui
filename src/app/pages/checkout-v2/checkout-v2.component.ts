@@ -621,6 +621,11 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       await this.roomSelector.reloadOnTravelersChange();
     }
     
+    // Recargar viajeros en el selector de seguros y actualizar asignaciones
+    if (this.insuranceSelector) {
+      await this.insuranceSelector.reloadOnTravelersChange();
+    }
+    
     // Disparar actualización del summary
     this.triggerSummaryRefresh();
   }

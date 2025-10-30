@@ -14,8 +14,11 @@
     </div>
     
     <!-- Móvil/Tablet: Segunda fila: botón de cancelar -->
-    <button pButton label="Cancelar reserva" icon="pi pi-times-circle"
+    <button pButton 
+            [label]="cancelButtonLabel" 
+            [icon]="isCancelled ? 'pi pi-ban' : 'pi pi-times-circle'"
             class="p-button-outlined p-button-rounded cancel-button"
+            [disabled]="isCancelled"
             (click)="onCancelBooking()"></button>
   </div>
 </p-panel>

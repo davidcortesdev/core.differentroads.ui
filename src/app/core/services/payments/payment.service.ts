@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Observable, forkJoin } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { map, catchError, switchMap } from 'rxjs/operators';
 import { Payment, PaymentStatus } from '../../models/bookings/payment.model';
 import { PaymentStatusNetService, IPaymentStatusResponse } from '../../../pages/checkout-v2/services/paymentStatusNet.service';
 import { PaymentsNetService, IPaymentResponse } from '../../../pages/checkout-v2/services/paymentsNet.service';
@@ -79,19 +79,30 @@ export class PaymentService {
           throw new Error('No se encontró el pago en la API');
         }
 
-        // Actualizar solo el estado del pago
+        // Construir payload completo requerido por la API
         const updateData: any = {
           id: apiPayment.id,
-          paymentStatusId: newStatusId
+          amount: apiPayment.amount,
+          paymentDate: apiPayment.paymentDate,
+          paymentMethodId: apiPayment.paymentMethodId,
+          paymentStatusId: newStatusId,
+          transactionReference: apiPayment.transactionReference,
+          notes: apiPayment.notes,
+          currencyId: apiPayment.currencyId,
+          // Campos adicionales si el backend los acepta en PUT
+          reservationId: apiPayment.reservationId,
+          attachmentUrl: apiPayment.attachmentUrl
         };
 
-        this.paymentsNetService.update(updateData).subscribe({
-          next: () => console.log('Estado de pago actualizado correctamente'),
-          error: (error) => console.error('Error actualizando estado del pago:', error)
-        });
-
-        return true;
+        return updateData;
       })
+    ).pipe(
+      switchMap((updateData: any) =>
+        this.paymentsNetService.update(updateData).pipe(
+          map(() => true),
+          catchError(() => of(false))
+        )
+      )
     );
   }
 

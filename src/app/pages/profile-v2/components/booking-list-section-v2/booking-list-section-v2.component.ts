@@ -16,14 +16,19 @@ import {
   DocumentationService,
   IDocumentReservationResponse,
 } from '../../../../core/services/documentation/documentation.service';
+import { DocumentServicev2 } from '../../../../core/services/v2/document.service';
 import {
   NotificationService,
   INotification,
   } from '../../../../core/services/documentation/notification.service';
-  import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
-  import { PointsV2Service } from '../../../../core/services/v2/points-v2.service';
-  import { TravelerCategory } from '../../../../core/models/v2/profile-v2.model';
-  import { switchMap, map, catchError, of, forkJoin } from 'rxjs';
+import {
+  NotificationServicev2,
+  NotificationRequest
+} from '../../../../core/services/v2/notification.service';
+import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
+import { PointsV2Service } from '../../../../core/services/v2/points-v2.service';
+import { TravelerCategory } from '../../../../core/models/v2/profile-v2.model';
+import { switchMap, map, catchError, of, forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-booking-list-section-v2',
@@ -72,7 +77,9 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
     private documentPDFService: DocumentPDFService,
     private emailSenderService: EmailSenderService,
     private documentationService: DocumentationService,
+    private documentServicev2: DocumentServicev2,
     private notificationService: NotificationService,
+    private notificationServicev2: NotificationServicev2,
     private authService: AuthenticateService,
     private pointsService: PointsV2Service
   ) {}
@@ -527,62 +534,120 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   }
 
   sendItem(item: BookingItem) {
+    // Check if the listType is 'recent-budgets'
+    if (this.listType === 'recent-budgets') {
+      this.sendBudgetNotification(item);
+    } else {
+      this.notificationLoading[item.id] = true;
+
+      // Get the logged user's email
+      const userEmail = this.authService.getUserEmailValue();
+
+      if (!userEmail) {
+        this.notificationLoading[item.id] = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudo obtener el email del usuario logueado',
+        });
+        return;
+      }
+
+      // Prepare the request body
+      const requestBody = {
+        event: 'BUDGET',
+        email: userEmail,
+      };
+
+      // Call the email service
+      this.emailSenderService
+        .sendReservationWithoutDocuments(parseInt(item.id, 10), requestBody)
+        .subscribe({
+          next: (response) => {
+            this.notificationLoading[item.id] = false;
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Éxito',
+              detail: 'Email enviado correctamente',
+            });
+          },
+          error: (error) => {
+            this.notificationLoading[item.id] = false;
+            console.error('Error sending email:', error);
+
+            let errorMessage = 'Error al enviar el email';
+            if (error.status === 500) {
+              errorMessage = 'Error interno del servidor. Inténtalo más tarde.';
+            } else if (error.status === 404) {
+              errorMessage = 'Reserva no encontrada.';
+            } else if (error.status === 403) {
+              errorMessage = 'No tienes permisos para enviar este email.';
+            }
+
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: errorMessage,
+            });
+          },
+        });
+    }
+  }
+
+  /**
+   * Envía una notificación de presupuesto utilizando el NotificationService.
+   * @param item El BookingItem que representa el presupuesto.
+   */
+  sendBudgetNotification(item: BookingItem): void {
     this.notificationLoading[item.id] = true;
 
-    // Get the logged user's email
-    const userEmail = this.authService.getUserEmailValue();
-
-    if (!userEmail) {
-      this.notificationLoading[item.id] = false;
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'No se pudo obtener el email del usuario logueado',
-      });
-      return;
-    }
-
-    // Prepare the request body
-    const requestBody = {
-      event: 'BUDGET',
-      email: userEmail,
+    const notificationData: NotificationRequest = {
+      reservationId: 13760,
+      code: "BUDGET",
+      email: "jiserte@differentroads.es"
     };
 
-    // Call the email service
-    this.emailSenderService
-      .sendReservationWithoutDocuments(parseInt(item.id, 10), requestBody)
-      .subscribe({
-        next: (response) => {
-          this.notificationLoading[item.id] = false;
+    this.notificationServicev2.sendNotification(notificationData).subscribe({
+      next: (response) => {
+        this.notificationLoading[item.id] = false;
+        if (response.success) {
           this.messageService.add({
             severity: 'success',
             summary: 'Éxito',
-            detail: 'Email enviado correctamente',
+            detail: 'Notificación de presupuesto enviada correctamente',
           });
-        },
-        error: (error) => {
-          this.notificationLoading[item.id] = false;
-          console.error('Error sending email:', error);
-
-          let errorMessage = 'Error al enviar el email';
-          if (error.status === 500) {
-            errorMessage = 'Error interno del servidor. Inténtalo más tarde.';
-          } else if (error.status === 404) {
-            errorMessage = 'Reserva no encontrada.';
-          } else if (error.status === 403) {
-            errorMessage = 'No tienes permisos para enviar este email.';
-          }
-
+          this.loadNotificationsForReservation(item.id); // Recargar notificaciones para el item
+        } else {
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
-            detail: errorMessage,
+            detail: response.message || 'Error al enviar la notificación de presupuesto',
           });
-        },
-      });
+        }
+      },
+      error: (error) => {
+        this.notificationLoading[item.id] = false;
+        console.error('Error sending budget notification:', error);
+        let errorMessage = 'Error al enviar la notificación de presupuesto';
+        if (error.status === 500) {
+          errorMessage = 'Error interno del servidor. Inténtalo más tarde.';
+        } else if (error.status === 404) {
+          errorMessage = 'Presupuesto no encontrado.';
+        }
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: errorMessage,
+        });
+      },
+    });
   }
 
   downloadItem(item: BookingItem) {
+    if (this.listType === 'recent-budgets') {
+      this.downloadBudgetDocument();
+      return;
+    }
     this.downloadLoading[item.id] = true;
 
     this.messageService.add({
@@ -634,6 +699,44 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
           });
         },
       });
+  }
+
+  downloadBudgetDocument(): void {
+    const BUDGET_ID = 13760; // ID predeterminado para el presupuesto
+    const TYPE_DOCUMENT = 'BUDGET';
+    this.documentServicev2.getDocumentInfo(BUDGET_ID, TYPE_DOCUMENT).subscribe({
+      next: (documentInfo) => {
+        const fileName = documentInfo.fileName;
+        
+        this.documentServicev2.getDocument(fileName).subscribe({
+          next: (blob) => {
+            
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+          },
+          error: (error) => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error al descargar documento',
+              detail: 'No se pudo descargar el documento. Por favor, inténtalo más tarde.'
+            });
+          }
+        });
+      },
+      error: (error) => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error al obtener información del documento',
+          detail: 'No se pudo obtener la información del documento. Por favor, inténtalo más tarde.'
+        });
+      }
+    });
   }
 
   reserveItem(item: BookingItem) {

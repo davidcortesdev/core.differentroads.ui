@@ -6,7 +6,10 @@ import {
   PaymentStatus,
 } from '../../../core/models/bookings/payment.model';
 import { PaymentData } from '../add-payment-modal/add-payment-modal.component';
-import { BookingsServiceV2, PaymentInfo } from '../../../core/services/v2/bookings-v2.service';
+import { BookingsServiceV2 } from '../../../core/services/v2/bookings-v2.service';
+import { PaymentService, PaymentInfo } from '../../../core/services/payments/payment.service';
+import { IPaymentStatusResponse } from '../../checkout-v2/services/paymentStatusNet.service';
+import { PaymentsNetService } from '../../checkout-v2/services/paymentsNet.service';
 
 // Interfaces existentes
 interface TripItemData {
@@ -32,6 +35,7 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   @Input() refreshTrigger: any = null;
   @Input() reservationId: number = 0; // NUEVO: Para payment-management
   @Input() departureDate: string = ''; // NUEVO: Para payment-management
+  @Input() isATC: boolean = false; // NUEVO: Para mostrar selector de estados
 
   @Output() registerPayment = new EventEmitter<number>();
 
@@ -46,6 +50,10 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   displayReviewModal: boolean = false;
   selectedReviewVoucherUrl: string = '';
   selectedPayment: Payment | null = null;
+  
+  // NUEVO: Estados de pago disponibles
+  paymentStatuses: IPaymentStatusResponse[] = [];
+  loadingStatuses: boolean = false;
 
   deadlines: {
     date: string;
@@ -70,7 +78,9 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   constructor(
     private fb: FormBuilder,
     private router: Router,
-    private bookingsService: BookingsServiceV2
+    private bookingsService: BookingsServiceV2,
+    private paymentService: PaymentService,
+    private paymentsNetService: PaymentsNetService
   ) {
     this.paymentForm = this.fb.group({
       amount: [0, [Validators.required, Validators.min(1)]],
@@ -80,6 +90,9 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   ngOnInit(): void {
     this.calculatePaymentInfo();
     this.loadPayments();
+    
+    // Cargar estados de pago desde la API (siempre, para todos)
+    this.loadPaymentStatuses();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -95,6 +108,11 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
     
     if (changes['refreshTrigger'] && changes['refreshTrigger'].currentValue) {
       this.refreshPayments();
+    }
+
+    // Cargar estados si aún no están cargados
+    if (changes['isATC'] && !this.paymentStatuses.length) {
+      this.loadPaymentStatuses();
     }
   }
 
@@ -231,7 +249,51 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
     }
   }
 
-  getStatusText(status: PaymentStatus | string): string {
-    return this.bookingsService.getPaymentStatusText(status);
+  /**
+   * Carga todos los estados de pago disponibles desde la API
+   */
+  private loadPaymentStatuses(): void {
+    this.loadingStatuses = true;
+    this.paymentService.getAllPaymentStatuses().subscribe({
+      next: (statuses) => {
+        this.paymentStatuses = statuses;
+        this.loadingStatuses = false;
+      },
+      error: (error) => {
+        console.error('Error cargando estados de pago:', error);
+        this.loadingStatuses = false;
+      }
+    });
+  }
+
+  /**
+   * Obtiene el nombre del estado para mostrar (directo desde la API)
+   */
+  getPaymentStatusDisplayName(payment: Payment): string {
+    if (!payment.paymentStatusId || this.paymentStatuses.length === 0) {
+      return ''; // No mostrar nada hasta que cargue la API
+    }
+    // Obtener el nombre directo desde la API
+    return this.paymentService.getPaymentStatusName(payment.paymentStatusId, this.paymentStatuses);
+  }
+
+  /**
+   * Actualiza el estado de un pago
+   */
+  onPaymentStatusChange(payment: Payment, statusId: number): void {
+    if (!payment.publicID) {
+      return;
+    }
+
+    this.paymentService.updatePaymentStatus(payment, statusId, this.reservationId).subscribe({
+      next: () => {
+        console.log('Estado de pago actualizado correctamente');
+        // Recargar los pagos
+        this.refreshPayments();
+      },
+      error: (error) => {
+        console.error('Error actualizando estado del pago:', error);
+      }
+    });
   }
 }

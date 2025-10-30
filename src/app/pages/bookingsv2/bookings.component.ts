@@ -125,6 +125,9 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
   private routerSubscription?: Subscription;
   private routeSubscription?: Subscription;
   
+  // Detectar si viene desde ATC
+  isATC: boolean = false;
+  
   // Trigger para refrescar el resumen
   summaryRefreshTrigger: any = null;
   reservation: IReservationResponse | null = null; // Objeto de reserva completo
@@ -229,6 +232,11 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.titleService.setTitle('Mis Reservas - Different Roads');
     this.messageService.clear();
+
+    // Detectar si viene desde ATC
+    this.route.queryParams.subscribe((queryParams) => {
+      this.isATC = queryParams['isATC'] === 'true';
+    });
 
     // Obtenemos el ID de la URL
     this.routeSubscription = this.route.params.subscribe((params) => {

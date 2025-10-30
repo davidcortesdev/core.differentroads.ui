@@ -101,9 +101,26 @@
                   <i class="pi pi-credit-card"></i> {{ item.method }}
                 </span>
                 <span class="amount">{{ item.amount | currencyFormat }}</span>
-                <span class="status">
+                
+                <!-- Selector de estado para ATC -->
+                <span class="status" *ngIf="isATC">
+                  <p-dropdown
+                    [options]="paymentStatuses"
+                    [(ngModel)]="item.paymentStatusId"
+                    optionLabel="name"
+                    optionValue="id"
+                    [placeholder]="getPaymentStatusDisplayName(item)"
+                    (onChange)="onPaymentStatusChange(item, $event.value)"
+                    [style]="{ minWidth: '180px' }"
+                    [disabled]="loadingStatuses || paymentStatuses.length === 0"
+                    appendTo="body"
+                  ></p-dropdown>
+                </span>
+                
+                <!-- Estado normal para no-ATC -->
+                <span class="status" *ngIf="!isATC">
                   <span class="status-text">
-                    {{ getStatusText(item.status) }}
+                    {{ getPaymentStatusDisplayName(item) }}
                   </span>
                   <button
                     *ngIf="
@@ -118,6 +135,7 @@
                     Ver
                   </button>
                 </span>
+                
                 <span class="notes" *ngIf="item.notes">
                   <i class="pi pi-comment"></i> {{ item.notes }}
                 </span>

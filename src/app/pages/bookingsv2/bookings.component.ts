@@ -128,9 +128,6 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
   // Detectar si viene desde ATC
   isATC: boolean = false;
   
-  // Detectar si viene desde ATC
-  isATC: boolean = false;
-  
   // Trigger para refrescar el resumen
   summaryRefreshTrigger: any = null;
   reservation: IReservationResponse | null = null; // Objeto de reserva completo

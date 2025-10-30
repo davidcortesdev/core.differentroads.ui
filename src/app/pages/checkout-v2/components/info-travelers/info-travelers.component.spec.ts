@@ -22,8 +22,9 @@ describe('InfoTravelersComponent', () => {
   });
 
   describe('canContinueToNextStep', () => {
-    it('should return false when no traveler forms are loaded', () => {
-      expect(component.canContinueToNextStep()).toBe(false);
+    it('should return false when no traveler forms are loaded', async () => {
+      const result = await component.canContinueToNextStep();
+      expect(result).toBe(false);
     });
 
     // TODO: Agregar más tests cuando se implementen mocks de los formularios

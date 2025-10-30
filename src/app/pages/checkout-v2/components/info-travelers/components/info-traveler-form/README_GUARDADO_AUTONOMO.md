@@ -69,6 +69,7 @@ Resultado en el formulario:
 5. **🔔 Notificaciones Discretas**: Toast sutiles cuando guarda automáticamente
 6. **🔄 Indicador Visual**: Muestra "Guardando automáticamente..." en el header
 7. **📊 Prioridad de Datos**: BD primero, perfil de usuario segundo
+8. **🔇 Guardado Silencioso**: No notifica al componente padre para evitar actualizaciones innecesarias
 
 ---
 
@@ -526,3 +527,53 @@ El componente `InfoTravelerFormComponent` ahora es:
 - 📊 **Debuggeable**: Logs completos para troubleshooting
 
 **¡El usuario solo necesita escribir y el componente hace el resto!** 🚀
+
+---
+
+## ⚠️ Cambio Importante: Guardado Silencioso
+
+**Desde la última actualización**, el componente ya **NO notifica** al componente padre cuando se guardan campos automáticamente. Esto significa:
+
+- ✅ **No más actualizaciones innecesarias** del componente padre
+- ✅ **Mejor performance** al evitar re-renderizados constantes
+- ✅ **Guardado más fluido** sin interrupciones en la UI
+- ✅ **Las validaciones siguen funcionando internamente**
+
+### Qué cambió:
+
+```typescript
+// ANTES: Se notificaba al padre en cada guardado
+private validateFormInRealTime(): void {
+  this.dataUpdated.emit(); // ❌ Eliminado
+}
+
+async saveData(): Promise<void> {
+  // ... lógica de guardado ...
+  this.dataUpdated.emit(); // ❌ Eliminado
+}
+
+// AHORA: Solo se guarda internamente, sin notificar
+private validateFormInRealTime(): void {
+  // La validación ocurre internamente sin notificar al padre
+}
+
+async saveData(): Promise<void> {
+  // ... lógica de guardado ...
+  // No se notifica al padre para evitar actualizaciones innecesarias
+}
+```
+
+### Impacto en el Componente Padre:
+
+- El componente padre ya **NO recibirá** eventos `dataUpdated` automáticos al guardar campos del formulario
+- Si necesitas detectar cambios desde el padre, usa los métodos públicos como `isReadyToContinue()`
+- ✅ **Las actividades SÍ siguen notificando** al padre cuando cambian (esto es intencional)
+
+### Comportamiento Específico:
+
+| Acción | ¿Notifica al Padre? | Razón |
+|--------|-------------------|-------|
+| **Escribir en campo de texto** | ❌ No | Evita actualizaciones constantes |
+| **Guardado automático de campo** | ❌ No | Guardado silencioso |
+| **Cambio de actividad** | ✅ Sí | Cambio importante que debe propagarse |
+| **Toggle de actividad** | ✅ Sí | Afecta el resumen y validaciones |

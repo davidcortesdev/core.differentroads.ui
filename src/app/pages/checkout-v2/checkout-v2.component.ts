@@ -621,6 +621,11 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       await this.roomSelector.reloadOnTravelersChange();
     }
     
+    // Recargar viajeros en el selector de seguros y actualizar asignaciones
+    if (this.insuranceSelector) {
+      await this.insuranceSelector.reloadOnTravelersChange();
+    }
+    
     // Disparar actualización del summary
     this.triggerSummaryRefresh();
   }
@@ -2114,7 +2119,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
       // ✅ NUEVO: Validar que todos los viajeros estén listos para continuar
       console.log('=== Validando viajeros antes de continuar al pago ===');
-      const allTravelersReady = this.infoTravelers.canContinueToNextStep();
+      const allTravelersReady = await this.infoTravelers.canContinueToNextStep();
 
       if (!allTravelersReady) {
         // ❌ Algunos viajeros no están listos

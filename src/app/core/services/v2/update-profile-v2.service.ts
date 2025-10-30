@@ -25,10 +25,11 @@ export class UpdateProfileV2Service {
    * Actualiza el perfil completo del usuario
    * @param userId - ID del usuario
    * @param personalInfo - Datos personales del usuario
+   * @param cognitoId - Datos del usuario en formato API
    * @returns Observable con el resultado de la actualización
    */
-  updateUserProfile(userId: string, personalInfo: PersonalInfo): Observable<PersonalInfo> {
-    const basicUserData = this.mapToBasicUserData(personalInfo);
+  updateUserProfile(userId: string, personalInfo: PersonalInfo, cognitoId?: string): Observable<PersonalInfo> {
+    const basicUserData = this.mapToBasicUserData(personalInfo,cognitoId);
     
     return this.updateBasicUserData(userId, basicUserData).pipe(
       switchMap(() => this.updateAdditionalFields(userId, personalInfo)),
@@ -184,11 +185,12 @@ export class UpdateProfileV2Service {
   /**
    * Mapea los datos personales a formato de datos básicos para la API
    * @param personalInfo - Datos personales del usuario
+   * @param cognitoId -id de cognito del usuario
    * @returns Datos formateados para la API
    */
-  private mapToBasicUserData(personalInfo: PersonalInfo): any {
+  private mapToBasicUserData(personalInfo: PersonalInfo, cognitoId?: string): any {
     return {
-      cognitoId: personalInfo.id?.toString() || '',
+      cognitoId: cognitoId || '',
       name: personalInfo.nombre || '',
       email: personalInfo.email || '',
       lastName: personalInfo.apellido || '',

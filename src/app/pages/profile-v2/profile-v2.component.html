@@ -13,7 +13,7 @@
     <!-- Contenido principal - solo se muestra cuando tenemos userId -->
     <div *ngIf="userId" class="profile-content">
       <div class="column left-column">
-        <app-personal-info-section-v2 [userId]="userId"></app-personal-info-section-v2>
+        <app-personal-info-section-v2 [userId]="userId" [cognitoId]="cognitoId"></app-personal-info-section-v2>
       </div>
       <div class="column right-column">
         <app-points-section-v2 [userId]="userId" #pointsSection></app-points-section-v2>

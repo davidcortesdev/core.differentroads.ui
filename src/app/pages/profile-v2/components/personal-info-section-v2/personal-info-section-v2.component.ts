@@ -12,6 +12,7 @@ import { PersonalInfoV2Service } from '../../../../core/services/v2/personal-inf
 })
 export class PersonalInfoSectionV2Component implements OnInit, OnChanges {
   @Input() userId: string = '';
+  @Input() cognitoId: string = '';
   personalInfo!: PersonalInfo;
   private originalPersonalInfo!: PersonalInfo; // Para almacenar datos originales
 
@@ -50,7 +51,6 @@ export class PersonalInfoSectionV2Component implements OnInit, OnChanges {
   loadUserData() {
     this.isLoading = true;
     this.errorMessage = '';
-    
     this.personalInfoService.getUserData(this.userId).subscribe({
       next: (data) => {
         this.personalInfo = data;

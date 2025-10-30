@@ -130,6 +130,7 @@
 <app-update-profile-section-v2 
   *ngIf="isEditing"
   [userId]="userId"
+  [cognitoId]="cognitoId"
   [personalInfo]="personalInfo"
   (cancelEdit)="toggleEditMode()"
   (profileUpdated)="onProfileUpdated()">

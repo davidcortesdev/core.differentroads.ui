@@ -19,6 +19,7 @@ export class ProfileV2Component implements OnInit, OnDestroy {
   @ViewChild('pointsSection') pointsSection?: PointsSectionV2Component;
   
   userId: string = '';
+  cognitoId: string = '';
   isLoadingUserId: boolean = true;
   private authSubscription?: Subscription;
 
@@ -38,7 +39,7 @@ export class ProfileV2Component implements OnInit, OnDestroy {
           console.warn('⚠️ No se encontró Cognito ID');
           return of([]);
         }
-        
+        this.cognitoId = cognitoId;
         // Buscar el usuario por Cognito ID para obtener su ID en la base de datos
         return this.usersNetService.getUsersByCognitoId(cognitoId);
       }),

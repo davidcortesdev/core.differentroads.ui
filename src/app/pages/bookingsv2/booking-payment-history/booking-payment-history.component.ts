@@ -55,6 +55,10 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   paymentStatuses: IPaymentStatusResponse[] = [];
   loadingStatuses: boolean = false;
 
+  // Estado local para selección y loading por pago
+  selectedStatusByPaymentId: { [publicID: string]: number } = {};
+  isChanging: { [publicID: string]: boolean } = {};
+
   deadlines: {
     date: string;
     amount: number;
@@ -134,6 +138,12 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
       .subscribe({
         next: (payments) => {
           this.paymentHistory = payments;
+          // Inicializar selección por cada pago al estado actual
+          this.paymentHistory.forEach(p => {
+            if (p.publicID) {
+              this.selectedStatusByPaymentId[p.publicID] = p.paymentStatusId || 0;
+            }
+          });
           this.calculatePaymentInfo();
           this.isLoadingPayments = false;
         },
@@ -278,22 +288,35 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   }
 
   /**
-   * Actualiza el estado de un pago
+   * Cambia el estado del pago usando el valor seleccionado en el selector
    */
-  onPaymentStatusChange(payment: Payment, statusId: number): void {
-    if (!payment.publicID) {
-      return;
-    }
+  onChangeStatusClick(payment: Payment): void {
+    if (!payment.publicID) return;
+    const selectedId = this.selectedStatusByPaymentId[payment.publicID];
+    if (!selectedId || selectedId === payment.paymentStatusId) return;
 
-    this.paymentService.updatePaymentStatus(payment, statusId, this.reservationId).subscribe({
+    this.isChanging[payment.publicID] = true;
+    this.paymentService.updatePaymentStatus(payment, selectedId, this.reservationId).subscribe({
       next: () => {
-        console.log('Estado de pago actualizado correctamente');
-        // Recargar los pagos
+        // Recargar los pagos para que la label se actualice desde BBDD
         this.refreshPayments();
+        this.isChanging[payment.publicID] = false;
       },
       error: (error) => {
         console.error('Error actualizando estado del pago:', error);
+        this.isChanging[payment.publicID] = false;
       }
     });
+  }
+
+  isChangeDisabled(payment: Payment): boolean {
+    if (!payment.publicID) return true;
+    const selectedId = this.selectedStatusByPaymentId[payment.publicID];
+    return (
+      this.loadingStatuses ||
+      this.isChanging[payment.publicID] === true ||
+      !selectedId ||
+      selectedId === payment.paymentStatusId
+    );
   }
 }

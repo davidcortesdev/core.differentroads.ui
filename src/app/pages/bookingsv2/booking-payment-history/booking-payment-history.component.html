@@ -96,50 +96,44 @@
 
             <!-- Payment history list -->
             <div *ngIf="!isLoadingPayments">
-              <div *ngFor="let item of paymentHistory" class="history-item">
+              <div *ngFor="let item of paymentHistory" class="history-item" style="display: flex; align-items: center; gap: 1rem;">
                 <span class="method" *ngIf="item.method">
                   <i class="pi pi-credit-card"></i> {{ item.method }}
                 </span>
                 <span class="amount">{{ item.amount | currencyFormat }}</span>
-                
-                <!-- Selector de estado para ATC -->
-                <span class="status" *ngIf="isATC">
-                  <p-dropdown
-                    [options]="paymentStatuses"
-                    [(ngModel)]="item.paymentStatusId"
-                    optionLabel="name"
-                    optionValue="id"
-                    [placeholder]="getPaymentStatusDisplayName(item)"
-                    (onChange)="onPaymentStatusChange(item, $event.value)"
-                    [style]="{ minWidth: '180px' }"
-                    [disabled]="loadingStatuses || paymentStatuses.length === 0"
-                    appendTo="body"
-                  ></p-dropdown>
+
+                <!-- Label del estado actual (desde BBDD) -->
+                <span class="status-text">
+                  <p-tag [value]="getPaymentStatusDisplayName(item)" severity="info"></p-tag>
                 </span>
-                
-                <!-- Estado normal para no-ATC -->
-                <span class="status" *ngIf="!isATC">
-                  <span class="status-text">
-                    {{ getPaymentStatusDisplayName(item) }}
-                  </span>
-                  <button
-                    *ngIf="
-                      isTO &&
-                      item.status === 'PENDING_REVIEW' &&
-                      item?.vouchers && item.vouchers.length > 0
-                    "
-                    type="button"
-                    class="p-button p-component p-button-text"
-                    (click)="showReviewModal(item)"
-                  >
-                    Ver
-                  </button>
-                </span>
-                
+
                 <span class="notes" *ngIf="item.notes">
                   <i class="pi pi-comment"></i> {{ item.notes }}
                 </span>
                 <span class="date">{{ item.createdAt | date }}</span>
+
+                <!-- Acciones a la derecha -->
+                <span class="actions" *ngIf="isATC" style="margin-left: auto; display: inline-flex; gap: .5rem; align-items: center;">
+                  <p-dropdown
+                    [options]="paymentStatuses"
+                    [(ngModel)]="selectedStatusByPaymentId[item.publicID]"
+                    optionLabel="name"
+                    optionValue="id"
+                    [placeholder]="getPaymentStatusDisplayName(item)"
+                    [style]="{ minWidth: '200px' }"
+                    [disabled]="loadingStatuses || paymentStatuses.length === 0 || isChanging[item.publicID]"
+                    appendTo="body"
+                  ></p-dropdown>
+                  <button
+                    pButton
+                    label="Cambiar estado"
+                    icon="pi pi-check"
+                    class="p-button-outlined"
+                    [disabled]="isChangeDisabled(item)"
+                    [loading]="isChanging[item.publicID]"
+                    (click)="onChangeStatusClick(item)"
+                  ></button>
+                </span>
               </div>
               <div
                 *ngIf="!paymentHistory || paymentHistory.length === 0"

@@ -57,9 +57,9 @@ export class BookingsServiceV2 {
 
     return this.http.get<ReservationResponse[]>(this.API_URL, { params }).pipe(
       map((reservations: ReservationResponse[]) => {
+        // Activas: 4 (RQ), 5 (BOOKED), 6 (CONFIRMED), 11 (PREBOOKED)
         const filtered = reservations.filter(reservation => 
-          reservation.reservationStatusId === 1 || 
-          reservation.reservationStatusId === 2 || 
+          reservation.reservationStatusId === 4 ||
           reservation.reservationStatusId === 5 || 
           reservation.reservationStatusId === 6 ||
           reservation.reservationStatusId === 11
@@ -67,6 +67,23 @@ export class BookingsServiceV2 {
         
         return filtered;
       })
+    );
+  }
+
+  /**
+   * Obtiene reservas pendientes (estados 1: DRAFT y 2: CART)
+   */
+  getPendingBookings(userId: number): Observable<ReservationResponse[]> {
+    const params = new HttpParams()
+      .set('UserId', userId.toString())
+      .set('useExactMatchForStrings', 'false');
+
+    return this.http.get<ReservationResponse[]>(this.API_URL, { params }).pipe(
+      map((reservations: ReservationResponse[]) =>
+        reservations.filter(reservation => 
+          reservation.reservationStatusId === 1 || reservation.reservationStatusId === 2
+        )
+      )
     );
   }
 
@@ -218,16 +235,16 @@ export class BookingsServiceV2 {
    */
   getActiveBookingsByTravelerEmail(email: string): Observable<ReservationResponse[]> {
     return this.getReservationsByTravelerEmail(email).pipe(
-      map((reservations: ReservationResponse[]) => 
-        reservations.filter(reservation => 
-          reservation.reservationStatusId === 1 || 
-          reservation.reservationStatusId === 2 || 
-          reservation.reservationStatusId === 5 || 
-          reservation.reservationStatusId === 6 || 
-          reservation.reservationStatusId === 7 ||
+      map((reservations: ReservationResponse[]) => {
+        // Activas para viajero: 4 (RQ), 5 (BOOKED), 6 (CONFIRMED), 11 (PREBOOKED)
+        const filtered = reservations.filter(reservation =>
+          reservation.reservationStatusId === 4 ||
+          reservation.reservationStatusId === 5 ||
+          reservation.reservationStatusId === 6 ||
           reservation.reservationStatusId === 11
-        )
-      )
+        );
+        return filtered;
+      })
     );
   }
 

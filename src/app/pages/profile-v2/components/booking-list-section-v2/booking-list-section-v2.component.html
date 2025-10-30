@@ -99,14 +99,16 @@
               <!-- Action buttons -->
               <div class="buttons">
                 <div class="top-buttons">
-                  <p-button *ngIf="shouldShowDownload()" 
+                  <p-button *ngIf="shouldShowDownload(item)" 
                     [label]="getDownloadLabel()" 
                     styleClass="p-button-outlined" 
+                    [disabled]="isCartInProcess(item)"
                     [loading]="downloadLoading[item.id]"
                     (click)="downloadItem(item)"></p-button>
-                  <p-button *ngIf="shouldShowSend()" 
+                  <p-button *ngIf="shouldShowSend(item)" 
                     [label]="getSendLabel()" 
                     styleClass="sendbtn"
+                    [disabled]="isCartInProcess(item)"
                     [loading]="notificationLoading[item.id]"
                     (click)="sendItem(item)"></p-button>
                 </div>
@@ -115,7 +117,7 @@
                     [label]="getViewLabel()" 
                     styleClass="p-button-rounded" 
                     (click)="viewItem(item)"></p-button>
-                  <p-button *ngIf="shouldShowReserve()" 
+                  <p-button *ngIf="shouldShowReserve(item)" 
                     [label]="getReserveLabel()" 
                     styleClass="p-button-rounded" 
                     (click)="reserveItem(item)"></p-button>

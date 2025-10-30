@@ -172,8 +172,8 @@
           </small>
         </div>
         
-        <!-- Campo de tarifa -->
-        <div class="p-field">
+        <!-- Campo de tarifa (solo visible para ATC) -->
+        <div class="p-field" *ngIf="isATC">
           <label for="cancelationFee">
             Tarifa de cancelación <span class="text-red-500">*</span>
           </label>

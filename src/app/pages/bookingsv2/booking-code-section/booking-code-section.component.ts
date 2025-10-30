@@ -40,6 +40,6 @@ export class BookingCodeSectionV2Component implements OnInit {
   }
 
   get showCancelButton(): boolean {
-    return this.isATC;
+    return true; // Siempre mostrar el botón
   }
 }

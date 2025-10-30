@@ -234,7 +234,7 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
     
     this.cancelForm = this.fb.group({
       comentario: ['', [Validators.required]],
-      cancelationFee: [0, [Validators.required, Validators.min(0)]],
+      cancelationFee: [0, [Validators.min(0)]], // No requerido por defecto
     });
   }
 
@@ -245,6 +245,15 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
     // Detectar si viene desde ATC
     this.route.queryParams.subscribe((queryParams) => {
       this.isATC = queryParams['isATC'] === 'true';
+      
+      // Actualizar validaciones del formulario según si es ATC
+      const cancelationFeeControl = this.cancelForm.get('cancelationFee');
+      if (this.isATC) {
+        cancelationFeeControl?.setValidators([Validators.required, Validators.min(0)]);
+      } else {
+        cancelationFeeControl?.setValidators([Validators.min(0)]);
+      }
+      cancelationFeeControl?.updateValueAndValidity();
     });
 
     // Obtenemos el ID de la URL

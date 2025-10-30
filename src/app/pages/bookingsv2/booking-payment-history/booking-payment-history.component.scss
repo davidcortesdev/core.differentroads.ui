@@ -1,3 +1,22 @@
+// Botón "Cambiar estado" con estilo naranja y texto blanco
+:host ::ng-deep .status-change-btn.p-button {
+  background-color: #ea6a5c;
+  border: none;
+  color: #ffffff;
+  border-radius: 9999px; // pill shape similar al ejemplo
+  padding: 0.6rem 1.2rem;
+  font-weight: 600;
+
+  &:hover {
+    background-color: #e65e50;
+    color: #ffffff;
+  }
+
+  &:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+  }
+}
 .payment-history-container {
   --p-panel-background: var(--background-azul-color-letra);
   --p-panel-color: var(--background-azul);

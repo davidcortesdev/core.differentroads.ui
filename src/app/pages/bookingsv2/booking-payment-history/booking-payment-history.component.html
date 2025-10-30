@@ -126,9 +126,8 @@
                   ></p-dropdown>
                   <button
                     pButton
-                    label="Cambiar estado"
-                    icon="pi pi-check"
-                    class="p-button-outlined"
+                    label="Aceptar"
+                    class="status-change-btn"
                     [disabled]="isChangeDisabled(item)"
                     [loading]="isChanging[item.publicID]"
                     (click)="onChangeStatusClick(item)"

@@ -8,12 +8,7 @@ import { Payment, PaymentStatus, IPaymentVoucher, VoucherReviewStatus } from '..
 import { PaymentsNetService, IPaymentResponse } from '../../../pages/checkout-v2/services/paymentsNet.service';
 import { PaymentStatusNetService, IPaymentStatusResponse } from '../../../pages/checkout-v2/services/paymentStatusNet.service';
 import { PaymentMethodNetService, IPaymentMethodResponse } from '../../../pages/checkout-v2/services/paymentMethodNet.service';
-
-export interface PaymentInfo {
-  totalPrice: number;
-  pendingAmount: number;
-  paidAmount: number;
-}
+import { PaymentService, PaymentInfo } from '../payments/payment.service';
 
 
 @Injectable({
@@ -31,7 +26,8 @@ export class BookingsServiceV2 {
     private http: HttpClient,
     private paymentsNetService: PaymentsNetService,
     private paymentStatusService: PaymentStatusNetService,
-    private paymentMethodService: PaymentMethodNetService
+    private paymentMethodService: PaymentMethodNetService,
+    private paymentService: PaymentService
   ) {
     this.loadPaymentStatusAndMethods();
   }
@@ -325,6 +321,7 @@ export class BookingsServiceV2 {
         status: this.mapPaymentStatus(payment.paymentStatusId),
         method: this.paymentMethodMap[payment.paymentMethodId] || 'Desconocido',
         paymentMethodId: payment.paymentMethodId,
+        paymentStatusId: payment.paymentStatusId, // NUEVO: Incluir el ID del estado
         notes: payment.notes,
         createdAt: new Date(payment.paymentDate).toISOString(),
         updatedAt: new Date(payment.paymentDate).toISOString(),
@@ -375,26 +372,20 @@ export class BookingsServiceV2 {
 
   /**
    * Calcula la información de pagos (total, pendiente, pagado)
+   * Delegado al PaymentService
    */
   calculatePaymentInfo(payments: Payment[], bookingTotal: number): PaymentInfo {
-    // Calcular el total pagado desde paymentHistory
-    const totalPaid = payments
-      .filter(p => p.status === PaymentStatus.COMPLETED)
-      .reduce((sum, p) => sum + p.amount, 0);
-    
-    return {
-      totalPrice: bookingTotal || 0,
-      pendingAmount: Math.max(0, (bookingTotal || 0) - totalPaid),
-      paidAmount: totalPaid,
-    };
+    return this.paymentService.calculatePaymentInfo(payments, bookingTotal);
   }
 
   /**
-   * Obtiene el texto del estado de un pago
+   * Obtiene el texto del estado de un pago (FALLBACK hardcodeado para compatibilidad)
+   * NOTA: Para obtener el estado desde la API, usar PaymentService.getPaymentStatusName()
    */
   getPaymentStatusText(status: PaymentStatus | string): string {
     const paymentStatus = typeof status === 'string' ? status as PaymentStatus : status;
     
+    // Mapeo hardcodeado solo como fallback para componentes legacy
     switch (paymentStatus) {
       case PaymentStatus.COMPLETED:
         return 'Completado';

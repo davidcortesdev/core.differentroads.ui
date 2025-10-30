@@ -7,12 +7,7 @@ import { PaymentStatusNetService } from '../../checkout-v2/services/paymentStatu
 import { PaymentMethodNetService } from '../../checkout-v2/services/paymentMethodNet.service';
 import { NewRedsysService, IFormData } from '../../checkout-v2/services/newRedsys.service';
 import { CurrencyService } from '../../../core/services/masterdata/currency.service';
-
-export interface PaymentInfo {
-  totalPrice: number;
-  pendingAmount: number;
-  paidAmount: number;
-}
+import { PaymentService, PaymentInfo } from '../../../core/services/payments/payment.service';
 
 export interface PaymentData {
   amount: number;
@@ -52,7 +47,8 @@ export class AddPaymentModalComponent implements OnInit {
     private readonly paymentStatusService: PaymentStatusNetService,
     private readonly paymentMethodService: PaymentMethodNetService,
     private readonly redsysService: NewRedsysService,
-    private readonly currencyService: CurrencyService
+    private readonly currencyService: CurrencyService,
+    private readonly paymentService: PaymentService
   ) {}
 
   ngOnInit(): void {
@@ -104,14 +100,13 @@ export class AddPaymentModalComponent implements OnInit {
   validatePaymentAmount(): void {
     this.paymentAmountError = '';
     
-    if (!this.customPaymentAmount || this.customPaymentAmount <= 0) {
-      this.paymentAmountError = 'La cantidad debe ser mayor a 0';
-      return;
-    }
+    const validation = this.paymentService.validatePaymentAmount(
+      this.customPaymentAmount, 
+      this.paymentInfo.pendingAmount
+    );
     
-    if (this.customPaymentAmount > this.paymentInfo.pendingAmount) {
-      this.paymentAmountError = `La cantidad no puede exceder el monto pendiente (${this.formatCurrency(this.paymentInfo.pendingAmount)})`;
-      return;
+    if (!validation.valid) {
+      this.paymentAmountError = validation.error || '';
     }
   }
 
@@ -316,7 +311,7 @@ export class AddPaymentModalComponent implements OnInit {
   }
 
   formatCurrency(amount: number): string {
-    return `${amount.toLocaleString('es-ES')} €`;
+    return this.paymentService.formatCurrency(amount);
   }
 }
 

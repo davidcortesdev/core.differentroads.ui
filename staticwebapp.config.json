@@ -1,9 +1,9 @@
 {
   "routes": [
     {
-      "route": "/scalapay-api/v2/orders",
+      "route": "/scalapay-api/v2/orders123412412",
       "methods": ["POST", "GET"],
-      "redirect": "https://integration.api.scalapay.com/v2/orders",
+      "redirect": "https://integration.api.scalapay.com/v2/orders4124124",
       "statusCode": 302
     },
     {

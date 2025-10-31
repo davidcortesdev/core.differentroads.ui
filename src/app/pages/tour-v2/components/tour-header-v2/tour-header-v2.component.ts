@@ -836,7 +836,6 @@ export class TourHeaderV2Component
     // Bloquear desde checkout: este botón solo debe funcionar en la página del tour
     const currentUrl = this.router.url || window.location.pathname || '';
     if (currentUrl.startsWith('/checkout')) {
-      console.warn('⛔ onBookingClick ignorado: estamos en checkout');
       return;
     }
 
@@ -864,7 +863,6 @@ export class TourHeaderV2Component
 
     // Evitar clicks repetidos solo mientras se está creando la reserva
     if (this.isCreatingReservation) {
-      console.warn('⚠️ Ya hay una reserva en proceso, ignorando click duplicado');
       return;
     }
 
@@ -1068,13 +1066,11 @@ export class TourHeaderV2Component
     // Defensa en profundidad: nunca crear desde checkout, aunque alguien llame directo
     const currentUrl = this.router.url || window.location.pathname || '';
     if (currentUrl.startsWith('/checkout')) {
-      console.warn('⛔ createReservation ignorado: estamos en checkout');
       return;
     }
 
     // Reentrada: si ya estamos creando, salir
     if (this.isCreatingReservation) {
-      console.warn('⚠️ createReservation ignorado: ya hay una reserva en proceso');
       return;
     }
     this.isCreatingReservation = true;

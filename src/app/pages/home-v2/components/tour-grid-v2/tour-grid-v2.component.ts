@@ -19,6 +19,7 @@ import {
   forkJoin,
 } from 'rxjs';
 import { TourDataV2 } from '../../../../shared/components/tour-card-v2/tour-card-v2.model';
+import { AnalyticsService, EcommerceItem } from '../../../../core/services/analytics/analytics.service';
 
 // Servicios para filtros por tag y ubicación
 import { TourTagService } from '../../../../core/services/tag/tour-tag.service';
@@ -124,6 +125,9 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
   
   // ✅ DEBUG: Flag para controlar logs de debug (cambiar a false en producción)
   private readonly DEBUG_MODE = false;
+  // Control de disparo del evento durante la carga inicial
+  private hasFiredInitialViewItemList: boolean = false;
+  private isInitialLoadingView: boolean = false;
 
   constructor(
     private readonly tourService: TourService,
@@ -131,7 +135,8 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
     private readonly tourTagService: TourTagService,
     private readonly departureService: DepartureService,
     private readonly itineraryService: ItineraryService,
-    private readonly itineraryDayService: ItineraryDayService
+    private readonly itineraryDayService: ItineraryDayService,
+    private readonly analyticsService: AnalyticsService
   ) {}
 
   ngOnInit(): void {
@@ -163,6 +168,9 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     // Si cambian los IDs de tours, recargar
     if (changes['tourIds'] && !changes['tourIds'].firstChange) {
+      // Reiniciar control de evento para nueva carga
+      this.hasFiredInitialViewItemList = false;
+      this.isInitialLoadingView = true;
       this.loadTours();
     }
   }
@@ -218,6 +226,18 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
 
     // Actualizar la lista de tours mostrados
     this.tours = filteredTours;
+
+    // Disparar evento view_item_list
+    // - Durante carga inicial: solo una vez cuando hay elementos
+    // - Después de carga inicial (filtros/orden): en cada cambio
+    if (this.isInitialLoadingView) {
+      if (!this.hasFiredInitialViewItemList && this.tours.length > 0) {
+        this.trackViewItemList(this.tours);
+        this.hasFiredInitialViewItemList = true;
+      }
+    } else {
+      this.trackViewItemList(this.tours);
+    }
 
     // Emitir evento de cambio (para compatibilidad con componentes existentes)
     this.filterChange.emit({
@@ -363,6 +383,8 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
       : this.tourIds;
     
     this.isLoading = true;
+    this.isInitialLoadingView = true;
+    this.hasFiredInitialViewItemList = false;
     this.tours = [];
     this.allTours = [];
 
@@ -434,7 +456,7 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
           }
           // Guardar todos los tours sin filtrar
           this.allTours = accumulatedTours;
-          // Aplicar filtros y ordenamiento
+          // Aplicar filtros y ordenamiento (esto disparará el evento view_item_list)
           this.applyFiltersAndSort();
         },
         complete: () => {
@@ -442,6 +464,8 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
             console.log('✅ Carga de tours completada');
           }
           this.isLoading = false;
+          // A partir de aquí, siguientes cambios son por filtros/orden
+          this.isInitialLoadingView = false;
         },
         error: (error) => {
           console.error('❌ Error en la carga de tours:', error);
@@ -658,5 +682,86 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
     };
 
     return mappedTour;
+  }
+
+  /**
+   * Convierte un array de TourDataV2 a EcommerceItem[] para analytics
+   */
+  private convertToursToEcommerceItems(tours: TourDataV2[]): EcommerceItem[] {
+    return tours.map((tour, index) => {
+      // Calcular duración: si hay itineraryDaysCount, formatear como "X días" o "X días, Y noches"
+      let duracion = '';
+      if (tour.itineraryDaysCount) {
+        // Intentar extraer noches del texto si está disponible, o calcular
+        const days = tour.itineraryDaysCount;
+        const nights = days > 0 ? days - 1 : 0; // Por defecto, noches = días - 1
+        duracion = nights > 0 ? `${days} días, ${nights} noches` : `${days} días`;
+      }
+
+      // Determinar item_category5 (tipología de viaje)
+      let itemCategory5 = '';
+      if (tour.tripType && tour.tripType.length > 0) {
+        itemCategory5 = tour.tripType.join(', ');
+      } else {
+        // Fallback: usar isByDr si está disponible
+        itemCategory5 = tour.isByDr ? 'Grupos' : 'Privados';
+      }
+
+      return {
+        item_id: tour.id?.toString() || '',
+        item_name: tour.title || '',
+        coupon: '',
+        discount: 0,
+        index: index + 1, // GA4 usa índice basado en 1
+        item_brand: 'Different Roads',
+        item_category: tour.continent || '',
+        item_category2: tour.country || '',
+        item_category3: tour.tag || '',
+        item_category4: tour.availableMonths?.join(', ') || '',
+        item_category5: itemCategory5,
+        item_list_id: this.itemListId,
+        item_list_name: this.itemListName,
+        item_variant: '',
+        price: tour.price || 0,
+        quantity: 1,
+        puntuacion: tour.rating?.toString() || '5.0',
+        duracion: duracion
+      };
+    });
+  }
+
+  /**
+   * Dispara el evento view_item_list cuando el usuario visualiza una lista de tours
+   */
+  private trackViewItemList(tours: TourDataV2[]): void {
+    // Solo disparar si hay tours para mostrar y tenemos itemListId/itemListName
+    if (!tours || tours.length === 0 || !this.itemListId || !this.itemListName) {
+      return;
+    }
+
+    // Convertir tours a formato EcommerceItem
+    const items = this.convertToursToEcommerceItems(tours);
+
+    // Obtener datos del usuario y disparar evento
+    this.analyticsService.getCurrentUserData().subscribe({
+      next: (userData) => {
+        this.analyticsService.viewItemList(
+          this.itemListId,
+          this.itemListName,
+          items,
+          userData
+        );
+      },
+      error: (error) => {
+        console.error('Error obteniendo datos de usuario para analytics:', error);
+        // Disparar evento sin datos de usuario en caso de error
+        this.analyticsService.viewItemList(
+          this.itemListId,
+          this.itemListName,
+          items,
+          undefined
+        );
+      }
+    });
   }
 }

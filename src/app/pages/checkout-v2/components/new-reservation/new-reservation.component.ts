@@ -574,7 +574,6 @@ export class NewReservationComponent implements OnInit {
           );
         },
         error: (error) => {
-          console.error('Error updating payment with voucher:', error);
           // Revertir si falla
           const index = this.uploadedVouchers.findIndex(v => v.url === response.secure_url);
           if (index > -1) {
@@ -597,7 +596,6 @@ export class NewReservationComponent implements OnInit {
   handleVoucherError(error: any): void {
     // Limpiar el archivo pendiente en caso de error
     this.pendingFileToConfirm = null;
-    console.error('Error uploading voucher:', error);
     this.showMessage(
       'error',
       'Error de subida',

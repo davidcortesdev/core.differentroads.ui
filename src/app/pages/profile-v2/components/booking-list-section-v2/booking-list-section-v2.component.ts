@@ -857,58 +857,56 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
 
   downloadReservationDocument(item: BookingItem): void {
     const RESERVATION_ID = parseInt(item.id, 10);
-    const TYPE_DOCUMENT = 'RESERVATION_VOUCHER';
     
     this.downloadLoading[item.id] = true;
     
-    this.documentServicev2.getDocumentInfo(RESERVATION_ID, TYPE_DOCUMENT).subscribe({
-      next: (documentInfo) => {
-        const fileName = documentInfo.fileName;
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Info',
+      detail: 'Generando voucher de reserva...',
+    });
+    
+    this.documentServicev2.getReservationVoucherDocument(RESERVATION_ID).subscribe({
+      next: (blob) => {
+        this.downloadLoading[item.id] = false;
         
-        this.documentServicev2.getDocument(fileName).subscribe({
-          next: (blob) => {
-            this.downloadLoading[item.id] = false;
-            
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-            
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Éxito',
-              detail: 'Voucher de reserva descargado exitosamente',
-            });
-          },
-          error: (error) => {
-            this.downloadLoading[item.id] = false;
-            console.error('Error al descargar documento:', error);
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Error al descargar documento',
-              detail: 'No se pudo descargar el documento. Por favor, inténtalo más tarde.'
-            });
-          }
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `voucher_reserva_${item.id}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Éxito',
+          detail: 'Voucher de reserva descargado exitosamente',
         });
       },
       error: (error) => {
         this.downloadLoading[item.id] = false;
-        console.error('Error al obtener información del documento:', error);
+        console.error('Error al descargar voucher de reserva:', error);
         
-        let errorDetail = 'No se pudo obtener la información del documento.';
+        let errorDetail = 'No se pudo descargar el voucher de reserva.';
         
-        // Manejo específico para el error de viajero no encontrado
-        if (error.status === 500 && error.error?.message?.includes('KeyNotFoundException')) {
-          errorDetail = 'Hay datos incompletos en esta reserva. Por favor, contacta con soporte.';
+        // Manejo específico de errores
+        if (error.status === 500) {
+          if (error.error?.message?.includes('KeyNotFoundException')) {
+            errorDetail = 'Hay datos incompletos en esta reserva. Por favor, contacta con soporte.';
+          } else {
+            errorDetail = 'Error interno del servidor. Inténtalo más tarde.';
+          }
+        } else if (error.status === 404) {
+          errorDetail = 'Voucher de reserva no encontrado.';
+        } else if (error.status === 403) {
+          errorDetail = 'No tienes permisos para descargar este documento.';
         }
         
         this.messageService.add({
           severity: 'error',
-          summary: 'Error al obtener información del documento',
+          summary: 'Error al descargar documento',
           detail: errorDetail
         });
       }

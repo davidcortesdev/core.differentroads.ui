@@ -209,17 +209,22 @@ export class AnalyticsService {
    * Se dispara cuando el usuario añade un artículo a favoritos
    */
   addToWishlist(
-    itemListId: string,
+    itemListId: string | number,
     itemListName: string,
     item: EcommerceItem,
     userData?: UserData
   ): void {
     this.clearEcommerce();
+    // Convertir item_list_id a número si es string
+    const numericItemListId = typeof itemListId === 'string' 
+      ? (isNaN(Number(itemListId)) ? 0 : Number(itemListId))
+      : itemListId;
+    
     this.pushEvent({
       event: 'add_to_wishlist',
       user_data: userData || {},
       ecommerce: {
-        item_list_id: itemListId,
+        item_list_id: numericItemListId,
         item_list_name: itemListName,
         items: [item]
       }
@@ -618,6 +623,16 @@ export class AnalyticsService {
       return phone;
     }
     return `${countryCode}${phone}`;
+  }
+
+  /**
+   * Formatea la puntuación con un decimal (ej: 4 → "4.0", 4.6 → "4.6")
+   */
+  formatRating(rating: number | undefined | null, defaultValue: string = '5.0'): string {
+    if (rating === undefined || rating === null) {
+      return defaultValue;
+    }
+    return rating.toFixed(1);
   }
 
 

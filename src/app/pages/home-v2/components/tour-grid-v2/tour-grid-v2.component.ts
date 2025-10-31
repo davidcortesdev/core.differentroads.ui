@@ -17,12 +17,15 @@ import {
   concatMap,
   scan,
   forkJoin,
+  switchMap,
 } from 'rxjs';
 import { TourDataV2 } from '../../../../shared/components/tour-card-v2/tour-card-v2.model';
 import { AnalyticsService, EcommerceItem } from '../../../../core/services/analytics/analytics.service';
 
 // Servicios para filtros por tag y ubicación
 import { TourTagService } from '../../../../core/services/tag/tour-tag.service';
+import { TourLocationService, ITourLocationResponse } from '../../../../core/services/tour/tour-location.service';
+import { LocationNetService, Location } from '../../../../core/services/locations/locationNet.service';
 
 // Servicios para fechas y tags
 import {
@@ -136,7 +139,9 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
     private readonly departureService: DepartureService,
     private readonly itineraryService: ItineraryService,
     private readonly itineraryDayService: ItineraryDayService,
-    private readonly analyticsService: AnalyticsService
+    private readonly analyticsService: AnalyticsService,
+    private readonly tourLocationService: TourLocationService,
+    private readonly locationService: LocationNetService
   ) {}
 
   ngOnInit(): void {
@@ -201,8 +206,9 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
 
   /**
    * Aplica todos los filtros y ordenamiento a la lista de tours
+   * @param shouldTrackEvent Si es true, dispara el evento view_item_list (por defecto true para cambios de filtros)
    */
-  private applyFiltersAndSort(): void {
+  private applyFiltersAndSort(shouldTrackEvent: boolean = true): void {
     // Comenzar con todos los tours
     let filteredTours = [...this.allTours];
 
@@ -227,15 +233,10 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
     // Actualizar la lista de tours mostrados
     this.tours = filteredTours;
 
-    // Disparar evento view_item_list
-    // - Durante carga inicial: solo una vez cuando hay elementos
-    // - Después de carga inicial (filtros/orden): en cada cambio
-    if (this.isInitialLoadingView) {
-      if (!this.hasFiredInitialViewItemList && this.tours.length > 0) {
-        this.trackViewItemList(this.tours);
-        this.hasFiredInitialViewItemList = true;
-      }
-    } else {
+    // Disparar evento view_item_list solo si se solicita
+    // - Durante carga inicial: NO se dispara aquí, se dispara en complete()
+    // - Después de carga inicial (filtros/orden): se dispara en cada cambio
+    if (shouldTrackEvent && !this.isInitialLoadingView && this.tours.length > 0) {
       this.trackViewItemList(this.tours);
     }
 
@@ -421,6 +422,8 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
                     departures: IDepartureResponse[];
                     tags: string[];
                     itineraryDays: IItineraryDayResponse[];
+                    continent: string;
+                    country: string;
                   };
                 } | null
               ): TourDataV2 | null => {
@@ -456,14 +459,19 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
           }
           // Guardar todos los tours sin filtrar
           this.allTours = accumulatedTours;
-          // Aplicar filtros y ordenamiento (esto disparará el evento view_item_list)
-          this.applyFiltersAndSort();
+          // Aplicar filtros y ordenamiento (pero NO disparar evento todavía)
+          this.applyFiltersAndSort(false);
         },
         complete: () => {
           if (this.DEBUG_MODE) {
             console.log('✅ Carga de tours completada');
           }
           this.isLoading = false;
+          // Disparar evento view_item_list cuando la carga está completa y la lista es visible
+          if (this.tours.length > 0 && !this.hasFiredInitialViewItemList) {
+            this.trackViewItemList(this.tours);
+            this.hasFiredInitialViewItemList = true;
+          }
           // A partir de aquí, siguientes cambios son por filtros/orden
           this.isInitialLoadingView = false;
         },
@@ -475,12 +483,14 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
-   * Obtiene datos adicionales del tour (departures, tags, días de itinerario)
+   * Obtiene datos adicionales del tour (departures, tags, días de itinerario, continent, country)
    */
   private getAdditionalTourData(tourId: number): Observable<{
     departures: IDepartureResponse[];
     tags: string[];
     itineraryDays: IItineraryDayResponse[];
+    continent: string;
+    country: string;
   }> {
     const itineraryFilters: ItineraryFilters = {
       tourId: tourId,
@@ -492,11 +502,63 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
     return this.itineraryService.getAll(itineraryFilters, false).pipe(
       concatMap((itineraries: IItineraryResponse[]) => {
         if (itineraries.length === 0) {
-          return of({
-            departures: [],
-            tags: [],
-            itineraryDays: [],
-          });
+          // Obtener continent y country incluso si no hay itinerarios
+          return forkJoin({
+            countryLocations: this.tourLocationService.getByTourAndType(tourId, 'COUNTRY').pipe(
+              map((response) => Array.isArray(response) ? response : response ? [response] : []),
+              catchError(() => of([] as ITourLocationResponse[]))
+            ),
+            continentLocations: this.tourLocationService.getByTourAndType(tourId, 'CONTINENT').pipe(
+              map((response) => Array.isArray(response) ? response : response ? [response] : []),
+              catchError(() => of([] as ITourLocationResponse[]))
+            )
+          }).pipe(
+            switchMap(({ countryLocations, continentLocations }) => {
+              const locationIds = [
+                ...countryLocations.map(tl => tl.locationId),
+                ...continentLocations.map(tl => tl.locationId)
+              ].filter(id => id !== undefined && id !== null);
+              
+              if (locationIds.length === 0) {
+                return of({
+                  departures: [],
+                  tags: [],
+                  itineraryDays: [],
+                  continent: '',
+                  country: ''
+                });
+              }
+              
+              return this.locationService.getLocationsByIds(locationIds).pipe(
+                map((locations: Location[]) => {
+                  const countries = countryLocations
+                    .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+                    .map(tl => locations.find(l => l.id === tl.locationId)?.name)
+                    .filter(name => name) as string[];
+                  
+                  const continents = continentLocations
+                    .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+                    .map(tl => locations.find(l => l.id === tl.locationId)?.name)
+                    .filter(name => name) as string[];
+                  
+                  return {
+                    departures: [],
+                    tags: [],
+                    itineraryDays: [],
+                    continent: continents.join(', ') || '',
+                    country: countries.join(', ') || ''
+                  };
+                }),
+                catchError(() => of({
+                  departures: [],
+                  tags: [],
+                  itineraryDays: [],
+                  continent: '',
+                  country: ''
+                }))
+              );
+            })
+          );
         }
 
         // Obtener departures de todos los itinerarios
@@ -534,13 +596,58 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
 
             // Obtener tags del tour
             const tagRequest = of([]);
+            
+            // Obtener continent y country
+            const locationRequest = forkJoin({
+              countryLocations: this.tourLocationService.getByTourAndType(tourId, 'COUNTRY').pipe(
+                map((response) => Array.isArray(response) ? response : response ? [response] : []),
+                catchError(() => of([] as ITourLocationResponse[]))
+              ),
+              continentLocations: this.tourLocationService.getByTourAndType(tourId, 'CONTINENT').pipe(
+                map((response) => Array.isArray(response) ? response : response ? [response] : []),
+                catchError(() => of([] as ITourLocationResponse[]))
+              )
+            }).pipe(
+              switchMap(({ countryLocations, continentLocations }) => {
+                const locationIds = [
+                  ...countryLocations.map(tl => tl.locationId),
+                  ...continentLocations.map(tl => tl.locationId)
+                ].filter(id => id !== undefined && id !== null);
+                
+                if (locationIds.length === 0) {
+                  return of({ continent: '', country: '' });
+                }
+                
+                return this.locationService.getLocationsByIds(locationIds).pipe(
+                  map((locations: Location[]) => {
+                    const countries = countryLocations
+                      .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+                      .map(tl => locations.find(l => l.id === tl.locationId)?.name)
+                      .filter(name => name) as string[];
+                    
+                    const continents = continentLocations
+                      .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+                      .map(tl => locations.find(l => l.id === tl.locationId)?.name)
+                      .filter(name => name) as string[];
+                    
+                    return {
+                      continent: continents.join(', ') || '',
+                      country: countries.join(', ') || ''
+                    };
+                  }),
+                  catchError(() => of({ continent: '', country: '' }))
+                );
+              })
+            );
 
-            return forkJoin([tagRequest, itineraryDaysRequest]).pipe(
-              map(([tags, itineraryDays]) => {
+            return forkJoin([tagRequest, itineraryDaysRequest, locationRequest]).pipe(
+              map(([tags, itineraryDays, locationData]: [string[], IItineraryDayResponse[], { continent: string; country: string }]) => {
                 return {
                   departures: allDepartures,
                   tags: tags as string[],
                   itineraryDays: itineraryDays as IItineraryDayResponse[],
+                  continent: locationData.continent,
+                  country: locationData.country
                 };
               })
             );
@@ -556,6 +663,8 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
           departures: [],
           tags: [],
           itineraryDays: [],
+          continent: '',
+          country: ''
         });
       })
     );
@@ -571,6 +680,8 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
       departures: IDepartureResponse[];
       tags: string[];
       itineraryDays: IItineraryDayResponse[];
+      continent: string;
+      country: string;
     };
   }): TourDataV2 {
     const tour = combinedData.tourData;
@@ -676,8 +787,8 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
         '',
       tripType: [],
       externalID: tour.tkId || '',
-      continent: '',
-      country: '',
+      continent: additional.continent || '',
+      country: additional.country || '',
       productStyleId: tour.productStyleId, // ✅ Agregar productStyleId al objeto
     };
 
@@ -699,13 +810,24 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
       }
 
       // Determinar item_category5 (tipología de viaje)
+      // Según especificación: "Grupos, Singles" o "Grupo, Singles" (singular cuando solo hay uno)
       let itemCategory5 = '';
       if (tour.tripType && tour.tripType.length > 0) {
-        itemCategory5 = tour.tripType.join(', ');
+        // Si tripType incluye "grupo" o "grupos", usar "Grupos"
+        // Si incluye "single" o "singles", usar "Singles"
+        const hasGrupo = tour.tripType.some(t => t.toLowerCase().includes('grupo'));
+        const hasSingle = tour.tripType.some(t => t.toLowerCase().includes('single'));
+        const parts: string[] = [];
+        if (hasGrupo) parts.push('Grupos');
+        if (hasSingle) parts.push('Singles');
+        itemCategory5 = parts.join(', ') || tour.tripType.join(', ');
       } else {
         // Fallback: usar isByDr si está disponible
         itemCategory5 = tour.isByDr ? 'Grupos' : 'Privados';
       }
+
+      // Convertir meses a minúsculas según especificación (ejemplo: "mayo, junio, julio")
+      const monthsString = tour.availableMonths?.join(', ').toLowerCase() || '';
 
       return {
         item_id: tour.id?.toString() || '',
@@ -717,14 +839,14 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
         item_category: tour.continent || '',
         item_category2: tour.country || '',
         item_category3: tour.tag || '',
-        item_category4: tour.availableMonths?.join(', ') || '',
+        item_category4: monthsString,
         item_category5: itemCategory5,
         item_list_id: this.itemListId,
         item_list_name: this.itemListName,
         item_variant: '',
         price: tour.price || 0,
         quantity: 1,
-        puntuacion: tour.rating?.toString() || '5.0',
+        puntuacion: this.analyticsService.formatRating(tour.rating, '5.0'),
         duracion: duracion
       };
     });

@@ -82,10 +82,6 @@
         Por favor, realiza el pago por transferencia antes de las 11:59 pm
         {{ nextDayDate }} a través de las entidades bancarias que se indican.
       </p>
-      <p class="status-msg" style="color: #f05a4c" *ngIf="!payment?.attachmentUrl">
-        IMPORTANTE: Sube el justificante de pago dentro de este plazo para
-        evitar que tu viaje se cancele automáticamente.
-      </p>
     </ng-container>
 
     <!-- Recuadro coral con información bancaria -->
@@ -119,12 +115,35 @@
     </p-panel>
 
     <ng-container *ngIf="paymentType === 'Transfer'">
-      <!-- Botón de justificante: mostrar componente de subida o botón de ver voucher -->
-      <ng-container
-        *ngIf="!payment?.attachmentUrl && status === 'PENDING'; else voucherView"
-      >
+      <!-- Mensaje importante solo cuando no hay justificantes -->
+      <p class="status-msg" style="color: #f05a4c" *ngIf="uploadedVouchers.length === 0 && status === 'PENDING'">
+        IMPORTANTE: Sube el justificante de pago dentro de este plazo para
+        evitar que tu viaje se cancele automáticamente.
+      </p>
+
+      <!-- Lista de justificantes subidos -->
+      <div *ngIf="uploadedVouchers.length > 0" class="vouchers-list">
+        <div class="voucher-item" *ngFor="let voucher of uploadedVouchers; let i = index">
+          <div class="voucher-info">
+            <i class="pi pi-file-pdf" style="margin-right: 8px; color: #f05a4c;"></i>
+            <span>{{ voucher.fileName || ('Justificante ' + (i + 1)) }}</span>
+            <span class="voucher-date">({{ voucher.uploadDate | date:'dd/MM/yyyy HH:mm' }})</span>
+          </div>
+          <p-button
+            label="Ver"
+            icon="pi pi-external-link"
+            (onClick)="viewVoucher(voucher.url)"
+            severity="info"
+            [text]="true"
+            size="small"
+          ></p-button>
+        </div>
+      </div>
+
+      <!-- Botón para subir/añadir justificante (siempre visible cuando está PENDING) -->
+      <div *ngIf="status === 'PENDING'" class="upload-section">
         <app-upload-button
-          label="Subir justificante de transferencia"
+          [label]="uploadedVouchers.length === 0 ? 'Subir justificante de transferencia' : 'Añadir otro justificante'"
           accept="image/*, .pdf"
           [maxFileSize]="1000000"
           folder="vouchers"
@@ -133,23 +152,39 @@
           styleClass="upload-button"
           (onUploadSuccess)="handleVoucherUpload($event)"
           (onUploadError)="handleVoucherError($event)"
+          (onFileSelect)="handleFileSelect($event)"
         >
         </app-upload-button>
-      </ng-container>
-      <ng-template #voucherView>
-        <p-button
-          label="Ver justificante"
-          (onClick)="viewVoucher()"
-          severity="info"
-        ></p-button>
-        <ng-container *ngIf="status === 'PENDING'">
-          <p class="voucher-status-text">
-            Hemos recibido tu comprobante de pago y nuestro equipo lo estará
-            validando. Recibirás una notificación en tu correo cuando la
-            transferencia sea verificada.
+
+        <!-- Mensaje informativo cuando hay un archivo pendiente de confirmar -->
+        <div *ngIf="pendingFileToConfirm" class="pending-file-info">
+          <p class="info-message">
+            <i class="pi pi-info-circle" style="margin-right: 8px;"></i>
+            Has seleccionado <strong>{{ pendingFileToConfirm.name }}</strong> 
+            Por favor, confirma la subida del archivo usando el botón "Confirmar" que aparece arriba antes de añadir otro justificante.
           </p>
-        </ng-container>
-      </ng-template>
+        </div>
+
+        <!-- Mensaje informativo general -->
+        <p *ngIf="!pendingFileToConfirm && uploadedVouchers.length > 0" class="info-message-general">
+          <i class="pi pi-info-circle" style="margin-right: 8px;"></i>
+          Puedes añadir más justificantes. Recuerda confirmar cada uno antes de seleccionar el siguiente.
+        </p>
+
+        <!-- Mensaje de confirmación cuando hay justificantes subidos -->
+        <p *ngIf="uploadedVouchers.length > 0" class="voucher-status-text">
+          Hemos recibido tu{{ uploadedVouchers.length > 1 ? 's' : '' }} comprobante{{ uploadedVouchers.length > 1 ? 's' : '' }} de pago y nuestro equipo {{ uploadedVouchers.length > 1 ? 'los' : 'lo' }} estará
+          validando. Recibirás una notificación en tu correo cuando la
+          transferencia sea verificada.
+        </p>
+      </div>
+
+      <!-- Mensaje cuando el pago está completado -->
+      <ng-container *ngIf="status !== 'PENDING' && uploadedVouchers.length > 0">
+        <p class="voucher-status-text">
+          Tu comprobante{{ uploadedVouchers.length > 1 ? 's' : '' }} de pago {{ uploadedVouchers.length > 1 ? 'han' : 'ha' }} sido validado{{ uploadedVouchers.length > 1 ? 's' : '' }}.
+        </p>
+      </ng-container>
     </ng-container>
   </div>
 

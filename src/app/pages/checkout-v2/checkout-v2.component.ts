@@ -2469,7 +2469,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     } else {
       this.reservationStatusService.getByCode('BUDGET').subscribe({
         next: (reservationStatus) => {
-          if (reservationStatus) {
+          if (reservationStatus && reservationStatus.length > 0) {
             this.reservationService
               .updateStatus(this.reservationId!, reservationStatus[0].id)
               .subscribe({
@@ -3490,7 +3490,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Disparar evento add_to_wishlist cuando se guarda presupuesto desde checkout
    */
   private trackAddToWishlist(): void {
-    if (!this.reservationData) return;
+    if (!this.reservationData) {
+      return;
+    }
 
     const tourData = this.reservationData.tour || {};
     
@@ -3514,14 +3516,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             item_category: tourData.destination?.continent || '',
             item_category2: tourData.destination?.country || '',
             item_category3: tourData.marketingSection?.marketingSeasonTag || '',
-            item_category4: tourData.monthTags?.join(', ') || '',
+            item_category4: tourData.monthTags?.join(', ').toLowerCase() || '',
             item_category5: tourData.tourType || '',
-            item_list_id: itemListId,
+            item_list_id: typeof itemListId === 'number' ? itemListId.toString() : itemListId,
             item_list_name: itemListName,
             item_variant: '',
             price: this.totalAmountCalculated || 0,
             quantity: 1,
-            puntuacion: tourData.rating?.toString() || '',
+            puntuacion: this.analyticsService.formatRating(tourData.rating, '5.0'),
             duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
             start_date: this.departureDate || '',
             end_date: this.returnDate || '',
@@ -3546,14 +3548,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             item_category: tourData.destination?.continent || '',
             item_category2: tourData.destination?.country || '',
             item_category3: tourData.marketingSection?.marketingSeasonTag || '',
-            item_category4: tourData.monthTags?.join(', ') || '',
+            item_category4: tourData.monthTags?.join(', ').toLowerCase() || '',
             item_category5: tourData.tourType || '',
-            item_list_id: itemListId,
+            item_list_id: typeof itemListId === 'number' ? itemListId.toString() : itemListId,
             item_list_name: itemListName,
             item_variant: '',
             price: this.totalAmountCalculated || 0,
             quantity: 1,
-            puntuacion: tourData.rating?.toString() || '',
+            puntuacion: this.analyticsService.formatRating(tourData.rating, '5.0'),
             duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
             start_date: this.departureDate || '',
             end_date: this.returnDate || '',

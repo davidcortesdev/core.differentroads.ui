@@ -220,6 +220,89 @@ $button-border-radius: 114.398px;
       }
     }
 
+    // Lista de justificantes
+    .vouchers-list {
+      margin-top: 1rem;
+      margin-bottom: 1rem;
+
+      .voucher-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        background-color: $panel-light-gray;
+        border: 1px solid $panel-light-gray-border;
+        border-radius: 8px;
+
+        .voucher-info {
+          display: flex;
+          align-items: center;
+          flex: 1;
+
+          i {
+            font-size: 1.2rem;
+          }
+
+          span {
+            margin-right: 0.5rem;
+            color: $azul;
+          }
+
+          .voucher-date {
+            color: $text-gray;
+            font-size: 0.875rem;
+            margin-left: 0.5rem;
+          }
+        }
+      }
+    }
+
+    // Sección de subida
+    .upload-section {
+      margin-top: 1rem;
+    }
+
+    // Mensaje informativo de archivo pendiente
+    .pending-file-info {
+      margin-top: 1rem;
+      padding: 1rem;
+      background-color: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 8px;
+
+      .info-message {
+        margin: 0;
+        color: #856404;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: flex-start;
+
+        i {
+          margin-top: 2px;
+        }
+      }
+    }
+
+    // Mensaje informativo general
+    .info-message-general {
+      margin-top: 1rem;
+      margin-bottom: 0.5rem;
+      padding: 0.75rem;
+      background-color: #e7f3ff;
+      border: 1px solid #b3d9ff;
+      border-radius: 8px;
+      color: #004085;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: flex-start;
+
+      i {
+        margin-top: 2px;
+        color: #0066cc;
+      }
+    }
+
     // Botón de subida
     .upload-button {
       margin-top: 1rem;

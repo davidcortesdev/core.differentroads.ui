@@ -99,6 +99,12 @@ export class NewReservationComponent implements OnInit {
   // Propiedad para detectar si tiene paymentId válido
   hasPaymentId: boolean = false;
 
+  // Array para almacenar múltiples justificantes
+  uploadedVouchers: Array<{ url: string; uploadDate: Date; fileName?: string }> = [];
+  
+  // Archivo pendiente de confirmar
+  pendingFileToConfirm: File | null = null;
+
   constructor(
     private titleService: Title,
     private route: ActivatedRoute,
@@ -311,6 +317,9 @@ export class NewReservationComponent implements OnInit {
       next: (payment: IPaymentResponse) => {
         this.payment = payment;
 
+        // Cargar justificantes existentes
+        this.loadExistingVouchers(payment);
+
         // Cargar método de pago
         this.loadPaymentMethod(payment.paymentMethodId);
 
@@ -478,10 +487,81 @@ export class NewReservationComponent implements OnInit {
   }
 
   /**
+   * Carga los justificantes existentes desde el payment
+   */
+  private loadExistingVouchers(payment: IPaymentResponse): void {
+    // Si hay attachmentUrl, añadirlo como primer justificante
+    if (payment.attachmentUrl) {
+      this.uploadedVouchers = [{
+        url: payment.attachmentUrl,
+        uploadDate: new Date(),
+        fileName: 'Justificante de transferencia'
+      }];
+    } else {
+      this.uploadedVouchers = [];
+    }
+
+    // También intentar cargar desde localStorage como respaldo
+    const storageKey = `vouchers_${payment.id}`;
+    const stored = localStorage.getItem(storageKey);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          this.uploadedVouchers = parsed.map((v: any) => ({
+            ...v,
+            uploadDate: new Date(v.uploadDate)
+          }));
+        }
+      } catch (e) {
+        // Ignorar error de parsing
+      }
+    }
+  }
+
+  /**
+   * Guarda los vouchers en localStorage
+   */
+  private saveVouchersToStorage(): void {
+    if (this.payment?.id) {
+      const storageKey = `vouchers_${this.payment.id}`;
+      localStorage.setItem(storageKey, JSON.stringify(this.uploadedVouchers));
+    }
+  }
+
+  /**
+   * Maneja la selección de un archivo (antes de subir)
+   */
+  handleFileSelect(files: File[]): void {
+    if (files && files.length > 0) {
+      this.pendingFileToConfirm = files[0];
+    } else {
+      this.pendingFileToConfirm = null;
+    }
+  }
+
+  /**
    * Maneja la subida del justificante de transferencia
    */
   handleVoucherUpload(response: any): void {
+    // Limpiar el archivo pendiente cuando se sube exitosamente
+    this.pendingFileToConfirm = null;
     if (this.payment && response.secure_url) {
+      // Añadir el nuevo justificante al array
+      const newVoucher = {
+        url: response.secure_url,
+        uploadDate: new Date(),
+        fileName: response.original_filename || response.public_id || `Justificante ${this.uploadedVouchers.length + 1}.pdf`
+      };
+      
+      // Si no existe ya, añadirlo
+      const exists = this.uploadedVouchers.some(v => v.url === response.secure_url);
+      if (!exists) {
+        this.uploadedVouchers.push(newVoucher);
+        this.saveVouchersToStorage();
+      }
+
+      // Actualizar el attachmentUrl con el último subido (para compatibilidad con backend)
       this.payment.attachmentUrl = response.secure_url;
       this.payment.paymentStatusId = this.pendingId; // Mantener como PENDING para revisión
 
@@ -495,6 +575,12 @@ export class NewReservationComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error updating payment with voucher:', error);
+          // Revertir si falla
+          const index = this.uploadedVouchers.findIndex(v => v.url === response.secure_url);
+          if (index > -1) {
+            this.uploadedVouchers.splice(index, 1);
+            this.saveVouchersToStorage();
+          }
           this.showMessage(
             'error',
             'Error',
@@ -509,6 +595,8 @@ export class NewReservationComponent implements OnInit {
    * Maneja errores en la subida del justificante
    */
   handleVoucherError(error: any): void {
+    // Limpiar el archivo pendiente en caso de error
+    this.pendingFileToConfirm = null;
     console.error('Error uploading voucher:', error);
     this.showMessage(
       'error',
@@ -520,9 +608,10 @@ export class NewReservationComponent implements OnInit {
   /**
    * Visualiza el justificante subido
    */
-  viewVoucher(): void {
-    if (this.payment?.attachmentUrl) {
-      window.open(this.payment.attachmentUrl, '_blank');
+  viewVoucher(voucherUrl?: string): void {
+    const urlToOpen = voucherUrl || this.payment?.attachmentUrl || this.uploadedVouchers[0]?.url;
+    if (urlToOpen) {
+      window.open(urlToOpen, '_blank');
     }
   }
 

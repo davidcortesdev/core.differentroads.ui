@@ -185,6 +185,16 @@ export class SignUpFormComponent {
                             // Guardar el usuario para verificar después de la confirmación
                             this.registeredUser = existingUser;
                             
+                            // Disparar evento sign_up con los datos disponibles
+                            const phone = existingUser.phone || this.signUpForm.value.phone || '';
+                            const formattedPhone = phone ? this.analyticsService.formatPhoneNumber(phone) : '';
+                            const userData = {
+                              email_address: existingUser.email || this.signUpForm.value.email || '',
+                              phone_number: formattedPhone,
+                              user_id: cognitoUserId || ''
+                            };
+                            this.analyticsService.signUp('manual', userData);
+                            
                             this.isLoading = false;
                             this.isConfirming = true;
                             this.registeredUsername = this.signUpForm.value.email;
@@ -208,6 +218,16 @@ export class SignUpFormComponent {
                             
                             // Guardar el usuario para verificar después de la confirmación
                             this.registeredUser = user;
+                            
+                            // Disparar evento sign_up con los datos disponibles
+                            const phone = user.phone || this.signUpForm.value.phone || '';
+                            const formattedPhone = phone ? this.analyticsService.formatPhoneNumber(phone) : '';
+                            const analyticsUserData = {
+                              email_address: user.email || this.signUpForm.value.email || '',
+                              phone_number: formattedPhone,
+                              user_id: cognitoUserId || ''
+                            };
+                            this.analyticsService.signUp('manual', analyticsUserData);
                             
                             this.isLoading = false;
                             this.isConfirming = true;
@@ -309,22 +329,46 @@ export class SignUpFormComponent {
    * Disparar evento sign_up con datos completos después de verificación exitosa
    */
   private trackSignUpWithCompleteData(method: string): void {
-    // Obtener datos completos del usuario después de la verificación
+    // Si tenemos el usuario registrado, usar sus datos directamente
+    if (this.registeredUser) {
+      const phone = this.registeredUser.phone || this.signUpForm.value.phone || '';
+      const formattedPhone = phone ? this.analyticsService.formatPhoneNumber(phone) : '';
+      const userData = {
+        email_address: this.registeredUser.email || this.signUpForm.value.email || '',
+        phone_number: formattedPhone,
+        user_id: this.registeredUser.cognitoId || ''
+      };
+      this.analyticsService.signUp(method, userData);
+      return;
+    }
+
+    // Si no tenemos el usuario registrado, intentar obtenerlo con getCurrentUserData
     this.analyticsService.getCurrentUserData().subscribe({
       next: (userData) => {
-        this.analyticsService.signUp(method, userData);
+        // Si getCurrentUserData ya tiene phone_number formateado, usarlo; si no, formatear desde formulario
+        const phone = userData?.phone_number || this.signUpForm.value.phone || '';
+        // Solo formatear si viene del formulario y no tiene el formato +
+        const formattedPhone = userData?.phone_number 
+          ? phone 
+          : (phone ? this.analyticsService.formatPhoneNumber(phone) : '');
+        const completeUserData = {
+          email_address: userData?.email_address || this.signUpForm.value.email || '',
+          phone_number: formattedPhone,
+          user_id: userData?.user_id || ''
+        };
+        this.analyticsService.signUp(method, completeUserData);
       },
       error: (error) => {
         console.error('Error obteniendo datos de usuario para analytics:', error);
         // Fallback con datos del formulario
-        this.analyticsService.signUp(
-          method,
-          this.analyticsService.getUserData(
-            this.signUpForm.value.email,
-            this.signUpForm.value.phone,
-            undefined
-          )
-        );
+        const phone = this.signUpForm.value.phone || '';
+        const formattedPhone = phone ? this.analyticsService.formatPhoneNumber(phone) : '';
+        const fallbackUserData = {
+          email_address: this.signUpForm.value.email || '',
+          phone_number: formattedPhone,
+          user_id: ''
+        };
+        this.analyticsService.signUp(method, fallbackUserData);
       }
     });
   }

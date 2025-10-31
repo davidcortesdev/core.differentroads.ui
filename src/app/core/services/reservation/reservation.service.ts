@@ -83,6 +83,10 @@ export interface ReservationCompleteCreate {
   activityPackIds?: number[] | null;
 }
 
+export interface CancelReservationResponse {
+  isSuccess: boolean;
+}
+
 /**
  * Interfaz para los filtros disponibles en el método getAll.
  */
@@ -373,19 +377,19 @@ export class ReservationService {
    * @param canceledBy Indica quién cancela: 1 si viene de UI directo, 2 si viene desde ATC.
    * @param comment Comentario sobre la cancelación.
    * @param cancelationFee Tarifa de cancelación.
-   * @returns Resultado de la operación.
+   * @returns Resultado de la operación con campo isSuccess.
    */
   cancelReservation(
     reservationId: number,
     canceledBy: number,
     comment: string,
     cancelationFee?: number
-  ): Observable<boolean> {
+  ): Observable<CancelReservationResponse> {
     const params = new HttpParams()
       .set('comment', comment)
       .set('cancelationFee', (cancelationFee || 0).toString());
     
-    return this.http.put<boolean>(
+    return this.http.put<CancelReservationResponse>(
       `${environment.reservationsApiUrl}/ReservationsSyncs/cancel-reservation/${reservationId}/${canceledBy}`,
       null,
       {

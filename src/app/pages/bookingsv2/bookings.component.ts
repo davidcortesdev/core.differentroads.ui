@@ -705,9 +705,9 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
           })
         )
         .subscribe({
-          next: (success) => {
+          next: (response) => {
             this.hideCancelModal();
-            if (success) {
+            if (response.isSuccess) {
               this.messageService.add({
                 key: 'center',
                 severity: 'success',
@@ -723,7 +723,7 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
                 key: 'center',
                 severity: 'error',
                 summary: 'Error',
-                detail: 'No se pudo cancelar la reserva',
+                detail: 'No ha sido posible cancelar la reserva',
                 life: 3000,
               });
             }

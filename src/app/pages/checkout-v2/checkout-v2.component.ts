@@ -2469,7 +2469,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     } else {
       this.reservationStatusService.getByCode('BUDGET').subscribe({
         next: (reservationStatus) => {
-          if (reservationStatus) {
+          if (reservationStatus && reservationStatus.length > 0) {
             this.reservationService
               .updateStatus(this.reservationId!, reservationStatus[0].id)
               .subscribe({
@@ -3490,7 +3490,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Disparar evento add_to_wishlist cuando se guarda presupuesto desde checkout
    */
   private trackAddToWishlist(): void {
-    if (!this.reservationData) return;
+    if (!this.reservationData) {
+      return;
+    }
 
     const tourData = this.reservationData.tour || {};
     

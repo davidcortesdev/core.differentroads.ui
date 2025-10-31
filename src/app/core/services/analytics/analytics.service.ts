@@ -628,11 +628,20 @@ export class AnalyticsService {
   /**
    * Formatea la puntuación con un decimal (ej: 4 → "4.0", 4.6 → "4.6")
    */
-  formatRating(rating: number | undefined | null, defaultValue: string = '5.0'): string {
-    if (rating === undefined || rating === null) {
+  formatRating(rating: number | string | undefined | null, defaultValue: string = '5.0'): string {
+    if (rating === undefined || rating === null || rating === '') {
       return defaultValue;
     }
-    return rating.toFixed(1);
+    
+    // Convertir a número si es string
+    const numericRating = typeof rating === 'string' ? parseFloat(rating) : rating;
+    
+    // Verificar que sea un número válido
+    if (isNaN(numericRating)) {
+      return defaultValue;
+    }
+    
+    return numericRating.toFixed(1);
   }
 
 

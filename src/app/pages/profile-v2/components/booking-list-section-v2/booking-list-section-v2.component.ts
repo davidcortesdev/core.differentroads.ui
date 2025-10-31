@@ -38,7 +38,7 @@ import { switchMap, map, catchError, of, forkJoin } from 'rxjs';
 })
 export class BookingListSectionV2Component implements OnInit, OnChanges {
   @Input() userId: string = '';
-  @Input() listType: 'active-bookings' | 'travel-history' | 'recent-budgets' =
+  @Input() listType: 'active-bookings' | 'pending-bookings' | 'travel-history' | 'recent-budgets' =
     'active-bookings';
   @Input() parentComponent?: any;  // Referencia al componente padre
 
@@ -113,6 +113,9 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       case 'active-bookings':
         this.loadActiveBookings(userIdNumber);
         break;
+      case 'pending-bookings':
+        this.loadPendingBookings(userIdNumber);
+        break;
       case 'travel-history':
         this.loadTravelHistory(userIdNumber);
         break;
@@ -132,6 +135,41 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   private loadActiveBookings(userId: number): void {
     // Esperar hasta obtener el email del usuario con reintentos
     this.waitForUserEmail(userId);
+  }
+
+  /**
+   * Carga reservas pendientes (DRAFT/CART) solo por userId (no aplica por viajero)
+   */
+  private loadPendingBookings(userId: number): void {
+    this.bookingsService.getPendingBookings(userId)
+      .pipe(
+        map((reservations: ReservationResponse[]) =>
+          this.dataMappingService.mapReservationsToBookingItems(
+            reservations,
+            [],
+            'active-bookings' // reutilizamos el mapeo genérico
+          )
+        ),
+        catchError((error) => {
+          console.error('Error obteniendo reservas pendientes:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al cargar las reservas pendientes',
+          });
+          return of([]);
+        })
+      )
+      .subscribe({
+        next: (bookingItems: BookingItem[]) => {
+          this.bookingItems = bookingItems;
+          this.loading = false;
+        },
+        error: () => {
+          this.bookingItems = [];
+          this.loading = false;
+        }
+      });
   }
 
   /**
@@ -934,6 +972,8 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
     switch (this.listType) {
       case 'active-bookings':
         return 'Reservas Activas';
+      case 'pending-bookings':
+        return 'Reservas Pendientes';
       case 'recent-budgets':
         return 'Presupuestos Recientes';
       case 'travel-history':
@@ -947,6 +987,8 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
     switch (this.listType) {
       case 'active-bookings':
         return 'No tienes reservas activas';
+      case 'pending-bookings':
+        return 'No tienes reservas pendientes';
       case 'recent-budgets':
         return 'No tienes presupuestos recientes';
       case 'travel-history':
@@ -957,25 +999,51 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   }
 
   // Button visibility methods
-  shouldShowDownload(): boolean {
+  shouldShowDownload(item: BookingItem): boolean {
+    // Ocultar cuando es borrador (1) o carrito en proceso (2)
+    if (this.isDraft(item) || this.isCartInProcess(item)) return false;
     return (
-      this.listType === 'active-bookings' || this.listType === 'recent-budgets'
+      this.listType === 'active-bookings' ||
+      this.listType === 'recent-budgets' ||
+      this.listType === 'pending-bookings'
     );
   }
 
-  shouldShowSend(): boolean {
+  shouldShowSend(item: BookingItem): boolean {
+    // Ocultar cuando es borrador (1) o carrito en proceso (2)
+    if (this.isDraft(item) || this.isCartInProcess(item)) return false;
     return (
-      this.listType === 'active-bookings' || this.listType === 'recent-budgets'
+      this.listType === 'active-bookings' ||
+      this.listType === 'recent-budgets' ||
+      this.listType === 'pending-bookings'
     );
   }
 
   shouldShowView(item: BookingItem): boolean {
-    // No mostrar botón de ver detalle si el estado es 3 (budget/presupuesto reservado)
-    return item.reservationStatusId !== 3;
+    // Ocultar ver detalle para estados 1 (DRAFT) y 2 (CART) y para 3 (BUDGET)
+    if ([1, 2, 3].includes(item.reservationStatusId as any)) return false;
+    // Además ocultar si estamos en la sección de pendientes
+    if (this.listType === 'pending-bookings') return false;
+    return true;
   }
 
-  shouldShowReserve(): boolean {
-    return this.listType === 'recent-budgets';
+  shouldShowReserve(item?: BookingItem): boolean {
+    // Si es carrito en proceso (2), mostrar siempre Reservar
+    if (item && this.isCartInProcess(item)) return true;
+    // Mostrar "Reservar" para presupuestos y para toda la sección de pendientes
+    if (this.listType === 'recent-budgets') return true;
+    if (this.listType === 'pending-bookings') return true;
+    return false;
+  }
+
+  isCartInProcess(item: BookingItem): boolean {
+    // Estado 2 = Carrito en proceso
+    return item?.reservationStatusId === 2;
+  }
+
+  isDraft(item: BookingItem): boolean {
+    // Estado 1 = Borrador
+    return item?.reservationStatusId === 1;
   }
 
   shouldShowPointsDiscount(item: BookingItem): boolean {
@@ -989,7 +1057,7 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   }
 
   getSendLabel(): string {
-    return 'Enviar';
+    return 'Compartir';
   }
 
   getViewLabel(): string {

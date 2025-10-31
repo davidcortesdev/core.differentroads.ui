@@ -270,6 +270,7 @@ $button-border-radius: 114.398px;
       background-color: #fff3cd;
       border: 1px solid #ffc107;
       border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
       .info-message {
         margin: 0;
@@ -277,9 +278,18 @@ $button-border-radius: 114.398px;
         font-size: 0.9rem;
         display: flex;
         align-items: flex-start;
+        line-height: 1.5;
 
         i {
           margin-top: 2px;
+          color: #856404;
+          margin-right: 0.5rem;
+          flex-shrink: 0;
+        }
+
+        strong {
+          font-weight: 600;
+          color: #856404;
         }
       }
     }

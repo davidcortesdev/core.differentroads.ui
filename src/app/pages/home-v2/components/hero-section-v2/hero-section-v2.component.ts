@@ -393,26 +393,36 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
    * Disparar evento search cuando el usuario realiza una búsqueda
    */
   private trackSearch(queryParams: TripQueryParams): void {
-    this.analyticsService.search(
-      {
-        search_term: queryParams.destination || '',
-        start_date: queryParams.departureDate || '',
-        end_date: queryParams.returnDate || '',
-        trip_type: queryParams.tripType || ''
+    // Obtener datos completos del usuario si está logueado
+    this.analyticsService.getCurrentUserData().subscribe({
+      next: (userData) => {
+        this.analyticsService.search(
+          {
+            search_term: queryParams.destination || '',
+            start_date: queryParams.departureDate || '',
+            end_date: queryParams.returnDate || '',
+            trip_type: queryParams.tripType || ''
+          },
+          userData
+        );
       },
-      this.getUserData()
-    );
-  }
-
-  /**
-   * Obtener datos del usuario para analytics
-   */
-  private getUserData() {
-    return this.analyticsService.getUserData(
-      this.authService.getUserEmailValue(),
-      '', // No tenemos teléfono en este contexto
-      this.authService.getCognitoIdValue()
-    );
+      error: () => {
+        // Fallback si no se pueden obtener datos completos
+        this.analyticsService.search(
+          {
+            search_term: queryParams.destination || '',
+            start_date: queryParams.departureDate || '',
+            end_date: queryParams.returnDate || '',
+            trip_type: queryParams.tripType || ''
+          },
+          this.analyticsService.getUserData(
+            this.authService.getUserEmailValue(),
+            '',
+            this.authService.getCognitoIdValue()
+          )
+        );
+      }
+    });
   }
 
 

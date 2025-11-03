@@ -91,11 +91,25 @@
 
         <div class="form-field" *ngIf="shouldShowField('phone')">
           <label>Teléfono:</label>
-          <input
-            pInputText
-            formControlName="phone"
-            placeholder="Ingrese su teléfono"
-          />
+          <div class="phone-row">
+            <input
+              pInputText
+              type="text"
+              class="prefix-input"
+              placeholder="+34"
+              inputmode="numeric"
+              maxlength="3"
+              (input)="onPrefixInput($event)"
+            />
+            <input
+              pInputText
+              formControlName="phone"
+              placeholder="Ingrese su teléfono"
+              inputmode="tel"
+              maxlength="20"
+              (input)="onPhoneInput($event)"
+            />
+          </div>
         </div>
 
         <div class="form-field" *ngIf="shouldShowField('email')">

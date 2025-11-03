@@ -19,13 +19,26 @@
     <ng-container *ngSwitchCase="'text'">
       <!-- Campo de teléfono (code === 'phone') -->
       <ng-container *ngIf="fieldDetails.code === 'phone'">
-        <input 
-          pInputText 
-          type="tel" 
-          [formControl]="control"
-          [placeholder]="placeholder"
-          [ngClass]="{ 'p-invalid': hasError }"
-          (input)="onPhoneInput($event)" />
+        <div class="phone-row">
+          <input
+            pInputText
+            type="text"
+            class="prefix-input"
+            placeholder="+34"
+            inputmode="numeric"
+            maxlength="3"
+            (input)="onPrefixInput($event)"
+          />
+          <input 
+            pInputText 
+            type="tel" 
+            [formControl]="control"
+            [placeholder]="placeholder"
+            [ngClass]="{ 'p-invalid': hasError }"
+            inputmode="tel"
+            maxlength="20"
+            (input)="onPhoneInput($event)" />
+        </div>
         <small *ngIf="hasError" class="p-error">
           {{ getErrorMessage(errors) }}
         </small>
@@ -63,13 +76,26 @@
 
     <!-- Campo de teléfono (si fieldType es 'phone') -->
     <ng-container *ngSwitchCase="'phone'">
-      <input 
-        pInputText 
-        type="tel" 
-        [formControl]="control"
-        [placeholder]="placeholder"
-        [ngClass]="{ 'p-invalid': hasError }"
-        (input)="onPhoneInput($event)" />
+      <div class="phone-row">
+        <input
+          pInputText
+          type="text"
+          class="prefix-input"
+          placeholder="+34"
+          inputmode="numeric"
+          maxlength="3"
+          (input)="onPrefixInput($event)"
+        />
+        <input 
+          pInputText 
+          type="tel" 
+          [formControl]="control"
+          [placeholder]="placeholder"
+          [ngClass]="{ 'p-invalid': hasError }"
+          inputmode="tel"
+          maxlength="20"
+          (input)="onPhoneInput($event)" />
+      </div>
       <small *ngIf="hasError" class="p-error">
         {{ getErrorMessage(errors) }}
       </small>

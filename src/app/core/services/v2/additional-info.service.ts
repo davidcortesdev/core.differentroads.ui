@@ -8,8 +8,8 @@ import { AnalyticsService } from '../analytics/analytics.service';
 import { ReservationService, ReservationCreate, ReservationUpdate, ReservationCompleteCreate, IReservationTravelerData } from '../reservation/reservation.service';
 import { ReservationStatusService } from '../reservation/reservation-status.service';
 import { UsersNetService } from '../users/usersNet.service';
-import { NotificationService } from './notification.service';
-import { DocumentService } from './document.service';
+import { NotificationServicev2 } from './notification.service';
+import { DocumentServicev2 } from './document.service';
 import { environment } from '../../../../environments/environment';
 
 /**
@@ -58,8 +58,8 @@ export class AdditionalInfoService {
     private reservationService: ReservationService,
     private usersNetService: UsersNetService,
     private reservationStatusService: ReservationStatusService,
-    private notificationService: NotificationService,
-    private documentService: DocumentService
+    private notificationService: NotificationServicev2,
+    private documentService: DocumentServicev2
   ) {}
 
   /**
@@ -560,18 +560,18 @@ export class AdditionalInfoService {
           discount: 0,
           index: 1,
           item_brand: 'Different Roads',
-          item_category: tourData?.category || '',
-          item_category2: tourData?.subcategory || '',
-          item_category3: tourData?.type || '',
-          item_category4: periodDates,
-          item_category5: tourData?.tripType || '',
-          item_list_id: tourData?.listId || '',
+          item_category: tourData?.destination?.continent || tourData?.category || '',
+          item_category2: tourData?.destination?.country || tourData?.subcategory || '',
+          item_category3: tourData?.marketingSection?.marketingSeasonTag || tourData?.type || '',
+          item_category4: tourData?.monthTags?.join(', ').toLowerCase() || tourData?.availableMonths?.join(', ').toLowerCase() || '',
+          item_category5: tourData?.tourType || tourData?.tripType || '',
+          item_list_id: typeof tourData?.listId === 'number' ? tourData.listId.toString() : (tourData?.listId || ''),
           item_list_name: tourData?.listName || '',
           item_variant: '',
           price: this.totalPrice || 0,
           quantity: 1,
-          puntuacion: tourData?.rating || '',
-          duracion: tourData?.duration || ''
+          puntuacion: this.analyticsService.formatRating(tourData?.rating, '5.0'),
+          duracion: tourData?.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : tourData?.duration || ''
         };
 
         // Disparar evento add_to_wishlist
@@ -591,18 +591,18 @@ export class AdditionalInfoService {
           discount: 0,
           index: 1,
           item_brand: 'Different Roads',
-          item_category: tourData?.category || '',
-          item_category2: tourData?.subcategory || '',
-          item_category3: tourData?.type || '',
-          item_category4: periodDates,
-          item_category5: tourData?.tripType || '',
-          item_list_id: tourData?.listId || '',
+          item_category: tourData?.destination?.continent || tourData?.category || '',
+          item_category2: tourData?.destination?.country || tourData?.subcategory || '',
+          item_category3: tourData?.marketingSection?.marketingSeasonTag || tourData?.type || '',
+          item_category4: tourData?.monthTags?.join(', ').toLowerCase() || tourData?.availableMonths?.join(', ').toLowerCase() || '',
+          item_category5: tourData?.tourType || tourData?.tripType || '',
+          item_list_id: typeof tourData?.listId === 'number' ? tourData.listId.toString() : (tourData?.listId || ''),
           item_list_name: tourData?.listName || '',
           item_variant: '',
           price: this.totalPrice || 0,
           quantity: 1,
-          puntuacion: tourData?.rating || '',
-          duracion: tourData?.duration || ''
+          puntuacion: this.analyticsService.formatRating(tourData?.rating, '5.0'),
+          duracion: tourData?.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : tourData?.duration || ''
         };
 
         this.analyticsService.addToWishlist(

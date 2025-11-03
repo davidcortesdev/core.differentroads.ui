@@ -12,6 +12,7 @@ import { CloudinaryService } from '../../../../core/services/media/cloudinary.se
 export class UpdateProfileSectionV2Component{
   @Input() userId: string = '';
   @Input() personalInfo: PersonalInfo = {};
+  @Input() cognitoId: string = '';
   @Output() cancelEdit = new EventEmitter<void>();
   @Output() profileUpdated = new EventEmitter<void>();
 
@@ -173,7 +174,7 @@ export class UpdateProfileSectionV2Component{
       this.errorMessage = '';
       this.successMessage = '';
       
-      this.updateProfileService.updateUserProfile(this.userId, this.personalInfo).subscribe({
+      this.updateProfileService.updateUserProfile(this.userId, this.personalInfo, this.cognitoId).subscribe({
         next: (response) => {
           this.isSaving = false;
           this.successMessage = 'Perfil actualizado correctamente';

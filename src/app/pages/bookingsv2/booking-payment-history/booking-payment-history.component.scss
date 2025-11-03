@@ -1,3 +1,22 @@
+// Botón "Cambiar estado" con estilo naranja y texto blanco
+:host ::ng-deep .status-change-btn.p-button {
+  background-color: #ea6a5c;
+  border: none;
+  color: #ffffff;
+  border-radius: 9999px; // pill shape similar al ejemplo
+  padding: 0.6rem 1.2rem;
+  font-weight: 600;
+
+  &:hover {
+    background-color: #e65e50;
+    color: #ffffff;
+  }
+
+  &:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+  }
+}
 .payment-history-container {
   --p-panel-background: var(--background-azul-color-letra);
   --p-panel-color: var(--background-azul);
@@ -118,27 +137,12 @@
   margin-top: 1rem;
   p-panel {
     flex: 1;
-    &:first-child {
-      min-width: 30%;
-    }
-    &:last-child {
-      flex: 1.5;
-    }
   }
   @media (max-width: 992px) {
     flex-direction: column;
     p-panel {
       margin-bottom: 1rem;
     }
-  }
-}
-.upcoming-payment-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid #eee;
-  &:last-child {
-    border-bottom: none;
   }
 }
 
@@ -238,20 +242,7 @@
       }
     }
   }
-  .p-panel .p-panel-header {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    height: 50px;
-    padding-left: 1rem;
-    border-radius: 10px;
-    margin-bottom: -10px;
-    border-bottom: 1px solid #66666627;
-    .p-panel-title {
-      font-weight: 600;
-      font-size: 16px;
-    }
-  }
+
   .p-panel-content {
     padding: 1rem;
   }
@@ -353,85 +344,7 @@
 .required {
   color: red;
 }
-.mt-4 {
-  margin-top: 1rem;
-}
-:host ::ng-deep {
-  .p-datatable-borderless .p-datatable-thead > tr > th,
-  .p-datatable-borderless .p-datatable-tbody > tr > td {
-    border: none;
-  }
-  .p-datatable-sm .p-datatable-tbody > tr > td {
-    padding: 0.5rem 0.5rem;
-  }
-  .text-right {
-    text-align: right;
-  }
-  .text-center {
-    text-align: center;
-  }
-  .p-datatable-tbody > tr > td.operator {
-    width: 25px;
-    padding-left: 6px !important;
-    padding-right: 6px !important;
-  }
-  .p-datatable-tbody > tr > td.quantity {
-    width: 45px;
-    padding-left: 6px !important;
-    padding-right: 6px !important;
-  }
-  .p-datatable-tbody > tr > td.unit-price {
-    width: auto;
-    padding-left: 6px !important;
-    padding-right: 6px !important;
-  }
-  .p-datatable-tbody > tr > td.price {
-    width: auto;
-    font-weight: bold;
-    padding-left: 6px !important;
-    &.discount {
-      color: green;
-    }
-  }
-  .p-datatable-tbody > tr > td.description {
-    width: 100%;
-    padding-right: 1rem !important;
-  }
-  @media (max-width: 768px) {
-    .p-datatable-responsive .p-datatable-tbody > tr {
-      display: flex;
-      flex-wrap: wrap;
-      padding: 0.5rem 0;
-      border-bottom: 1px solid #eee;
-    }
-    .p-datatable-responsive .p-datatable-tbody > tr > td.description {
-      width: 100%;
-      font-weight: 600;
-      padding-bottom: 0.5rem;
-    }
-    .p-datatable-responsive .p-datatable-tbody > tr > td.operator:nth-child(5) {
-      display: none;
-    }
-    .p-datatable-responsive .p-datatable-tbody > tr > td.quantity,
-    .p-datatable-responsive .p-datatable-tbody > tr > td.operator,
-    .p-datatable-responsive .p-datatable-tbody > tr > td.unit-price {
-      padding: 0.25rem 2px;
-    }
-    .p-datatable-responsive .p-datatable-tbody > tr > td.price {
-      margin-left: auto;
-      padding-left: 0.5rem;
-    }
-  }
-}
-:host ::ng-deep {
-  .panel-background {
-    &.order-summary {
-      background-color: transparent !important;
-      padding: 0;
-      margin: 0;
-    }
-  }
-}
+
 .p-button-text {
   background: transparent;
   border-color: var(--p-button-primary-border-color);

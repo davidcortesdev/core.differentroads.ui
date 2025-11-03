@@ -31,6 +31,7 @@ export interface BookingItem {
 
 export interface PersonalInfo {
     id?: string;
+    cognitoId?:number;
     nombre?: string;
     apellido?: string;
     avatarUrl?: string;

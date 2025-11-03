@@ -29,7 +29,7 @@ export interface DocumentInfo {
 @Injectable({
   providedIn: 'root'
 })
-export class DocumentService {
+export class DocumentServicev2 {
   private readonly baseUrl = environment.documentationApiUrl;
   
   constructor(private http: HttpClient) {}

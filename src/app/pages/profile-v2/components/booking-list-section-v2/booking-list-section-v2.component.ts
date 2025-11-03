@@ -16,14 +16,19 @@ import {
   DocumentationService,
   IDocumentReservationResponse,
 } from '../../../../core/services/documentation/documentation.service';
+import { DocumentServicev2 } from '../../../../core/services/v2/document.service';
 import {
   NotificationService,
   INotification,
   } from '../../../../core/services/documentation/notification.service';
-  import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
-  import { PointsV2Service } from '../../../../core/services/v2/points-v2.service';
-  import { TravelerCategory } from '../../../../core/models/v2/profile-v2.model';
-  import { switchMap, map, catchError, of, forkJoin } from 'rxjs';
+import {
+  NotificationServicev2,
+  NotificationRequest
+} from '../../../../core/services/v2/notification.service';
+import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
+import { PointsV2Service } from '../../../../core/services/v2/points-v2.service';
+import { TravelerCategory } from '../../../../core/models/v2/profile-v2.model';
+import { switchMap, map, catchError, of, forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-booking-list-section-v2',
@@ -33,7 +38,7 @@ import {
 })
 export class BookingListSectionV2Component implements OnInit, OnChanges {
   @Input() userId: string = '';
-  @Input() listType: 'active-bookings' | 'travel-history' | 'recent-budgets' =
+  @Input() listType: 'active-bookings' | 'pending-bookings' | 'travel-history' | 'recent-budgets' =
     'active-bookings';
   @Input() parentComponent?: any;  // Referencia al componente padre
 
@@ -72,7 +77,9 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
     private documentPDFService: DocumentPDFService,
     private emailSenderService: EmailSenderService,
     private documentationService: DocumentationService,
+    private documentServicev2: DocumentServicev2,
     private notificationService: NotificationService,
+    private notificationServicev2: NotificationServicev2,
     private authService: AuthenticateService,
     private pointsService: PointsV2Service
   ) {}
@@ -106,6 +113,9 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       case 'active-bookings':
         this.loadActiveBookings(userIdNumber);
         break;
+      case 'pending-bookings':
+        this.loadPendingBookings(userIdNumber);
+        break;
       case 'travel-history':
         this.loadTravelHistory(userIdNumber);
         break;
@@ -125,6 +135,41 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   private loadActiveBookings(userId: number): void {
     // Esperar hasta obtener el email del usuario con reintentos
     this.waitForUserEmail(userId);
+  }
+
+  /**
+   * Carga reservas pendientes (DRAFT/CART) solo por userId (no aplica por viajero)
+   */
+  private loadPendingBookings(userId: number): void {
+    this.bookingsService.getPendingBookings(userId)
+      .pipe(
+        map((reservations: ReservationResponse[]) =>
+          this.dataMappingService.mapReservationsToBookingItems(
+            reservations,
+            [],
+            'active-bookings' // reutilizamos el mapeo genérico
+          )
+        ),
+        catchError((error) => {
+          console.error('Error obteniendo reservas pendientes:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al cargar las reservas pendientes',
+          });
+          return of([]);
+        })
+      )
+      .subscribe({
+        next: (bookingItems: BookingItem[]) => {
+          this.bookingItems = bookingItems;
+          this.loading = false;
+        },
+        error: () => {
+          this.bookingItems = [];
+          this.loading = false;
+        }
+      });
   }
 
   /**
@@ -527,9 +572,75 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   }
 
   sendItem(item: BookingItem) {
-    this.notificationLoading[item.id] = true;
+    // Check if the listType is 'recent-budgets'
+    if (this.listType === 'recent-budgets') {
+      this.sendBudgetNotification(item);
+    } else if (this.listType === 'active-bookings') {
+      this.sendReservationNotification(item);
+    } else {
+      this.notificationLoading[item.id] = true;
 
-    // Get the logged user's email
+      // Get the logged user's email
+      const userEmail = this.authService.getUserEmailValue();
+
+      if (!userEmail) {
+        this.notificationLoading[item.id] = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudo obtener el email del usuario logueado',
+        });
+        return;
+      }
+
+      // Prepare the request body
+      const requestBody = {
+        event: 'BUDGET',
+        email: userEmail,
+      };
+
+      // Call the email service
+      this.emailSenderService
+        .sendReservationWithoutDocuments(parseInt(item.id, 10), requestBody)
+        .subscribe({
+          next: (response) => {
+            this.notificationLoading[item.id] = false;
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Éxito',
+              detail: 'Email enviado correctamente',
+            });
+          },
+          error: (error) => {
+            this.notificationLoading[item.id] = false;
+            console.error('Error sending email:', error);
+
+            let errorMessage = 'Error al enviar el email';
+            if (error.status === 500) {
+              errorMessage = 'Error interno del servidor. Inténtalo más tarde.';
+            } else if (error.status === 404) {
+              errorMessage = 'Reserva no encontrada.';
+            } else if (error.status === 403) {
+              errorMessage = 'No tienes permisos para enviar este email.';
+            }
+
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: errorMessage,
+            });
+          },
+        });
+    }
+  }
+
+  /**
+   * Envía una notificación de presupuesto utilizando el NotificationService.
+   * @param item El BookingItem que representa el presupuesto.
+   */
+  sendBudgetNotification(item: BookingItem): void {
+    this.notificationLoading[item.id] = true;
+    
     const userEmail = this.authService.getUserEmailValue();
 
     if (!userEmail) {
@@ -542,98 +653,264 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       return;
     }
 
-    // Prepare the request body
-    const requestBody = {
-      event: 'BUDGET',
-      email: userEmail,
+    
+  
+    const notificationData: NotificationRequest = {
+      reservationId: parseInt(item.id, 10), // Convertir el ID a número
+      code: "BUDGET",
+      email: userEmail 
     };
 
-    // Call the email service
-    this.emailSenderService
-      .sendReservationWithoutDocuments(parseInt(item.id, 10), requestBody)
-      .subscribe({
-        next: (response) => {
-          this.notificationLoading[item.id] = false;
+    this.notificationServicev2.sendNotification(notificationData).subscribe({
+      next: (response) => {
+        this.notificationLoading[item.id] = false;
+        if (response.success) {
           this.messageService.add({
             severity: 'success',
             summary: 'Éxito',
-            detail: 'Email enviado correctamente',
+            detail: 'Notificación de presupuesto enviada correctamente',
           });
-        },
-        error: (error) => {
-          this.notificationLoading[item.id] = false;
-          console.error('Error sending email:', error);
-
-          let errorMessage = 'Error al enviar el email';
-          if (error.status === 500) {
-            errorMessage = 'Error interno del servidor. Inténtalo más tarde.';
-          } else if (error.status === 404) {
-            errorMessage = 'Reserva no encontrada.';
-          } else if (error.status === 403) {
-            errorMessage = 'No tienes permisos para enviar este email.';
-          }
-
+          this.loadNotificationsForReservation(item.id); // Recargar notificaciones para el item
+        } else {
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
-            detail: errorMessage,
+            detail: response.message || 'Error al enviar la notificación de presupuesto',
           });
-        },
+        }
+      },
+      error: (error) => {
+        this.notificationLoading[item.id] = false;
+        console.error('Error sending budget notification:', error);
+        let errorMessage = 'Error al enviar la notificación de presupuesto';
+        if (error.status === 500) {
+          errorMessage = 'Error interno del servidor. Inténtalo más tarde.';
+        } else if (error.status === 404) {
+          errorMessage = 'Presupuesto no encontrado.';
+        }
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: errorMessage,
+        });
+      },
+    });
+  }
+
+  sendReservationNotification(item: BookingItem): void {
+    this.notificationLoading[item.id] = true;
+    
+    const userEmail = this.authService.getUserEmailValue();
+  
+    if (!userEmail) {
+      this.notificationLoading[item.id] = false;
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudo obtener el email del usuario logueado',
       });
+      return;
+    }
+  
+    const notificationData: NotificationRequest = {
+      reservationId: parseInt(item.id, 10),
+      code: "RESERVATION_VOUCHER",
+      email: userEmail 
+    };
+  
+    this.notificationServicev2.sendNotification(notificationData).subscribe({
+      next: (response) => {
+        this.notificationLoading[item.id] = false;
+        if (response.success) {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Éxito',
+            detail: 'Notificación de reserva enviada correctamente',
+          });
+          this.loadNotificationsForReservation(item.id);
+        } else {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: response.message || 'Error al enviar la notificación de reserva',
+          });
+        }
+      },
+      error: (error) => {
+        this.notificationLoading[item.id] = false;
+        console.error('Error sending reservation notification:', error);
+        let errorMessage = 'Error al enviar la notificación de reserva';
+        if (error.status === 500) {
+          errorMessage = 'Error interno del servidor. Inténtalo más tarde.';
+        } else if (error.status === 404) {
+          errorMessage = 'Reserva no encontrada.';
+        }
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: errorMessage,
+        });
+      },
+    });
   }
 
   downloadItem(item: BookingItem) {
-    this.downloadLoading[item.id] = true;
+    if (this.listType === 'recent-budgets') {
+      // Lógica para descargar presupuestos
+      this.downloadBudgetDocument(item);
+    } else if (this.listType === 'active-bookings') {
+      // Lógica para descargar reserva
+      this.downloadReservationDocument(item);
+    } else {
+      // Lógica para descargar reservas activas/historial
+      this.downloadLoading[item.id] = true;
+  
+      this.messageService.add({
+        severity: 'info',
+        summary: 'Info',
+        detail: 'Generando documento PDF...',
+      });
+  
+      // Download PDF as blob
+      this.documentPDFService
+        .downloadReservationPDFAsBlob(parseInt(item.id, 10), 'BUDGET')
+        .subscribe({
+          next: (blob) => {
+            this.downloadLoading[item.id] = false;
+  
+            // Create download link
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `presupuesto_${item.id}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+  
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Éxito',
+              detail: 'Documento PDF descargado exitosamente',
+            });
+          },
+          error: (error) => {
+            console.error('Error downloading PDF:', error);
+            this.downloadLoading[item.id] = false;
+  
+            let errorMessage = 'Error al generar el documento PDF';
+            if (error.status === 500) {
+              errorMessage = 'Error interno del servidor. Inténtalo más tarde.';
+            } else if (error.status === 404) {
+              errorMessage = 'Documento no encontrado.';
+            } else if (error.status === 403) {
+              errorMessage = 'No tienes permisos para descargar este documento.';
+            }
+  
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: errorMessage,
+            });
+          },
+        });
+    }
+  }
 
+  downloadBudgetDocument(item: BookingItem): void {
+    const BUDGET_ID =parseInt(item.id, 10);
+    const TYPE_DOCUMENT = 'BUDGET';
+    this.documentServicev2.getDocumentInfo(BUDGET_ID, TYPE_DOCUMENT).subscribe({
+      next: (documentInfo) => {
+        const fileName = documentInfo.fileName;
+        
+        this.documentServicev2.getDocument(fileName).subscribe({
+          next: (blob) => {
+            
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+          },
+          error: (error) => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error al descargar documento',
+              detail: 'No se pudo descargar el documento. Por favor, inténtalo más tarde.'
+            });
+          }
+        });
+      },
+      error: (error) => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error al obtener información del documento',
+          detail: 'No se pudo obtener la información del documento. Por favor, inténtalo más tarde.'
+        });
+      }
+    });
+  }
+
+  downloadReservationDocument(item: BookingItem): void {
+    const RESERVATION_ID = parseInt(item.id, 10);
+    
+    this.downloadLoading[item.id] = true;
+    
     this.messageService.add({
       severity: 'info',
       summary: 'Info',
-      detail: 'Generando documento PDF...',
+      detail: 'Generando voucher de reserva...',
     });
-
-    // Download PDF as blob
-    this.documentPDFService
-      .downloadReservationPDFAsBlob(parseInt(item.id, 10), 'BUDGET')
-      .subscribe({
-        next: (blob) => {
-          this.downloadLoading[item.id] = false;
-
-          // Create download link
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `presupuesto_${item.id}.pdf`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(url);
-
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: 'Documento PDF descargado exitosamente',
-          });
-        },
-        error: (error) => {
-          console.error('Error downloading PDF:', error);
-          this.downloadLoading[item.id] = false;
-
-          let errorMessage = 'Error al generar el documento PDF';
-          if (error.status === 500) {
-            errorMessage = 'Error interno del servidor. Inténtalo más tarde.';
-          } else if (error.status === 404) {
-            errorMessage = 'Documento no encontrado.';
-          } else if (error.status === 403) {
-            errorMessage = 'No tienes permisos para descargar este documento.';
+    
+    this.documentServicev2.getReservationVoucherDocument(RESERVATION_ID).subscribe({
+      next: (blob) => {
+        this.downloadLoading[item.id] = false;
+        
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `voucher_reserva_${item.id}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Éxito',
+          detail: 'Voucher de reserva descargado exitosamente',
+        });
+      },
+      error: (error) => {
+        this.downloadLoading[item.id] = false;
+        console.error('Error al descargar voucher de reserva:', error);
+        
+        let errorDetail = 'No se pudo descargar el voucher de reserva.';
+        
+        // Manejo específico de errores
+        if (error.status === 500) {
+          if (error.error?.message?.includes('KeyNotFoundException')) {
+            errorDetail = 'Hay datos incompletos en esta reserva. Por favor, contacta con soporte.';
+          } else {
+            errorDetail = 'Error interno del servidor. Inténtalo más tarde.';
           }
-
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: errorMessage,
-          });
-        },
-      });
+        } else if (error.status === 404) {
+          errorDetail = 'Voucher de reserva no encontrado.';
+        } else if (error.status === 403) {
+          errorDetail = 'No tienes permisos para descargar este documento.';
+        }
+        
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error al descargar documento',
+          detail: errorDetail
+        });
+      }
+    });
   }
 
   reserveItem(item: BookingItem) {
@@ -695,6 +972,8 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
     switch (this.listType) {
       case 'active-bookings':
         return 'Reservas Activas';
+      case 'pending-bookings':
+        return 'Reservas Pendientes';
       case 'recent-budgets':
         return 'Presupuestos Recientes';
       case 'travel-history':
@@ -708,6 +987,8 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
     switch (this.listType) {
       case 'active-bookings':
         return 'No tienes reservas activas';
+      case 'pending-bookings':
+        return 'No tienes reservas pendientes';
       case 'recent-budgets':
         return 'No tienes presupuestos recientes';
       case 'travel-history':
@@ -718,25 +999,51 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   }
 
   // Button visibility methods
-  shouldShowDownload(): boolean {
+  shouldShowDownload(item: BookingItem): boolean {
+    // Ocultar cuando es borrador (1) o carrito en proceso (2)
+    if (this.isDraft(item) || this.isCartInProcess(item)) return false;
     return (
-      this.listType === 'active-bookings' || this.listType === 'recent-budgets'
+      this.listType === 'active-bookings' ||
+      this.listType === 'recent-budgets' ||
+      this.listType === 'pending-bookings'
     );
   }
 
-  shouldShowSend(): boolean {
+  shouldShowSend(item: BookingItem): boolean {
+    // Ocultar cuando es borrador (1) o carrito en proceso (2)
+    if (this.isDraft(item) || this.isCartInProcess(item)) return false;
     return (
-      this.listType === 'active-bookings' || this.listType === 'recent-budgets'
+      this.listType === 'active-bookings' ||
+      this.listType === 'recent-budgets' ||
+      this.listType === 'pending-bookings'
     );
   }
 
   shouldShowView(item: BookingItem): boolean {
-    // No mostrar botón de ver detalle si el estado es 3 (budget/presupuesto reservado)
-    return item.reservationStatusId !== 3;
+    // Ocultar ver detalle para estados 1 (DRAFT) y 2 (CART) y para 3 (BUDGET)
+    if ([1, 2, 3].includes(item.reservationStatusId as any)) return false;
+    // Además ocultar si estamos en la sección de pendientes
+    if (this.listType === 'pending-bookings') return false;
+    return true;
   }
 
-  shouldShowReserve(): boolean {
-    return this.listType === 'recent-budgets';
+  shouldShowReserve(item?: BookingItem): boolean {
+    // Si es carrito en proceso (2), mostrar siempre Reservar
+    if (item && this.isCartInProcess(item)) return true;
+    // Mostrar "Reservar" para presupuestos y para toda la sección de pendientes
+    if (this.listType === 'recent-budgets') return true;
+    if (this.listType === 'pending-bookings') return true;
+    return false;
+  }
+
+  isCartInProcess(item: BookingItem): boolean {
+    // Estado 2 = Carrito en proceso
+    return item?.reservationStatusId === 2;
+  }
+
+  isDraft(item: BookingItem): boolean {
+    // Estado 1 = Borrador
+    return item?.reservationStatusId === 1;
   }
 
   shouldShowPointsDiscount(item: BookingItem): boolean {
@@ -750,7 +1057,7 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   }
 
   getSendLabel(): string {
-    return 'Enviar';
+    return 'Compartir';
   }
 
   getViewLabel(): string {

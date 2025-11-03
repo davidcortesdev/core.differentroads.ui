@@ -328,16 +328,20 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   /**
    * Valida si todos los viajeros están listos para continuar al siguiente paso
    * 
-   * @returns true si TODOS los viajeros tienen sus campos obligatorios completos, válidos y guardados
+   * @returns Promise<boolean> - true si TODOS los viajeros tienen sus campos obligatorios completos, válidos y guardados
    * 
    * Este método itera sobre todos los formularios de viajeros y verifica que cada uno
    * esté listo usando el método isReadyToContinue() de InfoTravelerFormComponent
+   * 
+   * Si no todos están listos en el primer intento, realiza hasta 3 reintentos adicionales
+   * (4 intentos en total) esperando 1 segundo entre cada uno para permitir que las 
+   * operaciones asíncronas pendientes se completen.
    * 
    * Condiciones para estar listo:
    * 1. ✅ Todos los campos obligatorios completos y válidos
    * 2. ✅ No hay cambios pendientes (todo guardado en BD)
    */
-  canContinueToNextStep(): boolean {
+  async canContinueToNextStep(): Promise<boolean> {
     console.log('=== canContinueToNextStep() INICIADO ===');
 
     // Verificar que haya formularios cargados
@@ -349,24 +353,51 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     const forms = this.travelerForms.toArray();
     console.log(`[canContinueToNextStep] Verificando ${forms.length} viajero(s)...`);
 
-    // Verificar que TODOS los viajeros estén listos
-    const allReady = forms.every((form, index) => {
-      const isReady = form.isReadyToContinue();
-      const travelerNumber = index + 1;
+    // Función auxiliar para verificar el estado de todos los viajeros
+    const checkAllTravelers = (attemptNumber: number): boolean => {
+      console.log(`[canContinueToNextStep] 🔍 Intento ${attemptNumber}/4 - Verificando estado de viajeros...`);
       
-      if (isReady) {
-        console.log(`[canContinueToNextStep] ✅ Viajero ${travelerNumber} (ID: ${form.travelerId}): LISTO`);
-      } else {
-        console.log(`[canContinueToNextStep] ❌ Viajero ${travelerNumber} (ID: ${form.travelerId}): NO LISTO`);
+      return forms.every((form, index) => {
+        const isReady = form.isReadyToContinue();
+        const travelerNumber = index + 1;
+        
+        if (isReady) {
+          console.log(`[canContinueToNextStep] ✅ Viajero ${travelerNumber} (ID: ${form.travelerId}): LISTO`);
+        } else {
+          console.log(`[canContinueToNextStep] ❌ Viajero ${travelerNumber} (ID: ${form.travelerId}): NO LISTO`);
+        }
+        
+        return isReady;
+      });
+    };
+
+    // Intentar hasta 4 veces (1 inicial + 3 reintentos)
+    const maxAttempts = 4;
+    let allReady = false;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      allReady = checkAllTravelers(attempt);
+
+      if (allReady) {
+        if (attempt === 1) {
+          console.log('[canContinueToNextStep] ✅ Todos los viajeros listos en el primer intento');
+        } else {
+          console.log(`[canContinueToNextStep] ✅ Todos los viajeros listos después de ${attempt} intento(s)`);
+        }
+        break;
       }
-      
-      return isReady;
-    });
+
+      // Si no es el último intento, esperar 1 segundo antes del siguiente
+      if (attempt < maxAttempts) {
+        console.log(`[canContinueToNextStep] ⏳ Intento ${attempt} falló. Esperando 1 segundo antes del siguiente intento...`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
 
     if (allReady) {
       console.log('[canContinueToNextStep] ✅ TODOS los viajeros están listos para continuar');
     } else {
-      console.log('[canContinueToNextStep] ❌ ALGUNOS viajeros no están listos');
+      console.log('[canContinueToNextStep] ❌ ALGUNOS viajeros aún no están listos después de todos los reintentos');
     }
 
     return allReady;

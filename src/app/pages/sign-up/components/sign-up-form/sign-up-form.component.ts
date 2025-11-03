@@ -19,6 +19,7 @@ import { AnalyticsService } from '../../../../core/services/analytics/analytics.
 import { ConfirmationCodeComponent } from '../../../../shared/components/confirmation-code/confirmation-code.component';
 import { IUserResponse } from '../../../../core/models/users/user.model';
 import { environment } from '../../../../../environments/environment';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-sign-up-form',
@@ -79,7 +80,8 @@ export class SignUpFormComponent {
     private authService: AuthenticateService,
     private usersNetService: UsersNetService,
     private hubspotService: HubspotService,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private messageService: MessageService // <--- INYECTAR!
   ) {
     this.signUpForm = this.fb.group(
       {
@@ -94,13 +96,17 @@ export class SignUpFormComponent {
     );
   }
 
+  showToastError(msg: string) {
+    this.messageService.add({ severity: 'error', summary: 'Error', detail: msg });
+  }
+
   signInWithGoogle(): void {
     this.isLoading = true;
     this.authService.handleGoogleSignIn().then(() => {
       this.isLoading = false;
     }).catch((error) => {
       this.isLoading = false;
-      this.errorMessage = 'Error al iniciar sesión con Google';
+      this.showToastError('Error al iniciar sesión con Google');
       console.error(error);
     });
   }
@@ -113,7 +119,7 @@ export class SignUpFormComponent {
 
   onSubmit() {
     if (this.signUpForm.invalid) {
-      this.errorMessage = 'Por favor, corrige los errores en el formulario.';
+      this.showToastError('Por favor, corrige los errores en el formulario.');
       return;
     }
 
@@ -179,6 +185,16 @@ export class SignUpFormComponent {
                             // Guardar el usuario para verificar después de la confirmación
                             this.registeredUser = existingUser;
                             
+                            // Disparar evento sign_up con los datos disponibles
+                            const phone = existingUser.phone || this.signUpForm.value.phone || '';
+                            const formattedPhone = phone ? this.analyticsService.formatPhoneNumber(phone) : '';
+                            const userData = {
+                              email_address: existingUser.email || this.signUpForm.value.email || '',
+                              phone_number: formattedPhone,
+                              user_id: cognitoUserId || ''
+                            };
+                            this.analyticsService.signUp('manual', userData);
+                            
                             this.isLoading = false;
                             this.isConfirming = true;
                             this.registeredUsername = this.signUpForm.value.email;
@@ -187,7 +203,7 @@ export class SignUpFormComponent {
                           },
                           error: (error: unknown) => {
                             this.isLoading = false;
-                            this.errorMessage = error instanceof Error ? error.message : 'Error al actualizar usuario';
+                            this.showToastError(error instanceof Error ? error.message : 'Error al actualizar usuario');
                           }
                         });
                     } else {
@@ -203,6 +219,16 @@ export class SignUpFormComponent {
                             // Guardar el usuario para verificar después de la confirmación
                             this.registeredUser = user;
                             
+                            // Disparar evento sign_up con los datos disponibles
+                            const phone = user.phone || this.signUpForm.value.phone || '';
+                            const formattedPhone = phone ? this.analyticsService.formatPhoneNumber(phone) : '';
+                            const analyticsUserData = {
+                              email_address: user.email || this.signUpForm.value.email || '',
+                              phone_number: formattedPhone,
+                              user_id: cognitoUserId || ''
+                            };
+                            this.analyticsService.signUp('manual', analyticsUserData);
+                            
                             this.isLoading = false;
                             this.isConfirming = true;
                             this.registeredUsername = this.signUpForm.value.email;
@@ -211,25 +237,25 @@ export class SignUpFormComponent {
                           },
                           error: (error: unknown) => {
                             this.isLoading = false;
-                            this.errorMessage = error instanceof Error ? error.message : 'Registro fallido';
+                            this.showToastError(error instanceof Error ? error.message : 'Registro fallido');
                           }
                         });
                     }
                   },
                   error: (error: unknown) => {
                     this.isLoading = false;
-                    this.errorMessage = error instanceof Error ? error.message : 'Error al verificar usuario existente';
+                    this.showToastError(error instanceof Error ? error.message : 'Error al verificar usuario existente');
                   }
                 });
             })
             .catch((error) => {
               this.isLoading = false;
-              this.errorMessage = error instanceof Error ? error.message : 'Registro fallido';
+              this.showToastError(error instanceof Error ? error.message : 'Registro fallido');
             });
         },
         error: (hubspotError) => {
           this.isLoading = false;
-          this.errorMessage = 'Error al crear el contacto en Hubspot';
+          this.showToastError('Error al crear el contacto en Hubspot');
           console.error('Error al crear contacto en Hubspot:', hubspotError);
         }
       });
@@ -274,6 +300,10 @@ export class SignUpFormComponent {
   }
 
   onErrorMessageChange(message: string): void {
+    // Mostrar error de confirmación solo en Toast si no estamos en el paso intermedio
+    if (!this.isConfirming) {
+      this.showToastError(message);
+    }
     this.errorMessage = message;
   }
 
@@ -299,22 +329,46 @@ export class SignUpFormComponent {
    * Disparar evento sign_up con datos completos después de verificación exitosa
    */
   private trackSignUpWithCompleteData(method: string): void {
-    // Obtener datos completos del usuario después de la verificación
+    // Si tenemos el usuario registrado, usar sus datos directamente
+    if (this.registeredUser) {
+      const phone = this.registeredUser.phone || this.signUpForm.value.phone || '';
+      const formattedPhone = phone ? this.analyticsService.formatPhoneNumber(phone) : '';
+      const userData = {
+        email_address: this.registeredUser.email || this.signUpForm.value.email || '',
+        phone_number: formattedPhone,
+        user_id: this.registeredUser.cognitoId || ''
+      };
+      this.analyticsService.signUp(method, userData);
+      return;
+    }
+
+    // Si no tenemos el usuario registrado, intentar obtenerlo con getCurrentUserData
     this.analyticsService.getCurrentUserData().subscribe({
       next: (userData) => {
-        this.analyticsService.signUp(method, userData);
+        // Si getCurrentUserData ya tiene phone_number formateado, usarlo; si no, formatear desde formulario
+        const phone = userData?.phone_number || this.signUpForm.value.phone || '';
+        // Solo formatear si viene del formulario y no tiene el formato +
+        const formattedPhone = userData?.phone_number 
+          ? phone 
+          : (phone ? this.analyticsService.formatPhoneNumber(phone) : '');
+        const completeUserData = {
+          email_address: userData?.email_address || this.signUpForm.value.email || '',
+          phone_number: formattedPhone,
+          user_id: userData?.user_id || ''
+        };
+        this.analyticsService.signUp(method, completeUserData);
       },
       error: (error) => {
         console.error('Error obteniendo datos de usuario para analytics:', error);
         // Fallback con datos del formulario
-        this.analyticsService.signUp(
-          method,
-          this.analyticsService.getUserData(
-            this.signUpForm.value.email,
-            this.signUpForm.value.phone,
-            undefined
-          )
-        );
+        const phone = this.signUpForm.value.phone || '';
+        const formattedPhone = phone ? this.analyticsService.formatPhoneNumber(phone) : '';
+        const fallbackUserData = {
+          email_address: this.signUpForm.value.email || '',
+          phone_number: formattedPhone,
+          user_id: ''
+        };
+        this.analyticsService.signUp(method, fallbackUserData);
       }
     });
   }

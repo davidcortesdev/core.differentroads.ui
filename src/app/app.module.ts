@@ -196,6 +196,7 @@ import { AddPaymentModalComponent } from './pages/bookingsv2/add-payment-modal/a
 // ========================================
 import { ProfileV2Component } from './pages/profile-v2/profile-v2.component';
 import { BookingListSectionV2Component } from './pages/profile-v2/components/booking-list-section-v2/booking-list-section-v2.component';
+import { ModalPointsComponent } from './pages/profile-v2/components/booking-list-section-v2/components/modal-points/modal-points.component';
 import { PersonalInfoSectionV2Component } from './pages/profile-v2/components/personal-info-section-v2/personal-info-section-v2.component';
 import { PointsSectionV2Component } from './pages/profile-v2/components/points-section-v2/points-section-v2.component';
 import { PointsTableComponent } from './pages/profile-v2/components/points-section-v2/components/points-table/points-table.component';
@@ -376,6 +377,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     // ========================================
     ProfileV2Component,
     BookingListSectionV2Component,
+    ModalPointsComponent,
     PersonalInfoSectionV2Component,
     PointsSectionV2Component,
     PointsTableComponent,

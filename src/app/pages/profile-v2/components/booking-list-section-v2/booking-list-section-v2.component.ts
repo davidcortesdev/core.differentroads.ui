@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { BookingItem } from '../../../../core/models/v2/profile-v2.model';
@@ -27,7 +27,7 @@ import {
 } from '../../../../core/services/v2/notification.service';
 import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 import { PointsV2Service } from '../../../../core/services/v2/points-v2.service';
-import { switchMap, map, catchError, of, forkJoin } from 'rxjs';
+import { switchMap, map, catchError, of, forkJoin, Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-booking-list-section-v2',
@@ -35,7 +35,7 @@ import { switchMap, map, catchError, of, forkJoin } from 'rxjs';
   templateUrl: './booking-list-section-v2.component.html',
   styleUrls: ['./booking-list-section-v2.component.scss'],
 })
-export class BookingListSectionV2Component implements OnInit, OnChanges {
+export class BookingListSectionV2Component implements OnInit, OnChanges, OnDestroy {
   @Input() userId: string = '';
   @Input() listType: 'active-bookings' | 'pending-bookings' | 'travel-history' | 'recent-budgets' =
     'active-bookings';
@@ -43,6 +43,9 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
 
   // Almacenar qué reservas ya tienen puntos aplicados (clave: reservationId_userId)
   private reservationsWithPointsRedeemed: Set<string> = new Set();
+  
+  // Suscripción para poder cancelarla si se inicia una nueva carga
+  private activeBookingsSubscription: Subscription | null = null;
 
   bookingItems: BookingItem[] = [];
   isExpanded: boolean = true;
@@ -97,7 +100,17 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
     }
   }
 
+  ngOnDestroy(): void {
+    // Cancelar suscripciones activas al destruir el componente
+    if (this.activeBookingsSubscription) {
+      this.activeBookingsSubscription.unsubscribe();
+      this.activeBookingsSubscription = null;
+    }
+  }
+
   private loadData(): void {
+    // Inicializar bookingItems como array vacío al inicio para evitar mostrar mensaje prematuro
+    this.bookingItems = [];
     this.loading = true;
 
     // Convertir userId de string a number para la API
@@ -142,6 +155,9 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
    * Carga reservas pendientes (DRAFT/CART) solo por userId (no aplica por viajero)
    */
   private loadPendingBookings(userId: number): void {
+    this.loading = true;
+    this.bookingItems = [];
+    
     this.bookingsService.getPendingBookings(userId)
       .pipe(
         map((reservations: ReservationResponse[]) =>
@@ -181,6 +197,10 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
     const maxAttempts = 10;
     const delayMs = 300;
 
+    // Asegurar que loading esté en true mientras esperamos
+    this.loading = true;
+    this.bookingItems = [];
+
     const userEmail = this.authService.getUserEmailValue();
 
     if (userEmail) {
@@ -208,12 +228,34 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
    * Carga las reservas activas una vez que el email está disponible
    */
   private loadActiveBookingsWithEmail(userId: number, userEmail: string): void {
+    // Cancelar cualquier suscripción previa para evitar múltiples cargas simultáneas
+    if (this.activeBookingsSubscription) {
+      this.activeBookingsSubscription.unsubscribe();
+      this.activeBookingsSubscription = null;
+    }
+    
+    // Asegurar que loading esté en true y bookingItems esté vacío al inicio
+    this.loading = true;
+    this.bookingItems = [];
     
     // Cargar reservas Y transacciones de puntos EN PARALELO
-    forkJoin({
+    // Agregar catchError a cada llamada para evitar que un error haga fallar todo el observable
+    const subscription = forkJoin({
       reservationsData: forkJoin({
-        userReservations: this.bookingsService.getActiveBookings(userId),
-        travelerReservations: this.bookingsService.getActiveBookingsByTravelerEmail(userEmail),
+        userReservations: this.bookingsService.getActiveBookings(userId).pipe(
+          catchError((error) => {
+            console.error('Error obteniendo reservas activas del usuario:', error);
+            // Retornar array vacío en caso de error para que no falle todo el forkJoin
+            return of([]);
+          })
+        ),
+        travelerReservations: this.bookingsService.getActiveBookingsByTravelerEmail(userEmail).pipe(
+          catchError((error) => {
+            console.error('Error obteniendo reservas activas del viajero:', error);
+            // Retornar array vacío en caso de error para que no falle todo el forkJoin
+            return of([]);
+          })
+        ),
       }),
       pointsTransactions: this.loadPointsTransactions()
     })
@@ -223,8 +265,8 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
           
           // Combinar y eliminar duplicados basándose en el ID de reserva
           const allReservations = [
-            ...userReservations,
-            ...travelerReservations,
+            ...(userReservations || []),
+            ...(travelerReservations || []),
           ];
                     
           const uniqueReservations = allReservations.filter(
@@ -233,6 +275,8 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
           );
           
           if (uniqueReservations.length === 0) {
+            // Retornar un observable que se complete después de un pequeño delay
+            // para asegurar que el loading se muestre por un tiempo mínimo
             return of([]);
           }
 
@@ -267,9 +311,24 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
             )
           );
 
-          return forkJoin(tourPromises);
+          return forkJoin(tourPromises).pipe(
+            catchError((error) => {
+              console.error('Error obteniendo información de tours:', error);
+              // Si falla la obtención de tours, retornar las reservas sin información de tour
+              return of(uniqueReservations.map(reservation => ({
+                reservation,
+                tour: null,
+                cmsTour: null
+              })));
+            })
+          );
         }),
         map((reservationTourPairs: any[]) => {
+          // Verificar que reservationTourPairs tenga datos
+          if (!reservationTourPairs || reservationTourPairs.length === 0) {
+            return [];
+          }
+          
           // Mapear usando el servicio de mapeo con imágenes CMS
           return this.dataMappingService.mapReservationsToBookingItems(
             reservationTourPairs.map((pair) => pair.reservation),
@@ -290,17 +349,25 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       )
       .subscribe({
         next: (bookingItems: BookingItem[]) => {
-          this.bookingItems = bookingItems;
+          // Solo actualizar después de que toda la carga esté completa
+          this.bookingItems = bookingItems || [];
           this.loading = false;
-          // Cargar documentación y notificaciones para todas las reservas
+          // Limpiar la suscripción activa
+          this.activeBookingsSubscription = null;
+          // Cargar documentación y notificaciones para todas las reservas (asíncrono, no bloquea UI)
           this.loadDocumentationAndNotifications();
         },
         error: (error) => {
           console.error('Error en la suscripción:', error);
           this.bookingItems = [];
           this.loading = false;
+          // Limpiar la suscripción activa
+          this.activeBookingsSubscription = null;
         },
       });
+    
+    // Guardar la suscripción para poder cancelarla si es necesario
+    this.activeBookingsSubscription = subscription;
   }
 
   /**
@@ -308,6 +375,9 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
    * Incluye reservas donde el usuario es titular + reservas donde aparece como viajero
    */
   private loadTravelHistory(userId: number): void {
+    this.loading = true;
+    this.bookingItems = [];
+    
     const userEmail = this.authService.getUserEmailValue();
     
     if (!userEmail) {
@@ -414,6 +484,9 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
    * Incluye presupuestos donde el usuario es titular + presupuestos donde aparece como viajero
    */
   private loadRecentBudgets(userId: number): void {
+    this.loading = true;
+    this.bookingItems = [];
+    
     this.bookingsService
       .getRecentBudgets(userId)
       .pipe(

@@ -391,20 +391,19 @@ $orange-red: #f66b5b;
             justify-content: space-between;
             align-items: center;
             padding: 1rem !important;
-            background: var(--p-green-50);
-            border-radius: var(--p-border-radius);
+            background: #ee5a24 !important;
+            border-radius: 0.2rem;
             margin-bottom: 1.25rem !important;
-            border: 1px solid var(--p-green-200);
             
             label {
-                color: var(--p-green-700);
+                color: white;
                 font-weight: var(--p-font-weight-semibold);
             }
             
             .points-value {
                 font-size: 1.25rem;
                 font-weight: bold;
-                color: var(--p-green-600);
+                color: white;
             }
         }
 
@@ -461,6 +460,66 @@ $orange-red: #f66b5b;
                     color: var(--p-red-500);
                     font-weight: var(--p-font-weight-semibold);
                 }
+            }
+        }
+    }
+}
+ 
+// Estilos para la modal de confirmación
+.confirmation-content {
+    padding: 1rem 0;
+    
+    .warning-message {
+        text-align: center;
+        padding: 1rem;
+        
+        i {
+            display: block;
+            margin-bottom: 1rem;
+        }
+        
+        p {
+            margin: 0.5rem 0;
+            line-height: 1.6;
+            
+            &:first-of-type {
+                font-size: 1.1rem;
+            }
+        }
+    }
+    
+    .points-summary {
+        margin-top: 1.5rem;
+        padding: 1rem;
+        background: var(--p-surface-50);
+        border-radius: var(--p-border-radius);
+        border: 1px solid var(--p-content-border-color);
+        
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--p-content-border-color);
+            
+            &:last-child {
+                border-bottom: none;
+            }
+            
+            &.total {
+                margin-top: 0.5rem;
+                padding-top: 1rem;
+                border-top: 2px solid var(--p-primary-color);
+                font-size: 1.1rem;
+            }
+            
+            span {
+                color: var(--p-text-color);
+            }
+            
+            strong {
+                color: var(--p-text-color);
+                font-weight: var(--p-font-weight-semibold);
             }
         }
     }

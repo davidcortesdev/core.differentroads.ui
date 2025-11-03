@@ -66,6 +66,9 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   maxPointsPerReservation: number = 50; // Límite por reserva según documento
   maxPointsForCategory: number = 50; // Límite según categoría del usuario
   loadingUserData: boolean = false;
+  
+  // Propiedades para modal de confirmación
+  confirmationModalVisible: boolean = false;
 
   constructor(
     private router: Router,
@@ -1504,7 +1507,7 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   }
 
   /**
-   * Aplica el descuento de puntos
+   * Muestra la modal de confirmación antes de aplicar el descuento
    */
   applyPointsDiscount(): void {
     if (!this.selectedBookingItem || this.pointsToUse <= 0) {
@@ -1527,6 +1530,43 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       return;
     }
 
+    // Mostrar modal de confirmación
+    this.confirmationModalVisible = true;
+  }
+
+  /**
+   * Cierra la modal de confirmación
+   */
+  closeConfirmationModal(): void {
+    this.confirmationModalVisible = false;
+  }
+
+  /**
+   * Confirma y aplica el descuento de puntos
+   */
+  confirmApplyPointsDiscount(): void {
+    if (!this.selectedBookingItem || this.pointsToUse <= 0) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Debes seleccionar una cantidad de puntos válida',
+      });
+      this.closeConfirmationModal();
+      return;
+    }
+
+    const validation = this.validatePointsUsage();
+    
+    if (!validation.isValid) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error de validación',
+        detail: validation.message,
+      });
+      this.closeConfirmationModal();
+      return;
+    }
+
     const reservationId = parseInt(this.selectedBookingItem.id, 10);
 
     if (!this.userId) {
@@ -1535,6 +1575,7 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
         summary: 'Error',
         detail: 'No se pudo obtener el ID del usuario',
       });
+      this.closeConfirmationModal();
       return;
     }
 
@@ -1546,8 +1587,12 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
         summary: 'Error',
         detail: 'IDs inválidos',
       });
+      this.closeConfirmationModal();
       return;
     }
+
+    // Cerrar modal de confirmación
+    this.closeConfirmationModal();
 
     this.pointsService.redeemPointsForReservation(reservationId, userIdNumber, this.pointsToUse)
       .then(result => {
@@ -1570,7 +1615,7 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
           // Recargar datos de reservas para reflejar cambios en precio
           this.loadData();
           
-          // Cerrar modal
+          // Cerrar modal de descuento
           this.closePointsDiscountModal();
         } else {
           this.messageService.add({

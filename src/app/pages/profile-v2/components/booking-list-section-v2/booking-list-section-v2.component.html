@@ -171,7 +171,7 @@
         <ng-template pTemplate="messageicon">
           <i class="pi pi-star-fill"></i>
         </ng-template>
-        <span><strong>{{ getCategoryDisplayName() }}</strong> - Límite por reserva: <strong>{{ maxPointsForCategory }} puntos</strong></span>
+        <span><strong>{{ getCategoryDisplayName() }}</strong> : Límite por reserva: <strong>{{ maxPointsForCategory }} puntos</strong></span>
       </p-message>
       
       <div class="points-input">
@@ -218,11 +218,61 @@
       (click)="closePointsDiscountModal()">
     </p-button>
     <p-button 
-      label="Aplicar Descuento" 
+      label="Aplicar Puntos" 
       icon="pi pi-check" 
       styleClass="p-button-success" 
       [disabled]="!isApplyDiscountButtonEnabled()"
       (click)="applyPointsDiscount()">
+    </p-button>
+  </ng-template>
+</p-dialog>
+
+<!-- Modal de confirmación para aplicar puntos -->
+<p-dialog 
+  [(visible)]="confirmationModalVisible" 
+  [modal]="true" 
+  [closable]="true" 
+  [draggable]="false" 
+  [resizable]="false"
+  [style]="{width: '450px'}"
+  header="Confirmar Aplicación de Puntos">
+  
+  <div class="confirmation-content">
+    <div class="warning-message">
+      <i class="pi pi-exclamation-triangle" style="font-size: 2rem; color: #ee5a24; margin-bottom: 1rem;"></i>
+      <p><strong>¿Estás seguro de que deseas aplicar {{ pointsToUse }} puntos?</strong></p>
+      <p style="margin-top: 1rem;">Una vez aplicados los puntos, no podrás revertir esta acción.</p>
+      <p style="margin-top: 0.5rem; color: #6b7280;">El descuento se aplicará inmediatamente a tu reserva.</p>
+    </div>
+    
+    <div class="points-summary" *ngIf="selectedBookingItem">
+      <div class="summary-row">
+        <span>Puntos a aplicar:</span>
+        <strong>{{ pointsToUse }}</strong>
+      </div>
+      <div class="summary-row">
+        <span>Descuento:</span>
+        <strong>{{ pointsToUse | currency:'EUR':'symbol':'1.2-2' }}</strong>
+      </div>
+      <div class="summary-row total">
+        <span>Precio final:</span>
+        <strong>{{ getFinalPrice() | currency:'EUR':'symbol':'1.2-2' }}</strong>
+      </div>
+    </div>
+  </div>
+  
+  <ng-template pTemplate="footer">
+    <p-button 
+      label="Cancelar" 
+      icon="pi pi-times" 
+      styleClass="p-button-text" 
+      (click)="closeConfirmationModal()">
+    </p-button>
+    <p-button 
+      label="Confirmar y Aplicar" 
+      icon="pi pi-check" 
+      styleClass="p-button-success" 
+      (click)="confirmApplyPointsDiscount()">
     </p-button>
   </ng-template>
 </p-dialog>

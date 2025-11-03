@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import {
   Payment,
   PaymentStatus,
+  IPaymentVoucher,
 } from '../../../core/models/bookings/payment.model';
 import { PaymentData } from '../add-payment-modal/add-payment-modal.component';
 import { BookingsServiceV2 } from '../../../core/services/v2/bookings-v2.service';
@@ -356,5 +357,52 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
       !selectedId ||
       selectedId === payment.paymentStatusId
     );
+  }
+
+  /**
+   * Obtiene todos los justificantes (vouchers) de todos los pagos
+   */
+  getPaymentVouchers(): IPaymentVoucher[] {
+    const allVouchers: IPaymentVoucher[] = [];
+    if (!this.paymentHistory || this.paymentHistory.length === 0) {
+      return allVouchers;
+    }
+
+    this.paymentHistory.forEach((payment) => {
+      if (payment.vouchers && payment.vouchers.length > 0) {
+        allVouchers.push(...payment.vouchers);
+      }
+    });
+
+    return allVouchers;
+  }
+
+  /**
+   * Abre un justificante de pago en una nueva pestaña
+   */
+  viewVoucher(voucher: IPaymentVoucher): void {
+    if (voucher.fileUrl) {
+      window.open(voucher.fileUrl, '_blank');
+    }
+  }
+
+  /**
+   * Formatea la fecha de subida del justificante
+   */
+  formatVoucherDate(date: Date | string): string {
+    if (!date) return 'Fecha no disponible';
+
+    try {
+      const dateObj = date instanceof Date ? date : new Date(date);
+      return dateObj.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch (error) {
+      return 'Fecha no válida';
+    }
   }
 }

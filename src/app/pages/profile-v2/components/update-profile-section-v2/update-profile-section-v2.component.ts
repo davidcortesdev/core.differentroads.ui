@@ -94,11 +94,20 @@ export class UpdateProfileSectionV2Component{
   // Validaciones de campos
   onTelefonoInput(event: any) {
     const input = event.target as HTMLInputElement;
-    const filteredValue = this.updateProfileService.validateTelefonoInput(input.value);
-    input.value = filteredValue;
+    // Limitar a 14 dígitos (sin contar espacios u otros caracteres)
+    const digitsOnly = input.value.replace(/\D/g, '').slice(0, 14);
+    input.value = digitsOnly;
     // Actualizar también el modelo
-    this.personalInfo.telefono = filteredValue;
+    this.personalInfo.telefono = digitsOnly;
     this.clearFieldError('telefono');
+  }
+
+  // Input helper: limitar prefijo a 3 dígitos
+  onPrefixInput(event: Event): void {
+    const inputEl = event.target as HTMLInputElement | null;
+    if (!inputEl) return;
+    const digitsOnly = inputEl.value.replace(/\D/g, '').slice(0, 3);
+    inputEl.value = digitsOnly;
   }
 
   onDniInput(event: any) {

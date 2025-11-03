@@ -107,16 +107,29 @@
         </p-floatlabel>
 
         <p-floatlabel variant="on">
-          <input
-            pInputText
-            type="tel"
-            id="telefono"
-            [(ngModel)]="personalInfo.telefono"
-            name="telefono"
-            (input)="onTelefonoInput($event)"
-            [class.error]="hasFieldError('telefono')"
-            styleClass="p-inputtext-sm"
-          />
+          <div class="phone-row">
+            <input
+              pInputText
+              type="text"
+              class="prefix-input"
+              placeholder="+34"
+              inputmode="numeric"
+              maxlength="3"
+              (input)="onPrefixInput($event)"
+            />
+            <input
+              pInputText
+              type="tel"
+              id="telefono"
+              [(ngModel)]="personalInfo.telefono"
+              name="telefono"
+              (input)="onTelefonoInput($event)"
+              [class.error]="hasFieldError('telefono')"
+              styleClass="p-inputtext-sm"
+              inputmode="tel"
+              maxlength="20"
+            />
+          </div>
           <label for="telefono">Teléfono *</label>
           <small class="error-message" *ngIf="hasFieldError('telefono')">
             {{ getFieldError('telefono') }}

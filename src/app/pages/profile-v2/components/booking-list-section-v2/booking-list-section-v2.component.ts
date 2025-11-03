@@ -914,7 +914,12 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   }
 
   reserveItem(item: BookingItem) {
+    // Navegar al checkout para presupuestos recientes
     if (this.listType === 'recent-budgets') {
+      this.router.navigate(['/checkout', item.id]);
+    }
+    // Navegar al checkout para reservas pendientes o carrito en proceso
+    else if (this.listType === 'pending-bookings' || this.isCartInProcess(item)) {
       this.router.navigate(['/checkout', item.id]);
     }
   }

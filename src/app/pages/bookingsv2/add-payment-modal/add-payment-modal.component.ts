@@ -298,6 +298,12 @@ export class AddPaymentModalComponent implements OnInit {
       console.log('✅ Scalapay - Respuesta recibida:', response);
 
       if (response?.checkoutUrl) {
+        // Emitir evento de pago procesado para analytics (antes de redirigir)
+        this.paymentProcessed.emit({
+          amount: this.customPaymentAmount,
+          method: 'scalapay'
+        });
+
         console.log('🔗 Scalapay - Redirigiendo a:', response.checkoutUrl);
         // Redirigir a Scalapay para completar el pago
         window.location.href = response.checkoutUrl;

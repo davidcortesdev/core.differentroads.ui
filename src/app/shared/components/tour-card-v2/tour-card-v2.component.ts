@@ -87,7 +87,7 @@ export class TourCardV2Component implements OnInit, AfterViewInit {
             item_brand: 'Different Roads',
             item_category: this.tourData.continent || '',
             item_category2: this.tourData.country || '',
-            item_category3: this.tourData.tag || '',
+            item_category3: this.tourData.tag && this.tourData.tag.trim().length > 0 ? this.tourData.tag.trim() : '',
             item_category4: this.tourData.availableMonths?.join(', ').toLowerCase() || '',
             item_category5: this.tourData.tripType && this.tourData.tripType.length > 0
               ? this.tourData.tripType.join(', ')

@@ -1,12 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TourService, Tour } from '../../core/services/tour/tour.service';
-import { catchError, of } from 'rxjs';
+import { catchError, of, switchMap, map } from 'rxjs';
 import { SelectedDepartureEvent } from './components/tour-itinerary-v2/components/selector-itinerary/selector-itinerary.component';
 import { ActivityHighlight } from '../../shared/components/activity-card/activity-card.component';
 import { AnalyticsService } from '../../core/services/analytics/analytics.service';
 import { AuthenticateService } from '../../core/services/auth/auth-service.service';
 import { Title } from '@angular/platform-browser';
+import { TourTagService } from '../../core/services/tag/tour-tag.service';
+import { TagService } from '../../core/services/tag/tag.service';
 
 // ✅ INTERFACES para tipado fuerte
 interface PassengersData {
@@ -124,6 +126,8 @@ export class TourV2Component implements OnInit {
     private tourService: TourService,
     private analyticsService: AnalyticsService,
     private authService: AuthenticateService,
+    private tourTagService: TourTagService,
+    private tagService: TagService,
   ) {}
 
   ngOnInit(): void {
@@ -301,7 +305,30 @@ export class TourV2Component implements OnInit {
     const itemListId = state?.['listId'] || '';
     const itemListName = state?.['listName'] || '';
     
-    this.analyticsService.getCurrentUserData().subscribe((userData: any) => {
+    // Obtener el primer tag visible del tour para item_category3
+    this.tourTagService.getByTourAndType(tour.id!, 'VISIBLE').pipe(
+      switchMap((tourTags) => {
+        // Validar que haya tags y que el primer tag tenga un tagId válido
+        if (tourTags.length > 0 && tourTags[0]?.tagId && tourTags[0].tagId > 0) {
+          // Obtener el nombre del primer tag
+          const firstTagId = tourTags[0].tagId;
+          return this.tagService.getById(firstTagId).pipe(
+            map((tag) => tag?.name || null),
+            catchError(() => of(null))
+          );
+        }
+        return of(null);
+      }),
+      catchError(() => of(null)),
+      switchMap((firstTagName) => {
+        // Agregar el tag al tourData si existe
+        if (firstTagName && firstTagName.trim().length > 0) {
+          tourData.tag = firstTagName.trim();
+        }
+        
+        return this.analyticsService.getCurrentUserData();
+      })
+    ).subscribe((userData: any) => {
       this.fireViewItemEvent(itemListId, itemListName, tourData, tour, userData);
       // Marcar como trackeado después de disparar el evento
       this.viewItemTracked = true;
@@ -324,7 +351,11 @@ export class TourV2Component implements OnInit {
         item_brand: 'Different Roads',
         item_category: tourData.destination?.continent || '',
         item_category2: tourData.destination?.country || '',
-        item_category3: tourData.marketingSection?.marketingSeasonTag || 'Clasico',
+        item_category3: (tourData.tag && tourData.tag.trim().length > 0) 
+          ? tourData.tag.trim() 
+          : (tourData.marketingSection?.marketingSeasonTag && tourData.marketingSection.marketingSeasonTag.trim().length > 0)
+          ? tourData.marketingSection.marketingSeasonTag.trim()
+          : '',
         item_category4: tourData.monthTags?.join(', ') || '',
         item_category5: tourData.tourType === 'FIT' ? 'Privados' : 'Grupos',
         item_list_id: itemListId,

@@ -8,6 +8,7 @@ import { PaymentMethodNetService } from '../../checkout-v2/services/paymentMetho
 import { NewRedsysService, IFormData } from '../../checkout-v2/services/newRedsys.service';
 import { CurrencyService } from '../../../core/services/masterdata/currency.service';
 import { PaymentService, PaymentInfo } from '../../../core/services/payments/payment.service';
+import { environment } from '../../../../environments/environment';
 
 export interface PaymentData {
   amount: number;
@@ -200,9 +201,11 @@ export class AddPaymentModalComponent implements OnInit {
       });
 
       // Generar los datos del formulario para Redsys
+      const baseUrlFront = (window.location.href).replace(this.router.url, '');
       const formData: IFormData | undefined = await this.redsysService.generateFormData(
         response.id, 
-        "https://www.differentroads.es/"
+        environment.redsysApiUrl,
+        baseUrlFront
       ).toPromise();
       
       if (formData) {
@@ -221,7 +224,7 @@ export class AddPaymentModalComponent implements OnInit {
     // Crear formulario dinámico para enviar a Redsys
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = 'https://sis-t.redsys.es:25443/sis/realizarPago';
+    form.action = environment.redsysUrl;
 
     const input1 = document.createElement('input');
     input1.type = 'hidden';

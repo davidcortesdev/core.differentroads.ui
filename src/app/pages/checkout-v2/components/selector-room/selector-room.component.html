@@ -19,19 +19,6 @@
   </div>
 </div>
 
-<!-- Indicador de proceso y guardado -->
-<div class="processing-status" *ngIf="processingStatus">
-  <div class="status-content">
-    <span class="status-text">{{ processingStatus }}</span>
-    <div class="progress-bar" *ngIf="savingCountdown > 0">
-      <div 
-        class="progress-fill" 
-        [style.width.%]="((1200 - savingCountdown) / 1200) * 100"
-      ></div>
-    </div>
-  </div>
-</div>
-
 <div class="room-selector" [class.saving]="saving">
   <div
     *ngFor="let room of roomsAvailabilityForTravelersNumber; let i = index"

@@ -314,7 +314,7 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
           return of(null);
         }
 
-        return this.tourService.getById(tourIdToLoad).pipe(
+        return this.tourService.getById(tourIdToLoad, false).pipe(
           map((tour) => {
             if (!tour) return null;
 

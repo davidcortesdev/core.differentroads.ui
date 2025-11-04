@@ -24,6 +24,7 @@ import { TagService } from '../../../core/services/tag/tag.service';
 import { DepartureService, IDepartureResponse } from '../../../core/services/departure/departure.service';
 import { ReservationTravelerService, IReservationTravelerResponse } from '../../../core/services/reservation/reservation-traveler.service';
 import { ReservationTravelerActivityService, IReservationTravelerActivityResponse } from '../../../core/services/reservation/reservation-traveler-activity.service';
+import { ActivityService, IActivityResponse } from '../../../core/services/activity/activity.service';
 import { switchMap, map, catchError, concatMap } from 'rxjs/operators';
 import { forkJoin, of, Observable } from 'rxjs';
 
@@ -115,7 +116,8 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
     private tagService: TagService,
     private departureService: DepartureService,
     private reservationTravelerService: ReservationTravelerService,
-    private reservationTravelerActivityService: ReservationTravelerActivityService
+    private reservationTravelerActivityService: ReservationTravelerActivityService,
+    private activityService: ActivityService
   ) {
     this.paymentForm = this.fb.group({
       amount: [0, [Validators.required, Validators.min(1)]],
@@ -472,6 +474,7 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
         // Intentar obtener tour desde reservationData.tour (como en checkout)
         const reservationData = reservation as any;
         const tourFromReservation = reservationData.tour;
+        const insuranceFromReservation = reservationData.insurance?.name || '';
 
         // Si el tour viene completo en la reserva, usarlo directamente
         if (tourFromReservation && tourFromReservation.days !== undefined) {
@@ -489,13 +492,55 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
             monthTags: tourFromReservation.monthTags,
             tourType: tourFromReservation.tourType,
             flightCity: 'Sin vuelo',
+            activitiesText: undefined, // Se obtendrá desde travelers
+            selectedInsurance: insuranceFromReservation || undefined,
             childrenCount: '0',
             totalPassengers: reservation.totalPassengers,
             departureDate: this.departureDate || '',
-            returnDate: '',
+            returnDate: reservationData.departure?.arrivalDate || '',
             price: paymentData.amount
           };
 
+          // Si no tiene actividades, intentar obtenerlas
+          if (!tourDataForEcommerce.activitiesText) {
+            return this.reservationTravelerService.getByReservation(this.reservationId).pipe(
+              switchMap((travelers) => {
+                if (travelers.length === 0) {
+                  return of({ tourDataForEcommerce, reservation });
+                }
+                const activityRequests = travelers.map(traveler =>
+                  this.reservationTravelerActivityService.getByReservationTraveler(traveler.id).pipe(
+                    catchError(() => of([]))
+                  )
+                );
+                return forkJoin(activityRequests).pipe(
+                  switchMap((activityArrays: IReservationTravelerActivityResponse[][]) => {
+                    const allActivityIds = activityArrays.flat().map(a => a.activityId).filter(id => id > 0);
+                    const uniqueActivityIds = [...new Set(allActivityIds)];
+                    if (uniqueActivityIds.length === 0) {
+                      return of({ tourDataForEcommerce, reservation });
+                    }
+                    const activityDetailRequests = uniqueActivityIds.map(activityId =>
+                      this.activityService.getById(activityId).pipe(catchError(() => of(null)))
+                    );
+                    return forkJoin(activityDetailRequests).pipe(
+                      map((activities: (IActivityResponse | null)[]) => {
+                        const validActivities = activities.filter(a => a !== null) as IActivityResponse[];
+                        const activitiesText = validActivities.length > 0
+                          ? validActivities.map(a => a.name || a.description || '').filter(t => t).join(', ')
+                          : '';
+                        tourDataForEcommerce.activitiesText = activitiesText || undefined;
+                        return { tourDataForEcommerce, reservation };
+                      }),
+                      catchError(() => of({ tourDataForEcommerce, reservation }))
+                    );
+                  }),
+                  catchError(() => of({ tourDataForEcommerce, reservation }))
+                );
+              }),
+              catchError(() => of({ tourDataForEcommerce, reservation }))
+            );
+          }
           return of({ tourDataForEcommerce, reservation });
         }
 
@@ -541,19 +586,39 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
               )
             );
 
-            return forkJoin({
-              activities: activityRequests.length > 0 ? forkJoin(activityRequests).pipe(
-                map(activityArrays => activityArrays.flat()),
-                catchError(() => of([]))
-              ) : of([]),
-              // Seguros desde travelers (comfortPlan)
-              insurance: of(travelers.length > 0 ? travelers[0].comfortPlan || '' : '')
-            }).pipe(
-              map(({ activities, insurance }) => {
-                // Construir texto de actividades
-                const activitiesText = activities.length > 0
-                  ? activities.map(a => a.description || a.name || '').filter(t => t).join(', ')
-                  : '';
+            return (activityRequests.length > 0 ? forkJoin(activityRequests).pipe(
+              switchMap((activityArrays: IReservationTravelerActivityResponse[][]) => {
+                const allActivityIds = activityArrays.flat().map(a => a.activityId).filter(id => id > 0);
+                const uniqueActivityIds = [...new Set(allActivityIds)];
+                
+                if (uniqueActivityIds.length === 0) {
+                  return of({ activitiesText: '', insurance: '' });
+                }
+                
+                // Obtener detalles de actividades desde ActivityService
+                const activityDetailRequests = uniqueActivityIds.map(activityId =>
+                  this.activityService.getById(activityId).pipe(
+                    catchError(() => of(null))
+                  )
+                );
+                
+                return forkJoin(activityDetailRequests).pipe(
+                  map((activities: (IActivityResponse | null)[]) => {
+                    const validActivities = activities.filter(a => a !== null) as IActivityResponse[];
+                    const activitiesText = validActivities.length > 0
+                      ? validActivities.map(a => a.name || a.description || '').filter(t => t).join(', ')
+                      : '';
+                    
+                    // Seguros: obtener desde reservationData (disponible en el scope)
+                    const insuranceFromReservation = (reservation as any).insurance?.name || '';
+                    
+                    return { activitiesText, insurance: insuranceFromReservation };
+                  })
+                );
+              }),
+              catchError(() => of({ activitiesText: '', insurance: '' }))
+            ) : of({ activitiesText: '', insurance: '' })).pipe(
+              map(({ activitiesText, insurance }) => {
 
                 const tourDataForEcommerce: TourDataForEcommerce = {
                   id: tour.id,

@@ -1,7 +1,9 @@
 import { Injectable, Injector } from '@angular/core';
 import { UsersNetService } from '../users/usersNet.service';
 import { PersonalInfoV2Service } from '../v2/personal-info-v2.service';
-import { Observable, of, map, switchMap } from 'rxjs';
+import { Observable, of, map, switchMap, catchError } from 'rxjs';
+import { TourTagService } from '../tag/tour-tag.service';
+import { TagService } from '../tag/tag.service';
 
 /**
  * Interfaz para los datos de usuario que se envían en los eventos
@@ -80,6 +82,33 @@ export interface FilterParams {
 }
 
 /**
+ * Interfaz para los datos del tour necesarios para construir EcommerceItem
+ */
+export interface TourDataForEcommerce {
+  id?: number;
+  tkId?: string;
+  name?: string;
+  destination?: {
+    continent?: string;
+    country?: string;
+  };
+  days?: number;
+  nights?: number;
+  rating?: number | string;
+  monthTags?: string[];
+  tourType?: string;
+  // Datos adicionales opcionales
+  flightCity?: string;
+  activitiesText?: string;
+  selectedInsurance?: string;
+  childrenCount?: string;
+  totalPassengers?: number;
+  departureDate?: string;
+  returnDate?: string;
+  price?: number;
+}
+
+/**
  * Servicio para gestionar todos los eventos de Google Analytics 4 mediante dataLayer
  * Implementa el plan de medición de Different Roads siguiendo las especificaciones de GA4
  */
@@ -92,7 +121,9 @@ export class AnalyticsService {
   constructor(
     private injector: Injector,
     private usersNetService: UsersNetService,
-    private personalInfoService: PersonalInfoV2Service
+    private personalInfoService: PersonalInfoV2Service,
+    private tourTagService: TourTagService,
+    private tagService: TagService
   ) {
     this.initDataLayer();
   }
@@ -642,6 +673,95 @@ export class AnalyticsService {
     }
     
     return numericRating.toFixed(1);
+  }
+
+  /**
+   * Obtiene el tag VISIBLE del tour
+   */
+  private getTourTag(tourId: number): Observable<string> {
+    if (!tourId || tourId <= 0) {
+      return of('');
+    }
+    
+    return this.tourTagService.getByTourAndType(tourId, 'VISIBLE').pipe(
+      switchMap((tourTags) => {
+        if (tourTags.length > 0 && tourTags[0]?.tagId && tourTags[0].tagId > 0) {
+          const firstTagId = tourTags[0].tagId;
+          return this.tagService.getById(firstTagId).pipe(
+            map((tag) => tag?.name && tag.name.trim().length > 0 ? tag.name.trim() : ''),
+            catchError(() => of(''))
+          );
+        }
+        return of('');
+      }),
+      catchError(() => of(''))
+    );
+  }
+
+  /**
+   * Construye un EcommerceItem desde datos del tour
+   * Incluye obtención automática del tag VISIBLE para item_category3
+   */
+  buildEcommerceItemFromTourData(
+    tourData: TourDataForEcommerce,
+    itemListId: string,
+    itemListName: string,
+    itemId?: string
+  ): Observable<EcommerceItem> {
+    const tourId = tourData.id;
+    const flightCity = tourData.flightCity || 'Sin vuelo';
+    
+    // Obtener tag del tour
+    return this.getTourTag(tourId || 0).pipe(
+      map((tag) => {
+        // Construir ID del item
+        const finalItemId = itemId || 
+          tourData.id?.toString() || 
+          tourData.tkId?.toString() || 
+          '';
+        
+        // Construir duración
+        const days = tourData.days || 0;
+        const nights = tourData.nights || (days > 0 ? days - 1 : 0);
+        const duracion = days > 0 ? `${days} días, ${nights} noches` : '';
+        
+        // Construir item_category5
+        const itemCategory5 = tourData.tourType === 'FIT' ? 'Privados' : 'Grupos';
+        
+        // Asegurar que totalPassengers sea un número válido o undefined
+        const totalPassengers = tourData.totalPassengers !== undefined && tourData.totalPassengers !== null 
+          ? tourData.totalPassengers.toString() 
+          : '0';
+        
+        return {
+          item_id: finalItemId,
+          item_name: tourData.name || '',
+          coupon: '',
+          discount: 0,
+          index: 1,
+          item_brand: 'Different Roads',
+          item_category: tourData.destination?.continent || '',
+          item_category2: tourData.destination?.country || '',
+          item_category3: tag || '',
+          item_category4: tourData.monthTags?.join(', ') || '',
+          item_category5: itemCategory5,
+          item_list_id: itemListId,
+          item_list_name: itemListName,
+          item_variant: `${tourData.tkId || tourData.id} - ${flightCity}`,
+          price: tourData.price || 0,
+          quantity: 1,
+          puntuacion: this.formatRating(tourData.rating),
+          duracion: duracion,
+          start_date: tourData.departureDate || '',
+          end_date: tourData.returnDate || '',
+          pasajeros_adultos: totalPassengers,
+          pasajeros_niños: tourData.childrenCount || '0',
+          actividades: tourData.activitiesText || '',
+          seguros: tourData.selectedInsurance || '',
+          vuelo: flightCity
+        };
+      })
+    );
   }
 
 

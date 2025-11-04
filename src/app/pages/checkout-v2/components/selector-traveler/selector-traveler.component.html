@@ -67,5 +67,17 @@
       <i class="pi pi-info-circle"></i>
       <p>{{ adultsErrorMsg }}</p>
     </div>
+    <!-- Mensaje de advertencia por exceso de niños -->
+    <div *ngIf="hasMoreThanOneChildPerAdult()" class="children-warning-message">
+      <p-message icon="pi pi-exclamation-triangle" severity="warn" [closable]="false">
+        <div>
+          <p style="margin-bottom: 8px;">Hay más de un niño por adulto en esta reserva. Por favor, contacte con <strong>atención al cliente</strong> para continuar.</p>
+          <div style="margin-top: 8px; font-size: 0.9em;">
+            <div><strong>Teléfono:</strong> +34 91 123 45 67</div>
+            <div><strong>Email:</strong> info&#64;differentroads.com</div>
+          </div>
+        </div>
+      </p-message>
+    </div>
   </div>
 </div>

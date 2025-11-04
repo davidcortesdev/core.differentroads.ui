@@ -456,48 +456,4 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     });
   }
 
-  /**
-   * Verificar si un viajero es niño
-   */
-  private isChildTraveler(traveler: IReservationTravelerResponse): boolean {
-    const ageGroup = this.ageGroups.find(group => group.id === traveler.ageGroupId);
-    
-    if (ageGroup) {
-      if (ageGroup.upperLimitAge === null || ageGroup.upperLimitAge === undefined) {
-        return false; // No tiene límite superior = Adulto
-      } else if (ageGroup.upperLimitAge <= 15) {
-        return true; // Tiene límite superior <= 15 = Niño
-      }
-    }
-    
-    return false; // Por defecto, es adulto
-  }
-
-  /**
-   * Obtener el número de adultos
-   */
-  getAdultsCount(): number {
-    return this.travelers.filter(traveler => !this.isChildTraveler(traveler)).length;
-  }
-
-  /**
-   * Obtener el número de niños
-   */
-  getChildrenCount(): number {
-    return this.travelers.filter(traveler => this.isChildTraveler(traveler)).length;
-  }
-
-  /**
-   * Verificar si hay más de un niño por adulto
-   */
-  hasMoreThanOneChildPerAdult(): boolean {
-    const adultsCount = this.getAdultsCount();
-    const childrenCount = this.getChildrenCount();
-    
-    if (adultsCount === 0) {
-      return childrenCount > 0; // Si no hay adultos pero hay niños, mostrar mensaje
-    }
-    
-    return childrenCount / adultsCount > 1;
-  }
 }

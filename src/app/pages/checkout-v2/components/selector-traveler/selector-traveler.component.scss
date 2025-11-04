@@ -231,4 +231,9 @@
       transform: translateY(-1px);
     }
   }
+
+  // Mensaje de advertencia para exceso de niños
+  .children-warning-message {
+    margin-bottom: 8px;
+  }
 }

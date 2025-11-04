@@ -96,13 +96,6 @@
   </div>
   
   <div class="flex flex-col" *ngIf="!loading && !checkingReservationStatus && !error">
-    <!-- Mensaje de advertencia por exceso de niños -->
-    <div *ngIf="hasMoreThanOneChildPerAdult()" class="children-warning-message">
-      <p-message icon="pi pi-exclamation-triangle" severity="warn" [closable]="false">
-        <span>Hay más de un niño por adulto en esta reserva. Por favor, contacte con atención al cliente para continuar.</span>
-      </p-message>
-    </div>
-
     <div class="border-2 border-dashed border-surface-200 dark:border-surface-700 rounded bg-surface-50 dark:bg-surface-950 flex-auto flex justify-center items-center font-medium">
       <div class="content-form">
         <div class="travel-title">

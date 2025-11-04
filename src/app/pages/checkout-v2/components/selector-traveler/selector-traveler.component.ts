@@ -516,6 +516,56 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
     return this.ageGroupService.getAgeRangeText(ageGroup);
   }
 
+  /**
+   * Verificar si un grupo de edad es de niños (basado en upperLimitAge)
+   */
+  private isChildAgeGroup(ageGroup: IAgeGroupResponse): boolean {
+    if (ageGroup.upperLimitAge === null || ageGroup.upperLimitAge === undefined) {
+      return false; // No tiene límite superior = Adulto
+    }
+    return ageGroup.upperLimitAge <= 15; // Tiene límite superior <= 15 = Niño
+  }
+
+  /**
+   * Obtener el número de adultos usando getCountForAgeGroup
+   */
+  private getAdultsCount(): number {
+    let adultsCount = 0;
+    this.orderedAgeGroups.forEach(ageGroup => {
+      if (!this.isChildAgeGroup(ageGroup)) {
+        adultsCount += this.getCountForAgeGroup(ageGroup.id);
+      }
+    });
+    return adultsCount;
+  }
+
+  /**
+   * Obtener el número de niños usando getCountForAgeGroup
+   */
+  private getChildrenCount(): number {
+    let childrenCount = 0;
+    this.orderedAgeGroups.forEach(ageGroup => {
+      if (this.isChildAgeGroup(ageGroup)) {
+        childrenCount += this.getCountForAgeGroup(ageGroup.id);
+      }
+    });
+    return childrenCount;
+  }
+
+  /**
+   * Verificar si hay más de un niño por adulto
+   */
+  hasMoreThanOneChildPerAdult(): boolean {
+    const adultsCount = this.getAdultsCount();
+    const childrenCount = this.getChildrenCount();
+    
+    if (adultsCount === 0) {
+      return childrenCount > 0; // Si no hay adultos pero hay niños, mostrar mensaje
+    }
+    
+    return childrenCount / adultsCount > 1;
+  }
+
   ngOnDestroy(): void {
     // Limpiar recursos si es necesario
   }

@@ -12,6 +12,7 @@ import { CloudinaryService } from '../../../../core/services/media/cloudinary.se
 export class UpdateProfileSectionV2Component{
   @Input() userId: string = '';
   @Input() personalInfo: PersonalInfo = {};
+  @Input() cognitoId: string = '';
   @Output() cancelEdit = new EventEmitter<void>();
   @Output() profileUpdated = new EventEmitter<void>();
 
@@ -93,11 +94,20 @@ export class UpdateProfileSectionV2Component{
   // Validaciones de campos
   onTelefonoInput(event: any) {
     const input = event.target as HTMLInputElement;
-    const filteredValue = this.updateProfileService.validateTelefonoInput(input.value);
-    input.value = filteredValue;
+    // Limitar a 14 dígitos (sin contar espacios u otros caracteres)
+    const digitsOnly = input.value.replace(/\D/g, '').slice(0, 14);
+    input.value = digitsOnly;
     // Actualizar también el modelo
-    this.personalInfo.telefono = filteredValue;
+    this.personalInfo.telefono = digitsOnly;
     this.clearFieldError('telefono');
+  }
+
+  // Input helper: limitar prefijo a 3 dígitos
+  onPrefixInput(event: Event): void {
+    const inputEl = event.target as HTMLInputElement | null;
+    if (!inputEl) return;
+    const digitsOnly = inputEl.value.replace(/\D/g, '').slice(0, 3);
+    inputEl.value = digitsOnly;
   }
 
   onDniInput(event: any) {
@@ -173,7 +183,7 @@ export class UpdateProfileSectionV2Component{
       this.errorMessage = '';
       this.successMessage = '';
       
-      this.updateProfileService.updateUserProfile(this.userId, this.personalInfo).subscribe({
+      this.updateProfileService.updateUserProfile(this.userId, this.personalInfo, this.cognitoId).subscribe({
         next: (response) => {
           this.isSaving = false;
           this.successMessage = 'Perfil actualizado correctamente';

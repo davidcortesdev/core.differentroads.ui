@@ -4,9 +4,14 @@ import { Router } from '@angular/router';
 import {
   Payment,
   PaymentStatus,
+  IPaymentVoucher,
 } from '../../../core/models/bookings/payment.model';
 import { PaymentData } from '../add-payment-modal/add-payment-modal.component';
-import { BookingsServiceV2, PaymentInfo } from '../../../core/services/v2/bookings-v2.service';
+import { BookingsServiceV2 } from '../../../core/services/v2/bookings-v2.service';
+import { PaymentService, PaymentInfo } from '../../../core/services/payments/payment.service';
+import { IPaymentStatusResponse } from '../../checkout-v2/services/paymentStatusNet.service';
+import { PaymentsNetService } from '../../checkout-v2/services/paymentsNet.service';
+import { PaymentMethodNetService } from '../../checkout-v2/services/paymentMethodNet.service';
 
 // Interfaces existentes
 interface TripItemData {
@@ -32,6 +37,7 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   @Input() refreshTrigger: any = null;
   @Input() reservationId: number = 0; // NUEVO: Para payment-management
   @Input() departureDate: string = ''; // NUEVO: Para payment-management
+  @Input() isATC: boolean = false; // NUEVO: Para mostrar selector de estados
 
   @Output() registerPayment = new EventEmitter<number>();
 
@@ -46,6 +52,14 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   displayReviewModal: boolean = false;
   selectedReviewVoucherUrl: string = '';
   selectedPayment: Payment | null = null;
+  
+  // NUEVO: Estados de pago disponibles
+  paymentStatuses: IPaymentStatusResponse[] = [];
+  loadingStatuses: boolean = false;
+
+  // Estado local para selección y loading por pago
+  selectedStatusByPaymentId: { [publicID: string]: number } = {};
+  isChanging: { [publicID: string]: boolean } = {};
 
   deadlines: {
     date: string;
@@ -66,11 +80,15 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   isApproveSuccess: boolean = false;
 
   isLoadingPayments: boolean = false;
+  transferMethodId: number = 0;
 
   constructor(
     private fb: FormBuilder,
     private router: Router,
-    private bookingsService: BookingsServiceV2
+    private bookingsService: BookingsServiceV2,
+    private paymentService: PaymentService,
+    private paymentsNetService: PaymentsNetService,
+    private paymentMethodService: PaymentMethodNetService
   ) {
     this.paymentForm = this.fb.group({
       amount: [0, [Validators.required, Validators.min(1)]],
@@ -80,6 +98,25 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   ngOnInit(): void {
     this.calculatePaymentInfo();
     this.loadPayments();
+    
+    // Cargar estados de pago desde la API (siempre, para todos)
+    this.loadPaymentStatuses();
+
+    // Obtener el id del método de pago de transferencia para filtrar
+    this.paymentMethodService.getPaymentMethodByCode('TRANSFER').subscribe({
+      next: (methods: any) => {
+        if (methods && methods.length > 0) {
+          this.transferMethodId = methods[0].id;
+          // Refiltrar si ya había datos cargados
+          if (this.paymentHistory?.length) {
+            this.filterPaymentHistoryForDisplay();
+          }
+        }
+      },
+      error: () => {
+        this.transferMethodId = 0;
+      }
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -95,6 +132,11 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
     
     if (changes['refreshTrigger'] && changes['refreshTrigger'].currentValue) {
       this.refreshPayments();
+    }
+
+    // Cargar estados si aún no están cargados
+    if (changes['isATC'] && !this.paymentStatuses.length) {
+      this.loadPaymentStatuses();
     }
   }
 
@@ -116,6 +158,13 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
       .subscribe({
         next: (payments) => {
           this.paymentHistory = payments;
+          this.filterPaymentHistoryForDisplay();
+          // Inicializar selección por cada pago al estado actual
+          this.paymentHistory.forEach(p => {
+            if (p.publicID) {
+              this.selectedStatusByPaymentId[p.publicID] = p.paymentStatusId || 0;
+            }
+          });
           this.calculatePaymentInfo();
           this.isLoadingPayments = false;
         },
@@ -125,6 +174,24 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
           this.isLoadingPayments = false;
         }
       });
+  }
+
+  /**
+   * Filtra el historial para que los pagos por transferencia solo aparezcan
+   * cuando ya existe justificante (voucher). El estado puede permanecer en PENDING
+   * hasta que ATC lo cambie; no mostramos el registro mientras no haya justificante.
+   */
+  private filterPaymentHistoryForDisplay(): void {
+    if (!this.paymentHistory || this.paymentHistory.length === 0) return;
+    this.paymentHistory = this.paymentHistory.filter(p => {
+      const isTransfer = this.transferMethodId && p.paymentMethodId === this.transferMethodId;
+      const hasVoucher = !!(p.vouchers && p.vouchers.length > 0);
+      // Ocultar transferencias recién creadas (sin voucher), independientemente del estado
+      if (isTransfer && !hasVoucher) {
+        return false;
+      }
+      return true;
+    });
   }
 
   public refreshPayments(): void {
@@ -231,7 +298,111 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
     }
   }
 
-  getStatusText(status: PaymentStatus | string): string {
-    return this.bookingsService.getPaymentStatusText(status);
+  /**
+   * Carga todos los estados de pago disponibles desde la API
+   */
+  private loadPaymentStatuses(): void {
+    this.loadingStatuses = true;
+    this.paymentService.getAllPaymentStatuses().subscribe({
+      next: (statuses) => {
+        this.paymentStatuses = statuses;
+        this.loadingStatuses = false;
+      },
+      error: (error) => {
+        console.error('Error cargando estados de pago:', error);
+        this.loadingStatuses = false;
+      }
+    });
+  }
+
+  /**
+   * Obtiene el nombre del estado para mostrar (directo desde la API)
+   */
+  getPaymentStatusDisplayName(payment: Payment): string {
+    if (!payment.paymentStatusId || this.paymentStatuses.length === 0) {
+      return ''; // No mostrar nada hasta que cargue la API
+    }
+    // Obtener el nombre directo desde la API
+    return this.paymentService.getPaymentStatusName(payment.paymentStatusId, this.paymentStatuses);
+  }
+
+  /**
+   * Cambia el estado del pago usando el valor seleccionado en el selector
+   */
+  onChangeStatusClick(payment: Payment): void {
+    if (!payment.publicID) return;
+    const selectedId = this.selectedStatusByPaymentId[payment.publicID];
+    if (!selectedId || selectedId === payment.paymentStatusId) return;
+
+    this.isChanging[payment.publicID] = true;
+    this.paymentService.updatePaymentStatus(payment, selectedId, this.reservationId).subscribe({
+      next: () => {
+        // Recargar los pagos para que la label se actualice desde BBDD
+        this.refreshPayments();
+        this.isChanging[payment.publicID] = false;
+      },
+      error: (error) => {
+        console.error('Error actualizando estado del pago:', error);
+        this.isChanging[payment.publicID] = false;
+      }
+    });
+  }
+
+  isChangeDisabled(payment: Payment): boolean {
+    if (!payment.publicID) return true;
+    const selectedId = this.selectedStatusByPaymentId[payment.publicID];
+    return (
+      this.loadingStatuses ||
+      this.isChanging[payment.publicID] === true ||
+      !selectedId ||
+      selectedId === payment.paymentStatusId
+    );
+  }
+
+  /**
+   * Obtiene todos los justificantes (vouchers) de todos los pagos
+   */
+  getPaymentVouchers(): IPaymentVoucher[] {
+    const allVouchers: IPaymentVoucher[] = [];
+    if (!this.paymentHistory || this.paymentHistory.length === 0) {
+      return allVouchers;
+    }
+
+    this.paymentHistory.forEach((payment) => {
+      if (payment.vouchers && payment.vouchers.length > 0) {
+        allVouchers.push(...payment.vouchers);
+      }
+    });
+
+    return allVouchers;
+  }
+
+  /**
+   * Abre un justificante de pago en una nueva pestaña
+   */
+  viewVoucher(voucher: IPaymentVoucher): void {
+    if (voucher.fileUrl) {
+      window.open(voucher.fileUrl, '_blank');
+    }
+  }
+
+  /**
+   * Formatea la fecha de subida del justificante
+   */
+  formatVoucherDate(date: Date | string): string {
+    if (!date) return 'Fecha no disponible';
+
+    try {
+      const dateObj = date instanceof Date ? date : new Date(date);
+      return dateObj.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch (error) {
+      return 'Fecha no válida';
+    }
   }
 }

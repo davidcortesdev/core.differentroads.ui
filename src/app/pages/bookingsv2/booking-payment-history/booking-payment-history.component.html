@@ -49,7 +49,7 @@
               <p-button
                 label="Añadir pago"
                 icon="pi pi-plus-circle"
-                styleClass="p-button-rounded p-button-success p-button-lg"
+                styleClass="p-button-rounded p-button-lg"
                 (onClick)="navigateToPayment()"
               ></p-button>
             </div>
@@ -60,29 +60,7 @@
 
         <!-- Contenedor de columnas para pagos y historial -->
         <div class="payment-columns-container">
-          <!-- Próximos pagos -->
-          <!--   <p-panel
-            header="Próximo pago"
-            [styleClass]="
-              deadlines && deadlines.length > 0 ? '' : 'empty-panel'
-            "
-          >
-            <div
-              *ngFor="let payment of deadlines"
-              class="upcoming-payment-item"
-            >
-              <span class="date">{{ payment.date }}</span>
-              <span class="amount">{{ payment.amount | currencyFormat }}</span>
-            </div>
-            <div
-              *ngIf="!deadlines || deadlines.length === 0"
-              class="empty-message"
-            >
-              No hay pagos programados
-            </div>
-          </p-panel> -->
 
-          <!-- Historial de pagos -->
           <p-panel
             header="Historial de pago"
             [styleClass]="
@@ -96,38 +74,90 @@
 
             <!-- Payment history list -->
             <div *ngIf="!isLoadingPayments">
-              <div *ngFor="let item of paymentHistory" class="history-item">
+              <div *ngFor="let item of paymentHistory" class="history-item" style="display: flex; align-items: center; gap: 1rem;">
                 <span class="method" *ngIf="item.method">
                   <i class="pi pi-credit-card"></i> {{ item.method }}
                 </span>
                 <span class="amount">{{ item.amount | currencyFormat }}</span>
-                <span class="status">
-                  <span class="status-text">
-                    {{ getStatusText(item.status) }}
-                  </span>
-                  <button
-                    *ngIf="
-                      isTO &&
-                      item.status === 'PENDING_REVIEW' &&
-                      item?.vouchers && item.vouchers.length > 0
-                    "
-                    type="button"
-                    class="p-button p-component p-button-text"
-                    (click)="showReviewModal(item)"
-                  >
-                    Ver
-                  </button>
+
+                <!-- Label del estado actual (desde BBDD) -->
+                <span class="status-text">
+                  <p-tag [value]="getPaymentStatusDisplayName(item)" severity="info"></p-tag>
                 </span>
+
                 <span class="notes" *ngIf="item.notes">
                   <i class="pi pi-comment"></i> {{ item.notes }}
                 </span>
                 <span class="date">{{ item.createdAt | date }}</span>
+
+                <!-- Acciones a la derecha -->
+                <span class="actions" *ngIf="isATC" style="margin-left: auto; display: inline-flex; gap: .5rem; align-items: center;">
+                  <p-dropdown
+                    [options]="paymentStatuses"
+                    [(ngModel)]="selectedStatusByPaymentId[item.publicID]"
+                    optionLabel="name"
+                    optionValue="id"
+                    [placeholder]="getPaymentStatusDisplayName(item)"
+                    [style]="{ minWidth: '200px' }"
+                    [disabled]="loadingStatuses || paymentStatuses.length === 0 || isChanging[item.publicID]"
+                    appendTo="body"
+                  ></p-dropdown>
+                  <button
+                    pButton
+                    label="Aceptar"
+                    class="status-change-btn"
+                    [disabled]="isChangeDisabled(item)"
+                    [loading]="isChanging[item.publicID]"
+                    (click)="onChangeStatusClick(item)"
+                  ></button>
+                </span>
               </div>
               <div
                 *ngIf="!paymentHistory || paymentHistory.length === 0"
                 class="empty-message"
               >
                 No hay ningun pago registrado
+              </div>
+            </div>
+          </p-panel>
+
+          <!-- Historial de recibos -->
+          <p-panel
+            header="Justificantes de Pago"
+            [styleClass]="getPaymentVouchers().length > 0 ? '' : 'empty-panel'"
+          >
+            <!-- Loading state -->
+            <div *ngIf="isLoadingPayments" class="loading-container">
+              <p-progressSpinner></p-progressSpinner>
+            </div>
+
+            <!-- Lista de justificantes -->
+            <div *ngIf="!isLoadingPayments">
+              <div *ngIf="getPaymentVouchers().length > 0" class="vouchers-list">
+                <div *ngFor="let voucher of getPaymentVouchers(); let i = index" class="voucher-item">
+                  <div class="voucher-info">
+                    <i class="pi pi-file-pdf" style="margin-right: 8px; color: #f05a4c; font-size: 1.5rem;"></i>
+                    <div class="voucher-details">
+                      <span class="voucher-name">Justificante {{ i + 1 }}</span>
+                      <span class="voucher-date">{{ formatVoucherDate(voucher.uploadDate) }}</span>
+                    </div>
+                  </div>
+                  <p-button
+                    label="Ver"
+                    icon="pi pi-external-link"
+                    severity="info"
+                    size="small"
+                    [text]="true"
+                    (onClick)="viewVoucher(voucher)"
+                    pTooltip="Ver justificante"
+                  ></p-button>
+                </div>
+              </div>
+
+              <!-- Mensaje cuando no hay justificantes -->
+              <div *ngIf="getPaymentVouchers().length === 0" class="empty-message">
+                <i class="pi pi-info-circle" style="margin-right: 8px;"></i>
+                No hay justificantes de pago adjuntos
               </div>
             </div>
           </p-panel>

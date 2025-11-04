@@ -455,4 +455,5 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
       life: 5000
     });
   }
+
 }

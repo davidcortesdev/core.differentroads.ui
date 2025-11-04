@@ -14,6 +14,7 @@ export interface Payment {
   updatedAt: string;
   notes?: string;
   paymentMethodId?: number;
+  paymentStatusId?: number; // NUEVO: Para el dropdown de estados en ATC
 }
 
 export interface IPaymentVoucher {

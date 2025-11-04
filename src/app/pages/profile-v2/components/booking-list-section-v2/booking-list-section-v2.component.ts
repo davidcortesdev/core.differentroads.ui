@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { BookingItem } from '../../../../core/models/v2/profile-v2.model';
@@ -16,14 +16,18 @@ import {
   DocumentationService,
   IDocumentReservationResponse,
 } from '../../../../core/services/documentation/documentation.service';
+import { DocumentServicev2 } from '../../../../core/services/v2/document.service';
 import {
   NotificationService,
   INotification,
   } from '../../../../core/services/documentation/notification.service';
-  import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
-  import { PointsV2Service } from '../../../../core/services/v2/points-v2.service';
-  import { TravelerCategory } from '../../../../core/models/v2/profile-v2.model';
-  import { switchMap, map, catchError, of, forkJoin } from 'rxjs';
+import {
+  NotificationServicev2,
+  NotificationRequest
+} from '../../../../core/services/v2/notification.service';
+import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
+import { PointsV2Service } from '../../../../core/services/v2/points-v2.service';
+import { switchMap, map, catchError, of, forkJoin, Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-booking-list-section-v2',
@@ -31,14 +35,17 @@ import {
   templateUrl: './booking-list-section-v2.component.html',
   styleUrls: ['./booking-list-section-v2.component.scss'],
 })
-export class BookingListSectionV2Component implements OnInit, OnChanges {
+export class BookingListSectionV2Component implements OnInit, OnChanges, OnDestroy {
   @Input() userId: string = '';
-  @Input() listType: 'active-bookings' | 'travel-history' | 'recent-budgets' =
+  @Input() listType: 'active-bookings' | 'pending-bookings' | 'travel-history' | 'recent-budgets' =
     'active-bookings';
   @Input() parentComponent?: any;  // Referencia al componente padre
 
   // Almacenar qué reservas ya tienen puntos aplicados (clave: reservationId_userId)
   private reservationsWithPointsRedeemed: Set<string> = new Set();
+  
+  // Suscripción para poder cancelarla si se inicia una nueva carga
+  private activeBookingsSubscription: Subscription | null = null;
 
   bookingItems: BookingItem[] = [];
   isExpanded: boolean = true;
@@ -55,12 +62,6 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   // Propiedades para modal de descuento de puntos
   pointsDiscountModalVisible: boolean = false;
   selectedBookingItem: BookingItem | null = null;
-  availablePoints: number = 0;
-  pointsToUse: number = 0;
-  userCategory: TravelerCategory = TravelerCategory.TROTAMUNDOS;
-  maxPointsPerReservation: number = 50; // Límite por reserva según documento
-  maxPointsForCategory: number = 50; // Límite según categoría del usuario
-  loadingUserData: boolean = false;
 
   constructor(
     private router: Router,
@@ -72,10 +73,20 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
     private documentPDFService: DocumentPDFService,
     private emailSenderService: EmailSenderService,
     private documentationService: DocumentationService,
+    private documentServicev2: DocumentServicev2,
     private notificationService: NotificationService,
+    private notificationServicev2: NotificationServicev2,
     private authService: AuthenticateService,
     private pointsService: PointsV2Service
   ) {}
+
+  /**
+   * Maneja el evento cuando se aplican puntos desde el componente modal
+   */
+  onPointsApplied(): void {
+    // Recargar datos para reflejar cambios en precio y estado de puntos
+    this.loadData();
+  }
 
   ngOnInit() {
     if (this.userId) {
@@ -89,7 +100,17 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
     }
   }
 
+  ngOnDestroy(): void {
+    // Cancelar suscripciones activas al destruir el componente
+    if (this.activeBookingsSubscription) {
+      this.activeBookingsSubscription.unsubscribe();
+      this.activeBookingsSubscription = null;
+    }
+  }
+
   private loadData(): void {
+    // Inicializar bookingItems como array vacío al inicio para evitar mostrar mensaje prematuro
+    this.bookingItems = [];
     this.loading = true;
 
     // Convertir userId de string a number para la API
@@ -105,6 +126,9 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
     switch (this.listType) {
       case 'active-bookings':
         this.loadActiveBookings(userIdNumber);
+        break;
+      case 'pending-bookings':
+        this.loadPendingBookings(userIdNumber);
         break;
       case 'travel-history':
         this.loadTravelHistory(userIdNumber);
@@ -128,12 +152,54 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   }
 
   /**
+   * Carga reservas pendientes (DRAFT/CART) solo por userId (no aplica por viajero)
+   */
+  private loadPendingBookings(userId: number): void {
+    this.loading = true;
+    this.bookingItems = [];
+    
+    this.bookingsService.getPendingBookings(userId)
+      .pipe(
+        map((reservations: ReservationResponse[]) =>
+          this.dataMappingService.mapReservationsToBookingItems(
+            reservations,
+            [],
+            'active-bookings' // reutilizamos el mapeo genérico
+          )
+        ),
+        catchError((error) => {
+          console.error('Error obteniendo reservas pendientes:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al cargar las reservas pendientes',
+          });
+          return of([]);
+        })
+      )
+      .subscribe({
+        next: (bookingItems: BookingItem[]) => {
+          this.bookingItems = bookingItems;
+          this.loading = false;
+        },
+        error: () => {
+          this.bookingItems = [];
+          this.loading = false;
+        }
+      });
+  }
+
+  /**
    * Espera hasta que el email del usuario esté disponible y luego carga las reservas
    * Intenta hasta 10 veces con un delay de 300ms entre intentos
    */
   private waitForUserEmail(userId: number, attempt: number = 0): void {
     const maxAttempts = 10;
     const delayMs = 300;
+
+    // Asegurar que loading esté en true mientras esperamos
+    this.loading = true;
+    this.bookingItems = [];
 
     const userEmail = this.authService.getUserEmailValue();
 
@@ -162,12 +228,34 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
    * Carga las reservas activas una vez que el email está disponible
    */
   private loadActiveBookingsWithEmail(userId: number, userEmail: string): void {
+    // Cancelar cualquier suscripción previa para evitar múltiples cargas simultáneas
+    if (this.activeBookingsSubscription) {
+      this.activeBookingsSubscription.unsubscribe();
+      this.activeBookingsSubscription = null;
+    }
+    
+    // Asegurar que loading esté en true y bookingItems esté vacío al inicio
+    this.loading = true;
+    this.bookingItems = [];
     
     // Cargar reservas Y transacciones de puntos EN PARALELO
-    forkJoin({
+    // Agregar catchError a cada llamada para evitar que un error haga fallar todo el observable
+    const subscription = forkJoin({
       reservationsData: forkJoin({
-        userReservations: this.bookingsService.getActiveBookings(userId),
-        travelerReservations: this.bookingsService.getActiveBookingsByTravelerEmail(userEmail),
+        userReservations: this.bookingsService.getActiveBookings(userId).pipe(
+          catchError((error) => {
+            console.error('Error obteniendo reservas activas del usuario:', error);
+            // Retornar array vacío en caso de error para que no falle todo el forkJoin
+            return of([]);
+          })
+        ),
+        travelerReservations: this.bookingsService.getActiveBookingsByTravelerEmail(userEmail).pipe(
+          catchError((error) => {
+            console.error('Error obteniendo reservas activas del viajero:', error);
+            // Retornar array vacío en caso de error para que no falle todo el forkJoin
+            return of([]);
+          })
+        ),
       }),
       pointsTransactions: this.loadPointsTransactions()
     })
@@ -177,8 +265,8 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
           
           // Combinar y eliminar duplicados basándose en el ID de reserva
           const allReservations = [
-            ...userReservations,
-            ...travelerReservations,
+            ...(userReservations || []),
+            ...(travelerReservations || []),
           ];
                     
           const uniqueReservations = allReservations.filter(
@@ -187,6 +275,8 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
           );
           
           if (uniqueReservations.length === 0) {
+            // Retornar un observable que se complete después de un pequeño delay
+            // para asegurar que el loading se muestre por un tiempo mínimo
             return of([]);
           }
 
@@ -221,9 +311,24 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
             )
           );
 
-          return forkJoin(tourPromises);
+          return forkJoin(tourPromises).pipe(
+            catchError((error) => {
+              console.error('Error obteniendo información de tours:', error);
+              // Si falla la obtención de tours, retornar las reservas sin información de tour
+              return of(uniqueReservations.map(reservation => ({
+                reservation,
+                tour: null,
+                cmsTour: null
+              })));
+            })
+          );
         }),
         map((reservationTourPairs: any[]) => {
+          // Verificar que reservationTourPairs tenga datos
+          if (!reservationTourPairs || reservationTourPairs.length === 0) {
+            return [];
+          }
+          
           // Mapear usando el servicio de mapeo con imágenes CMS
           return this.dataMappingService.mapReservationsToBookingItems(
             reservationTourPairs.map((pair) => pair.reservation),
@@ -244,17 +349,25 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       )
       .subscribe({
         next: (bookingItems: BookingItem[]) => {
-          this.bookingItems = bookingItems;
+          // Solo actualizar después de que toda la carga esté completa
+          this.bookingItems = bookingItems || [];
           this.loading = false;
-          // Cargar documentación y notificaciones para todas las reservas
+          // Limpiar la suscripción activa
+          this.activeBookingsSubscription = null;
+          // Cargar documentación y notificaciones para todas las reservas (asíncrono, no bloquea UI)
           this.loadDocumentationAndNotifications();
         },
         error: (error) => {
           console.error('Error en la suscripción:', error);
           this.bookingItems = [];
           this.loading = false;
+          // Limpiar la suscripción activa
+          this.activeBookingsSubscription = null;
         },
       });
+    
+    // Guardar la suscripción para poder cancelarla si es necesario
+    this.activeBookingsSubscription = subscription;
   }
 
   /**
@@ -262,6 +375,9 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
    * Incluye reservas donde el usuario es titular + reservas donde aparece como viajero
    */
   private loadTravelHistory(userId: number): void {
+    this.loading = true;
+    this.bookingItems = [];
+    
     const userEmail = this.authService.getUserEmailValue();
     
     if (!userEmail) {
@@ -368,6 +484,9 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
    * Incluye presupuestos donde el usuario es titular + presupuestos donde aparece como viajero
    */
   private loadRecentBudgets(userId: number): void {
+    this.loading = true;
+    this.bookingItems = [];
+    
     this.bookingsService
       .getRecentBudgets(userId)
       .pipe(
@@ -527,9 +646,75 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   }
 
   sendItem(item: BookingItem) {
-    this.notificationLoading[item.id] = true;
+    // Check if the listType is 'recent-budgets'
+    if (this.listType === 'recent-budgets') {
+      this.sendBudgetNotification(item);
+    } else if (this.listType === 'active-bookings') {
+      this.sendReservationNotification(item);
+    } else {
+      this.notificationLoading[item.id] = true;
 
-    // Get the logged user's email
+      // Get the logged user's email
+      const userEmail = this.authService.getUserEmailValue();
+
+      if (!userEmail) {
+        this.notificationLoading[item.id] = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudo obtener el email del usuario logueado',
+        });
+        return;
+      }
+
+      // Prepare the request body
+      const requestBody = {
+        event: 'BUDGET',
+        email: userEmail,
+      };
+
+      // Call the email service
+      this.emailSenderService
+        .sendReservationWithoutDocuments(parseInt(item.id, 10), requestBody)
+        .subscribe({
+          next: (response) => {
+            this.notificationLoading[item.id] = false;
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Éxito',
+              detail: 'Email enviado correctamente',
+            });
+          },
+          error: (error) => {
+            this.notificationLoading[item.id] = false;
+            console.error('Error sending email:', error);
+
+            let errorMessage = 'Error al enviar el email';
+            if (error.status === 500) {
+              errorMessage = 'Error interno del servidor. Inténtalo más tarde.';
+            } else if (error.status === 404) {
+              errorMessage = 'Reserva no encontrada.';
+            } else if (error.status === 403) {
+              errorMessage = 'No tienes permisos para enviar este email.';
+            }
+
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: errorMessage,
+            });
+          },
+        });
+    }
+  }
+
+  /**
+   * Envía una notificación de presupuesto utilizando el NotificationService.
+   * @param item El BookingItem que representa el presupuesto.
+   */
+  sendBudgetNotification(item: BookingItem): void {
+    this.notificationLoading[item.id] = true;
+    
     const userEmail = this.authService.getUserEmailValue();
 
     if (!userEmail) {
@@ -542,102 +727,273 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
       return;
     }
 
-    // Prepare the request body
-    const requestBody = {
-      event: 'BUDGET',
-      email: userEmail,
+    
+  
+    const notificationData: NotificationRequest = {
+      reservationId: parseInt(item.id, 10), // Convertir el ID a número
+      code: "BUDGET",
+      email: userEmail 
     };
 
-    // Call the email service
-    this.emailSenderService
-      .sendReservationWithoutDocuments(parseInt(item.id, 10), requestBody)
-      .subscribe({
-        next: (response) => {
-          this.notificationLoading[item.id] = false;
+    this.notificationServicev2.sendNotification(notificationData).subscribe({
+      next: (response) => {
+        this.notificationLoading[item.id] = false;
+        if (response.success) {
           this.messageService.add({
             severity: 'success',
             summary: 'Éxito',
-            detail: 'Email enviado correctamente',
+            detail: 'Notificación de presupuesto enviada correctamente',
           });
-        },
-        error: (error) => {
-          this.notificationLoading[item.id] = false;
-          console.error('Error sending email:', error);
-
-          let errorMessage = 'Error al enviar el email';
-          if (error.status === 500) {
-            errorMessage = 'Error interno del servidor. Inténtalo más tarde.';
-          } else if (error.status === 404) {
-            errorMessage = 'Reserva no encontrada.';
-          } else if (error.status === 403) {
-            errorMessage = 'No tienes permisos para enviar este email.';
-          }
-
+          this.loadNotificationsForReservation(item.id); // Recargar notificaciones para el item
+        } else {
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
-            detail: errorMessage,
+            detail: response.message || 'Error al enviar la notificación de presupuesto',
           });
-        },
+        }
+      },
+      error: (error) => {
+        this.notificationLoading[item.id] = false;
+        console.error('Error sending budget notification:', error);
+        let errorMessage = 'Error al enviar la notificación de presupuesto';
+        if (error.status === 500) {
+          errorMessage = 'Error interno del servidor. Inténtalo más tarde.';
+        } else if (error.status === 404) {
+          errorMessage = 'Presupuesto no encontrado.';
+        }
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: errorMessage,
+        });
+      },
+    });
+  }
+
+  sendReservationNotification(item: BookingItem): void {
+    this.notificationLoading[item.id] = true;
+    
+    const userEmail = this.authService.getUserEmailValue();
+  
+    if (!userEmail) {
+      this.notificationLoading[item.id] = false;
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudo obtener el email del usuario logueado',
       });
+      return;
+    }
+  
+    const notificationData: NotificationRequest = {
+      reservationId: parseInt(item.id, 10),
+      code: "RESERVATION_VOUCHER",
+      email: userEmail 
+    };
+  
+    this.notificationServicev2.sendNotification(notificationData).subscribe({
+      next: (response) => {
+        this.notificationLoading[item.id] = false;
+        if (response.success) {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Éxito',
+            detail: 'Notificación de reserva enviada correctamente',
+          });
+          this.loadNotificationsForReservation(item.id);
+        } else {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: response.message || 'Error al enviar la notificación de reserva',
+          });
+        }
+      },
+      error: (error) => {
+        this.notificationLoading[item.id] = false;
+        console.error('Error sending reservation notification:', error);
+        let errorMessage = 'Error al enviar la notificación de reserva';
+        if (error.status === 500) {
+          errorMessage = 'Error interno del servidor. Inténtalo más tarde.';
+        } else if (error.status === 404) {
+          errorMessage = 'Reserva no encontrada.';
+        }
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: errorMessage,
+        });
+      },
+    });
   }
 
   downloadItem(item: BookingItem) {
-    this.downloadLoading[item.id] = true;
+    if (this.listType === 'recent-budgets') {
+      // Lógica para descargar presupuestos
+      this.downloadBudgetDocument(item);
+    } else if (this.listType === 'active-bookings') {
+      // Lógica para descargar reserva
+      this.downloadReservationDocument(item);
+    } else {
+      // Lógica para descargar reservas activas/historial
+      this.downloadLoading[item.id] = true;
+  
+      this.messageService.add({
+        severity: 'info',
+        summary: 'Info',
+        detail: 'Generando documento PDF...',
+      });
+  
+      // Download PDF as blob
+      this.documentPDFService
+        .downloadReservationPDFAsBlob(parseInt(item.id, 10), 'BUDGET')
+        .subscribe({
+          next: (blob) => {
+            this.downloadLoading[item.id] = false;
+  
+            // Create download link
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `presupuesto_${item.id}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+  
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Éxito',
+              detail: 'Documento PDF descargado exitosamente',
+            });
+          },
+          error: (error) => {
+            console.error('Error downloading PDF:', error);
+            this.downloadLoading[item.id] = false;
+  
+            let errorMessage = 'Error al generar el documento PDF';
+            if (error.status === 500) {
+              errorMessage = 'Error interno del servidor. Inténtalo más tarde.';
+            } else if (error.status === 404) {
+              errorMessage = 'Documento no encontrado.';
+            } else if (error.status === 403) {
+              errorMessage = 'No tienes permisos para descargar este documento.';
+            }
+  
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: errorMessage,
+            });
+          },
+        });
+    }
+  }
 
+  downloadBudgetDocument(item: BookingItem): void {
+    const BUDGET_ID =parseInt(item.id, 10);
+    const TYPE_DOCUMENT = 'BUDGET';
+    this.documentServicev2.getDocumentInfo(BUDGET_ID, TYPE_DOCUMENT).subscribe({
+      next: (documentInfo) => {
+        const fileName = documentInfo.fileName;
+        
+        this.documentServicev2.getDocument(fileName).subscribe({
+          next: (blob) => {
+            
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+          },
+          error: (error) => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error al descargar documento',
+              detail: 'No se pudo descargar el documento. Por favor, inténtalo más tarde.'
+            });
+          }
+        });
+      },
+      error: (error) => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error al obtener información del documento',
+          detail: 'No se pudo obtener la información del documento. Por favor, inténtalo más tarde.'
+        });
+      }
+    });
+  }
+
+  downloadReservationDocument(item: BookingItem): void {
+    const RESERVATION_ID = parseInt(item.id, 10);
+    
+    this.downloadLoading[item.id] = true;
+    
     this.messageService.add({
       severity: 'info',
       summary: 'Info',
-      detail: 'Generando documento PDF...',
+      detail: 'Generando voucher de reserva...',
     });
-
-    // Download PDF as blob
-    this.documentPDFService
-      .downloadReservationPDFAsBlob(parseInt(item.id, 10), 'BUDGET')
-      .subscribe({
-        next: (blob) => {
-          this.downloadLoading[item.id] = false;
-
-          // Create download link
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `presupuesto_${item.id}.pdf`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(url);
-
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Éxito',
-            detail: 'Documento PDF descargado exitosamente',
-          });
-        },
-        error: (error) => {
-          console.error('Error downloading PDF:', error);
-          this.downloadLoading[item.id] = false;
-
-          let errorMessage = 'Error al generar el documento PDF';
-          if (error.status === 500) {
-            errorMessage = 'Error interno del servidor. Inténtalo más tarde.';
-          } else if (error.status === 404) {
-            errorMessage = 'Documento no encontrado.';
-          } else if (error.status === 403) {
-            errorMessage = 'No tienes permisos para descargar este documento.';
+    
+    this.documentServicev2.getReservationVoucherDocument(RESERVATION_ID).subscribe({
+      next: (blob) => {
+        this.downloadLoading[item.id] = false;
+        
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `voucher_reserva_${item.id}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Éxito',
+          detail: 'Voucher de reserva descargado exitosamente',
+        });
+      },
+      error: (error) => {
+        this.downloadLoading[item.id] = false;
+        console.error('Error al descargar voucher de reserva:', error);
+        
+        let errorDetail = 'No se pudo descargar el voucher de reserva.';
+        
+        // Manejo específico de errores
+        if (error.status === 500) {
+          if (error.error?.message?.includes('KeyNotFoundException')) {
+            errorDetail = 'Hay datos incompletos en esta reserva. Por favor, contacta con soporte.';
+          } else {
+            errorDetail = 'Error interno del servidor. Inténtalo más tarde.';
           }
-
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: errorMessage,
-          });
-        },
-      });
+        } else if (error.status === 404) {
+          errorDetail = 'Voucher de reserva no encontrado.';
+        } else if (error.status === 403) {
+          errorDetail = 'No tienes permisos para descargar este documento.';
+        }
+        
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error al descargar documento',
+          detail: errorDetail
+        });
+      }
+    });
   }
 
   reserveItem(item: BookingItem) {
+    // Navegar al checkout para presupuestos recientes
     if (this.listType === 'recent-budgets') {
+      this.router.navigate(['/checkout', item.id]);
+    }
+    // Navegar al checkout para reservas pendientes o carrito en proceso
+    else if (this.listType === 'pending-bookings' || this.isCartInProcess(item)) {
       this.router.navigate(['/checkout', item.id]);
     }
   }
@@ -695,6 +1051,8 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
     switch (this.listType) {
       case 'active-bookings':
         return 'Reservas Activas';
+      case 'pending-bookings':
+        return 'Reservas Pendientes';
       case 'recent-budgets':
         return 'Presupuestos Recientes';
       case 'travel-history':
@@ -708,6 +1066,8 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
     switch (this.listType) {
       case 'active-bookings':
         return 'No tienes reservas activas';
+      case 'pending-bookings':
+        return 'No tienes reservas pendientes';
       case 'recent-budgets':
         return 'No tienes presupuestos recientes';
       case 'travel-history':
@@ -718,25 +1078,51 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   }
 
   // Button visibility methods
-  shouldShowDownload(): boolean {
+  shouldShowDownload(item: BookingItem): boolean {
+    // Ocultar cuando es borrador (1) o carrito en proceso (2)
+    if (this.isDraft(item) || this.isCartInProcess(item)) return false;
     return (
-      this.listType === 'active-bookings' || this.listType === 'recent-budgets'
+      this.listType === 'active-bookings' ||
+      this.listType === 'recent-budgets' ||
+      this.listType === 'pending-bookings'
     );
   }
 
-  shouldShowSend(): boolean {
+  shouldShowSend(item: BookingItem): boolean {
+    // Ocultar cuando es borrador (1) o carrito en proceso (2)
+    if (this.isDraft(item) || this.isCartInProcess(item)) return false;
     return (
-      this.listType === 'active-bookings' || this.listType === 'recent-budgets'
+      this.listType === 'active-bookings' ||
+      this.listType === 'recent-budgets' ||
+      this.listType === 'pending-bookings'
     );
   }
 
   shouldShowView(item: BookingItem): boolean {
-    // No mostrar botón de ver detalle si el estado es 3 (budget/presupuesto reservado)
-    return item.reservationStatusId !== 3;
+    // Ocultar ver detalle para estados 1 (DRAFT) y 2 (CART) y para 3 (BUDGET)
+    if ([1, 2, 3].includes(item.reservationStatusId as any)) return false;
+    // Además ocultar si estamos en la sección de pendientes
+    if (this.listType === 'pending-bookings') return false;
+    return true;
   }
 
-  shouldShowReserve(): boolean {
-    return this.listType === 'recent-budgets';
+  shouldShowReserve(item?: BookingItem): boolean {
+    // Si es carrito en proceso (2), mostrar siempre Reservar
+    if (item && this.isCartInProcess(item)) return true;
+    // Mostrar "Reservar" para presupuestos y para toda la sección de pendientes
+    if (this.listType === 'recent-budgets') return true;
+    if (this.listType === 'pending-bookings') return true;
+    return false;
+  }
+
+  isCartInProcess(item: BookingItem): boolean {
+    // Estado 2 = Carrito en proceso
+    return item?.reservationStatusId === 2;
+  }
+
+  isDraft(item: BookingItem): boolean {
+    // Estado 1 = Borrador
+    return item?.reservationStatusId === 1;
   }
 
   shouldShowPointsDiscount(item: BookingItem): boolean {
@@ -750,7 +1136,7 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
   }
 
   getSendLabel(): string {
-    return 'Enviar';
+    return 'Compartir';
   }
 
   getViewLabel(): string {
@@ -1040,318 +1426,6 @@ export class BookingListSectionV2Component implements OnInit, OnChanges {
    */
   openPointsDiscountModal(item: BookingItem): void {
     this.selectedBookingItem = item;
-    this.pointsToUse = 0;
-    
-    // Obtener puntos reales del usuario
-    this.loadUserPointsData();
-    
     this.pointsDiscountModalVisible = true;
-  }
-
-  /**
-   * Cierra la modal de descuento de puntos
-   */
-  closePointsDiscountModal(): void {
-    this.pointsDiscountModalVisible = false;
-    this.selectedBookingItem = null;
-    this.pointsToUse = 0;
-    this.availablePoints = 0;
-  }
-
-  /**
-   * Carga los datos de puntos del usuario
-   */
-  private loadUserPointsData(): void {
-    this.loadingUserData = true;
-    if (!this.userId) {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'No se pudo obtener el ID del usuario',
-      });
-      this.setDefaultCategory();
-      this.loadingUserData = false;
-      return;
-    }
-
-    // Obtener saldo de puntos del usuario
-    this.pointsService.getLoyaltyBalanceFromAPI(this.userId).subscribe({
-      next: (balance) => {
-        // Usar la misma lógica que points-section-v2
-        this.availablePoints = balance?.pointsAvailable || balance?.totalPoints || balance?.balance || 0;
-        this.loadingUserData = false;
-      },
-      error: (error: any) => {
-        console.error('Error cargando saldo de puntos:', error);
-        this.availablePoints = 0;
-        this.loadingUserData = false;
-        this.messageService.add({
-          severity: 'warn',
-          summary: 'Advertencia',
-          detail: 'No se pudieron cargar los puntos del usuario. Usando valor por defecto.',
-        });
-      }
-    });
-
-    // Obtener categoría del usuario
-    this.pointsService.getUserLoyaltyCategory(this.userId).then((userCategory: any) => {
-      if (userCategory && userCategory.loyaltyCategoryId) {
-        this.pointsService.getLoyaltyProgramCategory(userCategory.loyaltyCategoryId).then((category: any) => {
-          if (category) {
-            this.userCategory = this.mapCategoryNameToEnum(category.name);
-            this.maxPointsForCategory = category.maxDiscountPerPurchase || 50;
-            this.maxPointsPerReservation = Math.min(50, this.maxPointsForCategory);
-          } else {
-            this.setDefaultCategory();
-          }
-        }).catch((error: any) => {
-          this.setDefaultCategory();
-        });
-      } else {
-        this.setDefaultCategory();
-      }
-    }).catch((error: any) => {
-      this.setDefaultCategory();
-    });
-  }
-
-  /**
-   * Mapea el nombre de categoría a enum
-   */
-  private mapCategoryNameToEnum(categoryName: string): TravelerCategory {
-    const categoryMap: { [key: string]: TravelerCategory } = {
-      'Trotamundos': TravelerCategory.TROTAMUNDOS,
-      'Viajero': TravelerCategory.VIAJERO,
-      'Nómada': TravelerCategory.NOMADA
-    };
-    return categoryMap[categoryName] || TravelerCategory.TROTAMUNDOS;
-  }
-
-  /**
-   * Establece la categoría por defecto
-   */
-  private setDefaultCategory(): void {
-    this.userCategory = TravelerCategory.TROTAMUNDOS;
-    this.maxPointsForCategory = 50;
-    this.maxPointsPerReservation = 50;
-  }
-
-  /**
-   * Calcula el precio final después del descuento
-   * @returns Precio final
-   */
-  getCategoryDisplayName(): string {
-    return this.pointsService.getCategoryDisplayName(this.userCategory);
-  }
-
-  /**
-   * Valida y limita el número de dígitos en el input de puntos
-   */
-  validatePointsInput(): void {
-    if (this.pointsToUse) {
-      // Limitar a 5 dígitos máximo (99999 puntos)
-      const pointsStr = this.pointsToUse.toString();
-      if (pointsStr.length > 5) {
-        this.pointsToUse = parseInt(pointsStr.substring(0, 5));
-      }
-      
-      // Asegurar que sea un número positivo
-      if (this.pointsToUse < 0) {
-        this.pointsToUse = 0;
-      }
-      
-      // No permitir valores mayores al disponible
-      if (this.pointsToUse > this.availablePoints) {
-        this.pointsToUse = this.availablePoints;
-      }
-    }
-  }
-
-  /**
-   * Verifica si el botón de aplicar descuento debe estar habilitado
-   */
-  isApplyDiscountButtonEnabled(): boolean {
-    if (!this.selectedBookingItem || this.pointsToUse <= 0) {
-      return false;
-    }
-
-    const validation = this.validatePointsUsage();
-    return validation.isValid;
-  }
-
-  getFinalPrice(): number {
-    if (!this.selectedBookingItem || this.pointsToUse <= 0) {
-      return this.selectedBookingItem?.price || 0;
-    }
-    
-    const originalPrice = this.selectedBookingItem.price || 0;
-    const discount = this.pointsToUse; // 1 punto = 1 euro
-    const finalPrice = originalPrice - discount;
-    
-    return Math.max(0, finalPrice); // No permitir precio negativo
-  }
-
-  /**
-   * Aplica el descuento de puntos
-   */
-  applyPointsDiscount(): void {
-    if (!this.selectedBookingItem || this.pointsToUse <= 0) {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'Debes seleccionar una cantidad de puntos válida',
-      });
-      return;
-    }
-
-    const validation = this.validatePointsUsage();
-    
-    if (!validation.isValid) {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error de validación',
-        detail: validation.message,
-      });
-      return;
-    }
-
-    const reservationId = parseInt(this.selectedBookingItem.id, 10);
-
-    if (!this.userId) {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'No se pudo obtener el ID del usuario',
-      });
-      return;
-    }
-
-    const userIdNumber = parseInt(this.userId, 10);
-
-    if (isNaN(userIdNumber) || isNaN(reservationId)) {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'IDs inválidos',
-      });
-      return;
-    }
-
-    this.pointsService.redeemPointsForReservation(reservationId, userIdNumber, this.pointsToUse)
-      .then(result => {
-        if (result.success) {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Descuento Aplicado',
-            detail: result.message,
-          });
-          
-          // Marcar esta reserva como que ya tiene puntos aplicados para este viajero
-          const uniqueKey = `${this.selectedBookingItem!.id}_${this.userId}`;
-          this.reservationsWithPointsRedeemed.add(uniqueKey);
-          
-          // Recargar la sección de puntos en el componente padre
-          if (this.parentComponent && this.parentComponent.reloadPointsSection) {
-            this.parentComponent.reloadPointsSection();
-          }
-          
-          // Recargar datos de reservas para reflejar cambios en precio
-          this.loadData();
-          
-          // Cerrar modal
-          this.closePointsDiscountModal();
-        } else {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: result.message,
-          });
-        }
-      })
-      .catch(error => {
-        console.error('Error aplicando descuento:', error);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Error al procesar el descuento. Inténtalo de nuevo.',
-        });
-      });
-  }
-
-  /**
-   * Valida el uso de puntos según las reglas del documento
-   */
-  private validatePointsUsage(): { isValid: boolean; message: string } {
-    // 1. Validar saldo disponible
-    if (this.pointsToUse > this.availablePoints) {
-      return {
-        isValid: false,
-        message: `No tienes suficientes puntos. Disponibles: ${this.availablePoints}`
-      };
-    }
-
-    // 2. Validar límite por reserva (50€ máximo por reserva según documento)
-    if (this.pointsToUse > this.maxPointsPerReservation) {
-      return {
-        isValid: false,
-        message: `Máximo ${this.maxPointsPerReservation} puntos por reserva según las reglas`
-      };
-    }
-
-    // 3. Validar límite por categoría
-    if (this.pointsToUse > this.maxPointsForCategory) {
-      const categoryName = this.pointsService.getCategoryDisplayName(this.userCategory);
-      return {
-        isValid: false,
-        message: `Como ${categoryName} puedes usar máximo ${this.maxPointsForCategory} puntos por reserva`
-      };
-    }
-
-    // 4. Validar que no exceda el precio de la reserva
-    if (this.selectedBookingItem && this.pointsToUse > (this.selectedBookingItem.price || 0)) {
-      return {
-        isValid: false,
-        message: 'No puedes canjear más puntos que el precio total de la reserva'
-      };
-    }
-
-    return { isValid: true, message: '' };
-  }
-
-  /**
-   * Calcula el máximo de puntos permitidos según todas las reglas
-   */
-  getMaxAllowedPoints(): number {
-    if (!this.selectedBookingItem) return 0;
-
-    const reservationPrice = this.selectedBookingItem.price || 0;
-    const limits = [
-      this.availablePoints,                    // Puntos disponibles
-      this.maxPointsPerReservation,           // Límite por reserva (50€)
-      this.maxPointsForCategory,              // Límite por categoría
-      reservationPrice                        // No exceder el precio de la reserva
-    ];
-
-    return Math.min(...limits);
-  }
-
-  /**
-   * Verifica si el usuario tiene puntos suficientes
-   */
-  hasEnoughPoints(): boolean {
-    return this.availablePoints > 0;
-  }
-
-  /**
-   * Obtiene el mensaje de estado de puntos
-   */
-  getPointsStatusMessage(): string {
-    if (this.availablePoints === 0) {
-      return 'No tienes puntos disponibles para canjear';
-    } else if (this.availablePoints < this.maxPointsPerReservation) {
-      return `Tienes ${this.availablePoints} puntos. Puedes usar hasta ${this.availablePoints} en esta reserva.`;
-    } else {
-      return `Tienes ${this.availablePoints} puntos. Puedes usar hasta ${this.maxPointsPerReservation} en esta reserva.`;
-    }
   }
 }

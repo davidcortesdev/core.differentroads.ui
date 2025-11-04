@@ -158,6 +158,8 @@ export class TourHeaderV2Component
   ) {}
 
   ngOnInit() {
+    // Resetear el flag al inicializar para evitar estados bloqueados
+    this.isCreatingReservation = false;
     if (this.tourId) {
       this.loadTourData(this.tourId);
     }
@@ -831,6 +833,12 @@ export class TourHeaderV2Component
   }
 
   onBookingClick(): void {
+    // Bloquear desde checkout: este botón solo debe funcionar en la página del tour
+    const currentUrl = this.router.url || window.location.pathname || '';
+    if (currentUrl.startsWith('/checkout')) {
+      return;
+    }
+
     // Disparar evento add_to_cart incluso si no hay fecha seleccionada
     this.trackAddToCart();
 
@@ -853,8 +861,10 @@ export class TourHeaderV2Component
 
     }
 
-    // Dispara evento add_to_cart
-    this.isCreatingReservation = true;
+    // Evitar clicks repetidos solo mientras se está creando la reserva
+    if (this.isCreatingReservation) {
+      return;
+    }
 
     // Obtener el ID del usuario logueado
     this.authService.getCognitoId().subscribe({
@@ -873,6 +883,7 @@ export class TourHeaderV2Component
             },
             error: (error) => {
               console.error('Error buscando usuario por Cognito ID:', error);
+              // El flag se manejará dentro de createReservation
               this.createReservation(null); // Usar null en caso de error
             },
           });
@@ -882,6 +893,7 @@ export class TourHeaderV2Component
       },
       error: (error) => {
         console.error('Error obteniendo Cognito ID:', error);
+        // El flag se manejará dentro de createReservation
         this.createReservation(null); // Usar null en caso de error
       },
     });
@@ -1051,6 +1063,17 @@ export class TourHeaderV2Component
   }
 
   private createReservation(userId: number | null): void {
+    // Defensa en profundidad: nunca crear desde checkout, aunque alguien llame directo
+    const currentUrl = this.router.url || window.location.pathname || '';
+    if (currentUrl.startsWith('/checkout')) {
+      return;
+    }
+
+    // Reentrada: si ya estamos creando, salir
+    if (this.isCreatingReservation) {
+      return;
+    }
+    this.isCreatingReservation = true;
     try {
       // ✅ OBTENER ID DEL ESTADO DRAFT DINÁMICAMENTE
       this.reservationStatusService.getByCode('DRAFT').subscribe({

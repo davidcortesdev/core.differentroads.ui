@@ -78,8 +78,6 @@ export class PaymentInfoComponent implements OnInit, OnChanges {
           paymentPercentage: summary.paymentPercentage || 0,
         };
 
-        console.log('Payment summary loaded:', this.paymentInfo);
-
         // Cargar historial de pagos solo si hay pagos realizados
         if (summary.totalPaid > 0) {
           this.loadPaymentHistory();
@@ -89,7 +87,6 @@ export class PaymentInfoComponent implements OnInit, OnChanges {
         }
       },
       error: (error) => {
-        console.error('Error loading payment summary:', error);
         this.paymentInfo = {
           totalAmount: 0,
           paidAmount: 0,
@@ -117,7 +114,6 @@ export class PaymentInfoComponent implements OnInit, OnChanges {
           this.loading = false;
         },
         error: (error) => {
-          console.error('Error loading payments:', error);
           this.payments = [];
           this.loading = false;
         },
@@ -163,7 +159,7 @@ export class PaymentInfoComponent implements OnInit, OnChanges {
             }
           }
         } catch (error) {
-          console.error('Error getting payment method:', error);
+          // Ignorar error y usar método por defecto
         }
 
         return {
@@ -179,8 +175,6 @@ export class PaymentInfoComponent implements OnInit, OnChanges {
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
-
-    console.log('Processed payments:', this.payments);
   }
 
   get hasPaymentInfo(): boolean {

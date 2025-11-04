@@ -29,8 +29,8 @@ export class DataMappingV2Service {
     listType: 'active-bookings' | 'travel-history' | 'recent-budgets' = 'active-bookings',
     cmsTour: ICMSTourResponse | null = null
   ): BookingItem {
-    // Usar tkId si existe, sino usar el id de la reserva
-    const reservationNumber = reservation.tkId || reservation.id.toString();
+    // Usar siempre el id de la reserva (no tkId)
+    const reservationNumber = reservation.id.toString();
     
     const bookingItem: BookingItem = {
       id: reservation.id.toString(),

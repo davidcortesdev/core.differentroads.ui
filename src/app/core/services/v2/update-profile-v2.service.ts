@@ -309,11 +309,17 @@ export class UpdateProfileV2Service {
       }
     }
 
-    // Validación de DNI
+    // Validación de DNI/NIE (documentos de identidad internacionales)
     if (personalInfo.dni?.trim()) {
-      const dniRegex = /^[0-9]{8}[TRWAGMYFPDXBNJZSQVHLCKE]$/i;
-      if (!dniRegex.test(personalInfo.dni)) {
-        errors['dni'] = 'El DNI debe tener 8 números seguidos de una letra válida';
+      const dniValue = personalInfo.dni.trim();
+      // Validación internacional: acepta documentos de identidad de diferentes países
+      // Permite: DNI español (8 dígitos + letra), NIE español (X/Y/Z + 7 dígitos + letra),
+      // DNI colombiano, DNI argentino, DNI francés, pasaportes y otros documentos internacionales
+      // Longitud mínima: 4 caracteres, máxima: 20 caracteres
+      // Permite letras, números, guiones, puntos y espacios (formato flexible)
+      const internationalIdRegex = /^[A-Z0-9\-\s\.]{4,20}$/i;
+      if (!internationalIdRegex.test(dniValue)) {
+        errors['dni'] = 'Ingresa un documento de identidad válido (DNI, NIE, pasaporte, etc.)';
         isValid = false;
       }
     }
@@ -376,12 +382,18 @@ export class UpdateProfileV2Service {
   }
 
   /**
-   * Valida y filtra el input de DNI
+   * Valida y filtra el input de DNI/NIE (documentos de identidad internacionales)
+   * Permite letras, números, guiones, puntos y espacios para aceptar diferentes formatos internacionales
+   * Soporta: DNI español, NIE español, DNI colombiano, DNI argentino, DNI francés, pasaportes, etc.
    * @param value - Valor del input
    * @returns Valor filtrado
    */
   validateDniInput(value: string): string {
-    return value.toUpperCase().slice(0, 9);
+    // Permitir letras, números, guiones, puntos y espacios
+    // Convertir a mayúsculas para consistencia
+    const filtered = value.replace(/[^A-Za-z0-9\-\s\.]/g, '').toUpperCase();
+    // Limitar a 20 caracteres para documentos internacionales
+    return filtered.slice(0, 20);
   }
 
 

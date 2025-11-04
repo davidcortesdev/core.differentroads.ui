@@ -14,19 +14,13 @@
       <i class="pi pi-info-circle"></i>También puedes añadirlas después desde tu
       perfil
     </div>
-    <!-- OPTIMIZADO: Mensaje informativo sobre selección por usuario -->
+    <!-- Mensaje informativo sobre personalización por viajero -->
     <div
       class="step-info"
-      [ngClass]="{ saving: hasAnyActivityLoading() }"
-      *ngIf="hasAnyActivityLoading() || hasSelectedActivities"
+      *ngIf="hasSelectedActivities"
     >
-      <i class="pi pi-check-circle" *ngIf="!hasAnyActivityLoading()"></i>
-      <i class="pi pi-spin pi-spinner" *ngIf="hasAnyActivityLoading()"></i>
-      <span *ngIf="hasAnyActivityLoading()">Guardando actividad...</span>
-      <span *ngIf="!hasAnyActivityLoading() && hasSelectedActivities">
-        ✅ Actividades guardadas. Podrás elegir por usuario en el paso 3 de
-        viajeros.
-      </span>
+      <i class="pi pi-info-circle"></i>
+      <span>Las actividades seleccionadas se aplicarán a todos los viajeros. En el paso 3 podrás personalizar qué actividades desea cada viajero específicamente.</span>
     </div>
   </div>
 

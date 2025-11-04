@@ -178,6 +178,7 @@
             name="dni"
             (input)="onDniInput($event)"
             [class.error]="hasFieldError('dni')"
+            maxlength="20"
           />
           <label for="dni">DNI/NIE</label>
           <small class="error-message" *ngIf="hasFieldError('dni')">

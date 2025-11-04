@@ -13,8 +13,8 @@
       "profile",
       "aws.cognito.signin.user.admin"
     ],
-    "redirectSignIn": "http://localhost:4200/,https://ui-dev.differentroads.es/,https://ui-pre.differentroads.es/",
-    "redirectSignOut": "http://localhost:4200/,https://ui-dev.differentroads.es/,https://ui-pre.differentroads.es/",
+    "redirectSignIn": "http://localhost:4200/,https://ui-dev.differentroads.es/,https://ui-pre.differentroads.es/,https://ui.differentroads.es/,https://www.differentroads.es/,https://differentroads.es",
+    "redirectSignOut": "http://localhost:4200/,https://ui-dev.differentroads.es/,https://ui-pre.differentroads.es/,https://ui.differentroads.es/,https://www.differentroads.es/,https://differentroads.es",
     "responseType": "code"
   },
   "federationTarget": "COGNITO_USER_POOLS",

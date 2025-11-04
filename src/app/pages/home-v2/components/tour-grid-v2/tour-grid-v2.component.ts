@@ -24,6 +24,8 @@ import { AnalyticsService, EcommerceItem } from '../../../../core/services/analy
 
 // Servicios para filtros por tag y ubicación
 import { TourTagService } from '../../../../core/services/tag/tour-tag.service';
+import { TourTagRelationTypeService } from '../../../../core/services/tag/tour-tag-relation-type.service';
+import { TagService } from '../../../../core/services/tag/tag.service';
 import { TourLocationService, ITourLocationResponse } from '../../../../core/services/tour/tour-location.service';
 import { LocationNetService, Location } from '../../../../core/services/locations/locationNet.service';
 
@@ -136,6 +138,8 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
     private readonly tourService: TourService,
     private readonly cmsTourService: CMSTourService,
     private readonly tourTagService: TourTagService,
+    private readonly tourTagRelationTypeService: TourTagRelationTypeService,
+    private readonly tagService: TagService,
     private readonly departureService: DepartureService,
     private readonly itineraryService: ItineraryService,
     private readonly itineraryDayService: ItineraryDayService,
@@ -594,8 +598,23 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
                     )
                 : of([]);
 
-            // Obtener tags del tour
-            const tagRequest = of([]);
+            // Obtener tags del tour usando el tipo de relación "VISIBLE"
+            // Usar el endpoint más eficiente getByTourAndType con el code "VISIBLE"
+            const tagRequest = this.tourTagService.getByTourAndType(tourId, 'VISIBLE').pipe(
+              switchMap((tourTags) => {
+                // Validar que haya tags y que el primer tag tenga un tagId válido
+                if (tourTags.length === 0 || !tourTags[0]?.tagId || tourTags[0].tagId <= 0) {
+                  return of([]);
+                }
+                // Obtener el nombre del primer tag
+                const firstTagId = tourTags[0].tagId;
+                return this.tagService.getById(firstTagId).pipe(
+                  map((tag) => tag?.name && tag.name.trim().length > 0 ? [tag.name.trim()] : []),
+                  catchError(() => of([]))
+                );
+              }),
+              catchError(() => of([]))
+            );
             
             // Obtener continent y country
             const locationRequest = forkJoin({
@@ -739,8 +758,8 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
 
     // Obtener tag: Usar el primer tag disponible
     const tourTag =
-      additional.tags && additional.tags.length > 0
-        ? additional.tags[0]
+      additional.tags && additional.tags.length > 0 && additional.tags[0].trim().length > 0
+        ? additional.tags[0].trim()
         : '';
 
     // Obtener días de itinerario: Contar los días disponibles
@@ -838,7 +857,7 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
         item_brand: 'Different Roads',
         item_category: tour.continent || '',
         item_category2: tour.country || '',
-        item_category3: tour.tag || '',
+        item_category3: tour.tag && tour.tag.trim().length > 0 ? tour.tag.trim() : '',
         item_category4: monthsString,
         item_category5: itemCategory5,
         item_list_id: this.itemListId,

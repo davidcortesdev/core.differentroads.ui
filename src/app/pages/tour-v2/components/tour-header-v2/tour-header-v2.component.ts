@@ -46,6 +46,8 @@ import {
 } from '../../../../core/services/reservation/reservation-traveler-activity-pack.service';
 import { Subscription, forkJoin, of, Observable } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
+import { TourTagService } from '../../../../core/services/tag/tour-tag.service';
+import { TagService } from '../../../../core/services/tag/tag.service';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ActivityHighlight } from '../../../../shared/components/activity-card/activity-card.component';
 import { environment } from '../../../../../environments/environment';
@@ -147,6 +149,8 @@ export class TourHeaderV2Component
     private reservationTravelerActivityService: ReservationTravelerActivityService,
     // ✅ SOLO AGREGANDO: Servicio para paquetes
     private reservationTravelerActivityPackService: ReservationTravelerActivityPackService,
+    private tourTagService: TourTagService,
+    private tagService: TagService,
     private el: ElementRef,
     private renderer: Renderer2,
     private router: Router,
@@ -310,15 +314,39 @@ export class TourHeaderV2Component
 
   private loadTourData(tourId: number) {
     this.subscriptions.add(
-      this.tourService.getTourById(tourId).subscribe({
-        next: (tourData) => {
+      this.tourService.getTourById(tourId).pipe(
+        switchMap((tourData) => {
           this.tour = { ...tourData };
           this.loadCountryAndContinent(tourId);
-        },
-        error: (error) => {
+          
+          // Obtener el primer tag visible del tour
+          return this.tourTagService.getByTourAndType(tourId, 'VISIBLE').pipe(
+            switchMap((tourTags) => {
+              // Validar que haya tags y que el primer tag tenga un tagId válido
+              if (tourTags.length > 0 && tourTags[0]?.tagId && tourTags[0].tagId > 0) {
+                const firstTagId = tourTags[0].tagId;
+                return this.tagService.getById(firstTagId).pipe(
+                  map((tag) => tag?.name || null),
+                  catchError(() => of(null))
+                );
+              }
+              return of(null);
+            }),
+            catchError(() => of(null)),
+            map((tagName) => {
+              // Agregar el tag al objeto tour si existe
+              if (tagName && tagName.trim().length > 0) {
+                (this.tour as any).tag = tagName.trim();
+              }
+              return tourData;
+            })
+          );
+        }),
+        catchError((error) => {
           console.error('Error cargando tour:', error);
-        },
-      })
+          return of(null);
+        })
+      ).subscribe()
     );
   }
 
@@ -925,7 +953,11 @@ export class TourHeaderV2Component
           item_brand: 'Different Roads',
           item_category: tourData.destination?.continent || '',
           item_category2: tourData.destination?.country || '',
-          item_category3: tourData.marketingSection?.marketingSeasonTag || 'Clasico',
+          item_category3: (tourData.tag && tourData.tag.trim().length > 0) 
+            ? tourData.tag.trim() 
+            : (tourData.marketingSection?.marketingSeasonTag && tourData.marketingSection.marketingSeasonTag.trim().length > 0)
+            ? tourData.marketingSection.marketingSeasonTag.trim()
+            : '',
           item_category4: tourData.monthTags?.join(', ') || '',
           item_category5: tourData.tourType === 'FIT' ? 'Privados' : 'Grupos',
           item_list_id: itemListId,

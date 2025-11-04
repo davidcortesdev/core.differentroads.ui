@@ -436,6 +436,12 @@ export class PaymentManagementComponent
 
       await this.processPaymentBasedOnMethod();
 
+      // Emitir evento de pago completado para analytics
+      this.paymentCompleted.emit({
+        type: this.paymentState.type || 'complete',
+        method: this.paymentState.method || 'transfer'
+      });
+
       this.messageService.add({
         severity: 'success',
         summary: 'Pago procesado',

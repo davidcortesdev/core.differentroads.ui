@@ -194,6 +194,12 @@ export class AddPaymentModalComponent implements OnInit {
         throw new Error('Error al crear el pago');
       }
 
+      // Emitir evento de pago procesado para analytics
+      this.paymentProcessed.emit({
+        amount: this.customPaymentAmount,
+        method: 'card'
+      });
+
       // Generar los datos del formulario para Redsys
       const baseUrlFront = (window.location.href).replace(this.router.url, '');
       const formData: IFormData | undefined = await this.redsysService.generateFormData(
@@ -264,6 +270,12 @@ export class AddPaymentModalComponent implements OnInit {
         throw new Error('Error al crear el pago por transferencia');
       }
 
+      // Emitir evento de pago procesado para analytics
+      this.paymentProcessed.emit({
+        amount: this.customPaymentAmount,
+        method: 'transfer'
+      });
+
       // Navegar a la página de confirmación/subida de comprobante
       this.router.navigate([`/reservation/${this.reservationId}/${response.id}`]);
     } catch (error) {
@@ -289,6 +301,12 @@ export class AddPaymentModalComponent implements OnInit {
       console.log('✅ Scalapay - Respuesta recibida:', response);
 
       if (response?.checkoutUrl) {
+        // Emitir evento de pago procesado para analytics (antes de redirigir)
+        this.paymentProcessed.emit({
+          amount: this.customPaymentAmount,
+          method: 'scalapay'
+        });
+
         console.log('🔗 Scalapay - Redirigiendo a:', response.checkoutUrl);
         // Redirigir a Scalapay para completar el pago
         window.location.href = response.checkoutUrl;

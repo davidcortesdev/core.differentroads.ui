@@ -193,6 +193,12 @@ export class AddPaymentModalComponent implements OnInit {
         throw new Error('Error al crear el pago');
       }
 
+      // Emitir evento de pago procesado para analytics
+      this.paymentProcessed.emit({
+        amount: this.customPaymentAmount,
+        method: 'card'
+      });
+
       // Generar los datos del formulario para Redsys
       const formData: IFormData | undefined = await this.redsysService.generateFormData(
         response.id, 
@@ -260,6 +266,12 @@ export class AddPaymentModalComponent implements OnInit {
       if (!response) {
         throw new Error('Error al crear el pago por transferencia');
       }
+
+      // Emitir evento de pago procesado para analytics
+      this.paymentProcessed.emit({
+        amount: this.customPaymentAmount,
+        method: 'transfer'
+      });
 
       // Navegar a la página de confirmación/subida de comprobante
       this.router.navigate([`/reservation/${this.reservationId}/${response.id}`]);

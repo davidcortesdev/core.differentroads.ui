@@ -12,6 +12,11 @@ import { PaymentService, PaymentInfo } from '../../../core/services/payments/pay
 import { IPaymentStatusResponse } from '../../checkout-v2/services/paymentStatusNet.service';
 import { PaymentsNetService } from '../../checkout-v2/services/paymentsNet.service';
 import { PaymentMethodNetService } from '../../checkout-v2/services/paymentMethodNet.service';
+import { AnalyticsService, TourDataForEcommerce } from '../../../core/services/analytics/analytics.service';
+import { ReservationService, IReservationResponse } from '../../../core/services/reservation/reservation.service';
+import { TourService } from '../../../core/services/tour/tour.service';
+import { switchMap, map, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 // Interfaces existentes
 interface TripItemData {
@@ -38,6 +43,7 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   @Input() reservationId: number = 0; // NUEVO: Para payment-management
   @Input() departureDate: string = ''; // NUEVO: Para payment-management
   @Input() isATC: boolean = false; // NUEVO: Para mostrar selector de estados
+  @Input() tourId: number = 0; // NUEVO: Para analytics
 
   @Output() registerPayment = new EventEmitter<number>();
 
@@ -88,7 +94,10 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
     private bookingsService: BookingsServiceV2,
     private paymentService: PaymentService,
     private paymentsNetService: PaymentsNetService,
-    private paymentMethodService: PaymentMethodNetService
+    private paymentMethodService: PaymentMethodNetService,
+    private analyticsService: AnalyticsService,
+    private reservationService: ReservationService,
+    private tourService: TourService
   ) {
     this.paymentForm = this.fb.group({
       amount: [0, [Validators.required, Validators.min(1)]],
@@ -283,6 +292,110 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
     
     // Refrescar la información de pagos
     this.refreshPayments();
+    
+    // Disparar evento de analytics
+    this.trackAddPaymentInfo(paymentData);
+  }
+
+  /**
+   * Disparar evento add_payment_info cuando se añade un pago desde el detalle de reserva
+   */
+  private trackAddPaymentInfo(paymentData: PaymentData): void {
+    if (!this.reservationId || this.reservationId <= 0) {
+      return;
+    }
+
+    // Obtener datos de la reserva primero
+    this.reservationService.getById(this.reservationId).pipe(
+      switchMap((reservation: IReservationResponse) => {
+        // Obtener datos del tour
+        const tourIdToLoad = this.tourId || reservation.tourId;
+        if (!tourIdToLoad || tourIdToLoad <= 0) {
+          return of(null);
+        }
+
+        return this.tourService.getById(tourIdToLoad).pipe(
+          map((tour) => {
+            if (!tour) return null;
+
+            // Construir datos del tour para analytics
+            const tourDataForEcommerce: TourDataForEcommerce = {
+              id: tour.id,
+              tkId: tour.tkId,
+              name: tour.name,
+              destination: {
+                continent: tour.destination?.continent,
+                country: tour.destination?.country
+              },
+              days: tour.days,
+              nights: tour.nights,
+              rating: tour.rating,
+              monthTags: tour.monthTags,
+              tourType: tour.tourType,
+              flightCity: 'Sin vuelo',
+              childrenCount: '0',
+              totalPassengers: reservation.totalPassengers,
+              departureDate: this.departureDate || reservation.departure?.departureDate || '',
+              returnDate: reservation.departure?.arrivalDate || '',
+              price: paymentData.amount
+            };
+
+            return { tourDataForEcommerce, reservation };
+          }),
+          catchError(() => of(null))
+        );
+      }),
+      switchMap((data) => {
+        if (!data) return of(null);
+
+        // Determinar payment_type
+        const method = paymentData.method === 'card' ? 'tarjeta' : 
+                      paymentData.method === 'transfer' ? 'transferencia' : 'scalapay';
+        const paymentType = `completo, ${method}`;
+
+        // Construir item usando el servicio de analytics
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          data.tourDataForEcommerce,
+          'booking_detail',
+          'Detalle de Reserva',
+          data.reservation.id?.toString() || ''
+        ).pipe(
+          switchMap((item) => {
+            return this.analyticsService.getCurrentUserData().pipe(
+              map((userData) => ({ item, userData, paymentType }))
+            );
+          }),
+          catchError((error) => {
+            console.error('Error obteniendo datos para analytics:', error);
+            return this.analyticsService.buildEcommerceItemFromTourData(
+              data.tourDataForEcommerce,
+              'booking_detail',
+              'Detalle de Reserva',
+              data.reservation.id?.toString() || ''
+            ).pipe(
+              map((item) => ({ 
+                item, 
+                userData: undefined,
+                paymentType 
+              }))
+            );
+          })
+        );
+      })
+    ).subscribe((result) => {
+      if (result && result.item) {
+        this.analyticsService.addPaymentInfo(
+          {
+            currency: 'EUR',
+            value: paymentData.amount,
+            coupon: '',
+            payment_type: result.paymentType,
+            items: [result.item]
+          },
+          result.userData
+        );
+      }
+    });
   }
 
   formatDateForDisplay(dateStr: string): string {

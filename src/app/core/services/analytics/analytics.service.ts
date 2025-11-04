@@ -728,6 +728,11 @@ export class AnalyticsService {
         // Construir item_category5
         const itemCategory5 = tourData.tourType === 'FIT' ? 'Privados' : 'Grupos';
         
+        // Asegurar que totalPassengers sea un número válido o undefined
+        const totalPassengers = tourData.totalPassengers !== undefined && tourData.totalPassengers !== null 
+          ? tourData.totalPassengers.toString() 
+          : '0';
+        
         return {
           item_id: finalItemId,
           item_name: tourData.name || '',
@@ -749,7 +754,7 @@ export class AnalyticsService {
           duracion: duracion,
           start_date: tourData.departureDate || '',
           end_date: tourData.returnDate || '',
-          pasajeros_adultos: tourData.totalPassengers?.toString() || '0',
+          pasajeros_adultos: totalPassengers,
           pasajeros_niños: tourData.childrenCount || '0',
           actividades: tourData.activitiesText || '',
           seguros: tourData.selectedInsurance || '',

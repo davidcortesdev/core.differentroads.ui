@@ -93,14 +93,14 @@
             gap: 0.5rem;
 
             &:hover {
-              border-color: #4ecdc4;
-              background: #f8fdfc;
+              border-color: #ea685c;
+              background: #fff5f4; /* naranja muy claro */
             }
 
             &.selected {
-              border-color: #4ecdc4;
-              background: #f0fffd;
-              box-shadow: 0 2px 8px rgba(78, 205, 196, 0.2);
+              border-color: #ea685c;
+              background: #fff0ee; /* fondo suave para seleccionado */
+              box-shadow: 0 2px 8px rgba(234, 104, 92, 0.25);
             }
 
             .method-info {

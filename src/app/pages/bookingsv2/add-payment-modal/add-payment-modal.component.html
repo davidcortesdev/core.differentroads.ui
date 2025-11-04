@@ -113,7 +113,7 @@
     <div class="method-additional-info mt-3" *ngIf="selectedPaymentMethod">
       <p-message 
         *ngIf="selectedPaymentMethod === 'card'" 
-        severity="info" 
+        severity="contrast" 
         styleClass="w-full">
         <ng-template pTemplate="messageicon">
           <i class="pi pi-info-circle"></i>
@@ -123,7 +123,7 @@
 
       <p-message 
         *ngIf="selectedPaymentMethod === 'transfer'" 
-        severity="info" 
+        severity="contrast" 
         styleClass="w-full">
         <ng-template pTemplate="messageicon">
           <i class="pi pi-info-circle"></i>
@@ -133,7 +133,7 @@
 
       <p-message 
         *ngIf="selectedPaymentMethod === 'scalapay'" 
-        severity="info" 
+        severity="contrast" 
         styleClass="w-full">
         <ng-template pTemplate="messageicon">
           <i class="pi pi-info-circle"></i>

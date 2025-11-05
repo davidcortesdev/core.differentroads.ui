@@ -4,6 +4,8 @@ import { Subject, takeUntil } from 'rxjs';
 import { HomeSectionService, IHomeSectionResponse, } from '../../core/services/home/home-section.service';
 import { HomeSectionConfigurationService, IHomeSectionConfigurationResponse, } from '../../core/services/home/home-section-configuration.service';
 import { Title } from '@angular/platform-browser';
+import { AuthenticateService } from '../../core/services/auth/auth-service.service';
+import { UsersNetService } from '../../core/services/users/usersNet.service';
 
 @Component({
   selector: 'app-home-v2',
@@ -24,12 +26,23 @@ export class HomeV2Component implements OnInit, OnDestroy {
   constructor(
     private titleService: Title,
     private homeSectionService: HomeSectionService,
-    private homeSectionConfigurationService: HomeSectionConfigurationService
+    private homeSectionConfigurationService: HomeSectionConfigurationService,
+    private authService: AuthenticateService,
+    private usersNetService: UsersNetService
   ) {}
 
-  ngOnInit() {
+  async ngOnInit() {
+    
     this.titleService.setTitle('Different Roads - Viajes y Experiencias Únicas');
     this.loadAllHomeSections();
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const state = urlParams.get('state');
+    
+    if (code && state) {
+      console.log('✅ Detectado callback de OAuth en App Component');
+      await this.handleOAuthCallback();
+    }
   }
 
   ngOnDestroy() {
@@ -37,6 +50,85 @@ export class HomeV2Component implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  private async handleOAuthCallback(): Promise<void> {
+    try {
+      // Procesar la autenticación
+      await this.authService.handleAuthRedirect();
+      
+      console.log('✅ handleAuthRedirect completado');
+      
+      // Obtener atributos del usuario
+      this.authService.getUserAttributes().subscribe({
+        next: async (attributes) => {
+          console.log('✅ Atributos obtenidos:', attributes);
+          
+          const username = this.authService.getCurrentUsername();
+          const cognitoId = attributes.sub;
+          const email = attributes.email;
+          
+          if (!cognitoId || !email) {
+            console.error('❌ Datos incompletos');
+            return;
+          }
+          
+          console.log('🔍 Verificando usuario en API...');
+          
+          // Buscar por Cognito ID
+          this.usersNetService.getUsersByCognitoId(cognitoId).subscribe({
+            next: (users) => {
+              if (users && users.length > 0) {
+                console.log('✅ Usuario encontrado');
+                // Limpiar URL y navegar
+                this.cleanUrlAndNavigate();
+              } else {
+                // Buscar por email
+                this.usersNetService.getUsersByEmail(email).subscribe({
+                  next: (usersByEmail) => {
+                    if (usersByEmail && usersByEmail.length > 0) {
+                      console.log('✅ Usuario encontrado por email, actualizando...');
+                      // Actualizar con Cognito ID
+                      this.usersNetService.updateUser(usersByEmail[0].id, {
+                        cognitoId: cognitoId,
+                        name: usersByEmail[0].name ?? '',
+                        email: usersByEmail[0].email ?? ''
+                      }).subscribe(() => {
+                        this.cleanUrlAndNavigate();
+                      });
+                    } else {
+                      console.log('🆕 Creando nuevo usuario...');
+                      // Crear usuario
+                      this.usersNetService.createUser({
+                        cognitoId: cognitoId,
+                        name: email,
+                        email: email,
+                        hasWebAccess: true,
+                        hasMiddleAccess: false
+                      }).subscribe(() => {
+                        this.cleanUrlAndNavigate();
+                      });
+                    }
+                  }
+                });
+              }
+            }
+          });
+        },
+        error: (error) => {
+          console.error('❌ Error obteniendo atributos:', error);
+        }
+      });
+    } catch (error) {
+      console.error('❌ Error procesando callback:', error);
+    }
+  }
+
+  private cleanUrlAndNavigate(): void {
+    // Limpiar URL (quitar code y state)
+    window.history.replaceState({}, document.title, window.location.pathname);
+    
+    // Ya estás en la página correcta, solo limpia la URL
+    console.log('✅ Proceso completado');
+  }
   private loadAllHomeSections(): void {
     this.isLoading = true;
     this.hasError = false;

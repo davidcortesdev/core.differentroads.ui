@@ -386,8 +386,6 @@ export class LoginFormComponent implements OnInit {
     this.isLoading = true;
     console.log('🔄 Iniciando sesión con Google...');
     this.authService.handleGoogleSignIn().then((cognitoUser) => {
-      // Login exitoso con Google, verificar si el usuario existe en nuestro API
-      this.checkAndCreateUserIfNeeded(cognitoUser, 'google');
     }).catch((error) => {
       this.isLoading = false;
       this.errorMessage = 'Error al iniciar sesión con Google';

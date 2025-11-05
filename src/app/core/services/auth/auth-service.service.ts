@@ -129,7 +129,15 @@ export class AuthenticateService {
         });
     });
   }
-
+  async getCognitoSub(): Promise<string> {
+    try {
+      const attributes = await fetchUserAttributes();
+      return attributes.sub || '';
+    } catch (error) {
+      console.error('Error obteniendo sub:', error);
+      return '';
+    }
+  }
   // Obtener el email del usuario actual como Observable
   getUserEmail(): Observable<string> {
     return this.currentUserEmail.asObservable();

@@ -1,11 +1,8 @@
 {
   "name": "user-migration-lambda",
   "version": "1.0.0",
-  "description": "Lambda function para migración Just-In-Time de usuarios de Cognito",
+  "description": "Lambda function para migración de usuarios de Cognito",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.0.0"
   },
@@ -13,4 +10,3 @@
     "node": ">=18.x"
   }
 }
-

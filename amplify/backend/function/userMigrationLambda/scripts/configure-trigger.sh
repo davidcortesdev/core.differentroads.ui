@@ -37,11 +37,31 @@ else
     exit 1
 fi
 
+# Obtener configuración actual del User Pool para preservarla
+echo -e "${YELLOW}Obteniendo configuración actual del User Pool...${NC}"
+AUTO_VERIFIED_ATTRS=$(aws cognito-idp describe-user-pool \
+    --user-pool-id "${NEW_USER_POOL_ID}" \
+    --region "${REGION}" \
+    --query 'UserPool.AutoVerifiedAttributes' \
+    --output text)
+
+# Si no hay atributos auto-verificados, usar array vacío
+if [ -z "$AUTO_VERIFIED_ATTRS" ] || [ "$AUTO_VERIFIED_ATTRS" == "None" ]; then
+    AUTO_VERIFIED_ATTRS=""
+    AUTO_VERIFIED_PARAM=""
+else
+    # Convertir a formato CLI (space-separated)
+    AUTO_VERIFIED_PARAM="--auto-verified-attributes $AUTO_VERIFIED_ATTRS"
+fi
+
+echo "AutoVerifiedAttributes actuales: ${AUTO_VERIFIED_ATTRS:-ninguno}"
+
 # Configurar el trigger en Cognito
 echo -e "${YELLOW}Configurando trigger en Cognito User Pool...${NC}"
 aws cognito-idp update-user-pool \
     --user-pool-id "${NEW_USER_POOL_ID}" \
     --lambda-config "UserMigration=${LAMBDA_ARN}" \
+    ${AUTO_VERIFIED_PARAM} \
     --region "${REGION}"
 
 if [ $? -eq 0 ]; then

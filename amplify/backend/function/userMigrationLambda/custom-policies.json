@@ -5,7 +5,9 @@
       "cognito-idp:AdminGetUser",
       "cognito-idp:AdminInitiateAuth",
       "cognito-idp:AdminCreateUser",
-      "cognito-idp:AdminSetUserPassword"
+      "cognito-idp:AdminSetUserPassword",
+      "cognito-idp:ListUsers",
+      "cognito-idp:InitiateAuth"
     ],
     "Resource": [
       "arn:aws:cognito-idp:eu-west-1:*:userpool/eu-west-1_JrNbjdsBH",

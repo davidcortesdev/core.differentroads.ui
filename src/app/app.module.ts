@@ -220,6 +220,7 @@ import { SobreNosotrosComponent } from './pages/basic-page/components/sobre-noso
 import { PorQueDifferentComponent } from './pages/basic-page/components/por-que-different/por-que-different.component';
 import { ReviewSurveyComponent } from './pages/review-survey/review-survey.component';
 import { ImageUploadModalComponent } from './pages/review-survey/image-upload-modal/image-upload-modal.component';
+import { CompleteInformationComponent } from './pages/complete-information/complete-information.component';
 
 // ========================================
 // SHARED COMPONENTS
@@ -401,6 +402,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     PorQueDifferentComponent,
     ReviewSurveyComponent,
     ImageUploadModalComponent,
+    CompleteInformationComponent,
 
     // ========================================
     // SHARED COMPONENTS

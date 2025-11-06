@@ -58,6 +58,7 @@ import { ReviewsService } from '../../core/services/reviews/reviews.service';
 import { TourLocationService, ITourLocationResponse } from '../../core/services/tour/tour-location.service';
 import { LocationNetService, Location } from '../../core/services/locations/locationNet.service';
 import { ItineraryDayService, IItineraryDayResponse } from '../../core/services/itinerary/itinerary-day/itinerary-day.service';
+import { ActivityService, IActivityResponse } from '../../core/services/activity/activity.service';
 
 @Component({
   selector: 'app-checkout-v2',
@@ -214,7 +215,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     private reviewsService: ReviewsService,
     private tourLocationService: TourLocationService,
     private locationNetService: LocationNetService,
-    private itineraryDayService: ItineraryDayService
+    private itineraryDayService: ItineraryDayService,
+    private activityService: ActivityService
   ) {}
 
   ngOnInit(): void {
@@ -2896,6 +2898,91 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
+   * Obtiene las actividades asignadas desde los viajeros de la reservación
+   */
+  private getActivitiesFromTravelers(): Observable<string> {
+    if (!this.reservationId || !this.itineraryId) {
+      return of('');
+    }
+
+    // Obtener todos los viajeros de la reservación
+    return this.reservationTravelerService.getAll({ reservationId: this.reservationId }).pipe(
+      switchMap((travelers) => {
+        if (!travelers || travelers.length === 0) {
+          return of('');
+        }
+
+        // Obtener todas las actividades asignadas (individuales y packs) de todos los viajeros
+        const activityRequests = travelers.map(traveler =>
+          forkJoin({
+            activities: this.reservationTravelerActivityService.getByReservationTraveler(traveler.id).pipe(
+              catchError(() => of([]))
+            ),
+            activityPacks: this.reservationTravelerActivityPackService.getByReservationTraveler(traveler.id).pipe(
+              catchError(() => of([]))
+            )
+          })
+        );
+
+        return forkJoin(activityRequests).pipe(
+          switchMap((results) => {
+            // Recopilar todos los IDs únicos de actividades y packs
+            const activityIds = new Set<number>();
+            const packIds = new Set<number>();
+
+            results.forEach(result => {
+              result.activities.forEach(activity => {
+                if (activity.activityId) {
+                  activityIds.add(activity.activityId);
+                }
+              });
+              result.activityPacks.forEach(pack => {
+                if (pack.activityPackId) {
+                  packIds.add(pack.activityPackId);
+                }
+              });
+            });
+
+            if (activityIds.size === 0 && packIds.size === 0) {
+              return of('');
+            }
+
+            // Obtener todas las actividades disponibles del itinerario
+            return this.activityService.getForItineraryWithPacks(
+              this.itineraryId!,
+              this.departureId || undefined,
+              undefined,
+              true, // isVisibleOnWeb
+              true  // onlyOpt
+            ).pipe(
+              map((allActivities: IActivityResponse[]) => {
+                // Filtrar actividades asignadas
+                const assignedActivities = allActivities.filter(activity => {
+                  if (activity.type === 'act') {
+                    return activityIds.has(activity.id);
+                  } else if (activity.type === 'pack') {
+                    return packIds.has(activity.id);
+                  }
+                  return false;
+                });
+
+                // Formatear nombres de actividades
+                const activityNames = assignedActivities
+                  .map(activity => activity.name)
+                  .filter(name => name && name.trim().length > 0);
+
+                return activityNames.join(', ');
+              }),
+              catchError(() => of(''))
+            );
+          })
+        );
+      }),
+      catchError(() => of(''))
+    );
+  }
+
+  /**
    * Helper para preparar datos del tour para analytics
    */
   private prepareTourDataForEcommerce(additionalData?: {
@@ -2906,6 +2993,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     const tourData = this.reservationData?.tour || {};
     
     // Obtener actividades seleccionadas
+    // Si no se proporciona en additionalData, intentar desde selectedActivities o desde viajeros
     const activitiesText = additionalData?.activitiesText ||
       (this.selectedActivities && this.selectedActivities.length > 0
         ? this.selectedActivities.map((a) => a.description || a.name).join(', ')
@@ -2993,13 +3081,17 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     const itemListId = state?.['listId'] || '';
     const itemListName = state?.['listName'] || '';
     
-    // Obtener todos los datos completos del tour dinámicamente
-    this.getCompleteTourDataForEcommerce(this.tourId).pipe(
-      switchMap((tourDataForEcommerce: TourDataForEcommerce) => {
+    // Obtener todos los datos completos del tour dinámicamente, incluyendo actividades desde viajeros
+    forkJoin({
+      tourData: this.getCompleteTourDataForEcommerce(this.tourId),
+      activitiesText: this.getActivitiesFromTravelers()
+    }).pipe(
+      switchMap(({ tourData: tourDataForEcommerce, activitiesText }) => {
         // Actualizar con datos adicionales del contexto
         const additionalData = this.prepareTourDataForEcommerce();
         tourDataForEcommerce.flightCity = additionalData.flightCity || tourDataForEcommerce.flightCity;
-        tourDataForEcommerce.activitiesText = additionalData.activitiesText || tourDataForEcommerce.activitiesText;
+        // Usar actividades obtenidas dinámicamente desde viajeros, o fallback a additionalData
+        tourDataForEcommerce.activitiesText = activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
         tourDataForEcommerce.selectedInsurance = additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
         tourDataForEcommerce.totalPassengers = additionalData.totalPassengers || tourDataForEcommerce.totalPassengers;
         tourDataForEcommerce.childrenCount = additionalData.childrenCount || tourDataForEcommerce.childrenCount;

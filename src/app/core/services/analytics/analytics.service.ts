@@ -1223,7 +1223,9 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
           duracion: duracion,
           start_date: tourData.departureDate || '',
           end_date: tourData.returnDate || '',
-          pasajeros_adultos: totalPassengers,
+          pasajeros_adultos: (tourData.totalPassengers && tourData.childrenCount) 
+            ? (tourData.totalPassengers - parseInt(tourData.childrenCount || '0')).toString()
+            : (tourData.totalPassengers?.toString() || '0'),
           pasajeros_niños: tourData.childrenCount || '0',
           actividades: tourData.activitiesText || '',
           seguros: tourData.selectedInsurance || '',

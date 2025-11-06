@@ -2645,8 +2645,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     if (!this.reservationData || !this.tourId) return;
     
     const state = window.history.state;
-    const itemListId = state?.['listId'] || '';
-    const itemListName = state?.['listName'] || '';
+    const itemListId = state?.['listId'] || state?.['list_id'] || '';
+    const itemListName = state?.['listName'] || state?.['list_name'] || '';
     
     // Obtener todos los datos completos del tour dinámicamente
     this.getCompleteTourDataForEcommerce(this.tourId).pipe(
@@ -2679,11 +2679,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         console.error('Error obteniendo datos completos del tour para view_cart:', error);
         // Fallback con datos básicos
         const tourDataForEcommerce = this.prepareTourDataForEcommerce();
+        // Usar el ID del tour desde tourDataForEcommerce
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        
         return this.analyticsService.buildEcommerceItemFromTourData(
           tourDataForEcommerce,
           itemListId,
           itemListName,
-          this.getTourItemId()
+          itemId
         ).pipe(
           map((item) => ({ item, userData: this.getUserData() }))
         );
@@ -2709,6 +2712,50 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
            this.tourId?.toString() || 
            tourData.tkId?.toString() || 
            '';
+  }
+
+  /**
+   * Obtiene el conteo de adultos y niños desde los viajeros de la reservación
+   */
+  private getPassengersCount(): Observable<{ adults: string; children: string }> {
+    if (!this.reservationId) {
+      return of({ adults: '0', children: '0' });
+    }
+
+    return forkJoin({
+      travelers: this.reservationTravelerService.getAll({ reservationId: this.reservationId }),
+      ageGroups: this.ageGroupService.getAll()
+    }).pipe(
+      map(({ travelers, ageGroups }) => {
+        let adultsCount = 0;
+        let childrenCount = 0;
+
+        travelers.forEach(traveler => {
+          const ageGroup = ageGroups.find(group => group.id === traveler.ageGroupId);
+          if (ageGroup) {
+            // Si upperLimitAge es null o undefined, es adulto
+            // Si upperLimitAge <= 15, es niño
+            // Si upperLimitAge > 15, es adulto
+            if (ageGroup.upperLimitAge === null || ageGroup.upperLimitAge === undefined) {
+              adultsCount++;
+            } else if (ageGroup.upperLimitAge <= 15) {
+              childrenCount++;
+            } else {
+              adultsCount++;
+            }
+          } else {
+            // Si no se encuentra el grupo de edad, asumir adulto
+            adultsCount++;
+          }
+        });
+
+        return {
+          adults: adultsCount.toString(),
+          children: childrenCount.toString()
+        };
+      }),
+      catchError(() => of({ adults: '0', children: '0' }))
+    );
   }
 
   /**
@@ -2898,6 +2945,17 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
+   * Obtiene el nombre del seguro seleccionado
+   */
+  private getInsuranceName(): string {
+    // Usar el seguro del componente hijo si está disponible, o el del componente padre
+    return this.insuranceSelector?.selectedInsurance?.name || 
+           this.selectedInsurance?.name || 
+           this.reservationData?.insurance?.name || 
+           '';
+  }
+
+  /**
    * Obtiene las actividades asignadas desde los viajeros de la reservación
    */
   private getActivitiesFromTravelers(): Observable<string> {
@@ -3043,11 +3101,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     itemListName: string,
     tourDataForEcommerce: TourDataForEcommerce
   ): void {
+    // Usar el ID del tour desde tourDataForEcommerce
+    const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+    
     this.analyticsService.buildEcommerceItemFromTourData(
       tourDataForEcommerce,
       itemListId,
       itemListName,
-      this.getTourItemId()
+      itemId
     ).pipe(
       switchMap((item) => {
         return this.analyticsService.getCurrentUserData().pipe(
@@ -3056,11 +3117,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       }),
       catchError((error) => {
         console.error('Error obteniendo datos para analytics:', error);
+        // Usar el ID del tour desde tourDataForEcommerce
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        
         return this.analyticsService.buildEcommerceItemFromTourData(
           tourDataForEcommerce,
           itemListId,
           itemListName,
-          this.getTourItemId()
+          itemId
         ).pipe(
           map((item) => ({ item, userData: this.getUserData() }))
         );
@@ -3078,32 +3142,38 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     if (!this.reservationData || !this.tourId) return;
     
     const state = window.history.state;
-    const itemListId = state?.['listId'] || '';
-    const itemListName = state?.['listName'] || '';
+    const itemListId = state?.['listId'] || state?.['list_id'] || '';
+    const itemListName = state?.['listName'] || state?.['list_name'] || '';
     
-    // Obtener todos los datos completos del tour dinámicamente, incluyendo actividades desde viajeros
+    // Obtener todos los datos completos del tour dinámicamente, incluyendo actividades y pasajeros desde viajeros
     forkJoin({
       tourData: this.getCompleteTourDataForEcommerce(this.tourId),
-      activitiesText: this.getActivitiesFromTravelers()
+      activitiesText: this.getActivitiesFromTravelers(),
+      passengersCount: this.getPassengersCount()
     }).pipe(
-      switchMap(({ tourData: tourDataForEcommerce, activitiesText }) => {
+      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount }) => {
         // Actualizar con datos adicionales del contexto
         const additionalData = this.prepareTourDataForEcommerce();
         tourDataForEcommerce.flightCity = additionalData.flightCity || tourDataForEcommerce.flightCity;
         // Usar actividades obtenidas dinámicamente desde viajeros, o fallback a additionalData
         tourDataForEcommerce.activitiesText = activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
-        tourDataForEcommerce.selectedInsurance = additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
-        tourDataForEcommerce.totalPassengers = additionalData.totalPassengers || tourDataForEcommerce.totalPassengers;
-        tourDataForEcommerce.childrenCount = additionalData.childrenCount || tourDataForEcommerce.childrenCount;
+        // Usar seguro del componente o del contexto
+        tourDataForEcommerce.selectedInsurance = this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
+        // Usar conteo de pasajeros desde viajeros
+        tourDataForEcommerce.totalPassengers = parseInt(passengersCount.adults) + parseInt(passengersCount.children);
+        tourDataForEcommerce.childrenCount = passengersCount.children;
         tourDataForEcommerce.departureDate = additionalData.departureDate || tourDataForEcommerce.departureDate;
         tourDataForEcommerce.returnDate = additionalData.returnDate || tourDataForEcommerce.returnDate;
         tourDataForEcommerce.price = additionalData.price || tourDataForEcommerce.price;
+        
+        // Usar el ID del tour desde tourDataForEcommerce
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
         
         return this.analyticsService.buildEcommerceItemFromTourData(
           tourDataForEcommerce,
           itemListId,
           itemListName,
-          this.getTourItemId()
+          itemId
         ).pipe(
           switchMap((item) => {
             return this.analyticsService.getCurrentUserData().pipe(
@@ -3116,11 +3186,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         console.error('Error obteniendo datos completos del tour para begin_checkout:', error);
         // Fallback con datos básicos
         const tourDataForEcommerce = this.prepareTourDataForEcommerce();
+        // Usar el ID del tour desde tourDataForEcommerce
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        
         return this.analyticsService.buildEcommerceItemFromTourData(
           tourDataForEcommerce,
           itemListId,
           itemListName,
-          this.getTourItemId()
+          itemId
         ).pipe(
           map((item) => ({ item, userData: this.getUserData() }))
         );
@@ -3145,8 +3218,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     if (!this.reservationData) return;
     
     const state = window.history.state;
-    const itemListId = state?.['listId'] || '';
-    const itemListName = state?.['listName'] || '';
+    const itemListId = state?.['listId'] || state?.['list_id'] || '';
+    const itemListName = state?.['listName'] || state?.['list_name'] || '';
     
     const tourDataForEcommerce = this.prepareTourDataForEcommerce();
     
@@ -3175,8 +3248,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     if (!this.reservationData) return;
     
     const state = window.history.state;
-    const itemListId = state?.['listId'] || '';
-    const itemListName = state?.['listName'] || '';
+    const itemListId = state?.['listId'] || state?.['list_id'] || '';
+    const itemListName = state?.['listName'] || state?.['list_name'] || '';
     
     const tourDataForEcommerce = this.prepareTourDataForEcommerce();
     
@@ -3205,8 +3278,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     if (!this.reservationData) return;
     
     const state = window.history.state;
-    const itemListId = state?.['listId'] || '';
-    const itemListName = state?.['listName'] || '';
+    const itemListId = state?.['listId'] || state?.['list_id'] || '';
+    const itemListName = state?.['listName'] || state?.['list_name'] || '';
     
     const tourDataForEcommerce = this.prepareTourDataForEcommerce();
     
@@ -3235,8 +3308,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     if (!this.reservationData) return;
     
     const state = window.history.state;
-    const itemListId = state?.['listId'] || '';
-    const itemListName = state?.['listName'] || '';
+    const itemListId = state?.['listId'] || state?.['list_id'] || '';
+    const itemListName = state?.['listName'] || state?.['list_name'] || '';
     
     // Obtener método de pago seleccionado (dinámico)
     let paymentType = 'completo, transferencia'; // Valor por defecto
@@ -3276,8 +3349,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     if (!this.reservationData) return;
     
     const state = window.history.state;
-    const itemListId = state?.['listId'] || '';
-    const itemListName = state?.['listName'] || '';
+    const itemListId = state?.['listId'] || state?.['list_id'] || '';
+    const itemListName = state?.['listName'] || state?.['list_name'] || '';
     
     const tourDataForEcommerce = this.prepareTourDataForEcommerce();
     
@@ -3306,8 +3379,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     if (!this.reservationData) return;
     
     const state = window.history.state;
-    const itemListId = state?.['listId'] || '';
-    const itemListName = state?.['listName'] || '';
+    const itemListId = state?.['listId'] || state?.['list_id'] || '';
+    const itemListName = state?.['listName'] || state?.['list_name'] || '';
     
     const tourDataForEcommerce = this.prepareTourDataForEcommerce();
     

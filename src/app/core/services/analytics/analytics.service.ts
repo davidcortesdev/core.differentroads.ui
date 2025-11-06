@@ -528,6 +528,28 @@ export class AnalyticsService {
       ? itemListId.toString()
       : itemListId;
     
+    // Filtrar solo los campos permitidos para add_to_wishlist
+    const filteredItem: EcommerceItem = {
+      item_id: item.item_id || '',
+      item_name: item.item_name || '',
+      coupon: item.coupon || '',
+      discount: item.discount || 0,
+      index: item.index || 0,
+      item_brand: item.item_brand || '',
+      item_category: item.item_category || '',
+      item_category2: item.item_category2 || '',
+      item_category3: item.item_category3 || '',
+      item_category4: item.item_category4 || '',
+      item_category5: item.item_category5 || '',
+      item_list_id: item.item_list_id || itemListIdString,
+      item_list_name: item.item_list_name || itemListName,
+      item_variant: item.item_variant || '',
+      price: item.price || 0,
+      quantity: item.quantity || 1,
+      puntuacion: item.puntuacion || '',
+      duracion: item.duracion || ''
+    };
+    
     // Estructura específica para add_to_wishlist
     const eventData: AddToWishlistEventData = {
       event: 'add_to_wishlist',
@@ -535,7 +557,7 @@ export class AnalyticsService {
       ecommerce: {
         item_list_id: itemListIdString,
         item_list_name: itemListName,
-        items: [item]
+        items: [filteredItem]
       }
     };
     
@@ -1248,20 +1270,66 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
   }
 
   private processUserDataWithEmail(email: string): Observable<UserData> {
+    // Verificar primero el valor actual del cognitoId (síncrono)
+    const currentCognitoId = this.authService.getCognitoIdValue();
+    
+    if (currentCognitoId && currentCognitoId.length > 0) {
+      return this.processUserDataWithCognitoId(email, currentCognitoId);
+    }
+    
+    // Si no hay cognitoId, esperar a que se actualice (asíncrono)
     return this.authService.getCognitoId().pipe(
+      filter((cognitoId: string) => !!cognitoId && cognitoId.length > 0),
+      first(),
       switchMap((cognitoId: string) => {
-        if (!cognitoId) {
-          return of({
-            email_address: email,
-            phone_number: '',
-            user_id: ''
-          });
-        }
+        return this.processUserDataWithCognitoId(email, cognitoId);
+      }),
+      catchError(() => {
+        return of({
+          email_address: email,
+          phone_number: '',
+          user_id: ''
+        });
+      })
+    );
+  }
 
-        return this.usersNetService.getUsersByCognitoId(cognitoId).pipe(
-          switchMap((users) => {
-            if (users && users.length > 0) {
-              const user = users[0];
+  private processUserDataWithCognitoId(email: string, cognitoId: string): Observable<UserData> {
+    if (!cognitoId) {
+      return of({
+        email_address: email,
+        phone_number: '',
+        user_id: ''
+      });
+    }
+
+    return this.usersNetService.getUsersByCognitoId(cognitoId).pipe(
+      switchMap((users) => {
+        if (users && users.length > 0) {
+          const user = users[0];
+          return this.personalInfoService.getUserData(user.id.toString()).pipe(
+            map((personalInfo: any) => {
+              const phone = personalInfo?.telefono ? this.formatPhoneNumber(personalInfo.telefono) : '';
+              return {
+                email_address: personalInfo?.email || email,
+                phone_number: phone,
+                user_id: cognitoId
+              };
+            }),
+            catchError(() => {
+              return of({
+                email_address: email,
+                phone_number: '',
+                user_id: cognitoId
+              });
+            })
+          );
+        }
+        
+        return this.usersNetService.getUsersByEmail(email).pipe(
+          switchMap((usersByEmail) => {
+            if (usersByEmail && usersByEmail.length > 0) {
+              const user = usersByEmail[0];
               return this.personalInfoService.getUserData(user.id.toString()).pipe(
                 map((personalInfo: any) => {
                   const phone = personalInfo?.telefono ? this.formatPhoneNumber(personalInfo.telefono) : '';
@@ -1280,42 +1348,10 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
                 })
               );
             }
-            
-            return this.usersNetService.getUsersByEmail(email).pipe(
-              switchMap((usersByEmail) => {
-                if (usersByEmail && usersByEmail.length > 0) {
-                  const user = usersByEmail[0];
-                  return this.personalInfoService.getUserData(user.id.toString()).pipe(
-                    map((personalInfo: any) => {
-                      const phone = personalInfo?.telefono ? this.formatPhoneNumber(personalInfo.telefono) : '';
-                      return {
-                        email_address: personalInfo?.email || email,
-                        phone_number: phone,
-                        user_id: cognitoId
-                      };
-                    }),
-                    catchError(() => {
-                      return of({
-                        email_address: email,
-                        phone_number: '',
-                        user_id: cognitoId
-                      });
-                    })
-                  );
-                }
-                return of({
-                  email_address: email,
-                  phone_number: '',
-                  user_id: cognitoId
-                });
-              })
-            );
-          }),
-          catchError(() => {
             return of({
               email_address: email,
               phone_number: '',
-              user_id: cognitoId || ''
+              user_id: cognitoId
             });
           })
         );
@@ -1324,7 +1360,7 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
         return of({
           email_address: email,
           phone_number: '',
-          user_id: ''
+          user_id: cognitoId || ''
         });
       })
     );

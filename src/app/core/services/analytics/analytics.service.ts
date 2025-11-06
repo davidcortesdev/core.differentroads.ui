@@ -229,13 +229,24 @@ export class AnalyticsService {
     userData?: UserData
   ): void {
     this.clearEcommerce();
+    
+    // Asegurar que user_data siempre tenga los campos, incluso si están vacíos
+    const userDataWithFields: UserData = userData || {
+      email_address: '',
+      phone_number: '',
+      user_id: ''
+    };
+    
+    // Eliminar end_date del item si existe
+    const { end_date, ...itemWithoutEndDate } = item;
+    
     this.pushEvent({
       event: 'select_item',
-      user_data: userData || {},
+      user_data: userDataWithFields,
       ecommerce: {
         item_list_id: itemListId,
         item_list_name: itemListName,
-        items: [item]
+        items: [itemWithoutEndDate]
       }
     });
   }
@@ -1000,3 +1011,5 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
     );
   }
 }
+
+

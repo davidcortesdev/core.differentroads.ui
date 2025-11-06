@@ -64,6 +64,9 @@ export class NewReservationComponent implements OnInit {
   paymentType: 'Transfer' | 'Scalapay' | 'RedSys' | null = null;
   paymentMethod: string = '';
   paymentStatus: string = '';
+  
+  // Bandera para evitar disparar purchase múltiples veces
+  private purchaseEventFired: boolean = false;
 
   // IDs de estados de pago
   successId: number = 0;
@@ -375,8 +378,12 @@ export class NewReservationComponent implements OnInit {
         } else if (status.code === 'COMPLETED') {
           this.status = 'SUCCESS';
 
-          // Disparar evento purchase cuando se visita la página de gracias tras compra exitosa
-          this.trackPurchase();
+          // Disparar evento purchase cuando se visita la página de confirmación tras compra exitosa
+          // Solo disparar una vez cuando se carga la página
+          if (!this.purchaseEventFired) {
+            this.trackPurchase();
+            this.purchaseEventFired = true;
+          }
 
           // Generar puntos después del pago exitoso
           this.generatePointsAfterPayment();
@@ -434,9 +441,6 @@ export class NewReservationComponent implements OnInit {
             this.updatePaymentStatus();
 
             this.status = 'SUCCESS';
-
-            // Disparar evento purchase
-            this.trackPurchase();
 
             this.showMessage(
               'success',

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TourService, Tour } from '../../core/services/tour/tour.service';
-import { catchError, switchMap, map } from 'rxjs/operators';
+import { catchError, switchMap, map, first } from 'rxjs/operators';
 import { SelectedDepartureEvent } from './components/tour-itinerary-v2/components/selector-itinerary/selector-itinerary.component';
 import { ActivityHighlight } from '../../shared/components/activity-card/activity-card.component';
 import { AnalyticsService } from '../../core/services/analytics/analytics.service';
@@ -330,6 +330,7 @@ export class TourV2Component implements OnInit {
         ).pipe(
           switchMap((item) => {
             return this.analyticsService.getCurrentUserData().pipe(
+              first(), // Tomar solo el primer valor
               map((userData) => ({ item, userData }))
             );
           }),

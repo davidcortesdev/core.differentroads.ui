@@ -198,16 +198,9 @@ export class AnalyticsService {
     this.clearEcommerce();
     
     // Estructura exacta según especificación
-    // Asegurar que user_data siempre tenga los campos, incluso si están vacíos
-    const userDataWithFields: UserData = userData || {
-      email_address: '',
-      phone_number: '',
-      user_id: ''
-    };
-    
     const eventData: any = {
       event: 'view_item_list',
-      user_data: userDataWithFields,
+      user_data: this.normalizeUserData(userData),
       ecommerce: {
         item_list_id: itemListId,
         item_list_name: itemListName,
@@ -230,19 +223,12 @@ export class AnalyticsService {
   ): void {
     this.clearEcommerce();
     
-    // Asegurar que user_data siempre tenga los campos, incluso si están vacíos
-    const userDataWithFields: UserData = userData || {
-      email_address: '',
-      phone_number: '',
-      user_id: ''
-    };
-    
     // Eliminar end_date del item si existe
     const { end_date, ...itemWithoutEndDate } = item;
     
     this.pushEvent({
       event: 'select_item',
-      user_data: userDataWithFields,
+      user_data: this.normalizeUserData(userData),
       ecommerce: {
         item_list_id: itemListId,
         item_list_name: itemListName,
@@ -275,23 +261,35 @@ export class AnalyticsService {
     
     this.clearEcommerce();
     
-    // Asegurar que user_data siempre tenga los campos, incluso si están vacíos
-    const userDataWithFields: UserData = userData || {
-      email_address: '',
-      phone_number: '',
-      user_id: ''
+    // Filtrar solo los campos permitidos para view_item
+    const filteredItem: EcommerceItem = {
+      item_id: item.item_id || '',
+      item_name: item.item_name || '',
+      coupon: item.coupon || '',
+      discount: item.discount || 0,
+      index: item.index || 1,
+      item_brand: item.item_brand || '',
+      item_category: item.item_category || '',
+      item_category2: item.item_category2 || '',
+      item_category3: item.item_category3 || '',
+      item_category4: item.item_category4 || '',
+      item_category5: item.item_category5 || '',
+      item_list_id: item.item_list_id || itemListId,
+      item_list_name: item.item_list_name || itemListName,
+      item_variant: item.item_variant || '',
+      price: item.price || 0,
+      quantity: item.quantity || 1,
+      puntuacion: item.puntuacion || '',
+      duracion: item.duracion || ''
     };
-    
-    // Eliminar end_date del item si existe
-    const { end_date, ...itemWithoutEndDate } = item;
     
     this.pushEvent({
       event: 'view_item',
-      user_data: userDataWithFields,
+      user_data: this.normalizeUserData(userData),
       ecommerce: {
         item_list_id: itemListId,
         item_list_name: itemListName,
-        items: [itemWithoutEndDate]
+        items: [filteredItem]
       }
     });
   }
@@ -314,7 +312,7 @@ export class AnalyticsService {
     
     this.pushEvent({
       event: 'add_to_wishlist',
-      user_data: userData || {},
+      user_data: this.normalizeUserData(userData),
       ecommerce: {
         item_list_id: itemListIdString,
         item_list_name: itemListName,
@@ -336,7 +334,7 @@ export class AnalyticsService {
     this.clearEcommerce();
     this.pushEvent({
       event: 'add_to_cart',
-      user_data: userData || {},
+      user_data: this.normalizeUserData(userData),
       ecommerce: {
         currency: currency,
         value: value,
@@ -358,7 +356,7 @@ export class AnalyticsService {
     this.clearEcommerce();
     this.pushEvent({
       event: 'view_cart',
-      user_data: userData || {},
+      user_data: this.normalizeUserData(userData),
       ecommerce: {
         currency: currency,
         value: value,
@@ -382,7 +380,7 @@ export class AnalyticsService {
     this.clearEcommerce();
     this.pushEvent({
       event: 'begin_checkout',
-      user_data: userData || {},
+      user_data: this.normalizeUserData(userData),
       ecommerce: ecommerceData
     });
   }
@@ -398,7 +396,7 @@ export class AnalyticsService {
     this.clearEcommerce();
     this.pushEvent({
       event: 'view_flights_info',
-      user_data: userData || {},
+      user_data: this.normalizeUserData(userData),
       ecommerce: ecommerceData
     });
   }
@@ -414,7 +412,7 @@ export class AnalyticsService {
     this.clearEcommerce();
     this.pushEvent({
       event: 'add_flights_info',
-      user_data: userData || {},
+      user_data: this.normalizeUserData(userData),
       ecommerce: ecommerceData
     });
   }
@@ -430,7 +428,7 @@ export class AnalyticsService {
     this.clearEcommerce();
     this.pushEvent({
       event: 'view_personal_info',
-      user_data: userData || {},
+      user_data: this.normalizeUserData(userData),
       ecommerce: ecommerceData
     });
   }
@@ -446,7 +444,7 @@ export class AnalyticsService {
     this.clearEcommerce();
     this.pushEvent({
       event: 'add_personal_info',
-      user_data: userData || {},
+      user_data: this.normalizeUserData(userData),
       ecommerce: ecommerceData
     });
   }
@@ -462,7 +460,7 @@ export class AnalyticsService {
     this.clearEcommerce();
     this.pushEvent({
       event: 'view_payment_info',
-      user_data: userData || {},
+      user_data: this.normalizeUserData(userData),
       ecommerce: ecommerceData
     });
   }
@@ -478,7 +476,7 @@ export class AnalyticsService {
     this.clearEcommerce();
     this.pushEvent({
       event: 'add_payment_info',
-      user_data: userData || {},
+      user_data: this.normalizeUserData(userData),
       ecommerce: ecommerceData
     });
   }
@@ -494,7 +492,7 @@ export class AnalyticsService {
     this.clearEcommerce();
     this.pushEvent({
       event: 'purchase',
-      user_data: userData || {},
+      user_data: this.normalizeUserData(userData),
       ecommerce: ecommerceData
     });
   }
@@ -686,6 +684,17 @@ export class AnalyticsService {
   // ============================================
   // MÉTODOS AUXILIARES
   // ============================================
+
+  /**
+   * Normaliza userData para asegurar que siempre tenga los campos, incluso si están vacíos
+   */
+  private normalizeUserData(userData?: UserData): UserData {
+    return userData || {
+      email_address: '',
+      phone_number: '',
+      user_id: ''
+    };
+  }
 
   /**
    * Obtiene los datos del usuario actual si está logueado
@@ -931,10 +940,19 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
    * Combina email, cognitoId y datos de la base de datos
    */
   getCurrentUserData(): Observable<UserData | undefined> {
+    // Verificar primero el valor actual del email (síncrono)
+    const currentEmail = this.authService.getUserEmailValue();
+    
+    // Si ya hay email, procesarlo directamente
+    if (currentEmail && currentEmail.length > 0) {
+      return this.processUserDataWithEmail(currentEmail);
+    }
+    
+    // Si no hay email, esperar a que se actualice (asíncrono)
     return this.authService.getUserEmail().pipe(
       switchMap((email: string) => {
         if (!email || email.length === 0) {
-          // Devolver objeto con campos vacíos en lugar de undefined
+          // Si no hay email, devolver campos vacíos
           return of({
             email_address: '',
             phone_number: '',
@@ -942,20 +960,57 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
           });
         }
         
-        return this.authService.getCognitoId().pipe(
-          switchMap((cognitoId: string) => {
-            if (!cognitoId) {
-              return of({
-                email_address: email,
-                phone_number: '',
-                user_id: ''
-              });
-            }
+        return this.processUserDataWithEmail(email);
+      }),
+      catchError(() => {
+        // Devolver objeto con campos vacíos en lugar de undefined
+        return of({
+          email_address: '',
+          phone_number: '',
+          user_id: ''
+        });
+      })
+    );
+  }
 
-            return this.usersNetService.getUsersByCognitoId(cognitoId).pipe(
-              switchMap((users) => {
-                if (users && users.length > 0) {
-                  const user = users[0];
+  private processUserDataWithEmail(email: string): Observable<UserData> {
+    return this.authService.getCognitoId().pipe(
+      switchMap((cognitoId: string) => {
+        if (!cognitoId) {
+          return of({
+            email_address: email,
+            phone_number: '',
+            user_id: ''
+          });
+        }
+
+        return this.usersNetService.getUsersByCognitoId(cognitoId).pipe(
+          switchMap((users) => {
+            if (users && users.length > 0) {
+              const user = users[0];
+              return this.personalInfoService.getUserData(user.id.toString()).pipe(
+                map((personalInfo: any) => {
+                  const phone = personalInfo?.telefono ? this.formatPhoneNumber(personalInfo.telefono) : '';
+                  return {
+                    email_address: personalInfo?.email || email,
+                    phone_number: phone,
+                    user_id: cognitoId
+                  };
+                }),
+                catchError(() => {
+                  return of({
+                    email_address: email,
+                    phone_number: '',
+                    user_id: cognitoId
+                  });
+                })
+              );
+            }
+            
+            return this.usersNetService.getUsersByEmail(email).pipe(
+              switchMap((usersByEmail) => {
+                if (usersByEmail && usersByEmail.length > 0) {
+                  const user = usersByEmail[0];
                   return this.personalInfoService.getUserData(user.id.toString()).pipe(
                     map((personalInfo: any) => {
                       const phone = personalInfo?.telefono ? this.formatPhoneNumber(personalInfo.telefono) : '';
@@ -974,42 +1029,10 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
                     })
                   );
                 }
-                
-                return this.usersNetService.getUsersByEmail(email).pipe(
-                  switchMap((usersByEmail) => {
-                    if (usersByEmail && usersByEmail.length > 0) {
-                      const user = usersByEmail[0];
-                      return this.personalInfoService.getUserData(user.id.toString()).pipe(
-                        map((personalInfo: any) => {
-                          const phone = personalInfo?.telefono ? this.formatPhoneNumber(personalInfo.telefono) : '';
-                          return {
-                            email_address: personalInfo?.email || email,
-                            phone_number: phone,
-                            user_id: cognitoId
-                          };
-                        }),
-                        catchError(() => {
-                          return of({
-                            email_address: email,
-                            phone_number: '',
-                            user_id: cognitoId
-                          });
-                        })
-                      );
-                    }
-                    return of({
-                      email_address: email,
-                      phone_number: '',
-                      user_id: cognitoId
-                    });
-                  })
-                );
-              }),
-              catchError(() => {
                 return of({
                   email_address: email,
                   phone_number: '',
-                  user_id: cognitoId || ''
+                  user_id: cognitoId
                 });
               })
             );
@@ -1018,15 +1041,14 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
             return of({
               email_address: email,
               phone_number: '',
-              user_id: ''
+              user_id: cognitoId || ''
             });
           })
         );
       }),
       catchError(() => {
-        // Devolver objeto con campos vacíos en lugar de undefined
         return of({
-          email_address: '',
+          email_address: email,
           phone_number: '',
           user_id: ''
         });

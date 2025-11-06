@@ -1,9 +1,11 @@
 import { Injectable, Injector } from '@angular/core';
 import { UsersNetService } from '../users/usersNet.service';
 import { PersonalInfoV2Service } from '../v2/personal-info-v2.service';
-import { Observable, of, map, switchMap, catchError } from 'rxjs';
+import { Observable, of, map, switchMap, catchError, first, take, shareReplay } from 'rxjs';
 import { TourTagService } from '../tag/tour-tag.service';
 import { TagService } from '../tag/tag.service';
+import { TripTypeService } from '../trip-type/trip-type.service';
+import { TourDataV2 } from '../../../shared/components/tour-card-v2/tour-card-v2.model';
 
 /**
  * Interfaz para los datos de usuario que se envían en los eventos
@@ -123,7 +125,8 @@ export class AnalyticsService {
     private usersNetService: UsersNetService,
     private personalInfoService: PersonalInfoV2Service,
     private tourTagService: TourTagService,
-    private tagService: TagService
+    private tagService: TagService,
+    private tripTypeService: TripTypeService
   ) {
     this.initDataLayer();
   }
@@ -169,9 +172,13 @@ export class AnalyticsService {
   // EVENTOS DE ECOMMERCE
   // ============================================
 
+  // Set para trackear eventos ya disparados (última línea de defensa)
+  private firedEvents = new Set<string>();
+
   /**
    * Evento: view_item_list
    * Se dispara cuando el usuario visualiza una lista de viajes
+   * Estructura exacta según especificación GA4
    */
   viewItemList(
     itemListId: string,
@@ -179,8 +186,19 @@ export class AnalyticsService {
     items: EcommerceItem[],
     userData?: UserData
   ): void {
+    // Última verificación: si ya se disparó este evento, no hacer nada
+    const eventKey = `view_item_list_${itemListId}`;
+    if (this.firedEvents.has(eventKey)) {
+      return;
+    }
+
+    // Marcar como disparado inmediatamente
+    this.firedEvents.add(eventKey);
+
     this.clearEcommerce();
-    this.pushEvent({
+    
+    // Estructura exacta según especificación
+    const eventData: any = {
       event: 'view_item_list',
       user_data: userData || {},
       ecommerce: {
@@ -188,7 +206,9 @@ export class AnalyticsService {
         item_list_name: itemListName,
         items: items
       }
-    });
+    };
+    
+    this.pushEvent(eventData);
   }
 
   /**
@@ -658,8 +678,9 @@ export class AnalyticsService {
 
   /**
    * Formatea la puntuación con un decimal (ej: 4 → "4.0", 4.6 → "4.6")
+s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
    */
-  formatRating(rating: number | string | undefined | null, defaultValue: string = '5.0'): string {
+  formatRating(rating: number | string | undefined | null, defaultValue: string = ''): string {
     if (rating === undefined || rating === null || rating === '') {
       return defaultValue;
     }
@@ -766,16 +787,115 @@ export class AnalyticsService {
 
 
   /**
+   * Convierte un array de TourDataV2 a EcommerceItem[] para analytics
+   */
+  convertToursToEcommerceItems(
+    tours: TourDataV2[],
+    itemListId: string,
+    itemListName: string
+  ): EcommerceItem[] {
+    return tours.map((tour, index) => {
+      // Calcular duración
+      let duracion = '';
+      if (tour.itineraryDaysCount) {
+        const days = tour.itineraryDaysCount;
+        const nights = days > 0 ? days - 1 : 0;
+        duracion = nights > 0 ? `${days} días, ${nights} noches` : `${days} días`;
+      }
+
+      // Determinar item_category5 (tipología de viaje) - usar solo datos dinámicos
+      // Si no hay datos, dejar vacío (sin hardcodeo)
+      const itemCategory5 = tour.tripType && tour.tripType.length > 0
+        ? tour.tripType.join(', ')
+        : '';
+
+      // Convertir meses a minúsculas
+      const monthsString = tour.availableMonths?.join(', ').toLowerCase() || '';
+
+      // Estructura exacta según especificación - todos los campos dinámicos, vacíos si no hay datos
+      return {
+        item_id: tour.id?.toString() || '',
+        item_name: tour.title || '',
+        coupon: '',
+        discount: 0,
+        index: index + 1,
+        item_brand: 'Different Roads',
+        item_category: tour.continent || '',
+        item_category2: tour.country || '',
+        item_category3: tour.tag && tour.tag.trim().length > 0 ? tour.tag.trim() : '',
+        item_category4: monthsString,
+        item_category5: itemCategory5,
+        item_list_id: itemListId,
+        item_list_name: itemListName,
+        item_variant: '',
+        price: tour.price || 0,
+        quantity: 1,
+        puntuacion: tour.rating ? this.formatRating(tour.rating, '') : '',
+        duracion: duracion
+      };
+    });
+  }
+
+  /**
+   * Dispara el evento view_item_list para una lista de tours
+   * Maneja automáticamente la obtención de datos del usuario y la conversión de tours
+   * Solo dispara un evento por itemListId para evitar duplicados
+   */
+  private trackedListIds = new Set<string>();
+
+  /**
+   * Limpia el registro de listas trackeadas (útil para testing o reset)
+   */
+  clearTrackedListIds(): void {
+    this.trackedListIds.clear();
+    this.firedEvents.clear();
+    // El cache se mantiene para reutilizar los datos del usuario
+  }
+
+  /**
+   * Verifica si una lista ya fue trackeada
+   */
+  isListTracked(itemListId: string): boolean {
+    return this.trackedListIds.has(itemListId);
+  }
+
+  trackViewItemListFromTours(
+    tours: TourDataV2[],
+    itemListId: string,
+    itemListName: string
+  ): void {
+    if (!tours || tours.length === 0 || !itemListId || !itemListName) {
+      return;
+    }
+
+    // Evitar disparar múltiples eventos para la misma lista
+    if (this.trackedListIds.has(itemListId)) {
+      return;
+    }
+
+    // Marcar como trackeada INMEDIATAMENTE antes de hacer cualquier cosa
+    this.trackedListIds.add(itemListId);
+
+    // Convertir tours a formato EcommerceItem
+    const items = this.convertToursToEcommerceItems(tours, itemListId, itemListName);
+
+    // Obtener datos del usuario y disparar evento (igual que en selectItem)
+    this.getCurrentUserData().subscribe(userData => {
+      this.viewItemList(itemListId, itemListName, items, userData);
+    });
+  }
+
+  /**
    * Obtiene los datos completos del usuario usando el mismo patrón que el header
    * Combina email, cognitoId y datos de la base de datos
    */
   getCurrentUserData(): Observable<UserData | undefined> {
     return this.authService.getUserEmail().pipe(
       switchMap((email: string) => {
-        if (!email) {
+        if (!email || email.length === 0) {
           return of(undefined);
         }
-
+        
         return this.authService.getCognitoId().pipe(
           switchMap((cognitoId: string) => {
             if (!cognitoId) {
@@ -786,12 +906,10 @@ export class AnalyticsService {
               });
             }
 
-            // Usar el mismo patrón que el header pero con PersonalInfoV2Service
             return this.usersNetService.getUsersByCognitoId(cognitoId).pipe(
               switchMap((users) => {
                 if (users && users.length > 0) {
                   const user = users[0];
-                  // Obtener datos completos usando PersonalInfoV2Service
                   return this.personalInfoService.getUserData(user.id.toString()).pipe(
                     map((personalInfo: any) => {
                       const phone = personalInfo?.telefono ? this.formatPhoneNumber(personalInfo.telefono) : '';
@@ -800,10 +918,17 @@ export class AnalyticsService {
                         phone_number: phone,
                         user_id: cognitoId
                       };
+                    }),
+                    catchError(() => {
+                      return of({
+                        email_address: email,
+                        phone_number: '',
+                        user_id: cognitoId
+                      });
                     })
                   );
                 }
-                // Si no encuentra usuario, intentar con email directamente
+                
                 return this.usersNetService.getUsersByEmail(email).pipe(
                   switchMap((usersByEmail) => {
                     if (usersByEmail && usersByEmail.length > 0) {
@@ -816,10 +941,16 @@ export class AnalyticsService {
                             phone_number: phone,
                             user_id: cognitoId
                           };
+                        }),
+                        catchError(() => {
+                          return of({
+                            email_address: email,
+                            phone_number: '',
+                            user_id: cognitoId
+                          });
                         })
                       );
                     }
-                    // Fallback final
                     return of({
                       email_address: email,
                       phone_number: '',
@@ -827,13 +958,28 @@ export class AnalyticsService {
                     });
                   })
                 );
+              }),
+              catchError(() => {
+                return of({
+                  email_address: email,
+                  phone_number: '',
+                  user_id: cognitoId || ''
+                });
               })
             );
+          }),
+          catchError(() => {
+            return of({
+              email_address: email,
+              phone_number: '',
+              user_id: ''
+            });
           })
         );
+      }),
+      catchError(() => {
+        return of(undefined);
       })
     );
   }
 }
-
-

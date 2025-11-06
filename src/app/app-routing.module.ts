@@ -52,6 +52,7 @@ import { CategoryPageComponent } from './pages/category-page/category-page.compo
 import { BasicPageComponent } from './pages/basic-page/basic-page.component';
 import { ContentPageComponent } from './pages/content-page/content-page.component';
 import { ReviewSurveyComponent } from './pages/review-survey/review-survey.component';
+import { CompleteInformationComponent } from './pages/complete-information/complete-information.component';
 
 // ========================================
 // SHARED COMPONENTS
@@ -112,6 +113,7 @@ const routes: Routes = [
       { path: 'tours', component: ToursComponent },
       { path: 'tour/:slug', component: TourV2Component },
       { path: 'tour/:slug/preview', component: TourV2Component },
+      { path: 'tour/:slug-tour/completa-tus-datos/:idreserva', component: CompleteInformationComponent },
 
       // ========================================
       // CHECKOUT ROUTES

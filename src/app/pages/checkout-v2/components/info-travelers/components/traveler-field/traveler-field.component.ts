@@ -75,6 +75,14 @@ export class TravelerFieldComponent {
   }
 
   onPhoneInput(event: Event): void {
+    const inputEl = event.target as HTMLInputElement | null;
+    if (inputEl) {
+      // Limitar a 14 dígitos (sin contar espacios u otros caracteres)
+      const digitsOnly = inputEl.value.replace(/\D/g, '').slice(0, 14);
+      inputEl.value = digitsOnly;
+      // Mantener sincronizado el FormControl con el valor normalizado
+      this.control?.setValue(digitsOnly);
+    }
     this.phoneFieldChange.emit({ fieldCode: this.fieldDetails.code, event });
   }
 
@@ -84,6 +92,14 @@ export class TravelerFieldComponent {
 
   onDateBlur(): void {
     this.dateFieldBlur.emit(this.fieldDetails.code);
+  }
+
+  // Input helper: limitar prefijo a 3 dígitos
+  onPrefixInput(event: Event): void {
+    const inputEl = event.target as HTMLInputElement | null;
+    if (!inputEl) return;
+    const digitsOnly = inputEl.value.replace(/\D/g, '').slice(0, 3);
+    inputEl.value = digitsOnly;
   }
 
   getErrorMessage(errors: ValidationErrors | null): string {

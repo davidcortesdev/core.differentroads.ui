@@ -21,10 +21,12 @@ import {
   FlightSearchService,
   IAmadeusFlightCreateOrderResponse,
 } from '../../../../core/services/flight/flight-search.service';
-import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
+import { AnalyticsService, TourDataForEcommerce } from '../../../../core/services/analytics/analytics.service';
 import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 import { PointsV2Service } from '../../../../core/services/v2/points-v2.service';
 import { Title } from '@angular/platform-browser';
+import { switchMap, map, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 // Interfaz para información bancaria
 interface BankInfo {
@@ -98,6 +100,12 @@ export class NewReservationComponent implements OnInit {
 
   // Propiedad para detectar si tiene paymentId válido
   hasPaymentId: boolean = false;
+
+  // Array para almacenar múltiples justificantes
+  uploadedVouchers: Array<{ url: string; uploadDate: Date; fileName?: string }> = [];
+  
+  // Archivo pendiente de confirmar
+  pendingFileToConfirm: File | null = null;
 
   constructor(
     private titleService: Title,
@@ -311,6 +319,9 @@ export class NewReservationComponent implements OnInit {
       next: (payment: IPaymentResponse) => {
         this.payment = payment;
 
+        // Cargar justificantes existentes
+        this.loadExistingVouchers(payment);
+
         // Cargar método de pago
         this.loadPaymentMethod(payment.paymentMethodId);
 
@@ -478,10 +489,81 @@ export class NewReservationComponent implements OnInit {
   }
 
   /**
+   * Carga los justificantes existentes desde el payment
+   */
+  private loadExistingVouchers(payment: IPaymentResponse): void {
+    // Si hay attachmentUrl, añadirlo como primer justificante
+    if (payment.attachmentUrl) {
+      this.uploadedVouchers = [{
+        url: payment.attachmentUrl,
+        uploadDate: new Date(),
+        fileName: 'Justificante de transferencia'
+      }];
+    } else {
+      this.uploadedVouchers = [];
+    }
+
+    // También intentar cargar desde localStorage como respaldo
+    const storageKey = `vouchers_${payment.id}`;
+    const stored = localStorage.getItem(storageKey);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          this.uploadedVouchers = parsed.map((v: any) => ({
+            ...v,
+            uploadDate: new Date(v.uploadDate)
+          }));
+        }
+      } catch (e) {
+        // Ignorar error de parsing
+      }
+    }
+  }
+
+  /**
+   * Guarda los vouchers en localStorage
+   */
+  private saveVouchersToStorage(): void {
+    if (this.payment?.id) {
+      const storageKey = `vouchers_${this.payment.id}`;
+      localStorage.setItem(storageKey, JSON.stringify(this.uploadedVouchers));
+    }
+  }
+
+  /**
+   * Maneja la selección de un archivo (antes de subir)
+   */
+  handleFileSelect(files: File[]): void {
+    if (files && files.length > 0) {
+      this.pendingFileToConfirm = files[0];
+    } else {
+      this.pendingFileToConfirm = null;
+    }
+  }
+
+  /**
    * Maneja la subida del justificante de transferencia
    */
   handleVoucherUpload(response: any): void {
+    // Limpiar el archivo pendiente cuando se sube exitosamente
+    this.pendingFileToConfirm = null;
     if (this.payment && response.secure_url) {
+      // Añadir el nuevo justificante al array
+      const newVoucher = {
+        url: response.secure_url,
+        uploadDate: new Date(),
+        fileName: response.original_filename || response.public_id || `Justificante ${this.uploadedVouchers.length + 1}.pdf`
+      };
+      
+      // Si no existe ya, añadirlo
+      const exists = this.uploadedVouchers.some(v => v.url === response.secure_url);
+      if (!exists) {
+        this.uploadedVouchers.push(newVoucher);
+        this.saveVouchersToStorage();
+      }
+
+      // Actualizar el attachmentUrl con el último subido (para compatibilidad con backend)
       this.payment.attachmentUrl = response.secure_url;
       this.payment.paymentStatusId = this.pendingId; // Mantener como PENDING para revisión
 
@@ -494,7 +576,12 @@ export class NewReservationComponent implements OnInit {
           );
         },
         error: (error) => {
-          console.error('Error updating payment with voucher:', error);
+          // Revertir si falla
+          const index = this.uploadedVouchers.findIndex(v => v.url === response.secure_url);
+          if (index > -1) {
+            this.uploadedVouchers.splice(index, 1);
+            this.saveVouchersToStorage();
+          }
           this.showMessage(
             'error',
             'Error',
@@ -509,7 +596,8 @@ export class NewReservationComponent implements OnInit {
    * Maneja errores en la subida del justificante
    */
   handleVoucherError(error: any): void {
-    console.error('Error uploading voucher:', error);
+    // Limpiar el archivo pendiente en caso de error
+    this.pendingFileToConfirm = null;
     this.showMessage(
       'error',
       'Error de subida',
@@ -520,9 +608,10 @@ export class NewReservationComponent implements OnInit {
   /**
    * Visualiza el justificante subido
    */
-  viewVoucher(): void {
-    if (this.payment?.attachmentUrl) {
-      window.open(this.payment.attachmentUrl, '_blank');
+  viewVoucher(voucherUrl?: string): void {
+    const urlToOpen = voucherUrl || this.payment?.attachmentUrl || this.uploadedVouchers[0]?.url;
+    if (urlToOpen) {
+      window.open(urlToOpen, '_blank');
     }
   }
 
@@ -646,70 +735,105 @@ export class NewReservationComponent implements OnInit {
     // Obtener información de vuelo (si está disponible)
     const flightCity = reservationData.flight?.originCity || 'Sin vuelo';
 
-    // Calcular pasajeros niños dinámicamente desde los travelers
+    // Calcular pasajeros niños dinámicamente desde los travelers y construir TourDataForEcommerce
     this.reservationTravelerService
       .getByReservation(this.reservationId)
-      .subscribe({
-        next: (travelers) => {
+      .pipe(
+        map((travelers) => {
           // Contar travelers que NO son adultos (ageGroupId !== 1)
           const childrenCount = travelers.filter(
             (traveler) => traveler.ageGroupId !== 1
           ).length;
 
-          this.analyticsService.purchase(
-            {
-              transaction_id: transactionId,
-              value: totalValue,
-              tax: 0.6, // IVA fijo según el documento
-              shipping: 0.0, // Sin gastos de envío
-              currency: 'EUR',
-              coupon: reservationData.coupon?.code || '',
-              payment_type: paymentType,
-              items: [
-                {
-                  item_id:
-                    tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
-                  item_name: reservationData.tourName || tourData.name || '',
-                  coupon: '',
-                  discount: 0,
-                  index: 1,
-                  item_brand: 'Different Roads',
-                  item_category: tourData.destination?.continent || '',
-                  item_category2: tourData.destination?.country || '',
-                  item_category3:
-                    tourData.marketingSection?.marketingSeasonTag || '',
-                  item_category4: tourData.monthTags?.join(', ') || '',
-                  item_category5: tourData.tourType || '',
-                  item_list_id: itemListId,
-                  item_list_name: itemListName,
-                  item_variant: `${
-                    tourData.tkId || tourData.id
-                  } - ${flightCity}`,
-                  price: totalValue,
-                  quantity: 1,
-                  puntuacion: tourData.rating?.toString() || '',
-                  duracion: tourData.days
-                    ? `${tourData.days} días, ${
-                        tourData.nights || tourData.days - 1
-                      } noches`
-                    : '',
-                  start_date: reservationData.departureDate || '',
-                  end_date: reservationData.returnDate || '',
-                  pasajeros_adultos:
-                    this.reservation?.totalPassengers?.toString() || '0',
-                  pasajeros_niños: childrenCount.toString(),
-                  actividades: activitiesText,
-                  seguros: selectedInsurance,
-                  vuelo: flightCity,
-                },
-              ],
+          // Construir TourDataForEcommerce desde reservationData.tour
+          const tourDataForEcommerce: TourDataForEcommerce = {
+            id: tourData.id,
+            tkId: tourData.tkId ?? undefined,
+            name: reservationData.tourName || tourData.name || undefined,
+            destination: {
+              continent: tourData.destination?.continent || undefined,
+              country: tourData.destination?.country || undefined
             },
-            this.getUserData()
+            days: tourData.days || undefined,
+            nights: tourData.nights || undefined,
+            rating: tourData.rating || undefined,
+            monthTags: tourData.monthTags || undefined,
+            tourType: tourData.tourType || undefined,
+            flightCity: flightCity || 'Sin vuelo',
+            activitiesText: activitiesText || undefined,
+            selectedInsurance: selectedInsurance || undefined,
+            childrenCount: childrenCount.toString(),
+            totalPassengers: this.reservation?.totalPassengers || undefined,
+            departureDate: reservationData.departureDate || '',
+            returnDate: reservationData.returnDate || '',
+            price: totalValue
+          };
+
+          return { tourDataForEcommerce, childrenCount };
+        }),
+        switchMap(({ tourDataForEcommerce, childrenCount }) => {
+          return this.analyticsService.buildEcommerceItemFromTourData(
+            tourDataForEcommerce,
+            itemListId || 'purchase',
+            itemListName || 'Compra',
+            tourDataForEcommerce.id?.toString() || tourDataForEcommerce.tkId || ''
+          ).pipe(
+            switchMap((item) => {
+              return this.analyticsService.getCurrentUserData().pipe(
+                map((userData) => ({ item, userData, childrenCount }))
+              );
+            }),
+            catchError(() => {
+              // Si falla getCurrentUserData, usar el item sin userData
+              return this.analyticsService.buildEcommerceItemFromTourData(
+                tourDataForEcommerce,
+                itemListId || 'purchase',
+                itemListName || 'Compra',
+                tourDataForEcommerce.id?.toString() || tourDataForEcommerce.tkId || ''
+              ).pipe(
+                map((item) => ({ item, userData: this.getUserData(), childrenCount }))
+              );
+            })
           );
-        },
-        error: (error) => {
-          console.error('Error obteniendo travelers para analytics:', error);
-          // Si hay error, disparar el evento con niños = 0
+        }),
+        catchError((error) => {
+          console.error('Error obteniendo datos para purchase:', error);
+          // Fallback con datos básicos
+          const tourDataForEcommerce: TourDataForEcommerce = {
+            id: tourData.id,
+            tkId: tourData.tkId ?? undefined,
+            name: reservationData.tourName || tourData.name || undefined,
+            destination: {
+              continent: tourData.destination?.continent || undefined,
+              country: tourData.destination?.country || undefined
+            },
+            days: tourData.days || undefined,
+            nights: tourData.nights || undefined,
+            rating: tourData.rating || undefined,
+            monthTags: tourData.monthTags || undefined,
+            tourType: tourData.tourType || undefined,
+            flightCity: flightCity || 'Sin vuelo',
+            activitiesText: activitiesText || undefined,
+            selectedInsurance: selectedInsurance || undefined,
+            childrenCount: '0',
+            totalPassengers: this.reservation?.totalPassengers || undefined,
+            departureDate: reservationData.departureDate || '',
+            returnDate: reservationData.returnDate || '',
+            price: totalValue
+          };
+
+          return this.analyticsService.buildEcommerceItemFromTourData(
+            tourDataForEcommerce,
+            itemListId || 'purchase',
+            itemListName || 'Compra',
+            tourDataForEcommerce.id?.toString() || tourDataForEcommerce.tkId || ''
+          ).pipe(
+            map((item) => ({ item, userData: this.getUserData(), childrenCount: 0 }))
+          );
+        })
+      )
+      .subscribe({
+        next: ({ item, userData, childrenCount }) => {
           this.analyticsService.purchase(
             {
               transaction_id: transactionId,
@@ -719,48 +843,14 @@ export class NewReservationComponent implements OnInit {
               currency: 'EUR',
               coupon: reservationData.coupon?.code || '',
               payment_type: paymentType,
-              items: [
-                {
-                  item_id:
-                    tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
-                  item_name: reservationData.tourName || tourData.name || '',
-                  coupon: '',
-                  discount: 0,
-                  index: 1,
-                  item_brand: 'Different Roads',
-                  item_category: tourData.destination?.continent || '',
-                  item_category2: tourData.destination?.country || '',
-                  item_category3:
-                    tourData.marketingSection?.marketingSeasonTag || '',
-                  item_category4: tourData.monthTags?.join(', ') || '',
-                  item_category5: tourData.tourType || '',
-                  item_list_id: itemListId,
-                  item_list_name: itemListName,
-                  item_variant: `${
-                    tourData.tkId || tourData.id
-                  } - ${flightCity}`,
-                  price: totalValue,
-                  quantity: 1,
-                  puntuacion: tourData.rating?.toString() || '',
-                  duracion: tourData.days
-                    ? `${tourData.days} días, ${
-                        tourData.nights || tourData.days - 1
-                      } noches`
-                    : '',
-                  start_date: reservationData.departureDate || '',
-                  end_date: reservationData.returnDate || '',
-                  pasajeros_adultos:
-                    this.reservation?.totalPassengers?.toString() || '0',
-                  pasajeros_niños: '0',
-                  actividades: activitiesText,
-                  seguros: selectedInsurance,
-                  vuelo: flightCity,
-                },
-              ],
+              items: [item]
             },
-            this.getUserData()
+            userData
           );
         },
+        error: (error) => {
+          console.error('Error final obteniendo datos para purchase:', error);
+        }
       });
   }
 

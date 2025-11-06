@@ -58,6 +58,7 @@
       [refreshTrigger]="summaryRefreshTrigger"
       [reservationId]="reservation?.id || 0"
       [departureDate]="departureDate"
+      [tourId]="reservation?.tourId || 0"
       (registerPayment)="registerPayment($event)"
       (fileUploaded)="handleFileUploaded($event)"
     >

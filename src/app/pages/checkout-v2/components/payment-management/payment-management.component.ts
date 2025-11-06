@@ -11,6 +11,7 @@ import { ReservationService } from '../../../../core/services/reservation/reserv
 import { MessageService } from 'primeng/api';
 import { CurrencyService } from '../../../../core/services/masterdata/currency.service';
 import { FlightSearchService, IPriceChangeInfo } from '../../../../core/services/flight/flight-search.service';
+import { environment } from '../../../../../environments/environment';
 
 // Interfaces y tipos
 export type PaymentType = 'complete' | 'deposit' | 'installments' | 'transfer25';
@@ -435,6 +436,12 @@ export class PaymentManagementComponent
 
       await this.processPaymentBasedOnMethod();
 
+      // Emitir evento de pago completado para analytics
+      this.paymentCompleted.emit({
+        type: this.paymentState.type || 'complete',
+        method: this.paymentState.method || 'transfer'
+      });
+
       this.messageService.add({
         severity: 'success',
         summary: 'Pago procesado',
@@ -673,9 +680,11 @@ export class PaymentManagementComponent
       throw new Error('Error al crear el pago');
     }
 
+    const baseUrlFront = (window.location.href).replace(this.router.url, '');
     const formData: IFormData | undefined = await this.redsysService.generateFormData(
       response.id, 
-      "https://www.differentroads.es/"
+      environment.redsysApiUrl,
+      baseUrlFront
     ).toPromise();
     
     if (formData) {
@@ -687,7 +696,7 @@ export class PaymentManagementComponent
     if (formData) {
       const form = document.createElement('form');
       form.method = 'POST';
-      form.action = 'https://sis-t.redsys.es:25443/sis/realizarPago';
+      form.action = environment.redsysUrl;
 
       const input1 = document.createElement('input');
       input1.type = 'hidden';

@@ -174,6 +174,27 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
     });
   }
 
+  // Limitar prefijo a 3 dígitos (visual, no se guarda)
+  onPrefixInput(event: Event): void {
+    const inputEl = event.target as HTMLInputElement | null;
+    if (!inputEl) return;
+    const digitsOnly = inputEl.value.replace(/\D/g, '').slice(0, 3);
+    inputEl.value = digitsOnly;
+  }
+
+  // Normalizar teléfono a dígitos y limitar a 14
+  onPhoneInput(event: Event): void {
+    const inputEl = event.target as HTMLInputElement | null;
+    if (!inputEl) return;
+    const digitsOnly = inputEl.value.replace(/\D/g, '').slice(0, 14);
+    inputEl.value = digitsOnly;
+    // Reflejar en el formulario si existe el control
+    const control = this.passengerForm?.get('phone');
+    if (control) {
+      control.setValue(digitsOnly, { emitEvent: false });
+    }
+  }
+
   onSave(): void {
     if (this.passengerForm.valid) {
       const formValue = this.passengerForm.getRawValue();

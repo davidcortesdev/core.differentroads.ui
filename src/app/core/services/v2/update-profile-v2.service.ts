@@ -4,6 +4,7 @@ import { Observable, throwError, of, forkJoin } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { PersonalInfo } from '../../models/v2/profile-v2.model';
 import { environment } from '../../../../environments/environment';
+import { UsersNetService } from '../users/usersNet.service';
 
 @Injectable({
   providedIn: 'root'
@@ -18,7 +19,9 @@ export class UpdateProfileV2Service {
     }),
   };
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient,
+    private usersNetService: UsersNetService
+  ) { }
 
 
   /**
@@ -29,12 +32,33 @@ export class UpdateProfileV2Service {
    * @returns Observable con el resultado de la actualización
    */
   updateUserProfile(userId: string, personalInfo: PersonalInfo, cognitoId?: string): Observable<PersonalInfo> {
-    const basicUserData = this.mapToBasicUserData(personalInfo,cognitoId);
-    
-    return this.updateBasicUserData(userId, basicUserData).pipe(
+    // Primero obtener los datos actuales del usuario por cognitoId
+    if (!cognitoId) {
+      const basicUserData = this.mapToBasicUserData(personalInfo, cognitoId);
+      return this.updateBasicUserData(userId, basicUserData).pipe(
+        switchMap(() => this.updateAdditionalFields(userId, personalInfo)),
+        switchMap(() => of(personalInfo)),
+        catchError(this.handleError)
+      );
+    }
+
+    return this.usersNetService.getUsersByCognitoId(cognitoId).pipe(
+      switchMap((response) => {
+        const currentUser = Array.isArray(response) && response.length > 0 ? response[0] : null;
+        
+        const basicUserData = this.mapToBasicUserData(personalInfo, cognitoId, currentUser);
+        return this.updateBasicUserData(userId, basicUserData);
+      }),
       switchMap(() => this.updateAdditionalFields(userId, personalInfo)),
       switchMap(() => of(personalInfo)),
-      catchError(this.handleError)
+      catchError((error) => {
+        console.warn('No se pudo obtener usuario por cognitoId, usando valores predeterminados', error);
+        const basicUserData = this.mapToBasicUserData(personalInfo, cognitoId);
+        return this.updateBasicUserData(userId, basicUserData).pipe(
+          switchMap(() => this.updateAdditionalFields(userId, personalInfo)),
+          switchMap(() => of(personalInfo))
+        );
+      })
     );
   }
 
@@ -186,20 +210,21 @@ export class UpdateProfileV2Service {
    * Mapea los datos personales a formato de datos básicos para la API
    * @param personalInfo - Datos personales del usuario
    * @param cognitoId -id de cognito del usuario
+   * @param currentUser -datos actuales del usuario
    * @returns Datos formateados para la API
    */
-  private mapToBasicUserData(personalInfo: PersonalInfo, cognitoId?: string): any {
+  private mapToBasicUserData(personalInfo: PersonalInfo, cognitoId?: string, currentUser?: any): any {
     return {
       cognitoId: cognitoId || '',
       name: personalInfo.nombre || '',
       email: personalInfo.email || '',
       lastName: personalInfo.apellido || '',
       phone: personalInfo.telefono || '',
-      hasWebAccess: true,
-      hasMiddleAccess: false,
-      hasMiddleAtcAccess: false,
-      hasTourOperationAccess: false,
-      retailerId: 7
+      hasWebAccess: currentUser?.hasWebAccess ?? true,
+      hasMiddleAccess: currentUser?.hasMiddleAccess ?? false,
+      hasMiddleAtcAccess: currentUser?.hasMiddleAtcAccess ?? false,
+      hasTourOperationAccess: currentUser?.hasTourOperationAccess ?? false,
+      retailerId: currentUser?.retailerId ?? 7
     };
   }
 
@@ -309,11 +334,17 @@ export class UpdateProfileV2Service {
       }
     }
 
-    // Validación de DNI
+    // Validación de DNI/NIE (documentos de identidad internacionales)
     if (personalInfo.dni?.trim()) {
-      const dniRegex = /^[0-9]{8}[TRWAGMYFPDXBNJZSQVHLCKE]$/i;
-      if (!dniRegex.test(personalInfo.dni)) {
-        errors['dni'] = 'El DNI debe tener 8 números seguidos de una letra válida';
+      const dniValue = personalInfo.dni.trim();
+      // Validación internacional: acepta documentos de identidad de diferentes países
+      // Permite: DNI español (8 dígitos + letra), NIE español (X/Y/Z + 7 dígitos + letra),
+      // DNI colombiano, DNI argentino, DNI francés, pasaportes y otros documentos internacionales
+      // Longitud mínima: 4 caracteres, máxima: 20 caracteres
+      // Permite letras, números, guiones, puntos y espacios (formato flexible)
+      const internationalIdRegex = /^[A-Z0-9\-\s\.]{4,20}$/i;
+      if (!internationalIdRegex.test(dniValue)) {
+        errors['dni'] = 'Ingresa un documento de identidad válido (DNI, NIE, pasaporte, etc.)';
         isValid = false;
       }
     }
@@ -376,12 +407,18 @@ export class UpdateProfileV2Service {
   }
 
   /**
-   * Valida y filtra el input de DNI
+   * Valida y filtra el input de DNI/NIE (documentos de identidad internacionales)
+   * Permite letras, números, guiones, puntos y espacios para aceptar diferentes formatos internacionales
+   * Soporta: DNI español, NIE español, DNI colombiano, DNI argentino, DNI francés, pasaportes, etc.
    * @param value - Valor del input
    * @returns Valor filtrado
    */
   validateDniInput(value: string): string {
-    return value.toUpperCase().slice(0, 9);
+    // Permitir letras, números, guiones, puntos y espacios
+    // Convertir a mayúsculas para consistencia
+    const filtered = value.replace(/[^A-Za-z0-9\-\s\.]/g, '').toUpperCase();
+    // Limitar a 20 caracteres para documentos internacionales
+    return filtered.slice(0, 20);
   }
 
 

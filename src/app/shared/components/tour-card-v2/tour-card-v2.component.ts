@@ -87,16 +87,20 @@ export class TourCardV2Component implements OnInit, AfterViewInit {
             item_brand: 'Different Roads',
             item_category: this.tourData.continent || '',
             item_category2: this.tourData.country || '',
-            item_category3: this.tourData.tag || '',
-            item_category4: this.tourData.availableMonths?.join(', ') || '',
-            item_category5: this.tourData.tripType?.join(', ') || (this.tourData.isByDr ? 'Grupos' : 'Privados'),
+            item_category3: this.tourData.tag && this.tourData.tag.trim().length > 0 ? this.tourData.tag.trim() : '',
+            item_category4: this.tourData.availableMonths?.join(', ').toLowerCase() || '',
+            item_category5: this.tourData.tripType && this.tourData.tripType.length > 0
+              ? this.tourData.tripType.join(', ')
+              : (this.tourData.isByDr ? 'Grupos' : 'Privados'),
             item_list_id: this.itemListId!, // Usar el ID real de la lista directamente
             item_list_name: this.itemListName!,
             item_variant: '',
             price: this.tourData.price || 0,
             quantity: 1,
-            puntuacion: this.tourData.rating?.toString() || '',
-            duracion: this.tourData.itineraryDaysCount ? `${this.tourData.itineraryDaysCount} días` : ''
+            puntuacion: this.analyticsService.formatRating(this.tourData.rating, '5.0'),
+            duracion: this.tourData.itineraryDaysCount 
+              ? `${this.tourData.itineraryDaysCount} días, ${Math.max(0, this.tourData.itineraryDaysCount - 1)} noches`
+              : ''
           },
           userData
         );

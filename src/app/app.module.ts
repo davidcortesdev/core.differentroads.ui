@@ -196,6 +196,7 @@ import { AddPaymentModalComponent } from './pages/bookingsv2/add-payment-modal/a
 // ========================================
 import { ProfileV2Component } from './pages/profile-v2/profile-v2.component';
 import { BookingListSectionV2Component } from './pages/profile-v2/components/booking-list-section-v2/booking-list-section-v2.component';
+import { ModalPointsComponent } from './pages/profile-v2/components/booking-list-section-v2/components/modal-points/modal-points.component';
 import { PersonalInfoSectionV2Component } from './pages/profile-v2/components/personal-info-section-v2/personal-info-section-v2.component';
 import { PointsSectionV2Component } from './pages/profile-v2/components/points-section-v2/points-section-v2.component';
 import { PointsTableComponent } from './pages/profile-v2/components/points-section-v2/components/points-table/points-table.component';
@@ -219,6 +220,7 @@ import { SobreNosotrosComponent } from './pages/basic-page/components/sobre-noso
 import { PorQueDifferentComponent } from './pages/basic-page/components/por-que-different/por-que-different.component';
 import { ReviewSurveyComponent } from './pages/review-survey/review-survey.component';
 import { ImageUploadModalComponent } from './pages/review-survey/image-upload-modal/image-upload-modal.component';
+import { CompleteInformationComponent } from './pages/complete-information/complete-information.component';
 
 // ========================================
 // SHARED COMPONENTS
@@ -376,6 +378,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     // ========================================
     ProfileV2Component,
     BookingListSectionV2Component,
+    ModalPointsComponent,
     PersonalInfoSectionV2Component,
     PointsSectionV2Component,
     PointsTableComponent,
@@ -399,6 +402,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     PorQueDifferentComponent,
     ReviewSurveyComponent,
     ImageUploadModalComponent,
+    CompleteInformationComponent,
 
     // ========================================
     // SHARED COMPONENTS

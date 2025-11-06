@@ -1,9 +1,25 @@
 import { Injectable, Injector } from '@angular/core';
 import { UsersNetService } from '../users/usersNet.service';
 import { PersonalInfoV2Service } from '../v2/personal-info-v2.service';
-import { Observable, of, map, switchMap, catchError } from 'rxjs';
+import { Observable, of, map, switchMap, catchError, first, take, shareReplay, tap, defaultIfEmpty, filter, skipWhile, forkJoin, concatMap } from 'rxjs';
 import { TourTagService } from '../tag/tour-tag.service';
 import { TagService } from '../tag/tag.service';
+import { TripTypeService } from '../trip-type/trip-type.service';
+import { TourDataV2 } from '../../../shared/components/tour-card-v2/tour-card-v2.model';
+import { ReviewsService } from '../reviews/reviews.service';
+import { TourService } from '../tour/tour.service';
+import { TourLocationService, ITourLocationResponse } from '../tour/tour-location.service';
+import { LocationNetService, Location } from '../locations/locationNet.service';
+import { ItineraryService, ItineraryFilters } from '../itinerary/itinerary.service';
+import { ItineraryDayService, IItineraryDayResponse } from '../itinerary/itinerary-day/itinerary-day.service';
+import { DepartureService, IDepartureResponse } from '../departure/departure.service';
+import { ReservationTravelerService } from '../reservation/reservation-traveler.service';
+import { ReservationTravelerActivityService } from '../reservation/reservation-traveler-activity.service';
+import { ReservationTravelerActivityPackService } from '../reservation/reservation-traveler-activity-pack.service';
+import { ActivityService, IActivityResponse } from '../activity/activity.service';
+import { AgeGroupService } from '../agegroup/age-group.service';
+import { ReservationService } from '../reservation/reservation.service';
+import { ReservationFlightService } from '../flight/reservationflight.service';
 
 /**
  * Interfaz para los datos de usuario que se envían en los eventos
@@ -59,6 +75,218 @@ export interface EcommerceData {
   transaction_id?: string;
   tax?: number;
   shipping?: number;
+}
+
+/**
+ * ============================================
+ * ESTRUCTURAS ESPECÍFICAS PARA CADA EVENTO
+ * ============================================
+ */
+
+/**
+ * Estructura específica para view_item_list
+ */
+export interface ViewItemListEventData {
+  event: 'view_item_list';
+  user_data: {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  };
+  ecommerce: {
+    item_list_id: string;
+    item_list_name: string;
+    items: EcommerceItem[];
+  };
+}
+
+/**
+ * Estructura específica para select_item
+ */
+export interface SelectItemEventData {
+  event: 'select_item';
+  user_data: {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  };
+  ecommerce: {
+    item_list_id: string;
+    item_list_name: string;
+    items: EcommerceItem[];
+  };
+}
+
+/**
+ * Estructura específica para view_item
+ */
+export interface ViewItemEventData {
+  event: 'view_item';
+  user_data: {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  };
+  ecommerce: {
+    item_list_id: string;
+    item_list_name: string;
+    items: EcommerceItem[];
+  };
+}
+
+/**
+ * Estructura específica para add_to_wishlist
+ */
+export interface AddToWishlistEventData {
+  event: 'add_to_wishlist';
+  user_data: {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  };
+  ecommerce: {
+    item_list_id: string;
+    item_list_name: string;
+    items: EcommerceItem[];
+  };
+}
+
+/**
+ * Estructura específica para add_to_cart
+ */
+export interface AddToCartEventData {
+  event: 'add_to_cart';
+  user_data: {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  };
+  ecommerce: {
+    currency: string;
+    value: number;
+    items: EcommerceItem[];
+  };
+}
+
+/**
+ * Estructura específica para view_cart
+ */
+export interface ViewCartEventData {
+  event: 'view_cart';
+  user_data: {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  };
+  ecommerce: {
+    currency: string;
+    value: number;
+    items: EcommerceItem[];
+  };
+}
+
+/**
+ * Estructura específica para begin_checkout
+ */
+export interface BeginCheckoutEventData {
+  event: 'begin_checkout';
+  user_data: {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  };
+  ecommerce: EcommerceData;
+}
+
+/**
+ * Estructura específica para view_flights_info
+ */
+export interface ViewFlightsInfoEventData {
+  event: 'view_flights_info';
+  user_data: {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  };
+  ecommerce: EcommerceData;
+}
+
+/**
+ * Estructura específica para add_flights_info
+ */
+export interface AddFlightsInfoEventData {
+  event: 'add_flights_info';
+  user_data: {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  };
+  ecommerce: EcommerceData;
+}
+
+/**
+ * Estructura específica para view_personal_info
+ */
+export interface ViewPersonalInfoEventData {
+  event: 'view_personal_info';
+  user_data: {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  };
+  ecommerce: EcommerceData;
+}
+
+/**
+ * Estructura específica para add_personal_info
+ */
+export interface AddPersonalInfoEventData {
+  event: 'add_personal_info';
+  user_data: {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  };
+  ecommerce: EcommerceData;
+}
+
+/**
+ * Estructura específica para view_payment_info
+ */
+export interface ViewPaymentInfoEventData {
+  event: 'view_payment_info';
+  user_data: {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  };
+  ecommerce: EcommerceData;
+}
+
+/**
+ * Estructura específica para add_payment_info
+ */
+export interface AddPaymentInfoEventData {
+  event: 'add_payment_info';
+  user_data: {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  };
+  ecommerce: EcommerceData;
+}
+
+/**
+ * Estructura específica para purchase
+ */
+export interface PurchaseEventData {
+  event: 'purchase';
+  user_data: {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  };
+  ecommerce: EcommerceData;
 }
 
 /**
@@ -123,7 +351,23 @@ export class AnalyticsService {
     private usersNetService: UsersNetService,
     private personalInfoService: PersonalInfoV2Service,
     private tourTagService: TourTagService,
-    private tagService: TagService
+    private tagService: TagService,
+    private tripTypeService: TripTypeService,
+    // Servicios para obtener datos dinámicos del tour
+    private reviewsService: ReviewsService,
+    private tourService: TourService,
+    private tourLocationService: TourLocationService,
+    private locationNetService: LocationNetService,
+    private itineraryService: ItineraryService,
+    private itineraryDayService: ItineraryDayService,
+    private departureService: DepartureService,
+    private reservationTravelerService: ReservationTravelerService,
+    private reservationTravelerActivityService: ReservationTravelerActivityService,
+    private reservationTravelerActivityPackService: ReservationTravelerActivityPackService,
+    private activityService: ActivityService,
+    private ageGroupService: AgeGroupService,
+    private reservationService: ReservationService,
+    private reservationFlightService: ReservationFlightService
   ) {
     this.initDataLayer();
   }
@@ -169,9 +413,13 @@ export class AnalyticsService {
   // EVENTOS DE ECOMMERCE
   // ============================================
 
+  // Set para trackear eventos ya disparados (última línea de defensa)
+  private firedEvents = new Set<string>();
+
   /**
    * Evento: view_item_list
    * Se dispara cuando el usuario visualiza una lista de viajes
+   * Estructura exacta según especificación GA4
    */
   viewItemList(
     itemListId: string,
@@ -179,16 +427,29 @@ export class AnalyticsService {
     items: EcommerceItem[],
     userData?: UserData
   ): void {
+    // Última verificación: si ya se disparó este evento, no hacer nada
+    const eventKey = `view_item_list_${itemListId}`;
+    if (this.firedEvents.has(eventKey)) {
+      return;
+    }
+
+    // Marcar como disparado inmediatamente
+    this.firedEvents.add(eventKey);
+
     this.clearEcommerce();
-    this.pushEvent({
+    
+    // Estructura específica para view_item_list
+    const eventData: ViewItemListEventData = {
       event: 'view_item_list',
-      user_data: userData || {},
+      user_data: this.normalizeUserData(userData),
       ecommerce: {
         item_list_id: itemListId,
         item_list_name: itemListName,
         items: items
       }
-    });
+    };
+    
+    this.pushEvent(eventData);
   }
 
   /**
@@ -202,15 +463,22 @@ export class AnalyticsService {
     userData?: UserData
   ): void {
     this.clearEcommerce();
-    this.pushEvent({
+    
+    // Eliminar end_date del item si existe
+    const { end_date, ...itemWithoutEndDate } = item;
+    
+    // Estructura específica para select_item
+    const eventData: SelectItemEventData = {
       event: 'select_item',
-      user_data: userData || {},
+      user_data: this.normalizeUserData(userData),
       ecommerce: {
         item_list_id: itemListId,
         item_list_name: itemListName,
-        items: [item]
+        items: [itemWithoutEndDate]
       }
-    });
+    };
+    
+    this.pushEvent(eventData);
   }
 
   /**
@@ -223,16 +491,54 @@ export class AnalyticsService {
     item: EcommerceItem,
     userData?: UserData
   ): void {
+    // Crear una clave única basada en item_list_id e item_id para evitar duplicados
+    const itemId = item.item_id || '';
+    const eventKey = `view_item_${itemListId}_${itemId}`;
+    
+    // Verificar si ya se disparó este evento
+    if (this.firedEvents.has(eventKey)) {
+      return;
+    }
+    
+    // Marcar como disparado inmediatamente
+    this.firedEvents.add(eventKey);
+    
     this.clearEcommerce();
-    this.pushEvent({
+    
+    // Filtrar solo los campos permitidos para view_item
+    const filteredItem: EcommerceItem = {
+      item_id: item.item_id || '',
+      item_name: item.item_name || '',
+      coupon: item.coupon || '',
+      discount: item.discount || 0,
+      index: item.index || 1,
+      item_brand: item.item_brand || '',
+      item_category: item.item_category || '',
+      item_category2: item.item_category2 || '',
+      item_category3: item.item_category3 || '',
+      item_category4: item.item_category4 || '',
+      item_category5: item.item_category5 || '',
+      item_list_id: item.item_list_id || itemListId,
+      item_list_name: item.item_list_name || itemListName,
+      item_variant: item.item_variant || '',
+      price: item.price || 0,
+      quantity: item.quantity || 1,
+      puntuacion: item.puntuacion || '',
+      duracion: item.duracion || ''
+    };
+    
+    // Estructura específica para view_item
+    const eventData: ViewItemEventData = {
       event: 'view_item',
-      user_data: userData || {},
+      user_data: this.normalizeUserData(userData),
       ecommerce: {
         item_list_id: itemListId,
         item_list_name: itemListName,
-        items: [item]
+        items: [filteredItem]
       }
-    });
+    };
+    
+    this.pushEvent(eventData);
   }
 
   /**
@@ -251,15 +557,45 @@ export class AnalyticsService {
       ? itemListId.toString()
       : itemListId;
     
-    this.pushEvent({
+    // Filtrar solo los campos permitidos para add_to_wishlist
+    // Asegurar que puntuacion esté formateada correctamente
+    const puntuacion = item.puntuacion 
+      ? item.puntuacion 
+      : this.formatRating((item as any).rating, '');
+    
+    const filteredItem: EcommerceItem = {
+      item_id: item.item_id || '',
+      item_name: item.item_name || '',
+      coupon: item.coupon || '',
+      discount: item.discount || 0,
+      index: item.index || 0,
+      item_brand: item.item_brand || '',
+      item_category: item.item_category || '',
+      item_category2: item.item_category2 || '',
+      item_category3: item.item_category3 || '',
+      item_category4: item.item_category4 || '',
+      item_category5: item.item_category5 || '',
+      item_list_id: item.item_list_id || itemListIdString,
+      item_list_name: item.item_list_name || itemListName,
+      item_variant: item.item_variant || '',
+      price: item.price || 0,
+      quantity: item.quantity || 1,
+      puntuacion: puntuacion,
+      duracion: item.duracion || ''
+    };
+    
+    // Estructura específica para add_to_wishlist
+    const eventData: AddToWishlistEventData = {
       event: 'add_to_wishlist',
-      user_data: userData || {},
+      user_data: this.normalizeUserData(userData),
       ecommerce: {
         item_list_id: itemListIdString,
         item_list_name: itemListName,
-        items: [item]
+        items: [filteredItem]
       }
-    });
+    };
+    
+    this.pushEvent(eventData);
   }
 
   /**
@@ -273,15 +609,50 @@ export class AnalyticsService {
     userData?: UserData
   ): void {
     this.clearEcommerce();
-    this.pushEvent({
+    
+    // Filtrar solo los campos permitidos para add_to_cart
+    // Asegurar que puntuacion esté formateada correctamente
+    const puntuacion = item.puntuacion 
+      ? item.puntuacion 
+      : this.formatRating((item as any).rating, '');
+    
+    const filteredItem: EcommerceItem = {
+      item_id: item.item_id || '',
+      item_name: item.item_name || '',
+      coupon: item.coupon || '',
+      discount: item.discount || 0,
+      index: item.index || 0,
+      item_brand: item.item_brand || '',
+      item_category: item.item_category || '',
+      item_category2: item.item_category2 || '',
+      item_category3: item.item_category3 || '',
+      item_category4: item.item_category4 || '',
+      item_category5: item.item_category5 || '',
+      item_list_id: item.item_list_id || '',
+      item_list_name: item.item_list_name || '',
+      item_variant: item.item_variant || '',
+      price: item.price || 0,
+      quantity: item.quantity || 1,
+      puntuacion: puntuacion,
+      duracion: item.duracion || '',
+      start_date: item.start_date || '',
+      end_date: item.end_date || '',
+      pasajeros_adultos: item.pasajeros_adultos || '',
+      pasajeros_niños: item.pasajeros_niños || ''
+    };
+    
+    // Estructura específica para add_to_cart
+    const eventData: AddToCartEventData = {
       event: 'add_to_cart',
-      user_data: userData || {},
+      user_data: this.normalizeUserData(userData),
       ecommerce: {
         currency: currency,
         value: value,
-        items: [item]
+        items: [filteredItem]
       }
-    });
+    };
+    
+    this.pushEvent(eventData);
   }
 
   /**
@@ -295,15 +666,50 @@ export class AnalyticsService {
     userData?: UserData
   ): void {
     this.clearEcommerce();
-    this.pushEvent({
+    
+    // Filtrar solo los campos permitidos para view_cart
+    // Asegurar que puntuacion esté formateada correctamente
+    const puntuacion = item.puntuacion 
+      ? item.puntuacion 
+      : this.formatRating((item as any).rating, '');
+    
+    const filteredItem: EcommerceItem = {
+      item_id: item.item_id || '',
+      item_name: item.item_name || '',
+      coupon: item.coupon || '',
+      discount: item.discount || 0,
+      index: item.index || 0,
+      item_brand: item.item_brand || '',
+      item_category: item.item_category || '',
+      item_category2: item.item_category2 || '',
+      item_category3: item.item_category3 || '',
+      item_category4: item.item_category4 || '',
+      item_category5: item.item_category5 || '',
+      item_list_id: item.item_list_id || '',
+      item_list_name: item.item_list_name || '',
+      item_variant: item.item_variant || '',
+      price: item.price || 0,
+      quantity: item.quantity || 1,
+      puntuacion: puntuacion,
+      duracion: item.duracion || '',
+      start_date: item.start_date || '',
+      end_date: item.end_date || '',
+      pasajeros_adultos: item.pasajeros_adultos || '',
+      pasajeros_niños: item.pasajeros_niños || ''
+    };
+    
+    // Estructura específica para view_cart
+    const eventData: ViewCartEventData = {
       event: 'view_cart',
-      user_data: userData || {},
+      user_data: this.normalizeUserData(userData),
       ecommerce: {
         currency: currency,
         value: value,
-        items: [item]
+        items: [filteredItem]
       }
-    });
+    };
+    
+    this.pushEvent(eventData);
   }
 
   // ============================================
@@ -319,11 +725,55 @@ export class AnalyticsService {
     userData?: UserData
   ): void {
     this.clearEcommerce();
-    this.pushEvent({
-      event: 'begin_checkout',
-      user_data: userData || {},
-      ecommerce: ecommerceData
+    
+    // Filtrar items para incluir solo los campos permitidos
+    const filteredItems: EcommerceItem[] = (ecommerceData.items || []).map(item => {
+      // Asegurar que puntuacion esté formateada correctamente
+      const puntuacion = item.puntuacion 
+        ? item.puntuacion 
+        : this.formatRating((item as any).rating, '');
+      
+      return {
+        item_id: item.item_id || '',
+        item_name: item.item_name || '',
+        coupon: item.coupon || '',
+        discount: item.discount || 0,
+        index: item.index || 0,
+        item_brand: item.item_brand || '',
+        item_category: item.item_category || '',
+        item_category2: item.item_category2 || '',
+        item_category3: item.item_category3 || '',
+        item_category4: item.item_category4 || '',
+        item_category5: item.item_category5 || '',
+        item_list_id: item.item_list_id || '',
+        item_list_name: item.item_list_name || '',
+        item_variant: item.item_variant || '',
+        price: item.price || 0,
+        quantity: item.quantity || 1,
+        puntuacion: puntuacion,
+        duracion: item.duracion || '',
+        start_date: item.start_date || '',
+        end_date: item.end_date || '',
+        pasajeros_adultos: item.pasajeros_adultos || '',
+        pasajeros_niños: item.pasajeros_niños || '',
+        actividades: item.actividades || '',
+        seguros: item.seguros || ''
+      };
     });
+    
+    // Estructura específica para begin_checkout
+    const eventData: BeginCheckoutEventData = {
+      event: 'begin_checkout',
+      user_data: this.normalizeUserData(userData),
+      ecommerce: {
+        currency: ecommerceData.currency || 'EUR',
+        value: ecommerceData.value || 0,
+        coupon: ecommerceData.coupon || '',
+        items: filteredItems
+      }
+    };
+    
+    this.pushEvent(eventData);
   }
 
   /**
@@ -335,11 +785,55 @@ export class AnalyticsService {
     userData?: UserData
   ): void {
     this.clearEcommerce();
-    this.pushEvent({
-      event: 'view_flights_info',
-      user_data: userData || {},
-      ecommerce: ecommerceData
+    
+    // Filtrar items para incluir solo los campos permitidos
+    const filteredItems: EcommerceItem[] = (ecommerceData.items || []).map(item => {
+      // Asegurar que puntuacion esté formateada correctamente
+      const puntuacion = item.puntuacion 
+        ? item.puntuacion 
+        : this.formatRating((item as any).rating, '');
+      
+      return {
+        item_id: item.item_id || '',
+        item_name: item.item_name || '',
+        coupon: item.coupon || '',
+        discount: item.discount || 0,
+        index: item.index || 0,
+        item_brand: item.item_brand || '',
+        item_category: item.item_category || '',
+        item_category2: item.item_category2 || '',
+        item_category3: item.item_category3 || '',
+        item_category4: item.item_category4 || '',
+        item_category5: item.item_category5 || '',
+        item_list_id: item.item_list_id || '',
+        item_list_name: item.item_list_name || '',
+        item_variant: item.item_variant || '',
+        price: item.price || 0,
+        quantity: item.quantity || 1,
+        puntuacion: puntuacion,
+        duracion: item.duracion || '',
+        start_date: item.start_date || '',
+        end_date: item.end_date || '',
+        pasajeros_adultos: item.pasajeros_adultos || '',
+        pasajeros_niños: item.pasajeros_niños || '',
+        actividades: item.actividades || '',
+        seguros: item.seguros || ''
+      };
     });
+    
+    // Estructura específica para view_flights_info
+    const eventData: ViewFlightsInfoEventData = {
+      event: 'view_flights_info',
+      user_data: this.normalizeUserData(userData),
+      ecommerce: {
+        currency: ecommerceData.currency || 'EUR',
+        value: ecommerceData.value || 0,
+        coupon: ecommerceData.coupon || '',
+        items: filteredItems
+      }
+    };
+    
+    this.pushEvent(eventData);
   }
 
   /**
@@ -351,11 +845,56 @@ export class AnalyticsService {
     userData?: UserData
   ): void {
     this.clearEcommerce();
-    this.pushEvent({
-      event: 'add_flights_info',
-      user_data: userData || {},
-      ecommerce: ecommerceData
+    
+    // Filtrar items para incluir solo los campos permitidos
+    const filteredItems: EcommerceItem[] = (ecommerceData.items || []).map(item => {
+      // Asegurar que puntuacion esté formateada correctamente
+      const puntuacion = item.puntuacion 
+        ? item.puntuacion 
+        : this.formatRating((item as any).rating, '');
+      
+      return {
+        item_id: item.item_id || '',
+        item_name: item.item_name || '',
+        coupon: item.coupon || '',
+        discount: item.discount || 0,
+        index: item.index || 0,
+        item_brand: item.item_brand || '',
+        item_category: item.item_category || '',
+        item_category2: item.item_category2 || '',
+        item_category3: item.item_category3 || '',
+        item_category4: item.item_category4 || '',
+        item_category5: item.item_category5 || '',
+        item_list_id: item.item_list_id || '',
+        item_list_name: item.item_list_name || '',
+        item_variant: item.item_variant || '',
+        price: item.price || 0,
+        quantity: item.quantity || 1,
+        puntuacion: puntuacion,
+        duracion: item.duracion || '',
+        start_date: item.start_date || '',
+        end_date: item.end_date || '',
+        pasajeros_adultos: item.pasajeros_adultos || '',
+        pasajeros_niños: item.pasajeros_niños || '',
+        actividades: item.actividades || '',
+        seguros: item.seguros || '',
+        vuelo: item.vuelo || ''
+      };
     });
+    
+    // Estructura específica para add_flights_info
+    const eventData: AddFlightsInfoEventData = {
+      event: 'add_flights_info',
+      user_data: this.normalizeUserData(userData),
+      ecommerce: {
+        currency: ecommerceData.currency || 'EUR',
+        value: ecommerceData.value || 0,
+        coupon: ecommerceData.coupon || '',
+        items: filteredItems
+      }
+    };
+    
+    this.pushEvent(eventData);
   }
 
   /**
@@ -367,11 +906,56 @@ export class AnalyticsService {
     userData?: UserData
   ): void {
     this.clearEcommerce();
-    this.pushEvent({
-      event: 'view_personal_info',
-      user_data: userData || {},
-      ecommerce: ecommerceData
+    
+    // Filtrar items para incluir solo los campos permitidos
+    const filteredItems: EcommerceItem[] = (ecommerceData.items || []).map(item => {
+      // Asegurar que puntuacion esté formateada correctamente
+      const puntuacion = item.puntuacion 
+        ? item.puntuacion 
+        : this.formatRating((item as any).rating, '');
+      
+      return {
+        item_id: item.item_id || '',
+        item_name: item.item_name || '',
+        coupon: item.coupon || '',
+        discount: item.discount || 0,
+        index: item.index || 0,
+        item_brand: item.item_brand || '',
+        item_category: item.item_category || '',
+        item_category2: item.item_category2 || '',
+        item_category3: item.item_category3 || '',
+        item_category4: item.item_category4 || '',
+        item_category5: item.item_category5 || '',
+        item_list_id: item.item_list_id || '',
+        item_list_name: item.item_list_name || '',
+        item_variant: item.item_variant || '',
+        price: item.price || 0,
+        quantity: item.quantity || 1,
+        puntuacion: puntuacion,
+        duracion: item.duracion || '',
+        start_date: item.start_date || '',
+        end_date: item.end_date || '',
+        pasajeros_adultos: item.pasajeros_adultos || '',
+        pasajeros_niños: item.pasajeros_niños || '',
+        actividades: item.actividades || '',
+        seguros: item.seguros || '',
+        vuelo: item.vuelo || ''
+      };
     });
+    
+    // Estructura específica para view_personal_info
+    const eventData: ViewPersonalInfoEventData = {
+      event: 'view_personal_info',
+      user_data: this.normalizeUserData(userData),
+      ecommerce: {
+        currency: ecommerceData.currency || 'EUR',
+        value: ecommerceData.value || 0,
+        coupon: ecommerceData.coupon || '',
+        items: filteredItems
+      }
+    };
+    
+    this.pushEvent(eventData);
   }
 
   /**
@@ -383,11 +967,56 @@ export class AnalyticsService {
     userData?: UserData
   ): void {
     this.clearEcommerce();
-    this.pushEvent({
-      event: 'add_personal_info',
-      user_data: userData || {},
-      ecommerce: ecommerceData
+    
+    // Filtrar items para incluir solo los campos permitidos
+    const filteredItems: EcommerceItem[] = (ecommerceData.items || []).map(item => {
+      // Asegurar que puntuacion esté formateada correctamente
+      const puntuacion = item.puntuacion 
+        ? item.puntuacion 
+        : this.formatRating((item as any).rating, '');
+      
+      return {
+        item_id: item.item_id || '',
+        item_name: item.item_name || '',
+        coupon: item.coupon || '',
+        discount: item.discount || 0,
+        index: item.index || 0,
+        item_brand: item.item_brand || '',
+        item_category: item.item_category || '',
+        item_category2: item.item_category2 || '',
+        item_category3: item.item_category3 || '',
+        item_category4: item.item_category4 || '',
+        item_category5: item.item_category5 || '',
+        item_list_id: item.item_list_id || '',
+        item_list_name: item.item_list_name || '',
+        item_variant: item.item_variant || '',
+        price: item.price || 0,
+        quantity: item.quantity || 1,
+        puntuacion: puntuacion,
+        duracion: item.duracion || '',
+        start_date: item.start_date || '',
+        end_date: item.end_date || '',
+        pasajeros_adultos: item.pasajeros_adultos || '',
+        pasajeros_niños: item.pasajeros_niños || '',
+        actividades: item.actividades || '',
+        seguros: item.seguros || '',
+        vuelo: item.vuelo || ''
+      };
     });
+    
+    // Estructura específica para add_personal_info
+    const eventData: AddPersonalInfoEventData = {
+      event: 'add_personal_info',
+      user_data: this.normalizeUserData(userData),
+      ecommerce: {
+        currency: ecommerceData.currency || 'EUR',
+        value: ecommerceData.value || 0,
+        coupon: ecommerceData.coupon || '',
+        items: filteredItems
+      }
+    };
+    
+    this.pushEvent(eventData);
   }
 
   /**
@@ -399,11 +1028,56 @@ export class AnalyticsService {
     userData?: UserData
   ): void {
     this.clearEcommerce();
-    this.pushEvent({
-      event: 'view_payment_info',
-      user_data: userData || {},
-      ecommerce: ecommerceData
+    
+    // Filtrar items para incluir solo los campos permitidos
+    const filteredItems: EcommerceItem[] = (ecommerceData.items || []).map(item => {
+      // Asegurar que puntuacion esté formateada correctamente
+      const puntuacion = item.puntuacion 
+        ? item.puntuacion 
+        : this.formatRating((item as any).rating, '');
+      
+      return {
+        item_id: item.item_id || '',
+        item_name: item.item_name || '',
+        coupon: item.coupon || '',
+        discount: item.discount || 0,
+        index: item.index || 0,
+        item_brand: item.item_brand || '',
+        item_category: item.item_category || '',
+        item_category2: item.item_category2 || '',
+        item_category3: item.item_category3 || '',
+        item_category4: item.item_category4 || '',
+        item_category5: item.item_category5 || '',
+        item_list_id: item.item_list_id || '',
+        item_list_name: item.item_list_name || '',
+        item_variant: item.item_variant || '',
+        price: item.price || 0,
+        quantity: item.quantity || 1,
+        puntuacion: puntuacion,
+        duracion: item.duracion || '',
+        start_date: item.start_date || '',
+        end_date: item.end_date || '',
+        pasajeros_adultos: item.pasajeros_adultos || '',
+        pasajeros_niños: item.pasajeros_niños || '',
+        actividades: item.actividades || '',
+        seguros: item.seguros || '',
+        vuelo: item.vuelo || ''
+      };
     });
+    
+    // Estructura específica para view_payment_info
+    const eventData: ViewPaymentInfoEventData = {
+      event: 'view_payment_info',
+      user_data: this.normalizeUserData(userData),
+      ecommerce: {
+        currency: ecommerceData.currency || 'EUR',
+        value: ecommerceData.value || 0,
+        coupon: ecommerceData.coupon || '',
+        items: filteredItems
+      }
+    };
+    
+    this.pushEvent(eventData);
   }
 
   /**
@@ -415,11 +1089,57 @@ export class AnalyticsService {
     userData?: UserData
   ): void {
     this.clearEcommerce();
-    this.pushEvent({
-      event: 'add_payment_info',
-      user_data: userData || {},
-      ecommerce: ecommerceData
+    
+    // Filtrar items para incluir solo los campos permitidos
+    const filteredItems: EcommerceItem[] = (ecommerceData.items || []).map(item => {
+      // Asegurar que puntuacion esté formateada correctamente
+      const puntuacion = item.puntuacion 
+        ? item.puntuacion 
+        : this.formatRating((item as any).rating, '');
+      
+      return {
+        item_id: item.item_id || '',
+        item_name: item.item_name || '',
+        coupon: item.coupon || '',
+        discount: item.discount || 0,
+        index: item.index || 0,
+        item_brand: item.item_brand || '',
+        item_category: item.item_category || '',
+        item_category2: item.item_category2 || '',
+        item_category3: item.item_category3 || '',
+        item_category4: item.item_category4 || '',
+        item_category5: item.item_category5 || '',
+        item_list_id: item.item_list_id || '',
+        item_list_name: item.item_list_name || '',
+        item_variant: item.item_variant || '',
+        price: item.price || 0,
+        quantity: item.quantity || 1,
+        puntuacion: puntuacion,
+        duracion: item.duracion || '',
+        start_date: item.start_date || '',
+        end_date: item.end_date || '',
+        pasajeros_adultos: item.pasajeros_adultos || '',
+        pasajeros_niños: item.pasajeros_niños || '',
+        actividades: item.actividades || '',
+        seguros: item.seguros || '',
+        vuelo: item.vuelo || ''
+      };
     });
+    
+    // Estructura específica para add_payment_info
+    const eventData: AddPaymentInfoEventData = {
+      event: 'add_payment_info',
+      user_data: this.normalizeUserData(userData),
+      ecommerce: {
+        currency: ecommerceData.currency || 'EUR',
+        value: ecommerceData.value || 0,
+        coupon: ecommerceData.coupon || '',
+        payment_type: ecommerceData.payment_type || '',
+        items: filteredItems
+      }
+    };
+    
+    this.pushEvent(eventData);
   }
 
   /**
@@ -431,11 +1151,560 @@ export class AnalyticsService {
     userData?: UserData
   ): void {
     this.clearEcommerce();
-    this.pushEvent({
-      event: 'purchase',
-      user_data: userData || {},
-      ecommerce: ecommerceData
+    
+    // Filtrar items para incluir solo los campos permitidos
+    const filteredItems: EcommerceItem[] = (ecommerceData.items || []).map(item => {
+      // Asegurar que puntuacion esté formateada correctamente
+      const puntuacion = item.puntuacion 
+        ? item.puntuacion 
+        : this.formatRating((item as any).rating, '');
+      
+      return {
+        item_id: item.item_id || '',
+        item_name: item.item_name || '',
+        coupon: item.coupon || '',
+        discount: item.discount || 0,
+        index: item.index || 0,
+        item_brand: item.item_brand || '',
+        item_category: item.item_category || '',
+        item_category2: item.item_category2 || '',
+        item_category3: item.item_category3 || '',
+        item_category4: item.item_category4 || '',
+        item_category5: item.item_category5 || '',
+        item_list_id: item.item_list_id || '',
+        item_list_name: item.item_list_name || '',
+        item_variant: item.item_variant || '',
+        price: item.price || 0,
+        quantity: item.quantity || 1,
+        puntuacion: puntuacion,
+        duracion: item.duracion || '',
+        start_date: item.start_date || '',
+        end_date: item.end_date || '',
+        pasajeros_adultos: item.pasajeros_adultos || '',
+        pasajeros_niños: item.pasajeros_niños || '',
+        actividades: item.actividades || '',
+        seguros: item.seguros || '',
+        vuelo: item.vuelo || ''
+      };
     });
+    
+    // Estructura específica para purchase
+    const eventData: PurchaseEventData = {
+      event: 'purchase',
+      user_data: this.normalizeUserData(userData),
+      ecommerce: {
+        currency: ecommerceData.currency || 'EUR',
+        value: ecommerceData.value || 0,
+        coupon: ecommerceData.coupon || '',
+        payment_type: ecommerceData.payment_type || '',
+        transaction_id: ecommerceData.transaction_id || '',
+        tax: ecommerceData.tax || 0,
+        shipping: ecommerceData.shipping || 0,
+        items: filteredItems
+      }
+    };
+    
+    this.pushEvent(eventData);
+  }
+
+  /**
+   * Método centralizado para disparar evento purchase desde una reservación
+   * Obtiene todos los datos dinámicamente y construye el evento completo
+   */
+  trackPurchaseFromReservation(
+    reservationId: number,
+    tourId: number,
+    paymentData: {
+      transactionId: string;
+      paymentType: string;
+      totalValue: number;
+      tax?: number;
+      shipping?: number;
+      coupon?: string;
+    },
+    itemListId?: string,
+    itemListName?: string
+  ): void {
+    // Obtener item_list_id y item_list_name desde sessionStorage si no se proporcionan
+    const finalItemListId = itemListId || sessionStorage.getItem('checkout_itemListId') || '';
+    const finalItemListName = itemListName || sessionStorage.getItem('checkout_itemListName') || '';
+
+    // Obtener todos los datos completos del tour dinámicamente
+    forkJoin({
+      tourData: this.getCompleteTourDataForEcommerce(tourId),
+      activitiesText: this.getActivitiesFromTravelers(reservationId),
+      passengersCount: this.getPassengersCount(reservationId),
+      reservation: this.reservationService.getById(reservationId)
+    }).pipe(
+      switchMap(({ tourData, activitiesText, passengersCount, reservation }) => {
+        const reservationData = reservation as any;
+        const departureId = reservationData.departureId;
+        
+        // Obtener departure para las fechas
+        const departureRequest = departureId 
+          ? this.departureService.getById(departureId).pipe(
+              catchError(() => of(null))
+            )
+          : of(null);
+        
+        // Obtener vuelo seleccionado desde ReservationFlightService (igual que en checkout)
+        const flightRequest = this.reservationFlightService.getSelectedFlightPack(reservationId).pipe(
+          catchError(() => of(null))
+        );
+        
+        return forkJoin({
+          departure: departureRequest,
+          flightPack: flightRequest
+        }).pipe(
+          switchMap(({ departure, flightPack }) => {
+            // Obtener vuelo desde el flight pack seleccionado (igual que en checkout: selectedFlight?.name)
+            let flightCity = 'Sin vuelo';
+            if (flightPack) {
+              // flightPack puede ser un objeto o un array
+              const pack = Array.isArray(flightPack) ? flightPack[0] : flightPack;
+              if (pack?.name) {
+                flightCity = pack.name;
+              }
+            }
+            
+            // Actualizar con datos adicionales del contexto
+            // Asignar flightCity
+            tourData.flightCity = flightCity || tourData.flightCity || 'Sin vuelo';
+            // Asignar actividades (usar las obtenidas dinámicamente)
+            tourData.activitiesText = activitiesText || tourData.activitiesText || '';
+            // Asignar seguro desde reservationData.insurance
+            tourData.selectedInsurance = reservationData.insurance?.name || tourData.selectedInsurance || '';
+            // Asignar pasajeros
+            tourData.totalPassengers = parseInt(passengersCount.adults) + parseInt(passengersCount.children);
+            tourData.childrenCount = passengersCount.children;
+            // Obtener fechas del departure (departureDate y arrivalDate)
+            tourData.departureDate = departure?.departureDate || reservationData.departureDate || tourData.departureDate || '';
+            tourData.returnDate = departure?.arrivalDate || reservationData.returnDate || tourData.returnDate || '';
+            tourData.price = paymentData.totalValue;
+        
+            // Usar el ID del tour desde tourData
+            const itemId = tourData.tkId?.toString() || tourData.id?.toString() || '';
+            
+            return this.buildEcommerceItemFromTourData(
+              tourData,
+              finalItemListId,
+              finalItemListName,
+              itemId
+            ).pipe(
+              switchMap((item) => {
+                return this.getCurrentUserData().pipe(
+                  map((userData) => ({ item, userData }))
+                );
+              })
+            );
+          })
+        );
+      }),
+      catchError((error) => {
+        console.error('Error obteniendo datos completos del tour para purchase:', error);
+        // Fallback: obtener datos básicos de la reserva
+        return this.reservationService.getById(reservationId).pipe(
+          switchMap((reservation) => {
+            const reservationData = reservation as any;
+            const tourData = reservationData.tour || {};
+            const departureId = reservationData.departureId;
+            
+            // Intentar obtener departure para las fechas
+            const departureRequest = departureId 
+              ? this.departureService.getById(departureId).pipe(
+                  catchError(() => of(null))
+                )
+              : of(null);
+            
+            // Obtener vuelo seleccionado desde ReservationFlightService (igual que en checkout)
+            const flightRequest = this.reservationFlightService.getSelectedFlightPack(reservationId).pipe(
+              catchError(() => of(null))
+            );
+            
+            return forkJoin({
+              departure: departureRequest,
+              flightPack: flightRequest
+            }).pipe(
+              switchMap(({ departure, flightPack }) => {
+                // Obtener vuelo desde el flight pack seleccionado (igual que en checkout: selectedFlight?.name)
+                let flightCity = 'Sin vuelo';
+                if (flightPack) {
+                  const pack = Array.isArray(flightPack) ? flightPack[0] : flightPack;
+                  if (pack?.name) {
+                    flightCity = pack.name;
+                  }
+                }
+                
+                const tourDataForEcommerce: TourDataForEcommerce = {
+                  id: tourData.id,
+                  tkId: tourData.tkId ?? undefined,
+                  name: reservationData.tourName || tourData.name || undefined,
+                  destination: {
+                    continent: tourData.destination?.continent || undefined,
+                    country: tourData.destination?.country || undefined
+                  },
+                  days: tourData.days || undefined,
+                  nights: tourData.nights || undefined,
+                  rating: tourData.rating || undefined,
+                  monthTags: tourData.monthTags || undefined,
+                  tourType: tourData.tourType || undefined,
+                  flightCity: flightCity,
+                  activitiesText: reservationData.activities && reservationData.activities.length > 0
+                    ? reservationData.activities.map((a: any) => a.description || a.name).join(', ')
+                    : '',
+                  selectedInsurance: reservationData.insurance?.name || '',
+                  childrenCount: '0',
+                  totalPassengers: reservation.totalPassengers || undefined,
+                  departureDate: departure?.departureDate || reservationData.departureDate || '',
+                  returnDate: departure?.arrivalDate || reservationData.returnDate || '',
+                  price: paymentData.totalValue
+                };
+
+                const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+                return this.buildEcommerceItemFromTourData(
+                  tourDataForEcommerce,
+                  finalItemListId,
+                  finalItemListName,
+                  itemId
+                ).pipe(
+                  map((item) => ({ item, userData: this.getUserData('', undefined, '') }))
+                );
+              })
+            );
+          })
+        );
+      })
+    ).subscribe({
+      next: ({ item, userData }) => {
+        this.purchase(
+          {
+            transaction_id: paymentData.transactionId,
+            value: paymentData.totalValue,
+            tax: paymentData.tax || 0.6,
+            shipping: paymentData.shipping || 0.0,
+            currency: 'EUR',
+            coupon: paymentData.coupon || '',
+            payment_type: paymentData.paymentType,
+            items: [item]
+          },
+          userData
+        );
+      },
+      error: (error) => {
+        console.error('Error final obteniendo datos para purchase:', error);
+      }
+    });
+  }
+
+  /**
+   * Obtiene datos completos del tour para analytics (rating, continent, country, monthTags, days, nights, tourType)
+   */
+  private getCompleteTourDataForEcommerce(tourId: number): Observable<TourDataForEcommerce> {
+    const itineraryFilters: ItineraryFilters = {
+      tourId: tourId,
+      isVisibleOnWeb: true,
+      isBookable: true,
+    };
+
+    return this.itineraryService.getAll(itineraryFilters, false).pipe(
+      concatMap((itineraries) => {
+        if (itineraries.length === 0) {
+          return forkJoin({
+            tour: this.tourService.getById(tourId, false),
+            rating: this.reviewsService.getAverageRating({ tourId: tourId }).pipe(
+              map((ratingResponse) => {
+                const avgRating = ratingResponse?.averageRating;
+                return avgRating && avgRating > 0 ? avgRating : null;
+              }),
+              catchError(() => of(null))
+            )
+          }).pipe(
+            map(({ tour, rating }) => ({
+              id: tourId,
+              tkId: tour.tkId ?? undefined,
+              name: tour.name ?? undefined,
+              destination: { continent: undefined, country: undefined },
+              days: undefined,
+              nights: undefined,
+              rating: rating !== null ? rating : undefined,
+              monthTags: undefined,
+              tourType: tour.tripTypeId === 1 ? 'FIT' : 'Grupos',
+              price: tour.minPrice ?? undefined
+            } as TourDataForEcommerce))
+          );
+        }
+
+        // Obtener días de itinerario del primer itinerario disponible
+        const itineraryDaysRequest = this.itineraryDayService
+          .getAll({ itineraryId: itineraries[0].id })
+          .pipe(catchError(() => of([] as IItineraryDayResponse[])));
+
+        // Obtener continent y country
+        const locationRequest = forkJoin({
+          countryLocations: this.tourLocationService.getByTourAndType(tourId, 'COUNTRY').pipe(
+            map((response) => Array.isArray(response) ? response : response ? [response] : []),
+            catchError(() => of([] as ITourLocationResponse[]))
+          ),
+          continentLocations: this.tourLocationService.getByTourAndType(tourId, 'CONTINENT').pipe(
+            map((response) => Array.isArray(response) ? response : response ? [response] : []),
+            catchError(() => of([] as ITourLocationResponse[]))
+          )
+        }).pipe(
+          switchMap(({ countryLocations, continentLocations }) => {
+            const locationIds = [
+              ...countryLocations.map(tl => tl.locationId),
+              ...continentLocations.map(tl => tl.locationId)
+            ].filter(id => id !== undefined && id !== null);
+            
+            if (locationIds.length === 0) {
+              return of({ continent: '', country: '' });
+            }
+            
+            return this.locationNetService.getLocationsByIds(locationIds).pipe(
+              map((locations: Location[]) => {
+                const countries = countryLocations
+                  .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+                  .map(tl => locations.find(l => l.id === tl.locationId)?.name)
+                  .filter(name => name) as string[];
+                
+                const continents = continentLocations
+                  .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+                  .map(tl => locations.find(l => l.id === tl.locationId)?.name)
+                  .filter(name => name) as string[];
+                
+                return {
+                  continent: continents.join(', ') || '',
+                  country: countries.join(', ') || ''
+                };
+              }),
+              catchError(() => of({ continent: '', country: '' }))
+            );
+          })
+        );
+
+        // Obtener departures para extraer monthTags desde las fechas
+        const departureRequests = itineraries.map((itinerary) =>
+          this.departureService.getByItinerary(itinerary.id, false).pipe(
+            catchError(() => of([] as IDepartureResponse[]))
+          )
+        );
+
+        const monthTagsRequest = departureRequests.length > 0 
+          ? forkJoin(departureRequests).pipe(
+              map((departureArrays: IDepartureResponse[][]) => {
+                const allDepartures = departureArrays.flat();
+                const availableMonths: string[] = [];
+                
+                // Extraer meses de las fechas de departure
+                allDepartures.forEach((departure: IDepartureResponse) => {
+                  if (departure.departureDate) {
+                    const date = new Date(departure.departureDate);
+                    const monthIndex = date.getMonth(); // 0-11
+                    const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 
+                                      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+                    if (monthIndex >= 0 && monthIndex < 12) {
+                      const monthName = monthNames[monthIndex];
+                      if (!availableMonths.includes(monthName)) {
+                        availableMonths.push(monthName);
+                      }
+                    }
+                  }
+                });
+                
+                return availableMonths;
+              }),
+              catchError(() => of([]))
+            )
+          : of([]);
+
+        return forkJoin({
+          itineraryDays: itineraryDaysRequest,
+          locationData: locationRequest,
+          monthTags: monthTagsRequest,
+          tour: this.tourService.getById(tourId, false),
+          rating: this.reviewsService.getAverageRating({ tourId: tourId }).pipe(
+            map((ratingResponse) => {
+              const avgRating = ratingResponse?.averageRating;
+              return avgRating && avgRating > 0 ? avgRating : null;
+            }),
+            catchError(() => of(null))
+          )
+        }).pipe(
+          map(({ itineraryDays, locationData, monthTags, tour, rating }) => {
+            const days = itineraryDays.length;
+            const nights = days > 0 ? days - 1 : 0;
+            const tourType = tour.tripTypeId === 1 ? 'FIT' : 'Grupos';
+
+            return {
+              id: tourId,
+              tkId: tour.tkId ?? undefined,
+              name: tour.name ?? undefined,
+              destination: {
+                continent: locationData.continent || undefined,
+                country: locationData.country || undefined
+              },
+              days: days > 0 ? days : undefined,
+              nights: nights > 0 ? nights : undefined,
+              rating: rating !== null ? rating : undefined,
+              monthTags: monthTags.length > 0 ? monthTags : undefined,
+              tourType: tourType,
+              flightCity: '',
+              price: tour.minPrice ?? undefined
+            } as TourDataForEcommerce;
+          }),
+          catchError(() => of({
+            id: tourId,
+            days: undefined,
+            nights: undefined,
+            destination: { continent: undefined, country: undefined },
+            monthTags: undefined,
+            tourType: undefined
+          } as TourDataForEcommerce))
+        );
+      }),
+      catchError(() => of({
+        id: tourId,
+        days: undefined,
+        nights: undefined,
+        destination: { continent: undefined, country: undefined },
+        monthTags: undefined,
+        tourType: undefined
+      } as TourDataForEcommerce))
+    );
+  }
+
+  /**
+   * Obtiene las actividades asignadas desde los viajeros de la reservación
+   */
+  private getActivitiesFromTravelers(reservationId: number): Observable<string> {
+    return this.reservationService.getById(reservationId).pipe(
+      switchMap((reservation) => {
+        const reservationData = reservation as any;
+        const itineraryId = reservationData.itineraryId;
+        const departureId = reservationData.departureId || undefined;
+
+        if (!itineraryId) {
+          return of('');
+        }
+
+        // Obtener todos los viajeros de la reservación
+        return this.reservationTravelerService.getByReservation(reservationId).pipe(
+          switchMap((travelers) => {
+            if (!travelers || travelers.length === 0) {
+              return of('');
+            }
+
+            // Obtener todas las actividades asignadas (individuales y packs) de todos los viajeros
+            const activityRequests = travelers.map(traveler =>
+              forkJoin({
+                activities: this.reservationTravelerActivityService.getByReservationTraveler(traveler.id).pipe(
+                  catchError(() => of([]))
+                ),
+                activityPacks: this.reservationTravelerActivityPackService.getByReservationTraveler(traveler.id).pipe(
+                  catchError(() => of([]))
+                )
+              })
+            );
+
+            return forkJoin(activityRequests).pipe(
+              switchMap((results) => {
+                // Recopilar todos los IDs únicos de actividades y packs
+                const activityIds = new Set<number>();
+                const packIds = new Set<number>();
+
+                results.forEach(result => {
+                  result.activities.forEach((activity: any) => {
+                    if (activity.activityId) {
+                      activityIds.add(activity.activityId);
+                    }
+                  });
+                  result.activityPacks.forEach((pack: any) => {
+                    if (pack.activityPackId) {
+                      packIds.add(pack.activityPackId);
+                    }
+                  });
+                });
+
+                if (activityIds.size === 0 && packIds.size === 0) {
+                  return of('');
+                }
+
+                // Obtener todas las actividades disponibles del itinerario
+                return this.activityService.getForItineraryWithPacks(
+                  itineraryId,
+                  departureId,
+                  undefined,
+                  true, // isVisibleOnWeb
+                  true  // onlyOpt
+                ).pipe(
+                  map((allActivities: IActivityResponse[]) => {
+                    // Filtrar actividades asignadas
+                    const assignedActivities = allActivities.filter(activity => {
+                      if (activity.type === 'act') {
+                        return activityIds.has(activity.id);
+                      } else if (activity.type === 'pack') {
+                        return packIds.has(activity.id);
+                      }
+                      return false;
+                    });
+
+                    // Formatear nombres de actividades
+                    const activityNames = assignedActivities
+                      .map(activity => activity.name)
+                      .filter(name => name && name.trim().length > 0);
+
+                    return activityNames.join(', ');
+                  }),
+                  catchError(() => of(''))
+                );
+              })
+            );
+          }),
+          catchError(() => of(''))
+        );
+      }),
+      catchError(() => of(''))
+    );
+  }
+
+  /**
+   * Obtiene el conteo de pasajeros adultos y niños desde los viajeros y age groups
+   */
+  private getPassengersCount(reservationId: number): Observable<{ adults: string; children: string }> {
+    return forkJoin({
+      travelers: this.reservationTravelerService.getByReservation(reservationId),
+      ageGroups: this.ageGroupService.getAll()
+    }).pipe(
+      map(({ travelers, ageGroups }) => {
+        let adultsCount = 0;
+        let childrenCount = 0;
+
+        travelers.forEach(traveler => {
+          const ageGroup = ageGroups.find((group: any) => group.id === traveler.ageGroupId);
+          if (ageGroup) {
+            // Si upperLimitAge es null o undefined, es adulto
+            // Si upperLimitAge <= 15, es niño
+            // Si upperLimitAge > 15, es adulto
+            if (ageGroup.upperLimitAge === null || ageGroup.upperLimitAge === undefined) {
+              adultsCount++;
+            } else if (ageGroup.upperLimitAge <= 15) {
+              childrenCount++;
+            } else {
+              adultsCount++;
+            }
+          } else {
+            // Si no se encuentra el grupo de edad, asumir adulto
+            adultsCount++;
+          }
+        });
+
+        return {
+          adults: adultsCount.toString(),
+          children: childrenCount.toString()
+        };
+      }),
+      catchError(() => of({ adults: '0', children: '0' }))
+    );
   }
 
   // ============================================
@@ -627,6 +1896,25 @@ export class AnalyticsService {
   // ============================================
 
   /**
+   * Normaliza userData para asegurar que siempre tenga los campos, incluso si están vacíos
+   */
+  /**
+   * Normaliza los datos de usuario para asegurar que siempre tengan los campos requeridos
+   * Devuelve un objeto con campos obligatorios (no opcionales) para las estructuras específicas de eventos
+   */
+  private normalizeUserData(userData?: UserData): {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  } {
+    return {
+      email_address: userData?.email_address || '',
+      phone_number: userData?.phone_number || '',
+      user_id: userData?.user_id || ''
+    };
+  }
+
+  /**
    * Obtiene los datos del usuario actual si está logueado
    * Este método debe ser llamado desde los componentes que tienen acceso al AuthService
    */
@@ -658,8 +1946,9 @@ export class AnalyticsService {
 
   /**
    * Formatea la puntuación con un decimal (ej: 4 → "4.0", 4.6 → "4.6")
+s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
    */
-  formatRating(rating: number | string | undefined | null, defaultValue: string = '5.0'): string {
+  formatRating(rating: number | string | undefined | null, defaultValue: string = ''): string {
     if (rating === undefined || rating === null || rating === '') {
       return defaultValue;
     }
@@ -672,7 +1961,14 @@ export class AnalyticsService {
       return defaultValue;
     }
     
-    return numericRating.toFixed(1);
+    // Si el rating es 0, devolver vacío (no hay reviews)
+    if (numericRating === 0) {
+      return defaultValue;
+    }
+    
+    // Devolver el rating truncado a 1 decimal (no redondeado)
+    // Ejemplo: 4.7653 -> 4.7 (no 4.8)
+    return Math.floor(numericRating * 100) / 100 + '';
   }
 
   /**
@@ -709,6 +2005,7 @@ export class AnalyticsService {
     itemId?: string
   ): Observable<EcommerceItem> {
     const tourId = tourData.id;
+    // Usar flightCity directamente de tourData (ya viene asignado desde trackPurchaseFromReservation)
     const flightCity = tourData.flightCity || 'Sin vuelo';
     
     // Obtener tag del tour
@@ -754,7 +2051,9 @@ export class AnalyticsService {
           duracion: duracion,
           start_date: tourData.departureDate || '',
           end_date: tourData.returnDate || '',
-          pasajeros_adultos: totalPassengers,
+          pasajeros_adultos: (tourData.totalPassengers && tourData.childrenCount) 
+            ? (tourData.totalPassengers - parseInt(tourData.childrenCount || '0')).toString()
+            : (tourData.totalPassengers?.toString() || '0'),
           pasajeros_niños: tourData.childrenCount || '0',
           actividades: tourData.activitiesText || '',
           seguros: tourData.selectedInsurance || '',
@@ -766,74 +2065,247 @@ export class AnalyticsService {
 
 
   /**
+   * Convierte un array de TourDataV2 a EcommerceItem[] para analytics
+   */
+  /**
+   * Convierte un TourDataV2 individual a EcommerceItem
+   * Método helper para mantener consistencia entre eventos
+   */
+  convertTourToEcommerceItem(
+    tour: TourDataV2,
+    itemListId: string,
+    itemListName: string,
+    index: number = 0
+  ): EcommerceItem {
+    // Calcular duración
+    let duracion = '';
+    if (tour.itineraryDaysCount) {
+      const days = tour.itineraryDaysCount;
+      const nights = days > 0 ? days - 1 : 0;
+      duracion = nights > 0 ? `${days} días, ${nights} noches` : `${days} días`;
+    }
+
+    // Determinar item_category5 (tipología de viaje)
+    // Usar tripType si está disponible, si no, usar fallback basado en isByDr
+    const itemCategory5 = tour.tripType && tour.tripType.length > 0
+      ? tour.tripType.join(', ')
+      : (tour.isByDr ? 'Grupos' : 'Privados');
+
+    // Convertir meses a minúsculas
+    const monthsString = tour.availableMonths?.join(', ').toLowerCase() || '';
+
+    // Estructura exacta según especificación
+    return {
+      item_id: tour.id?.toString() || '',
+      item_name: tour.title || '',
+      coupon: '',
+      discount: 0,
+      index: index + 1,
+      item_brand: 'Different Roads',
+      item_category: tour.continent || '',
+      item_category2: tour.country || '',
+      item_category3: tour.tag && tour.tag.trim().length > 0 ? tour.tag.trim() : '',
+      item_category4: monthsString,
+      item_category5: itemCategory5,
+      item_list_id: itemListId,
+      item_list_name: itemListName,
+      item_variant: '',
+      price: tour.price || 0,
+      quantity: 1,
+      puntuacion: this.formatRating(tour.rating, ''),
+      duracion: duracion
+    };
+  }
+
+  convertToursToEcommerceItems(
+    tours: TourDataV2[],
+    itemListId: string,
+    itemListName: string
+  ): EcommerceItem[] {
+    return tours.map((tour, index) => {
+      return this.convertTourToEcommerceItem(tour, itemListId, itemListName, index);
+    });
+  }
+
+  /**
+   * Dispara el evento view_item_list para una lista de tours
+   * Maneja automáticamente la obtención de datos del usuario y la conversión de tours
+   * Solo dispara un evento por itemListId para evitar duplicados
+   */
+  private trackedListIds = new Set<string>();
+
+  /**
+   * Limpia el registro de listas trackeadas (útil para testing o reset)
+   */
+  clearTrackedListIds(): void {
+    this.trackedListIds.clear();
+    this.firedEvents.clear();
+    // El cache se mantiene para reutilizar los datos del usuario
+  }
+
+  /**
+   * Verifica si una lista ya fue trackeada
+   */
+  isListTracked(itemListId: string): boolean {
+    return this.trackedListIds.has(itemListId);
+  }
+
+  trackViewItemListFromTours(
+    tours: TourDataV2[],
+    itemListId: string,
+    itemListName: string
+  ): void {
+    if (!tours || tours.length === 0 || !itemListId || !itemListName) {
+      return;
+    }
+
+    // Evitar disparar múltiples eventos para la misma lista
+    if (this.trackedListIds.has(itemListId)) {
+      return;
+    }
+
+    // Marcar como trackeada INMEDIATAMENTE antes de hacer cualquier cosa
+    this.trackedListIds.add(itemListId);
+
+    // Convertir tours a formato EcommerceItem
+    const items = this.convertToursToEcommerceItems(tours, itemListId, itemListName);
+
+    // Obtener datos del usuario y disparar evento
+    this.getCurrentUserData().subscribe(userData => {
+      this.viewItemList(itemListId, itemListName, items, userData);
+    });
+  }
+
+  /**
    * Obtiene los datos completos del usuario usando el mismo patrón que el header
    * Combina email, cognitoId y datos de la base de datos
    */
-  getCurrentUserData(): Observable<UserData | undefined> {
+  getCurrentUserData(): Observable<UserData> {
+    // Verificar primero el valor actual del email (síncrono)
+    const currentEmail = this.authService.getUserEmailValue();
+    
+    // Si ya hay email, procesarlo directamente
+    if (currentEmail && currentEmail.length > 0) {
+      return this.processUserDataWithEmail(currentEmail);
+    }
+    
+    // Si no hay email, esperar a que se actualice (asíncrono)
     return this.authService.getUserEmail().pipe(
+      // Filtrar valores vacíos
+      filter((email: string) => !!email && email.length > 0),
+      // Tomar el primer valor válido
+      first(),
       switchMap((email: string) => {
-        if (!email) {
-          return of(undefined);
-        }
+        return this.processUserDataWithEmail(email);
+      }),
+      catchError(() => {
+        // Devolver objeto con campos vacíos en lugar de undefined
+        return of({
+          email_address: '',
+          phone_number: '',
+          user_id: ''
+        } as UserData);
+      })
+    );
+  }
 
-        return this.authService.getCognitoId().pipe(
-          switchMap((cognitoId: string) => {
-            if (!cognitoId) {
+  private processUserDataWithEmail(email: string): Observable<UserData> {
+    // Verificar primero el valor actual del cognitoId (síncrono)
+    const currentCognitoId = this.authService.getCognitoIdValue();
+    
+    if (currentCognitoId && currentCognitoId.length > 0) {
+      return this.processUserDataWithCognitoId(email, currentCognitoId);
+    }
+    
+    // Si no hay cognitoId, esperar a que se actualice (asíncrono)
+    return this.authService.getCognitoId().pipe(
+      filter((cognitoId: string) => !!cognitoId && cognitoId.length > 0),
+      first(),
+      switchMap((cognitoId: string) => {
+        return this.processUserDataWithCognitoId(email, cognitoId);
+      }),
+      catchError(() => {
+        return of({
+          email_address: email,
+          phone_number: '',
+          user_id: ''
+        });
+      })
+    );
+  }
+
+  private processUserDataWithCognitoId(email: string, cognitoId: string): Observable<UserData> {
+    if (!cognitoId) {
+      return of({
+        email_address: email,
+        phone_number: '',
+        user_id: ''
+      });
+    }
+
+    return this.usersNetService.getUsersByCognitoId(cognitoId).pipe(
+      switchMap((users) => {
+        if (users && users.length > 0) {
+          const user = users[0];
+          return this.personalInfoService.getUserData(user.id.toString()).pipe(
+            map((personalInfo: any) => {
+              const phone = personalInfo?.telefono ? this.formatPhoneNumber(personalInfo.telefono) : '';
+              return {
+                email_address: personalInfo?.email || email,
+                phone_number: phone,
+                user_id: cognitoId
+              };
+            }),
+            catchError(() => {
               return of({
                 email_address: email,
                 phone_number: '',
-                user_id: ''
+                user_id: cognitoId
               });
+            })
+          );
+        }
+        
+        return this.usersNetService.getUsersByEmail(email).pipe(
+          switchMap((usersByEmail) => {
+            if (usersByEmail && usersByEmail.length > 0) {
+              const user = usersByEmail[0];
+              return this.personalInfoService.getUserData(user.id.toString()).pipe(
+                map((personalInfo: any) => {
+                  const phone = personalInfo?.telefono ? this.formatPhoneNumber(personalInfo.telefono) : '';
+                  return {
+                    email_address: personalInfo?.email || email,
+                    phone_number: phone,
+                    user_id: cognitoId
+                  };
+                }),
+                catchError(() => {
+                  return of({
+                    email_address: email,
+                    phone_number: '',
+                    user_id: cognitoId
+                  });
+                })
+              );
             }
-
-            // Usar el mismo patrón que el header pero con PersonalInfoV2Service
-            return this.usersNetService.getUsersByCognitoId(cognitoId).pipe(
-              switchMap((users) => {
-                if (users && users.length > 0) {
-                  const user = users[0];
-                  // Obtener datos completos usando PersonalInfoV2Service
-                  return this.personalInfoService.getUserData(user.id.toString()).pipe(
-                    map((personalInfo: any) => {
-                      const phone = personalInfo?.telefono ? this.formatPhoneNumber(personalInfo.telefono) : '';
-                      return {
-                        email_address: personalInfo?.email || email,
-                        phone_number: phone,
-                        user_id: cognitoId
-                      };
-                    })
-                  );
-                }
-                // Si no encuentra usuario, intentar con email directamente
-                return this.usersNetService.getUsersByEmail(email).pipe(
-                  switchMap((usersByEmail) => {
-                    if (usersByEmail && usersByEmail.length > 0) {
-                      const user = usersByEmail[0];
-                      return this.personalInfoService.getUserData(user.id.toString()).pipe(
-                        map((personalInfo: any) => {
-                          const phone = personalInfo?.telefono ? this.formatPhoneNumber(personalInfo.telefono) : '';
-                          return {
-                            email_address: personalInfo?.email || email,
-                            phone_number: phone,
-                            user_id: cognitoId
-                          };
-                        })
-                      );
-                    }
-                    // Fallback final
-                    return of({
-                      email_address: email,
-                      phone_number: '',
-                      user_id: cognitoId
-                    });
-                  })
-                );
-              })
-            );
+            return of({
+              email_address: email,
+              phone_number: '',
+              user_id: cognitoId
+            });
           })
         );
+      }),
+      catchError(() => {
+        return of({
+          email_address: email,
+          phone_number: '',
+          user_id: cognitoId || ''
+        });
       })
     );
   }
 }
+
 
 

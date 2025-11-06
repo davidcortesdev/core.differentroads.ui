@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 
 /**
@@ -244,7 +245,20 @@ export class ReviewsService {
       });
     }
 
-    return this.http.get<AverageRatingResponse>(`${this.API_URL}/average-rating`, { params });
+    // El endpoint puede devolver un número directamente o un objeto
+    return this.http.get<number | AverageRatingResponse>(`${this.API_URL}/average-rating`, { params }).pipe(
+      map((response) => {
+        // Si la respuesta es un número, convertirla al formato esperado
+        if (typeof response === 'number') {
+          return {
+            averageRating: response,
+            totalReviews: 0 // El endpoint no devuelve el total, así que lo dejamos en 0
+          };
+        }
+        // Si ya es un objeto, devolverlo tal cual
+        return response;
+      })
+    );
   }
 
   /**

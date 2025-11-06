@@ -18,6 +18,7 @@ import { LocationNetService, Location } from '../locations/locationNet.service';
 import { DepartureService, IDepartureResponse } from '../departure/departure.service';
 import { TourTagService } from '../tag/tour-tag.service';
 import { TagService } from '../tag/tag.service';
+import { ReviewsService } from '../reviews/reviews.service';
 import { environment } from '../../../../environments/environment';
 
 /**
@@ -75,7 +76,8 @@ export class AdditionalInfoService {
     private locationService: LocationNetService,
     private departureService: DepartureService,
     private tourTagService: TourTagService,
-    private tagService: TagService
+    private tagService: TagService,
+    private reviewsService: ReviewsService
   ) {}
 
   /**
@@ -781,9 +783,16 @@ export class AdditionalInfoService {
           itineraryDays: itineraryDaysRequest,
           locationData: locationRequest,
           monthTags: monthTagsRequest,
-          tour: this.tourService.getById(tourId, false)
+          tour: this.tourService.getById(tourId, false),
+          rating: this.reviewsService.getAverageRating({ tourId: tourId }).pipe(
+            map((ratingResponse) => {
+              const avgRating = ratingResponse?.averageRating;
+              return avgRating && avgRating > 0 ? avgRating : null;
+            }),
+            catchError(() => of(null))
+          )
         }).pipe(
-          map(({ itineraryDays, locationData, monthTags, tour }) => {
+          map(({ itineraryDays, locationData, monthTags, tour, rating }) => {
             const days = itineraryDays.length;
             const nights = days > 0 ? days - 1 : 0;
             const tourType = tour.tripTypeId === 1 ? 'FIT' : 'Grupos';
@@ -798,7 +807,7 @@ export class AdditionalInfoService {
               },
               days: days > 0 ? days : undefined,
               nights: nights > 0 ? nights : undefined,
-              rating: undefined,
+              rating: rating !== null ? rating : undefined,
               monthTags: monthTags.length > 0 ? monthTags : undefined,
               tourType: tourType,
               flightCity: 'Sin vuelo',

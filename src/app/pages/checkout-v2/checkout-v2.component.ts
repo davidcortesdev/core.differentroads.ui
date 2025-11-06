@@ -50,10 +50,15 @@ import {
 } from './services/price-check.service';
 import { environment } from '../../../environments/environment';
 import { interval, Subscription } from 'rxjs';
-import { takeWhile, switchMap, map, catchError } from 'rxjs/operators';
+import { takeWhile, switchMap, map, catchError, concatMap } from 'rxjs/operators';
 import { ReservationStatusService } from '../../core/services/reservation/reservation-status.service';
 import { Title } from '@angular/platform-browser';
 import { EcommerceItem, TourDataForEcommerce } from '../../core/services/analytics/analytics.service';
+import { ReviewsService } from '../../core/services/reviews/reviews.service';
+import { TourLocationService, ITourLocationResponse } from '../../core/services/tour/tour-location.service';
+import { LocationNetService, Location } from '../../core/services/locations/locationNet.service';
+import { ItineraryDayService, IItineraryDayResponse } from '../../core/services/itinerary/itinerary-day/itinerary-day.service';
+import { ActivityService, IActivityResponse } from '../../core/services/activity/activity.service';
 
 @Component({
   selector: 'app-checkout-v2',
@@ -90,6 +95,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   // Variable para datos del itinerario
   itineraryData: IItineraryResponse | null = null;
   departureData: IDepartureResponse | null = null; // Nuevo: para almacenar datos del departure
+  
+  // Guardar itemListId e itemListName desde el state de navegación
+  private savedItemListId: string = '';
+  private savedItemListName: string = '';
 
   // Variables para actividades
   selectedActivities: any[] = [];
@@ -206,7 +215,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     private priceCheckService: PriceCheckService,
     private reservationStatusService: ReservationStatusService,
     private http: HttpClient,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private reviewsService: ReviewsService,
+    private tourLocationService: TourLocationService,
+    private locationNetService: LocationNetService,
+    private itineraryDayService: ItineraryDayService,
+    private activityService: ActivityService
   ) {}
 
   ngOnInit(): void {
@@ -549,6 +563,24 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   private loadReservationData(reservationId: number): void {
     this.loading = true;
     this.error = null;
+    
+    // Guardar itemListId e itemListName desde el state de navegación al cargar el componente
+    const navigation = this.router.getCurrentNavigation();
+    const state = navigation?.extras?.state || window.history.state;
+    const itemListIdFromState = state?.['listId'] || state?.['list_id'] || '';
+    const itemListNameFromState = state?.['listName'] || state?.['list_name'] || '';
+    
+    // Si hay valores en el state, guardarlos en sessionStorage para que persistan al recargar
+    if (itemListIdFromState) {
+      sessionStorage.setItem('checkout_itemListId', itemListIdFromState);
+    }
+    if (itemListNameFromState) {
+      sessionStorage.setItem('checkout_itemListName', itemListNameFromState);
+    }
+    
+    // Usar valores del state si están disponibles, o recuperar de sessionStorage
+    this.savedItemListId = itemListIdFromState || sessionStorage.getItem('checkout_itemListId') || '';
+    this.savedItemListName = itemListNameFromState || sessionStorage.getItem('checkout_itemListName') || '';
 
     this.reservationService.getById(reservationId).subscribe({
       next: (reservation) => {
@@ -2632,27 +2664,63 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Disparar evento view_cart cuando se visualiza el checkout paso 1
    */
   private trackViewCart(): void {
-    if (!this.reservationData) return;
+    if (!this.reservationData || !this.tourId) return;
     
     const state = window.history.state;
-    const itemListId = state?.['listId'] || '';
-    const itemListName = state?.['listName'] || '';
+    const itemListId = state?.['listId'] || state?.['list_id'] || '';
+    const itemListName = state?.['listName'] || state?.['list_name'] || '';
     
-    const tourDataForEcommerce = this.prepareTourDataForEcommerce();
-    
-    this.buildAndDispatchEvent(
-      (item, userData) => {
-        this.analyticsService.viewCart(
-          'EUR',
-          this.totalAmountCalculated || this.totalAmount || 0,
-          item,
-          userData
+    // Obtener todos los datos completos del tour dinámicamente
+    this.getCompleteTourDataForEcommerce(this.tourId).pipe(
+      switchMap((tourDataForEcommerce: TourDataForEcommerce) => {
+        // Actualizar con datos adicionales del contexto
+        const additionalData = this.prepareTourDataForEcommerce();
+        tourDataForEcommerce.flightCity = additionalData.flightCity || tourDataForEcommerce.flightCity;
+        tourDataForEcommerce.activitiesText = additionalData.activitiesText || tourDataForEcommerce.activitiesText;
+        tourDataForEcommerce.selectedInsurance = additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
+        tourDataForEcommerce.totalPassengers = additionalData.totalPassengers || tourDataForEcommerce.totalPassengers;
+        tourDataForEcommerce.childrenCount = additionalData.childrenCount || tourDataForEcommerce.childrenCount;
+        tourDataForEcommerce.departureDate = additionalData.departureDate || tourDataForEcommerce.departureDate;
+        tourDataForEcommerce.returnDate = additionalData.returnDate || tourDataForEcommerce.returnDate;
+        tourDataForEcommerce.price = additionalData.price || tourDataForEcommerce.price;
+        
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          this.getTourItemId()
+        ).pipe(
+          switchMap((item) => {
+            return this.analyticsService.getCurrentUserData().pipe(
+              map((userData) => ({ item, userData }))
+            );
+          })
         );
-      },
-      itemListId,
-      itemListName,
-      tourDataForEcommerce
-    );
+      }),
+      catchError((error) => {
+        console.error('Error obteniendo datos completos del tour para view_cart:', error);
+        // Fallback con datos básicos
+        const tourDataForEcommerce = this.prepareTourDataForEcommerce();
+        // Usar el ID del tour desde tourDataForEcommerce
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          map((item) => ({ item, userData: this.getUserData() }))
+        );
+      })
+    ).subscribe(({ item, userData }) => {
+      this.analyticsService.viewCart(
+        'EUR',
+        this.totalAmountCalculated || this.totalAmount || 0,
+        item,
+        userData
+      );
+    });
   }
 
   /**
@@ -2669,12 +2737,329 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
+   * Obtiene el conteo de adultos y niños desde los viajeros de la reservación
+   */
+  private getPassengersCount(): Observable<{ adults: string; children: string }> {
+    if (!this.reservationId) {
+      return of({ adults: '0', children: '0' });
+    }
+
+    return forkJoin({
+      travelers: this.reservationTravelerService.getAll({ reservationId: this.reservationId }),
+      ageGroups: this.ageGroupService.getAll()
+    }).pipe(
+      map(({ travelers, ageGroups }) => {
+        let adultsCount = 0;
+        let childrenCount = 0;
+
+        travelers.forEach(traveler => {
+          const ageGroup = ageGroups.find(group => group.id === traveler.ageGroupId);
+          if (ageGroup) {
+            // Si upperLimitAge es null o undefined, es adulto
+            // Si upperLimitAge <= 15, es niño
+            // Si upperLimitAge > 15, es adulto
+            if (ageGroup.upperLimitAge === null || ageGroup.upperLimitAge === undefined) {
+              adultsCount++;
+            } else if (ageGroup.upperLimitAge <= 15) {
+              childrenCount++;
+            } else {
+              adultsCount++;
+            }
+          } else {
+            // Si no se encuentra el grupo de edad, asumir adulto
+            adultsCount++;
+          }
+        });
+
+        return {
+          adults: adultsCount.toString(),
+          children: childrenCount.toString()
+        };
+      }),
+      catchError(() => of({ adults: '0', children: '0' }))
+    );
+  }
+
+  /**
    * Calcular el número de pasajeros niños (menores de edad) dinámicamente
    * NOTA: Simplificado para independencia de componentes
    */
   private getChildrenPassengersCount(): string {
     // Retornar 0 ya que cada componente maneja sus propios datos
     return '0';
+  }
+
+  /**
+   * Obtiene todos los datos completos del tour desde los servicios adicionales para analytics
+   */
+  private getCompleteTourDataForEcommerce(tourId: number): Observable<TourDataForEcommerce> {
+    const itineraryFilters: ItineraryFilters = {
+      tourId: tourId,
+      isVisibleOnWeb: true,
+      isBookable: true,
+    };
+
+    return this.itineraryService.getAll(itineraryFilters, false).pipe(
+      concatMap((itineraries) => {
+        if (itineraries.length === 0) {
+          return forkJoin({
+            tour: this.tourService.getById(tourId, false),
+            rating: this.reviewsService.getAverageRating({ tourId: tourId }).pipe(
+              map((ratingResponse) => {
+                const avgRating = ratingResponse?.averageRating;
+                return avgRating && avgRating > 0 ? avgRating : null;
+              }),
+              catchError(() => of(null))
+            )
+          }).pipe(
+            map(({ tour, rating }) => ({
+              id: tourId,
+              tkId: tour.tkId ?? undefined,
+              name: tour.name ?? undefined,
+              destination: { continent: undefined, country: undefined },
+              days: undefined,
+              nights: undefined,
+              rating: rating !== null ? rating : undefined,
+              monthTags: undefined,
+              tourType: tour.tripTypeId === 1 ? 'FIT' : 'Grupos',
+              price: tour.minPrice ?? undefined
+            } as TourDataForEcommerce))
+          );
+        }
+
+        // Obtener días de itinerario del primer itinerario disponible
+        const itineraryDaysRequest = this.itineraryDayService
+          .getAll({ itineraryId: itineraries[0].id })
+          .pipe(catchError(() => of([] as IItineraryDayResponse[])));
+
+        // Obtener continent y country
+        const locationRequest = forkJoin({
+          countryLocations: this.tourLocationService.getByTourAndType(tourId, 'COUNTRY').pipe(
+            map((response) => Array.isArray(response) ? response : response ? [response] : []),
+            catchError(() => of([] as ITourLocationResponse[]))
+          ),
+          continentLocations: this.tourLocationService.getByTourAndType(tourId, 'CONTINENT').pipe(
+            map((response) => Array.isArray(response) ? response : response ? [response] : []),
+            catchError(() => of([] as ITourLocationResponse[]))
+          )
+        }).pipe(
+          switchMap(({ countryLocations, continentLocations }) => {
+            const locationIds = [
+              ...countryLocations.map(tl => tl.locationId),
+              ...continentLocations.map(tl => tl.locationId)
+            ].filter(id => id !== undefined && id !== null);
+            
+            if (locationIds.length === 0) {
+              return of({ continent: '', country: '' });
+            }
+            
+            return this.locationNetService.getLocationsByIds(locationIds).pipe(
+              map((locations: Location[]) => {
+                const countries = countryLocations
+                  .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+                  .map(tl => locations.find(l => l.id === tl.locationId)?.name)
+                  .filter(name => name) as string[];
+                
+                const continents = continentLocations
+                  .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+                  .map(tl => locations.find(l => l.id === tl.locationId)?.name)
+                  .filter(name => name) as string[];
+                
+                return {
+                  continent: continents.join(', ') || '',
+                  country: countries.join(', ') || ''
+                };
+              }),
+              catchError(() => of({ continent: '', country: '' }))
+            );
+          })
+        );
+
+        // Obtener departures para extraer monthTags desde las fechas
+        const departureRequests = itineraries.map((itinerary) =>
+          this.departureService.getByItinerary(itinerary.id, false).pipe(
+            catchError(() => of([] as IDepartureResponse[]))
+          )
+        );
+
+        const monthTagsRequest = departureRequests.length > 0 
+          ? forkJoin(departureRequests).pipe(
+              map((departureArrays: IDepartureResponse[][]) => {
+                const allDepartures = departureArrays.flat();
+                const availableMonths: string[] = [];
+                
+                // Extraer meses de las fechas de departure
+                allDepartures.forEach((departure: IDepartureResponse) => {
+                  if (departure.departureDate) {
+                    const date = new Date(departure.departureDate);
+                    const monthIndex = date.getMonth(); // 0-11
+                    const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 
+                                      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+                    if (monthIndex >= 0 && monthIndex < 12) {
+                      const monthName = monthNames[monthIndex];
+                      if (!availableMonths.includes(monthName)) {
+                        availableMonths.push(monthName);
+                      }
+                    }
+                  }
+                });
+                
+                return availableMonths;
+              }),
+              catchError(() => of([]))
+            )
+          : of([]);
+
+        return forkJoin({
+          itineraryDays: itineraryDaysRequest,
+          locationData: locationRequest,
+          monthTags: monthTagsRequest,
+          tour: this.tourService.getById(tourId, false),
+          rating: this.reviewsService.getAverageRating({ tourId: tourId }).pipe(
+            map((ratingResponse) => {
+              const avgRating = ratingResponse?.averageRating;
+              return avgRating && avgRating > 0 ? avgRating : null;
+            }),
+            catchError(() => of(null))
+          )
+        }).pipe(
+          map(({ itineraryDays, locationData, monthTags, tour, rating }) => {
+            const days = itineraryDays.length;
+            const nights = days > 0 ? days - 1 : 0;
+            const tourType = tour.tripTypeId === 1 ? 'FIT' : 'Grupos';
+
+            return {
+              id: tourId,
+              tkId: tour.tkId ?? undefined,
+              name: tour.name ?? undefined,
+              destination: {
+                continent: locationData.continent || undefined,
+                country: locationData.country || undefined
+              },
+              days: days > 0 ? days : undefined,
+              nights: nights > 0 ? nights : undefined,
+              rating: rating !== null ? rating : undefined,
+              monthTags: monthTags.length > 0 ? monthTags : undefined,
+              tourType: tourType,
+              flightCity: 'Sin vuelo',
+              price: tour.minPrice ?? undefined
+            } as TourDataForEcommerce;
+          }),
+          catchError(() => of({
+            id: tourId,
+            days: undefined,
+            nights: undefined,
+            destination: { continent: undefined, country: undefined },
+            monthTags: undefined,
+            tourType: undefined
+          } as TourDataForEcommerce))
+        );
+      }),
+      catchError(() => of({
+        id: tourId,
+        days: undefined,
+        nights: undefined,
+        destination: { continent: undefined, country: undefined },
+        monthTags: undefined,
+        tourType: undefined
+      } as TourDataForEcommerce))
+    );
+  }
+
+  /**
+   * Obtiene el nombre del seguro seleccionado
+   */
+  private getInsuranceName(): string {
+    // Usar el seguro del componente hijo si está disponible, o el del componente padre
+    return this.insuranceSelector?.selectedInsurance?.name || 
+           this.selectedInsurance?.name || 
+           this.reservationData?.insurance?.name || 
+           '';
+  }
+
+  /**
+   * Obtiene las actividades asignadas desde los viajeros de la reservación
+   */
+  private getActivitiesFromTravelers(): Observable<string> {
+    if (!this.reservationId || !this.itineraryId) {
+      return of('');
+    }
+
+    // Obtener todos los viajeros de la reservación
+    return this.reservationTravelerService.getAll({ reservationId: this.reservationId }).pipe(
+      switchMap((travelers) => {
+        if (!travelers || travelers.length === 0) {
+          return of('');
+        }
+
+        // Obtener todas las actividades asignadas (individuales y packs) de todos los viajeros
+        const activityRequests = travelers.map(traveler =>
+          forkJoin({
+            activities: this.reservationTravelerActivityService.getByReservationTraveler(traveler.id).pipe(
+              catchError(() => of([]))
+            ),
+            activityPacks: this.reservationTravelerActivityPackService.getByReservationTraveler(traveler.id).pipe(
+              catchError(() => of([]))
+            )
+          })
+        );
+
+        return forkJoin(activityRequests).pipe(
+          switchMap((results) => {
+            // Recopilar todos los IDs únicos de actividades y packs
+            const activityIds = new Set<number>();
+            const packIds = new Set<number>();
+
+            results.forEach(result => {
+              result.activities.forEach(activity => {
+                if (activity.activityId) {
+                  activityIds.add(activity.activityId);
+                }
+              });
+              result.activityPacks.forEach(pack => {
+                if (pack.activityPackId) {
+                  packIds.add(pack.activityPackId);
+                }
+              });
+            });
+
+            if (activityIds.size === 0 && packIds.size === 0) {
+              return of('');
+            }
+
+            // Obtener todas las actividades disponibles del itinerario
+            return this.activityService.getForItineraryWithPacks(
+              this.itineraryId!,
+              this.departureId || undefined,
+              undefined,
+              true, // isVisibleOnWeb
+              true  // onlyOpt
+            ).pipe(
+              map((allActivities: IActivityResponse[]) => {
+                // Filtrar actividades asignadas
+                const assignedActivities = allActivities.filter(activity => {
+                  if (activity.type === 'act') {
+                    return activityIds.has(activity.id);
+                  } else if (activity.type === 'pack') {
+                    return packIds.has(activity.id);
+                  }
+                  return false;
+                });
+
+                // Formatear nombres de actividades
+                const activityNames = assignedActivities
+                  .map(activity => activity.name)
+                  .filter(name => name && name.trim().length > 0);
+
+                return activityNames.join(', ');
+              }),
+              catchError(() => of(''))
+            );
+          })
+        );
+      }),
+      catchError(() => of(''))
+    );
   }
 
   /**
@@ -2688,6 +3073,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     const tourData = this.reservationData?.tour || {};
     
     // Obtener actividades seleccionadas
+    // Si no se proporciona en additionalData, intentar desde selectedActivities o desde viajeros
     const activitiesText = additionalData?.activitiesText ||
       (this.selectedActivities && this.selectedActivities.length > 0
         ? this.selectedActivities.map((a) => a.description || a.name).join(', ')
@@ -2737,11 +3123,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     itemListName: string,
     tourDataForEcommerce: TourDataForEcommerce
   ): void {
+    // Usar el ID del tour desde tourDataForEcommerce
+    const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+    
     this.analyticsService.buildEcommerceItemFromTourData(
       tourDataForEcommerce,
       itemListId,
       itemListName,
-      this.getTourItemId()
+      itemId
     ).pipe(
       switchMap((item) => {
         return this.analyticsService.getCurrentUserData().pipe(
@@ -2750,11 +3139,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       }),
       catchError((error) => {
         console.error('Error obteniendo datos para analytics:', error);
+        // Usar el ID del tour desde tourDataForEcommerce
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        
         return this.analyticsService.buildEcommerceItemFromTourData(
           tourDataForEcommerce,
           itemListId,
           itemListName,
-          this.getTourItemId()
+          itemId
         ).pipe(
           map((item) => ({ item, userData: this.getUserData() }))
         );
@@ -2769,131 +3161,317 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Disparar evento begin_checkout cuando el usuario continúa del paso 1
    */
   private trackBeginCheckout(): void {
-    if (!this.reservationData) return;
+    if (!this.reservationData || !this.tourId) return;
     
-    const state = window.history.state;
-    const itemListId = state?.['listId'] || '';
-    const itemListName = state?.['listName'] || '';
+    // Usar los valores guardados al cargar el componente
+    const itemListId = this.savedItemListId;
+    const itemListName = this.savedItemListName;
     
-    const tourDataForEcommerce = this.prepareTourDataForEcommerce();
-    
-    this.buildAndDispatchEvent(
-      (item, userData) => {
-        this.analyticsService.beginCheckout(
-          {
-            currency: 'EUR',
-            value: this.totalAmountCalculated || this.totalAmount || 0,
-            coupon: this.reservationData.coupon?.code || '',
-            items: [item]
-          },
-          userData
+    // Obtener todos los datos completos del tour dinámicamente, incluyendo actividades y pasajeros desde viajeros
+    forkJoin({
+      tourData: this.getCompleteTourDataForEcommerce(this.tourId),
+      activitiesText: this.getActivitiesFromTravelers(),
+      passengersCount: this.getPassengersCount()
+    }).pipe(
+      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount }) => {
+        // Actualizar con datos adicionales del contexto
+        const additionalData = this.prepareTourDataForEcommerce();
+        tourDataForEcommerce.flightCity = additionalData.flightCity || tourDataForEcommerce.flightCity;
+        // Usar actividades obtenidas dinámicamente desde viajeros, o fallback a additionalData
+        tourDataForEcommerce.activitiesText = activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
+        // Usar seguro del componente o del contexto
+        tourDataForEcommerce.selectedInsurance = this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
+        // Usar conteo de pasajeros desde viajeros
+        tourDataForEcommerce.totalPassengers = parseInt(passengersCount.adults) + parseInt(passengersCount.children);
+        tourDataForEcommerce.childrenCount = passengersCount.children;
+        tourDataForEcommerce.departureDate = additionalData.departureDate || tourDataForEcommerce.departureDate;
+        tourDataForEcommerce.returnDate = additionalData.returnDate || tourDataForEcommerce.returnDate;
+        tourDataForEcommerce.price = additionalData.price || tourDataForEcommerce.price;
+        
+        // Usar el ID del tour desde tourDataForEcommerce
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          switchMap((item) => {
+            return this.analyticsService.getCurrentUserData().pipe(
+              map((userData) => ({ item, userData }))
+            );
+          })
         );
-      },
-      itemListId,
-      itemListName,
-      tourDataForEcommerce
-    );
+      }),
+      catchError((error) => {
+        console.error('Error obteniendo datos completos del tour para begin_checkout:', error);
+        // Fallback con datos básicos
+        const tourDataForEcommerce = this.prepareTourDataForEcommerce();
+        // Usar el ID del tour desde tourDataForEcommerce
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          map((item) => ({ item, userData: this.getUserData() }))
+        );
+      })
+    ).subscribe(({ item, userData }) => {
+      // El item ya tiene item_list_id e item_list_name desde buildEcommerceItemFromTourData
+      // No necesitamos actualizarlo, solo pasarlo directamente como en view_cart
+      this.analyticsService.beginCheckout(
+        {
+          currency: 'EUR',
+          value: this.totalAmountCalculated || this.totalAmount || 0,
+          coupon: this.reservationData.coupon?.code || '',
+          items: [item]
+        },
+        userData
+      );
+    });
   }
 
   /**
    * Disparar evento view_flights_info cuando se visualiza el paso de vuelos
    */
   private trackViewFlightsInfo(): void {
-    if (!this.reservationData) return;
+    if (!this.reservationData || !this.tourId) return;
     
-    const state = window.history.state;
-    const itemListId = state?.['listId'] || '';
-    const itemListName = state?.['listName'] || '';
+    // Usar los valores guardados al cargar el componente
+    const itemListId = this.savedItemListId;
+    const itemListName = this.savedItemListName;
     
-    const tourDataForEcommerce = this.prepareTourDataForEcommerce();
-    
-    this.buildAndDispatchEvent(
-      (item, userData) => {
-        this.analyticsService.viewFlightsInfo(
-          {
-            currency: 'EUR',
-            value: this.totalAmountCalculated || this.totalAmount || 0,
-            coupon: this.reservationData.coupon?.code || '',
-            items: [item]
-          },
-          userData
+    // Obtener todos los datos completos del tour dinámicamente, incluyendo actividades y pasajeros desde viajeros
+    forkJoin({
+      tourData: this.getCompleteTourDataForEcommerce(this.tourId),
+      activitiesText: this.getActivitiesFromTravelers(),
+      passengersCount: this.getPassengersCount()
+    }).pipe(
+      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount }) => {
+        // Actualizar con datos adicionales del contexto
+        const additionalData = this.prepareTourDataForEcommerce();
+        tourDataForEcommerce.flightCity = additionalData.flightCity || tourDataForEcommerce.flightCity;
+        // Usar actividades obtenidas dinámicamente desde viajeros, o fallback a additionalData
+        tourDataForEcommerce.activitiesText = activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
+        // Usar seguro del componente o del contexto
+        tourDataForEcommerce.selectedInsurance = this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
+        // Usar conteo de pasajeros desde viajeros
+        tourDataForEcommerce.totalPassengers = parseInt(passengersCount.adults) + parseInt(passengersCount.children);
+        tourDataForEcommerce.childrenCount = passengersCount.children;
+        tourDataForEcommerce.departureDate = additionalData.departureDate || tourDataForEcommerce.departureDate;
+        tourDataForEcommerce.returnDate = additionalData.returnDate || tourDataForEcommerce.returnDate;
+        tourDataForEcommerce.price = additionalData.price || tourDataForEcommerce.price;
+        
+        // Usar el ID del tour desde tourDataForEcommerce
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          switchMap((item) => {
+            return this.analyticsService.getCurrentUserData().pipe(
+              map((userData) => ({ item, userData }))
+            );
+          })
         );
-      },
-      itemListId,
-      itemListName,
-      tourDataForEcommerce
-    );
+      }),
+      catchError((error) => {
+        console.error('Error obteniendo datos completos del tour para view_flights_info:', error);
+        // Fallback con datos básicos
+        const tourDataForEcommerce = this.prepareTourDataForEcommerce();
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          map((item) => ({ item, userData: this.getUserData() }))
+        );
+      })
+    ).subscribe(({ item, userData }) => {
+      // El item ya tiene item_list_id e item_list_name desde buildEcommerceItemFromTourData
+      // No necesitamos actualizarlo, solo pasarlo directamente como en view_cart
+      this.analyticsService.viewFlightsInfo(
+        {
+          currency: 'EUR',
+          value: this.totalAmountCalculated || this.totalAmount || 0,
+          coupon: this.reservationData.coupon?.code || '',
+          items: [item]
+        },
+        userData
+      );
+    });
   }
 
   /**
    * Disparar evento add_flights_info cuando el usuario selecciona vuelo y continúa
    */
   private trackAddFlightsInfo(): void {
-    if (!this.reservationData) return;
+    if (!this.reservationData || !this.tourId) return;
     
-    const state = window.history.state;
-    const itemListId = state?.['listId'] || '';
-    const itemListName = state?.['listName'] || '';
+    // Usar los valores guardados al cargar el componente
+    const itemListId = this.savedItemListId;
+    const itemListName = this.savedItemListName;
     
-    const tourDataForEcommerce = this.prepareTourDataForEcommerce();
-    
-    this.buildAndDispatchEvent(
-      (item, userData) => {
-        this.analyticsService.addFlightsInfo(
-          {
-            currency: 'EUR',
-            value: this.totalAmountCalculated || this.totalAmount || 0,
-            coupon: this.reservationData.coupon?.code || '',
-            items: [item]
-          },
-          userData
+    // Obtener todos los datos completos del tour dinámicamente, incluyendo actividades y pasajeros desde viajeros
+    forkJoin({
+      tourData: this.getCompleteTourDataForEcommerce(this.tourId),
+      activitiesText: this.getActivitiesFromTravelers(),
+      passengersCount: this.getPassengersCount()
+    }).pipe(
+      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount }) => {
+        // Actualizar con datos adicionales del contexto
+        const additionalData = this.prepareTourDataForEcommerce();
+        tourDataForEcommerce.flightCity = additionalData.flightCity || tourDataForEcommerce.flightCity;
+        // Usar actividades obtenidas dinámicamente desde viajeros, o fallback a additionalData
+        tourDataForEcommerce.activitiesText = activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
+        // Usar seguro del componente o del contexto
+        tourDataForEcommerce.selectedInsurance = this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
+        // Usar conteo de pasajeros desde viajeros
+        tourDataForEcommerce.totalPassengers = parseInt(passengersCount.adults) + parseInt(passengersCount.children);
+        tourDataForEcommerce.childrenCount = passengersCount.children;
+        tourDataForEcommerce.departureDate = additionalData.departureDate || tourDataForEcommerce.departureDate;
+        tourDataForEcommerce.returnDate = additionalData.returnDate || tourDataForEcommerce.returnDate;
+        tourDataForEcommerce.price = additionalData.price || tourDataForEcommerce.price;
+        
+        // Usar el ID del tour desde tourDataForEcommerce
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          switchMap((item) => {
+            return this.analyticsService.getCurrentUserData().pipe(
+              map((userData) => ({ item, userData }))
+            );
+          })
         );
-      },
-      itemListId,
-      itemListName,
-      tourDataForEcommerce
-    );
+      }),
+      catchError((error) => {
+        console.error('Error obteniendo datos completos del tour para add_flights_info:', error);
+        // Fallback con datos básicos
+        const tourDataForEcommerce = this.prepareTourDataForEcommerce();
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          map((item) => ({ item, userData: this.getUserData() }))
+        );
+      })
+    ).subscribe(({ item, userData }) => {
+      // El item ya tiene item_list_id e item_list_name desde buildEcommerceItemFromTourData
+      // No necesitamos actualizarlo, solo pasarlo directamente como en view_cart
+      this.analyticsService.addFlightsInfo(
+        {
+          currency: 'EUR',
+          value: this.totalAmountCalculated || this.totalAmount || 0,
+          coupon: this.reservationData.coupon?.code || '',
+          items: [item]
+        },
+        userData
+      );
+    });
   }
 
   /**
    * Disparar evento view_personal_info cuando se visualiza el paso de datos de pasajeros
    */
   private trackViewPersonalInfo(): void {
-    if (!this.reservationData) return;
+    if (!this.reservationData || !this.tourId) return;
     
-    const state = window.history.state;
-    const itemListId = state?.['listId'] || '';
-    const itemListName = state?.['listName'] || '';
+    // Usar los valores guardados al cargar el componente
+    const itemListId = this.savedItemListId;
+    const itemListName = this.savedItemListName;
     
-    const tourDataForEcommerce = this.prepareTourDataForEcommerce();
-    
-    this.buildAndDispatchEvent(
-      (item, userData) => {
-        this.analyticsService.viewPersonalInfo(
-          {
-            currency: 'EUR',
-            value: this.totalAmountCalculated || this.totalAmount || 0,
-            coupon: this.reservationData.coupon?.code || '',
-            items: [item]
-          },
-          userData
+    // Obtener todos los datos completos del tour dinámicamente, incluyendo actividades y pasajeros desde viajeros
+    forkJoin({
+      tourData: this.getCompleteTourDataForEcommerce(this.tourId),
+      activitiesText: this.getActivitiesFromTravelers(),
+      passengersCount: this.getPassengersCount()
+    }).pipe(
+      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount }) => {
+        // Actualizar con datos adicionales del contexto
+        const additionalData = this.prepareTourDataForEcommerce();
+        tourDataForEcommerce.flightCity = additionalData.flightCity || tourDataForEcommerce.flightCity;
+        // Usar actividades obtenidas dinámicamente desde viajeros, o fallback a additionalData
+        tourDataForEcommerce.activitiesText = activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
+        // Usar seguro del componente o del contexto
+        tourDataForEcommerce.selectedInsurance = this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
+        // Usar conteo de pasajeros desde viajeros
+        tourDataForEcommerce.totalPassengers = parseInt(passengersCount.adults) + parseInt(passengersCount.children);
+        tourDataForEcommerce.childrenCount = passengersCount.children;
+        tourDataForEcommerce.departureDate = additionalData.departureDate || tourDataForEcommerce.departureDate;
+        tourDataForEcommerce.returnDate = additionalData.returnDate || tourDataForEcommerce.returnDate;
+        tourDataForEcommerce.price = additionalData.price || tourDataForEcommerce.price;
+        
+        // Usar el ID del tour desde tourDataForEcommerce
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          switchMap((item) => {
+            return this.analyticsService.getCurrentUserData().pipe(
+              map((userData) => ({ item, userData }))
+            );
+          })
         );
-      },
-      itemListId,
-      itemListName,
-      tourDataForEcommerce
-    );
+      }),
+      catchError((error) => {
+        console.error('Error obteniendo datos completos del tour para view_personal_info:', error);
+        // Fallback con datos básicos
+        const tourDataForEcommerce = this.prepareTourDataForEcommerce();
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          map((item) => ({ item, userData: this.getUserData() }))
+        );
+      })
+    ).subscribe(({ item, userData }) => {
+      // El item ya tiene item_list_id e item_list_name desde buildEcommerceItemFromTourData
+      // No necesitamos actualizarlo, solo pasarlo directamente como en view_cart
+      this.analyticsService.viewPersonalInfo(
+        {
+          currency: 'EUR',
+          value: this.totalAmountCalculated || this.totalAmount || 0,
+          coupon: this.reservationData.coupon?.code || '',
+          items: [item]
+        },
+        userData
+      );
+    });
   }
 
   /**
    * Disparar evento add_payment_info cuando el usuario selecciona método de pago
    */
   private trackAddPaymentInfo(paymentOption?: any): void {
-    if (!this.reservationData) return;
+    if (!this.reservationData || !this.tourId) return;
     
-    const state = window.history.state;
-    const itemListId = state?.['listId'] || '';
-    const itemListName = state?.['listName'] || '';
+    // Usar los valores guardados al cargar el componente
+    const itemListId = this.savedItemListId;
+    const itemListName = this.savedItemListName;
     
     // Obtener método de pago seleccionado (dinámico)
     let paymentType = 'completo, transferencia'; // Valor por defecto
@@ -2905,85 +3483,223 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       paymentType = `${type}, ${method}`;
     }
     
-    const tourDataForEcommerce = this.prepareTourDataForEcommerce();
-    
-    this.buildAndDispatchEvent(
-      (item, userData) => {
-        this.analyticsService.addPaymentInfo(
-          {
-            currency: 'EUR',
-            value: this.totalAmountCalculated || this.totalAmount || 0,
-            coupon: this.reservationData.coupon?.code || '',
-            payment_type: paymentType,
-            items: [item]
-          },
-          userData
+    // Obtener todos los datos completos del tour dinámicamente, incluyendo actividades y pasajeros desde viajeros
+    forkJoin({
+      tourData: this.getCompleteTourDataForEcommerce(this.tourId),
+      activitiesText: this.getActivitiesFromTravelers(),
+      passengersCount: this.getPassengersCount()
+    }).pipe(
+      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount }) => {
+        // Actualizar con datos adicionales del contexto
+        const additionalData = this.prepareTourDataForEcommerce();
+        tourDataForEcommerce.flightCity = additionalData.flightCity || tourDataForEcommerce.flightCity;
+        // Usar actividades obtenidas dinámicamente desde viajeros, o fallback a additionalData
+        tourDataForEcommerce.activitiesText = activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
+        // Usar seguro del componente o del contexto
+        tourDataForEcommerce.selectedInsurance = this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
+        // Usar conteo de pasajeros desde viajeros
+        tourDataForEcommerce.totalPassengers = parseInt(passengersCount.adults) + parseInt(passengersCount.children);
+        tourDataForEcommerce.childrenCount = passengersCount.children;
+        tourDataForEcommerce.departureDate = additionalData.departureDate || tourDataForEcommerce.departureDate;
+        tourDataForEcommerce.returnDate = additionalData.returnDate || tourDataForEcommerce.returnDate;
+        tourDataForEcommerce.price = additionalData.price || tourDataForEcommerce.price;
+        
+        // Usar el ID del tour desde tourDataForEcommerce
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          switchMap((item) => {
+            return this.analyticsService.getCurrentUserData().pipe(
+              map((userData) => ({ item, userData }))
+            );
+          })
         );
-      },
-      itemListId,
-      itemListName,
-      tourDataForEcommerce
-    );
+      }),
+      catchError((error) => {
+        console.error('Error obteniendo datos completos del tour para add_payment_info:', error);
+        // Fallback con datos básicos
+        const tourDataForEcommerce = this.prepareTourDataForEcommerce();
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          map((item) => ({ item, userData: this.getUserData() }))
+        );
+      })
+    ).subscribe(({ item, userData }) => {
+      // El item ya tiene item_list_id e item_list_name desde buildEcommerceItemFromTourData
+      // No necesitamos actualizarlo, solo pasarlo directamente como en view_cart
+      this.analyticsService.addPaymentInfo(
+        {
+          currency: 'EUR',
+          value: this.totalAmountCalculated || this.totalAmount || 0,
+          coupon: this.reservationData.coupon?.code || '',
+          payment_type: paymentType,
+          items: [item]
+        },
+        userData
+      );
+    });
   }
 
   /**
    * Disparar evento view_payment_info cuando el usuario visualiza el paso de pago
    */
   private trackViewPaymentInfo(): void {
-    if (!this.reservationData) return;
+    if (!this.reservationData || !this.tourId) return;
     
-    const state = window.history.state;
-    const itemListId = state?.['listId'] || '';
-    const itemListName = state?.['listName'] || '';
+    // Usar los valores guardados al cargar el componente
+    const itemListId = this.savedItemListId;
+    const itemListName = this.savedItemListName;
     
-    const tourDataForEcommerce = this.prepareTourDataForEcommerce();
-    
-    this.buildAndDispatchEvent(
-      (item, userData) => {
-        this.analyticsService.viewPaymentInfo(
-          {
-            currency: 'EUR',
-            value: this.totalAmountCalculated || this.totalAmount || 0,
-            coupon: this.reservationData.coupon?.code || '',
-            items: [item]
-          },
-          userData
+    // Obtener todos los datos completos del tour dinámicamente, incluyendo actividades y pasajeros desde viajeros
+    forkJoin({
+      tourData: this.getCompleteTourDataForEcommerce(this.tourId),
+      activitiesText: this.getActivitiesFromTravelers(),
+      passengersCount: this.getPassengersCount()
+    }).pipe(
+      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount }) => {
+        // Actualizar con datos adicionales del contexto
+        const additionalData = this.prepareTourDataForEcommerce();
+        tourDataForEcommerce.flightCity = additionalData.flightCity || tourDataForEcommerce.flightCity;
+        // Usar actividades obtenidas dinámicamente desde viajeros, o fallback a additionalData
+        tourDataForEcommerce.activitiesText = activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
+        // Usar seguro del componente o del contexto
+        tourDataForEcommerce.selectedInsurance = this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
+        // Usar conteo de pasajeros desde viajeros
+        tourDataForEcommerce.totalPassengers = parseInt(passengersCount.adults) + parseInt(passengersCount.children);
+        tourDataForEcommerce.childrenCount = passengersCount.children;
+        tourDataForEcommerce.departureDate = additionalData.departureDate || tourDataForEcommerce.departureDate;
+        tourDataForEcommerce.returnDate = additionalData.returnDate || tourDataForEcommerce.returnDate;
+        tourDataForEcommerce.price = additionalData.price || tourDataForEcommerce.price;
+        
+        // Usar el ID del tour desde tourDataForEcommerce
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          switchMap((item) => {
+            return this.analyticsService.getCurrentUserData().pipe(
+              map((userData) => ({ item, userData }))
+            );
+          })
         );
-      },
-      itemListId,
-      itemListName,
-      tourDataForEcommerce
-    );
+      }),
+      catchError((error) => {
+        console.error('Error obteniendo datos completos del tour para view_payment_info:', error);
+        // Fallback con datos básicos
+        const tourDataForEcommerce = this.prepareTourDataForEcommerce();
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          map((item) => ({ item, userData: this.getUserData() }))
+        );
+      })
+    ).subscribe(({ item, userData }) => {
+      // El item ya tiene item_list_id e item_list_name desde buildEcommerceItemFromTourData
+      // No necesitamos actualizarlo, solo pasarlo directamente como en view_cart
+      this.analyticsService.viewPaymentInfo(
+        {
+          currency: 'EUR',
+          value: this.totalAmountCalculated || this.totalAmount || 0,
+          coupon: this.reservationData.coupon?.code || '',
+          items: [item]
+        },
+        userData
+      );
+    });
   }
 
   /**
    * Disparar evento add_personal_info cuando el usuario completa datos de pasajeros
    */
   private trackAddPersonalInfo(): void {
-    if (!this.reservationData) return;
+    if (!this.reservationData || !this.tourId) return;
     
-    const state = window.history.state;
-    const itemListId = state?.['listId'] || '';
-    const itemListName = state?.['listName'] || '';
+    // Usar los valores guardados al cargar el componente
+    const itemListId = this.savedItemListId;
+    const itemListName = this.savedItemListName;
     
-    const tourDataForEcommerce = this.prepareTourDataForEcommerce();
-    
-    this.buildAndDispatchEvent(
-      (item, userData) => {
-        this.analyticsService.addPersonalInfo(
-          {
-            currency: 'EUR',
-            value: this.totalAmountCalculated || this.totalAmount || 0,
-            coupon: this.reservationData.coupon?.code || '',
-            items: [item]
-          },
-          userData
+    // Obtener todos los datos completos del tour dinámicamente, incluyendo actividades y pasajeros desde viajeros
+    forkJoin({
+      tourData: this.getCompleteTourDataForEcommerce(this.tourId),
+      activitiesText: this.getActivitiesFromTravelers(),
+      passengersCount: this.getPassengersCount()
+    }).pipe(
+      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount }) => {
+        // Actualizar con datos adicionales del contexto
+        const additionalData = this.prepareTourDataForEcommerce();
+        tourDataForEcommerce.flightCity = additionalData.flightCity || tourDataForEcommerce.flightCity;
+        // Usar actividades obtenidas dinámicamente desde viajeros, o fallback a additionalData
+        tourDataForEcommerce.activitiesText = activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
+        // Usar seguro del componente o del contexto
+        tourDataForEcommerce.selectedInsurance = this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
+        // Usar conteo de pasajeros desde viajeros
+        tourDataForEcommerce.totalPassengers = parseInt(passengersCount.adults) + parseInt(passengersCount.children);
+        tourDataForEcommerce.childrenCount = passengersCount.children;
+        tourDataForEcommerce.departureDate = additionalData.departureDate || tourDataForEcommerce.departureDate;
+        tourDataForEcommerce.returnDate = additionalData.returnDate || tourDataForEcommerce.returnDate;
+        tourDataForEcommerce.price = additionalData.price || tourDataForEcommerce.price;
+        
+        // Usar el ID del tour desde tourDataForEcommerce
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          switchMap((item) => {
+            return this.analyticsService.getCurrentUserData().pipe(
+              map((userData) => ({ item, userData }))
+            );
+          })
         );
-      },
-      itemListId,
-      itemListName,
-      tourDataForEcommerce
-    );
+      }),
+      catchError((error) => {
+        console.error('Error obteniendo datos completos del tour para add_personal_info:', error);
+        // Fallback con datos básicos
+        const tourDataForEcommerce = this.prepareTourDataForEcommerce();
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          map((item) => ({ item, userData: this.getUserData() }))
+        );
+      })
+    ).subscribe(({ item, userData }) => {
+      // El item ya tiene item_list_id e item_list_name desde buildEcommerceItemFromTourData
+      // No necesitamos actualizarlo, solo pasarlo directamente como en view_cart
+      this.analyticsService.addPersonalInfo(
+        {
+          currency: 'EUR',
+          value: this.totalAmountCalculated || this.totalAmount || 0,
+          coupon: this.reservationData.coupon?.code || '',
+          items: [item]
+        },
+        userData
+      );
+    });
   }
 
   /**

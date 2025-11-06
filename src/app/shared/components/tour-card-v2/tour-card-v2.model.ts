@@ -2,7 +2,7 @@ export interface TourDataV2 {
   id?: number; // ID real de base de datos del tour
   imageUrl: string;
   title: string;
-  rating: number;
+  rating: number | undefined;
   isByDr?: boolean;
   tag?: string;
   description: string;

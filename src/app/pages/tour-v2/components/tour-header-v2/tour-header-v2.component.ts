@@ -59,6 +59,7 @@ import { AuthenticateService } from '../../../../core/services/auth/auth-service
 import { UsersNetService } from '../../../../core/services/users/usersNet.service';
 import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
 import { ReservationStatusService } from '../../../../core/services/reservation/reservation-status.service';
+import { ReviewsService } from '../../../../core/services/reviews/reviews.service';
 
 // ✅ INTERFACES para tipado fuerte
 interface PassengersData {
@@ -165,7 +166,8 @@ export class TourHeaderV2Component
     private authService: AuthenticateService,
     private usersNetService: UsersNetService,
     private analyticsService: AnalyticsService,
-    private reservationStatusService: ReservationStatusService
+    private reservationStatusService: ReservationStatusService,
+    private reviewsService: ReviewsService
   ) {}
 
   ngOnInit() {
@@ -1041,15 +1043,24 @@ export class TourHeaderV2Component
     return this.itineraryService.getAll(itineraryFilters, false).pipe(
       concatMap((itineraries) => {
         if (itineraries.length === 0) {
-          return this.tourService.getById(tourId, false).pipe(
-            map((tour) => ({
+          return forkJoin({
+            tour: this.tourService.getById(tourId, false),
+            rating: this.reviewsService.getAverageRating({ tourId: tourId }).pipe(
+              map((ratingResponse) => {
+                const avgRating = ratingResponse?.averageRating;
+                return avgRating && avgRating > 0 ? avgRating : null;
+              }),
+              catchError(() => of(null))
+            )
+          }).pipe(
+            map(({ tour, rating }) => ({
               id: tourId,
               tkId: tour.tkId ?? undefined,
               name: tour.name ?? undefined,
               destination: { continent: undefined, country: undefined },
               days: undefined,
               nights: undefined,
-              rating: undefined,
+              rating: rating !== null ? rating : undefined,
               monthTags: undefined,
               tourType: tour.tripTypeId === 1 ? 'FIT' : 'Grupos',
               price: tour.minPrice ?? undefined
@@ -1144,9 +1155,16 @@ export class TourHeaderV2Component
           itineraryDays: itineraryDaysRequest,
           locationData: locationRequest,
           monthTags: monthTagsRequest,
-          tour: this.tourService.getById(tourId, false)
+          tour: this.tourService.getById(tourId, false),
+          rating: this.reviewsService.getAverageRating({ tourId: tourId }).pipe(
+            map((ratingResponse) => {
+              const avgRating = ratingResponse?.averageRating;
+              return avgRating && avgRating > 0 ? avgRating : null;
+            }),
+            catchError(() => of(null))
+          )
         }).pipe(
-          map(({ itineraryDays, locationData, monthTags, tour }) => {
+          map(({ itineraryDays, locationData, monthTags, tour, rating }) => {
             const days = itineraryDays.length;
             const nights = days > 0 ? days - 1 : 0;
             const tourType = tour.tripTypeId === 1 ? 'FIT' : 'Grupos';
@@ -1161,7 +1179,7 @@ export class TourHeaderV2Component
               },
               days: days > 0 ? days : undefined,
               nights: nights > 0 ? nights : undefined,
-              rating: undefined,
+              rating: rating !== null ? rating : undefined,
               monthTags: monthTags.length > 0 ? monthTags : undefined,
               tourType: tourType,
               flightCity: 'Sin vuelo',
@@ -1364,9 +1382,6 @@ export class TourHeaderV2Component
                   statusId: createdReservation.reservationStatusId,
                   cartAt: createdReservation.cartAt
                 });
-
-                // Disparar evento add_to_cart
-                this.trackAddToCart();
 
                 // Obtener contexto de la lista desde el state del router y pasarlo al checkout
                 const state = window.history.state;

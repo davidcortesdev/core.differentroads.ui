@@ -1,7 +1,7 @@
 <section class="trip-types-section">
   <div class="trip-types-container">
     <ng-container *ngFor="let tripType of tripTypes">
-      <div class="trip-type-item {{tripType.class}}" (click)="navigateToTripType(tripType.value)">
+      <div class="trip-type-item {{tripType.class}}">
         <div class="trip-type-content">
           <div class="title-container">
             <h3>{{tripType.title}}</h3>

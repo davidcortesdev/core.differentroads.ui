@@ -50,10 +50,14 @@ import {
 } from './services/price-check.service';
 import { environment } from '../../../environments/environment';
 import { interval, Subscription } from 'rxjs';
-import { takeWhile, switchMap, map, catchError } from 'rxjs/operators';
+import { takeWhile, switchMap, map, catchError, concatMap } from 'rxjs/operators';
 import { ReservationStatusService } from '../../core/services/reservation/reservation-status.service';
 import { Title } from '@angular/platform-browser';
 import { EcommerceItem, TourDataForEcommerce } from '../../core/services/analytics/analytics.service';
+import { ReviewsService } from '../../core/services/reviews/reviews.service';
+import { TourLocationService, ITourLocationResponse } from '../../core/services/tour/tour-location.service';
+import { LocationNetService, Location } from '../../core/services/locations/locationNet.service';
+import { ItineraryDayService, IItineraryDayResponse } from '../../core/services/itinerary/itinerary-day/itinerary-day.service';
 
 @Component({
   selector: 'app-checkout-v2',
@@ -206,7 +210,11 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     private priceCheckService: PriceCheckService,
     private reservationStatusService: ReservationStatusService,
     private http: HttpClient,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private reviewsService: ReviewsService,
+    private tourLocationService: TourLocationService,
+    private locationNetService: LocationNetService,
+    private itineraryDayService: ItineraryDayService
   ) {}
 
   ngOnInit(): void {
@@ -2632,27 +2640,60 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Disparar evento view_cart cuando se visualiza el checkout paso 1
    */
   private trackViewCart(): void {
-    if (!this.reservationData) return;
+    if (!this.reservationData || !this.tourId) return;
     
     const state = window.history.state;
     const itemListId = state?.['listId'] || '';
     const itemListName = state?.['listName'] || '';
     
-    const tourDataForEcommerce = this.prepareTourDataForEcommerce();
-    
-    this.buildAndDispatchEvent(
-      (item, userData) => {
-        this.analyticsService.viewCart(
-          'EUR',
-          this.totalAmountCalculated || this.totalAmount || 0,
-          item,
-          userData
+    // Obtener todos los datos completos del tour dinámicamente
+    this.getCompleteTourDataForEcommerce(this.tourId).pipe(
+      switchMap((tourDataForEcommerce: TourDataForEcommerce) => {
+        // Actualizar con datos adicionales del contexto
+        const additionalData = this.prepareTourDataForEcommerce();
+        tourDataForEcommerce.flightCity = additionalData.flightCity || tourDataForEcommerce.flightCity;
+        tourDataForEcommerce.activitiesText = additionalData.activitiesText || tourDataForEcommerce.activitiesText;
+        tourDataForEcommerce.selectedInsurance = additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
+        tourDataForEcommerce.totalPassengers = additionalData.totalPassengers || tourDataForEcommerce.totalPassengers;
+        tourDataForEcommerce.childrenCount = additionalData.childrenCount || tourDataForEcommerce.childrenCount;
+        tourDataForEcommerce.departureDate = additionalData.departureDate || tourDataForEcommerce.departureDate;
+        tourDataForEcommerce.returnDate = additionalData.returnDate || tourDataForEcommerce.returnDate;
+        tourDataForEcommerce.price = additionalData.price || tourDataForEcommerce.price;
+        
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          this.getTourItemId()
+        ).pipe(
+          switchMap((item) => {
+            return this.analyticsService.getCurrentUserData().pipe(
+              map((userData) => ({ item, userData }))
+            );
+          })
         );
-      },
-      itemListId,
-      itemListName,
-      tourDataForEcommerce
-    );
+      }),
+      catchError((error) => {
+        console.error('Error obteniendo datos completos del tour para view_cart:', error);
+        // Fallback con datos básicos
+        const tourDataForEcommerce = this.prepareTourDataForEcommerce();
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          this.getTourItemId()
+        ).pipe(
+          map((item) => ({ item, userData: this.getUserData() }))
+        );
+      })
+    ).subscribe(({ item, userData }) => {
+      this.analyticsService.viewCart(
+        'EUR',
+        this.totalAmountCalculated || this.totalAmount || 0,
+        item,
+        userData
+      );
+    });
   }
 
   /**
@@ -2675,6 +2716,183 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   private getChildrenPassengersCount(): string {
     // Retornar 0 ya que cada componente maneja sus propios datos
     return '0';
+  }
+
+  /**
+   * Obtiene todos los datos completos del tour desde los servicios adicionales para analytics
+   */
+  private getCompleteTourDataForEcommerce(tourId: number): Observable<TourDataForEcommerce> {
+    const itineraryFilters: ItineraryFilters = {
+      tourId: tourId,
+      isVisibleOnWeb: true,
+      isBookable: true,
+    };
+
+    return this.itineraryService.getAll(itineraryFilters, false).pipe(
+      concatMap((itineraries) => {
+        if (itineraries.length === 0) {
+          return forkJoin({
+            tour: this.tourService.getById(tourId, false),
+            rating: this.reviewsService.getAverageRating({ tourId: tourId }).pipe(
+              map((ratingResponse) => {
+                const avgRating = ratingResponse?.averageRating;
+                return avgRating && avgRating > 0 ? avgRating : null;
+              }),
+              catchError(() => of(null))
+            )
+          }).pipe(
+            map(({ tour, rating }) => ({
+              id: tourId,
+              tkId: tour.tkId ?? undefined,
+              name: tour.name ?? undefined,
+              destination: { continent: undefined, country: undefined },
+              days: undefined,
+              nights: undefined,
+              rating: rating !== null ? rating : undefined,
+              monthTags: undefined,
+              tourType: tour.tripTypeId === 1 ? 'FIT' : 'Grupos',
+              price: tour.minPrice ?? undefined
+            } as TourDataForEcommerce))
+          );
+        }
+
+        // Obtener días de itinerario del primer itinerario disponible
+        const itineraryDaysRequest = this.itineraryDayService
+          .getAll({ itineraryId: itineraries[0].id })
+          .pipe(catchError(() => of([] as IItineraryDayResponse[])));
+
+        // Obtener continent y country
+        const locationRequest = forkJoin({
+          countryLocations: this.tourLocationService.getByTourAndType(tourId, 'COUNTRY').pipe(
+            map((response) => Array.isArray(response) ? response : response ? [response] : []),
+            catchError(() => of([] as ITourLocationResponse[]))
+          ),
+          continentLocations: this.tourLocationService.getByTourAndType(tourId, 'CONTINENT').pipe(
+            map((response) => Array.isArray(response) ? response : response ? [response] : []),
+            catchError(() => of([] as ITourLocationResponse[]))
+          )
+        }).pipe(
+          switchMap(({ countryLocations, continentLocations }) => {
+            const locationIds = [
+              ...countryLocations.map(tl => tl.locationId),
+              ...continentLocations.map(tl => tl.locationId)
+            ].filter(id => id !== undefined && id !== null);
+            
+            if (locationIds.length === 0) {
+              return of({ continent: '', country: '' });
+            }
+            
+            return this.locationNetService.getLocationsByIds(locationIds).pipe(
+              map((locations: Location[]) => {
+                const countries = countryLocations
+                  .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+                  .map(tl => locations.find(l => l.id === tl.locationId)?.name)
+                  .filter(name => name) as string[];
+                
+                const continents = continentLocations
+                  .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+                  .map(tl => locations.find(l => l.id === tl.locationId)?.name)
+                  .filter(name => name) as string[];
+                
+                return {
+                  continent: continents.join(', ') || '',
+                  country: countries.join(', ') || ''
+                };
+              }),
+              catchError(() => of({ continent: '', country: '' }))
+            );
+          })
+        );
+
+        // Obtener departures para extraer monthTags desde las fechas
+        const departureRequests = itineraries.map((itinerary) =>
+          this.departureService.getByItinerary(itinerary.id, false).pipe(
+            catchError(() => of([] as IDepartureResponse[]))
+          )
+        );
+
+        const monthTagsRequest = departureRequests.length > 0 
+          ? forkJoin(departureRequests).pipe(
+              map((departureArrays: IDepartureResponse[][]) => {
+                const allDepartures = departureArrays.flat();
+                const availableMonths: string[] = [];
+                
+                // Extraer meses de las fechas de departure
+                allDepartures.forEach((departure: IDepartureResponse) => {
+                  if (departure.departureDate) {
+                    const date = new Date(departure.departureDate);
+                    const monthIndex = date.getMonth(); // 0-11
+                    const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 
+                                      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+                    if (monthIndex >= 0 && monthIndex < 12) {
+                      const monthName = monthNames[monthIndex];
+                      if (!availableMonths.includes(monthName)) {
+                        availableMonths.push(monthName);
+                      }
+                    }
+                  }
+                });
+                
+                return availableMonths;
+              }),
+              catchError(() => of([]))
+            )
+          : of([]);
+
+        return forkJoin({
+          itineraryDays: itineraryDaysRequest,
+          locationData: locationRequest,
+          monthTags: monthTagsRequest,
+          tour: this.tourService.getById(tourId, false),
+          rating: this.reviewsService.getAverageRating({ tourId: tourId }).pipe(
+            map((ratingResponse) => {
+              const avgRating = ratingResponse?.averageRating;
+              return avgRating && avgRating > 0 ? avgRating : null;
+            }),
+            catchError(() => of(null))
+          )
+        }).pipe(
+          map(({ itineraryDays, locationData, monthTags, tour, rating }) => {
+            const days = itineraryDays.length;
+            const nights = days > 0 ? days - 1 : 0;
+            const tourType = tour.tripTypeId === 1 ? 'FIT' : 'Grupos';
+
+            return {
+              id: tourId,
+              tkId: tour.tkId ?? undefined,
+              name: tour.name ?? undefined,
+              destination: {
+                continent: locationData.continent || undefined,
+                country: locationData.country || undefined
+              },
+              days: days > 0 ? days : undefined,
+              nights: nights > 0 ? nights : undefined,
+              rating: rating !== null ? rating : undefined,
+              monthTags: monthTags.length > 0 ? monthTags : undefined,
+              tourType: tourType,
+              flightCity: 'Sin vuelo',
+              price: tour.minPrice ?? undefined
+            } as TourDataForEcommerce;
+          }),
+          catchError(() => of({
+            id: tourId,
+            days: undefined,
+            nights: undefined,
+            destination: { continent: undefined, country: undefined },
+            monthTags: undefined,
+            tourType: undefined
+          } as TourDataForEcommerce))
+        );
+      }),
+      catchError(() => of({
+        id: tourId,
+        days: undefined,
+        nights: undefined,
+        destination: { continent: undefined, country: undefined },
+        monthTags: undefined,
+        tourType: undefined
+      } as TourDataForEcommerce))
+    );
   }
 
   /**
@@ -2769,30 +2987,63 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Disparar evento begin_checkout cuando el usuario continúa del paso 1
    */
   private trackBeginCheckout(): void {
-    if (!this.reservationData) return;
+    if (!this.reservationData || !this.tourId) return;
     
     const state = window.history.state;
     const itemListId = state?.['listId'] || '';
     const itemListName = state?.['listName'] || '';
     
-    const tourDataForEcommerce = this.prepareTourDataForEcommerce();
-    
-    this.buildAndDispatchEvent(
-      (item, userData) => {
-        this.analyticsService.beginCheckout(
-          {
-            currency: 'EUR',
-            value: this.totalAmountCalculated || this.totalAmount || 0,
-            coupon: this.reservationData.coupon?.code || '',
-            items: [item]
-          },
-          userData
+    // Obtener todos los datos completos del tour dinámicamente
+    this.getCompleteTourDataForEcommerce(this.tourId).pipe(
+      switchMap((tourDataForEcommerce: TourDataForEcommerce) => {
+        // Actualizar con datos adicionales del contexto
+        const additionalData = this.prepareTourDataForEcommerce();
+        tourDataForEcommerce.flightCity = additionalData.flightCity || tourDataForEcommerce.flightCity;
+        tourDataForEcommerce.activitiesText = additionalData.activitiesText || tourDataForEcommerce.activitiesText;
+        tourDataForEcommerce.selectedInsurance = additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
+        tourDataForEcommerce.totalPassengers = additionalData.totalPassengers || tourDataForEcommerce.totalPassengers;
+        tourDataForEcommerce.childrenCount = additionalData.childrenCount || tourDataForEcommerce.childrenCount;
+        tourDataForEcommerce.departureDate = additionalData.departureDate || tourDataForEcommerce.departureDate;
+        tourDataForEcommerce.returnDate = additionalData.returnDate || tourDataForEcommerce.returnDate;
+        tourDataForEcommerce.price = additionalData.price || tourDataForEcommerce.price;
+        
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          this.getTourItemId()
+        ).pipe(
+          switchMap((item) => {
+            return this.analyticsService.getCurrentUserData().pipe(
+              map((userData) => ({ item, userData }))
+            );
+          })
         );
-      },
-      itemListId,
-      itemListName,
-      tourDataForEcommerce
-    );
+      }),
+      catchError((error) => {
+        console.error('Error obteniendo datos completos del tour para begin_checkout:', error);
+        // Fallback con datos básicos
+        const tourDataForEcommerce = this.prepareTourDataForEcommerce();
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          this.getTourItemId()
+        ).pipe(
+          map((item) => ({ item, userData: this.getUserData() }))
+        );
+      })
+    ).subscribe(({ item, userData }) => {
+      this.analyticsService.beginCheckout(
+        {
+          currency: 'EUR',
+          value: this.totalAmountCalculated || this.totalAmount || 0,
+          coupon: this.reservationData.coupon?.code || '',
+          items: [item]
+        },
+        userData
+      );
+    });
   }
 
   /**

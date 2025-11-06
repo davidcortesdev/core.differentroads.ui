@@ -198,9 +198,16 @@ export class AnalyticsService {
     this.clearEcommerce();
     
     // Estructura exacta según especificación
+    // Asegurar que user_data siempre tenga los campos, incluso si están vacíos
+    const userDataWithFields: UserData = userData || {
+      email_address: '',
+      phone_number: '',
+      user_id: ''
+    };
+    
     const eventData: any = {
       event: 'view_item_list',
-      user_data: userData || {},
+      user_data: userDataWithFields,
       ecommerce: {
         item_list_id: itemListId,
         item_list_name: itemListName,
@@ -893,7 +900,12 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
     return this.authService.getUserEmail().pipe(
       switchMap((email: string) => {
         if (!email || email.length === 0) {
-          return of(undefined);
+          // Devolver objeto con campos vacíos en lugar de undefined
+          return of({
+            email_address: '',
+            phone_number: '',
+            user_id: ''
+          });
         }
         
         return this.authService.getCognitoId().pipe(
@@ -978,7 +990,12 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
         );
       }),
       catchError(() => {
-        return of(undefined);
+        // Devolver objeto con campos vacíos en lugar de undefined
+        return of({
+          email_address: '',
+          phone_number: '',
+          user_id: ''
+        });
       })
     );
   }

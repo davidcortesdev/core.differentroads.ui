@@ -846,50 +846,63 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
   /**
    * Convierte un array de TourDataV2 a EcommerceItem[] para analytics
    */
+  /**
+   * Convierte un TourDataV2 individual a EcommerceItem
+   * Método helper para mantener consistencia entre eventos
+   */
+  convertTourToEcommerceItem(
+    tour: TourDataV2,
+    itemListId: string,
+    itemListName: string,
+    index: number = 0
+  ): EcommerceItem {
+    // Calcular duración
+    let duracion = '';
+    if (tour.itineraryDaysCount) {
+      const days = tour.itineraryDaysCount;
+      const nights = days > 0 ? days - 1 : 0;
+      duracion = nights > 0 ? `${days} días, ${nights} noches` : `${days} días`;
+    }
+
+    // Determinar item_category5 (tipología de viaje)
+    // Usar tripType si está disponible, si no, usar fallback basado en isByDr
+    const itemCategory5 = tour.tripType && tour.tripType.length > 0
+      ? tour.tripType.join(', ')
+      : (tour.isByDr ? 'Grupos' : 'Privados');
+
+    // Convertir meses a minúsculas
+    const monthsString = tour.availableMonths?.join(', ').toLowerCase() || '';
+
+    // Estructura exacta según especificación
+    return {
+      item_id: tour.id?.toString() || '',
+      item_name: tour.title || '',
+      coupon: '',
+      discount: 0,
+      index: index + 1,
+      item_brand: 'Different Roads',
+      item_category: tour.continent || '',
+      item_category2: tour.country || '',
+      item_category3: tour.tag && tour.tag.trim().length > 0 ? tour.tag.trim() : '',
+      item_category4: monthsString,
+      item_category5: itemCategory5,
+      item_list_id: itemListId,
+      item_list_name: itemListName,
+      item_variant: '',
+      price: tour.price || 0,
+      quantity: 1,
+      puntuacion: this.formatRating(tour.rating, ''),
+      duracion: duracion
+    };
+  }
+
   convertToursToEcommerceItems(
     tours: TourDataV2[],
     itemListId: string,
     itemListName: string
   ): EcommerceItem[] {
     return tours.map((tour, index) => {
-      // Calcular duración
-      let duracion = '';
-      if (tour.itineraryDaysCount) {
-        const days = tour.itineraryDaysCount;
-        const nights = days > 0 ? days - 1 : 0;
-        duracion = nights > 0 ? `${days} días, ${nights} noches` : `${days} días`;
-      }
-
-      // Determinar item_category5 (tipología de viaje) - usar solo datos dinámicos
-      // Si no hay datos, dejar vacío (sin hardcodeo)
-      const itemCategory5 = tour.tripType && tour.tripType.length > 0
-        ? tour.tripType.join(', ')
-        : '';
-
-      // Convertir meses a minúsculas
-      const monthsString = tour.availableMonths?.join(', ').toLowerCase() || '';
-
-      // Estructura exacta según especificación - todos los campos dinámicos, vacíos si no hay datos
-      return {
-        item_id: tour.id?.toString() || '',
-        item_name: tour.title || '',
-        coupon: '',
-        discount: 0,
-        index: index + 1,
-        item_brand: 'Different Roads',
-        item_category: tour.continent || '',
-        item_category2: tour.country || '',
-        item_category3: tour.tag && tour.tag.trim().length > 0 ? tour.tag.trim() : '',
-        item_category4: monthsString,
-        item_category5: itemCategory5,
-        item_list_id: itemListId,
-        item_list_name: itemListName,
-        item_variant: '',
-        price: tour.price || 0,
-        quantity: 1,
-        puntuacion: this.formatRating(tour.rating, ''),
-        duracion: duracion
-      };
+      return this.convertTourToEcommerceItem(tour, itemListId, itemListName, index);
     });
   }
 

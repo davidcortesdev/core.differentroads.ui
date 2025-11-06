@@ -75,33 +75,18 @@ export class TourCardV2Component implements OnInit, AfterViewInit {
     // Disparar evento select_item si tenemos información de la lista
     if (this.itemListId && this.itemListName) {
       this.analyticsService.getCurrentUserData().subscribe(userData => {
-        this.analyticsService.selectItem(
-          this.itemListId!, // Usar el ID real de la lista directamente
+        // Usar el método helper para construir el item de forma consistente
+        const item = this.analyticsService.convertTourToEcommerceItem(
+          this.tourData,
+          this.itemListId!,
           this.itemListName!,
-          {
-            item_id: this.tourData.id?.toString() || '', // ✅ ID REAL DE BASE DE DATOS
-            item_name: this.tourData.title || '',
-            coupon: '',
-            discount: 0,
-            index: (this.index || 0) + 1, // GA4 usa índice basado en 1
-            item_brand: 'Different Roads',
-            item_category: this.tourData.continent || '',
-            item_category2: this.tourData.country || '',
-            item_category3: this.tourData.tag && this.tourData.tag.trim().length > 0 ? this.tourData.tag.trim() : '',
-            item_category4: this.tourData.availableMonths?.join(', ').toLowerCase() || '',
-            item_category5: this.tourData.tripType && this.tourData.tripType.length > 0
-              ? this.tourData.tripType.join(', ')
-              : (this.tourData.isByDr ? 'Grupos' : 'Privados'),
-            item_list_id: this.itemListId!, // Usar el ID real de la lista directamente
-            item_list_name: this.itemListName!,
-            item_variant: '',
-            price: this.tourData.price || 0,
-            quantity: 1,
-            puntuacion: this.analyticsService.formatRating(this.tourData.rating, ''),
-            duracion: this.tourData.itineraryDaysCount 
-              ? `${this.tourData.itineraryDaysCount} días, ${Math.max(0, this.tourData.itineraryDaysCount - 1)} noches`
-              : ''
-          },
+          this.index || 0
+        );
+        
+        this.analyticsService.selectItem(
+          this.itemListId!,
+          this.itemListName!,
+          item,
           userData
         );
       });

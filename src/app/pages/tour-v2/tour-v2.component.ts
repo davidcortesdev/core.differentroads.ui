@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TourService, Tour } from '../../core/services/tour/tour.service';
-import { catchError, switchMap, map, first } from 'rxjs/operators';
+import { catchError, switchMap, map, first, concatMap } from 'rxjs/operators';
 import { SelectedDepartureEvent } from './components/tour-itinerary-v2/components/selector-itinerary/selector-itinerary.component';
 import { ActivityHighlight } from '../../shared/components/activity-card/activity-card.component';
 import { AnalyticsService } from '../../core/services/analytics/analytics.service';
@@ -15,8 +15,8 @@ import { TourLocationService, ITourLocationResponse } from '../../core/services/
 import { LocationNetService, Location } from '../../core/services/locations/locationNet.service';
 import { DepartureService, IDepartureResponse } from '../../core/services/departure/departure.service';
 import { TourDataForEcommerce } from '../../core/services/analytics/analytics.service';
+import { ReviewsService } from '../../core/services/reviews/reviews.service';
 import { forkJoin, Observable, of } from 'rxjs';
-import { concatMap } from 'rxjs/operators';
 
 // ✅ INTERFACES para tipado fuerte
 interface PassengersData {
@@ -141,6 +141,7 @@ export class TourV2Component implements OnInit {
     private tourLocationService: TourLocationService,
     private locationService: LocationNetService,
     private departureService: DepartureService,
+    private reviewsService: ReviewsService,
   ) {}
 
   ngOnInit(): void {
@@ -473,9 +474,18 @@ export class TourV2Component implements OnInit {
           itineraryDays: itineraryDaysRequest,
           locationData: locationRequest,
           monthTags: monthTagsRequest,
-          tour: this.tourService.getById(tourId, false)
+          tour: this.tourService.getById(tourId, false),
+          rating: this.reviewsService.getAverageRating({ tourId: tourId }).pipe(
+            map((ratingResponse) => {
+              // Si hay rating, devolverlo tal cual
+              // Si no hay rating o es 0, devolver null para que formatRating devuelva ''
+              const avgRating = ratingResponse?.averageRating;
+              return avgRating && avgRating > 0 ? avgRating : null;
+            }),
+            catchError(() => of(null))
+          )
         }).pipe(
-          map(({ itineraryDays, locationData, monthTags, tour }) => {
+          map(({ itineraryDays, locationData, monthTags, tour, rating }) => {
             const days = itineraryDays.length;
             const nights = days > 0 ? days - 1 : 0;
             const tourType = tour.tripTypeId === 1 ? 'FIT' : 'Grupos';
@@ -490,7 +500,7 @@ export class TourV2Component implements OnInit {
               },
               days: days > 0 ? days : undefined,
               nights: nights > 0 ? nights : undefined,
-              rating: undefined, // Rating se obtiene de reviews, por ahora undefined
+              rating: rating !== null ? rating : undefined,
               monthTags: monthTags.length > 0 ? monthTags : undefined,
               tourType: tourType,
               flightCity: 'Sin vuelo',

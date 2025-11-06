@@ -567,8 +567,20 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     // Guardar itemListId e itemListName desde el state de navegación al cargar el componente
     const navigation = this.router.getCurrentNavigation();
     const state = navigation?.extras?.state || window.history.state;
-    this.savedItemListId = state?.['listId'] || state?.['list_id'] || '';
-    this.savedItemListName = state?.['listName'] || state?.['list_name'] || '';
+    const itemListIdFromState = state?.['listId'] || state?.['list_id'] || '';
+    const itemListNameFromState = state?.['listName'] || state?.['list_name'] || '';
+    
+    // Si hay valores en el state, guardarlos en sessionStorage para que persistan al recargar
+    if (itemListIdFromState) {
+      sessionStorage.setItem('checkout_itemListId', itemListIdFromState);
+    }
+    if (itemListNameFromState) {
+      sessionStorage.setItem('checkout_itemListName', itemListNameFromState);
+    }
+    
+    // Usar valores del state si están disponibles, o recuperar de sessionStorage
+    this.savedItemListId = itemListIdFromState || sessionStorage.getItem('checkout_itemListId') || '';
+    this.savedItemListName = itemListNameFromState || sessionStorage.getItem('checkout_itemListName') || '';
 
     this.reservationService.getById(reservationId).subscribe({
       next: (reservation) => {

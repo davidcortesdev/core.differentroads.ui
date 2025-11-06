@@ -21,23 +21,12 @@ import {
   FlightSearchService,
   IAmadeusFlightCreateOrderResponse,
 } from '../../../../core/services/flight/flight-search.service';
-import { AnalyticsService, TourDataForEcommerce } from '../../../../core/services/analytics/analytics.service';
+import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
 import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 import { PointsV2Service } from '../../../../core/services/v2/points-v2.service';
 import { Title } from '@angular/platform-browser';
-import { switchMap, map, catchError, concatMap } from 'rxjs/operators';
-import { of, Observable } from 'rxjs';
-import { ReviewsService } from '../../../../core/services/reviews/reviews.service';
-import { TourService } from '../../../../core/services/tour/tour.service';
-import { TourLocationService, ITourLocationResponse } from '../../../../core/services/tour/tour-location.service';
-import { LocationNetService, Location } from '../../../../core/services/locations/locationNet.service';
-import { ItineraryService, ItineraryFilters } from '../../../../core/services/itinerary/itinerary.service';
-import { ItineraryDayService, IItineraryDayResponse } from '../../../../core/services/itinerary/itinerary-day/itinerary-day.service';
-import { DepartureService, IDepartureResponse } from '../../../../core/services/departure/departure.service';
-import { ReservationTravelerActivityService } from '../../../../core/services/reservation/reservation-traveler-activity.service';
-import { ReservationTravelerActivityPackService } from '../../../../core/services/reservation/reservation-traveler-activity-pack.service';
-import { ActivityService, IActivityResponse } from '../../../../core/services/activity/activity.service';
-import { AgeGroupService } from '../../../../core/services/agegroup/age-group.service';
+import { switchMap, map, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 // Interfaz para información bancaria
 interface BankInfo {
@@ -138,19 +127,7 @@ export class NewReservationComponent implements OnInit {
     private analyticsService: AnalyticsService,
     private authService: AuthenticateService,
     // SERVICIO PARA PUNTOS
-    private pointsService: PointsV2Service,
-    // SERVICIOS PARA OBTENER DATOS DINÁMICOS DEL TOUR
-    private reviewsService: ReviewsService,
-    private tourService: TourService,
-    private tourLocationService: TourLocationService,
-    private locationNetService: LocationNetService,
-    private itineraryService: ItineraryService,
-    private itineraryDayService: ItineraryDayService,
-    private departureService: DepartureService,
-    private reservationTravelerActivityService: ReservationTravelerActivityService,
-    private reservationTravelerActivityPackService: ReservationTravelerActivityPackService,
-    private activityService: ActivityService,
-    private ageGroupService: AgeGroupService
+    private pointsService: PointsV2Service
   ) {
     // Calcular la fecha del día siguiente
     const tomorrow = new Date();
@@ -735,10 +712,6 @@ export class NewReservationComponent implements OnInit {
     const reservationData = this.reservation as any;
     const tourId = this.reservation.tourId;
 
-    // Obtener item_list_id y item_list_name desde sessionStorage (persistidos desde checkout)
-    const itemListId = sessionStorage.getItem('checkout_itemListId') || '';
-    const itemListName = sessionStorage.getItem('checkout_itemListName') || '';
-
     // Obtener información del pago
     const paymentType = this.paymentType || 'completo, transferencia';
     const transactionId =
@@ -747,412 +720,18 @@ export class NewReservationComponent implements OnInit {
       `#${this.reservationId}`;
     const totalValue = this.reservation.totalAmount || 0;
 
-    // Obtener todos los datos completos del tour dinámicamente
-    forkJoin({
-      tourData: this.getCompleteTourDataForEcommerce(tourId),
-      activitiesText: this.getActivitiesFromTravelers(),
-      passengersCount: this.getPassengersCount()
-    }).pipe(
-      switchMap(({ tourData, activitiesText, passengersCount }: { tourData: TourDataForEcommerce; activitiesText: string; passengersCount: { adults: string; children: string } }) => {
-        // Actualizar con datos adicionales del contexto
-        tourData.flightCity = reservationData.flight?.originCity || tourData.flightCity || '';
-        // Usar actividades obtenidas dinámicamente desde viajeros
-        tourData.activitiesText = activitiesText || '';
-        // Usar seguro del contexto
-        tourData.selectedInsurance = reservationData.insurance?.name || '';
-        // Usar conteo de pasajeros desde viajeros
-        tourData.totalPassengers = parseInt(passengersCount.adults) + parseInt(passengersCount.children);
-        tourData.childrenCount = passengersCount.children;
-        tourData.departureDate = reservationData.departureDate || '';
-        tourData.returnDate = reservationData.returnDate || '';
-        tourData.price = totalValue;
-        
-        // Usar el ID del tour desde tourData
-        const itemId = tourData.tkId?.toString() || tourData.id?.toString() || '';
-        
-        return this.analyticsService.buildEcommerceItemFromTourData(
-          tourData,
-          itemListId,
-          itemListName,
-          itemId
-        ).pipe(
-          switchMap((item) => {
-            return this.analyticsService.getCurrentUserData().pipe(
-              map((userData) => ({ item, userData }))
-            );
-          })
-        );
-      }),
-      catchError((error) => {
-        console.error('Error obteniendo datos completos del tour para purchase:', error);
-        // Fallback con datos básicos
-        const tourData = reservationData.tour || {};
-        const tourDataForEcommerce: TourDataForEcommerce = {
-          id: tourData.id,
-          tkId: tourData.tkId ?? undefined,
-          name: reservationData.tourName || tourData.name || undefined,
-          destination: {
-            continent: tourData.destination?.continent || undefined,
-            country: tourData.destination?.country || undefined
-          },
-          days: tourData.days || undefined,
-          nights: tourData.nights || undefined,
-          rating: tourData.rating || undefined,
-          monthTags: tourData.monthTags || undefined,
-          tourType: tourData.tourType || undefined,
-          flightCity: reservationData.flight?.originCity || '',
-          activitiesText: reservationData.activities && reservationData.activities.length > 0
-            ? reservationData.activities.map((a: any) => a.description || a.name).join(', ')
-            : '',
-          selectedInsurance: reservationData.insurance?.name || '',
-          childrenCount: '0',
-          totalPassengers: this.reservation?.totalPassengers || undefined,
-          departureDate: reservationData.departureDate || '',
-          returnDate: reservationData.returnDate || '',
-          price: totalValue
-        };
-
-        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
-        return this.analyticsService.buildEcommerceItemFromTourData(
-          tourDataForEcommerce,
-          itemListId,
-          itemListName,
-          itemId
-        ).pipe(
-          map((item) => ({ item, userData: this.getUserData() }))
-        );
-      })
-    ).subscribe({
-      next: ({ item, userData }) => {
-        // El item ya tiene item_list_id e item_list_name desde buildEcommerceItemFromTourData
-        // No necesitamos actualizarlo, solo pasarlo directamente
-        this.analyticsService.purchase(
-          {
-            transaction_id: transactionId,
-            value: totalValue,
-            tax: 0.6,
-            shipping: 0.0,
-            currency: 'EUR',
-            coupon: reservationData.coupon?.code || '',
-            payment_type: paymentType,
-            items: [item]
-          },
-          userData
-        );
-      },
-      error: (error) => {
-        console.error('Error final obteniendo datos para purchase:', error);
+    // Usar el método centralizado del servicio que obtiene todos los datos dinámicamente
+    this.analyticsService.trackPurchaseFromReservation(
+      this.reservationId,
+      tourId,
+      {
+        transactionId: transactionId,
+        paymentType: paymentType,
+        totalValue: totalValue,
+        tax: 0.6,
+        shipping: 0.0,
+        coupon: reservationData.coupon?.code || ''
       }
-    });
-  }
-
-  /**
-   * Obtiene datos completos del tour para analytics (rating, continent, country, monthTags, days, nights, tourType)
-   */
-  private getCompleteTourDataForEcommerce(tourId: number): Observable<TourDataForEcommerce> {
-    const itineraryFilters: ItineraryFilters = {
-      tourId: tourId,
-      isVisibleOnWeb: true,
-      isBookable: true,
-    };
-
-    return this.itineraryService.getAll(itineraryFilters, false).pipe(
-      concatMap((itineraries) => {
-        if (itineraries.length === 0) {
-          return forkJoin({
-            tour: this.tourService.getById(tourId, false),
-            rating: this.reviewsService.getAverageRating({ tourId: tourId }).pipe(
-              map((ratingResponse) => {
-                const avgRating = ratingResponse?.averageRating;
-                return avgRating && avgRating > 0 ? avgRating : null;
-              }),
-              catchError(() => of(null))
-            )
-          }).pipe(
-            map(({ tour, rating }) => ({
-              id: tourId,
-              tkId: tour.tkId ?? undefined,
-              name: tour.name ?? undefined,
-              destination: { continent: undefined, country: undefined },
-              days: undefined,
-              nights: undefined,
-              rating: rating !== null ? rating : undefined,
-              monthTags: undefined,
-              tourType: tour.tripTypeId === 1 ? 'FIT' : 'Grupos',
-              price: tour.minPrice ?? undefined
-            } as TourDataForEcommerce))
-          );
-        }
-
-        // Obtener días de itinerario del primer itinerario disponible
-        const itineraryDaysRequest = this.itineraryDayService
-          .getAll({ itineraryId: itineraries[0].id })
-          .pipe(catchError(() => of([] as IItineraryDayResponse[])));
-
-        // Obtener continent y country
-        const locationRequest = forkJoin({
-          countryLocations: this.tourLocationService.getByTourAndType(tourId, 'COUNTRY').pipe(
-            map((response) => Array.isArray(response) ? response : response ? [response] : []),
-            catchError(() => of([] as ITourLocationResponse[]))
-          ),
-          continentLocations: this.tourLocationService.getByTourAndType(tourId, 'CONTINENT').pipe(
-            map((response) => Array.isArray(response) ? response : response ? [response] : []),
-            catchError(() => of([] as ITourLocationResponse[]))
-          )
-        }).pipe(
-          switchMap(({ countryLocations, continentLocations }) => {
-            const locationIds = [
-              ...countryLocations.map(tl => tl.locationId),
-              ...continentLocations.map(tl => tl.locationId)
-            ].filter(id => id !== undefined && id !== null);
-            
-            if (locationIds.length === 0) {
-              return of({ continent: '', country: '' });
-            }
-            
-            return this.locationNetService.getLocationsByIds(locationIds).pipe(
-              map((locations: Location[]) => {
-                const countries = countryLocations
-                  .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
-                  .map(tl => locations.find(l => l.id === tl.locationId)?.name)
-                  .filter(name => name) as string[];
-                
-                const continents = continentLocations
-                  .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
-                  .map(tl => locations.find(l => l.id === tl.locationId)?.name)
-                  .filter(name => name) as string[];
-                
-                return {
-                  continent: continents.join(', ') || '',
-                  country: countries.join(', ') || ''
-                };
-              }),
-              catchError(() => of({ continent: '', country: '' }))
-            );
-          })
-        );
-
-        // Obtener departures para extraer monthTags desde las fechas
-        const departureRequests = itineraries.map((itinerary) =>
-          this.departureService.getByItinerary(itinerary.id, false).pipe(
-            catchError(() => of([] as IDepartureResponse[]))
-          )
-        );
-
-        const monthTagsRequest = departureRequests.length > 0 
-          ? forkJoin(departureRequests).pipe(
-              map((departureArrays: IDepartureResponse[][]) => {
-                const allDepartures = departureArrays.flat();
-                const availableMonths: string[] = [];
-                
-                // Extraer meses de las fechas de departure
-                allDepartures.forEach((departure: IDepartureResponse) => {
-                  if (departure.departureDate) {
-                    const date = new Date(departure.departureDate);
-                    const monthIndex = date.getMonth(); // 0-11
-                    const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 
-                                      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-                    if (monthIndex >= 0 && monthIndex < 12) {
-                      const monthName = monthNames[monthIndex];
-                      if (!availableMonths.includes(monthName)) {
-                        availableMonths.push(monthName);
-                      }
-                    }
-                  }
-                });
-                
-                return availableMonths;
-              }),
-              catchError(() => of([]))
-            )
-          : of([]);
-
-        return forkJoin({
-          itineraryDays: itineraryDaysRequest,
-          locationData: locationRequest,
-          monthTags: monthTagsRequest,
-          tour: this.tourService.getById(tourId, false),
-          rating: this.reviewsService.getAverageRating({ tourId: tourId }).pipe(
-            map((ratingResponse) => {
-              const avgRating = ratingResponse?.averageRating;
-              return avgRating && avgRating > 0 ? avgRating : null;
-            }),
-            catchError(() => of(null))
-          )
-        }).pipe(
-          map(({ itineraryDays, locationData, monthTags, tour, rating }) => {
-            const days = itineraryDays.length;
-            const nights = days > 0 ? days - 1 : 0;
-            const tourType = tour.tripTypeId === 1 ? 'FIT' : 'Grupos';
-
-            return {
-              id: tourId,
-              tkId: tour.tkId ?? undefined,
-              name: tour.name ?? undefined,
-              destination: {
-                continent: locationData.continent || undefined,
-                country: locationData.country || undefined
-              },
-              days: days > 0 ? days : undefined,
-              nights: nights > 0 ? nights : undefined,
-              rating: rating !== null ? rating : undefined,
-              monthTags: monthTags.length > 0 ? monthTags : undefined,
-              tourType: tourType,
-              flightCity: '',
-              price: tour.minPrice ?? undefined
-            } as TourDataForEcommerce;
-          }),
-          catchError(() => of({
-            id: tourId,
-            days: undefined,
-            nights: undefined,
-            destination: { continent: undefined, country: undefined },
-            monthTags: undefined,
-            tourType: undefined
-          } as TourDataForEcommerce))
-        );
-      }),
-      catchError(() => of({
-        id: tourId,
-        days: undefined,
-        nights: undefined,
-        destination: { continent: undefined, country: undefined },
-        monthTags: undefined,
-        tourType: undefined
-      } as TourDataForEcommerce))
-    );
-  }
-
-  /**
-   * Obtiene las actividades asignadas desde los viajeros de la reservación
-   */
-  private getActivitiesFromTravelers(): Observable<string> {
-    const reservationData = this.reservation as any;
-    if (!this.reservationId || !reservationData?.itineraryId) {
-      return of('');
-    }
-
-    const itineraryId = reservationData.itineraryId;
-    const departureId = reservationData.departureId || undefined;
-
-    // Obtener todos los viajeros de la reservación
-    return this.reservationTravelerService.getByReservation(this.reservationId).pipe(
-      switchMap((travelers) => {
-        if (!travelers || travelers.length === 0) {
-          return of('');
-        }
-
-        // Obtener todas las actividades asignadas (individuales y packs) de todos los viajeros
-        const activityRequests = travelers.map(traveler =>
-          forkJoin({
-            activities: this.reservationTravelerActivityService.getByReservationTraveler(traveler.id).pipe(
-              catchError(() => of([]))
-            ),
-            activityPacks: this.reservationTravelerActivityPackService.getByReservationTraveler(traveler.id).pipe(
-              catchError(() => of([]))
-            )
-          })
-        );
-
-        return forkJoin(activityRequests).pipe(
-          switchMap((results) => {
-            // Recopilar todos los IDs únicos de actividades y packs
-            const activityIds = new Set<number>();
-            const packIds = new Set<number>();
-
-            results.forEach(result => {
-              result.activities.forEach((activity: any) => {
-                if (activity.activityId) {
-                  activityIds.add(activity.activityId);
-                }
-              });
-              result.activityPacks.forEach((pack: any) => {
-                if (pack.activityPackId) {
-                  packIds.add(pack.activityPackId);
-                }
-              });
-            });
-
-            if (activityIds.size === 0 && packIds.size === 0) {
-              return of('');
-            }
-
-            // Obtener todas las actividades disponibles del itinerario
-            return this.activityService.getForItineraryWithPacks(
-              itineraryId,
-              departureId,
-              undefined,
-              true, // isVisibleOnWeb
-              true  // onlyOpt
-            ).pipe(
-              map((allActivities: IActivityResponse[]) => {
-                // Filtrar actividades asignadas
-                const assignedActivities = allActivities.filter(activity => {
-                  if (activity.type === 'act') {
-                    return activityIds.has(activity.id);
-                  } else if (activity.type === 'pack') {
-                    return packIds.has(activity.id);
-                  }
-                  return false;
-                });
-
-                // Formatear nombres de actividades
-                const activityNames = assignedActivities
-                  .map(activity => activity.name)
-                  .filter(name => name && name.trim().length > 0);
-
-                return activityNames.join(', ');
-              }),
-              catchError(() => of(''))
-            );
-          })
-        );
-      }),
-      catchError(() => of(''))
-    );
-  }
-
-  /**
-   * Obtiene el conteo de pasajeros adultos y niños desde los viajeros y age groups
-   */
-  private getPassengersCount(): Observable<{ adults: string; children: string }> {
-    if (!this.reservationId) {
-      return of({ adults: '0', children: '0' });
-    }
-
-    return forkJoin({
-      travelers: this.reservationTravelerService.getByReservation(this.reservationId),
-      ageGroups: this.ageGroupService.getAll()
-    }).pipe(
-      map(({ travelers, ageGroups }) => {
-        let adultsCount = 0;
-        let childrenCount = 0;
-
-        travelers.forEach(traveler => {
-          const ageGroup = ageGroups.find((group: any) => group.id === traveler.ageGroupId);
-          if (ageGroup) {
-            // Si upperLimitAge es null o undefined, es adulto
-            // Si upperLimitAge <= 15, es niño
-            // Si upperLimitAge > 15, es adulto
-            if (ageGroup.upperLimitAge === null || ageGroup.upperLimitAge === undefined) {
-              adultsCount++;
-            } else if (ageGroup.upperLimitAge <= 15) {
-              childrenCount++;
-            } else {
-              adultsCount++;
-            }
-          } else {
-            // Si no se encuentra el grupo de edad, asumir adulto
-            adultsCount++;
-          }
-        });
-
-        return {
-          adults: adultsCount.toString(),
-          children: childrenCount.toString()
-        };
-      }),
-      catchError(() => of({ adults: '0', children: '0' }))
     );
   }
 
@@ -1169,6 +748,7 @@ export class NewReservationComponent implements OnInit {
     }
     return undefined;
   }
+
 
   /**
    * Genera puntos después del pago exitoso (3% del PVP) y cambia el estado de la reserva a BOOKED

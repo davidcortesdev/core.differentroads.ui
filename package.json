@@ -24,6 +24,7 @@
     "@angular/platform-browser-dynamic": "^19.0.0",
     "@angular/router": "^19.0.0",
     "@aws-amplify/ui-angular": "^5.0.39",
+    "@aws-sdk/client-cognito-identity-provider": "^3.925.0",
     "@ctrl/tinycolor": "^4.1.0",
     "@ngx-translate/core": "^16.0.4",
     "@ngx-translate/http-loader": "^16.0.1",

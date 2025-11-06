@@ -580,6 +580,38 @@ export class AnalyticsService {
     userData?: UserData
   ): void {
     this.clearEcommerce();
+    
+    // Filtrar solo los campos permitidos para add_to_cart
+    // Asegurar que puntuacion esté formateada correctamente
+    const puntuacion = item.puntuacion 
+      ? item.puntuacion 
+      : this.formatRating((item as any).rating, '');
+    
+    const filteredItem: EcommerceItem = {
+      item_id: item.item_id || '',
+      item_name: item.item_name || '',
+      coupon: item.coupon || '',
+      discount: item.discount || 0,
+      index: item.index || 0,
+      item_brand: item.item_brand || '',
+      item_category: item.item_category || '',
+      item_category2: item.item_category2 || '',
+      item_category3: item.item_category3 || '',
+      item_category4: item.item_category4 || '',
+      item_category5: item.item_category5 || '',
+      item_list_id: item.item_list_id || '',
+      item_list_name: item.item_list_name || '',
+      item_variant: item.item_variant || '',
+      price: item.price || 0,
+      quantity: item.quantity || 1,
+      puntuacion: puntuacion,
+      duracion: item.duracion || '',
+      start_date: item.start_date || '',
+      end_date: item.end_date || '',
+      pasajeros_adultos: item.pasajeros_adultos || '',
+      pasajeros_niños: item.pasajeros_niños || ''
+    };
+    
     // Estructura específica para add_to_cart
     const eventData: AddToCartEventData = {
       event: 'add_to_cart',
@@ -587,7 +619,7 @@ export class AnalyticsService {
       ecommerce: {
         currency: currency,
         value: value,
-        items: [item]
+        items: [filteredItem]
       }
     };
     

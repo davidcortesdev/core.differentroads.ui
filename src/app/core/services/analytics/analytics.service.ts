@@ -938,11 +938,53 @@ export class AnalyticsService {
     userData?: UserData
   ): void {
     this.clearEcommerce();
+    
+    // Filtrar items para incluir solo los campos permitidos
+    const filteredItems: EcommerceItem[] = (ecommerceData.items || []).map(item => {
+      // Asegurar que puntuacion esté formateada correctamente
+      const puntuacion = item.puntuacion 
+        ? item.puntuacion 
+        : this.formatRating((item as any).rating, '');
+      
+      return {
+        item_id: item.item_id || '',
+        item_name: item.item_name || '',
+        coupon: item.coupon || '',
+        discount: item.discount || 0,
+        index: item.index || 0,
+        item_brand: item.item_brand || '',
+        item_category: item.item_category || '',
+        item_category2: item.item_category2 || '',
+        item_category3: item.item_category3 || '',
+        item_category4: item.item_category4 || '',
+        item_category5: item.item_category5 || '',
+        item_list_id: item.item_list_id || '',
+        item_list_name: item.item_list_name || '',
+        item_variant: item.item_variant || '',
+        price: item.price || 0,
+        quantity: item.quantity || 1,
+        puntuacion: puntuacion,
+        duracion: item.duracion || '',
+        start_date: item.start_date || '',
+        end_date: item.end_date || '',
+        pasajeros_adultos: item.pasajeros_adultos || '',
+        pasajeros_niños: item.pasajeros_niños || '',
+        actividades: item.actividades || '',
+        seguros: item.seguros || '',
+        vuelo: item.vuelo || ''
+      };
+    });
+    
     // Estructura específica para add_personal_info
     const eventData: AddPersonalInfoEventData = {
       event: 'add_personal_info',
       user_data: this.normalizeUserData(userData),
-      ecommerce: ecommerceData
+      ecommerce: {
+        currency: ecommerceData.currency || 'EUR',
+        value: ecommerceData.value || 0,
+        coupon: ecommerceData.coupon || '',
+        items: filteredItems
+      }
     };
     
     this.pushEvent(eventData);
@@ -957,11 +999,53 @@ export class AnalyticsService {
     userData?: UserData
   ): void {
     this.clearEcommerce();
+    
+    // Filtrar items para incluir solo los campos permitidos
+    const filteredItems: EcommerceItem[] = (ecommerceData.items || []).map(item => {
+      // Asegurar que puntuacion esté formateada correctamente
+      const puntuacion = item.puntuacion 
+        ? item.puntuacion 
+        : this.formatRating((item as any).rating, '');
+      
+      return {
+        item_id: item.item_id || '',
+        item_name: item.item_name || '',
+        coupon: item.coupon || '',
+        discount: item.discount || 0,
+        index: item.index || 0,
+        item_brand: item.item_brand || '',
+        item_category: item.item_category || '',
+        item_category2: item.item_category2 || '',
+        item_category3: item.item_category3 || '',
+        item_category4: item.item_category4 || '',
+        item_category5: item.item_category5 || '',
+        item_list_id: item.item_list_id || '',
+        item_list_name: item.item_list_name || '',
+        item_variant: item.item_variant || '',
+        price: item.price || 0,
+        quantity: item.quantity || 1,
+        puntuacion: puntuacion,
+        duracion: item.duracion || '',
+        start_date: item.start_date || '',
+        end_date: item.end_date || '',
+        pasajeros_adultos: item.pasajeros_adultos || '',
+        pasajeros_niños: item.pasajeros_niños || '',
+        actividades: item.actividades || '',
+        seguros: item.seguros || '',
+        vuelo: item.vuelo || ''
+      };
+    });
+    
     // Estructura específica para view_payment_info
     const eventData: ViewPaymentInfoEventData = {
       event: 'view_payment_info',
       user_data: this.normalizeUserData(userData),
-      ecommerce: ecommerceData
+      ecommerce: {
+        currency: ecommerceData.currency || 'EUR',
+        value: ecommerceData.value || 0,
+        coupon: ecommerceData.coupon || '',
+        items: filteredItems
+      }
     };
     
     this.pushEvent(eventData);

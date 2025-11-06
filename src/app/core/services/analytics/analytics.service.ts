@@ -1,7 +1,7 @@
 import { Injectable, Injector } from '@angular/core';
 import { UsersNetService } from '../users/usersNet.service';
 import { PersonalInfoV2Service } from '../v2/personal-info-v2.service';
-import { Observable, of, map, switchMap, catchError, first, take, shareReplay } from 'rxjs';
+import { Observable, of, map, switchMap, catchError, first, take, shareReplay, tap, defaultIfEmpty, filter, skipWhile } from 'rxjs';
 import { TourTagService } from '../tag/tour-tag.service';
 import { TagService } from '../tag/tag.service';
 import { TripTypeService } from '../trip-type/trip-type.service';
@@ -61,6 +61,218 @@ export interface EcommerceData {
   transaction_id?: string;
   tax?: number;
   shipping?: number;
+}
+
+/**
+ * ============================================
+ * ESTRUCTURAS ESPECÍFICAS PARA CADA EVENTO
+ * ============================================
+ */
+
+/**
+ * Estructura específica para view_item_list
+ */
+export interface ViewItemListEventData {
+  event: 'view_item_list';
+  user_data: {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  };
+  ecommerce: {
+    item_list_id: string;
+    item_list_name: string;
+    items: EcommerceItem[];
+  };
+}
+
+/**
+ * Estructura específica para select_item
+ */
+export interface SelectItemEventData {
+  event: 'select_item';
+  user_data: {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  };
+  ecommerce: {
+    item_list_id: string;
+    item_list_name: string;
+    items: EcommerceItem[];
+  };
+}
+
+/**
+ * Estructura específica para view_item
+ */
+export interface ViewItemEventData {
+  event: 'view_item';
+  user_data: {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  };
+  ecommerce: {
+    item_list_id: string;
+    item_list_name: string;
+    items: EcommerceItem[];
+  };
+}
+
+/**
+ * Estructura específica para add_to_wishlist
+ */
+export interface AddToWishlistEventData {
+  event: 'add_to_wishlist';
+  user_data: {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  };
+  ecommerce: {
+    item_list_id: string;
+    item_list_name: string;
+    items: EcommerceItem[];
+  };
+}
+
+/**
+ * Estructura específica para add_to_cart
+ */
+export interface AddToCartEventData {
+  event: 'add_to_cart';
+  user_data: {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  };
+  ecommerce: {
+    currency: string;
+    value: number;
+    items: EcommerceItem[];
+  };
+}
+
+/**
+ * Estructura específica para view_cart
+ */
+export interface ViewCartEventData {
+  event: 'view_cart';
+  user_data: {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  };
+  ecommerce: {
+    currency: string;
+    value: number;
+    items: EcommerceItem[];
+  };
+}
+
+/**
+ * Estructura específica para begin_checkout
+ */
+export interface BeginCheckoutEventData {
+  event: 'begin_checkout';
+  user_data: {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  };
+  ecommerce: EcommerceData;
+}
+
+/**
+ * Estructura específica para view_flights_info
+ */
+export interface ViewFlightsInfoEventData {
+  event: 'view_flights_info';
+  user_data: {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  };
+  ecommerce: EcommerceData;
+}
+
+/**
+ * Estructura específica para add_flights_info
+ */
+export interface AddFlightsInfoEventData {
+  event: 'add_flights_info';
+  user_data: {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  };
+  ecommerce: EcommerceData;
+}
+
+/**
+ * Estructura específica para view_personal_info
+ */
+export interface ViewPersonalInfoEventData {
+  event: 'view_personal_info';
+  user_data: {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  };
+  ecommerce: EcommerceData;
+}
+
+/**
+ * Estructura específica para add_personal_info
+ */
+export interface AddPersonalInfoEventData {
+  event: 'add_personal_info';
+  user_data: {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  };
+  ecommerce: EcommerceData;
+}
+
+/**
+ * Estructura específica para view_payment_info
+ */
+export interface ViewPaymentInfoEventData {
+  event: 'view_payment_info';
+  user_data: {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  };
+  ecommerce: EcommerceData;
+}
+
+/**
+ * Estructura específica para add_payment_info
+ */
+export interface AddPaymentInfoEventData {
+  event: 'add_payment_info';
+  user_data: {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  };
+  ecommerce: EcommerceData;
+}
+
+/**
+ * Estructura específica para purchase
+ */
+export interface PurchaseEventData {
+  event: 'purchase';
+  user_data: {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  };
+  ecommerce: EcommerceData;
 }
 
 /**
@@ -197,8 +409,8 @@ export class AnalyticsService {
 
     this.clearEcommerce();
     
-    // Estructura exacta según especificación
-    const eventData: any = {
+    // Estructura específica para view_item_list
+    const eventData: ViewItemListEventData = {
       event: 'view_item_list',
       user_data: this.normalizeUserData(userData),
       ecommerce: {
@@ -226,7 +438,8 @@ export class AnalyticsService {
     // Eliminar end_date del item si existe
     const { end_date, ...itemWithoutEndDate } = item;
     
-    this.pushEvent({
+    // Estructura específica para select_item
+    const eventData: SelectItemEventData = {
       event: 'select_item',
       user_data: this.normalizeUserData(userData),
       ecommerce: {
@@ -234,7 +447,9 @@ export class AnalyticsService {
         item_list_name: itemListName,
         items: [itemWithoutEndDate]
       }
-    });
+    };
+    
+    this.pushEvent(eventData);
   }
 
   /**
@@ -283,7 +498,8 @@ export class AnalyticsService {
       duracion: item.duracion || ''
     };
     
-    this.pushEvent({
+    // Estructura específica para view_item
+    const eventData: ViewItemEventData = {
       event: 'view_item',
       user_data: this.normalizeUserData(userData),
       ecommerce: {
@@ -291,7 +507,9 @@ export class AnalyticsService {
         item_list_name: itemListName,
         items: [filteredItem]
       }
-    });
+    };
+    
+    this.pushEvent(eventData);
   }
 
   /**
@@ -310,7 +528,8 @@ export class AnalyticsService {
       ? itemListId.toString()
       : itemListId;
     
-    this.pushEvent({
+    // Estructura específica para add_to_wishlist
+    const eventData: AddToWishlistEventData = {
       event: 'add_to_wishlist',
       user_data: this.normalizeUserData(userData),
       ecommerce: {
@@ -318,7 +537,9 @@ export class AnalyticsService {
         item_list_name: itemListName,
         items: [item]
       }
-    });
+    };
+    
+    this.pushEvent(eventData);
   }
 
   /**
@@ -332,7 +553,8 @@ export class AnalyticsService {
     userData?: UserData
   ): void {
     this.clearEcommerce();
-    this.pushEvent({
+    // Estructura específica para add_to_cart
+    const eventData: AddToCartEventData = {
       event: 'add_to_cart',
       user_data: this.normalizeUserData(userData),
       ecommerce: {
@@ -340,7 +562,9 @@ export class AnalyticsService {
         value: value,
         items: [item]
       }
-    });
+    };
+    
+    this.pushEvent(eventData);
   }
 
   /**
@@ -354,7 +578,8 @@ export class AnalyticsService {
     userData?: UserData
   ): void {
     this.clearEcommerce();
-    this.pushEvent({
+    // Estructura específica para view_cart
+    const eventData: ViewCartEventData = {
       event: 'view_cart',
       user_data: this.normalizeUserData(userData),
       ecommerce: {
@@ -362,7 +587,9 @@ export class AnalyticsService {
         value: value,
         items: [item]
       }
-    });
+    };
+    
+    this.pushEvent(eventData);
   }
 
   // ============================================
@@ -378,11 +605,14 @@ export class AnalyticsService {
     userData?: UserData
   ): void {
     this.clearEcommerce();
-    this.pushEvent({
+    // Estructura específica para begin_checkout
+    const eventData: BeginCheckoutEventData = {
       event: 'begin_checkout',
       user_data: this.normalizeUserData(userData),
       ecommerce: ecommerceData
-    });
+    };
+    
+    this.pushEvent(eventData);
   }
 
   /**
@@ -394,11 +624,14 @@ export class AnalyticsService {
     userData?: UserData
   ): void {
     this.clearEcommerce();
-    this.pushEvent({
+    // Estructura específica para view_flights_info
+    const eventData: ViewFlightsInfoEventData = {
       event: 'view_flights_info',
       user_data: this.normalizeUserData(userData),
       ecommerce: ecommerceData
-    });
+    };
+    
+    this.pushEvent(eventData);
   }
 
   /**
@@ -410,11 +643,14 @@ export class AnalyticsService {
     userData?: UserData
   ): void {
     this.clearEcommerce();
-    this.pushEvent({
+    // Estructura específica para add_flights_info
+    const eventData: AddFlightsInfoEventData = {
       event: 'add_flights_info',
       user_data: this.normalizeUserData(userData),
       ecommerce: ecommerceData
-    });
+    };
+    
+    this.pushEvent(eventData);
   }
 
   /**
@@ -426,11 +662,14 @@ export class AnalyticsService {
     userData?: UserData
   ): void {
     this.clearEcommerce();
-    this.pushEvent({
+    // Estructura específica para view_personal_info
+    const eventData: ViewPersonalInfoEventData = {
       event: 'view_personal_info',
       user_data: this.normalizeUserData(userData),
       ecommerce: ecommerceData
-    });
+    };
+    
+    this.pushEvent(eventData);
   }
 
   /**
@@ -442,11 +681,14 @@ export class AnalyticsService {
     userData?: UserData
   ): void {
     this.clearEcommerce();
-    this.pushEvent({
+    // Estructura específica para add_personal_info
+    const eventData: AddPersonalInfoEventData = {
       event: 'add_personal_info',
       user_data: this.normalizeUserData(userData),
       ecommerce: ecommerceData
-    });
+    };
+    
+    this.pushEvent(eventData);
   }
 
   /**
@@ -458,11 +700,14 @@ export class AnalyticsService {
     userData?: UserData
   ): void {
     this.clearEcommerce();
-    this.pushEvent({
+    // Estructura específica para view_payment_info
+    const eventData: ViewPaymentInfoEventData = {
       event: 'view_payment_info',
       user_data: this.normalizeUserData(userData),
       ecommerce: ecommerceData
-    });
+    };
+    
+    this.pushEvent(eventData);
   }
 
   /**
@@ -474,11 +719,14 @@ export class AnalyticsService {
     userData?: UserData
   ): void {
     this.clearEcommerce();
-    this.pushEvent({
+    // Estructura específica para add_payment_info
+    const eventData: AddPaymentInfoEventData = {
       event: 'add_payment_info',
       user_data: this.normalizeUserData(userData),
       ecommerce: ecommerceData
-    });
+    };
+    
+    this.pushEvent(eventData);
   }
 
   /**
@@ -490,11 +738,14 @@ export class AnalyticsService {
     userData?: UserData
   ): void {
     this.clearEcommerce();
-    this.pushEvent({
+    // Estructura específica para purchase
+    const eventData: PurchaseEventData = {
       event: 'purchase',
       user_data: this.normalizeUserData(userData),
       ecommerce: ecommerceData
-    });
+    };
+    
+    this.pushEvent(eventData);
   }
 
   // ============================================
@@ -688,11 +939,19 @@ export class AnalyticsService {
   /**
    * Normaliza userData para asegurar que siempre tenga los campos, incluso si están vacíos
    */
-  private normalizeUserData(userData?: UserData): UserData {
-    return userData || {
-      email_address: '',
-      phone_number: '',
-      user_id: ''
+  /**
+   * Normaliza los datos de usuario para asegurar que siempre tengan los campos requeridos
+   * Devuelve un objeto con campos obligatorios (no opcionales) para las estructuras específicas de eventos
+   */
+  private normalizeUserData(userData?: UserData): {
+    email_address: string;
+    phone_number: string;
+    user_id: string;
+  } {
+    return {
+      email_address: userData?.email_address || '',
+      phone_number: userData?.phone_number || '',
+      user_id: userData?.user_id || ''
     };
   }
 
@@ -949,7 +1208,7 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
     // Convertir tours a formato EcommerceItem
     const items = this.convertToursToEcommerceItems(tours, itemListId, itemListName);
 
-    // Obtener datos del usuario y disparar evento (igual que en selectItem)
+    // Obtener datos del usuario y disparar evento
     this.getCurrentUserData().subscribe(userData => {
       this.viewItemList(itemListId, itemListName, items, userData);
     });
@@ -959,7 +1218,7 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
    * Obtiene los datos completos del usuario usando el mismo patrón que el header
    * Combina email, cognitoId y datos de la base de datos
    */
-  getCurrentUserData(): Observable<UserData | undefined> {
+  getCurrentUserData(): Observable<UserData> {
     // Verificar primero el valor actual del email (síncrono)
     const currentEmail = this.authService.getUserEmailValue();
     
@@ -970,16 +1229,11 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
     
     // Si no hay email, esperar a que se actualice (asíncrono)
     return this.authService.getUserEmail().pipe(
+      // Filtrar valores vacíos
+      filter((email: string) => !!email && email.length > 0),
+      // Tomar el primer valor válido
+      first(),
       switchMap((email: string) => {
-        if (!email || email.length === 0) {
-          // Si no hay email, devolver campos vacíos
-          return of({
-            email_address: '',
-            phone_number: '',
-            user_id: ''
-          });
-        }
-        
         return this.processUserDataWithEmail(email);
       }),
       catchError(() => {
@@ -988,7 +1242,7 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
           email_address: '',
           phone_number: '',
           user_id: ''
-        });
+        } as UserData);
       })
     );
   }

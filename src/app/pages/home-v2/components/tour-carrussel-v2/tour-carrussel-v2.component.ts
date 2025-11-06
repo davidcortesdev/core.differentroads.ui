@@ -35,7 +35,9 @@ import {
 
 // Importar servicios para filtros por tag y ubicación
 import { TourTagService } from '../../../../core/services/tag/tour-tag.service';
+import { TagService } from '../../../../core/services/tag/tag.service';
 import { TourLocationService } from '../../../../core/services/tour/tour-location.service';
+import { LocationNetService, Location } from '../../../../core/services/locations/locationNet.service';
 
 // ✅ NUEVOS SERVICIOS: Para fechas y tags
 import {
@@ -109,7 +111,9 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
     private readonly homeSectionConfigurationService: HomeSectionConfigurationService,
     private readonly homeSectionTourFilterService: HomeSectionTourFilterService,
     private readonly tourTagService: TourTagService,
+    private readonly tagService: TagService,
     private readonly tourLocationService: TourLocationService,
+    private readonly locationService: LocationNetService,
     // ✅ NUEVOS SERVICIOS: Para precios, fechas y tags
     private readonly departureService: DepartureService,
     private readonly itineraryService: ItineraryService,
@@ -329,19 +333,21 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
   }
 
   // ✅ MÉTODO AUXILIAR: Obtener datos adicionales (fechas, tags, días)
+  // NOTA: Este método está duplicado de home-v2.component.ts
+  // TODO: Extraer a un servicio compartido para evitar duplicación
   private getAdditionalTourData(tourId: number): Observable<{
     departures: IDepartureResponse[];
     tags: string[];
     itineraryDays: IItineraryDayResponse[];
+    continent?: string;
+    country?: string;
   }> {
-    // ✅ USAR LOS MISMOS FILTROS QUE TOUR-DEPARTURES-V2
     const itineraryFilters: ItineraryFilters = {
       tourId: tourId,
-      isVisibleOnWeb: true, // ✅ FILTRO ADICIONAL
-      isBookable: true, // ✅ FILTRO ADICIONAL
+      isVisibleOnWeb: true,
+      isBookable: true,
     };
 
-    // Obtener itinerarios del tour para luego obtener departures
     return this.itineraryService.getAll(itineraryFilters, false).pipe(
       switchMap((itineraries: IItineraryResponse[]) => {
         if (itineraries.length === 0) {
@@ -349,16 +355,14 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
             departures: [],
             tags: [],
             itineraryDays: [],
+            continent: '',
+            country: '',
           });
         }
 
-        // Obtener departures de todos los itinerarios
         const departureRequests = itineraries.map((itinerary) =>
           this.departureService.getByItinerary(itinerary.id, false).pipe(
-            catchError((error) => {
-              // Error obteniendo departures
-              return of([]);
-            })
+            catchError(() => of([]))
           )
         );
 
@@ -366,51 +370,115 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
           switchMap((departureArrays: IDepartureResponse[][]) => {
             const allDepartures = departureArrays.flat();
 
-            // Obtener días de itinerario del primer itinerario disponible
             const itineraryDaysRequest =
               itineraries.length > 0
                 ? this.itineraryDayService
                     .getAll({ itineraryId: itineraries[0].id })
-                    .pipe(
-                      catchError((error) => {
-                        // Error obteniendo días de itinerario
-                        return of([]);
-                      })
-                    )
+                    .pipe(catchError(() => of([])))
                 : of([]);
 
-            // Obtener tags del tour
-            const tagRequest = this.tourTagService.getAll({ tourId: [tourId] }).pipe(
-              map((tourTags) => {
-                // Por ahora retornamos un array vacío, pero aquí podrías obtener los nombres de los tags
-                return [];
-              }),
-              catchError((error) => {
-                // Error obteniendo tags
-                return of([]);
-              })
-            );
+            const tagRequest = this.tourTagService
+              .getByTourAndType(tourId, 'VISIBLE')
+              .pipe(
+                switchMap((tourTags) => {
+                  if (tourTags.length > 0 && tourTags[0]?.tagId && tourTags[0].tagId > 0) {
+                    const firstTagId = tourTags[0].tagId;
+                    return this.tagService.getById(firstTagId).pipe(
+                      map((tag) => tag?.name && tag.name.trim().length > 0 ? [tag.name.trim()] : []),
+                      catchError(() => of([]))
+                    );
+                  }
+                  return of([]);
+                }),
+                catchError(() => of([]))
+              );
 
-            return forkJoin([tagRequest, itineraryDaysRequest]).pipe(
-              map(([tags, itineraryDays]) => {
-                const result = {
-                  departures: allDepartures,
-                  tags: tags as string[],
-                  itineraryDays: itineraryDays as IItineraryDayResponse[],
-                };
+            const countryLocationRequest = this.tourLocationService
+              .getByTourAndType(tourId, 'COUNTRY')
+              .pipe(
+                map((response) => Array.isArray(response) ? response : response ? [response] : []),
+                catchError(() => of([]))
+              );
 
-                return result;
+            const continentLocationRequest = this.tourLocationService
+              .getByTourAndType(tourId, 'CONTINENT')
+              .pipe(
+                map((response) => Array.isArray(response) ? response : response ? [response] : []),
+                catchError(() => of([]))
+              );
+
+            return forkJoin([tagRequest, itineraryDaysRequest, countryLocationRequest, continentLocationRequest]).pipe(
+              switchMap(([tags, itineraryDays, countryLocations, continentLocations]) => {
+                const validCountryLocations = countryLocations.filter(
+                  (loc: any) => loc && loc.id && loc.locationId
+                );
+                const validContinentLocations = continentLocations.filter(
+                  (loc: any) => loc && loc.id && loc.locationId
+                );
+
+                const allLocationIds = [
+                  ...validCountryLocations.map((tl: any) => tl.locationId),
+                  ...validContinentLocations.map((tl: any) => tl.locationId),
+                ];
+                const uniqueLocationIds = [...new Set(allLocationIds)];
+
+                if (uniqueLocationIds.length === 0) {
+                  return of({
+                    departures: allDepartures,
+                    tags: tags as string[],
+                    itineraryDays: itineraryDays as IItineraryDayResponse[],
+                    continent: '',
+                    country: '',
+                  });
+                }
+
+                return this.locationService.getLocationsByIds(uniqueLocationIds).pipe(
+                  map((locations: Location[]) => {
+                    const locationsMap = new Map<number, Location>();
+                    locations.forEach((location) => {
+                      locationsMap.set(location.id, location);
+                    });
+
+                    const countries = validCountryLocations
+                      .sort((a: any, b: any) => a.displayOrder - b.displayOrder)
+                      .map((tl: any) => locationsMap.get(tl.locationId)?.name)
+                      .filter((name) => name) as string[];
+
+                    const continents = validContinentLocations
+                      .sort((a: any, b: any) => a.displayOrder - b.displayOrder)
+                      .map((tl: any) => locationsMap.get(tl.locationId)?.name)
+                      .filter((name) => name) as string[];
+
+                    return {
+                      departures: allDepartures,
+                      tags: tags as string[],
+                      itineraryDays: itineraryDays as IItineraryDayResponse[],
+                      continent: continents.join(', ') || '',
+                      country: countries.join(', ') || '',
+                    };
+                  }),
+                  catchError(() => {
+                    return of({
+                      departures: allDepartures,
+                      tags: tags as string[],
+                      itineraryDays: itineraryDays as IItineraryDayResponse[],
+                      continent: '',
+                      country: '',
+                    });
+                  })
+                );
               })
             );
           })
         );
       }),
-      catchError((error) => {
-        // Error obteniendo datos adicionales
+      catchError(() => {
         return of({
           departures: [],
           tags: [],
           itineraryDays: [],
+          continent: '',
+          country: '',
         });
       })
     );
@@ -468,7 +536,13 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
                 const cmsArray = combinedData.cmsData;
                 const cms =
                   cmsArray && cmsArray.length > 0 ? cmsArray[0] : null;
-                const additional = combinedData.additionalData;
+                const additional = combinedData.additionalData as {
+                  departures: IDepartureResponse[];
+                  tags: string[];
+                  itineraryDays: IItineraryDayResponse[];
+                  continent?: string;
+                  country?: string;
+                };
 
                 // ✅ OBTENER PRECIO: Usar minPrice del TourNetService
                 let tourPrice = tour.minPrice || 0;
@@ -561,8 +635,8 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
                     '',
                   tripType: [], // TourNetService no tiene tripType
                   externalID: tour.tkId || '',
-                  continent: '', // TourNetService no tiene continent - pendiente de agregar
-                  country: '', // TourNetService no tiene country - pendiente de agregar
+                  continent: additional.continent || '',
+                  country: additional.country || '',
                   productStyleId: tour.productStyleId, // ✅ Agregar productStyleId al objeto
                 };
               }

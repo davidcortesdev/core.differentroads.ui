@@ -24,7 +24,7 @@
       "
     ></span>
     <h1 *ngIf="status === 'SUCCESS'">
-      ¡Reserva Confirmada! Número {{ reservation?.id }}
+      Pago Confirmado! Número {{ reservation?.id }}
     </h1>
     <h1 *ngIf="status === 'PENDING' && paymentType !== 'Transfer'">
       Reserva Pendiente de Confirmación #{{ reservation?.id }}

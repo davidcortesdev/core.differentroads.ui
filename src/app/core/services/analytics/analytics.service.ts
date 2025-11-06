@@ -750,7 +750,7 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
     
     // Devolver el rating truncado a 1 decimal (no redondeado)
     // Ejemplo: 4.7653 -> 4.7 (no 4.8)
-    return Math.floor(numericRating * 10) / 10 + '';
+    return Math.floor(numericRating * 100) / 100 + '';
   }
 
   /**

@@ -748,8 +748,9 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
       return defaultValue;
     }
     
-    // Devolver el rating como string sin redondeos
-    return numericRating.toString();
+    // Devolver el rating truncado a 1 decimal (no redondeado)
+    // Ejemplo: 4.7653 -> 4.7 (no 4.8)
+    return Math.floor(numericRating * 10) / 10 + '';
   }
 
   /**

@@ -865,7 +865,7 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
         item_variant: '',
         price: tour.price || 0,
         quantity: 1,
-        puntuacion: this.analyticsService.formatRating(tour.rating, '5.0'),
+        puntuacion: this.analyticsService.formatRating(tour.rating, ''),
         duracion: duracion
       };
     });

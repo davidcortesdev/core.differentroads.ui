@@ -97,7 +97,7 @@ export class TourCardV2Component implements OnInit, AfterViewInit {
             item_variant: '',
             price: this.tourData.price || 0,
             quantity: 1,
-            puntuacion: this.analyticsService.formatRating(this.tourData.rating, '5.0'),
+            puntuacion: this.analyticsService.formatRating(this.tourData.rating, ''),
             duracion: this.tourData.itineraryDaysCount 
               ? `${this.tourData.itineraryDaysCount} días, ${Math.max(0, this.tourData.itineraryDaysCount - 1)} noches`
               : ''

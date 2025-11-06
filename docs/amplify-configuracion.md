@@ -97,3 +97,4 @@ amplify env list
 - No editar manualmente los archivos en `amplify/.config/` sin conocimiento previo
 - Los cambios en la consola de AWS Amplify requieren ejecutar `amplify pull` para sincronizar localmente
 
+

@@ -19,6 +19,7 @@ import { ReservationTravelerActivityPackService } from '../reservation/reservati
 import { ActivityService, IActivityResponse } from '../activity/activity.service';
 import { AgeGroupService } from '../agegroup/age-group.service';
 import { ReservationService } from '../reservation/reservation.service';
+import { ReservationFlightService } from '../flight/reservationflight.service';
 
 /**
  * Interfaz para los datos de usuario que se envían en los eventos
@@ -365,7 +366,8 @@ export class AnalyticsService {
     private reservationTravelerActivityPackService: ReservationTravelerActivityPackService,
     private activityService: ActivityService,
     private ageGroupService: AgeGroupService,
-    private reservationService: ReservationService
+    private reservationService: ReservationService,
+    private reservationFlightService: ReservationFlightService
   ) {
     this.initDataLayer();
   }
@@ -1236,29 +1238,64 @@ export class AnalyticsService {
     }).pipe(
       switchMap(({ tourData, activitiesText, passengersCount, reservation }) => {
         const reservationData = reservation as any;
+        const departureId = reservationData.departureId;
         
-        // Actualizar con datos adicionales del contexto
-        tourData.flightCity = reservationData.flight?.originCity || tourData.flightCity || '';
-        tourData.activitiesText = activitiesText || '';
-        tourData.selectedInsurance = reservationData.insurance?.name || '';
-        tourData.totalPassengers = parseInt(passengersCount.adults) + parseInt(passengersCount.children);
-        tourData.childrenCount = passengersCount.children;
-        tourData.departureDate = reservationData.departureDate || '';
-        tourData.returnDate = reservationData.returnDate || '';
-        tourData.price = paymentData.totalValue;
+        // Obtener departure para las fechas
+        const departureRequest = departureId 
+          ? this.departureService.getById(departureId).pipe(
+              catchError(() => of(null))
+            )
+          : of(null);
         
-        // Usar el ID del tour desde tourData
-        const itemId = tourData.tkId?.toString() || tourData.id?.toString() || '';
+        // Obtener vuelo seleccionado desde ReservationFlightService (igual que en checkout)
+        const flightRequest = this.reservationFlightService.getSelectedFlightPack(reservationId).pipe(
+          catchError(() => of(null))
+        );
         
-        return this.buildEcommerceItemFromTourData(
-          tourData,
-          finalItemListId,
-          finalItemListName,
-          itemId
-        ).pipe(
-          switchMap((item) => {
-            return this.getCurrentUserData().pipe(
-              map((userData) => ({ item, userData }))
+        return forkJoin({
+          departure: departureRequest,
+          flightPack: flightRequest
+        }).pipe(
+          switchMap(({ departure, flightPack }) => {
+            // Obtener vuelo desde el flight pack seleccionado (igual que en checkout: selectedFlight?.name)
+            let flightCity = 'Sin vuelo';
+            if (flightPack) {
+              // flightPack puede ser un objeto o un array
+              const pack = Array.isArray(flightPack) ? flightPack[0] : flightPack;
+              if (pack?.name) {
+                flightCity = pack.name;
+              }
+            }
+            
+            // Actualizar con datos adicionales del contexto
+            // Asignar flightCity
+            tourData.flightCity = flightCity || tourData.flightCity || 'Sin vuelo';
+            // Asignar actividades (usar las obtenidas dinámicamente)
+            tourData.activitiesText = activitiesText || tourData.activitiesText || '';
+            // Asignar seguro desde reservationData.insurance
+            tourData.selectedInsurance = reservationData.insurance?.name || tourData.selectedInsurance || '';
+            // Asignar pasajeros
+            tourData.totalPassengers = parseInt(passengersCount.adults) + parseInt(passengersCount.children);
+            tourData.childrenCount = passengersCount.children;
+            // Obtener fechas del departure (departureDate y arrivalDate)
+            tourData.departureDate = departure?.departureDate || reservationData.departureDate || tourData.departureDate || '';
+            tourData.returnDate = departure?.arrivalDate || reservationData.returnDate || tourData.returnDate || '';
+            tourData.price = paymentData.totalValue;
+        
+            // Usar el ID del tour desde tourData
+            const itemId = tourData.tkId?.toString() || tourData.id?.toString() || '';
+            
+            return this.buildEcommerceItemFromTourData(
+              tourData,
+              finalItemListId,
+              finalItemListName,
+              itemId
+            ).pipe(
+              switchMap((item) => {
+                return this.getCurrentUserData().pipe(
+                  map((userData) => ({ item, userData }))
+                );
+              })
             );
           })
         );
@@ -1270,39 +1307,69 @@ export class AnalyticsService {
           switchMap((reservation) => {
             const reservationData = reservation as any;
             const tourData = reservationData.tour || {};
-            const tourDataForEcommerce: TourDataForEcommerce = {
-              id: tourData.id,
-              tkId: tourData.tkId ?? undefined,
-              name: reservationData.tourName || tourData.name || undefined,
-              destination: {
-                continent: tourData.destination?.continent || undefined,
-                country: tourData.destination?.country || undefined
-              },
-              days: tourData.days || undefined,
-              nights: tourData.nights || undefined,
-              rating: tourData.rating || undefined,
-              monthTags: tourData.monthTags || undefined,
-              tourType: tourData.tourType || undefined,
-              flightCity: reservationData.flight?.originCity || '',
-              activitiesText: reservationData.activities && reservationData.activities.length > 0
-                ? reservationData.activities.map((a: any) => a.description || a.name).join(', ')
-                : '',
-              selectedInsurance: reservationData.insurance?.name || '',
-              childrenCount: '0',
-              totalPassengers: reservation.totalPassengers || undefined,
-              departureDate: reservationData.departureDate || '',
-              returnDate: reservationData.returnDate || '',
-              price: paymentData.totalValue
-            };
+            const departureId = reservationData.departureId;
+            
+            // Intentar obtener departure para las fechas
+            const departureRequest = departureId 
+              ? this.departureService.getById(departureId).pipe(
+                  catchError(() => of(null))
+                )
+              : of(null);
+            
+            // Obtener vuelo seleccionado desde ReservationFlightService (igual que en checkout)
+            const flightRequest = this.reservationFlightService.getSelectedFlightPack(reservationId).pipe(
+              catchError(() => of(null))
+            );
+            
+            return forkJoin({
+              departure: departureRequest,
+              flightPack: flightRequest
+            }).pipe(
+              switchMap(({ departure, flightPack }) => {
+                // Obtener vuelo desde el flight pack seleccionado (igual que en checkout: selectedFlight?.name)
+                let flightCity = 'Sin vuelo';
+                if (flightPack) {
+                  const pack = Array.isArray(flightPack) ? flightPack[0] : flightPack;
+                  if (pack?.name) {
+                    flightCity = pack.name;
+                  }
+                }
+                
+                const tourDataForEcommerce: TourDataForEcommerce = {
+                  id: tourData.id,
+                  tkId: tourData.tkId ?? undefined,
+                  name: reservationData.tourName || tourData.name || undefined,
+                  destination: {
+                    continent: tourData.destination?.continent || undefined,
+                    country: tourData.destination?.country || undefined
+                  },
+                  days: tourData.days || undefined,
+                  nights: tourData.nights || undefined,
+                  rating: tourData.rating || undefined,
+                  monthTags: tourData.monthTags || undefined,
+                  tourType: tourData.tourType || undefined,
+                  flightCity: flightCity,
+                  activitiesText: reservationData.activities && reservationData.activities.length > 0
+                    ? reservationData.activities.map((a: any) => a.description || a.name).join(', ')
+                    : '',
+                  selectedInsurance: reservationData.insurance?.name || '',
+                  childrenCount: '0',
+                  totalPassengers: reservation.totalPassengers || undefined,
+                  departureDate: departure?.departureDate || reservationData.departureDate || '',
+                  returnDate: departure?.arrivalDate || reservationData.returnDate || '',
+                  price: paymentData.totalValue
+                };
 
-            const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
-            return this.buildEcommerceItemFromTourData(
-              tourDataForEcommerce,
-              finalItemListId,
-              finalItemListName,
-              itemId
-            ).pipe(
-              map((item) => ({ item, userData: this.getUserData('', undefined, '') }))
+                const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+                return this.buildEcommerceItemFromTourData(
+                  tourDataForEcommerce,
+                  finalItemListId,
+                  finalItemListName,
+                  itemId
+                ).pipe(
+                  map((item) => ({ item, userData: this.getUserData('', undefined, '') }))
+                );
+              })
             );
           })
         );
@@ -1938,6 +2005,7 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
     itemId?: string
   ): Observable<EcommerceItem> {
     const tourId = tourData.id;
+    // Usar flightCity directamente de tourData (ya viene asignado desde trackPurchaseFromReservation)
     const flightCity = tourData.flightCity || 'Sin vuelo';
     
     // Obtener tag del tour
@@ -2238,5 +2306,6 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
     );
   }
 }
+
 
 

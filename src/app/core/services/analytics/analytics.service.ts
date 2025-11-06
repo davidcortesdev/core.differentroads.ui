@@ -529,6 +529,11 @@ export class AnalyticsService {
       : itemListId;
     
     // Filtrar solo los campos permitidos para add_to_wishlist
+    // Asegurar que puntuacion esté formateada correctamente
+    const puntuacion = item.puntuacion 
+      ? item.puntuacion 
+      : this.formatRating((item as any).rating, '');
+    
     const filteredItem: EcommerceItem = {
       item_id: item.item_id || '',
       item_name: item.item_name || '',
@@ -546,7 +551,7 @@ export class AnalyticsService {
       item_variant: item.item_variant || '',
       price: item.price || 0,
       quantity: item.quantity || 1,
-      puntuacion: item.puntuacion || '',
+      puntuacion: puntuacion,
       duracion: item.duracion || ''
     };
     

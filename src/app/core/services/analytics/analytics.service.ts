@@ -743,7 +743,13 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
       return defaultValue;
     }
     
-    return numericRating.toFixed(1);
+    // Si el rating es 0, devolver vacío (no hay reviews)
+    if (numericRating === 0) {
+      return defaultValue;
+    }
+    
+    // Devolver el rating como string sin redondeos
+    return numericRating.toString();
   }
 
   /**
@@ -880,7 +886,7 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
         item_variant: '',
         price: tour.price || 0,
         quantity: 1,
-        puntuacion: tour.rating ? this.formatRating(tour.rating, '') : '',
+        puntuacion: this.formatRating(tour.rating, ''),
         duracion: duracion
       };
     });

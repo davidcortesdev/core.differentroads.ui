@@ -51,6 +51,7 @@ import {
   ItineraryDayService,
   IItineraryDayResponse,
 } from '../../../../core/services/itinerary/itinerary-day/itinerary-day.service';
+import { ReviewsService } from '../../../../core/services/reviews/reviews.service';
 
 @Component({
   selector: 'app-tour-carrussel-v2',
@@ -112,7 +113,8 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
     // ✅ NUEVOS SERVICIOS: Para precios, fechas y tags
     private readonly departureService: DepartureService,
     private readonly itineraryService: ItineraryService,
-    private readonly itineraryDayService: ItineraryDayService
+    private readonly itineraryDayService: ItineraryDayService,
+    private readonly reviewsService: ReviewsService
   ) {}
 
   ngOnInit(): void {
@@ -430,6 +432,15 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
             tourData: this.tourService.getTourById(Number(id)),
             cmsData: this.cmsTourService.getAllTours({ tourId: Number(id) }),
             additionalData: this.getAdditionalTourData(Number(id)),
+            rating: this.reviewsService.getAverageRating({ tourId: Number(id) }).pipe(
+              map((ratingResponse) => {
+                // Si hay rating, devolverlo tal cual (sin redondeos)
+                // Si no hay rating o es 0, devolver null para que formatRating devuelva ''
+                const avgRating = ratingResponse?.averageRating;
+                return avgRating && avgRating > 0 ? avgRating : null;
+              }),
+              catchError(() => of(null))
+            ),
           }).pipe(
             catchError((error: Error) => {
               // Error loading tour
@@ -445,6 +456,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
                     tags: string[];
                     itineraryDays: IItineraryDayResponse[];
                   };
+                  rating: number | null;
                 } | null
               ): TourDataV2 | null => {
                 if (combinedData) {
@@ -526,12 +538,16 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
                 // ✅ APLICAR IMAGEN COMO EN TOUR-OVERVIEW-V2
                 const imageUrl = cms?.imageUrl || '';
 
+                // Usar el rating tal cual, sin redondeos
+                // Si es null, usar undefined para que formatRating devuelva ''
+                const ratingValue = combinedData.rating !== null ? combinedData.rating : undefined;
+
                 return {
                   id: tour.id,
                   imageUrl: imageUrl,
                   title: tour.name || '',
                   description: '',
-                  rating: 5, // Valor por defecto
+                  rating: ratingValue,
                   tag: tourTag,
                   price: tourPrice,
                   availableMonths: availableMonths,

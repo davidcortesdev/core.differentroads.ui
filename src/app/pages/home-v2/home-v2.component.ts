@@ -18,6 +18,7 @@ import { DepartureService, IDepartureResponse } from '../../core/services/depart
 import { ItineraryService, IItineraryResponse, ItineraryFilters } from '../../core/services/itinerary/itinerary.service';
 import { ItineraryDayService, IItineraryDayResponse } from '../../core/services/itinerary/itinerary-day/itinerary-day.service';
 import { LocationNetService, Location } from '../../core/services/locations/locationNet.service';
+import { ReviewsService } from '../../core/services/reviews/reviews.service';
 
 @Component({
   selector: 'app-home-v2',
@@ -55,7 +56,8 @@ export class HomeV2Component implements OnInit, OnDestroy {
     private departureService: DepartureService,
     private itineraryService: ItineraryService,
     private itineraryDayService: ItineraryDayService,
-    private locationNetService: LocationNetService
+    private locationNetService: LocationNetService,
+    private reviewsService: ReviewsService
   ) {}
 
   async ngOnInit() {
@@ -430,6 +432,15 @@ export class HomeV2Component implements OnInit, OnDestroy {
             cmsData: this.cmsTourService.getAllTours({ tourId: id }),
             additionalData: this.getAdditionalTourData(id),
             tripType: tripTypeObservable,
+            rating: this.reviewsService.getAverageRating({ tourId: id }).pipe(
+              map((ratingResponse) => {
+                // Si hay rating, devolverlo tal cual (sin redondeos)
+                // Si no hay rating o es 0, devolver null para que formatRating devuelva ''
+                const avgRating = ratingResponse?.averageRating;
+                return avgRating && avgRating > 0 ? avgRating : null;
+              }),
+              catchError(() => of(null))
+            ),
           });
         }),
         catchError((error: Error) => {
@@ -449,6 +460,7 @@ export class HomeV2Component implements OnInit, OnDestroy {
                 country?: string;
               };
               tripType: string[];
+              rating: number | null;
             } | null
           ): TourDataV2 | null => {
             if (!combinedData) return null;
@@ -518,12 +530,16 @@ export class HomeV2Component implements OnInit, OnDestroy {
 
             const imageUrl = cms?.imageUrl || '';
 
+            // Usar el rating tal cual, sin redondeos
+            // Si es null, usar undefined para que formatRating devuelva ''
+            const ratingValue = combinedData.rating !== null ? combinedData.rating : undefined;
+
             return {
               id: tour.id,
               imageUrl: imageUrl,
               title: tour.name || '',
               description: '',
-              rating: 5,
+              rating: ratingValue,
               tag: tourTag,
               price: tourPrice,
               availableMonths: availableMonths,

@@ -448,6 +448,17 @@ export class BookingDocumentationV2Component implements OnInit {
   }
 
   /**
+   * Formatea el contenido enviado truncándolo si es muy largo
+   */
+  formatSentContent(content: string): string {
+    if (!content) return '-';
+    const maxLength = 60;
+    return content.length > maxLength
+      ? content.substring(0, maxLength) + '...'
+      : content;
+  }
+
+  /**
    * Obtiene el icono apropiado según la severidad del log
    */
   getLogIcon(severity: string): string {

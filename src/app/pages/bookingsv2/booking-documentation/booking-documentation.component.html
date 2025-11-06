@@ -158,6 +158,7 @@
               <th style="width: 4rem">Estado</th>
               <th style="width: 8rem">Fecha Envío</th>
               <th style="width: 4rem">HTTP Status</th>
+              <th style="width: 10rem">Contenido Enviado</th>
               <th style="width: 10rem">Contenido Respuesta</th>
               <th style="width: 20rem">Error TK</th>
               <th style="width: 15rem">Notas</th>
@@ -191,6 +192,13 @@
                   [value]="log.httpStatusCode?.toString() || '-'"
                   [severity]="log.httpStatusCode >= 400 ? 'danger' : (log.httpStatusCode >= 200 && log.httpStatusCode < 300 ? 'success' : 'warn')"
                 ></p-tag>
+              </td>
+
+              <!-- Contenido enviado -->
+              <td>
+                <span [title]="log.sentContent" class="sent-content">
+                  {{ formatSentContent(log.sentContent) }}
+                </span>
               </td>
 
               <!-- Contenido de respuesta -->
@@ -242,7 +250,7 @@
           <!-- Empty message -->
           <ng-template #emptymessage>
             <tr>
-              <td colspan="6" class="text-center">
+              <td colspan="7" class="text-center">
                 No se encontraron logs de TK
               </td>
             </tr>

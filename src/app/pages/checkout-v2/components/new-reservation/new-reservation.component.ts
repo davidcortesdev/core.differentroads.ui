@@ -708,10 +708,9 @@ export class NewReservationComponent implements OnInit {
     const reservationData = this.reservation as any; // Usar any para acceder a propiedades dinámicas
     const tourData = reservationData.tour || {};
 
-    // Obtener item_list_id y item_list_name desde el state del router (heredados desde home)
-    const state = window.history.state;
-    const itemListId = state?.['listId'] || '';
-    const itemListName = state?.['listName'] || '';
+    // Obtener item_list_id y item_list_name desde sessionStorage (persistidos desde checkout)
+    const itemListId = sessionStorage.getItem('checkout_itemListId') || '';
+    const itemListName = sessionStorage.getItem('checkout_itemListName') || '';
 
     // Obtener información del pago
     const paymentType = this.paymentType || 'completo, transferencia';
@@ -733,7 +732,7 @@ export class NewReservationComponent implements OnInit {
     const selectedInsurance = reservationData.insurance?.name || '';
 
     // Obtener información de vuelo (si está disponible)
-    const flightCity = reservationData.flight?.originCity || 'Sin vuelo';
+    const flightCity = reservationData.flight?.originCity || '';
 
     // Calcular pasajeros niños dinámicamente desde los travelers y construir TourDataForEcommerce
     this.reservationTravelerService
@@ -744,6 +743,7 @@ export class NewReservationComponent implements OnInit {
           const childrenCount = travelers.filter(
             (traveler) => traveler.ageGroupId !== 1
           ).length;
+          const adultsCount = travelers.length - childrenCount;
 
           // Construir TourDataForEcommerce desde reservationData.tour
           const tourDataForEcommerce: TourDataForEcommerce = {
@@ -759,39 +759,31 @@ export class NewReservationComponent implements OnInit {
             rating: tourData.rating || undefined,
             monthTags: tourData.monthTags || undefined,
             tourType: tourData.tourType || undefined,
-            flightCity: flightCity || 'Sin vuelo',
+            flightCity: flightCity || undefined,
             activitiesText: activitiesText || undefined,
             selectedInsurance: selectedInsurance || undefined,
             childrenCount: childrenCount.toString(),
-            totalPassengers: this.reservation?.totalPassengers || undefined,
+            totalPassengers: travelers.length,
             departureDate: reservationData.departureDate || '',
             returnDate: reservationData.returnDate || '',
             price: totalValue
           };
 
-          return { tourDataForEcommerce, childrenCount };
+          return { tourDataForEcommerce, childrenCount, adultsCount };
         }),
-        switchMap(({ tourDataForEcommerce, childrenCount }) => {
+        switchMap(({ tourDataForEcommerce, childrenCount, adultsCount }) => {
+          // Usar el ID del tour desde tourDataForEcommerce
+          const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+          
           return this.analyticsService.buildEcommerceItemFromTourData(
             tourDataForEcommerce,
-            itemListId || 'purchase',
-            itemListName || 'Compra',
-            tourDataForEcommerce.id?.toString() || tourDataForEcommerce.tkId || ''
+            itemListId,
+            itemListName,
+            itemId
           ).pipe(
             switchMap((item) => {
               return this.analyticsService.getCurrentUserData().pipe(
-                map((userData) => ({ item, userData, childrenCount }))
-              );
-            }),
-            catchError(() => {
-              // Si falla getCurrentUserData, usar el item sin userData
-              return this.analyticsService.buildEcommerceItemFromTourData(
-                tourDataForEcommerce,
-                itemListId || 'purchase',
-                itemListName || 'Compra',
-                tourDataForEcommerce.id?.toString() || tourDataForEcommerce.tkId || ''
-              ).pipe(
-                map((item) => ({ item, userData: this.getUserData(), childrenCount }))
+                map((userData) => ({ item, userData }))
               );
             })
           );
@@ -812,7 +804,7 @@ export class NewReservationComponent implements OnInit {
             rating: tourData.rating || undefined,
             monthTags: tourData.monthTags || undefined,
             tourType: tourData.tourType || undefined,
-            flightCity: flightCity || 'Sin vuelo',
+            flightCity: flightCity || undefined,
             activitiesText: activitiesText || undefined,
             selectedInsurance: selectedInsurance || undefined,
             childrenCount: '0',
@@ -822,18 +814,21 @@ export class NewReservationComponent implements OnInit {
             price: totalValue
           };
 
+          const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
           return this.analyticsService.buildEcommerceItemFromTourData(
             tourDataForEcommerce,
-            itemListId || 'purchase',
-            itemListName || 'Compra',
-            tourDataForEcommerce.id?.toString() || tourDataForEcommerce.tkId || ''
+            itemListId,
+            itemListName,
+            itemId
           ).pipe(
-            map((item) => ({ item, userData: this.getUserData(), childrenCount: 0 }))
+            map((item) => ({ item, userData: this.getUserData() }))
           );
         })
       )
       .subscribe({
-        next: ({ item, userData, childrenCount }) => {
+        next: ({ item, userData }) => {
+          // El item ya tiene item_list_id e item_list_name desde buildEcommerceItemFromTourData
+          // No necesitamos actualizarlo, solo pasarlo directamente
           this.analyticsService.purchase(
             {
               transaction_id: transactionId,

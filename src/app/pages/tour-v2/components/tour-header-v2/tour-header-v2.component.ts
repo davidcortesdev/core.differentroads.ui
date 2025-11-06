@@ -1365,9 +1365,6 @@ export class TourHeaderV2Component
                   cartAt: createdReservation.cartAt
                 });
 
-                // Disparar evento add_to_cart
-                this.trackAddToCart();
-
                 // Obtener contexto de la lista desde el state del router y pasarlo al checkout
                 const state = window.history.state;
                 const listId = state?.['listId'] || '';

@@ -3215,30 +3215,74 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Disparar evento view_flights_info cuando se visualiza el paso de vuelos
    */
   private trackViewFlightsInfo(): void {
-    if (!this.reservationData) return;
+    if (!this.reservationData || !this.tourId) return;
     
     const state = window.history.state;
     const itemListId = state?.['listId'] || state?.['list_id'] || '';
     const itemListName = state?.['listName'] || state?.['list_name'] || '';
     
-    const tourDataForEcommerce = this.prepareTourDataForEcommerce();
-    
-    this.buildAndDispatchEvent(
-      (item, userData) => {
-        this.analyticsService.viewFlightsInfo(
-          {
-            currency: 'EUR',
-            value: this.totalAmountCalculated || this.totalAmount || 0,
-            coupon: this.reservationData.coupon?.code || '',
-            items: [item]
-          },
-          userData
+    // Obtener todos los datos completos del tour dinámicamente, incluyendo actividades y pasajeros desde viajeros
+    forkJoin({
+      tourData: this.getCompleteTourDataForEcommerce(this.tourId),
+      activitiesText: this.getActivitiesFromTravelers(),
+      passengersCount: this.getPassengersCount()
+    }).pipe(
+      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount }) => {
+        // Actualizar con datos adicionales del contexto
+        const additionalData = this.prepareTourDataForEcommerce();
+        tourDataForEcommerce.flightCity = additionalData.flightCity || tourDataForEcommerce.flightCity;
+        // Usar actividades obtenidas dinámicamente desde viajeros, o fallback a additionalData
+        tourDataForEcommerce.activitiesText = activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
+        // Usar seguro del componente o del contexto
+        tourDataForEcommerce.selectedInsurance = this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
+        // Usar conteo de pasajeros desde viajeros
+        tourDataForEcommerce.totalPassengers = parseInt(passengersCount.adults) + parseInt(passengersCount.children);
+        tourDataForEcommerce.childrenCount = passengersCount.children;
+        tourDataForEcommerce.departureDate = additionalData.departureDate || tourDataForEcommerce.departureDate;
+        tourDataForEcommerce.returnDate = additionalData.returnDate || tourDataForEcommerce.returnDate;
+        tourDataForEcommerce.price = additionalData.price || tourDataForEcommerce.price;
+        
+        // Usar el ID del tour desde tourDataForEcommerce
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          switchMap((item) => {
+            return this.analyticsService.getCurrentUserData().pipe(
+              map((userData) => ({ item, userData }))
+            );
+          })
         );
-      },
-      itemListId,
-      itemListName,
-      tourDataForEcommerce
-    );
+      }),
+      catchError((error) => {
+        console.error('Error obteniendo datos completos del tour para view_flights_info:', error);
+        // Fallback con datos básicos
+        const tourDataForEcommerce = this.prepareTourDataForEcommerce();
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          map((item) => ({ item, userData: this.getUserData() }))
+        );
+      })
+    ).subscribe(({ item, userData }) => {
+      this.analyticsService.viewFlightsInfo(
+        {
+          currency: 'EUR',
+          value: this.totalAmountCalculated || this.totalAmount || 0,
+          coupon: this.reservationData.coupon?.code || '',
+          items: [item]
+        },
+        userData
+      );
+    });
   }
 
   /**

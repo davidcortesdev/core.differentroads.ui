@@ -95,6 +95,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   // Variable para datos del itinerario
   itineraryData: IItineraryResponse | null = null;
   departureData: IDepartureResponse | null = null; // Nuevo: para almacenar datos del departure
+  
+  // Guardar itemListId e itemListName desde el state de navegación
+  private savedItemListId: string = '';
+  private savedItemListName: string = '';
 
   // Variables para actividades
   selectedActivities: any[] = [];
@@ -559,6 +563,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   private loadReservationData(reservationId: number): void {
     this.loading = true;
     this.error = null;
+    
+    // Guardar itemListId e itemListName desde el state de navegación al cargar el componente
+    const navigation = this.router.getCurrentNavigation();
+    const state = navigation?.extras?.state || window.history.state;
+    this.savedItemListId = state?.['listId'] || state?.['list_id'] || '';
+    this.savedItemListName = state?.['listName'] || state?.['list_name'] || '';
 
     this.reservationService.getById(reservationId).subscribe({
       next: (reservation) => {
@@ -3141,9 +3151,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   private trackBeginCheckout(): void {
     if (!this.reservationData || !this.tourId) return;
     
-    const state = window.history.state;
-    const itemListId = state?.['listId'] || state?.['list_id'] || '';
-    const itemListName = state?.['listName'] || state?.['list_name'] || '';
+    // Usar los valores guardados al cargar el componente
+    const itemListId = this.savedItemListId;
+    const itemListName = this.savedItemListName;
     
     // Obtener todos los datos completos del tour dinámicamente, incluyendo actividades y pasajeros desde viajeros
     forkJoin({
@@ -3199,6 +3209,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         );
       })
     ).subscribe(({ item, userData }) => {
+      // El item ya tiene item_list_id e item_list_name desde buildEcommerceItemFromTourData
+      // No necesitamos actualizarlo, solo pasarlo directamente como en view_cart
       this.analyticsService.beginCheckout(
         {
           currency: 'EUR',
@@ -3217,9 +3229,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   private trackViewFlightsInfo(): void {
     if (!this.reservationData || !this.tourId) return;
     
-    const state = window.history.state;
-    const itemListId = state?.['listId'] || state?.['list_id'] || '';
-    const itemListName = state?.['listName'] || state?.['list_name'] || '';
+    // Usar los valores guardados al cargar el componente
+    const itemListId = this.savedItemListId;
+    const itemListName = this.savedItemListName;
     
     // Obtener todos los datos completos del tour dinámicamente, incluyendo actividades y pasajeros desde viajeros
     forkJoin({
@@ -3273,6 +3285,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         );
       })
     ).subscribe(({ item, userData }) => {
+      // El item ya tiene item_list_id e item_list_name desde buildEcommerceItemFromTourData
+      // No necesitamos actualizarlo, solo pasarlo directamente como en view_cart
       this.analyticsService.viewFlightsInfo(
         {
           currency: 'EUR',

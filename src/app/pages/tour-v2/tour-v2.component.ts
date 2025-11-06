@@ -309,6 +309,9 @@ export class TourV2Component implements OnInit {
       return;
     }
     
+    // Marcar como trackeado INMEDIATAMENTE antes de hacer cualquier cosa
+    this.viewItemTracked = true;
+    
     // Obtener contexto de navegación desde el state de la navegación (sin modificar URL)
     const navigation = this.router.getCurrentNavigation();
     const state = navigation?.extras?.state || window.history.state;
@@ -355,7 +358,6 @@ export class TourV2Component implements OnInit {
           result.item,
           result.userData
         );
-        this.viewItemTracked = true;
       }
     });
   }

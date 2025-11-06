@@ -261,14 +261,37 @@ export class AnalyticsService {
     item: EcommerceItem,
     userData?: UserData
   ): void {
+    // Crear una clave única basada en item_list_id e item_id para evitar duplicados
+    const itemId = item.item_id || '';
+    const eventKey = `view_item_${itemListId}_${itemId}`;
+    
+    // Verificar si ya se disparó este evento
+    if (this.firedEvents.has(eventKey)) {
+      return;
+    }
+    
+    // Marcar como disparado inmediatamente
+    this.firedEvents.add(eventKey);
+    
     this.clearEcommerce();
+    
+    // Asegurar que user_data siempre tenga los campos, incluso si están vacíos
+    const userDataWithFields: UserData = userData || {
+      email_address: '',
+      phone_number: '',
+      user_id: ''
+    };
+    
+    // Eliminar end_date del item si existe
+    const { end_date, ...itemWithoutEndDate } = item;
+    
     this.pushEvent({
       event: 'view_item',
-      user_data: userData || {},
+      user_data: userDataWithFields,
       ecommerce: {
         item_list_id: itemListId,
         item_list_name: itemListName,
-        items: [item]
+        items: [itemWithoutEndDate]
       }
     });
   }

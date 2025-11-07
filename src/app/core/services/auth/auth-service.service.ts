@@ -83,11 +83,18 @@ export class AuthenticateService {
           if (attributes && attributes.email) {
             this.currentUserEmail.next(attributes.email);
 
-            // Obtener el Cognito ID del usuario actual
-            const user = await getCurrentUser();
-            if (user) {
-              this.currentUserCognitoId.next(user.userId);
-            }
+            // ✅ CORREGIDO: Obtener el Cognito ID (sub) - priorizar sub de atributos, luego user.userId
+            // El sub es el Cognito User ID real (UUID), mientras que user.userId puede ser el username
+            const cognitoUserId = attributes.sub || user.userId;
+            
+            console.log('🔐 [checkAuthStatus] Cognito ID obtenido:', {
+              subFromAttributes: attributes.sub,
+              userIdFromUser: user.userId,
+              finalCognitoUserId: cognitoUserId,
+              email: attributes.email
+            });
+            
+            this.currentUserCognitoId.next(cognitoUserId);
           }
         } catch (error) {
           console.error('Error fetching user attributes:', error);
@@ -107,26 +114,62 @@ export class AuthenticateService {
     return this.authCheckPromise;
   }
 
+  /**
+   * Extrae el Cognito User ID (sub) del ID token JWT
+   * @param idToken El ID token JWT
+   * @returns El Cognito User ID (sub) o null si no se puede extraer
+   */
+  private extractSubFromIdToken(idToken: string): string | null {
+    try {
+      // Decodificar el JWT (es Base64URL)
+      const parts = idToken.split('.');
+      if (parts.length !== 3) {
+        console.error('Token JWT inválido');
+        return null;
+      }
+
+      // Decodificar el payload (segunda parte)
+      const payload = parts[1];
+      // Reemplazar caracteres de Base64URL a Base64 estándar
+      const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+      // Agregar padding si es necesario
+      const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+      // Decodificar
+      const decoded = JSON.parse(atob(padded));
+
+      return decoded.sub || null;
+    } catch (error) {
+      console.error('Error al extraer sub del ID token:', error);
+      return null;
+    }
+  }
+
   // Obtener el estado de autenticación como Observable
   // ✅ MEJORADO: Ahora espera a que termine la verificación inicial
   isLoggedIn(): Observable<boolean> {
     return new Observable<boolean>((observer) => {
+      let subscription: any = null;
+
       // Esperar a que termine la verificación inicial
       this.authCheckPromise
         .then(() => {
           // Una vez completada, suscribirse al BehaviorSubject
-          const subscription = this.isAuthenticated.subscribe((value) => {
+          subscription = this.isAuthenticated.subscribe((value) => {
             observer.next(value);
           });
-
-          // Devolver función de cleanup
-          return () => subscription.unsubscribe();
         })
         .catch((error) => {
           console.error('Error en verificación de autenticación:', error);
           observer.next(false);
           observer.complete();
         });
+
+      // Devolver función de cleanup
+      return () => {
+        if (subscription) {
+          subscription.unsubscribe();
+        }
+      };
     });
   }
   async getCognitoSub(): Promise<string> {
@@ -144,8 +187,32 @@ export class AuthenticateService {
   }
 
   // Obtener el Cognito ID del usuario actual como Observable
+  // ✅ MEJORADO: Ahora espera a que termine la verificación inicial
   getCognitoId(): Observable<string> {
-    return this.currentUserCognitoId.asObservable();
+    return new Observable<string>((observer) => {
+      let subscription: any = null;
+
+      // Esperar a que termine la verificación inicial
+      this.authCheckPromise
+        .then(() => {
+          // Una vez completada, suscribirse al BehaviorSubject
+          subscription = this.currentUserCognitoId.subscribe((value) => {
+            observer.next(value);
+          });
+        })
+        .catch((error) => {
+          console.error('Error en verificación de autenticación:', error);
+          observer.next('');
+          observer.complete();
+        });
+
+      // Devolver función de cleanup
+      return () => {
+        if (subscription) {
+          subscription.unsubscribe();
+        }
+      };
+    });
   }
 
   // Obtener el valor actual del estado de autenticación
@@ -247,9 +314,20 @@ export class AuthenticateService {
             // Establecer la sesión en el CognitoUser
             this.cognitoUser.setSignInUserSession(session);
 
+            // ✅ CORREGIDO: Extraer el Cognito User ID (sub) del ID token en lugar del username
+            const idTokenString = response.AuthenticationResult.IdToken;
+            const cognitoUserId = this.extractSubFromIdToken(idTokenString) || this.cognitoUser.getUsername();
+
+            console.log('🔐 [login] Cognito ID obtenido:', {
+              extractedFromToken: this.extractSubFromIdToken(idTokenString),
+              usernameFallback: this.cognitoUser.getUsername(),
+              finalCognitoUserId: cognitoUserId,
+              email: emailaddress
+            });
+
             this.isAuthenticated.next(true);
             this.currentUserEmail.next(emailaddress);
-            this.currentUserCognitoId.next(this.cognitoUser.getUsername());
+            this.currentUserCognitoId.next(cognitoUserId);
             this.userAttributesChanged.next();
 
             // Agregar la integración con Hubspot
@@ -481,11 +559,46 @@ export class AuthenticateService {
             this.currentUserEmail.next(formattedResult.email);
           }
 
-          // Obtener el Cognito ID del usuario actual
-          const currentUser = this.userPool.getCurrentUser();
-          if (currentUser) {
-            this.currentUserCognitoId.next(currentUser.getUsername());
+          // ✅ CORREGIDO: Obtener el Cognito ID (sub) desde los atributos del usuario o del token
+          const cognitoUserId = formattedResult.sub || null;
+          let finalCognitoUserId = cognitoUserId;
+          
+          if (cognitoUserId) {
+            // Si tenemos el sub en los atributos, usarlo directamente
+            this.currentUserCognitoId.next(cognitoUserId);
+          } else {
+            // Si no está en atributos, intentar extraerlo del ID token
+            try {
+              const idToken = session.getIdToken().getJwtToken();
+              const subFromToken = this.extractSubFromIdToken(idToken);
+              if (subFromToken) {
+                finalCognitoUserId = subFromToken;
+                this.currentUserCognitoId.next(subFromToken);
+              } else {
+                // Fallback: usar username (aunque sea el email)
+                const currentUser = this.userPool.getCurrentUser();
+                if (currentUser) {
+                  finalCognitoUserId = currentUser.getUsername();
+                  this.currentUserCognitoId.next(currentUser.getUsername());
+                }
+              }
+            } catch (error) {
+              console.error('Error al extraer Cognito ID del token:', error);
+              // Fallback: usar username
+              const currentUser = this.userPool.getCurrentUser();
+              if (currentUser) {
+                finalCognitoUserId = currentUser.getUsername();
+                this.currentUserCognitoId.next(currentUser.getUsername());
+              }
+            }
           }
+
+          console.log('🔐 [getUserAttributes] Cognito ID obtenido:', {
+            subFromAttributes: formattedResult.sub,
+            extractedFromToken: finalCognitoUserId !== formattedResult.sub ? finalCognitoUserId : null,
+            finalCognitoUserId: finalCognitoUserId,
+            email: formattedResult.email
+          });
 
           this.userAttributesChanged.next();
           observer.next(formattedResult);
@@ -574,9 +687,19 @@ export class AuthenticateService {
       if (user) {
         const attributes = await fetchUserAttributes();
         if (attributes && attributes.email) {
+          // ✅ CORREGIDO: Obtener el Cognito ID (sub) - priorizar sub de atributos, luego user.userId
+          const cognitoUserId = attributes.sub || user.userId;
+          
+          console.log('🔐 [handleAuthRedirect] Cognito ID obtenido:', {
+            subFromAttributes: attributes.sub,
+            userIdFromUser: user.userId,
+            finalCognitoUserId: cognitoUserId,
+            email: attributes.email
+          });
+          
           this.isAuthenticated.next(true);
           this.currentUserEmail.next(attributes.email);
-          this.currentUserCognitoId.next(user.userId);
+          this.currentUserCognitoId.next(cognitoUserId);
 
           this.userAttributesChanged.next();
         }

@@ -7,9 +7,9 @@
   *ngIf="!loading && !error"
   class="res-conf"
   [ngClass]="{
-    'rq': status === 'PENDING' && paymentType !== 'Transfer',
-    'confirm': status === 'SUCCESS',
-    'transfer': paymentType === 'Transfer'
+    rq: status === 'PENDING' && paymentType !== 'Transfer',
+    confirm: status === 'SUCCESS',
+    transfer: paymentType === 'Transfer'
   }"
 >
   <!-- Header con check y título -->
@@ -18,9 +18,7 @@
       class="status-icon"
       *ngIf="paymentType !== 'Transfer'"
       [class]="
-        status === 'SUCCESS'
-          ? 'pi pi-check-circle'
-          : 'pi pi-exclamation-circle'
+        status === 'SUCCESS' ? 'pi pi-check-circle' : 'pi pi-exclamation-circle'
       "
     ></span>
     <h1 *ngIf="status === 'SUCCESS'">
@@ -36,14 +34,13 @@
 
   <!-- Mensaje de bienvenida -->
   <div class="wel">
-    <p class="greet" *ngIf="leadTravelerName">
-      Hola {{ leadTravelerName }},
-    </p>
+    <p class="greet" *ngIf="leadTravelerName">Hola {{ leadTravelerName }},</p>
 
     <!-- Mensajes específicos por estado -->
     <ng-container *ngIf="status === 'SUCCESS'">
       <p class="hl">
-        ¡Estamos emocionados de confirmarte que tu reserva ha sido realizada con éxito!
+        ¡Estamos emocionados de confirmarte que tu reserva ha sido realizada con
+        éxito!
       </p>
       <p class="msg">
         Gracias por elegirnos para tu próximo viaje. Sabemos que cada viaje es
@@ -88,11 +85,21 @@
     <p-panel styleClass="bank-panel" *ngIf="paymentType === 'Transfer'">
       <ng-template #header>
         <div class="pan-hdr">
-          Realiza el pago a través de una de estas entidades bancarias y adjunta
-          el justificante
+          <span *ngIf="retailerCode === 'DIFFERENT_ROADS' || !retailerCode">
+            Realiza el pago a través de una de estas entidades bancarias y
+            adjunta el justificante
+          </span>
+          <span *ngIf="retailerCode && retailerCode !== 'DIFFERENT_ROADS'">
+            Realiza el pago a través de la entidad bancaria y adjunta el
+            justificante
+          </span>
         </div>
       </ng-template>
-      <div class="bank-info">
+      <!-- Cuentas bancarias para DIFFERENT_ROADS (dos cuentas) o por defecto -->
+      <div
+        class="bank-info"
+        *ngIf="retailerCode === 'DIFFERENT_ROADS' || !retailerCode"
+      >
         <div class="bank-column" *ngFor="let bank of bankInfo">
           <div class="bank-row">
             <span class="label">Banco:</span>
@@ -112,22 +119,60 @@
           </div>
         </div>
       </div>
+      <!-- Cuenta bancaria para otros retailers (una cuenta centrada) -->
+      <div
+        class="bank-info bank-info-centered"
+        *ngIf="retailerCode && retailerCode !== 'DIFFERENT_ROADS'"
+      >
+        <div class="bank-column bank-column-centered">
+          <div class="bank-row">
+            <span class="label">Banco:</span>
+            <span class="value">{{ bankInfoForOtherRetailers.name }}</span>
+          </div>
+          <div class="bank-row">
+            <span class="label">N° Cuenta:</span>
+            <span class="value">{{ bankInfoForOtherRetailers.account }}</span>
+          </div>
+          <div class="bank-row">
+            <span class="label">Beneficiario:</span>
+            <span class="value">{{
+              bankInfoForOtherRetailers.beneficiary
+            }}</span>
+          </div>
+          <div class="bank-row">
+            <span class="label">Concepto:</span>
+            <span class="value">{{ bankInfoForOtherRetailers.concept }}</span>
+          </div>
+        </div>
+      </div>
     </p-panel>
 
     <ng-container *ngIf="paymentType === 'Transfer'">
       <!-- Mensaje importante solo cuando no hay justificantes -->
-      <p class="status-msg" style="color: #f05a4c" *ngIf="uploadedVouchers.length === 0 && status === 'PENDING'">
+      <p
+        class="status-msg"
+        style="color: #f05a4c"
+        *ngIf="uploadedVouchers.length === 0 && status === 'PENDING'"
+      >
         IMPORTANTE: Sube el justificante de pago dentro de este plazo para
         evitar que tu viaje se cancele automáticamente.
       </p>
 
       <!-- Lista de justificantes subidos -->
       <div *ngIf="uploadedVouchers.length > 0" class="vouchers-list">
-        <div class="voucher-item" *ngFor="let voucher of uploadedVouchers; let i = index">
+        <div
+          class="voucher-item"
+          *ngFor="let voucher of uploadedVouchers; let i = index"
+        >
           <div class="voucher-info">
-            <i class="pi pi-file-pdf" style="margin-right: 8px; color: #f05a4c;"></i>
-            <span>{{ voucher.fileName || ('Justificante ' + (i + 1)) }}</span>
-            <span class="voucher-date">({{ voucher.uploadDate | date:'dd/MM/yyyy HH:mm' }})</span>
+            <i
+              class="pi pi-file-pdf"
+              style="margin-right: 8px; color: #f05a4c"
+            ></i>
+            <span>{{ voucher.fileName || "Justificante " + (i + 1) }}</span>
+            <span class="voucher-date"
+              >({{ voucher.uploadDate | date : "dd/MM/yyyy HH:mm" }})</span
+            >
           </div>
           <p-button
             label="Ver"
@@ -143,7 +188,11 @@
       <!-- Botón para subir/añadir justificante (siempre visible cuando está PENDING) -->
       <div *ngIf="status === 'PENDING'" class="upload-section">
         <app-upload-button
-          [label]="uploadedVouchers.length === 0 ? 'Subir justificante de transferencia' : 'Añadir otro justificante'"
+          [label]="
+            uploadedVouchers.length === 0
+              ? 'Subir justificante de transferencia'
+              : 'Añadir otro justificante'
+          "
           accept="image/*, .pdf"
           [maxFileSize]="1000000"
           folder="vouchers"
@@ -159,21 +208,30 @@
         <!-- Mensaje informativo cuando hay un archivo pendiente de confirmar -->
         <div *ngIf="pendingFileToConfirm" class="pending-file-info">
           <p class="info-message">
-            <i class="pi pi-info-circle" style="margin-right: 8px;"></i>
-            Has seleccionado <strong>{{ pendingFileToConfirm.name }}</strong> 
-            Por favor, confirma la subida del archivo usando el botón "Confirmar" que aparece arriba antes de añadir otro justificante.
+            <i class="pi pi-info-circle" style="margin-right: 8px"></i>
+            Has seleccionado <strong>{{ pendingFileToConfirm.name }}</strong>
+            Por favor, confirma la subida del archivo usando el botón
+            "Confirmar" que aparece arriba antes de añadir otro justificante.
           </p>
         </div>
 
         <!-- Mensaje informativo general -->
-        <p *ngIf="!pendingFileToConfirm && uploadedVouchers.length > 0" class="info-message-general">
-          <i class="pi pi-info-circle" style="margin-right: 8px;"></i>
-          Puedes añadir más justificantes. Recuerda confirmar cada uno antes de seleccionar el siguiente.
+        <p
+          *ngIf="!pendingFileToConfirm && uploadedVouchers.length > 0"
+          class="info-message-general"
+        >
+          <i class="pi pi-info-circle" style="margin-right: 8px"></i>
+          Puedes añadir más justificantes. Recuerda confirmar cada uno antes de
+          seleccionar el siguiente.
         </p>
 
         <!-- Mensaje de confirmación cuando hay justificantes subidos -->
         <p *ngIf="uploadedVouchers.length > 0" class="voucher-status-text">
-          Hemos recibido tu{{ uploadedVouchers.length > 1 ? 's' : '' }} comprobante{{ uploadedVouchers.length > 1 ? 's' : '' }} de pago y nuestro equipo {{ uploadedVouchers.length > 1 ? 'los' : 'lo' }} estará
+          Hemos recibido tu{{
+            uploadedVouchers.length > 1 ? "s" : ""
+          }}
+          comprobante{{ uploadedVouchers.length > 1 ? "s" : "" }} de pago y
+          nuestro equipo {{ uploadedVouchers.length > 1 ? "los" : "lo" }} estará
           validando. Recibirás una notificación en tu correo cuando la
           transferencia sea verificada.
         </p>
@@ -182,7 +240,10 @@
       <!-- Mensaje cuando el pago está completado -->
       <ng-container *ngIf="status !== 'PENDING' && uploadedVouchers.length > 0">
         <p class="voucher-status-text">
-          Tu comprobante{{ uploadedVouchers.length > 1 ? 's' : '' }} de pago {{ uploadedVouchers.length > 1 ? 'han' : 'ha' }} sido validado{{ uploadedVouchers.length > 1 ? 's' : '' }}.
+          Tu comprobante{{ uploadedVouchers.length > 1 ? "s" : "" }} de pago
+          {{ uploadedVouchers.length > 1 ? "han" : "ha" }} sido validado{{
+            uploadedVouchers.length > 1 ? "s" : ""
+          }}.
         </p>
       </ng-container>
     </ng-container>
@@ -192,7 +253,7 @@
   <p-panel styleClass="det-panel">
     <div class="det-item">
       <label class="val">Fecha de reserva:</label>
-      <span>{{ reservation?.createdAt | date:'dd/MM/yyyy' }}</span>
+      <span>{{ reservation?.createdAt | date : "dd/MM/yyyy" }}</span>
     </div>
     <div class="det-item">
       <label class="val">Número de reserva:</label>
@@ -200,11 +261,9 @@
     </div>
     <div class="det-item">
       <label class="val">{{
-        status === "PENDING"
-          ? "Pendiente a abonar:"
-          : "Importe abonado:"
+        status === "PENDING" ? "Pendiente a abonar:" : "Importe abonado:"
       }}</label>
-      <span>{{ (reservation?.totalAmount || 0) | number:'1.0-0' }} €</span>
+      <span>{{ reservation?.totalAmount || 0 | number : "1.0-0" }} €</span>
     </div>
   </p-panel>
 
@@ -221,51 +280,56 @@
   
 
   <!-- Panel de información del viaje -->
-  <app-travel-info 
+  <app-travel-info
     [reservationId]="reservationId"
     [tourId]="reservation?.tourId"
-    [departureId]="reservation?.departureId">
+    [departureId]="reservation?.departureId"
+  >
   </app-travel-info>
 
   <!-- Panel de información de viajeros -->
-  <app-travelers-info 
-    [reservationId]="reservationId">
-  </app-travelers-info>
+  <app-travelers-info [reservationId]="reservationId"> </app-travelers-info>
 
   <!-- Panel de información de vuelos -->
-  <app-section-flight 
+  <app-section-flight
     [departureId]="reservation?.departureId"
-    [reservationId]="reservationId">
+    [reservationId]="reservationId"
+  >
   </app-section-flight>
 
   <!-- Panel de resumen de precios -->
-  <app-summary-info 
-    [reservationId]="reservationId">
-  </app-summary-info>
+  <app-summary-info [reservationId]="reservationId"> </app-summary-info>
 
   <!-- Panel de información de pago -->
-  <app-payment-info 
-    *ngIf="hasPaymentId"
-    [reservationId]="reservationId">
+  <app-payment-info *ngIf="hasPaymentId" [reservationId]="reservationId">
   </app-payment-info>
 
   <!-- ✅ NUEVA SECCIÓN: Información de reserva de vuelos Amadeus -->
-  <div class="amadeus-flight-section" *ngIf="hasAmadeusFlight || flightBookingResponse">
+  <div
+    class="amadeus-flight-section"
+    *ngIf="hasAmadeusFlight || flightBookingResponse"
+  >
     <p-panel styleClass="amadeus-panel">
       <ng-template #header>
         <div class="amadeus-header">
-          <i class="pi pi-plane" style="margin-right: 0.5rem;"></i>
+          <i class="pi pi-plane" style="margin-right: 0.5rem"></i>
           Reserva de Vuelos Amadeus
         </div>
       </ng-template>
-      
+
       <!-- Estado de verificación -->
-      <div class="flight-status" *ngIf="!flightBookingResponse && !flightBookingError">
+      <div
+        class="flight-status"
+        *ngIf="!flightBookingResponse && !flightBookingError"
+      >
         <div class="status-item">
-          <i class="pi pi-check-circle" style="color: var(--success-green); margin-right: 0.5rem;"></i>
+          <i
+            class="pi pi-check-circle"
+            style="color: var(--success-green); margin-right: 0.5rem"
+          ></i>
           <span>Vuelos Amadeus detectados y seleccionados</span>
         </div>
-        
+
         <!-- Loading durante la reserva -->
         <div class="booking-loading" *ngIf="flightBookingLoading">
           <p-progressSpinner styleClass="flight-loader"></p-progressSpinner>
@@ -280,30 +344,44 @@
             </summary>
             <div class="debug-content">
               <div class="debug-item">
-                <strong>hasAmadeusFlight:</strong> 
-                <span class="debug-value" [class.success]="hasAmadeusFlight" [class.error]="!hasAmadeusFlight">{{ hasAmadeusFlight }}</span>
+                <strong>hasAmadeusFlight:</strong>
+                <span
+                  class="debug-value"
+                  [class.success]="hasAmadeusFlight"
+                  [class.error]="!hasAmadeusFlight"
+                  >{{ hasAmadeusFlight }}</span
+                >
               </div>
               <div class="debug-item">
-                <strong>flightBookingLoading:</strong> 
-                <span class="debug-value" [class.loading]="flightBookingLoading">{{ flightBookingLoading }}</span>
+                <strong>flightBookingLoading:</strong>
+                <span
+                  class="debug-value"
+                  [class.loading]="flightBookingLoading"
+                  >{{ flightBookingLoading }}</span
+                >
               </div>
               <div class="debug-item">
-                <strong>flightBookingError:</strong> 
-                <span class="debug-value" [class.error]="flightBookingError">{{ flightBookingError }}</span>
+                <strong>flightBookingError:</strong>
+                <span class="debug-value" [class.error]="flightBookingError">{{
+                  flightBookingError
+                }}</span>
               </div>
               <div class="debug-item">
-                <strong>reservationId:</strong> 
-                <span class="debug-id">{{ reservationId || 'No disponible' }}</span>
+                <strong>reservationId:</strong>
+                <span class="debug-id">{{
+                  reservationId || "No disponible"
+                }}</span>
               </div>
-              
+
               <!-- Botón manual para probar -->
               <div class="debug-actions">
-                <p-button 
-                  label="🔄 Verificar vuelos manualmente" 
-                  (onClick)="checkAndBookAmadeusFlight()" 
+                <p-button
+                  label="🔄 Verificar vuelos manualmente"
+                  (onClick)="checkAndBookAmadeusFlight()"
                   severity="info"
                   [disabled]="!reservationId || flightBookingLoading"
-                  styleClass="debug-button">
+                  styleClass="debug-button"
+                >
                 </p-button>
               </div>
             </div>
@@ -312,12 +390,15 @@
       </div>
 
       <!-- Respuesta exitosa de la reserva -->
-      <div class="flight-success" *ngIf="flightBookingResponse && !flightBookingLoading">
+      <div
+        class="flight-success"
+        *ngIf="flightBookingResponse && !flightBookingLoading"
+      >
         <div class="success-header">
           <i class="pi pi-check-circle success-icon"></i>
           <h3>¡Vuelos reservados exitosamente!</h3>
         </div>
-        
+
         <div class="flight-details" *ngIf="flightBookingResponse.data">
           <div class="detail-item" *ngIf="flightBookingResponse.data.id">
             <label>ID de Orden:</label>
@@ -327,24 +408,44 @@
             <label>Tipo de Orden:</label>
             <span>{{ flightBookingResponse.data.type }}</span>
           </div>
-          <div class="detail-item" *ngIf="flightBookingResponse.data.queuingOfficeId">
+          <div
+            class="detail-item"
+            *ngIf="flightBookingResponse.data.queuingOfficeId"
+          >
             <label>Oficina de Cola:</label>
             <span>{{ flightBookingResponse.data.queuingOfficeId }}</span>
           </div>
-          <div class="detail-item" *ngIf="flightBookingResponse.data.ownerOfficeId">
+          <div
+            class="detail-item"
+            *ngIf="flightBookingResponse.data.ownerOfficeId"
+          >
             <label>Oficina Propietaria:</label>
             <span>{{ flightBookingResponse.data.ownerOfficeId }}</span>
           </div>
 
           <!-- Información de FlightOffers -->
-          <div class="flight-offers" *ngIf="flightBookingResponse.data.flightOffers && flightBookingResponse.data.flightOffers.length > 0">
+          <div
+            class="flight-offers"
+            *ngIf="
+              flightBookingResponse.data.flightOffers &&
+              flightBookingResponse.data.flightOffers.length > 0
+            "
+          >
             <h4>Ofertas de Vuelo:</h4>
-            <div class="offer-item" *ngFor="let offer of flightBookingResponse.data.flightOffers; let i = index">
+            <div
+              class="offer-item"
+              *ngFor="
+                let offer of flightBookingResponse.data.flightOffers;
+                let i = index
+              "
+            >
               <div class="offer-header">
                 <strong>Oferta {{ i + 1 }}</strong>
-                <span class="offer-id" *ngIf="offer.id">ID: {{ offer.id }}</span>
+                <span class="offer-id" *ngIf="offer.id"
+                  >ID: {{ offer.id }}</span
+                >
               </div>
-              
+
               <div class="offer-details">
                 <div class="detail-row" *ngIf="offer.source">
                   <label>Fuente:</label>
@@ -352,15 +453,18 @@
                 </div>
                 <div class="detail-row" *ngIf="offer.oneWay !== null">
                   <label>Ida y Vuelta:</label>
-                  <span>{{ offer.oneWay ? 'Solo Ida' : 'Ida y Vuelta' }}</span>
+                  <span>{{ offer.oneWay ? "Solo Ida" : "Ida y Vuelta" }}</span>
                 </div>
                 <div class="detail-row" *ngIf="offer.numberOfBookableSeats">
                   <label>Asientos Disponibles:</label>
                   <span>{{ offer.numberOfBookableSeats }}</span>
                 </div>
-                <div class="detail-row" *ngIf="offer.paymentCardRequired !== null">
+                <div
+                  class="detail-row"
+                  *ngIf="offer.paymentCardRequired !== null"
+                >
                   <label>Tarjeta Requerida:</label>
-                  <span>{{ offer.paymentCardRequired ? 'Sí' : 'No' }}</span>
+                  <span>{{ offer.paymentCardRequired ? "Sí" : "No" }}</span>
                 </div>
               </div>
 
@@ -370,46 +474,91 @@
                 <div class="price-details">
                   <div class="price-row" *ngIf="offer.price.total">
                     <label>Total:</label>
-                    <span class="price-value">{{ offer.price.total }} {{ offer.price.currency || 'EUR' }}</span>
+                    <span class="price-value"
+                      >{{ offer.price.total }}
+                      {{ offer.price.currency || "EUR" }}</span
+                    >
                   </div>
                   <div class="price-row" *ngIf="offer.price.base">
                     <label>Base:</label>
-                    <span>{{ offer.price.base }} {{ offer.price.currency || 'EUR' }}</span>
+                    <span
+                      >{{ offer.price.base }}
+                      {{ offer.price.currency || "EUR" }}</span
+                    >
                   </div>
                   <div class="price-row" *ngIf="offer.price.grandTotal">
                     <label>Total General:</label>
-                    <span>{{ offer.price.grandTotal }} {{ offer.price.billingCurrency || 'EUR' }}</span>
+                    <span
+                      >{{ offer.price.grandTotal }}
+                      {{ offer.price.billingCurrency || "EUR" }}</span
+                    >
                   </div>
                 </div>
               </div>
 
               <!-- Información de Itinerarios -->
-              <div class="itineraries-info" *ngIf="offer.itineraries && offer.itineraries.length > 0">
+              <div
+                class="itineraries-info"
+                *ngIf="offer.itineraries && offer.itineraries.length > 0"
+              >
                 <h5>Itinerarios:</h5>
-                <div class="itinerary-item" *ngFor="let itinerary of offer.itineraries; let j = index">
+                <div
+                  class="itinerary-item"
+                  *ngFor="let itinerary of offer.itineraries; let j = index"
+                >
                   <div class="itinerary-header">
                     <strong>Itinerario {{ j + 1 }}</strong>
-                    <span *ngIf="itinerary.duration">Duración: {{ itinerary.duration }}</span>
+                    <span *ngIf="itinerary.duration"
+                      >Duración: {{ itinerary.duration }}</span
+                    >
                   </div>
-                  
-                  <div class="segments-info" *ngIf="itinerary.segments && itinerary.segments.length > 0">
-                    <div class="segment-item" *ngFor="let segment of itinerary.segments; let k = index">
+
+                  <div
+                    class="segments-info"
+                    *ngIf="itinerary.segments && itinerary.segments.length > 0"
+                  >
+                    <div
+                      class="segment-item"
+                      *ngFor="let segment of itinerary.segments; let k = index"
+                    >
                       <div class="segment-header">
                         <strong>Segmento {{ k + 1 }}</strong>
-                        <span class="carrier" *ngIf="segment.carrierCode">{{ segment.carrierCode }}</span>
-                        <span class="flight-number" *ngIf="segment.number">{{ segment.number }}</span>
+                        <span class="carrier" *ngIf="segment.carrierCode">{{
+                          segment.carrierCode
+                        }}</span>
+                        <span class="flight-number" *ngIf="segment.number">{{
+                          segment.number
+                        }}</span>
                       </div>
-                      
+
                       <div class="segment-details">
                         <div class="segment-row" *ngIf="segment.departure">
                           <label>Salida:</label>
-                          <span>{{ segment.departure.iataCode ?? '' }} {{ segment.departure.terminal ? '(T' + segment.departure.terminal + ')' : '' }}</span>
-                          <span class="time" *ngIf="segment.departure.at">{{ segment.departure.at | date:'HH:mm' }}</span>
+                          <span
+                            >{{ segment.departure.iataCode ?? "" }}
+                            {{
+                              segment.departure.terminal
+                                ? "(T" + segment.departure.terminal + ")"
+                                : ""
+                            }}</span
+                          >
+                          <span class="time" *ngIf="segment.departure.at">{{
+                            segment.departure.at | date : "HH:mm"
+                          }}</span>
                         </div>
                         <div class="segment-row" *ngIf="segment.arrival">
                           <label>Llegada:</label>
-                          <span>{{ segment.arrival.iataCode ?? '' }} {{ segment.arrival.terminal ? '(T' + segment.arrival.terminal + ')' : '' }}</span>
-                          <span class="time" *ngIf="segment.arrival?.at">{{ segment.arrival.at | date:'HH:mm' }}</span>
+                          <span
+                            >{{ segment.arrival.iataCode ?? "" }}
+                            {{
+                              segment.arrival.terminal
+                                ? "(T" + segment.arrival.terminal + ")"
+                                : ""
+                            }}</span
+                          >
+                          <span class="time" *ngIf="segment.arrival?.at">{{
+                            segment.arrival.at | date : "HH:mm"
+                          }}</span>
                         </div>
                         <div class="segment-row" *ngIf="segment.duration">
                           <label>Duración:</label>
@@ -417,7 +566,12 @@
                         </div>
                         <div class="segment-row" *ngIf="segment.bookingStatus">
                           <label>Estado:</label>
-                          <span [class]="'status-' + segment.bookingStatus.toLowerCase()">{{ segment.bookingStatus }}</span>
+                          <span
+                            [class]="
+                              'status-' + segment.bookingStatus.toLowerCase()
+                            "
+                            >{{ segment.bookingStatus }}</span
+                          >
                         </div>
                       </div>
                     </div>
@@ -428,22 +582,39 @@
           </div>
 
           <!-- Información de Viajeros -->
-          <div class="travelers-info" *ngIf="flightBookingResponse.data.travelers && flightBookingResponse.data.travelers.length > 0">
+          <div
+            class="travelers-info"
+            *ngIf="
+              flightBookingResponse.data.travelers &&
+              flightBookingResponse.data.travelers.length > 0
+            "
+          >
             <h4>Viajeros:</h4>
-            <div class="traveler-item" *ngFor="let traveler of flightBookingResponse.data.travelers; let i = index">
+            <div
+              class="traveler-item"
+              *ngFor="
+                let traveler of flightBookingResponse.data.travelers;
+                let i = index
+              "
+            >
               <div class="traveler-header">
                 <strong>Viajero {{ i + 1 }}</strong>
-                <span class="traveler-id" *ngIf="traveler.id">ID: {{ traveler.id }}</span>
+                <span class="traveler-id" *ngIf="traveler.id"
+                  >ID: {{ traveler.id }}</span
+                >
               </div>
-              
+
               <div class="traveler-details">
                 <div class="detail-row" *ngIf="traveler.name">
                   <label>Nombre:</label>
-                  <span>{{ traveler.name.title }} {{ traveler.name.firstName }} {{ traveler.name.lastName }}</span>
+                  <span
+                    >{{ traveler.name.title }} {{ traveler.name.firstName }}
+                    {{ traveler.name.lastName }}</span
+                  >
                 </div>
                 <div class="detail-row" *ngIf="traveler.dateOfBirth">
                   <label>Fecha de Nacimiento:</label>
-                  <span>{{ traveler.dateOfBirth | date:'dd/MM/yyyy' }}</span>
+                  <span>{{ traveler.dateOfBirth | date : "dd/MM/yyyy" }}</span>
                 </div>
                 <div class="detail-row" *ngIf="traveler.gender">
                   <label>Género:</label>
@@ -463,9 +634,18 @@
         </div>
 
         <!-- Warnings si existen -->
-        <div class="flight-warnings" *ngIf="flightBookingResponse.warnings && flightBookingResponse.warnings.length > 0">
+        <div
+          class="flight-warnings"
+          *ngIf="
+            flightBookingResponse.warnings &&
+            flightBookingResponse.warnings.length > 0
+          "
+        >
           <h4>Advertencias:</h4>
-          <div class="warning-item" *ngFor="let warning of flightBookingResponse.warnings">
+          <div
+            class="warning-item"
+            *ngFor="let warning of flightBookingResponse.warnings"
+          >
             <i class="pi pi-exclamation-triangle warning-icon"></i>
             <span>{{ warning.title }}: {{ warning.detail }}</span>
           </div>
@@ -485,22 +665,28 @@
       </div>
 
       <!-- Error en la reserva -->
-      <div class="flight-error" *ngIf="flightBookingError && !flightBookingLoading">
+      <div
+        class="flight-error"
+        *ngIf="flightBookingError && !flightBookingLoading"
+      >
         <div class="error-header">
           <i class="pi pi-exclamation-triangle error-icon"></i>
           <h3>Error en la reserva de vuelos</h3>
         </div>
-        <p>No se pudo completar la reserva de vuelos. Por favor, contacta con soporte técnico.</p>
-        <p-button 
-          label="Reintentar" 
-          (onClick)="checkAndBookAmadeusFlight()" 
+        <p>
+          No se pudo completar la reserva de vuelos. Por favor, contacta con
+          soporte técnico.
+        </p>
+        <p-button
+          label="Reintentar"
+          (onClick)="checkAndBookAmadeusFlight()"
           severity="warn"
-          styleClass="retry-button">
+          styleClass="retry-button"
+        >
         </p-button>
       </div>
     </p-panel>
   </div>
-
 </div>
 
 <div *ngIf="error" class="error-container">
@@ -513,10 +699,11 @@
     Por favor, inténtalo de nuevo más tarde o ponte en contacto con nuestro
     equipo de soporte.
   </p>
-  <p-button 
-    label="Volver" 
-    routerLink="/" 
+  <p-button
+    label="Volver"
+    routerLink="/"
     icon="pi pi-arrow-left"
-    severity="secondary">
+    severity="secondary"
+  >
   </p-button>
 </div>

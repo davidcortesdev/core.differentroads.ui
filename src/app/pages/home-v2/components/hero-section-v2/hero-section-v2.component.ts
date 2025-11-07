@@ -393,6 +393,13 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
    * Disparar evento search cuando el usuario realiza una búsqueda
    */
   private trackSearch(queryParams: TripQueryParams): void {
+    // Obtener el nombre del tipo de viaje basándose en el ID seleccionado
+    let tripTypeName = '';
+    if (this.selectedTripTypeId !== null && this.selectedTripTypeId !== undefined) {
+      const selectedTripType = this.tripTypes.find(t => t.id === this.selectedTripTypeId);
+      tripTypeName = selectedTripType?.name || '';
+    }
+
     // Obtener datos completos del usuario si está logueado
     this.analyticsService.getCurrentUserData().subscribe({
       next: (userData) => {
@@ -401,25 +408,30 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
             search_term: queryParams.destination || '',
             start_date: queryParams.departureDate || '',
             end_date: queryParams.returnDate || '',
-            trip_type: queryParams.tripType || ''
+            trip_type: tripTypeName
           },
           userData
         );
       },
       error: () => {
-        // Fallback si no se pueden obtener datos completos
+        // Fallback si no se pueden obtener datos completos - incluir todos los campos según estructura requerida
+        const fallbackUserData = this.analyticsService.getUserData(
+          this.authService.getUserEmailValue(),
+          '',
+          this.authService.getCognitoIdValue()
+        ) || {
+          email_address: this.authService.getUserEmailValue() || '',
+          phone_number: '',
+          user_id: this.authService.getCognitoIdValue() || ''
+        };
         this.analyticsService.search(
           {
             search_term: queryParams.destination || '',
             start_date: queryParams.departureDate || '',
             end_date: queryParams.returnDate || '',
-            trip_type: queryParams.tripType || ''
+            trip_type: tripTypeName
           },
-          this.analyticsService.getUserData(
-            this.authService.getUserEmailValue(),
-            '',
-            this.authService.getCognitoIdValue()
-          )
+          fallbackUserData
         );
       }
     });

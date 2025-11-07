@@ -223,20 +223,22 @@ export class TourCardV2Component implements OnInit, AfterViewInit {
    * Verifica que el widget se haya inicializado correctamente
    */
   private verifyWidgetInitialization(): void {
-    const widget = this.document.querySelector('scalapay-widget');
-    
-    if (!widget) {
-      console.error('Widget de Scalapay no encontrado');
-      return;
-    }
-    
-    const isVisible = this.isScalapayWidgetVisible();
-    
-    if (!isVisible) {
-      setTimeout(() => {
+    // Dar tiempo adicional para que el DOM hijo se renderice
+    setTimeout(() => {
+      const widget = this.document.querySelector('scalapay-widget');
+      
+      if (!widget) {
+        // El widget puede no estar presente si showScalapayPrice es false
+        // o si el DOM hijo aún no se ha renderizado completamente
+        return;
+      }
+      
+      const isVisible = this.isScalapayWidgetVisible();
+      
+      if (!isVisible) {
         this.forceScalapayReload();
-      }, 1000);
-    }
+      }
+    }, 500);
   }
 
   /**

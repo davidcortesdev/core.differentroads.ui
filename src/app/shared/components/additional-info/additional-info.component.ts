@@ -42,6 +42,7 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
   @Input() tourProductStyle: string = '';
   @Input() tourListId: string = ''; // ID de la lista del tour para analytics
   @Input() tourListName: string = ''; // Nombre de la lista del tour para analytics
+  @Input() isStandaloneMode: boolean = false; // Modo standalone desde checkout (TourOperator)
 
   // Estados del componente
   visible: boolean = false;
@@ -232,7 +233,8 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
     this.isDownloadMode = false;
     this.isShareMode = false;
 
-    if (!this.isAuthenticated) {
+    // Si es standalone (TourOperator), no pedir autenticación
+    if (!this.isStandaloneMode && !this.isAuthenticated) {
       const currentUrl = window.location.pathname;
       sessionStorage.setItem('redirectUrl', currentUrl);
       this.loginDialogVisible = true;
@@ -249,7 +251,8 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
    * Maneja la descarga directa del presupuesto
    */
   handleDownloadTrip(): void {
-    if (!this.isAuthenticated) {
+    // Si es standalone (TourOperator), no pedir autenticación
+    if (!this.isStandaloneMode && !this.isAuthenticated) {
       const currentUrl = window.location.pathname;
       sessionStorage.setItem('redirectUrl', currentUrl);
       this.loginDialogVisible = true;
@@ -268,7 +271,8 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
    * Descarga el presupuesto directamente
    */
   private downloadBudget(): void {
-    if (!this.userEmail) {
+    // En modo standalone (TourOperator), permitir continuar sin userEmail si hay una reserva existente
+    if (!this.isStandaloneMode && !this.userEmail) {
       this.additionalInfoService.showError(
         'No se pudo obtener la información del usuario. Por favor, inténtalo de nuevo.'
       );
@@ -334,7 +338,8 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
    * Guarda el presupuesto (crear nuevo o actualizar existente)
    */
   private saveBudget(): void {
-    if (!this.userEmail) {
+    // En modo standalone (TourOperator), permitir continuar sin userEmail si hay una reserva existente
+    if (!this.isStandaloneMode && !this.userEmail) {
       this.additionalInfoService.showError(
         'No se pudo obtener la información del usuario. Por favor, inténtalo de nuevo.'
       );

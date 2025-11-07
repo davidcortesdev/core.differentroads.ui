@@ -1228,6 +1228,7 @@ export class AnalyticsService {
     // Obtener item_list_id y item_list_name desde sessionStorage si no se proporcionan
     const finalItemListId = itemListId || sessionStorage.getItem('checkout_itemListId') || '';
     const finalItemListName = itemListName || sessionStorage.getItem('checkout_itemListName') || '';
+    const storedInsurance = sessionStorage.getItem('checkout_selectedInsurance') || '';
 
     // Obtener todos los datos completos del tour dinámicamente
     forkJoin({
@@ -1273,11 +1274,11 @@ export class AnalyticsService {
             tourData.flightCity = flightCity || tourData.flightCity || 'Sin vuelo';
             // Asignar actividades (usar las obtenidas dinámicamente)
             const summaryActivities = this.extractActivitiesFromSummary(summary);
-            const summaryInsurance = this.extractInsuranceFromSummary(summary, reservationData);
+            const summaryInsurance = this.extractInsuranceFromSummary(summary, reservationData, storedInsurance);
 
             tourData.activitiesText = activitiesText || summaryActivities || tourData.activitiesText || '';
             // Asignar seguro desde reservationData.insurance o summary
-            tourData.selectedInsurance = reservationData.insurance?.name || summaryInsurance || tourData.selectedInsurance || '';
+            tourData.selectedInsurance = reservationData.insurance?.name || summaryInsurance || storedInsurance || tourData.selectedInsurance || '';
             // Asignar pasajeros
             tourData.totalPassengers = parseInt(passengersCount.adults) + parseInt(passengersCount.children);
             tourData.childrenCount = passengersCount.children;
@@ -1343,7 +1344,7 @@ export class AnalyticsService {
                 }
                 
                           const summaryActivities = this.extractActivitiesFromSummary(summary);
-                          const summaryInsurance = this.extractInsuranceFromSummary(summary);
+                          const summaryInsurance = this.extractInsuranceFromSummary(summary, reservationData, storedInsurance);
 
                           const tourDataForEcommerce: TourDataForEcommerce = {
                   id: tourData.id,
@@ -1362,7 +1363,7 @@ export class AnalyticsService {
                             activitiesText: summaryActivities || (reservationData.activities && reservationData.activities.length > 0
                               ? reservationData.activities.map((a: any) => a.description || a.name).join(', ')
                               : ''),
-                            selectedInsurance: reservationData.insurance?.name || summaryInsurance || '',
+                            selectedInsurance: reservationData.insurance?.name || summaryInsurance || storedInsurance || '',
                   childrenCount: '0',
                   totalPassengers: reservation.totalPassengers || undefined,
                   departureDate: departure?.departureDate || reservationData.departureDate || '',
@@ -1752,10 +1753,11 @@ export class AnalyticsService {
 
   private extractInsuranceFromSummary(
     summary: IReservationSummaryResponse | null,
-    reservationData?: any
+    reservationData?: any,
+    storedInsurance?: string
   ): string {
     if (!summary || !summary.items || summary.items.length === 0) {
-      return reservationData?.insurance?.name || '';
+      return reservationData?.insurance?.name || storedInsurance || '';
     }
 
     const insuranceDescriptions = summary.items
@@ -1767,7 +1769,7 @@ export class AnalyticsService {
       return insuranceDescriptions.join(', ');
     }
 
-    return reservationData?.insurance?.name || '';
+    return reservationData?.insurance?.name || storedInsurance || '';
   }
 
   private isActivitySummaryItem(item: ReservationSummaryItem): boolean {

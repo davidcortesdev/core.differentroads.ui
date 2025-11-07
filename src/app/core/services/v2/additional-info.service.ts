@@ -863,8 +863,12 @@ export class AdditionalInfoService {
         this.analyticsService.share(fileName, userData);
       },
       error: () => {
-        // Fallback sin datos de usuario
-        this.analyticsService.share(fileName, { email_address: userEmail });
+        // Fallback sin datos de usuario - incluir todos los campos según estructura requerida
+        this.analyticsService.share(fileName, {
+          email_address: userEmail || '',
+          phone_number: '',
+          user_id: ''
+        });
       }
     });
   }

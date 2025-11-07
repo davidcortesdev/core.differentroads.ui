@@ -462,6 +462,9 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
    * Procesa el envío de presupuesto a otra persona
    */
   private handleShareMode(formData: any): void {
+    // Disparar evento de analytics: share al hacer clic en el botón
+    this.trackShare();
+    
     const budgetData = {
       recipientEmail: formData.recipientEmail,
       recipientName: formData.recipientName || '',
@@ -504,8 +507,6 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
         this.loading = false;
         if (response.success) {
           this.additionalInfoService.showSuccess(response.message);
-          // Disparar evento de analytics: share
-          this.trackShare();
         } else {
           this.additionalInfoService.showError(response.message);
         }
@@ -855,8 +856,7 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
               this.loading = false;
               if (response.success) {
                 this.additionalInfoService.showSuccess(response.message);
-                // Disparar evento de analytics: share
-                this.trackShare();
+                // NO disparar evento share aquí - ya se disparó al hacer clic en el botón
               } else {
                 this.additionalInfoService.showError(response.message);
               }

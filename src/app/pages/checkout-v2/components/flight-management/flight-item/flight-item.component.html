@@ -19,7 +19,7 @@
               {{ formatTime(flight.departureTime) }}
             </span>
             <span class="journey-date">
-              {{ flight.departureDate | date : "dd-MM-yyyy" : "UTC" }}
+              {{ flight.departureDate | date : "dd-MM-yyyy" }}
             </span>
             <span class="journey-city">({{ flight.departureIATACode }}) {{ flight.departureCity }}</span>
           </div>
@@ -35,7 +35,7 @@
               {{ formatTime(flight.arrivalTime) }}
             </span>
             <span class="journey-date">
-              {{ flight.arrivalDate | date : "dd-MM-yyyy" : "UTC" }}
+              {{ flight.arrivalDate | date : "dd-MM-yyyy" }}
             </span>
             <span class="journey-city">({{ flight.arrivalIATACode }}) {{ flight.arrivalCity }}</span>
           </div>

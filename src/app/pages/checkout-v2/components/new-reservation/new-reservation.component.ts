@@ -21,7 +21,7 @@ import {
   FlightSearchService,
   IAmadeusFlightCreateOrderResponse,
 } from '../../../../core/services/flight/flight-search.service';
-import { AnalyticsService, TourDataForEcommerce } from '../../../../core/services/analytics/analytics.service';
+import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
 import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 import { PointsV2Service } from '../../../../core/services/v2/points-v2.service';
 import { Title } from '@angular/platform-browser';
@@ -64,6 +64,9 @@ export class NewReservationComponent implements OnInit {
   paymentType: 'Transfer' | 'Scalapay' | 'RedSys' | null = null;
   paymentMethod: string = '';
   paymentStatus: string = '';
+  
+  // Bandera para evitar disparar purchase múltiples veces
+  private purchaseEventFired: boolean = false;
 
   // IDs de estados de pago
   successId: number = 0;
@@ -216,6 +219,13 @@ export class NewReservationComponent implements OnInit {
 
         // CARGAR NOMBRE DEL LEAD TRAVELER PARA EL SALUDO
         this.loadLeadTravelerName();
+
+        // Disparar evento purchase cuando se llega a la página de confirmación después del paso 4 del checkout
+        // Solo disparar una vez cuando se carga la página
+        if (!this.purchaseEventFired) {
+          this.trackPurchase();
+          this.purchaseEventFired = true;
+        }
 
         // Cargar información del pago
         this.loadPayment();
@@ -375,9 +385,6 @@ export class NewReservationComponent implements OnInit {
         } else if (status.code === 'COMPLETED') {
           this.status = 'SUCCESS';
 
-          // Disparar evento purchase cuando se visita la página de gracias tras compra exitosa
-          this.trackPurchase();
-
           // Generar puntos después del pago exitoso
           this.generatePointsAfterPayment();
 
@@ -434,9 +441,6 @@ export class NewReservationComponent implements OnInit {
             this.updatePaymentStatus();
 
             this.status = 'SUCCESS';
-
-            // Disparar evento purchase
-            this.trackPurchase();
 
             this.showMessage(
               'success',
@@ -703,15 +707,10 @@ export class NewReservationComponent implements OnInit {
    * Disparar evento purchase cuando se completa la compra
    */
   private trackPurchase(): void {
-    if (!this.reservation) return;
+    if (!this.reservation || !this.reservation.tourId) return;
 
-    const reservationData = this.reservation as any; // Usar any para acceder a propiedades dinámicas
-    const tourData = reservationData.tour || {};
-
-    // Obtener item_list_id y item_list_name desde el state del router (heredados desde home)
-    const state = window.history.state;
-    const itemListId = state?.['listId'] || '';
-    const itemListName = state?.['listName'] || '';
+    const reservationData = this.reservation as any;
+    const tourId = this.reservation.tourId;
 
     // Obtener información del pago
     const paymentType = this.paymentType || 'completo, transferencia';
@@ -721,137 +720,19 @@ export class NewReservationComponent implements OnInit {
       `#${this.reservationId}`;
     const totalValue = this.reservation.totalAmount || 0;
 
-    // Obtener actividades seleccionadas (si están disponibles)
-    const activitiesText =
-      reservationData.activities && reservationData.activities.length > 0
-        ? reservationData.activities
-            .map((a: any) => a.description || a.name)
-            .join(', ')
-        : '';
-
-    // Obtener seguro seleccionado
-    const selectedInsurance = reservationData.insurance?.name || '';
-
-    // Obtener información de vuelo (si está disponible)
-    const flightCity = reservationData.flight?.originCity || 'Sin vuelo';
-
-    // Calcular pasajeros niños dinámicamente desde los travelers y construir TourDataForEcommerce
-    this.reservationTravelerService
-      .getByReservation(this.reservationId)
-      .pipe(
-        map((travelers) => {
-          // Contar travelers que NO son adultos (ageGroupId !== 1)
-          const childrenCount = travelers.filter(
-            (traveler) => traveler.ageGroupId !== 1
-          ).length;
-
-          // Construir TourDataForEcommerce desde reservationData.tour
-          const tourDataForEcommerce: TourDataForEcommerce = {
-            id: tourData.id,
-            tkId: tourData.tkId ?? undefined,
-            name: reservationData.tourName || tourData.name || undefined,
-            destination: {
-              continent: tourData.destination?.continent || undefined,
-              country: tourData.destination?.country || undefined
-            },
-            days: tourData.days || undefined,
-            nights: tourData.nights || undefined,
-            rating: tourData.rating || undefined,
-            monthTags: tourData.monthTags || undefined,
-            tourType: tourData.tourType || undefined,
-            flightCity: flightCity || 'Sin vuelo',
-            activitiesText: activitiesText || undefined,
-            selectedInsurance: selectedInsurance || undefined,
-            childrenCount: childrenCount.toString(),
-            totalPassengers: this.reservation?.totalPassengers || undefined,
-            departureDate: reservationData.departureDate || '',
-            returnDate: reservationData.returnDate || '',
-            price: totalValue
-          };
-
-          return { tourDataForEcommerce, childrenCount };
-        }),
-        switchMap(({ tourDataForEcommerce, childrenCount }) => {
-          return this.analyticsService.buildEcommerceItemFromTourData(
-            tourDataForEcommerce,
-            itemListId || 'purchase',
-            itemListName || 'Compra',
-            tourDataForEcommerce.id?.toString() || tourDataForEcommerce.tkId || ''
-          ).pipe(
-            switchMap((item) => {
-              return this.analyticsService.getCurrentUserData().pipe(
-                map((userData) => ({ item, userData, childrenCount }))
-              );
-            }),
-            catchError(() => {
-              // Si falla getCurrentUserData, usar el item sin userData
-              return this.analyticsService.buildEcommerceItemFromTourData(
-                tourDataForEcommerce,
-                itemListId || 'purchase',
-                itemListName || 'Compra',
-                tourDataForEcommerce.id?.toString() || tourDataForEcommerce.tkId || ''
-              ).pipe(
-                map((item) => ({ item, userData: this.getUserData(), childrenCount }))
-              );
-            })
-          );
-        }),
-        catchError((error) => {
-          console.error('Error obteniendo datos para purchase:', error);
-          // Fallback con datos básicos
-          const tourDataForEcommerce: TourDataForEcommerce = {
-            id: tourData.id,
-            tkId: tourData.tkId ?? undefined,
-            name: reservationData.tourName || tourData.name || undefined,
-            destination: {
-              continent: tourData.destination?.continent || undefined,
-              country: tourData.destination?.country || undefined
-            },
-            days: tourData.days || undefined,
-            nights: tourData.nights || undefined,
-            rating: tourData.rating || undefined,
-            monthTags: tourData.monthTags || undefined,
-            tourType: tourData.tourType || undefined,
-            flightCity: flightCity || 'Sin vuelo',
-            activitiesText: activitiesText || undefined,
-            selectedInsurance: selectedInsurance || undefined,
-            childrenCount: '0',
-            totalPassengers: this.reservation?.totalPassengers || undefined,
-            departureDate: reservationData.departureDate || '',
-            returnDate: reservationData.returnDate || '',
-            price: totalValue
-          };
-
-          return this.analyticsService.buildEcommerceItemFromTourData(
-            tourDataForEcommerce,
-            itemListId || 'purchase',
-            itemListName || 'Compra',
-            tourDataForEcommerce.id?.toString() || tourDataForEcommerce.tkId || ''
-          ).pipe(
-            map((item) => ({ item, userData: this.getUserData(), childrenCount: 0 }))
-          );
-        })
-      )
-      .subscribe({
-        next: ({ item, userData, childrenCount }) => {
-          this.analyticsService.purchase(
-            {
-              transaction_id: transactionId,
-              value: totalValue,
-              tax: 0.6,
-              shipping: 0.0,
-              currency: 'EUR',
-              coupon: reservationData.coupon?.code || '',
-              payment_type: paymentType,
-              items: [item]
-            },
-            userData
-          );
-        },
-        error: (error) => {
-          console.error('Error final obteniendo datos para purchase:', error);
-        }
-      });
+    // Usar el método centralizado del servicio que obtiene todos los datos dinámicamente
+    this.analyticsService.trackPurchaseFromReservation(
+      this.reservationId,
+      tourId,
+      {
+        transactionId: transactionId,
+        paymentType: paymentType,
+        totalValue: totalValue,
+        tax: 0.6,
+        shipping: 0.0,
+        coupon: reservationData.coupon?.code || ''
+      }
+    );
   }
 
   /**
@@ -867,6 +748,7 @@ export class NewReservationComponent implements OnInit {
     }
     return undefined;
   }
+
 
   /**
    * Genera puntos después del pago exitoso (3% del PVP) y cambia el estado de la reserva a BOOKED

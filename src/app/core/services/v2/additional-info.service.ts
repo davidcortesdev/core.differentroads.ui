@@ -844,8 +844,12 @@ export class AdditionalInfoService {
         this.analyticsService.fileDownload(fileName, userData);
       },
       error: () => {
-        // Fallback sin datos de usuario
-        this.analyticsService.fileDownload(fileName, { email_address: userEmail });
+        // Fallback sin datos de usuario - incluir todos los campos según estructura requerida
+        this.analyticsService.fileDownload(fileName, {
+          email_address: userEmail || '',
+          phone_number: '',
+          user_id: ''
+        });
       }
     });
   }

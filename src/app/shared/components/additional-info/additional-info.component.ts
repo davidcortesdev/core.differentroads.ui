@@ -259,6 +259,8 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Disparar evento de analytics: file_download al hacer clic en el botón
+    this.trackFileDownload();
     this.downloadBudget();
   }
 
@@ -298,8 +300,6 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
         this.loading = false;
         if (response.success) {
           this.additionalInfoService.showSuccess(response.message);
-          // Disparar evento de analytics: file_download
-          this.trackFileDownload();
         } else {
           this.additionalInfoService.showError(response.message);
         }
@@ -523,6 +523,9 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
    * Procesa la descarga del presupuesto en PDF
    */
   private handleDownloadMode(formData: any): void {
+    // Disparar evento de analytics: file_download al hacer clic en el botón
+    this.trackFileDownload();
+    
     const budgetData = {
       recipientEmail: formData.recipientEmail,
       message: formData.message || '',
@@ -559,8 +562,6 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
           this.additionalInfoService.showSuccess(
             `Presupuesto descargado y enviado a ${formData.recipientEmail}`
           );
-          // Disparar evento de analytics: file_download
-          this.trackFileDownload();
         } else {
           this.additionalInfoService.showError(response.message);
         }
@@ -805,8 +806,7 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
               this.loading = false;
               if (response.success) {
                 this.additionalInfoService.showSuccess(response.message);
-                // Disparar evento de analytics: file_download
-                this.trackFileDownload();
+                // NO disparar evento file_download aquí - solo cuando el usuario hace clic explícitamente en "Descargar"
               } else {
                 this.additionalInfoService.showError(response.message);
               }
@@ -903,8 +903,7 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
                 this.additionalInfoService.showSuccess(
                   `Presupuesto descargado y enviado a ${formData.recipientEmail}`
                 );
-                // Disparar evento de analytics: file_download
-                this.trackFileDownload();
+                // NO disparar evento file_download aquí - solo cuando el usuario hace clic explícitamente en "Descargar"
               } else {
                 this.additionalInfoService.showError(response.message);
               }

@@ -18,7 +18,7 @@ import { ReservationTravelerActivityService } from '../reservation/reservation-t
 import { ReservationTravelerActivityPackService } from '../reservation/reservation-traveler-activity-pack.service';
 import { ActivityService, IActivityResponse } from '../activity/activity.service';
 import { AgeGroupService } from '../agegroup/age-group.service';
-import { ReservationService } from '../reservation/reservation.service';
+import { ReservationService, IReservationSummaryResponse, ReservationSummaryItem } from '../reservation/reservation.service';
 import { ReservationFlightService } from '../flight/reservationflight.service';
 
 /**
@@ -1228,15 +1228,17 @@ export class AnalyticsService {
     // Obtener item_list_id y item_list_name desde sessionStorage si no se proporcionan
     const finalItemListId = itemListId || sessionStorage.getItem('checkout_itemListId') || '';
     const finalItemListName = itemListName || sessionStorage.getItem('checkout_itemListName') || '';
+    const storedInsurance = sessionStorage.getItem('checkout_selectedInsurance') || '';
 
     // Obtener todos los datos completos del tour dinámicamente
     forkJoin({
       tourData: this.getCompleteTourDataForEcommerce(tourId),
       activitiesText: this.getActivitiesFromTravelers(reservationId),
       passengersCount: this.getPassengersCount(reservationId),
-      reservation: this.reservationService.getById(reservationId)
+      reservation: this.reservationService.getById(reservationId),
+      summary: this.reservationService.getSummary(reservationId).pipe(catchError(() => of(null)))
     }).pipe(
-      switchMap(({ tourData, activitiesText, passengersCount, reservation }) => {
+      switchMap(({ tourData, activitiesText, passengersCount, reservation, summary }) => {
         const reservationData = reservation as any;
         const departureId = reservationData.departureId;
         
@@ -1271,9 +1273,12 @@ export class AnalyticsService {
             // Asignar flightCity
             tourData.flightCity = flightCity || tourData.flightCity || 'Sin vuelo';
             // Asignar actividades (usar las obtenidas dinámicamente)
-            tourData.activitiesText = activitiesText || tourData.activitiesText || '';
-            // Asignar seguro desde reservationData.insurance
-            tourData.selectedInsurance = reservationData.insurance?.name || tourData.selectedInsurance || '';
+            const summaryActivities = this.extractActivitiesFromSummary(summary);
+            const summaryInsurance = this.extractInsuranceFromSummary(summary, reservationData, storedInsurance);
+
+            tourData.activitiesText = activitiesText || summaryActivities || tourData.activitiesText || '';
+            // Asignar seguro desde reservationData.insurance o summary
+            tourData.selectedInsurance = reservationData.insurance?.name || summaryInsurance || storedInsurance || tourData.selectedInsurance || '';
             // Asignar pasajeros
             tourData.totalPassengers = parseInt(passengersCount.adults) + parseInt(passengersCount.children);
             tourData.childrenCount = passengersCount.children;
@@ -1303,8 +1308,11 @@ export class AnalyticsService {
       catchError((error) => {
         console.error('Error obteniendo datos completos del tour para purchase:', error);
         // Fallback: obtener datos básicos de la reserva
-        return this.reservationService.getById(reservationId).pipe(
-          switchMap((reservation) => {
+        return forkJoin({
+          reservation: this.reservationService.getById(reservationId),
+          summary: this.reservationService.getSummary(reservationId).pipe(catchError(() => of(null)))
+        }).pipe(
+          switchMap(({ reservation, summary }) => {
             const reservationData = reservation as any;
             const tourData = reservationData.tour || {};
             const departureId = reservationData.departureId;
@@ -1335,7 +1343,10 @@ export class AnalyticsService {
                   }
                 }
                 
-                const tourDataForEcommerce: TourDataForEcommerce = {
+                          const summaryActivities = this.extractActivitiesFromSummary(summary);
+                          const summaryInsurance = this.extractInsuranceFromSummary(summary, reservationData, storedInsurance);
+
+                          const tourDataForEcommerce: TourDataForEcommerce = {
                   id: tourData.id,
                   tkId: tourData.tkId ?? undefined,
                   name: reservationData.tourName || tourData.name || undefined,
@@ -1349,10 +1360,10 @@ export class AnalyticsService {
                   monthTags: tourData.monthTags || undefined,
                   tourType: tourData.tourType || undefined,
                   flightCity: flightCity,
-                  activitiesText: reservationData.activities && reservationData.activities.length > 0
-                    ? reservationData.activities.map((a: any) => a.description || a.name).join(', ')
-                    : '',
-                  selectedInsurance: reservationData.insurance?.name || '',
+                            activitiesText: summaryActivities || (reservationData.activities && reservationData.activities.length > 0
+                              ? reservationData.activities.map((a: any) => a.description || a.name).join(', ')
+                              : ''),
+                            selectedInsurance: reservationData.insurance?.name || summaryInsurance || storedInsurance || '',
                   childrenCount: '0',
                   totalPassengers: reservation.totalPassengers || undefined,
                   departureDate: departure?.departureDate || reservationData.departureDate || '',
@@ -1584,6 +1595,16 @@ export class AnalyticsService {
         const departureId = reservationData.departureId || undefined;
 
         if (!itineraryId) {
+          if (reservationData.activities && Array.isArray(reservationData.activities)) {
+            const activityNames = reservationData.activities
+              .map((activity: any) => activity?.description || activity?.name)
+              .filter((name: string | undefined) => !!name && name.trim().length > 0);
+
+            if (activityNames.length > 0) {
+              return of(activityNames.join(', '));
+            }
+          }
+
           return of('');
         }
 
@@ -1626,6 +1647,16 @@ export class AnalyticsService {
                 });
 
                 if (activityIds.size === 0 && packIds.size === 0) {
+                  if (reservationData.activities && Array.isArray(reservationData.activities)) {
+                    const activityNames = reservationData.activities
+                      .map((activity: any) => activity?.description || activity?.name)
+                      .filter((name: string | undefined) => !!name && name.trim().length > 0);
+
+                    if (activityNames.length > 0) {
+                      return of(activityNames.join(', '));
+                    }
+                  }
+
                   return of('');
                 }
 
@@ -1704,6 +1735,63 @@ export class AnalyticsService {
         };
       }),
       catchError(() => of({ adults: '0', children: '0' }))
+    );
+  }
+
+  private extractActivitiesFromSummary(summary: IReservationSummaryResponse | null): string {
+    if (!summary || !summary.items || summary.items.length === 0) {
+      return '';
+    }
+
+    const activityDescriptions = summary.items
+      .filter((item) => this.isActivitySummaryItem(item))
+      .map((item) => item.description?.trim())
+      .filter((description): description is string => !!description && description.length > 0);
+
+    return activityDescriptions.join(', ');
+  }
+
+  private extractInsuranceFromSummary(
+    summary: IReservationSummaryResponse | null,
+    reservationData?: any,
+    storedInsurance?: string
+  ): string {
+    if (!summary || !summary.items || summary.items.length === 0) {
+      return reservationData?.insurance?.name || storedInsurance || '';
+    }
+
+    const insuranceDescriptions = summary.items
+      .filter((item) => this.isInsuranceSummaryItem(item))
+      .map((item) => item.description?.trim())
+      .filter((description): description is string => !!description && description.length > 0);
+
+    if (insuranceDescriptions.length > 0) {
+      return insuranceDescriptions.join(', ');
+    }
+
+    return reservationData?.insurance?.name || storedInsurance || '';
+  }
+
+  private isActivitySummaryItem(item: ReservationSummaryItem): boolean {
+    const type = item.itemType?.toLowerCase() || '';
+    const description = item.description?.toLowerCase() || '';
+
+    return (
+      type.includes('activity') ||
+      type.includes('actividad') ||
+      description.includes('actividad') ||
+      description.includes('excursión')
+    );
+  }
+
+  private isInsuranceSummaryItem(item: ReservationSummaryItem): boolean {
+    const type = item.itemType?.toLowerCase() || '';
+    const description = item.description?.toLowerCase() || '';
+
+    return (
+      type.includes('insurance') ||
+      type.includes('seguro') ||
+      description.includes('seguro')
     );
   }
 

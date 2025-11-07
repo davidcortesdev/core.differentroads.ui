@@ -2971,10 +2971,18 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    */
   private getInsuranceName(): string {
     // Usar el seguro del componente hijo si está disponible, o el del componente padre
-    return this.insuranceSelector?.selectedInsurance?.name || 
+    const insuranceName = this.insuranceSelector?.selectedInsurance?.name || 
            this.selectedInsurance?.name || 
            this.reservationData?.insurance?.name || 
            '';
+
+    if (insuranceName && insuranceName.length > 0) {
+      sessionStorage.setItem('checkout_selectedInsurance', insuranceName);
+    } else {
+      sessionStorage.removeItem('checkout_selectedInsurance');
+    }
+
+    return insuranceName;
   }
 
   /**

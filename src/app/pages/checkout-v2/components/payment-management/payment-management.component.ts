@@ -565,7 +565,6 @@ export class PaymentManagementComponent
     }
 
     const script = document.createElement('script');
-    script.type = 'module';
     script.src = 'https://cdn.scalapay.com/widget/scalapay-widget-loader.js?version=V5';
     
     script.onload = () => {

@@ -3,7 +3,13 @@
     <!-- Desktop: estructura original -->
     <!-- Móvil/Tablet: Primera fila con icono alineado a la izquierda y texto centrado -->
     <div class="booking-info-row">
-      <button pButton icon="pi pi-arrow-left" class="p-button-text p-button-rounded back-button" (click)="goBack()"></button>
+      <button 
+        *ngIf="!isStandaloneMode"
+        pButton 
+        icon="pi pi-arrow-left" 
+        class="p-button-text p-button-rounded back-button" 
+        (click)="goBack()">
+      </button>
       
       <div class="booking-code">
         <span class="booking-number">

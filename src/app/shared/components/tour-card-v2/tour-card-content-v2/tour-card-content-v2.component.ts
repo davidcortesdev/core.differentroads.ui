@@ -7,6 +7,7 @@ import {
   OnInit,
 } from '@angular/core';
 import { TourDataV2 } from '../tour-card-v2.model';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-tour-card-content-v2',
@@ -20,6 +21,17 @@ export class TourCardContentV2Component implements OnInit {
   @Input() showScalapayPrice = false;
   @Input() isLargeCard = false;
   @Output() tourClick = new EventEmitter<void>();
+
+  // Exponer environment para el template
+  readonly environment = environment;
+
+  // Generar ID único para el widget de Scalapay
+  readonly widgetId = `scalapay-amount-${Math.random().toString(36).substr(2, 9)}`;
+
+  // Getter para el selector del widget
+  get amountSelector(): string {
+    return `["#${this.widgetId}"]`;
+  }
 
   filteredTripTypes: string[] = [];
 

@@ -28,19 +28,18 @@
     <ng-container *ngIf="showScalapayPrice">
       <div class="priceScalapay">
         <div class="widget" #widgetContainer>
-          <span class="amount" id="amount" style="display: none;">{{ tourData.price }}</span>
+          <span class="amount" [id]="widgetId" style="display: none;">{{ tourData.price }}</span>
           
           <scalapay-widget
-          merchant-token="9MFV6DMBA" 
-          amount-selectors='["#amount"]' 
-          channel="travel"
-          type="product"
-          environment="integration"
-          locale="es"
-          currency-display="symbol"
-          hide-installments="true"
-          alignment="left"
-          >
+            [attr.merchant-token]="environment.scalapayMerchantToken"
+            [attr.amount-selectors]="amountSelector"
+            channel="travel"
+            type="product"
+            [attr.environment]="environment.scalapayEnvironment"
+            locale="es"
+            currency-display="symbol"
+            hide-installments="true"
+            alignment="left">
           </scalapay-widget>
         </div>
       </div>

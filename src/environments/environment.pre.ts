@@ -42,7 +42,9 @@ export const environment = {
   usersApiUrl: 'https://auth-pre.differentroads.es/api',
 
   // Scalapay
-  scalapayApiKey: 'qhtfs87hjnc12kkos',
+  scalapayApiKey: 'sp_44a434bb9da193abff2d0ecebb36c0595a884a26f60ce61bda5a55bec16073cb',
+  scalapayEnvironment: 'integration',
+  scalapayMerchantToken: '9MFV6DMBA',
 
   // Configuración general
   retaileriddefault: 7,

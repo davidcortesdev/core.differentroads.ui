@@ -420,23 +420,34 @@ export class BookingPersonalDataV2Component implements OnInit {
   }
 
   /**
-   * Formatea la fecha de nacimiento al formato dd/mm/yyyy
+   * Formatea la fecha al formato dd/mm/yyyy
    */
-  formatDate(date: string): string {
+  formatDate(date: string | Date): string {
     if (!date) return '';
 
+    // Si ya es un Date object, convertir a dd/mm/yyyy
+    if (date instanceof Date) {
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    }
+
+    // Si es string
+    const dateStr = date as string;
+    
     // Si la fecha ya está en formato dd/mm/yyyy
-    if (date.includes('/')) {
-      return date;
+    if (dateStr.includes('/')) {
+      return dateStr;
     }
 
     // Si la fecha está en formato yyyy-mm-dd
-    if (date.includes('-')) {
-      const parts = date.split('-');
+    if (dateStr.includes('-')) {
+      const parts = dateStr.split('-');
       return `${parts[2]}/${parts[1]}/${parts[0]}`;
     }
 
-    return date;
+    return dateStr;
   }
 
   /**
@@ -479,7 +490,6 @@ export class BookingPersonalDataV2Component implements OnInit {
         .getByReservationTraveler(travelerId)
         .toPromise() || [];
 
-
       // Crear un mapa de campos existentes
       const existingFieldsMap = new Map<number, IReservationTravelerFieldResponse>();
       existingFields.forEach(field => {
@@ -498,28 +508,35 @@ export class BookingPersonalDataV2Component implements OnInit {
         if (field && value) {
           const existingField = existingFieldsMap.get(field.id);
           
+          // ⭐ IMPORTANTE: Formatear el valor antes de guardar
+          let formattedValue = value;
+          
+          // Si es una fecha, convertir al formato dd/mm/yyyy
+          if (this.isDateField(fieldCode) && value) {
+            formattedValue = this.formatDate(value);
+          }
+          
           if (existingField) {
             // Actualizar campo existente
             const updateData: ReservationTravelerFieldUpdate = {
               id: existingField.id,
               reservationTravelerId: travelerId,
               reservationFieldId: field.id,
-              value: value.toString()
+              value: formattedValue.toString()
             };
             fieldUpdates.push(updateData);
           } else {
             // Crear nuevo campo
             const createData: ReservationTravelerFieldCreate = {
-              id: 0, // Se asignará automáticamente
+              id: 0,
               reservationTravelerId: travelerId,
               reservationFieldId: field.id,
-              value: value.toString()
+              value: formattedValue.toString()
             };
             fieldCreates.push(createData);
           }
         }
       }
-
 
       // Ejecutar actualizaciones
       const updatePromises = fieldUpdates.map(update => 
@@ -532,10 +549,30 @@ export class BookingPersonalDataV2Component implements OnInit {
 
       await Promise.all([...updatePromises, ...createPromises]);
 
-
     } catch (error) {
       throw error;
     }
+  }
+
+  /**
+   * Verifica si un campo es de tipo fecha
+   */
+  private isDateField(fieldCode: string): boolean {
+    const dateFields = [
+      'birthdate',
+      'fecha_nacimiento',
+      'birth_date',
+      'minorIdIssueDate',
+      'minor_id_issue_date',
+      'minorIdExpirationDate',
+      'minor_id_expiration_date',
+      'documentExpeditionDate',
+      'document_expedition_date',
+      'documentExpirationDate',
+      'document_expiration_date'
+    ];
+    
+    return dateFields.includes(fieldCode.toLowerCase());
   }
 
   /**
@@ -548,7 +585,7 @@ export class BookingPersonalDataV2Component implements OnInit {
       'surname': passenger.surname,
       'email': passenger.email,
       'phone': passenger.phone,
-      'sex': passenger.gender, // ✅ El código del campo es 'sex' en BD (no 'gender')
+      'sex': passenger.gender,
       'birthdate': passenger.birthDate,
       'document_type': passenger.documentType,
       'passport': passenger.passportID,

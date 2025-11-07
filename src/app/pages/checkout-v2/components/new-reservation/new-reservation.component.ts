@@ -27,6 +27,7 @@ import { PointsV2Service } from '../../../../core/services/v2/points-v2.service'
 import { Title } from '@angular/platform-browser';
 import { switchMap, map, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { RetailerService } from '../../../../core/services/retailer/retailer.service';
 
 // Interfaz para información bancaria
 interface BankInfo {
@@ -64,7 +65,7 @@ export class NewReservationComponent implements OnInit {
   paymentType: 'Transfer' | 'Scalapay' | 'RedSys' | null = null;
   paymentMethod: string = '';
   paymentStatus: string = '';
-  
+
   // Bandera para evitar disparar purchase múltiples veces
   private purchaseEventFired: boolean = false;
 
@@ -92,6 +93,17 @@ export class NewReservationComponent implements OnInit {
     },
   ];
 
+  // Información bancaria para retailers diferentes a DIFFERENT_ROADS
+  bankInfoForOtherRetailers: BankInfo = {
+    name: 'CaixaBank, S.A.',
+    account: 'ES51 2100 1463 1002 0020 8515',
+    beneficiary: 'Different Roads S.L',
+    concept: '',
+  };
+
+  // Código del retailer de la reserva
+  retailerCode: string = '';
+
   // Estados de reserva de vuelos
   hasAmadeusFlight: boolean = false;
   flightBookingLoading: boolean = false;
@@ -105,8 +117,12 @@ export class NewReservationComponent implements OnInit {
   hasPaymentId: boolean = false;
 
   // Array para almacenar múltiples justificantes
-  uploadedVouchers: Array<{ url: string; uploadDate: Date; fileName?: string }> = [];
-  
+  uploadedVouchers: Array<{
+    url: string;
+    uploadDate: Date;
+    fileName?: string;
+  }> = [];
+
   // Archivo pendiente de confirmar
   pendingFileToConfirm: File | null = null;
 
@@ -127,7 +143,9 @@ export class NewReservationComponent implements OnInit {
     private analyticsService: AnalyticsService,
     private authService: AuthenticateService,
     // SERVICIO PARA PUNTOS
-    private pointsService: PointsV2Service
+    private pointsService: PointsV2Service,
+    // SERVICIO PARA RETAILER
+    private retailerService: RetailerService
   ) {
     // Calcular la fecha del día siguiente
     const tomorrow = new Date();
@@ -214,6 +232,9 @@ export class NewReservationComponent implements OnInit {
       next: (reservation) => {
         this.reservation = reservation;
 
+        // Cargar información del retailer para determinar qué cuenta bancaria mostrar
+        this.loadRetailerInfo(reservation.retailerId);
+
         // Actualizar conceptos bancarios con ID de reserva
         this.updateBankConcepts();
 
@@ -238,10 +259,29 @@ export class NewReservationComponent implements OnInit {
   }
 
   /**
+   * Carga la información del retailer para determinar qué cuenta bancaria mostrar
+   */
+  private loadRetailerInfo(retailerId: number): void {
+    this.retailerService.getRetailerById(retailerId).subscribe({
+      next: (retailer) => {
+        this.retailerCode = retailer.code || '';
+
+        // Si el retailer es diferente a DIFFERENT_ROADS, actualizar conceptos con la cuenta específica
+        if (this.retailerCode !== 'DIFFERENT_ROADS') {
+          this.updateBankConceptsForOtherRetailers();
+        }
+      },
+      error: (error) => {
+        console.error('Error loading retailer info:', error);
+        // En caso de error, mantener el comportamiento por defecto
+      },
+    });
+  }
+
+  /**
    * Carga el nombre del lead traveler para el saludo
    */
   private loadLeadTravelerName(): void {
-
     this.reservationTravelerService
       .getByReservation(this.reservationId)
       .subscribe({
@@ -268,7 +308,6 @@ export class NewReservationComponent implements OnInit {
       .getByReservationTraveler(leadTravelerId)
       .subscribe({
         next: (fields) => {
-
           let firstName = '';
           let lastName = '';
 
@@ -301,6 +340,11 @@ export class NewReservationComponent implements OnInit {
     this.bankInfo.forEach((bank) => {
       bank.concept = concept;
     });
+
+    // Si es retailer diferente a DIFFERENT_ROADS, actualizar también esa cuenta
+    if (this.retailerCode !== 'DIFFERENT_ROADS') {
+      this.bankInfoForOtherRetailers.concept = `${this.reservation?.id}`;
+    }
   }
 
   /**
@@ -313,6 +357,19 @@ export class NewReservationComponent implements OnInit {
     this.bankInfo.forEach((bank) => {
       bank.concept = concept;
     });
+
+    // Si es retailer diferente a DIFFERENT_ROADS, solo usar el ID (sin nombre)
+    if (this.retailerCode !== 'DIFFERENT_ROADS') {
+      this.bankInfoForOtherRetailers.concept = `${this.reservation?.id || ''}`;
+    }
+  }
+
+  /**
+   * Actualiza los conceptos bancarios para retailers diferentes a DIFFERENT_ROADS
+   * Solo incluye el ID de reserva, sin el nombre del viajero
+   */
+  private updateBankConceptsForOtherRetailers(): void {
+    this.bankInfoForOtherRetailers.concept = `${this.reservation?.id || ''}`;
   }
 
   /**
@@ -412,7 +469,6 @@ export class NewReservationComponent implements OnInit {
       this.checkAndBookAmadeusFlight();
       return;
     }
-
   }
 
   /**
@@ -498,11 +554,13 @@ export class NewReservationComponent implements OnInit {
   private loadExistingVouchers(payment: IPaymentResponse): void {
     // Si hay attachmentUrl, añadirlo como primer justificante
     if (payment.attachmentUrl) {
-      this.uploadedVouchers = [{
-        url: payment.attachmentUrl,
-        uploadDate: new Date(),
-        fileName: 'Justificante de transferencia'
-      }];
+      this.uploadedVouchers = [
+        {
+          url: payment.attachmentUrl,
+          uploadDate: new Date(),
+          fileName: 'Justificante de transferencia',
+        },
+      ];
     } else {
       this.uploadedVouchers = [];
     }
@@ -516,7 +574,7 @@ export class NewReservationComponent implements OnInit {
         if (Array.isArray(parsed) && parsed.length > 0) {
           this.uploadedVouchers = parsed.map((v: any) => ({
             ...v,
-            uploadDate: new Date(v.uploadDate)
+            uploadDate: new Date(v.uploadDate),
           }));
         }
       } catch (e) {
@@ -557,11 +615,16 @@ export class NewReservationComponent implements OnInit {
       const newVoucher = {
         url: response.secure_url,
         uploadDate: new Date(),
-        fileName: response.original_filename || response.public_id || `Justificante ${this.uploadedVouchers.length + 1}.pdf`
+        fileName:
+          response.original_filename ||
+          response.public_id ||
+          `Justificante ${this.uploadedVouchers.length + 1}.pdf`,
       };
-      
+
       // Si no existe ya, añadirlo
-      const exists = this.uploadedVouchers.some(v => v.url === response.secure_url);
+      const exists = this.uploadedVouchers.some(
+        (v) => v.url === response.secure_url
+      );
       if (!exists) {
         this.uploadedVouchers.push(newVoucher);
         this.saveVouchersToStorage();
@@ -581,7 +644,9 @@ export class NewReservationComponent implements OnInit {
         },
         error: (error) => {
           // Revertir si falla
-          const index = this.uploadedVouchers.findIndex(v => v.url === response.secure_url);
+          const index = this.uploadedVouchers.findIndex(
+            (v) => v.url === response.secure_url
+          );
           if (index > -1) {
             this.uploadedVouchers.splice(index, 1);
             this.saveVouchersToStorage();
@@ -613,7 +678,10 @@ export class NewReservationComponent implements OnInit {
    * Visualiza el justificante subido
    */
   viewVoucher(voucherUrl?: string): void {
-    const urlToOpen = voucherUrl || this.payment?.attachmentUrl || this.uploadedVouchers[0]?.url;
+    const urlToOpen =
+      voucherUrl ||
+      this.payment?.attachmentUrl ||
+      this.uploadedVouchers[0]?.url;
     if (urlToOpen) {
       window.open(urlToOpen, '_blank');
     }
@@ -730,7 +798,7 @@ export class NewReservationComponent implements OnInit {
         totalValue: totalValue,
         tax: 0.6,
         shipping: 0.0,
-        coupon: reservationData.coupon?.code || ''
+        coupon: reservationData.coupon?.code || '',
       }
     );
   }
@@ -749,15 +817,15 @@ export class NewReservationComponent implements OnInit {
     return undefined;
   }
 
-
   /**
    * Genera puntos después del pago exitoso (3% del PVP) y cambia el estado de la reserva a BOOKED
    */
   private async generatePointsAfterPayment(): Promise<void> {
     try {
-      
       if (!this.reservation?.id || !this.reservation?.totalAmount) {
-        console.warn('No se puede generar puntos: falta reservationId o totalAmount');
+        console.warn(
+          'No se puede generar puntos: falta reservationId o totalAmount'
+        );
         return;
       }
 
@@ -793,8 +861,10 @@ export class NewReservationComponent implements OnInit {
 
       await this.pointsService.createLoyaltyTransaction(transaction);
       */
-      
-      console.log('⚠️ Acumulación de puntos temporalmente deshabilitada - pendiente de actualizar a nuevo esquema');
+
+      console.log(
+        '⚠️ Acumulación de puntos temporalmente deshabilitada - pendiente de actualizar a nuevo esquema'
+      );
 
       // 5. Mostrar mensaje al usuario
       this.messageService.add({
@@ -803,7 +873,6 @@ export class NewReservationComponent implements OnInit {
         detail: `Se han generado ${pointsToGenerate} puntos por tu compra`,
         life: 5000,
       });
-
     } catch (error) {
       console.error('Error generando puntos:', error);
       // No mostrar error al usuario para no interrumpir el flujo de pago
@@ -821,10 +890,13 @@ export class NewReservationComponent implements OnInit {
       }
 
       // Cambiar estado a BOOKED (5)
-      await this.reservationService.updateStatus(this.reservation.id, 5).toPromise();
-      
-      console.log(`Reserva ${this.reservation.id} actualizada a estado BOOKED (5)`);
-      
+      await this.reservationService
+        .updateStatus(this.reservation.id, 5)
+        .toPromise();
+
+      console.log(
+        `Reserva ${this.reservation.id} actualizada a estado BOOKED (5)`
+      );
     } catch (error) {
       console.error('Error actualizando estado de reserva a BOOKED:', error);
       // No lanzar error para no interrumpir el flujo de pago

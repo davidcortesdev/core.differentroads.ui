@@ -95,6 +95,10 @@ export class PassengerCardV2Component implements OnInit, OnChanges, OnDestroy {
       .subscribe({
         next: (prefixes) => {
           this.phonePrefixOptions = prefixes;
+          // Si ya hay un prefijo en el pasajero, establecerlo después de cargar las opciones
+          if (this.passenger?.prefijo) {
+            this.selectedPhonePrefix = this.passenger.prefijo;
+          }
         },
         error: (error) => {
           console.error('Error loading phone prefixes:', error);
@@ -164,6 +168,8 @@ export class PassengerCardV2Component implements OnInit, OnChanges, OnDestroy {
     // Establecer el prefijo seleccionado si existe
     if (this.passenger?.prefijo) {
       this.selectedPhonePrefix = this.passenger.prefijo;
+    } else {
+      this.selectedPhonePrefix = null;
     }
   }
 
@@ -211,6 +217,8 @@ export class PassengerCardV2Component implements OnInit, OnChanges, OnDestroy {
     // Establecer el prefijo seleccionado
     if (this.passenger?.prefijo) {
       this.selectedPhonePrefix = this.passenger.prefijo;
+    } else {
+      this.selectedPhonePrefix = null;
     }
   }
 

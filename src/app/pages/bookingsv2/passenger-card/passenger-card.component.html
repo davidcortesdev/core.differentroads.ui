@@ -111,8 +111,10 @@
           <label>Teléfono:</label>
           <div class="phone-row">
             <p-select
+              *ngIf="phonePrefixOptions.length > 0"
               [(ngModel)]="selectedPhonePrefix"
               name="prefijo"
+              [ngModelOptions]="{standalone: true}"
               [options]="phonePrefixOptions"
               optionLabel="name"
               optionValue="prefix"

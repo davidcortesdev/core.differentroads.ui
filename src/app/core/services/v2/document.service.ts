@@ -224,51 +224,26 @@ export class DocumentServicev2 {
 
   /**
    * Descarga un documento por código (método unificado)
+   * Llama directamente al endpoint que devuelve el documento
    * @param reservationId ID de la reserva
    * @param documentCode Código del documento
-   * @returns Observable con el blob y el nombre del archivo original
+   * @returns Observable con el blob y el nombre del archivo
    */
   downloadDocumentByCode(
     reservationId: number,
     documentCode: string
   ): Observable<DocumentDownloadResult> {
-    // Para todos los códigos, obtener primero la información del documento para tener el fileName original
-    return new Observable((observer) => {
-      this.getDocumentInfoByCode(reservationId, documentCode).subscribe({
-        next: (documentInfo) => {
-          if (!documentInfo?.filePath) {
-            observer.error(
-              new Error('No se pudo obtener la información del documento')
-            );
-            return;
-          }
+    const url = `${this.baseUrl}/DocumentProcess/GetDocument/Reservation/${reservationId}/DocumentType/${documentCode}/document`;
 
-          // Descargar el archivo usando la ruta
-          const fileUrl = `${this.baseUrl}/File/Get`;
-          const headers = new HttpHeaders({
-            accept: 'application/octet-stream',
-          });
-          const params = new URLSearchParams();
-          params.set('filepath', documentInfo.filePath);
-
-          this.http
-            .get(`${fileUrl}?${params.toString()}`, {
-              headers,
-              responseType: 'blob',
-            })
-            .subscribe({
-              next: (blob) => {
-                observer.next({
-                  blob: blob,
-                  fileName:
-                    documentInfo.fileName || `documento_${reservationId}.pdf`,
-                });
-              },
-              error: (error) => observer.error(error),
-            });
-        },
-        error: (error) => observer.error(error),
-      });
+    const headers = new HttpHeaders({
+      accept: 'application/octet-stream',
     });
+
+    return this.http.get(url, { headers, responseType: 'blob' }).pipe(
+      map((blob) => ({
+        blob: blob,
+        fileName: `${documentCode}_${reservationId}.pdf`,
+      }))
+    );
   }
 }

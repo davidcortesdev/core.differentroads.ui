@@ -47,7 +47,6 @@ export class BookingDocumentActionsV2Component implements OnInit {
       test: 'Enviar recordatorio de pago',
       icon: 'pi pi-calendar',
       emailCode: 'PAYMENT_REMINDER',
-      documentCode: 'PAYMENT_REMINDER',
       visible: true,
     },
     {

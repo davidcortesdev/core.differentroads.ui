@@ -29,7 +29,10 @@
     </app-booking-code-section-v2>
 
     <!-- Documents booking section -->
-    <app-booking-document-actions-v2 [isVisible]="true" [bookingId]="bookingId">
+    <app-booking-document-actions-v2
+      [isVisible]="isATC"
+      [bookingId]="bookingId"
+    >
     </app-booking-document-actions-v2>
 
     <!-- Componente de vista de detalles -->

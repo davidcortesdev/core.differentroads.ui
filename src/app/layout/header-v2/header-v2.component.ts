@@ -303,16 +303,38 @@ export class HeaderV2Component implements OnInit, OnDestroy {
   private loadCountriesForContinent(continentId: number, menuItemId: number): void {
     this.tourLocationService
       .getCountriesWithToursByContinent(continentId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (countries: CountryWithToursResponse[]) => {
+      .pipe(
+        takeUntil(this.destroy$),
+        switchMap((countries: CountryWithToursResponse[]) => {
           const countryIds = countries.map(
             (country) => (country as any).countryId
           );
-          this.loadCountryNames(countryIds, menuItemId);
+          
+          if (countryIds.length === 0) {
+            return of([]);
+          }
+          
+          // Cargar todos los países en paralelo usando forkJoin
+          const locationRequests = countryIds.map(countryId => 
+            this.locationNetService.getLocationById(countryId).pipe(
+              takeUntil(this.destroy$)
+            )
+          );
+          return forkJoin(locationRequests);
+        })
+      )
+      .subscribe({
+        next: (locations: Location[]) => {
+          // Almacenar todos los países cargados para este menuItemId
+          this.countriesByMenuItem[menuItemId] = locations;
+          this.updateMenusWithCountries();
         },
-        error: (error: any) => {
-          // Error handling
+        error: (error: unknown) => {
+          console.error(`Error al cargar países para continente ${continentId}:`, error);
+          // Inicializar como array vacío para evitar que se intente cargar múltiples veces
+          if (!this.countriesByMenuItem[menuItemId]) {
+            this.countriesByMenuItem[menuItemId] = [];
+          }
         },
       });
   }
@@ -346,38 +368,16 @@ export class HeaderV2Component implements OnInit, OnDestroy {
           this.tagsByMenuItem[menuItemId] = tags;
           this.updateMenusWithTags();
         },
-        error: (error: any) => {
-          console.error('Error al cargar tags para categoría:', error);
+        error: (error: unknown) => {
+          console.error(`Error al cargar tags para categoría ${categoryId}:`, error);
+          // Inicializar como array vacío para evitar que se intente cargar múltiples veces
+          if (!this.tagsByMenuItem[menuItemId]) {
+            this.tagsByMenuItem[menuItemId] = [];
+          }
         },
       });
   }
 
-  /**
-   * Carga los nombres de países por sus IDs y los agrupa por menuItemId
-   */
-  private loadCountryNames(countryIds: number[], menuItemId: number): void {
-    if (countryIds.length === 0) {
-      return;
-    }
-
-    countryIds.forEach((countryId, index) => {
-      this.locationNetService.getLocationById(countryId).subscribe({
-        next: (location) => {
-          if (!this.countriesByMenuItem[menuItemId]) {
-            this.countriesByMenuItem[menuItemId] = [];
-          }
-          this.countriesByMenuItem[menuItemId].push(location);
-
-          if (index === countryIds.length - 1) {
-            this.updateMenusWithCountries();
-          }
-        },
-        error: (error) => {
-          // Error handling
-        },
-      });
-    });
-  }
 
   /**
    * Actualiza los menús con la información de países cargada
@@ -404,8 +404,8 @@ export class HeaderV2Component implements OnInit, OnDestroy {
             const menuTipoSlug = menuItem.menuTipoSlug || '';
             const menuItemSlug = menuItem.menuItemSlug || '';
 
-            // Ordenar países alfabéticamente por nombre
-            const sortedCountries = countries.sort((a, b) => 
+            // Crear una copia y ordenar países alfabéticamente por nombre (evitar mutación)
+            const sortedCountries = [...countries].sort((a, b) => 
               a.name.localeCompare(b.name, 'es', { sensitivity: 'base' })
             );
 
@@ -461,8 +461,8 @@ export class HeaderV2Component implements OnInit, OnDestroy {
             const menuTipoSlug = menuItem.menuTipoSlug || '';
             const menuItemSlug = menuItem.menuItemSlug || '';
 
-            // Ordenar tags: meses cronológicamente, otros alfabéticamente
-            const sortedTags = tags.sort((a, b) => {
+            // Crear una copia y ordenar tags: meses cronológicamente, otros alfabéticamente (evitar mutación)
+            const sortedTags = [...tags].sort((a, b) => {
               const monthOrderA = this.getMonthOrder(a.name);
               const monthOrderB = this.getMonthOrder(b.name);
               

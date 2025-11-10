@@ -130,6 +130,12 @@ export class TourHeaderV2Component
   };
   @Input() preview: boolean = false;
   @Input() selectedActivityPackId: number | null = null;
+  @Input() tourTripTypes?: {
+    name: string;
+    code: string;
+    color: string;
+    abbreviation: string;
+  }[];
   // Tour data
   tour: Partial<Tour> = {};
 

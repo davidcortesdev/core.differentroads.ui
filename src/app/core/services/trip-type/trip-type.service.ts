@@ -29,6 +29,7 @@ export interface ITripTypeResponse {
   isActive: boolean;
   color: string;
   id: number;
+  abbreviation: string;
 }
 
 /**

@@ -43,7 +43,7 @@ import {
   ItineraryDayService,
   IItineraryDayResponse,
 } from '../../../../core/services/itinerary/itinerary-day/itinerary-day.service';
-
+import { TripTypeService, ITripTypeResponse } from '../../../../core/services/trip-type/trip-type.service';
 // Importar traducciones de PrimeNG directamente
 import { es } from 'primelocale/es.json';
 
@@ -127,6 +127,7 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
   selectedMonthOption: string[] = [];
   
   private destroy$ = new Subject<void>();
+  private tripTypesLoaded = false;
   
   // ✅ DEBUG: Flag para controlar logs de debug (cambiar a false en producción)
   private readonly DEBUG_MODE = false;
@@ -145,12 +146,19 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
     private readonly itineraryDayService: ItineraryDayService,
     private readonly analyticsService: AnalyticsService,
     private readonly tourLocationService: TourLocationService,
-    private readonly locationService: LocationNetService
+    private readonly locationService: LocationNetService,
+    private readonly tripTypeService: TripTypeService
   ) {}
 
   ngOnInit(): void {
     this.initializeMonthOptions();
-    this.loadTours();
+    // Cargar TripTypes solo si no se han cargado antes
+    this.loadTripTypes().pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      this.tripTypesLoaded = true; // ✅ Marcar como cargados
+      this.loadTours();
+    });
   }
 
   /**
@@ -173,6 +181,8 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
     const monthNamesShort = es.monthNamesShort;
     return monthNamesShort[monthIndex]?.toUpperCase() || '';
   }
+
+  private tripTypesMap: Map<number, ITripTypeResponse> = new Map();
 
   ngOnChanges(changes: SimpleChanges): void {
     // Si cambian los IDs de tours, recargar
@@ -252,7 +262,30 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
       monthOption: this.selectedMonthOption,
     });
   }
-
+  private loadTripTypes(): Observable<void> {
+    return this.tripTypeService.getActiveTripTypes().pipe(
+      map((tripTypes: ITripTypeResponse[]) => {
+        this.tripTypesMap.clear();
+        tripTypes.forEach(tripType => {
+          // Crear abreviación (primera letra del nombre)
+          const abbreviation = tripType.name.charAt(0).toUpperCase();
+          
+          this.tripTypesMap.set(tripType.id, {
+            ...tripType,
+            abbreviation: abbreviation
+          });
+        });
+        
+        if (this.DEBUG_MODE) {
+          console.log('✅ TripTypes cargados:', this.tripTypesMap);
+        }
+      }),
+      catchError((error) => {
+        console.error('❌ Error loading trip types:', error);
+        return of(undefined);
+      })
+    );
+  }
   /**
    * Filtra tours por rango de precio
    */
@@ -379,6 +412,17 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
     if (!this.tourIds || this.tourIds.length === 0) {
       this.tours = [];
       this.allTours = [];
+      return;
+    }
+    
+    if (!this.tripTypesLoaded) {
+      if (this.DEBUG_MODE) {
+        console.log('⏳ Esperando a que se carguen los TripTypes...');
+      }
+      // Reintentar después de un breve delay
+      setTimeout(() => {
+        this.loadTours();
+      }, 100);
       return;
     }
 
@@ -707,6 +751,7 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
     const cmsArray = combinedData.cmsData;
     const cms = cmsArray && cmsArray.length > 0 ? cmsArray[0] : null;
     const additional = combinedData.additionalData;
+    const tripTypes: { name: string; code: string; color: string; abbreviation: string }[] = [];
 
     // ✅ DEBUG: Log de datos del tour
     if (this.DEBUG_MODE) {
@@ -754,6 +799,22 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
       if (futureDepartures.length > 0) {
         nextDepartureDate = futureDepartures[0].departureDate!;
       }
+    }
+
+    if (additional.departures && additional.departures.length > 0) {
+      additional.departures.forEach((departure: IDepartureResponse) => {
+        if (departure.tripTypeId) {
+          const tripTypeInfo = this.tripTypesMap.get(departure.tripTypeId);
+          if (tripTypeInfo && !tripTypes.some(t => t.code === tripTypeInfo.code)) {
+            tripTypes.push({
+              name: tripTypeInfo.name,
+              code: tripTypeInfo.code,
+              color: tripTypeInfo.color,
+              abbreviation: tripTypeInfo.abbreviation
+            });
+          }
+        }
+      });
     }
 
     // Obtener tag: Usar el primer tag disponible
@@ -809,6 +870,7 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
       continent: additional.continent || '',
       country: additional.country || '',
       productStyleId: tour.productStyleId, // ✅ Agregar productStyleId al objeto
+      tripTypes: tripTypes
     };
 
     return mappedTour;
@@ -831,19 +893,17 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
       // Determinar item_category5 (tipología de viaje)
       // Según especificación: "Grupos, Singles" o "Grupo, Singles" (singular cuando solo hay uno)
       let itemCategory5 = '';
-      if (tour.tripType && tour.tripType.length > 0) {
-        // Si tripType incluye "grupo" o "grupos", usar "Grupos"
-        // Si incluye "single" o "singles", usar "Singles"
-        const hasGrupo = tour.tripType.some(t => t.toLowerCase().includes('grupo'));
-        const hasSingle = tour.tripType.some(t => t.toLowerCase().includes('single'));
-        const parts: string[] = [];
-        if (hasGrupo) parts.push('Grupos');
-        if (hasSingle) parts.push('Singles');
-        itemCategory5 = parts.join(', ') || tour.tripType.join(', ');
-      } else {
-        // Fallback: usar isByDr si está disponible
-        itemCategory5 = tour.isByDr ? 'Grupos' : 'Privados';
-      }
+    if (tour.tripTypes && tour.tripTypes.length > 0) {
+      // Usar los nombres de los TripTypes
+      const tripTypeNames = tour.tripTypes.map(t => t.name);
+      itemCategory5 = tripTypeNames.join(', ');
+    } else if (tour.tripType && tour.tripType.length > 0) {
+      // Fallback al array tripType antiguo
+      itemCategory5 = tour.tripType.join(', ');
+    } else {
+      // Fallback final: usar isByDr si está disponible
+      itemCategory5 = tour.isByDr ? 'Grupos' : 'Privados';
+    }
 
       // Convertir meses a minúsculas según especificación (ejemplo: "mayo, junio, julio")
       const monthsString = tour.availableMonths?.join(', ').toLowerCase() || '';

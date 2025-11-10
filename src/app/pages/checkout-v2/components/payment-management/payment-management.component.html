@@ -161,15 +161,11 @@
               {{ totalPrice | currencyFormat }}
             </div>
             <scalapay-widget
-              merchant-token="{{"
-              environment.scalapayMerchantToken
-              }}
+              [attr.merchant-token]="scalapayMerchantToken"
               amount-selectors='["#price-container-main"]'
               channel="travel"
               type="checkout"
-              environment="{{"
-              environment.scalapayEnvironment
-              }}
+              [attr.environment]="scalapayEnvironment"
               locale="es"
               currency-display="symbol"
             >

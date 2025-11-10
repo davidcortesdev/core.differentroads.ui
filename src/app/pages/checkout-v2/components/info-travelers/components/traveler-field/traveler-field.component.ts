@@ -26,6 +26,8 @@ export class TravelerFieldComponent implements OnChanges {
 
   // Cache del control del prefijo para evitar evaluaciones repetidas
   private _prefixControl: AbstractControl | null = null;
+  private _lastTravelerForm: FormGroup | null = null;
+  private _lastTravelerId: number | null = null;
 
   constructor(private cdr: ChangeDetectorRef) {}
 
@@ -37,10 +39,16 @@ export class TravelerFieldComponent implements OnChanges {
   }
 
   private updatePrefixControlCache(): void {
-    if (this.fieldDetails?.code === 'phone' && this.travelerForm && this.travelerId) {
-      this._prefixControl = this.travelerForm.get(`phonePrefix_${this.travelerId}`) || null;
-    } else {
-      this._prefixControl = null;
+    // Solo actualizar el cache si el formulario o el travelerId han cambiado
+    if (this.travelerForm !== this._lastTravelerForm || this.travelerId !== this._lastTravelerId) {
+      this._lastTravelerForm = this.travelerForm;
+      this._lastTravelerId = this.travelerId;
+      
+      if (this.fieldDetails?.code === 'phone' && this.travelerForm && this.travelerId) {
+        this._prefixControl = this.travelerForm.get(`phonePrefix_${this.travelerId}`) || null;
+      } else {
+        this._prefixControl = null;
+      }
     }
   }
 
@@ -53,6 +61,10 @@ export class TravelerFieldComponent implements OnChanges {
   }
 
   get prefixControl() {
+    // Solo actualizar el cache si el formulario o el travelerId han cambiado
+    if (this.travelerForm !== this._lastTravelerForm || this.travelerId !== this._lastTravelerId) {
+      this.updatePrefixControlCache();
+    }
     return this._prefixControl;
   }
 
@@ -123,8 +135,15 @@ export class TravelerFieldComponent implements OnChanges {
     const digitsOnly = inputEl.value.replace(/\D/g, '').slice(0, 3);
     inputEl.value = digitsOnly;
     // Reflejar en el formulario si existe el control
+    // Actualizar el cache primero
+    this.updatePrefixControlCache();
     if (this._prefixControl) {
-      this._prefixControl.setValue(digitsOnly, { emitEvent: false });
+      // Marcar como dirty y touched para que se detecte el cambio y se guarde automáticamente
+      this._prefixControl.setValue(digitsOnly, { emitEvent: true });
+      this._prefixControl.markAsDirty();
+      this._prefixControl.markAsTouched();
+      // Forzar detección de cambios
+      this.cdr.markForCheck();
     }
   }
 

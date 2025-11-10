@@ -108,15 +108,23 @@
 
         <p-floatlabel variant="on">
           <div class="phone-row">
-            <input
-              pInputText
-              type="text"
-              class="prefix-input"
-              placeholder="+34"
-              inputmode="numeric"
-              maxlength="3"
-              (input)="onPrefixInput($event)"
-            />
+            <p-select
+              [(ngModel)]="selectedPhonePrefix"
+              name="phonePrefix"
+              [options]="phonePrefixOptions"
+              optionLabel="name"
+              optionValue="prefix"
+              placeholder="Seleccione prefijo"
+              [showClear]="true"
+              [filter]="true"
+              filterBy="name,prefix,code"
+              (onChange)="onPhonePrefixChange($event)"
+              [class.error]="hasFieldError('phonePrefix')"
+              styleClass="prefix-select">
+              <ng-template let-prefix pTemplate="item">
+                <div>{{ prefix.prefix }} - {{ prefix.name }}</div>
+              </ng-template>
+            </p-select>
             <input
               pInputText
               type="tel"

@@ -26,9 +26,25 @@
         Viaje creado por el equipo de Different Roads
       </span>
     </span>
+    
     <div class="tags-container">
+      <!-- Tag principal -->
       <span class="tag" *ngIf="tourData.tag">{{ tourData.tag }}</span>
+      
+      <!-- ✅ NUEVO: Botones de TripTypes -->
+      <span 
+  *ngFor="let tripType of tourData.tripTypes" 
+  class="tag expandable-tag trip-type-tag"
+  [style.background]="tripType.color">
+  <span class="short-text">
+    <span class="abbreviation-text">{{ tripType.abbreviation }}</span>
+  </span>
+  <span class="expanded-content">
+    <span class="full-text">{{ tripType.name }}</span>
+  </span>
+</span>
     </div>
+    
     <div class="title-overlay">
       <!-- ✅ LÍNEA SUPERIOR: Días de itinerario -->
       <div *ngIf="tourData.itineraryDaysText" class="itinerary-days-text">

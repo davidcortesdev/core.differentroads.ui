@@ -22,6 +22,12 @@ export interface TourDataV2 {
   country?: string;
   // ✅ NUEVO CAMPO: Para productStyleId
   productStyleId?: number | null;
+  tripTypes?: {
+    name: string;
+    code: string;
+    color: string;
+    abbreviation: string; // Primera letra del nombre
+  }[];
 }
 
 export enum TripTypeV2 {

@@ -293,7 +293,7 @@ export class DataMappingV2Service {
           case 'Teléfono':
             combinedData.telefono = fieldValue.value;
             break;
-          case 'phonePrefix':
+          case 'Prefijo telefónico':
             combinedData.phonePrefix = fieldValue.value;
             break;
           case 'Fecha de nacimiento':

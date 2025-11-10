@@ -308,6 +308,8 @@ export class BookingPersonalDataV2Component implements OnInit {
                 passengerData.documentExpirationDate = field.value;
               } else if (normalizedCode === 'comfortplan' || normalizedCode === 'comfort_plan') {
                 passengerData.comfortPlan = field.value;
+              } else if (normalizedCode === 'phoneprefix' || normalizedCode === 'phone_prefix' || normalizedCode === 'prefijo' || normalizedCode === 'prefix') {
+                passengerData.prefijo = field.value;
               } else {
                 // Mapeo por nombre si el código no coincide
                 if (normalizedName.includes('nombre') && !passengerData.name) {
@@ -598,7 +600,8 @@ export class BookingPersonalDataV2Component implements OnInit {
       'minorIdExpirationDate': passenger.minorIdExpirationDate,
       'documentExpeditionDate': passenger.documentExpeditionDate,
       'documentExpirationDate': passenger.documentExpirationDate,
-      'comfortPlan': passenger.comfortPlan
+      'comfortPlan': passenger.comfortPlan,
+      'phonePrefix': passenger.prefijo  // ✅ Código en BD: phonePrefix
     };
   }
 }

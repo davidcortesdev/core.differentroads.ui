@@ -1,5 +1,5 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
-import { FormGroup, ValidationErrors } from '@angular/forms';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, ChangeDetectorRef, OnChanges, SimpleChanges } from '@angular/core';
+import { FormGroup, ValidationErrors, AbstractControl } from '@angular/forms';
 import { IReservationFieldResponse } from '../../../../../../core/services/reservation/reservation-field.service';
 
 @Component({
@@ -9,7 +9,7 @@ import { IReservationFieldResponse } from '../../../../../../core/services/reser
   styleUrls: ['./traveler-field.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class TravelerFieldComponent {
+export class TravelerFieldComponent implements OnChanges {
   @Input() fieldDetails!: IReservationFieldResponse;
   @Input() travelerId!: number;
   @Input() travelerForm!: FormGroup;
@@ -24,7 +24,25 @@ export class TravelerFieldComponent {
   @Output() dateFieldChange = new EventEmitter<{ fieldCode: string; value: Date }>();
   @Output() dateFieldBlur = new EventEmitter<string>();
 
+  // Cache del control del prefijo para evitar evaluaciones repetidas
+  private _prefixControl: AbstractControl | null = null;
+
   constructor(private cdr: ChangeDetectorRef) {}
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // Actualizar el cache del control del prefijo cuando cambian los inputs relevantes
+    if (changes['travelerForm'] || changes['travelerId'] || changes['fieldDetails']) {
+      this.updatePrefixControlCache();
+    }
+  }
+
+  private updatePrefixControlCache(): void {
+    if (this.fieldDetails?.code === 'phone' && this.travelerForm && this.travelerId) {
+      this._prefixControl = this.travelerForm.get(`phonePrefix_${this.travelerId}`) || null;
+    } else {
+      this._prefixControl = null;
+    }
+  }
 
   get controlName(): string {
     return `${this.fieldDetails.code}_${this.travelerId}`;
@@ -32,6 +50,10 @@ export class TravelerFieldComponent {
 
   get control() {
     return this.travelerForm?.get(this.controlName) || null;
+  }
+
+  get prefixControl() {
+    return this._prefixControl;
   }
 
   get fieldValue(): string | Date | null {
@@ -101,9 +123,8 @@ export class TravelerFieldComponent {
     const digitsOnly = inputEl.value.replace(/\D/g, '').slice(0, 3);
     inputEl.value = digitsOnly;
     // Reflejar en el formulario si existe el control
-    const prefixCtrl = this.travelerForm?.get(`phonePrefix_${this.travelerId}`);
-    if (prefixCtrl) {
-      prefixCtrl.setValue(digitsOnly, { emitEvent: false });
+    if (this._prefixControl) {
+      this._prefixControl.setValue(digitsOnly, { emitEvent: false });
     }
   }
 

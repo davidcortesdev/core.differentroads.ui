@@ -1,5 +1,5 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
-import { FormGroup, ValidationErrors } from '@angular/forms';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, ChangeDetectorRef, OnChanges, SimpleChanges } from '@angular/core';
+import { FormGroup, ValidationErrors, AbstractControl } from '@angular/forms';
 import { IReservationFieldResponse } from '../../../../../../core/services/reservation/reservation-field.service';
 
 @Component({
@@ -9,7 +9,7 @@ import { IReservationFieldResponse } from '../../../../../../core/services/reser
   styleUrls: ['./traveler-field.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class TravelerFieldComponent {
+export class TravelerFieldComponent implements OnChanges {
   @Input() fieldDetails!: IReservationFieldResponse;
   @Input() travelerId!: number;
   @Input() travelerForm!: FormGroup;
@@ -26,12 +26,25 @@ export class TravelerFieldComponent {
 
   constructor(private cdr: ChangeDetectorRef) {}
 
+  ngOnChanges(changes: SimpleChanges): void {
+    // No necesitamos hacer nada aquí - el getter prefixControl obtendrá el control directamente
+  }
+
   get controlName(): string {
     return `${this.fieldDetails.code}_${this.travelerId}`;
   }
 
   get control() {
-    return this.travelerForm.get(this.controlName);
+    return this.travelerForm?.get(this.controlName) || null;
+  }
+
+  get prefixControl(): AbstractControl | null {
+    // Obtener el control directamente del formulario sin cache
+    // Esto evita problemas de sincronización cuando el formulario se recrea
+    if (this.fieldDetails?.code === 'phone' && this.travelerForm && this.travelerId) {
+      return this.travelerForm.get(`phonePrefix_${this.travelerId}`) || null;
+    }
+    return null;
   }
 
   get fieldValue(): string | Date | null {
@@ -94,12 +107,20 @@ export class TravelerFieldComponent {
     this.dateFieldBlur.emit(this.fieldDetails.code);
   }
 
-  // Input helper: limitar prefijo a 3 dígitos
+  // Input helper: limitar prefijo a 3 dígitos y sincronizar con FormControl
   onPrefixInput(event: Event): void {
     const inputEl = event.target as HTMLInputElement | null;
     if (!inputEl) return;
     const digitsOnly = inputEl.value.replace(/\D/g, '').slice(0, 3);
     inputEl.value = digitsOnly;
+    
+    // Obtener el control directamente del formulario
+    const control = this.prefixControl;
+    if (control) {
+      control.setValue(digitsOnly, { emitEvent: true });
+      control.markAsDirty();
+      control.markAsTouched();
+    }
   }
 
   getErrorMessage(errors: ValidationErrors | null): string {

@@ -2,7 +2,7 @@ import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, OnChanges, S
 import { PointsV2Service } from '../../core/services/v2/points-v2.service';
 import { ReservationService, IReservationSummaryResponse } from '../../core/services/reservation/reservation.service';
 import { MessageService } from 'primeng/api';
-import { Subject, EMPTY } from 'rxjs';
+import { Subject, EMPTY, timer } from 'rxjs';
 import { takeUntil, catchError } from 'rxjs/operators';
 
 export interface SummaryItem {
@@ -62,6 +62,10 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
   loading: boolean = false;
   error: boolean = false;
   reservationSummary: IReservationSummaryResponse | undefined;
+  private retryAttempts: number = 0;
+  private readonly MAX_RETRY_ATTEMPTS: number = 5;
+  private readonly RETRY_DELAY: number = 1000; // 1 segundo
+  private isRetrying: boolean = false;
 
   // NUEVO: Inyectar servicios necesarios
   constructor(
@@ -103,16 +107,44 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
 
     this.loading = true;
     this.error = false;
+    this.retryAttempts = 0;
+    this.isRetrying = false;
+
+    this.attemptLoadSummary();
+  }
+
+  // NUEVO: Intentar cargar el resumen con retry automático
+  private attemptLoadSummary(): void {
+    if (!this.reservationId) return;
 
     this.reservationService
       .getSummary(this.reservationId)
       .pipe(
         takeUntil(this.destroy$),
         catchError((err) => {
-          this.error = true;
-          this.loading = false;
-          console.error('Error fetching reservation summary:', err);
-          return EMPTY;
+          this.retryAttempts++;
+          
+          if (this.retryAttempts < this.MAX_RETRY_ATTEMPTS && !this.isRetrying) {
+            this.isRetrying = true;
+            console.log(`Reintentando cargar resumen del pedido (intento ${this.retryAttempts}/${this.MAX_RETRY_ATTEMPTS})...`);
+            
+            // Esperar antes de reintentar
+            timer(this.RETRY_DELAY)
+              .pipe(takeUntil(this.destroy$))
+              .subscribe(() => {
+                this.isRetrying = false;
+                this.attemptLoadSummary();
+              });
+            
+            return EMPTY;
+          } else {
+            // Se agotaron los intentos
+            this.error = true;
+            this.loading = false;
+            this.isRetrying = false;
+            console.error(`Error fetching reservation summary after ${this.retryAttempts} attempts:`, err);
+            return EMPTY;
+          }
         })
       )
       .subscribe({
@@ -120,6 +152,9 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
           this.reservationSummary = summary;
           this.updateSummaryData(summary);
           this.loading = false;
+          this.error = false;
+          this.retryAttempts = 0; // Reset retry attempts on success
+          this.isRetrying = false;
         },
       });
   }
@@ -173,6 +208,9 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
   // NUEVO: Método para recargar información
   refreshSummary(): void {
     if (this.reservationId) {
+      // Resetear contadores de reintentos cuando se recarga manualmente
+      this.retryAttempts = 0;
+      this.isRetrying = false;
       this.loadReservationSummary();
     }
   }

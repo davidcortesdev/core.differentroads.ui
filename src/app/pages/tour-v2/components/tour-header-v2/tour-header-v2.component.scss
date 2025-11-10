@@ -36,6 +36,18 @@ $tablet-breakpoint: 1024px;
     .tour-info {
         flex: 1;
 
+        .trip-type-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.3rem 0.6rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border-radius: 20px;
+            border: none;
+            color: white;
+            margin: 0px 5px 0px 5px;
+        }
+
         h1 {
             margin: 0 0 0.5rem 0;
             font-size: 1.75rem;

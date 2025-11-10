@@ -49,6 +49,7 @@ import {
 import { IBookingRequirements } from '../../../../../../core/services/flight/flight-search.service';
 import { PersonalInfo } from '../../../../../../core/models/v2/profile-v2.model';
 import { CheckoutUserDataService } from '../../../../../../core/services/v2/checkout-user-data.service';
+import { PhonePrefixService, IPhonePrefixResponse } from '../../../../../../core/services/masterdata/phone-prefix.service';
 
 @Component({
   selector: 'app-info-traveler-form',
@@ -78,6 +79,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
   mandatoryTypes: IMandatoryTypeResponse[] = [];
   reservationFields: IReservationFieldResponse[] = [];
   ageGroups: IAgeGroupResponse[] = [];
+  phonePrefixes: IPhonePrefixResponse[] = [];
 
   // Datos existentes del viajero
   existingTravelerFields: IReservationTravelerFieldResponse[] = [];
@@ -171,7 +173,8 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     private reservationTravelerFieldService: ReservationTravelerFieldService,
     private messageService: MessageService,
     private fb: FormBuilder,
-    private checkoutUserDataService: CheckoutUserDataService
+    private checkoutUserDataService: CheckoutUserDataService,
+    private phonePrefixService: PhonePrefixService
   ) {
     this.travelerForm = this.fb.group({});
   }
@@ -247,6 +250,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
           mandatoryTypes: this.mandatoryTypeService.getAll(),
           reservationFields: this.reservationFieldService.getAllOrdered(),
           ageGroups: this.ageGroupService.getAllOrdered(),
+          phonePrefixes: this.phonePrefixService.getAllOrdered(),
         }).pipe(takeUntil(this.destroy$))
           .subscribe({
             next: ({
@@ -255,12 +259,14 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
               mandatoryTypes,
               reservationFields,
               ageGroups,
+              phonePrefixes,
             }) => {
               this.traveler = traveler;
               this.departureReservationFields = departureFields;
               this.mandatoryTypes = mandatoryTypes;
               this.reservationFields = reservationFields;
               this.ageGroups = ageGroups;
+              this.phonePrefixes = phonePrefixes;
               
               // Buscar el age group del viajero
               this.ageGroup = this.ageGroups.find(ag => ag.id === this.traveler?.ageGroupId) || null;

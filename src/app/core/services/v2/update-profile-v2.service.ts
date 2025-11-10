@@ -158,6 +158,8 @@ export class UpdateProfileV2Service {
     const fieldMappings = [
       { fieldCode: 'image', value: personalInfo.avatarUrl },
       { fieldCode: 'phone', value: personalInfo.telefono },
+      { fieldCode: 'phonePrefix', value: personalInfo.phonePrefix },
+      { fieldCode: 'phone_prefix', value: personalInfo.phonePrefix },
       { fieldCode: 'birth_date', value: this.formatDate(personalInfo.fechaNacimiento) },
       { fieldCode: 'national_id', value: personalInfo.dni },
       { fieldCode: 'address', value: personalInfo.direccion },
@@ -200,7 +202,9 @@ export class UpdateProfileV2Service {
       'country': 9,
       'notes': 10,
       'image': 12,
-      'sexo': 14
+      'sexo': 14,
+      'phonePrefix': 0, // TODO: Update with actual field ID from UserField API
+      'phone_prefix': 0 // TODO: Update with actual field ID from UserField API
     };
     
     return fieldIdMap[fieldCode] || 0;

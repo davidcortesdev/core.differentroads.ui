@@ -539,6 +539,9 @@ export class AnalyticsService {
     };
     
     this.pushEvent(eventData);
+    
+    // También enviar evento Taboola view_content (migrado desde Tour.tsx)
+    this.sendTaboolaEvent('view_content');
   }
 
   /**
@@ -774,6 +777,9 @@ export class AnalyticsService {
     };
     
     this.pushEvent(eventData);
+    
+    // También enviar evento Taboola start_checkout (migrado desde CustomizeTrip.tsx)
+    this.sendTaboolaEvent('start_checkout');
   }
 
   /**
@@ -1100,14 +1106,7 @@ export class AnalyticsService {
       }
 
       // 2. Taboola Pixel - evento add_payment_info (tal cual Pay.tsx)
-      const _tfa = (window as any)._tfa;
-      if (Array.isArray(_tfa)) {
-        _tfa.push({
-          notify: 'event',
-          name: 'add_payment_info',
-          id: 1878210
-        });
-      }
+      this.sendTaboolaEvent('add_payment_info');
     } catch (error) {
       console.error('Error enviando eventos view_payment_info a plataformas legacy:', error);
     }
@@ -1397,19 +1396,38 @@ export class AnalyticsService {
     revenue: number,
     currency: string
   ): void {
+    this.sendTaboolaEvent('make_purchase', {
+      revenue: revenue.toString(),
+      currency: currency
+    });
+  }
+
+  /**
+   * Método genérico para enviar eventos a Taboola Pixel
+   * Migrado desde varios componentes del proyecto React
+   */
+  private sendTaboolaEvent(eventName: string, additionalData?: { revenue?: string; currency?: string }): void {
     try {
       const _tfa = (window as any)._tfa;
       if (Array.isArray(_tfa)) {
-        _tfa.push({
+        const eventData: { notify: string; name: string; id: number; revenue?: string; currency?: string } = {
           notify: 'event',
-          name: 'make_purchase',
-          id: 1878210,
-          revenue: revenue.toString(),
-          currency: currency
-        });
+          name: eventName,
+          id: 1878210
+        };
+        
+        // Agregar datos adicionales si existen (para make_purchase)
+        if (additionalData?.revenue) {
+          eventData.revenue = additionalData.revenue;
+        }
+        if (additionalData?.currency) {
+          eventData.currency = additionalData.currency;
+        }
+        
+        _tfa.push(eventData);
       }
     } catch (error) {
-      console.error('Error enviando purchase a Taboola:', error);
+      console.error(`Error enviando evento ${eventName} a Taboola:`, error);
     }
   }
 

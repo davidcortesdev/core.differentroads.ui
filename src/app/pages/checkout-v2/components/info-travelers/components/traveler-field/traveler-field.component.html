@@ -20,17 +20,19 @@
       <!-- Campo de teléfono (code === 'phone') -->
       <ng-container *ngIf="fieldDetails.code === 'phone'">
         <div class="phone-row">
-          <input
-            *ngIf="prefixControl"
-            pInputText
-            type="text"
-            class="prefix-input"
-            [formControl]="prefixControl"
-            placeholder="+34"
-            inputmode="numeric"
-            maxlength="3"
-            (input)="onPrefixInput($event)"
-          />
+          <ng-container *ngIf="travelerForm && travelerId">
+            <input
+              *ngIf="travelerForm.get('phonePrefix_' + travelerId)"
+              pInputText
+              type="text"
+              class="prefix-input"
+              [formControl]="travelerForm.get('phonePrefix_' + travelerId)"
+              placeholder="+34"
+              inputmode="numeric"
+              maxlength="3"
+              (input)="onPrefixInput($event)"
+            />
+          </ng-container>
           <input 
             pInputText 
             type="tel" 
@@ -79,17 +81,18 @@
     <!-- Campo de teléfono (si fieldType es 'phone') -->
     <ng-container *ngSwitchCase="'phone'">
       <div class="phone-row">
-        <input
-          *ngIf="prefixControl"
-          pInputText
-          type="text"
-          class="prefix-input"
-          [formControl]="prefixControl"
-          placeholder="+34"
-          inputmode="numeric"
-          maxlength="3"
-          (input)="onPrefixInput($event)"
-        />
+        <ng-container *ngIf="prefixControl as prefixCtrl">
+          <input
+            pInputText
+            type="text"
+            class="prefix-input"
+            [formControl]="prefixCtrl"
+            placeholder="+34"
+            inputmode="numeric"
+            maxlength="3"
+            (input)="onPrefixInput($event)"
+          />
+        </ng-container>
         <input 
           pInputText 
           type="tel" 

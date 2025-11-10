@@ -24,32 +24,10 @@ export class TravelerFieldComponent implements OnChanges {
   @Output() dateFieldChange = new EventEmitter<{ fieldCode: string; value: Date }>();
   @Output() dateFieldBlur = new EventEmitter<string>();
 
-  // Cache del control del prefijo para evitar evaluaciones repetidas
-  private _prefixControl: AbstractControl | null = null;
-  private _lastTravelerForm: FormGroup | null = null;
-  private _lastTravelerId: number | null = null;
-
   constructor(private cdr: ChangeDetectorRef) {}
 
   ngOnChanges(changes: SimpleChanges): void {
-    // Actualizar el cache del control del prefijo cuando cambian los inputs relevantes
-    if (changes['travelerForm'] || changes['travelerId'] || changes['fieldDetails']) {
-      this.updatePrefixControlCache();
-    }
-  }
-
-  private updatePrefixControlCache(): void {
-    // Solo actualizar el cache si el formulario o el travelerId han cambiado
-    if (this.travelerForm !== this._lastTravelerForm || this.travelerId !== this._lastTravelerId) {
-      this._lastTravelerForm = this.travelerForm;
-      this._lastTravelerId = this.travelerId;
-      
-      if (this.fieldDetails?.code === 'phone' && this.travelerForm && this.travelerId) {
-        this._prefixControl = this.travelerForm.get(`phonePrefix_${this.travelerId}`) || null;
-      } else {
-        this._prefixControl = null;
-      }
-    }
+    // No necesitamos hacer nada aquí - el getter prefixControl obtendrá el control directamente
   }
 
   get controlName(): string {
@@ -60,12 +38,13 @@ export class TravelerFieldComponent implements OnChanges {
     return this.travelerForm?.get(this.controlName) || null;
   }
 
-  get prefixControl() {
-    // Solo actualizar el cache si el formulario o el travelerId han cambiado
-    if (this.travelerForm !== this._lastTravelerForm || this.travelerId !== this._lastTravelerId) {
-      this.updatePrefixControlCache();
+  get prefixControl(): AbstractControl | null {
+    // Obtener el control directamente del formulario sin cache
+    // Esto evita problemas de sincronización cuando el formulario se recrea
+    if (this.fieldDetails?.code === 'phone' && this.travelerForm && this.travelerId) {
+      return this.travelerForm.get(`phonePrefix_${this.travelerId}`) || null;
     }
-    return this._prefixControl;
+    return null;
   }
 
   get fieldValue(): string | Date | null {
@@ -134,16 +113,13 @@ export class TravelerFieldComponent implements OnChanges {
     if (!inputEl) return;
     const digitsOnly = inputEl.value.replace(/\D/g, '').slice(0, 3);
     inputEl.value = digitsOnly;
-    // Reflejar en el formulario si existe el control
-    // Actualizar el cache primero
-    this.updatePrefixControlCache();
-    if (this._prefixControl) {
-      // Marcar como dirty y touched para que se detecte el cambio y se guarde automáticamente
-      this._prefixControl.setValue(digitsOnly, { emitEvent: true });
-      this._prefixControl.markAsDirty();
-      this._prefixControl.markAsTouched();
-      // Forzar detección de cambios
-      this.cdr.markForCheck();
+    
+    // Obtener el control directamente del formulario
+    const control = this.prefixControl;
+    if (control) {
+      control.setValue(digitsOnly, { emitEvent: true });
+      control.markAsDirty();
+      control.markAsTouched();
     }
   }
 

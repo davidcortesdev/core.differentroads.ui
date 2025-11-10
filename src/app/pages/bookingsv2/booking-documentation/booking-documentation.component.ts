@@ -18,6 +18,7 @@ import {
 import {
   DocumentServicev2,
   DocumentType,
+  DocumentDownloadResult,
 } from '../../../core/services/v2/document.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
@@ -584,69 +585,40 @@ export class BookingDocumentationV2Component implements OnInit {
     );
     const documentTypeCode = documentType?.code?.toUpperCase();
 
-    // Si tenemos el código del tipo de documento, intentar obtener la ruta completa
-    if (
-      documentTypeCode &&
-      (documentTypeCode === 'BUDGET' ||
-        documentTypeCode === 'RESERVATION_VOUCHER')
-    ) {
+    // Si tenemos el código del tipo de documento, usar el método unificado
+    if (documentTypeCode) {
       this.documentServicev2
-        .getDocumentPath(reservationId, documentTypeCode as DocumentType)
+        .downloadDocumentByCode(reservationId, documentTypeCode)
         .subscribe({
-          next: (documentPath) => {
-            // Usar la ruta completa del documento
-            const baseUrl = environment.documentationApiUrl;
-            const url = `${baseUrl}/File/Get`;
+          next: (result: DocumentDownloadResult) => {
+            this.downloadLoading[documentId] = false;
 
-            const headers = new HttpHeaders({
-              accept: 'application/octet-stream',
+            const downloadUrl = window.URL.createObjectURL(result.blob);
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = result.fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(downloadUrl);
+
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Éxito',
+              detail: 'Documento descargado exitosamente',
             });
-
-            const params = new URLSearchParams();
-            params.set('filepath', documentPath);
-
-            this.http
-              .get(`${url}?${params.toString()}`, {
-                headers,
-                responseType: 'blob',
-              })
-              .subscribe({
-                next: (blob) => {
-                  this.downloadLoading[documentId] = false;
-
-                  const downloadUrl = window.URL.createObjectURL(blob);
-                  const link = document.createElement('a');
-                  link.href = downloadUrl;
-                  link.download = fileName;
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                  window.URL.revokeObjectURL(downloadUrl);
-
-                  this.messageService.add({
-                    severity: 'success',
-                    summary: 'Éxito',
-                    detail: 'Documento descargado exitosamente',
-                  });
-                },
-                error: (error) => {
-                  this.downloadLoading[documentId] = false;
-                  console.error('Error al descargar documento:', error);
-                  this.handleDownloadError(error);
-                },
-              });
           },
           error: (error) => {
-            // Si no se puede obtener la ruta, intentar con el método alternativo
+            // Si falla el método unificado, intentar con el método alternativo
             console.warn(
-              'No se pudo obtener la ruta del documento, intentando método alternativo:',
+              'No se pudo descargar con el método unificado, intentando método alternativo:',
               error
             );
             this.downloadDocumentAlternative(fileName, documentId);
           },
         });
     } else {
-      // Si no es BUDGET o RESERVATION_VOUCHER, usar método alternativo
+      // Si no tenemos el código, usar método alternativo
       this.downloadDocumentAlternative(fileName, documentId);
     }
   }

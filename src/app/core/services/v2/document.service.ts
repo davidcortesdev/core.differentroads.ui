@@ -26,6 +26,11 @@ export interface DocumentInfo {
   updatedAt: string;
 }
 
+export interface DocumentDownloadResult {
+  blob: Blob;
+  fileName: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -221,21 +226,13 @@ export class DocumentServicev2 {
    * Descarga un documento por código (método unificado)
    * @param reservationId ID de la reserva
    * @param documentCode Código del documento
-   * @returns Observable con el blob del documento
+   * @returns Observable con el blob y el nombre del archivo original
    */
   downloadDocumentByCode(
     reservationId: number,
     documentCode: string
-  ): Observable<Blob> {
-    // Si es un tipo conocido, usar el método específico
-    if (documentCode === 'RESERVATION_VOUCHER') {
-      return this.getReservationVoucherDocument(reservationId);
-    }
-    if (documentCode === 'BUDGET') {
-      return this.getBudgetDocument(reservationId);
-    }
-
-    // Para otros códigos, usar método genérico
+  ): Observable<DocumentDownloadResult> {
+    // Para todos los códigos, obtener primero la información del documento para tener el fileName original
     return new Observable((observer) => {
       this.getDocumentInfoByCode(reservationId, documentCode).subscribe({
         next: (documentInfo) => {
@@ -260,7 +257,13 @@ export class DocumentServicev2 {
               responseType: 'blob',
             })
             .subscribe({
-              next: (blob) => observer.next(blob),
+              next: (blob) => {
+                observer.next({
+                  blob: blob,
+                  fileName:
+                    documentInfo.fileName || `documento_${reservationId}.pdf`,
+                });
+              },
               error: (error) => observer.error(error),
             });
         },

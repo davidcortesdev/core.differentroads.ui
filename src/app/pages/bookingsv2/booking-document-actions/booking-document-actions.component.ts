@@ -9,6 +9,7 @@ import {
 import {
   DocumentServicev2,
   DocumentType,
+  DocumentDownloadResult,
 } from '../../../core/services/v2/document.service';
 import { of } from 'rxjs';
 import { switchMap, catchError } from 'rxjs/operators';
@@ -297,32 +298,16 @@ export class BookingDocumentActionsV2Component implements OnInit {
     this.documentServicev2
       .downloadDocumentByCode(reservationId, documentCode)
       .subscribe({
-        next: (blob) => {
-          const fileName = this.getDocumentFileName(
-            documentCode,
-            reservationId
-          );
+        next: (result: DocumentDownloadResult) => {
           const successMessage = this.getDocumentSuccessMessage(documentCode);
-          this.handleDownloadSuccess(blob, fileName, successMessage);
+          this.handleDownloadSuccess(
+            result.blob,
+            result.fileName,
+            successMessage
+          );
         },
         error: (error) => this.handleDownloadError(error),
       });
-  }
-
-  /**
-   * Obtiene el nombre del archivo según el código del documento
-   */
-  private getDocumentFileName(
-    documentCode: string,
-    reservationId: number
-  ): string {
-    const fileNameMap: Record<string, string> = {
-      RESERVATION_VOUCHER: `voucher_reserva_${reservationId}.pdf`,
-      ETICKETS: `etickets_${reservationId}.pdf`,
-      COMBINED_CONTRACT: `contrato_combinado_${reservationId}.pdf`,
-      PAYMENT_REMINDER: `recordatorio_pago_${reservationId}.pdf`,
-    };
-    return fileNameMap[documentCode] || `documento_${reservationId}.pdf`;
   }
 
   /**

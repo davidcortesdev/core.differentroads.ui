@@ -46,7 +46,7 @@
                   </ng-container>
                   <ng-container *ngIf="fieldDetails.code === 'phone'">
                     <ng-container *ngIf="getPassengerFieldValue('phonePrefix') as phonePrefix">
-                      <span>+{{ phonePrefix }} </span>
+                      <span>{{ phonePrefix }} </span>
                     </ng-container>
                     {{ fieldValue }}
                   </ng-container>
@@ -110,16 +110,23 @@
         <div class="form-field" *ngIf="shouldShowField('phone')">
           <label>Teléfono:</label>
           <div class="phone-row">
-            <input
-              pInputText
-              type="text"
-              class="prefix-input"
-              formControlName="prefijo"
-              placeholder="+34"
-              inputmode="numeric"
-              maxlength="3"
-              (input)="onPrefixInput($event)"
-            />
+            <p-select
+              [(ngModel)]="selectedPhonePrefix"
+              name="prefijo"
+              [options]="phonePrefixOptions"
+              optionLabel="name"
+              optionValue="prefix"
+              placeholder="Seleccione prefijo"
+              [showClear]="true"
+              [filter]="true"
+              filterBy="name,prefix,code"
+              (onChange)="onPhonePrefixChange($event)"
+              [disabled]="!isEditing"
+              styleClass="prefix-select">
+              <ng-template let-prefix pTemplate="item">
+                <div>{{ prefix.prefix }} - {{ prefix.name }}</div>
+              </ng-template>
+            </p-select>
             <input
               pInputText
               formControlName="phone"

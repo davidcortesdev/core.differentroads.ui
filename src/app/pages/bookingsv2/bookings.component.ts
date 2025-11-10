@@ -128,6 +128,9 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
   // Detectar si viene desde ATC
   isATC: boolean = false;
   
+  // Detectar si estamos en modo standalone
+  isStandaloneMode: boolean = false;
+  
   // Trigger para refrescar el resumen
   summaryRefreshTrigger: any = null;
   reservation: IReservationResponse | null = null; // Objeto de reserva completo
@@ -242,6 +245,9 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
     this.titleService.setTitle('Mis Reservas - Different Roads');
     this.messageService.clear();
 
+    // Detectar si estamos en modo standalone
+    this.detectStandaloneMode();
+
     // Detectar si viene desde ATC
     this.route.queryParams.subscribe((queryParams) => {
       this.isATC = queryParams['isATC'] === 'true';
@@ -278,6 +284,15 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
     if (this.routeSubscription) {
       this.routeSubscription.unsubscribe();
     }
+  }
+
+  /**
+   * Detectar si estamos en modo standalone
+   */
+  private detectStandaloneMode(): void {
+    // Verificar si la URL contiene 'standalone'
+    const currentPath = window.location.pathname;
+    this.isStandaloneMode = currentPath.includes('/standalone/');
   }
 
   // Método para cargar los datos de la reserva

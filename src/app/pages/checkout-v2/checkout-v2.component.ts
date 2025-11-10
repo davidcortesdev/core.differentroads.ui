@@ -458,11 +458,17 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Recarga todos los datos del componente
    */
   private reloadComponentData(): void {
+    console.log('🔄 [reloadComponentData] Recargando todos los datos del componente:', {
+      reservationId: this.reservationId,
+      timestamp: new Date().toISOString()
+    });
+    
     if (this.reservationId) {
       // Resetear el estado de verificación de precios para permitir nueva verificación
       this.resetPriceCheckState();
 
       // Recargar datos de la reservación
+      console.log('🔄 [reloadComponentData] Llamando a loadReservationData() desde recarga...');
       this.loadReservationData(this.reservationId);
 
       // Forzar actualización de todos los componentes hijos
@@ -561,6 +567,11 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
   // Método para cargar datos de la reservación
   private loadReservationData(reservationId: number): void {
+    console.log('🔄 [loadReservationData] Iniciando carga de datos de reserva:', {
+      reservationId,
+      timestamp: new Date().toISOString()
+    });
+    
     this.loading = true;
     this.error = null;
     
@@ -584,6 +595,19 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     this.reservationService.getById(reservationId).subscribe({
       next: (reservation) => {
+        console.log('✅ [loadReservationData] Reserva cargada desde backend:', {
+          reservationId: reservation.id,
+          userId: reservation.userId,
+          userIdType: typeof reservation.userId,
+          userIdIsEmpty: !reservation.userId,
+          userIdIsNull: reservation.userId === null,
+          userIdIsUndefined: reservation.userId === undefined,
+          totalPassengers: reservation.totalPassengers,
+          departureId: reservation.departureId,
+          tourId: reservation.tourId,
+          reservationStatusId: reservation.reservationStatusId
+        });
+        
         // Extraer datos de la reservación
         this.departureId = reservation.departureId;
         this.totalAmount = reservation.totalAmount;
@@ -592,6 +616,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         this.reservationData = reservation; // Guardar datos completos de la reserva
 
         // Verificar si el userId está vacío y el usuario está logueado
+        console.log('🔍 [loadReservationData] Llamando a checkAndUpdateUserId()...');
         this.checkAndUpdateUserId(reservation);
 
         // Cargar datos del tour usando reservation.tourId
@@ -2205,42 +2230,105 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Verifica si el userId está vacío y el usuario está logueado, y actualiza la reservación si es necesario
    */
   private checkAndUpdateUserId(reservation: any): void {
+    console.log('🔍 [checkAndUpdateUserId] Iniciando verificación de userId:', {
+      reservationId: reservation?.id,
+      currentUserId: reservation?.userId,
+      userIdIsEmpty: !reservation?.userId,
+      isUpdatingUserId: this.isUpdatingUserId,
+      isAuthenticated: this.isAuthenticated,
+      timestamp: new Date().toISOString()
+    });
+    
     // Verificar si el userId está vacío
     if (!reservation.userId && !this.isUpdatingUserId) {
+      console.log('✅ [checkAndUpdateUserId] Condiciones cumplidas - userId está vacío y no hay actualización en curso');
+      console.log('🔐 [checkAndUpdateUserId] Obteniendo Cognito ID del usuario autenticado...');
       this.isUpdatingUserId = true;
       
       this.authService.getCognitoId().subscribe({
         next: (cognitoId) => {
+          console.log('🔐 [checkAndUpdateUserId] Cognito ID obtenido:', {
+            cognitoId: cognitoId || 'null/undefined',
+            cognitoIdType: typeof cognitoId,
+            cognitoIdExists: !!cognitoId,
+            timestamp: new Date().toISOString()
+          });
+          
           if (cognitoId) {
+            console.log('✅ [checkAndUpdateUserId] Cognito ID válido, buscando usuario en BD...');
             // Buscar el usuario por Cognito ID para obtener su ID en la base de datos
             this.usersNetService.getUsersByCognitoId(cognitoId).subscribe({
               next: (users) => {
+                console.log('👤 [checkAndUpdateUserId] Usuarios encontrados por Cognito ID:', {
+                  usersFound: users?.length || 0,
+                  users: users,
+                  timestamp: new Date().toISOString()
+                });
+                
                 if (users && users.length > 0) {
                   const userId = users[0].id;
+                  console.log('✅ [checkAndUpdateUserId] Usuario encontrado en BD:', {
+                    userId: userId,
+                    userEmail: users[0].email,
+                    userCognitoId: users[0].cognitoId,
+                    userName: users[0].name,
+                    timestamp: new Date().toISOString()
+                  });
+                  
                   this.isAuthenticated = true;
+                  console.log('🔄 [checkAndUpdateUserId] Llamando a updateReservationUserId()...');
                   // Actualizar la reservación con el userId correcto
                   this.updateReservationUserId(userId);
                 } else {
+                  console.warn('⚠️ [checkAndUpdateUserId] No se encontró usuario en BD con el Cognito ID:', {
+                    cognitoId,
+                    timestamp: new Date().toISOString()
+                  });
                   this.isUpdatingUserId = false;
                 }
               },
               error: (error) => {
                 console.error(
-                  '❌ Error buscando usuario por Cognito ID:',
-                  error
+                  '❌ [checkAndUpdateUserId] Error buscando usuario por Cognito ID:',
+                  {
+                    error,
+                    cognitoId,
+                    errorMessage: error?.message,
+                    errorStatus: error?.status,
+                    timestamp: new Date().toISOString()
+                  }
                 );
                 this.isUpdatingUserId = false;
               },
             });
           } else {
+            console.log('ℹ️ [checkAndUpdateUserId] No hay Cognito ID - usuario no autenticado:', {
+              cognitoId,
+              timestamp: new Date().toISOString()
+            });
             this.isUpdatingUserId = false;
           }
         },
         error: (error) => {
-          console.error('❌ Error obteniendo Cognito ID:', error);
+          console.error('❌ [checkAndUpdateUserId] Error obteniendo Cognito ID:', {
+            error,
+            errorMessage: error?.message,
+            errorStatus: error?.status,
+            timestamp: new Date().toISOString()
+          });
           this.isUpdatingUserId = false;
         },
       });
+    } else {
+      if (reservation.userId) {
+        console.log('ℹ️ [checkAndUpdateUserId] Reserva ya tiene userId, no se requiere actualización:', {
+          userId: reservation.userId,
+          timestamp: new Date().toISOString()
+        });
+      }
+      if (this.isUpdatingUserId) {
+        console.log('ℹ️ [checkAndUpdateUserId] Ya hay una actualización de userId en curso, omitiendo...');
+      }
     }
   }
 
@@ -2248,9 +2336,22 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Actualiza el userId de la reservación
    */
   private updateReservationUserId(userId: number): void {
+    console.log('🔄 [updateReservationUserId] Iniciando actualización de userId:', {
+      reservationId: this.reservationId,
+      newUserId: userId,
+      currentReservationUserId: this.reservationData?.userId,
+      reservationDataExists: !!this.reservationData,
+      timestamp: new Date().toISOString()
+    });
+    
     if (!this.reservationId || !this.reservationData) {
       console.error(
-        '❌ No se puede actualizar userId: reservationId o reservationData no disponibles'
+        '❌ [updateReservationUserId] No se puede actualizar userId:',
+        {
+          reservationId: this.reservationId,
+          reservationDataExists: !!this.reservationData,
+          timestamp: new Date().toISOString()
+        }
       );
       return;
     }
@@ -2261,11 +2362,40 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       updatedAt: new Date().toISOString(),
     };
 
+    console.log('📤 [updateReservationUserId] Enviando actualización a backend:', {
+      reservationId: this.reservationId,
+      updateData: {
+        ...updateData,
+        // No logear datos sensibles completos, solo lo relevante
+        userId: updateData.userId,
+        updatedAt: updateData.updatedAt,
+        totalPassengers: updateData.totalPassengers,
+        departureId: updateData.departureId,
+        tourId: updateData.tourId
+      },
+      timestamp: new Date().toISOString()
+    });
+
     this.reservationService.update(this.reservationId, updateData).subscribe({
       next: (success) => {
+        console.log('📥 [updateReservationUserId] Respuesta del backend:', {
+          success,
+          successType: typeof success,
+          timestamp: new Date().toISOString()
+        });
+        
         if (success) {
           // Actualizar los datos locales
+          const previousUserId = this.reservationData.userId;
           this.reservationData.userId = userId;
+          
+          console.log('✅ [updateReservationUserId] userId actualizado exitosamente:', {
+            reservationId: this.reservationId,
+            previousUserId: previousUserId,
+            newUserId: userId,
+            reservationDataUpdated: this.reservationData.userId,
+            timestamp: new Date().toISOString()
+          });
 
           this.messageService.add({
             severity: 'success',
@@ -2274,14 +2404,28 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             life: 3000,
           });
         } else {
-          console.error('❌ Error al actualizar userId en la reservación');
+          console.error('❌ [updateReservationUserId] Error: La actualización no fue exitosa:', {
+            success,
+            reservationId: this.reservationId,
+            userId,
+            timestamp: new Date().toISOString()
+          });
         }
         this.isUpdatingUserId = false;
+        console.log('🏁 [updateReservationUserId] Finalizado, isUpdatingUserId = false');
       },
       error: (error) => {
         console.error(
-          '❌ Error al actualizar userId en la reservación:',
-          error
+          '❌ [updateReservationUserId] Error al actualizar userId en la reservación:',
+          {
+            error,
+            errorMessage: error?.message,
+            errorStatus: error?.status,
+            errorResponse: error?.error,
+            reservationId: this.reservationId,
+            userId,
+            timestamp: new Date().toISOString()
+          }
         );
         this.messageService.add({
           severity: 'error',
@@ -2290,6 +2434,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           life: 5000,
         });
         this.isUpdatingUserId = false;
+        console.log('🏁 [updateReservationUserId] Finalizado con error, isUpdatingUserId = false');
       },
     });
   }
@@ -2533,6 +2678,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
                   );
                 },
                 complete: () => {
+                  console.log('🔄 [handleSaveBudget] Llamando a loadReservationData() después de guardar presupuesto...');
                   this.loadReservationData(this.reservationId!);
                 },
               });
@@ -2971,10 +3117,18 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    */
   private getInsuranceName(): string {
     // Usar el seguro del componente hijo si está disponible, o el del componente padre
-    return this.insuranceSelector?.selectedInsurance?.name || 
+    const insuranceName = this.insuranceSelector?.selectedInsurance?.name || 
            this.selectedInsurance?.name || 
            this.reservationData?.insurance?.name || 
            '';
+
+    if (insuranceName && insuranceName.length > 0) {
+      sessionStorage.setItem('checkout_selectedInsurance', insuranceName);
+    } else {
+      sessionStorage.removeItem('checkout_selectedInsurance');
+    }
+
+    return insuranceName;
   }
 
   /**

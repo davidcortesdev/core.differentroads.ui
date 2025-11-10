@@ -1,8 +1,23 @@
-import { Component, Input, OnInit, OnDestroy, Output, EventEmitter, OnChanges, AfterViewInit } from '@angular/core';
+import {
+  Component,
+  Input,
+  OnInit,
+  OnDestroy,
+  Output,
+  EventEmitter,
+  OnChanges,
+  AfterViewInit,
+} from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { IScalapayOrderResponse, NewScalapayService } from '../../services/newScalapay.service';
+import {
+  IScalapayOrderResponse,
+  NewScalapayService,
+} from '../../services/newScalapay.service';
 import { Router } from '@angular/router';
-import { PaymentsNetService, PaymentStatusFilter } from '../../services/paymentsNet.service';
+import {
+  PaymentsNetService,
+  PaymentStatusFilter,
+} from '../../services/paymentsNet.service';
 import { PaymentStatusNetService } from '../../services/paymentStatusNet.service';
 import { PaymentMethodNetService } from '../../services/paymentMethodNet.service';
 import { IFormData, NewRedsysService } from '../../services/newRedsys.service';
@@ -10,11 +25,18 @@ import { ReservationStatusService } from '../../../../core/services/reservation/
 import { ReservationService } from '../../../../core/services/reservation/reservation.service';
 import { MessageService } from 'primeng/api';
 import { CurrencyService } from '../../../../core/services/masterdata/currency.service';
-import { FlightSearchService, IPriceChangeInfo } from '../../../../core/services/flight/flight-search.service';
+import {
+  FlightSearchService,
+  IPriceChangeInfo,
+} from '../../../../core/services/flight/flight-search.service';
 import { environment } from '../../../../../environments/environment';
 
 // Interfaces y tipos
-export type PaymentType = 'complete' | 'deposit' | 'installments' | 'transfer25';
+export type PaymentType =
+  | 'complete'
+  | 'deposit'
+  | 'installments'
+  | 'transfer25';
 export type PaymentMethod = 'creditCard' | 'transfer';
 
 export interface PaymentOption {
@@ -26,12 +48,11 @@ export interface PaymentOption {
   selector: 'app-payment-management',
   templateUrl: './payment-management.component.html',
   standalone: false,
-  styleUrl: './payment-management.component.scss'
+  styleUrl: './payment-management.component.scss',
 })
 export class PaymentManagementComponent
   implements OnInit, OnDestroy, OnChanges, AfterViewInit
 {
-
   //Total reservation amount
   totalPrice: number = 0;
 
@@ -65,25 +86,22 @@ export class PaymentManagementComponent
   hasSpecificSearchFlights: boolean = false;
   specificSearchFlightsCost: number = 0;
 
-  // Transfer 25% voucher
-  transfer25VoucherUrl: string | null = null;
-
   // State management
   readonly dropdownStates = {
     main: true,
-    paymentMethods: true
+    paymentMethods: true,
   };
 
   readonly paymentState = {
     type: null as PaymentType | null,
     method: null as PaymentMethod | null,
-    isLoading: false
+    isLoading: false,
   };
 
   constructor(
-    private readonly scalapayService: NewScalapayService, 
-    private readonly router: Router, 
-    private readonly paymentsService: PaymentsNetService, 
+    private readonly scalapayService: NewScalapayService,
+    private readonly router: Router,
+    private readonly paymentsService: PaymentsNetService,
     private readonly paymentStatusService: PaymentStatusNetService,
     private readonly paymentMethodService: PaymentMethodNetService,
     private readonly redsysService: NewRedsysService,
@@ -92,7 +110,7 @@ export class PaymentManagementComponent
     private readonly messageService: MessageService,
     private readonly currencyService: CurrencyService,
     private readonly flightSearchService: FlightSearchService
-  ) { }
+  ) {}
 
   ngOnInit(): void {
     this.loadReservationTotalAmount();
@@ -108,7 +126,10 @@ export class PaymentManagementComponent
     }
 
     // Si transfer25 no está habilitado pero está seleccionado, limpiar la selección
-    if (this.paymentState.type === 'transfer25' && !this.shouldShowTransfer25Option) {
+    if (
+      this.paymentState.type === 'transfer25' &&
+      !this.shouldShowTransfer25Option
+    ) {
       this.paymentState.type = null;
       this.updateDropdownVisibility();
     }
@@ -123,7 +144,11 @@ export class PaymentManagementComponent
     }
 
     // Si ya no es TO, limpiar transfer25 si showTransfer25Option es false
-    if (!this.isTourOperator && !this.showTransfer25Option && this.paymentState.type === 'transfer25') {
+    if (
+      !this.isTourOperator &&
+      !this.showTransfer25Option &&
+      this.paymentState.type === 'transfer25'
+    ) {
       this.paymentState.type = null;
       this.updateDropdownVisibility();
     }
@@ -135,7 +160,7 @@ export class PaymentManagementComponent
     this.flightSearchService.getSelectionStatus(this.reservationId).subscribe({
       next: (hasSelection: boolean) => {
         this.hasAmadeusFlight = hasSelection;
-        
+
         if (hasSelection) {
           this.checkSpecificSearchFlights();
           this.cleanupInvalidSelectionsForAmadeus();
@@ -149,7 +174,7 @@ export class PaymentManagementComponent
         this.hasAmadeusFlight = false;
         this.hasSpecificSearchFlights = false;
         this.specificSearchFlightsCost = 0;
-      }
+      },
     });
   }
 
@@ -165,13 +190,13 @@ export class PaymentManagementComponent
     if (this.paymentState.method === 'transfer') {
       this.paymentState.method = null;
     }
-    
+
     if (this.paymentState.type === 'deposit' && this.hasAmadeusFlight) {
       if (!this.hasSpecificSearchFlights) {
         this.paymentState.type = null;
       }
     }
-    
+
     this.updateDropdownVisibility();
   }
 
@@ -184,13 +209,15 @@ export class PaymentManagementComponent
           this.priceValidation = validation;
           this.specificSearchFlightsCost = validation.currentPrice;
           this.hasSpecificSearchFlights = true;
-          
+
           if (validation.hasChanged) {
             this.showPriceChangeDialog = true;
             this.messageService.add({
               severity: 'warn',
               summary: 'Precio cambiado',
-              detail: `El precio del vuelo ha cambiado. Diferencia: ${validation.priceDifference.toFixed(2)} ${validation.currency || 'EUR'}`,
+              detail: `El precio del vuelo ha cambiado. Diferencia: ${validation.priceDifference.toFixed(
+                2
+              )} ${validation.currency || 'EUR'}`,
               life: 5000,
             });
           }
@@ -198,7 +225,7 @@ export class PaymentManagementComponent
       },
       error: (error) => {
         this.priceValidation = null;
-      }
+      },
     });
   }
 
@@ -209,7 +236,7 @@ export class PaymentManagementComponent
           this.transferMethodId = methods[0].id;
         }
       },
-      error: (error) => console.error('Error loading transfer method:', error)
+      error: (error) => console.error('Error loading transfer method:', error),
     });
 
     this.paymentMethodService.getPaymentMethodByCode('REDSYS').subscribe({
@@ -218,7 +245,7 @@ export class PaymentManagementComponent
           this.redsysMethodId = methods[0].id;
         }
       },
-      error: (error) => console.error('Error loading redsys method:', error)
+      error: (error) => console.error('Error loading redsys method:', error),
     });
 
     this.paymentStatusService.getPaymentStatusByCode('PENDING').subscribe({
@@ -227,7 +254,7 @@ export class PaymentManagementComponent
           this.pendingStatusId = statuses[0].id;
         }
       },
-      error: (error) => console.error('Error loading pending status:', error)
+      error: (error) => console.error('Error loading pending status:', error),
     });
   }
 
@@ -256,7 +283,7 @@ export class PaymentManagementComponent
     }
 
     if (this.paymentState.type === 'transfer25') {
-      return this.showTransfer25Option && !!this.transfer25VoucherUrl;
+      return this.shouldShowTransfer25Option;
     }
 
     return !!this.paymentState.method;
@@ -271,24 +298,24 @@ export class PaymentManagementComponent
     if (this.isTourOperator) return false;
 
     if (!this.departureDate) return false;
-    
+
     const today = new Date();
     const departureDate = new Date(this.departureDate);
-    
+
     const deadlineMatch = this.paymentDeadline.match(/(\d+)\s*días?\s*antes/);
     if (!deadlineMatch) return false;
-    
+
     const daysBeforeDeparture = parseInt(deadlineMatch[1]);
     const deadlineDate = new Date(departureDate);
     deadlineDate.setDate(departureDate.getDate() - daysBeforeDeparture);
-    
+
     const isWithinDeadline = today < deadlineDate;
-    
+
     // Para vuelos de Amadeus, solo permitir depósito si hay vuelos de specific-search
     if (this.hasAmadeusFlight) {
       return this.hasSpecificSearchFlights && isWithinDeadline;
     }
-    
+
     return isWithinDeadline;
   }
 
@@ -338,11 +365,11 @@ export class PaymentManagementComponent
     if (type === 'transfer25' && !this.shouldShowTransfer25Option) {
       return;
     }
-    
+
     this.paymentState.type = type;
     this.updateDropdownVisibility();
     this.resetRelatedSelections(type);
-    
+
     // Si se selecciona installments, recargar el widget de Scalapay
     if (type === 'installments') {
       setTimeout(() => {
@@ -365,7 +392,7 @@ export class PaymentManagementComponent
 
   handlePriceChangeDecision(continueWithNewPrice: boolean): void {
     this.showPriceChangeDialog = false;
-    
+
     if (continueWithNewPrice) {
       this.messageService.add({
         severity: 'info',
@@ -380,35 +407,8 @@ export class PaymentManagementComponent
         detail: 'Será redirigido al paso de selección de vuelos',
         life: 3000,
       });
-      
+
       this.navigateToStep.emit(1);
-    }
-  }
-
-  // Handle transfer25 voucher upload
-  async onTransfer25VoucherUpload(event: any): Promise<void> {
-    const file = event.files[0];
-    if (!file) return;
-
-    try {
-      // TODO: Implementar subida real a Cloudinary u otro servicio
-      // Por ahora, crear un ObjectURL temporal
-      const objectUrl = URL.createObjectURL(file);
-      this.transfer25VoucherUrl = objectUrl;
-      
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Justificante subido',
-        detail: 'El justificante se ha subido correctamente',
-        life: 3000,
-      });
-    } catch (error) {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error al subir archivo',
-        detail: 'No se pudo subir el justificante. Intente nuevamente.',
-        life: 3000,
-      });
     }
   }
 
@@ -430,7 +430,8 @@ export class PaymentManagementComponent
       this.messageService.add({
         severity: 'success',
         summary: 'Reserva actualizada',
-        detail: 'Estado de la reservación actualizado correctamente. Procesando pago...',
+        detail:
+          'Estado de la reservación actualizado correctamente. Procesando pago...',
         life: 3000,
       });
 
@@ -439,7 +440,7 @@ export class PaymentManagementComponent
       // Emitir evento de pago completado para analytics
       this.paymentCompleted.emit({
         type: this.paymentState.type || 'complete',
-        method: this.paymentState.method || 'transfer'
+        method: this.paymentState.method || 'transfer',
       });
 
       this.messageService.add({
@@ -448,17 +449,19 @@ export class PaymentManagementComponent
         detail: 'El pago se ha procesado correctamente.',
         life: 5000,
       });
-
     } catch (error) {
       console.error('Payment processing failed:', error);
-      
-      let errorMessage = 'Ha ocurrido un error inesperado. Por favor, inténtelo nuevamente.';
-      
+
+      let errorMessage =
+        'Ha ocurrido un error inesperado. Por favor, inténtelo nuevamente.';
+
       if (error instanceof Error) {
         if (error.message.includes('estado')) {
-          errorMessage = 'Error al actualizar el estado de la reservación. El pago no se procesará.';
+          errorMessage =
+            'Error al actualizar el estado de la reservación. El pago no se procesará.';
         } else if (error.message.includes('pago')) {
-          errorMessage = 'Error al procesar el pago. La reservación se mantendrá en su estado actual.';
+          errorMessage =
+            'Error al procesar el pago. La reservación se mantendrá en su estado actual.';
         }
       }
 
@@ -476,59 +479,74 @@ export class PaymentManagementComponent
   private async updateReservationStatusToPrebooked(): Promise<boolean> {
     try {
       console.log('🔄 Verificando estado actual de la reserva...');
-      
+
       // 1. Obtener la reserva actual
       const currentReservation = await firstValueFrom(
         this.reservationService.getById(this.reservationId!)
       );
-      
+
       // 2. Obtener los estados permitidos (CART y BUDGET)
       const [cartStatus, budgetStatus] = await Promise.all([
         firstValueFrom(this.reservationStatusService.getByCode('CART')),
-        firstValueFrom(this.reservationStatusService.getByCode('BUDGET'))
+        firstValueFrom(this.reservationStatusService.getByCode('BUDGET')),
       ]);
-      
-      if (!cartStatus || cartStatus.length === 0 || !budgetStatus || budgetStatus.length === 0) {
+
+      if (
+        !cartStatus ||
+        cartStatus.length === 0 ||
+        !budgetStatus ||
+        budgetStatus.length === 0
+      ) {
         throw new Error('No se pudieron obtener los estados CART o BUDGET');
       }
-      
+
       const allowedStatusIds = [cartStatus[0].id, budgetStatus[0].id];
-      
+
       // 3. Verificar si el estado actual es CART o BUDGET
       if (!allowedStatusIds.includes(currentReservation.reservationStatusId)) {
-        console.log('⚠️ La reserva no está en estado CART o BUDGET. Estado actual ID:', currentReservation.reservationStatusId);
+        console.log(
+          '⚠️ La reserva no está en estado CART o BUDGET. Estado actual ID:',
+          currentReservation.reservationStatusId
+        );
         this.messageService.add({
           severity: 'warn',
           summary: 'Estado de reserva',
-          detail: 'La reserva no se encuentra en un estado que permita realizar el pago.',
+          detail:
+            'La reserva no se encuentra en un estado que permita realizar el pago.',
           life: 5000,
         });
         return false;
       }
-      
-      console.log('✅ Estado actual válido, procediendo a actualizar a PREBOOKED');
-      
+
+      console.log(
+        '✅ Estado actual válido, procediendo a actualizar a PREBOOKED'
+      );
+
       // 4. Obtener el estado PREBOOKED
       const prebookedStatus = await firstValueFrom(
         this.reservationStatusService.getByCode('PREBOOKED')
       );
-      
+
       if (!prebookedStatus || prebookedStatus.length === 0) {
         throw new Error('No se pudo obtener el estado PREBOOKED');
       }
 
       // 5. Actualizar el estado a PREBOOKED
       const success = await firstValueFrom(
-        this.reservationService.updateStatus(this.reservationId!, prebookedStatus[0].id)
+        this.reservationService.updateStatus(
+          this.reservationId!,
+          prebookedStatus[0].id
+        )
       );
 
       if (success) {
-        console.log('✅ Estado de reservación actualizado correctamente a PREBOOKED');
+        console.log(
+          '✅ Estado de reservación actualizado correctamente a PREBOOKED'
+        );
         return true;
       } else {
         throw new Error('La actualización del estado falló');
       }
-
     } catch (error) {
       console.error('❌ Error al actualizar estado de reservación:', error);
       this.messageService.add({
@@ -565,28 +583,32 @@ export class PaymentManagementComponent
     }
 
     const script = document.createElement('script');
-    script.type = 'module';
-    script.src = 'https://cdn.scalapay.com/widget/scalapay-widget-loader.js?version=V5';
-    
+    script.src =
+      'https://cdn.scalapay.com/widget/scalapay-widget-loader.js?version=V5';
+
     script.onload = () => {
       setTimeout(() => {
         this.initializeScalapayWidget();
       }, 500);
     };
-    
+
     script.onerror = (error) => {
       console.error('❌ Error al cargar script de Scalapay:', error);
     };
-    
+
     document.head.appendChild(script);
   }
 
   private isScalapayScriptLoaded(): boolean {
-    return !!document.querySelector('script[src*="scalapay-widget-loader.js?version=V5"]');
+    return !!document.querySelector(
+      'script[src*="scalapay-widget-loader.js?version=V5"]'
+    );
   }
 
   private updateDropdownVisibility(): void {
-    this.dropdownStates.paymentMethods = ['complete', 'deposit'].includes(this.paymentState.type!);
+    this.dropdownStates.paymentMethods = ['complete', 'deposit'].includes(
+      this.paymentState.type!
+    );
   }
 
   private resetRelatedSelections(type: PaymentType): void {
@@ -597,7 +619,7 @@ export class PaymentManagementComponent
 
   private updatePriceContainers(): void {
     if (!this.totalPrice) return;
-    
+
     const formattedPrice = `€ ${this.totalPrice.toFixed(2)}`;
     const mainContainer = document.getElementById('price-container-main');
     if (mainContainer) {
@@ -617,9 +639,9 @@ export class PaymentManagementComponent
       }, 500);
       return;
     }
-    
+
     this.updatePriceContainers();
-    
+
     setTimeout(() => {
       this.dispatchScalapayReloadEvent();
     }, 100);
@@ -628,20 +650,21 @@ export class PaymentManagementComponent
   private isScalapayWidgetVisible(): boolean {
     const widget = document.querySelector('scalapay-widget');
     if (!widget) return false;
-    
-    const hasContent = widget.children.length > 0 || 
-                      (widget.textContent?.trim().length || 0) > 0 || 
-                      (widget.innerHTML?.trim().length || 0) > 0;
-    
+
+    const hasContent =
+      widget.children.length > 0 ||
+      (widget.textContent?.trim().length || 0) > 0 ||
+      (widget.innerHTML?.trim().length || 0) > 0;
+
     return hasContent;
   }
 
   private forceScalapayReload(): void {
     this.updatePriceContainers();
-    
+
     setTimeout(() => {
       this.dispatchScalapayReloadEvent();
-      
+
       setTimeout(() => {
         if (!this.isScalapayWidgetVisible()) {
           this.initializeScalapayWidget();
@@ -651,9 +674,11 @@ export class PaymentManagementComponent
   }
 
   private async processInstallmentPayment(): Promise<void> {
-    const baseUrl = (window.location.href).replace(this.router.url, '');
+    const baseUrl = window.location.href.replace(this.router.url, '');
 
-    const response = await this.scalapayService.createOrder(this.reservationId, baseUrl).toPromise();
+    const response = await this.scalapayService
+      .createOrder(this.reservationId, baseUrl)
+      .toPromise();
 
     if (response?.checkoutUrl) {
       window.location.href = response.checkoutUrl;
@@ -661,32 +686,34 @@ export class PaymentManagementComponent
   }
 
   private async processCreditCardPayment(amount: number): Promise<void> {
-    const currencyId = await this.currencyService.getCurrencyIdByCode('EUR').toPromise();
+    const currencyId = await this.currencyService
+      .getCurrencyIdByCode('EUR')
+      .toPromise();
 
     if (!currencyId) {
       throw new Error('No se pudo obtener el ID de la moneda EUR');
     }
 
-    const response = await this.paymentsService.create({
-      reservationId: this.reservationId,
-      amount: amount,
-      paymentDate: new Date(),
-      paymentMethodId: this.redsysMethodId,
-      paymentStatusId: this.pendingStatusId,
-      currencyId: currencyId
-    }).toPromise();
+    const response = await this.paymentsService
+      .create({
+        reservationId: this.reservationId,
+        amount: amount,
+        paymentDate: new Date(),
+        paymentMethodId: this.redsysMethodId,
+        paymentStatusId: this.pendingStatusId,
+        currencyId: currencyId,
+      })
+      .toPromise();
 
     if (!response) {
       throw new Error('Error al crear el pago');
     }
 
-    const baseUrlFront = (window.location.href).replace(this.router.url, '');
-    const formData: IFormData | undefined = await this.redsysService.generateFormData(
-      response.id, 
-      environment.redsysApiUrl,
-      baseUrlFront
-    ).toPromise();
-    
+    const baseUrlFront = window.location.href.replace(this.router.url, '');
+    const formData: IFormData | undefined = await this.redsysService
+      .generateFormData(response.id, environment.redsysApiUrl, baseUrlFront)
+      .toPromise();
+
     if (formData) {
       await this.enviarFormARedsys(formData);
     }
@@ -722,22 +749,29 @@ export class PaymentManagementComponent
   }
 
   private async processTransferPayment(): Promise<void> {
-    const amount = this.paymentState.type === 'deposit' ? this.depositTotalAmount : this.totalPrice;
+    const amount =
+      this.paymentState.type === 'deposit'
+        ? this.depositTotalAmount
+        : this.totalPrice;
 
-    const currencyId = await this.currencyService.getCurrencyIdByCode('EUR').toPromise();
+    const currencyId = await this.currencyService
+      .getCurrencyIdByCode('EUR')
+      .toPromise();
 
     if (!currencyId) {
       throw new Error('No se pudo obtener el ID de la moneda EUR');
     }
 
-    const response = await this.paymentsService.create({
-      reservationId: this.reservationId,
-      amount: amount,
-      paymentDate: new Date(),
-      paymentMethodId: this.transferMethodId,
-      paymentStatusId: this.pendingStatusId,
-      currencyId: currencyId
-    }).toPromise();
+    const response = await this.paymentsService
+      .create({
+        reservationId: this.reservationId,
+        amount: amount,
+        paymentDate: new Date(),
+        paymentMethodId: this.transferMethodId,
+        paymentStatusId: this.pendingStatusId,
+        currencyId: currencyId,
+      })
+      .toPromise();
 
     if (!response) {
       throw new Error('Error al crear el pago por transferencia');
@@ -749,20 +783,24 @@ export class PaymentManagementComponent
   private async processTransfer25Payment(): Promise<void> {
     const amount = this.transfer25Amount;
 
-    const currencyId = await this.currencyService.getCurrencyIdByCode('EUR').toPromise();
+    const currencyId = await this.currencyService
+      .getCurrencyIdByCode('EUR')
+      .toPromise();
 
     if (!currencyId) {
       throw new Error('No se pudo obtener el ID de la moneda EUR');
     }
 
-    const response = await this.paymentsService.create({
-      reservationId: this.reservationId,
-      amount: amount,
-      paymentDate: new Date(),
-      paymentMethodId: this.transferMethodId,
-      paymentStatusId: this.pendingStatusId,
-      currencyId: currencyId
-    }).toPromise();
+    const response = await this.paymentsService
+      .create({
+        reservationId: this.reservationId,
+        amount: amount,
+        paymentDate: new Date(),
+        paymentMethodId: this.transferMethodId,
+        paymentStatusId: this.pendingStatusId,
+        currencyId: currencyId,
+      })
+      .toPromise();
 
     if (!response) {
       throw new Error('Error al crear el pago por transferencia 25%');
@@ -773,9 +811,11 @@ export class PaymentManagementComponent
   }
 
   loadReservationTotalAmount(): void {
-    this.reservationService.getById(this.reservationId).subscribe((reservation) => {
-      this.totalPrice = reservation.totalAmount;
-    });
+    this.reservationService
+      .getById(this.reservationId)
+      .subscribe((reservation) => {
+        this.totalPrice = reservation.totalAmount;
+      });
   }
 
   reloadReservationTotalAmount(): void {

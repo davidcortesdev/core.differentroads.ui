@@ -25,35 +25,53 @@
       </div>
 
       <!-- Campos generados dinámicamente desde departureReservationFields (COMPLETAMENTE DINÁMICO) -->
-      <ng-container *ngFor="let drf of departureReservationFields">
+      <ng-container *ngFor="let drf of departureReservationFields; trackBy: trackByReservationFieldId">
         <ng-container *ngIf="getReservationFieldDetails(drf.reservationFieldId) as fieldDetails">
-          <!-- Excluir campos que ya se muestran en el header (name, surname) -->
-          <div class="detail-row" *ngIf="fieldDetails.code !== 'name' && fieldDetails.code !== 'surname'">
-            <span class="detail-label">
-              {{ fieldDetails.name }}:
-              <span *ngIf="drf.mandatoryTypeId === 2 || (drf.mandatoryTypeId === 3 && isLeadTraveler)" class="required-indicator">*</span>
-            </span>
-            
-            <!-- Mostrar valor del campo (con formato especial para sexo y fechas) -->
-            <span class="detail-value" *ngIf="getPassengerFieldValue(fieldDetails.code)">
-              <ng-container *ngIf="fieldDetails.fieldType === 'date'">
-                {{ formatDate(getPassengerFieldValue(fieldDetails.code) || "") }}
-              </ng-container>
-              <ng-container *ngIf="fieldDetails.code === 'sex'">
-                {{ getGenderLabel(getPassengerFieldValue(fieldDetails.code)) }}
-              </ng-container>
-              <ng-container *ngIf="fieldDetails.fieldType !== 'date' && fieldDetails.code !== 'sex'">
-                {{ getPassengerFieldValue(fieldDetails.code) }}
-              </ng-container>
-            </span>
+          <!-- Excluir campos que ya se muestran en el header (name, surname) y phonePrefix (se muestra junto al teléfono) -->
+          <ng-container *ngIf="fieldDetails.code !== 'name' && fieldDetails.code !== 'surname' && fieldDetails.code !== 'phonePrefix'">
+            <ng-container *ngIf="getPassengerFieldValue(fieldDetails.code) as fieldValue; else noValue">
+              <div class="detail-row">
+                <span class="detail-label">
+                  {{ fieldDetails.name }}:
+                  <span *ngIf="drf.mandatoryTypeId === 2 || (drf.mandatoryTypeId === 3 && isLeadTraveler)" class="required-indicator">*</span>
+                </span>
+                
+                <!-- Mostrar valor del campo (con formato especial para sexo, fechas y teléfono) -->
+                <span class="detail-value">
+                  <ng-container *ngIf="fieldDetails.fieldType === 'date'">
+                    {{ formatDate(fieldValue || "") }}
+                  </ng-container>
+                  <ng-container *ngIf="fieldDetails.code === 'sex'">
+                    {{ getGenderLabel(fieldValue) }}
+                  </ng-container>
+                  <ng-container *ngIf="fieldDetails.code === 'phone'">
+                    <ng-container *ngIf="getPassengerFieldValue('phonePrefix') as phonePrefix">
+                      <span>+{{ phonePrefix }} </span>
+                    </ng-container>
+                    {{ fieldValue }}
+                  </ng-container>
+                  <ng-container *ngIf="fieldDetails.fieldType !== 'date' && fieldDetails.code !== 'sex' && fieldDetails.code !== 'phone'">
+                    {{ fieldValue }}
+                  </ng-container>
+                </span>
+              </div>
+            </ng-container>
             
             <!-- Mostrar icono de info si no hay valor -->
-            <span class="detail-value" *ngIf="!getPassengerFieldValue(fieldDetails.code)">
-              <i class="pi pi-info-circle"
-                [pTooltip]="(drf.mandatoryTypeId === 2 || (drf.mandatoryTypeId === 3 && isLeadTraveler)) ? 'Este campo es obligatorio' : 'Este dato no es obligatorio para realizar la reserva'"
-                [ngClass]="{ 'required-field': drf.mandatoryTypeId === 2 || (drf.mandatoryTypeId === 3 && isLeadTraveler) }"></i>
-            </span>
-          </div>
+            <ng-template #noValue>
+              <div class="detail-row">
+                <span class="detail-label">
+                  {{ fieldDetails.name }}:
+                  <span *ngIf="drf.mandatoryTypeId === 2 || (drf.mandatoryTypeId === 3 && isLeadTraveler)" class="required-indicator">*</span>
+                </span>
+                <span class="detail-value">
+                  <i class="pi pi-info-circle"
+                    [pTooltip]="(drf.mandatoryTypeId === 2 || (drf.mandatoryTypeId === 3 && isLeadTraveler)) ? 'Este campo es obligatorio' : 'Este dato no es obligatorio para realizar la reserva'"
+                    [ngClass]="{ 'required-field': drf.mandatoryTypeId === 2 || (drf.mandatoryTypeId === 3 && isLeadTraveler) }"></i>
+                </span>
+              </div>
+            </ng-template>
+          </ng-container>
         </ng-container>
       </ng-container>
     </div>
@@ -96,6 +114,7 @@
               pInputText
               type="text"
               class="prefix-input"
+              formControlName="prefijo"
               placeholder="+34"
               inputmode="numeric"
               maxlength="3"

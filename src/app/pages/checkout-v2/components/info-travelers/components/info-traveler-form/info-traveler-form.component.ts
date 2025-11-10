@@ -416,6 +416,38 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       }
     });
 
+    // ⭐ NUEVO: Crear control para phonePrefix si no existe y hay un campo phone
+    const hasPhoneField = this.departureReservationFields.some(field => {
+      const fieldDetails = this.getReservationFieldDetails(field.reservationFieldId);
+      return fieldDetails?.code === 'phone';
+    });
+    
+    const hasPhonePrefixField = this.departureReservationFields.some(field => {
+      const fieldDetails = this.getReservationFieldDetails(field.reservationFieldId);
+      return fieldDetails?.code === 'phonePrefix';
+    });
+
+    if (hasPhoneField && !hasPhonePrefixField && this.traveler) {
+      // Buscar el campo phonePrefix en reservationFields
+      const phonePrefixField = this.reservationFields.find(f => f.code === 'phonePrefix');
+      if (phonePrefixField) {
+        const prefixControlName = `phonePrefix_${this.traveler.id}`;
+        if (!this.travelerForm.get(prefixControlName)) {
+          let prefixValue: string | null = null;
+          
+          // Intentar cargar desde BD
+          const existingPrefixValue = this.getExistingFieldValue(this.traveler.id, phonePrefixField.id);
+          if (existingPrefixValue) {
+            prefixValue = existingPrefixValue;
+          }
+          
+          const prefixControl = this.fb.control(prefixValue);
+          this.travelerForm.addControl(prefixControlName, prefixControl);
+          console.log(`[CONTROL CREADO] ${prefixControlName} con valor: "${prefixValue}"`);
+        }
+      }
+    }
+
     console.log('=== FORMULARIO COMPLETO CREADO ===');
     console.log('Valores del formulario:', this.travelerForm.value);
     

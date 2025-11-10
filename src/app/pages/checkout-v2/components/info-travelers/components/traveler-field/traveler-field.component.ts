@@ -31,7 +31,7 @@ export class TravelerFieldComponent {
   }
 
   get control() {
-    return this.travelerForm.get(this.controlName);
+    return this.travelerForm?.get(this.controlName) || null;
   }
 
   get fieldValue(): string | Date | null {
@@ -94,12 +94,17 @@ export class TravelerFieldComponent {
     this.dateFieldBlur.emit(this.fieldDetails.code);
   }
 
-  // Input helper: limitar prefijo a 3 dígitos
+  // Input helper: limitar prefijo a 3 dígitos y sincronizar con FormControl
   onPrefixInput(event: Event): void {
     const inputEl = event.target as HTMLInputElement | null;
     if (!inputEl) return;
     const digitsOnly = inputEl.value.replace(/\D/g, '').slice(0, 3);
     inputEl.value = digitsOnly;
+    // Reflejar en el formulario si existe el control
+    const prefixCtrl = this.travelerForm?.get(`phonePrefix_${this.travelerId}`);
+    if (prefixCtrl) {
+      prefixCtrl.setValue(digitsOnly, { emitEvent: false });
+    }
   }
 
   getErrorMessage(errors: ValidationErrors | null): string {

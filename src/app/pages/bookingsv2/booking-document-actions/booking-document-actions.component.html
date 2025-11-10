@@ -3,40 +3,82 @@
   <p-panel styleClass="custom-panel">
     <div class="buttons-container">
       <p-button
-        icon="pi pi-envelope"
-        label="Enviar recordatorio"
-        (onClick)="onSendReminder()"
-      >
-      </p-button>
-
-      <p-button
-        icon="pi pi-print"
-        label="Reimprimir información"
-        (onClick)="onReprintInfo()"
-      >
-      </p-button>
-
-      <p-button
-        icon="pi pi-ticket"
-        label="Reimprimir bono reserva"
-        [loading]="isReprintVoucherLoading"
-        (onClick)="onReprintVoucher()"
-      >
-      </p-button>
-
-      <p-button
-        icon="pi pi-calendar"
-        label="Reimprimir recordatorio de pago"
-        (onClick)="onReprintPaymentReminder()"
-      >
-      </p-button>
-
-      <p-button
-        icon="pi pi-ticket"
-        label="Reimprimir e-tickets"
-        (onClick)="onReprintETickets()"
+        *ngFor="let action of getVisibleActions()"
+        [icon]="action.icon"
+        [label]="action.test"
+        (onClick)="onActionClick(action)"
       >
       </p-button>
     </div>
   </p-panel>
 </div>
+
+<!-- Modal para email -->
+<p-dialog
+  [header]="getModalTitle()"
+  [(visible)]="showEmailModal"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="true"
+  [style]="{ width: '90vw', maxWidth: '500px' }"
+  styleClass="email-modal-dialog"
+  (onHide)="closeEmailModal()"
+>
+  <div class="email-modal-container">
+    <div class="email-input-section mb-4">
+      <label for="emailInput" class="input-label">
+        Email <span class="required">*</span>
+      </label>
+      <div class="input-with-icon">
+        <i class="pi pi-envelope input-icon"></i>
+        <input
+          id="emailInput"
+          type="email"
+          pInputText
+          [(ngModel)]="userEmail"
+          placeholder="Ingrese el email"
+          class="email-input"
+          [disabled]="isLoadingEmail"
+        />
+      </div>
+      <small class="help-text" *ngIf="!isLoadingEmail"> </small>
+      <small class="loading-text" *ngIf="isLoadingEmail">
+        Cargando email...
+      </small>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="dialog-footer">
+      <p-button
+        label="Cancelar"
+        icon="pi pi-times"
+        styleClass="p-button-text"
+        (onClick)="closeEmailModal()"
+        [disabled]="isProcessing"
+      >
+      </p-button>
+      <p-button
+        *ngIf="hasDocumentCode()"
+        label="Descargar"
+        icon="pi pi-download"
+        styleClass="p-button-secondary"
+        (onClick)="onDownload()"
+        [loading]="isProcessing"
+        [disabled]="isProcessing"
+      >
+      </p-button>
+      <p-button
+        *ngIf="hasEmailCode()"
+        label="Enviar"
+        icon="pi pi-send"
+        styleClass="p-button-primary"
+        (onClick)="onSend()"
+        [loading]="isProcessing"
+        [disabled]="isProcessing || !userEmail"
+      >
+      </p-button>
+    </div>
+  </ng-template>
+</p-dialog>

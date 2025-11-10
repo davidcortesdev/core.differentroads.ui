@@ -3,7 +3,7 @@
   <div *ngIf="isLoading" class="loading-container">
     <p-progressSpinner></p-progressSpinner>
   </div>
-  
+
   <!-- Contenido principal - solo se muestra cuando no está cargando -->
   <div *ngIf="!isLoading">
     <!-- Header booking section -->
@@ -30,7 +30,7 @@
 
     <!-- Documents booking section -->
     <app-booking-document-actions-v2
-      [isVisible]="false"
+      [isVisible]="true"
       (sendReminder)="sendReminder()"
       (reprintInfo)="reprintInfo()"
       (reprintVoucher)="reprintVoucher()"
@@ -73,7 +73,10 @@
     />
 
     <!-- Flights -->
-    <app-booking-flights-v2 *ngIf="reservation?.id" [reservationId]="reservation.id">
+    <app-booking-flights-v2
+      *ngIf="reservation?.id"
+      [reservationId]="reservation.id"
+    >
     </app-booking-flights-v2>
 
     <!-- Activities -->
@@ -168,13 +171,16 @@
             [autoResize]="false"
           ></textarea>
           <small
-            *ngIf="cancelForm.get('comentario')?.invalid && cancelForm.get('comentario')?.touched"
+            *ngIf="
+              cancelForm.get('comentario')?.invalid &&
+              cancelForm.get('comentario')?.touched
+            "
             class="p-error"
           >
             Por favor, ingrese el motivo de la cancelación
           </small>
         </div>
-        
+
         <!-- Campo de tarifa (solo visible para ATC) -->
         <div class="p-field" *ngIf="isATC">
           <label for="cancelationFee">
@@ -193,7 +199,10 @@
           >
           </p-inputNumber>
           <small
-            *ngIf="cancelForm.get('cancelationFee')?.invalid && cancelForm.get('cancelationFee')?.touched"
+            *ngIf="
+              cancelForm.get('cancelationFee')?.invalid &&
+              cancelForm.get('cancelationFee')?.touched
+            "
             class="p-error"
           >
             Ingrese la tarifa de cancelación (puede ser 0)

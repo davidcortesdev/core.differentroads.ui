@@ -444,13 +444,33 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
           // Crear el control si no existe
           let prefixValue: string | null = null;
           
-          // Intentar cargar desde BD
+          // PRIMERO: Intentar cargar desde BD
           const existingPrefixValue = this.getExistingFieldValue(this.traveler.id, phonePrefixField.id);
           if (existingPrefixValue) {
             prefixValue = existingPrefixValue;
+            console.log(`[BD] phonePrefix → Valor de BD: "${prefixValue}"`);
+          } else if (this.traveler.isLeadTraveler && this.currentPersonalInfo) {
+            // SEGUNDO: Si NO hay datos en BD Y es lead traveler, prellenar del perfil
+            const userPrefixValue = this.currentPersonalInfo.phonePrefix;
+            if (userPrefixValue) {
+              prefixValue = userPrefixValue;
+              console.log(`[PERFIL] phonePrefix → Pre-llenado desde perfil: "${prefixValue}"`);
+            } else {
+              console.log(`[VACÍO] phonePrefix → Sin datos en BD ni en perfil`);
+            }
+          } else {
+            console.log(`[VACÍO] phonePrefix → Sin datos`);
           }
           
           const prefixControl = this.fb.control(prefixValue);
+          
+          // Si el valor viene del perfil del usuario (no de BD), marcarlo como dirty
+          if (this.traveler.isLeadTraveler && this.currentPersonalInfo && !existingPrefixValue && prefixValue) {
+            prefixControl.markAsDirty();
+            prefixControl.markAsTouched();
+            console.log(`[PRE-LLENADO] phonePrefix marcado como dirty desde perfil del usuario`);
+          }
+          
           this.travelerForm.addControl(prefixControlName, prefixControl);
           console.log(`[CONTROL CREADO] ${prefixControlName} con valor: "${prefixValue}"`);
         } else {
@@ -974,6 +994,11 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       case 'sexo':
         returnValue = this.normalizeSexValue(userData.sexo);
         break;
+      case 'phonePrefix':
+      case 'phone_prefix':
+      case 'prefijo':
+        returnValue = userData.phonePrefix || null;
+        break;
       default:
         const codeLower = (fieldCode || '').toLowerCase();
         switch (codeLower) {
@@ -981,6 +1006,11 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
           case 'gender':
           case 'sexo':
             returnValue = this.normalizeSexValue(userData.sexo);
+            break;
+          case 'phoneprefix':
+          case 'phone_prefix':
+          case 'prefijo':
+            returnValue = userData.phonePrefix || null;
             break;
           default:
             returnValue = null;
@@ -2175,6 +2205,11 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       case 'sexo':
         returnValue = this.normalizeSexValue(userData.sexo);
         break;
+      case 'phonePrefix':
+      case 'phone_prefix':
+      case 'prefijo':
+        returnValue = userData.phonePrefix || null;
+        break;
       default:
         const codeLower = (fieldCode || '').toLowerCase();
         switch (codeLower) {
@@ -2182,6 +2217,11 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
           case 'gender':
           case 'sexo':
             returnValue = this.normalizeSexValue(userData.sexo);
+            break;
+          case 'phoneprefix':
+          case 'phone_prefix':
+          case 'prefijo':
+            returnValue = userData.phonePrefix || null;
             break;
           default:
             returnValue = null;

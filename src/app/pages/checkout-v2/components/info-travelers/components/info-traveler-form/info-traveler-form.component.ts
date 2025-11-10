@@ -416,6 +416,49 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       }
     });
 
+    // ⭐ NUEVO: Crear control para phonePrefix si no existe y hay un campo phone
+    const hasPhoneField = this.departureReservationFields.some(field => {
+      const fieldDetails = this.getReservationFieldDetails(field.reservationFieldId);
+      return fieldDetails?.code === 'phone';
+    });
+    
+    const hasPhonePrefixField = this.departureReservationFields.some(field => {
+      const fieldDetails = this.getReservationFieldDetails(field.reservationFieldId);
+      return fieldDetails?.code === 'phonePrefix';
+    });
+
+    if (hasPhoneField && !hasPhonePrefixField && this.traveler) {
+      // Buscar el campo phonePrefix en reservationFields
+      const phonePrefixField = this.reservationFields.find(f => f.code === 'phonePrefix');
+      if (phonePrefixField) {
+        const prefixControlName = `phonePrefix_${this.traveler.id}`;
+        const existingControl = this.travelerForm.get(prefixControlName);
+        
+        if (!existingControl) {
+          // Crear el control si no existe
+          let prefixValue: string | null = null;
+          
+          // Intentar cargar desde BD
+          const existingPrefixValue = this.getExistingFieldValue(this.traveler.id, phonePrefixField.id);
+          if (existingPrefixValue) {
+            prefixValue = existingPrefixValue;
+          }
+          
+          const prefixControl = this.fb.control(prefixValue);
+          this.travelerForm.addControl(prefixControlName, prefixControl);
+          console.log(`[CONTROL CREADO] ${prefixControlName} con valor: "${prefixValue}"`);
+        } else {
+          // Actualizar el valor del control existente con el valor de BD
+          const existingPrefixValue = this.getExistingFieldValue(this.traveler.id, phonePrefixField.id);
+          if (existingPrefixValue !== null && existingPrefixValue !== undefined) {
+            existingControl.setValue(existingPrefixValue, { emitEvent: false });
+            existingControl.markAsPristine();
+            console.log(`[CONTROL ACTUALIZADO] ${prefixControlName} con valor: "${existingPrefixValue}"`);
+          }
+        }
+      }
+    }
+
     console.log('=== FORMULARIO COMPLETO CREADO ===');
     console.log('Valores del formulario:', this.travelerForm.value);
     
@@ -1663,6 +1706,31 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
             next: (fields) => {
               this.existingTravelerFields = fields;
               console.log('Campos existentes recargados:', fields.length);
+              
+              // Actualizar valores de controles existentes con los valores de BD
+              // Esto es especialmente importante para phonePrefix que se crea dinámicamente
+              const phonePrefixField = this.reservationFields.find(f => f.code === 'phonePrefix');
+              if (phonePrefixField && this.traveler) {
+                const prefixControlName = `phonePrefix_${this.traveler.id}`;
+                const prefixControl = this.travelerForm.get(prefixControlName);
+                if (prefixControl) {
+                  const existingPrefixValue = fields.find(
+                    f => f.reservationTravelerId === this.traveler!.id && 
+                         f.reservationFieldId === phonePrefixField.id
+                  )?.value || null;
+                  if (existingPrefixValue !== null && existingPrefixValue !== undefined) {
+                    prefixControl.setValue(existingPrefixValue, { emitEvent: false });
+                    prefixControl.markAsPristine();
+                    prefixControl.markAsUntouched();
+                    console.log(`[ACTUALIZADO DESPUÉS DE GUARDAR] ${prefixControlName} con valor: "${existingPrefixValue}"`);
+                  } else {
+                    // Si no hay valor en BD, limpiar el control
+                    prefixControl.setValue(null, { emitEvent: false });
+                    prefixControl.markAsPristine();
+                    prefixControl.markAsUntouched();
+                  }
+                }
+              }
               
               // Marcar controles como pristine después de guardar
               Object.keys(this.travelerForm.controls).forEach((controlName) => {

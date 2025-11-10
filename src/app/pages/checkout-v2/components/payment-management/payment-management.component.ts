@@ -275,6 +275,14 @@ export class PaymentManagementComponent
     return this.paymentState.method;
   }
 
+  get scalapayMerchantToken(): string {
+    return environment.scalapayMerchantToken;
+  }
+
+  get scalapayEnvironment(): string {
+    return environment.scalapayEnvironment;
+  }
+
   get isPaymentValid(): boolean {
     if (!this.paymentState.type) return false;
 

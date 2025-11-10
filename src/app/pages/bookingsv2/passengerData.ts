@@ -21,4 +21,5 @@ export interface PassengerData {
   dni?: string;
   minorIdExpirationDate?: string;
   minorIdIssueDate?: string;
+  prefijo?: string;
 }

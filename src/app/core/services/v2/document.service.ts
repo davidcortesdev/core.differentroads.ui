@@ -26,12 +26,17 @@ export interface DocumentInfo {
   updatedAt: string;
 }
 
+export interface DocumentDownloadResult {
+  blob: Blob;
+  fileName: string;
+}
+
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class DocumentServicev2 {
   private readonly baseUrl = environment.documentationApiUrl;
-  
+
   constructor(private http: HttpClient) {}
 
   /**
@@ -40,11 +45,14 @@ export class DocumentServicev2 {
    * @param documentType Tipo de documento (BUDGET, RESERVATION_VOUCHER)
    * @returns Observable con toda la información del documento
    */
-  getDocumentInfo(reservationId: number, documentType: DocumentType): Observable<DocumentInfo> {
+  getDocumentInfo(
+    reservationId: number,
+    documentType: DocumentType
+  ): Observable<DocumentInfo> {
     const url = `${this.baseUrl}/DocumentProcess/GetDocument/Reservation/${reservationId}/DocumentType/${documentType}`;
-    
+
     const headers = new HttpHeaders({
-      'accept': 'application/json'
+      accept: 'application/json',
     });
 
     return this.http.get<DocumentInfo>(url, { headers });
@@ -56,9 +64,12 @@ export class DocumentServicev2 {
    * @param documentType Tipo de documento (BUDGET, RESERVATION_VOUCHER)
    * @returns Observable con la ruta del documento
    */
-  getDocumentPath(reservationId: number, documentType: DocumentType): Observable<string> {
+  getDocumentPath(
+    reservationId: number,
+    documentType: DocumentType
+  ): Observable<string> {
     return this.getDocumentInfo(reservationId, documentType).pipe(
-      map(documentInfo => {
+      map((documentInfo) => {
         if (documentInfo && documentInfo.filePath) {
           return documentInfo.filePath;
         }
@@ -73,11 +84,14 @@ export class DocumentServicev2 {
    * @param folder Carpeta donde está almacenado el documento
    * @returns Observable con el blob del documento
    */
-  getDocument(fileName: string, folder: string = 'documents/budget/'): Observable<Blob> {
+  getDocument(
+    fileName: string,
+    folder: string = 'documents/budget/'
+  ): Observable<Blob> {
     const url = `${this.baseUrl}/File/Get`;
-    
+
     const headers = new HttpHeaders({
-      'accept': 'application/octet-stream'
+      accept: 'application/octet-stream',
     });
 
     // Crear la ruta completa del archivo
@@ -85,9 +99,9 @@ export class DocumentServicev2 {
     const params = new URLSearchParams();
     params.set('filepath', filepath);
 
-    return this.http.get(`${url}?${params.toString()}`, { 
-      headers, 
-      responseType: 'blob' 
+    return this.http.get(`${url}?${params.toString()}`, {
+      headers,
+      responseType: 'blob',
     });
   }
 
@@ -97,29 +111,31 @@ export class DocumentServicev2 {
    * @returns Observable con el blob del presupuesto
    */
   getBudgetDocument(reservationId: number): Observable<Blob> {
-    return new Observable(observer => {
+    return new Observable((observer) => {
       // Primero obtener la ruta del documento
       this.getDocumentPath(reservationId, 'BUDGET').subscribe({
         next: (documentPath) => {
           // La ruta ya viene completa desde el endpoint, usar directamente
           const url = `${this.baseUrl}/File/Get`;
-          
+
           const headers = new HttpHeaders({
-            'accept': 'application/octet-stream'
+            accept: 'application/octet-stream',
           });
 
           const params = new URLSearchParams();
           params.set('filepath', documentPath);
 
-          this.http.get(`${url}?${params.toString()}`, { 
-            headers, 
-            responseType: 'blob' 
-          }).subscribe({
-            next: (blob) => observer.next(blob),
-            error: (error) => observer.error(error)
-          });
+          this.http
+            .get(`${url}?${params.toString()}`, {
+              headers,
+              responseType: 'blob',
+            })
+            .subscribe({
+              next: (blob) => observer.next(blob),
+              error: (error) => observer.error(error),
+            });
         },
-        error: (error) => observer.error(error)
+        error: (error) => observer.error(error),
       });
     });
   }
@@ -130,29 +146,31 @@ export class DocumentServicev2 {
    * @returns Observable con el blob del voucher
    */
   getReservationVoucherDocument(reservationId: number): Observable<Blob> {
-    return new Observable(observer => {
+    return new Observable((observer) => {
       // Primero obtener la ruta del documento
       this.getDocumentPath(reservationId, 'RESERVATION_VOUCHER').subscribe({
         next: (documentPath) => {
           // La ruta ya viene completa desde el endpoint, usar directamente
           const url = `${this.baseUrl}/File/Get`;
-          
+
           const headers = new HttpHeaders({
-            'accept': 'application/octet-stream'
+            accept: 'application/octet-stream',
           });
 
           const params = new URLSearchParams();
           params.set('filepath', documentPath);
 
-          this.http.get(`${url}?${params.toString()}`, { 
-            headers, 
-            responseType: 'blob' 
-          }).subscribe({
-            next: (blob) => observer.next(blob),
-            error: (error) => observer.error(error)
-          });
+          this.http
+            .get(`${url}?${params.toString()}`, {
+              headers,
+              responseType: 'blob',
+            })
+            .subscribe({
+              next: (blob) => observer.next(blob),
+              error: (error) => observer.error(error),
+            });
         },
-        error: (error) => observer.error(error)
+        error: (error) => observer.error(error),
       });
     });
   }
@@ -178,7 +196,79 @@ export class DocumentServicev2 {
    * @returns Nombre del archivo
    */
   generateFileName(documentType: DocumentType, reservationId: number): string {
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[:.]/g, '-')
+      .slice(0, 19);
     return `${documentType}_${reservationId}_${timestamp}.pdf`;
+  }
+
+  /**
+   * Obtiene información de un documento por código (método genérico)
+   * @param reservationId ID de la reserva
+   * @param documentCode Código del documento (puede ser cualquier string)
+   * @returns Observable con la información del documento
+   */
+  getDocumentInfoByCode(
+    reservationId: number,
+    documentCode: string
+  ): Observable<DocumentInfo> {
+    const url = `${this.baseUrl}/DocumentProcess/GetDocument/Reservation/${reservationId}/DocumentType/${documentCode}`;
+
+    const headers = new HttpHeaders({
+      accept: 'application/json',
+    });
+
+    return this.http.get<DocumentInfo>(url, { headers });
+  }
+
+  /**
+   * Descarga un documento por código (método unificado)
+   * @param reservationId ID de la reserva
+   * @param documentCode Código del documento
+   * @returns Observable con el blob y el nombre del archivo original
+   */
+  downloadDocumentByCode(
+    reservationId: number,
+    documentCode: string
+  ): Observable<DocumentDownloadResult> {
+    // Para todos los códigos, obtener primero la información del documento para tener el fileName original
+    return new Observable((observer) => {
+      this.getDocumentInfoByCode(reservationId, documentCode).subscribe({
+        next: (documentInfo) => {
+          if (!documentInfo?.filePath) {
+            observer.error(
+              new Error('No se pudo obtener la información del documento')
+            );
+            return;
+          }
+
+          // Descargar el archivo usando la ruta
+          const fileUrl = `${this.baseUrl}/File/Get`;
+          const headers = new HttpHeaders({
+            accept: 'application/octet-stream',
+          });
+          const params = new URLSearchParams();
+          params.set('filepath', documentInfo.filePath);
+
+          this.http
+            .get(`${fileUrl}?${params.toString()}`, {
+              headers,
+              responseType: 'blob',
+            })
+            .subscribe({
+              next: (blob) => {
+                observer.next({
+                  blob: blob,
+                  fileName:
+                    documentInfo.fileName || `documento_${reservationId}.pdf`,
+                });
+              },
+              error: (error) => observer.error(error),
+            });
+        },
+        error: (error) => observer.error(error),
+      });
+    });
   }
 }

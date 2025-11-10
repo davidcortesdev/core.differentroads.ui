@@ -1,5 +1,20 @@
-import { Component, OnInit, OnDestroy, Inject, ViewChild, ErrorHandler } from '@angular/core';
-import { Router, ActivatedRoute, NavigationEnd, NavigationStart, NavigationCancel, NavigationError, Event } from '@angular/router';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  Inject,
+  ViewChild,
+  ErrorHandler,
+} from '@angular/core';
+import {
+  Router,
+  ActivatedRoute,
+  NavigationEnd,
+  NavigationStart,
+  NavigationCancel,
+  NavigationError,
+  Event,
+} from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Flight } from '../../core/models/tours/flight.model';
@@ -118,19 +133,19 @@ export interface PassengerData {
 })
 export class Bookingsv2Component implements OnInit, OnDestroy {
   @ViewChild('paymentHistoryComponent') paymentHistoryComponent: any;
-  
+
   // ID de la reserva actual
   bookingId: string = '';
   isLoading: boolean = false;
   private routerSubscription?: Subscription;
   private routeSubscription?: Subscription;
-  
+
   // Detectar si viene desde ATC
   isATC: boolean = false;
-  
+
   // Detectar si estamos en modo standalone
   isStandaloneMode: boolean = false;
-  
+
   // Trigger para refrescar el resumen
   summaryRefreshTrigger: any = null;
   reservation: IReservationResponse | null = null; // Objeto de reserva completo
@@ -234,7 +249,7 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
     this.paymentForm = this.fb.group({
       amount: [0, [Validators.required, Validators.min(1)]],
     });
-    
+
     this.cancelForm = this.fb.group({
       comentario: ['', [Validators.required]],
       cancelationFee: [0, [Validators.min(0)]], // No requerido por defecto
@@ -251,11 +266,14 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
     // Detectar si viene desde ATC
     this.route.queryParams.subscribe((queryParams) => {
       this.isATC = queryParams['isATC'] === 'true';
-      
+
       // Actualizar validaciones del formulario según si es ATC
       const cancelationFeeControl = this.cancelForm.get('cancelationFee');
       if (this.isATC) {
-        cancelationFeeControl?.setValidators([Validators.required, Validators.min(0)]);
+        cancelationFeeControl?.setValidators([
+          Validators.required,
+          Validators.min(0),
+        ]);
       } else {
         cancelationFeeControl?.setValidators([Validators.min(0)]);
       }
@@ -266,7 +284,7 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
     this.routeSubscription = this.route.params.subscribe((params) => {
       if (params['id']) {
         const newBookingId = params['id'];
-        
+
         // Solo cargar si es diferente del actual
         if (newBookingId !== this.bookingId) {
           this.bookingId = newBookingId;
@@ -300,7 +318,7 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
     if (this.isLoading) {
       return;
     }
-    
+
     this.isLoading = true;
 
     // Convertir el ID de string a number
@@ -434,7 +452,7 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
       11: 'Reserva pendiente de confirmación',
       12: 'Reserva eliminada',
       13: 'Reserva expirada',
-      14: 'Reserva suspendida'
+      14: 'Reserva suspendida',
     };
     return statusMap[statusId] || 'Unknown';
   }
@@ -514,7 +532,11 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
           if (!dateString) return '';
           try {
             const date = new Date(dateString);
-            return date.toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' });
+            return date.toLocaleDateString('es-ES', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+            });
           } catch {
             return dateString;
           }
@@ -529,7 +551,9 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
 
         // Actualizar la fecha de salida en bookingImages (formateada para display)
         if (this.bookingImages.length > 0 && departure.departureDate) {
-          this.bookingImages[0].departureDate = formatDate(departure.departureDate);
+          this.bookingImages[0].departureDate = formatDate(
+            departure.departureDate
+          );
         }
       },
       error: (error) => {
@@ -547,7 +571,11 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
         if (!dateString) return '';
         try {
           const date = new Date(dateString);
-          return date.toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' });
+          return date.toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+          });
         } catch {
           return dateString;
         }
@@ -662,7 +690,7 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
     if (this.cancelForm.valid) {
       const comentario = this.cancelForm.get('comentario')?.value?.trim();
       const cancelationFee = this.cancelForm.get('cancelationFee')?.value;
-      
+
       // Validar que el comentario no esté vacío
       if (!comentario) {
         this.messageService.add({
@@ -674,17 +702,20 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
         });
         return;
       }
-      
+
       // Verificar si viene desde ATC
       if (this.isATC && window.parent && window.parent !== window) {
         // Enviar mensaje al iframe padre (ATC)
-        window.parent.postMessage({
-          type: 'cancel_reservation_request',
-          comment: comentario, // El campo se llama "comment" en el backend
-          cancelationFee: cancelationFee,
-          reservationId: this.reservation?.id
-        }, '*');
-        
+        window.parent.postMessage(
+          {
+            type: 'cancel_reservation_request',
+            comment: comentario, // El campo se llama "comment" en el backend
+            cancelationFee: cancelationFee,
+            reservationId: this.reservation?.id,
+          },
+          '*'
+        );
+
         // Cerrar el modal y mostrar mensaje de confirmación
         this.hideCancelModal();
         this.messageService.add({
@@ -694,7 +725,7 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
           detail: 'La solicitud de cancelación ha sido enviada a ATC',
           life: 3000,
         });
-        
+
         return; // NO continuar con la cancelación normal
       }
 
@@ -730,7 +761,7 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
                 detail: 'La reserva ha sido cancelada correctamente',
                 life: 3000,
               });
-              
+
               // Recargar los datos de la reserva
               this.loadBookingData(this.bookingId);
             } else {
@@ -792,69 +823,9 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
     if (this.bookingId) {
       this.loadBookingData(this.bookingId);
     }
-    
+
     // Disparar trigger de refresh para actualizar el resumen
     this.summaryRefreshTrigger = Date.now();
-  }
-
-  sendReminder(): void {
-    if (this.isTO) {
-      this.messageService.add({
-        key: 'center',
-        severity: 'success',
-        summary: 'Éxito',
-        detail: 'Recordatorio enviado correctamente',
-        life: 3000,
-      });
-    }
-  }
-
-  reprintInfo(): void {
-    if (this.isTO) {
-      this.messageService.add({
-        key: 'center',
-        severity: 'info',
-        summary: 'Información',
-        detail: 'Reimprimiendo información de la reserva',
-        life: 3000,
-      });
-    }
-  }
-
-  reprintVoucher(): void {
-    if (this.isTO) {
-      this.messageService.add({
-        key: 'center',
-        severity: 'info',
-        summary: 'Información',
-        detail: 'Reimprimiendo bono de reserva',
-        life: 3000,
-      });
-    }
-  }
-
-  reprintPaymentReminder(): void {
-    if (this.isTO) {
-      this.messageService.add({
-        key: 'center',
-        severity: 'info',
-        summary: 'Información',
-        detail: 'Reimprimiendo recordatorio de pago',
-        life: 3000,
-      });
-    }
-  }
-
-  reprintETickets(): void {
-    if (this.isTO) {
-      this.messageService.add({
-        key: 'center',
-        severity: 'info',
-        summary: 'Información',
-        detail: 'Reimprimiendo e-tickets',
-        life: 3000,
-      });
-    }
   }
 
   handleFileUploaded(file: any): void {

@@ -50,7 +50,7 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
     if (!tkId) return;
 
     this.isLoadingRating = true;
-
+console.log(this.tourData.tripTypes)
     this.subscriptions.add(
       this.tourService
         .getTourIdByTKId(tkId)

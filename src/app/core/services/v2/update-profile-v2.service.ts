@@ -126,7 +126,16 @@ export class UpdateProfileV2Service {
       existingMap.set(existing.userFieldId, existing);
     });
     
-    const updateObservables = fieldValues.map(fieldValue => {
+    // Filtrar duplicados por userFieldId antes de procesar
+    const uniqueFieldValues = new Map();
+    fieldValues.forEach(fieldValue => {
+      const key = `${fieldValue.userId}-${fieldValue.userFieldId}`;
+      if (!uniqueFieldValues.has(key)) {
+        uniqueFieldValues.set(key, fieldValue);
+      }
+    });
+    
+    const updateObservables = Array.from(uniqueFieldValues.values()).map(fieldValue => {
       const existing = existingMap.get(fieldValue.userFieldId);
       
       if (existing) {
@@ -158,6 +167,7 @@ export class UpdateProfileV2Service {
     const fieldMappings = [
       { fieldCode: 'image', value: personalInfo.avatarUrl },
       { fieldCode: 'phone', value: personalInfo.telefono },
+      { fieldCode: 'phonePrefix', value: personalInfo.phonePrefix },
       { fieldCode: 'birth_date', value: this.formatDate(personalInfo.fechaNacimiento) },
       { fieldCode: 'national_id', value: personalInfo.dni },
       { fieldCode: 'address', value: personalInfo.direccion },
@@ -170,13 +180,18 @@ export class UpdateProfileV2Service {
 
     fieldMappings.forEach(mapping => {
       if (mapping.value && mapping.value.toString().trim()) {
-        const fieldValue = {
-          userId: parseInt(userId),
-          userFieldId: this.getFieldIdByCode(mapping.fieldCode),
-          value: mapping.value.toString().trim()
-        };
+        const userFieldId = this.getFieldIdByCode(mapping.fieldCode);
         
-        fieldValues.push(fieldValue);
+        // Solo agregar si el userFieldId es válido (no 0)
+        if (userFieldId > 0) {
+          const fieldValue = {
+            userId: parseInt(userId),
+            userFieldId: userFieldId,
+            value: mapping.value.toString().trim()
+          };
+          
+          fieldValues.push(fieldValue);
+        }
       }
     });
     return fieldValues;
@@ -200,7 +215,8 @@ export class UpdateProfileV2Service {
       'country': 9,
       'notes': 10,
       'image': 12,
-      'sexo': 14
+      'sexo': 14,
+      'phonePrefix': 15
     };
     
     return fieldIdMap[fieldCode] || 0;

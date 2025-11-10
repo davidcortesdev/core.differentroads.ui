@@ -49,6 +49,7 @@ import {
 import { IBookingRequirements } from '../../../../../../core/services/flight/flight-search.service';
 import { PersonalInfo } from '../../../../../../core/models/v2/profile-v2.model';
 import { CheckoutUserDataService } from '../../../../../../core/services/v2/checkout-user-data.service';
+import { PhonePrefixService, IPhonePrefixResponse } from '../../../../../../core/services/masterdata/phone-prefix.service';
 
 @Component({
   selector: 'app-info-traveler-form',
@@ -78,6 +79,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
   mandatoryTypes: IMandatoryTypeResponse[] = [];
   reservationFields: IReservationFieldResponse[] = [];
   ageGroups: IAgeGroupResponse[] = [];
+  phonePrefixes: IPhonePrefixResponse[] = [];
 
   // Datos existentes del viajero
   existingTravelerFields: IReservationTravelerFieldResponse[] = [];
@@ -171,7 +173,8 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     private reservationTravelerFieldService: ReservationTravelerFieldService,
     private messageService: MessageService,
     private fb: FormBuilder,
-    private checkoutUserDataService: CheckoutUserDataService
+    private checkoutUserDataService: CheckoutUserDataService,
+    private phonePrefixService: PhonePrefixService
   ) {
     this.travelerForm = this.fb.group({});
   }
@@ -247,6 +250,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
           mandatoryTypes: this.mandatoryTypeService.getAll(),
           reservationFields: this.reservationFieldService.getAllOrdered(),
           ageGroups: this.ageGroupService.getAllOrdered(),
+          phonePrefixes: this.phonePrefixService.getAllOrdered(),
         }).pipe(takeUntil(this.destroy$))
           .subscribe({
             next: ({
@@ -255,12 +259,14 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
               mandatoryTypes,
               reservationFields,
               ageGroups,
+              phonePrefixes,
             }) => {
               this.traveler = traveler;
               this.departureReservationFields = departureFields;
               this.mandatoryTypes = mandatoryTypes;
               this.reservationFields = reservationFields;
               this.ageGroups = ageGroups;
+              this.phonePrefixes = phonePrefixes;
               
               // Buscar el age group del viajero
               this.ageGroup = this.ageGroups.find(ag => ag.id === this.traveler?.ageGroupId) || null;
@@ -438,13 +444,33 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
           // Crear el control si no existe
           let prefixValue: string | null = null;
           
-          // Intentar cargar desde BD
+          // PRIMERO: Intentar cargar desde BD
           const existingPrefixValue = this.getExistingFieldValue(this.traveler.id, phonePrefixField.id);
           if (existingPrefixValue) {
             prefixValue = existingPrefixValue;
+            console.log(`[BD] phonePrefix → Valor de BD: "${prefixValue}"`);
+          } else if (this.traveler.isLeadTraveler && this.currentPersonalInfo) {
+            // SEGUNDO: Si NO hay datos en BD Y es lead traveler, prellenar del perfil
+            const userPrefixValue = this.currentPersonalInfo.phonePrefix;
+            if (userPrefixValue) {
+              prefixValue = userPrefixValue;
+              console.log(`[PERFIL] phonePrefix → Pre-llenado desde perfil: "${prefixValue}"`);
+            } else {
+              console.log(`[VACÍO] phonePrefix → Sin datos en BD ni en perfil`);
+            }
+          } else {
+            console.log(`[VACÍO] phonePrefix → Sin datos`);
           }
           
           const prefixControl = this.fb.control(prefixValue);
+          
+          // Si el valor viene del perfil del usuario (no de BD), marcarlo como dirty
+          if (this.traveler.isLeadTraveler && this.currentPersonalInfo && !existingPrefixValue && prefixValue) {
+            prefixControl.markAsDirty();
+            prefixControl.markAsTouched();
+            console.log(`[PRE-LLENADO] phonePrefix marcado como dirty desde perfil del usuario`);
+          }
+          
           this.travelerForm.addControl(prefixControlName, prefixControl);
           console.log(`[CONTROL CREADO] ${prefixControlName} con valor: "${prefixValue}"`);
         } else {
@@ -968,6 +994,11 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       case 'sexo':
         returnValue = this.normalizeSexValue(userData.sexo);
         break;
+      case 'phonePrefix':
+      case 'phone_prefix':
+      case 'prefijo':
+        returnValue = userData.phonePrefix || null;
+        break;
       default:
         const codeLower = (fieldCode || '').toLowerCase();
         switch (codeLower) {
@@ -975,6 +1006,11 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
           case 'gender':
           case 'sexo':
             returnValue = this.normalizeSexValue(userData.sexo);
+            break;
+          case 'phoneprefix':
+          case 'phone_prefix':
+          case 'prefijo':
+            returnValue = userData.phonePrefix || null;
             break;
           default:
             returnValue = null;
@@ -2169,6 +2205,11 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       case 'sexo':
         returnValue = this.normalizeSexValue(userData.sexo);
         break;
+      case 'phonePrefix':
+      case 'phone_prefix':
+      case 'prefijo':
+        returnValue = userData.phonePrefix || null;
+        break;
       default:
         const codeLower = (fieldCode || '').toLowerCase();
         switch (codeLower) {
@@ -2176,6 +2217,11 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
           case 'gender':
           case 'sexo':
             returnValue = this.normalizeSexValue(userData.sexo);
+            break;
+          case 'phoneprefix':
+          case 'phone_prefix':
+          case 'prefijo':
+            returnValue = userData.phonePrefix || null;
             break;
           default:
             returnValue = null;

@@ -30,12 +30,7 @@
 
     <!-- Documents booking section -->
     <app-booking-document-actions-v2
-      [isVisible]="true"
-      (sendReminder)="sendReminder()"
-      (reprintInfo)="reprintInfo()"
-      (reprintVoucher)="reprintVoucher()"
-      (reprintPaymentReminder)="reprintPaymentReminder()"
-      (reprintETickets)="reprintETickets()"
+      [isVisible]="isATC"
       [bookingId]="bookingId"
     >
     </app-booking-document-actions-v2>

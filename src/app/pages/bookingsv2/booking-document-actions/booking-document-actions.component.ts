@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { MessageService } from 'primeng/api';
 import { ReservationService } from '../../../core/services/reservation/reservation.service';
 import { UsersNetService } from '../../../core/services/users/usersNet.service';
@@ -32,13 +32,6 @@ interface DocumentActionConfig {
 export class BookingDocumentActionsV2Component implements OnInit {
   @Input() isVisible: boolean = true;
   @Input() bookingId: string = '';
-  @Output() sendReminder = new EventEmitter<void>();
-  @Output() reprintInfo = new EventEmitter<void>();
-  @Output() reprintVoucher = new EventEmitter<void>();
-  @Output() reprintPaymentReminder = new EventEmitter<void>();
-  @Output() reprintETickets = new EventEmitter<void>();
-
-  isReprintVoucherLoading: boolean = false;
 
   // Modal properties
   showEmailModal: boolean = false;

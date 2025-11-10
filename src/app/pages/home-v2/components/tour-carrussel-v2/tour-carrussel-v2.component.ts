@@ -38,6 +38,7 @@ import { TourTagService } from '../../../../core/services/tag/tour-tag.service';
 import { TagService } from '../../../../core/services/tag/tag.service';
 import { TourLocationService } from '../../../../core/services/tour/tour-location.service';
 import { LocationNetService, Location } from '../../../../core/services/locations/locationNet.service';
+import { ITripTypeResponse, TripTypeService } from '../../../../core/services/trip-type/trip-type.service';
 
 // ✅ NUEVOS SERVICIOS: Para fechas y tags
 import {
@@ -74,6 +75,8 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
     text: string;
     url: string;
   };
+
+  private tripTypesMap: Map<number, ITripTypeResponse> = new Map();
 
   // Debug: IDs de tours para mostrar en pantalla
   debugTourIds: number[] = [];
@@ -118,16 +121,42 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
     private readonly departureService: DepartureService,
     private readonly itineraryService: ItineraryService,
     private readonly itineraryDayService: ItineraryDayService,
-    private readonly reviewsService: ReviewsService
-  ) {}
+    private readonly reviewsService: ReviewsService,
+    private readonly tripTypeService: TripTypeService
+  ) { }
 
   ngOnInit(): void {
-    this.loadTourCarousel();
+    this.loadTripTypes().pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      this.loadTourCarousel();
+    });
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  private loadTripTypes(): Observable<void> {
+    return this.tripTypeService.getActiveTripTypes().pipe(
+      map((tripTypes: ITripTypeResponse[]) => {
+        this.tripTypesMap.clear();
+        tripTypes.forEach(tripType => {
+          // Crear abreviación (primera letra del nombre)
+          const abbreviation = tripType.name.charAt(0).toUpperCase();
+
+          this.tripTypesMap.set(tripType.id, {
+            ...tripType,
+            abbreviation: abbreviation
+          });
+        });
+      }),
+      catchError((error) => {
+        console.error('❌ Error loading trip types:', error);
+        return of(undefined);
+      })
+    );
   }
 
   private loadTourCarousel(): void {
@@ -373,8 +402,8 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
             const itineraryDaysRequest =
               itineraries.length > 0
                 ? this.itineraryDayService
-                    .getAll({ itineraryId: itineraries[0].id })
-                    .pipe(catchError(() => of([])))
+                  .getAll({ itineraryId: itineraries[0].id })
+                  .pipe(catchError(() => of([])))
                 : of([]);
 
             const tagRequest = this.tourTagService
@@ -548,12 +577,16 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
                 let tourPrice = tour.minPrice || 0;
 
                 // ✅ OBTENER FECHAS: Extraer fechas de los departures
+                // ✅ OBTENER FECHAS: Extraer fechas de los departures
                 const availableMonths: string[] = [];
                 const departureDates: string[] = [];
+                const tripTypes: { name: string; code: string; color: string; abbreviation: string }[] = [];
                 let nextDepartureDate: string | undefined;
 
                 if (additional.departures && additional.departures.length > 0) {
                   // Ordenar departures por fecha
+
+
                   const sortedDepartures = additional.departures
                     .filter((departure) => departure.departureDate)
                     .sort(
@@ -568,24 +601,28 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
                       const month = date
                         .toLocaleDateString('es-ES', { month: 'short' })
                         .toUpperCase();
+
                       if (!availableMonths.includes(month)) {
                         availableMonths.push(month);
                       }
                       departureDates.push(departure.departureDate);
+
+                      // ✅ NUEVO: Agregar tripTypeId al array (sin duplicados)
+                      if (departure.tripTypeId) {
+                        const tripTypeInfo = this.tripTypesMap.get(departure.tripTypeId);
+                        if (tripTypeInfo && !tripTypes.some(t => t.code === tripTypeInfo.code)) {
+                          tripTypes.push({
+                            name: tripTypeInfo.name,
+                            code: tripTypeInfo.code,
+                            color: tripTypeInfo.color,
+                            abbreviation: tripTypeInfo.abbreviation
+                          });
+                        }
+                      }
+
+
                     }
                   });
-
-                  // Obtener la próxima fecha de departure
-                  const today = new Date();
-                  const futureDepartures = sortedDepartures.filter(
-                    (departure) =>
-                      departure.departureDate &&
-                      new Date(departure.departureDate) >= today
-                  );
-
-                  if (futureDepartures.length > 0) {
-                    nextDepartureDate = futureDepartures[0].departureDate!;
-                  }
                 }
 
                 // ✅ OBTENER TAG: Usar el primer tag disponible
@@ -638,6 +675,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
                   continent: additional.continent || '',
                   country: additional.country || '',
                   productStyleId: tour.productStyleId, // ✅ Agregar productStyleId al objeto
+                  tripTypes: tripTypes,
                 };
               }
             )

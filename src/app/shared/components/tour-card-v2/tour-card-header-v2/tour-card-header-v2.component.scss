@@ -101,6 +101,7 @@ $spacing-md: 1rem;
       color: var(--p-button-primary-color);
       padding: $spacing-xs $spacing-xs * 2;
       opacity: 0;
+      max-height: 25px;
       animation: fadeIn 0.5s ease-in-out forwards;
       @include responsive-font(0.6rem, 0.65rem, 0.55rem);
 
@@ -148,6 +149,12 @@ $spacing-md: 1rem;
       }
     }
 
+    .trip-type-tag {
+      @extend .by-dr-tag; // Si tu preprocessor lo soporta
+      max-height: 25px;
+      align-self: flex-end !important;
+
+    }
     // Indicador general
     .indicator {
       font-weight: 500;

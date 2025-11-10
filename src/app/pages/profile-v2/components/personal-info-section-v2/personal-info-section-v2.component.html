@@ -48,7 +48,7 @@
       <div class="info-item">
         <span class="label">Teléfono:</span>
         <span class="value" [class.pending]="!personalInfo.telefono">
-          {{ personalInfo.telefono || 'Pendiente' }}
+          <ng-container *ngIf="personalInfo.phonePrefix"><span>{{ personalInfo.phonePrefix }} </span></ng-container>{{ personalInfo.telefono || 'Pendiente' }}
         </span>
       </div>
       <div class="info-item">

@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, ChangeDetectorRef, OnChanges, SimpleChanges } from '@angular/core';
 import { FormGroup, ValidationErrors, AbstractControl } from '@angular/forms';
 import { IReservationFieldResponse } from '../../../../../../core/services/reservation/reservation-field.service';
+import { IPhonePrefixResponse } from '../../../../../../core/services/masterdata/phone-prefix.service';
 
 @Component({
   selector: 'app-traveler-field',
@@ -16,6 +17,7 @@ export class TravelerFieldComponent implements OnChanges {
   @Input() isMandatory: boolean = false;
   @Input() sexOptions: Array<{ label: string; value: string }> = [];
   @Input() countryOptions: Array<{ name: string; code: string; value: string }> = [];
+  @Input() phonePrefixOptions: IPhonePrefixResponse[] = [];
   @Input() minDate: Date | null = null;
   @Input() maxDate: Date | null = null;
 
@@ -107,20 +109,8 @@ export class TravelerFieldComponent implements OnChanges {
     this.dateFieldBlur.emit(this.fieldDetails.code);
   }
 
-  // Input helper: limitar prefijo a 3 dígitos y sincronizar con FormControl
-  onPrefixInput(event: Event): void {
-    const inputEl = event.target as HTMLInputElement | null;
-    if (!inputEl) return;
-    const digitsOnly = inputEl.value.replace(/\D/g, '').slice(0, 3);
-    inputEl.value = digitsOnly;
-    
-    // Obtener el control directamente del formulario
-    const control = this.prefixControl;
-    if (control) {
-      control.setValue(digitsOnly, { emitEvent: true });
-      control.markAsDirty();
-      control.markAsTouched();
-    }
+  onPrefixChange(): void {
+    this.fieldChange.emit('phonePrefix');
   }
 
   getErrorMessage(errors: ValidationErrors | null): string {

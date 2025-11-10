@@ -13,21 +13,23 @@
   <div *ngIf="!loading && !error && tour" class="tour-content">
     <!-- Tour Header Section - MODIFICADO PARA PASAR ACTIVIDADES SELECCIONADAS, FLAG Y DATOS DE AGE GROUPS -->
     <section class="tour-section tour-header-section">
-      <app-tour-header-v2
-        [tourId]="tour.id"
-        [totalPrice]="totalPrice"
-        [selectedCity]="selectedCity"
-        [selectedDeparture]="selectedDepartureData"
-        [totalPassengers]="totalPassengers"
-        [selectedActivities]="selectedActivities"
-        [showActivitiesStatus]="showActivitiesStatus"
-        [passengersData]="passengersData"
-        [ageGroupCategories]="ageGroupCategories"
-        [activityTypesAnalysis]="activityTypesAnalysis"
-        [preview]="preview"
-        [selectedActivityPackId]="selectedActivityPackId">
-      >
-      </app-tour-header-v2>
+      <section class="tour-section tour-header-section">
+        <app-tour-header-v2
+          [tourId]="tour.id"
+          [totalPrice]="totalPrice"
+          [selectedCity]="selectedCity"
+          [selectedDeparture]="selectedDepartureData"
+          [totalPassengers]="totalPassengers"
+          [selectedActivities]="selectedActivities"
+          [showActivitiesStatus]="showActivitiesStatus"
+          [passengersData]="passengersData"
+          [ageGroupCategories]="ageGroupCategories"
+          [activityTypesAnalysis]="activityTypesAnalysis"
+          [preview]="preview"
+          [selectedActivityPackId]="selectedActivityPackId"
+          [tourTripTypes]="tourTripTypes"> <!-- ✅ NUEVO: Añadir tourTripTypes -->
+        </app-tour-header-v2>
+      </section>
     </section>
     
     <!-- Tour Overview Section -->

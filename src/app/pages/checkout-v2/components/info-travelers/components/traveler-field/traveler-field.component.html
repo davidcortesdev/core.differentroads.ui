@@ -20,18 +20,23 @@
       <!-- Campo de teléfono (code === 'phone') -->
       <ng-container *ngIf="fieldDetails.code === 'phone'">
         <div class="phone-row">
-          <ng-container *ngIf="travelerForm && travelerId">
-            <input
-              *ngIf="travelerForm.get('phonePrefix_' + travelerId)"
-              pInputText
-              type="text"
-              class="prefix-input"
-              [formControl]="travelerForm.get('phonePrefix_' + travelerId)"
-              placeholder="+34"
-              inputmode="numeric"
-              maxlength="3"
-              (input)="onPrefixInput($event)"
-            />
+          <ng-container *ngIf="prefixControl as prefixCtrl">
+            <p-select
+              [formControl]="prefixCtrl"
+              [options]="phonePrefixOptions"
+              optionLabel="name"
+              optionValue="prefix"
+              placeholder="Seleccione prefijo"
+              [showClear]="true"
+              [filter]="true"
+              filterBy="name,prefix,code"
+              [ngClass]="{ 'p-invalid': prefixCtrl?.invalid && (prefixCtrl?.dirty || prefixCtrl?.touched) }"
+              (onChange)="onPrefixChange()"
+              styleClass="prefix-select">
+              <ng-template let-prefix pTemplate="item">
+                <div>{{ prefix.prefix }} - {{ prefix.name }}</div>
+              </ng-template>
+            </p-select>
           </ng-container>
           <input 
             pInputText 
@@ -82,16 +87,22 @@
     <ng-container *ngSwitchCase="'phone'">
       <div class="phone-row">
         <ng-container *ngIf="prefixControl as prefixCtrl">
-          <input
-            pInputText
-            type="text"
-            class="prefix-input"
+          <p-select
             [formControl]="prefixCtrl"
-            placeholder="+34"
-            inputmode="numeric"
-            maxlength="3"
-            (input)="onPrefixInput($event)"
-          />
+            [options]="phonePrefixOptions"
+            optionLabel="name"
+            optionValue="prefix"
+            placeholder="Seleccione prefijo"
+            [showClear]="true"
+            [filter]="true"
+            filterBy="name,prefix,code"
+            [ngClass]="{ 'p-invalid': prefixCtrl?.invalid && (prefixCtrl?.dirty || prefixCtrl?.touched) }"
+            (onChange)="onPrefixChange()"
+            styleClass="prefix-select">
+            <ng-template let-prefix pTemplate="item">
+              <div>{{ prefix.prefix }} - {{ prefix.name }}</div>
+            </ng-template>
+          </p-select>
         </ng-container>
         <input 
           pInputText 

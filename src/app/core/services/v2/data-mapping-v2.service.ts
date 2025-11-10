@@ -293,6 +293,9 @@ export class DataMappingV2Service {
           case 'Teléfono':
             combinedData.telefono = fieldValue.value;
             break;
+          case 'Prefijo telefónico':
+            combinedData.phonePrefix = fieldValue.value;
+            break;
           case 'Fecha de nacimiento':
             // Convertir de YYYY-MM-DD (API) a DD/MM/YYYY (visualización)
             if (fieldValue.value && fieldValue.value.includes('-')) {
@@ -346,6 +349,7 @@ export class DataMappingV2Service {
       { fieldName: 'dni', value: userData.dni },
       { fieldName: 'nacionalidad', value: userData.pais },
       { fieldName: 'telefono', value: userData.telefono },
+      { fieldName: 'phonePrefix', value: userData.phonePrefix },
       { fieldName: 'ciudad', value: userData.ciudad },
       { fieldName: 'codigo_postal', value: userData.codigoPostal },
       { fieldName: 'fecha_nacimiento', value: userData.fechaNacimiento },

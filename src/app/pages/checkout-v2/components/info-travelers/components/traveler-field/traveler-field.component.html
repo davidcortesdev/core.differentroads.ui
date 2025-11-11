@@ -21,22 +21,16 @@
       <ng-container *ngIf="fieldDetails.code === 'phone'">
         <div class="phone-row">
           <ng-container *ngIf="prefixControl as prefixCtrl">
-            <p-select
+            <app-phone-prefix-select
               [formControl]="prefixCtrl"
-              [options]="phonePrefixOptions"
-              optionLabel="name"
-              optionValue="prefix"
-              placeholder="Seleccione prefijo"
+              [phonePrefixOptions]="phonePrefixOptions"
+              [placeholder]="'Seleccione prefijo'"
               [showClear]="true"
               [filter]="true"
-              filterBy="name,prefix,code"
-              [ngClass]="{ 'p-invalid': prefixCtrl?.invalid && (prefixCtrl?.dirty || prefixCtrl?.touched) }"
-              (onChange)="onPrefixChange()"
-              styleClass="prefix-select">
-              <ng-template let-prefix pTemplate="item">
-                <div>{{ prefix.prefix }} - {{ prefix.name }}</div>
-              </ng-template>
-            </p-select>
+              [styleClass]="'prefix-select'"
+              [errorClass]="prefixCtrl?.invalid && (prefixCtrl?.dirty || prefixCtrl?.touched) ? 'p-invalid' : ''"
+              (prefixChange)="onPrefixChange()">
+            </app-phone-prefix-select>
           </ng-container>
           <input 
             pInputText 
@@ -87,22 +81,16 @@
     <ng-container *ngSwitchCase="'phone'">
       <div class="phone-row">
         <ng-container *ngIf="prefixControl as prefixCtrl">
-          <p-select
+          <app-phone-prefix-select
             [formControl]="prefixCtrl"
-            [options]="phonePrefixOptions"
-            optionLabel="name"
-            optionValue="prefix"
-            placeholder="Seleccione prefijo"
+            [phonePrefixOptions]="phonePrefixOptions"
+            [placeholder]="'Seleccione prefijo'"
             [showClear]="true"
             [filter]="true"
-            filterBy="name,prefix,code"
-            [ngClass]="{ 'p-invalid': prefixCtrl?.invalid && (prefixCtrl?.dirty || prefixCtrl?.touched) }"
-            (onChange)="onPrefixChange()"
-            styleClass="prefix-select">
-            <ng-template let-prefix pTemplate="item">
-              <div>{{ prefix.prefix }} - {{ prefix.name }}</div>
-            </ng-template>
-          </p-select>
+            [styleClass]="'prefix-select'"
+            [errorClass]="prefixCtrl?.invalid && (prefixCtrl?.dirty || prefixCtrl?.touched) ? 'p-invalid' : ''"
+            (prefixChange)="onPrefixChange()">
+          </app-phone-prefix-select>
         </ng-container>
         <input 
           pInputText 

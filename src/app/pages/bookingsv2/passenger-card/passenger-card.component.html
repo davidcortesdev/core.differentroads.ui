@@ -110,25 +110,19 @@
         <div class="form-field" *ngIf="shouldShowField('phone')">
           <label>Teléfono:</label>
           <div class="phone-row">
-            <p-select
+            <app-phone-prefix-select
               *ngIf="phonePrefixOptions.length > 0"
               [(ngModel)]="selectedPhonePrefix"
               name="prefijo"
               [ngModelOptions]="{standalone: true}"
-              [options]="phonePrefixOptions"
-              optionLabel="name"
-              optionValue="prefix"
-              placeholder="Seleccione prefijo"
+              [phonePrefixOptions]="phonePrefixOptions"
+              [placeholder]="'Seleccione prefijo'"
               [showClear]="true"
               [filter]="true"
-              filterBy="name,prefix,code"
-              (onChange)="onPhonePrefixChange($event)"
               [disabled]="!isEditing"
-              styleClass="prefix-select">
-              <ng-template let-prefix pTemplate="item">
-                <div>{{ prefix.prefix }} - {{ prefix.name }}</div>
-              </ng-template>
-            </p-select>
+              [styleClass]="'prefix-select'"
+              (prefixChange)="onPhonePrefixChange({ value: $event })">
+            </app-phone-prefix-select>
             <input
               pInputText
               formControlName="phone"

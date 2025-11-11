@@ -110,6 +110,7 @@ export class TravelerFieldComponent implements OnChanges {
   }
 
   onPrefixChange(): void {
+    this.cdr.markForCheck(); // Forzar detección de cambios para OnPush
     this.fieldChange.emit('phonePrefix');
   }
 

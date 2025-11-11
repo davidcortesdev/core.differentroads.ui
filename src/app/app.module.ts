@@ -239,6 +239,7 @@ import { SeoLinksComponent } from './shared/components/seo-links/seo-links.compo
 import { AdditionalInfoComponent } from './shared/components/additional-info/additional-info.component';
 import { EnvironmentBannerComponent } from './shared/components/environment-banner/environment-banner.component';
 import { SeoManagerComponent } from './shared/components/seo-manager/seo-manager.component';
+import { PhonePrefixSelectComponent } from './shared/components/phone-prefix-select/phone-prefix-select.component';
 
 // Tour Cards
 import { TourCardComponent } from './shared/components/tour-card/tour-card.component';
@@ -421,6 +422,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     AdditionalInfoComponent,
     EnvironmentBannerComponent,
     SeoManagerComponent,
+    PhonePrefixSelectComponent,
 
     // Tour Cards
     TourCardComponent,

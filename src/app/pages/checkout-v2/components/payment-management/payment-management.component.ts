@@ -871,12 +871,12 @@ export class PaymentManagementComponent
     this.discountMessage = 'Validando código de descuento...';
     this.discountMessageSeverity = 'info';
 
-    this.discountCodeService.getByCode(this.discountCode.trim().toUpperCase()).subscribe({
+    this.discountCodeService.getByCode(this.discountCode.trim()).subscribe({
       next: (discounts: IDiscountCodeResponse[]) => {
         if (discounts && discounts.length > 0) {
-          // Buscar el código que coincida exactamente (no parcialmente)
-          const enteredCode = this.discountCode.trim().toUpperCase();
-          const discount = discounts.find(d => d.code.toUpperCase() === enteredCode);
+          // Buscar el código que coincida exactamente (case-sensitive)
+          const enteredCode = this.discountCode.trim();
+          const discount = discounts.find(d => d.code === enteredCode);
           
           if (!discount) {
             this.discountMessage = 'Código de descuento no válido';

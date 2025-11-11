@@ -472,6 +472,8 @@ export class PaymentManagementComponent
             'Error al procesar el pago. La reservación se mantendrá en su estado actual.';
         }
       }
+      
+      this.paymentState.isLoading = false;
 
       this.messageService.add({
         severity: 'error',
@@ -479,8 +481,8 @@ export class PaymentManagementComponent
         detail: errorMessage,
         life: 5000,
       });
-    } finally {
-      this.paymentState.isLoading = false;
+    
+      
     }
   }
 

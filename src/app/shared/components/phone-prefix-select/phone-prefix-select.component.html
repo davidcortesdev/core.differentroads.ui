@@ -12,15 +12,15 @@
   [styleClass]="styleClass"
   (ngModelChange)="onValueChange($event)">
   <ng-template let-prefix pTemplate="item">
-    <div style="font-size: 1.3em; text-align: center;">
-      <span>{{ getCountryFlag(prefix.isoCode2) }}</span>
-      <strong>{{ prefix.prefix }}</strong>
+    <div class="phone-prefix-dropdown-item">
+      <span class="flag">{{ getCountryFlag(prefix.isoCode2) }}</span>
+      <strong class="prefix">{{ prefix.prefix }}</strong>
     </div>
   </ng-template>
   <ng-template pTemplate="selectedItem">
-    <div style="font-size: 1.1em;">
-      <span>{{ getCountryFlag(getSelectedPrefix()?.isoCode2 || '') }}</span>
-      <strong>{{ getSelectedPrefix()?.prefix || '' }}</strong>
+    <div class="phone-prefix-selected">
+      <span class="flag">{{ getCountryFlag(getSelectedPrefix()?.isoCode2 || '') }}</span>
+      <strong class="prefix">{{ getSelectedPrefix()?.prefix || '' }}</strong>
     </div>
   </ng-template>
 </p-select>

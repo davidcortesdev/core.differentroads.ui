@@ -1,3 +1,38 @@
-// Estilos base del componente
-// Los estilos específicos se pueden aplicar mediante la clase styleClass
+// Estilos para el componente de selección de prefijo telefónico
 
+:host {
+  ::ng-deep {
+    // Fondo blanco para todos los selectores de prefijo
+    .p-select {
+      background: white !important;
+      --p-select-background: white !important;
+    }
+    
+    .p-select-label {
+      background: white !important;
+    }
+    
+    .p-select-trigger {
+      background: white !important;
+    }
+  }
+}
+
+::ng-deep {
+  // Estilos solo para el contenido del dropdown (items de la lista)
+  .phone-prefix-dropdown-item {
+    font-size: 1.3em;
+    text-align: center;
+    
+    .flag {
+      margin-right: 0.5rem;
+    }
+  }
+  
+  // El campo seleccionado mantiene el estilo del componente padre
+  .phone-prefix-selected {
+    .flag {
+      margin-right: 0.5rem;
+    }
+  }
+}

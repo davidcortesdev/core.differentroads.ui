@@ -28,7 +28,7 @@
               [showClear]="true"
               [filter]="true"
               [styleClass]="'prefix-select'"
-              [errorClass]="prefixCtrl?.invalid && (prefixCtrl?.dirty || prefixCtrl?.touched) ? 'p-invalid' : ''"
+              [errorClass]="hasPrefixError ? 'p-invalid' : ''"
               (prefixChange)="onPrefixChange()">
             </app-phone-prefix-select>
           </ng-container>
@@ -44,6 +44,9 @@
         </div>
         <small *ngIf="hasError" class="p-error">
           {{ getErrorMessage(errors) }}
+        </small>
+        <small *ngIf="hasPrefixError" class="p-error">
+          {{ getPrefixErrorMessage(prefixErrors) }}
         </small>
       </ng-container>
       
@@ -88,7 +91,7 @@
             [showClear]="true"
             [filter]="true"
             [styleClass]="'prefix-select'"
-            [errorClass]="prefixCtrl?.invalid && (prefixCtrl?.dirty || prefixCtrl?.touched) ? 'p-invalid' : ''"
+            [errorClass]="hasPrefixError ? 'p-invalid' : ''"
             (prefixChange)="onPrefixChange()">
           </app-phone-prefix-select>
         </ng-container>
@@ -104,6 +107,9 @@
       </div>
       <small *ngIf="hasError" class="p-error">
         {{ getErrorMessage(errors) }}
+      </small>
+      <small *ngIf="hasPrefixError" class="p-error">
+        {{ getErrorMessage(prefixErrors) }}
       </small>
     </ng-container>
 

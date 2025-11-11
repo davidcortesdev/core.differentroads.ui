@@ -2,6 +2,14 @@
 <html lang="es">
 
 <head>
+  <script>
+    window.TERMLY_CUSTOM_BLOCKING_MAP = {
+      "differentroads.es": "essential",
+      "ui.differentroads.es": "essential",
+      "ui-dev.differentroads.es": "essential",
+    };
+  </script>
+
   <!-- Termly CMP - Solo en producción (no en localhost) -->
   <script>
     if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {

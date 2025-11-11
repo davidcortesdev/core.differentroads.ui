@@ -31,8 +31,17 @@
   
   // El campo seleccionado mantiene el estilo del componente padre
   .phone-prefix-selected {
+    font-size: 1.3em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
     .flag {
       margin-right: 0.5rem;
+    }
+    
+    &.small-size {
+      font-size: 0.9em;
     }
   }
 }

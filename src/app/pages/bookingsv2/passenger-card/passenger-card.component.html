@@ -121,6 +121,7 @@
               [filter]="true"
               [disabled]="!isEditing"
               [styleClass]="'prefix-select'"
+              [smallSize]="true"
               (prefixChange)="onPhonePrefixChange({ value: $event })">
             </app-phone-prefix-select>
             <input

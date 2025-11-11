@@ -14,13 +14,13 @@
   <ng-template let-prefix pTemplate="item">
     <div class="phone-prefix-dropdown-item">
       <span class="flag">{{ getCountryFlag(prefix.isoCode2) }}</span>
-      <strong class="prefix">{{ prefix.prefix }}</strong>
+      <span class="prefix">{{ prefix.prefix }}</span>
     </div>
   </ng-template>
   <ng-template pTemplate="selectedItem">
-    <div class="phone-prefix-selected">
+    <div class="phone-prefix-selected" [ngClass]="{'small-size': smallSize}">
       <span class="flag">{{ getCountryFlag(getSelectedPrefix()?.isoCode2 || '') }}</span>
-      <strong class="prefix">{{ getSelectedPrefix()?.prefix || '' }}</strong>
+      <span class="prefix">{{ getSelectedPrefix()?.prefix || '' }}</span>
     </div>
   </ng-template>
 </p-select>

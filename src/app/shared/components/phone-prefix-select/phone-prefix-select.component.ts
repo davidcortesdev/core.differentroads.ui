@@ -24,6 +24,7 @@ export class PhonePrefixSelectComponent implements ControlValueAccessor {
   @Input() styleClass: string = 'prefix-select';
   @Input() errorClass: string = '';
   @Input() filterBy: string = 'name,prefix,code,isoCode2';
+  @Input() smallSize: boolean = false; // Para hacer los números más pequeños (detalle de reserva)
 
   @Output() prefixChange = new EventEmitter<string | null>();
 

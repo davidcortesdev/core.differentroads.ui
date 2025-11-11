@@ -510,11 +510,11 @@ export class BookingPersonalDataV2Component implements OnInit {
         if (field && value) {
           const existingField = existingFieldsMap.get(field.id);
           
-          // ⭐ IMPORTANTE: Formatear el valor antes de guardar
+          // ⭐ IMPORTANTE: Formatear el valor según el tipo de campo de BD
           let formattedValue = value;
           
-          // Si es una fecha, convertir al formato dd/mm/yyyy
-          if (this.isDateField(fieldCode) && value) {
+          // Usar el tipo de campo de la BD para determinar si es fecha
+          if (this.isDateFieldByType(field) && value) {
             formattedValue = this.formatDate(value);
           }
           
@@ -557,24 +557,12 @@ export class BookingPersonalDataV2Component implements OnInit {
   }
 
   /**
-   * Verifica si un campo es de tipo fecha
+   * Verifica si un campo es de tipo fecha usando la propiedad fieldType de BD
    */
-  private isDateField(fieldCode: string): boolean {
-    const dateFields = [
-      'birthdate',
-      'fecha_nacimiento',
-      'birth_date',
-      'minorIdIssueDate',
-      'minor_id_issue_date',
-      'minorIdExpirationDate',
-      'minor_id_expiration_date',
-      'documentExpeditionDate',
-      'document_expedition_date',
-      'documentExpirationDate',
-      'document_expiration_date'
-    ];
-    
-    return dateFields.includes(fieldCode.toLowerCase());
+  private isDateFieldByType(field: IReservationFieldResponse): boolean {
+    // Usar la propiedad fieldType que viene de la BD
+    const normalizedFieldType = field.fieldType.toLowerCase();
+    return normalizedFieldType === 'date' || normalizedFieldType === 'datetime';
   }
 
   /**

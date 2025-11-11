@@ -58,5 +58,48 @@ export class PhonePrefixService {
       map((prefixes) => prefixes.sort((a, b) => a.name.localeCompare(b.name)))
     );
   }
+
+  /**
+   * Convierte un código ISO de dos letras a un emoji de bandera
+   * @param isoCode Código ISO de dos letras (ej: "ES", "AF")
+   * @returns Emoji de bandera (ej: "🇪🇸", "🇦🇫")
+   */
+  getCountryFlag(isoCode: string): string {
+    if (!isoCode || isoCode.length !== 2) return '';
+    const codePoints = isoCode
+      .toUpperCase()
+      .split('')
+      .map(char => 127397 + char.charCodeAt(0));
+    return String.fromCodePoint(...codePoints);
+  }
+
+  /**
+   * Obtiene el texto de visualización para un prefijo telefónico
+   * Formato: 🇪🇸 +34 (bandera + prefijo)
+   * @param prefix Objeto IPhonePrefixResponse o string (prefijo)
+   * @param prefixes Array de prefijos para buscar el objeto completo si prefix es string
+   * @returns String con la bandera y el prefijo
+   */
+  getPrefixDisplayText(prefix: IPhonePrefixResponse | string | null, prefixes?: IPhonePrefixResponse[]): string {
+    if (!prefix) return '';
+    
+    // Si es un string (solo el prefijo), buscar el objeto completo
+    if (typeof prefix === 'string' && prefixes) {
+      const prefixObj = prefixes.find(p => p.prefix === prefix);
+      if (prefixObj) {
+        const flag = this.getCountryFlag(prefixObj.isoCode2);
+        return `${flag} ${prefixObj.prefix}`;
+      }
+      return prefix; // Si no se encuentra, devolver solo el prefijo
+    }
+    
+    // Si es un objeto completo
+    if (typeof prefix === 'object' && prefix.isoCode2) {
+      const flag = this.getCountryFlag(prefix.isoCode2);
+      return `${flag} ${prefix.prefix}`;
+    }
+    
+    return String(prefix);
+  }
 }
 

@@ -1,0 +1,28 @@
+<p-select
+  [ngModel]="selectedValue"
+  [options]="phonePrefixOptions"
+  optionLabel="name"
+  optionValue="prefix"
+  [placeholder]="placeholder"
+  [showClear]="showClear"
+  [filter]="filter"
+  [filterBy]="filterBy"
+  [disabled]="disabled"
+  [ngClass]="errorClass"
+  [styleClass]="styleClass"
+  appendTo="body"
+  (ngModelChange)="onValueChange($event)">
+  <ng-template let-prefix pTemplate="item">
+    <div class="phone-prefix-dropdown-item" [ngClass]="{'profile-style': profileStyle}">
+      <span class="flag">{{ getCountryFlag(prefix.isoCode2) }}</span>
+      <span class="prefix">{{ prefix.prefix }}</span>
+    </div>
+  </ng-template>
+  <ng-template pTemplate="selectedItem">
+    <div class="phone-prefix-selected" [ngClass]="{'small-size': smallSize}">
+      <span class="flag">{{ getCountryFlag(getSelectedPrefix()?.isoCode2 || '') }}</span>
+      <span class="prefix">{{ getSelectedPrefix()?.prefix || '' }}</span>
+    </div>
+  </ng-template>
+</p-select>
+

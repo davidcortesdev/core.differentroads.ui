@@ -256,7 +256,7 @@ export class BookingDocumentationV2Component implements OnInit {
   /**
    * Formatea la fecha de creación de una notificación
    */
-  formatNotificationDate(dateString: string): string {
+  formatNotificationDate(dateString: string | null): string {
     if (!dateString) return 'Fecha no disponible';
 
     try {

@@ -102,6 +102,7 @@
             <th>Tipo</th>
             <th>Email</th>
             <th>Estado</th>
+            <th>Fecha de creación</th>
             <th>Fecha de envío</th>
           </tr>
         </ng-template>
@@ -126,12 +127,13 @@
               </p-tag>
             </td>
             <td>{{ formatNotificationDate(notification.createdAt) }}</td>
+            <td>{{ formatNotificationDate(notification.sentAt) }}</td>
           </tr>
         </ng-template>
 
         <ng-template #emptymessage>
           <tr>
-            <td colspan="4">No hay notificaciones registradas.</td>
+            <td colspan="5">No hay notificaciones registradas.</td>
           </tr>
         </ng-template>
       </p-table>

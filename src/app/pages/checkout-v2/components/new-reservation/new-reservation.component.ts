@@ -25,6 +25,9 @@ import { AnalyticsService } from '../../../../core/services/analytics/analytics.
 import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 import { PointsV2Service } from '../../../../core/services/v2/points-v2.service';
 import { Title } from '@angular/platform-browser';
+import { switchMap, map, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
+import { RetailerService } from '../../../../core/services/retailer/retailer.service';
 
 // Interfaz para información bancaria
 interface BankInfo {
@@ -63,6 +66,9 @@ export class NewReservationComponent implements OnInit {
   paymentMethod: string = '';
   paymentStatus: string = '';
 
+  // Bandera para evitar disparar purchase múltiples veces
+  private purchaseEventFired: boolean = false;
+
   // IDs de estados de pago
   successId: number = 0;
   failedId: number = 0;
@@ -87,6 +93,17 @@ export class NewReservationComponent implements OnInit {
     },
   ];
 
+  // Información bancaria para retailers diferentes a DIFFERENT_ROADS
+  bankInfoForOtherRetailers: BankInfo = {
+    name: 'CaixaBank, S.A.',
+    account: 'ES51 2100 1463 1002 0020 8515',
+    beneficiary: 'Different Roads S.L',
+    concept: '',
+  };
+
+  // Código del retailer de la reserva
+  retailerCode: string = '';
+
   // Estados de reserva de vuelos
   hasAmadeusFlight: boolean = false;
   flightBookingLoading: boolean = false;
@@ -100,8 +117,12 @@ export class NewReservationComponent implements OnInit {
   hasPaymentId: boolean = false;
 
   // Array para almacenar múltiples justificantes
-  uploadedVouchers: Array<{ url: string; uploadDate: Date; fileName?: string }> = [];
-  
+  uploadedVouchers: Array<{
+    url: string;
+    uploadDate: Date;
+    fileName?: string;
+  }> = [];
+
   // Archivo pendiente de confirmar
   pendingFileToConfirm: File | null = null;
 
@@ -122,7 +143,9 @@ export class NewReservationComponent implements OnInit {
     private analyticsService: AnalyticsService,
     private authService: AuthenticateService,
     // SERVICIO PARA PUNTOS
-    private pointsService: PointsV2Service
+    private pointsService: PointsV2Service,
+    // SERVICIO PARA RETAILER
+    private retailerService: RetailerService
   ) {
     // Calcular la fecha del día siguiente
     const tomorrow = new Date();
@@ -209,11 +232,21 @@ export class NewReservationComponent implements OnInit {
       next: (reservation) => {
         this.reservation = reservation;
 
+        // Cargar información del retailer para determinar qué cuenta bancaria mostrar
+        this.loadRetailerInfo(reservation.retailerId);
+
         // Actualizar conceptos bancarios con ID de reserva
         this.updateBankConcepts();
 
         // CARGAR NOMBRE DEL LEAD TRAVELER PARA EL SALUDO
         this.loadLeadTravelerName();
+
+        // Disparar evento purchase cuando se llega a la página de confirmación después del paso 4 del checkout
+        // Solo disparar una vez cuando se carga la página
+        if (!this.purchaseEventFired) {
+          this.trackPurchase();
+          this.purchaseEventFired = true;
+        }
 
         // Cargar información del pago
         this.loadPayment();
@@ -226,10 +259,29 @@ export class NewReservationComponent implements OnInit {
   }
 
   /**
+   * Carga la información del retailer para determinar qué cuenta bancaria mostrar
+   */
+  private loadRetailerInfo(retailerId: number): void {
+    this.retailerService.getRetailerById(retailerId).subscribe({
+      next: (retailer) => {
+        this.retailerCode = retailer.code || '';
+
+        // Si el retailer es diferente a DIFFERENT_ROADS, actualizar conceptos con la cuenta específica
+        if (this.retailerCode !== 'DIFFERENT_ROADS') {
+          this.updateBankConceptsForOtherRetailers();
+        }
+      },
+      error: (error) => {
+        console.error('Error loading retailer info:', error);
+        // En caso de error, mantener el comportamiento por defecto
+      },
+    });
+  }
+
+  /**
    * Carga el nombre del lead traveler para el saludo
    */
   private loadLeadTravelerName(): void {
-
     this.reservationTravelerService
       .getByReservation(this.reservationId)
       .subscribe({
@@ -256,7 +308,6 @@ export class NewReservationComponent implements OnInit {
       .getByReservationTraveler(leadTravelerId)
       .subscribe({
         next: (fields) => {
-
           let firstName = '';
           let lastName = '';
 
@@ -289,6 +340,11 @@ export class NewReservationComponent implements OnInit {
     this.bankInfo.forEach((bank) => {
       bank.concept = concept;
     });
+
+    // Si es retailer diferente a DIFFERENT_ROADS, actualizar también esa cuenta
+    if (this.retailerCode !== 'DIFFERENT_ROADS') {
+      this.bankInfoForOtherRetailers.concept = `${this.reservation?.id}`;
+    }
   }
 
   /**
@@ -301,6 +357,19 @@ export class NewReservationComponent implements OnInit {
     this.bankInfo.forEach((bank) => {
       bank.concept = concept;
     });
+
+    // Si es retailer diferente a DIFFERENT_ROADS, solo usar el ID (sin nombre)
+    if (this.retailerCode !== 'DIFFERENT_ROADS') {
+      this.bankInfoForOtherRetailers.concept = `${this.reservation?.id || ''}`;
+    }
+  }
+
+  /**
+   * Actualiza los conceptos bancarios para retailers diferentes a DIFFERENT_ROADS
+   * Solo incluye el ID de reserva, sin el nombre del viajero
+   */
+  private updateBankConceptsForOtherRetailers(): void {
+    this.bankInfoForOtherRetailers.concept = `${this.reservation?.id || ''}`;
   }
 
   /**
@@ -373,9 +442,6 @@ export class NewReservationComponent implements OnInit {
         } else if (status.code === 'COMPLETED') {
           this.status = 'SUCCESS';
 
-          // Disparar evento purchase cuando se visita la página de gracias tras compra exitosa
-          this.trackPurchase();
-
           // Generar puntos después del pago exitoso
           this.generatePointsAfterPayment();
 
@@ -403,7 +469,6 @@ export class NewReservationComponent implements OnInit {
       this.checkAndBookAmadeusFlight();
       return;
     }
-
   }
 
   /**
@@ -432,9 +497,6 @@ export class NewReservationComponent implements OnInit {
             this.updatePaymentStatus();
 
             this.status = 'SUCCESS';
-
-            // Disparar evento purchase
-            this.trackPurchase();
 
             this.showMessage(
               'success',
@@ -492,11 +554,13 @@ export class NewReservationComponent implements OnInit {
   private loadExistingVouchers(payment: IPaymentResponse): void {
     // Si hay attachmentUrl, añadirlo como primer justificante
     if (payment.attachmentUrl) {
-      this.uploadedVouchers = [{
-        url: payment.attachmentUrl,
-        uploadDate: new Date(),
-        fileName: 'Justificante de transferencia'
-      }];
+      this.uploadedVouchers = [
+        {
+          url: payment.attachmentUrl,
+          uploadDate: new Date(),
+          fileName: 'Justificante de transferencia',
+        },
+      ];
     } else {
       this.uploadedVouchers = [];
     }
@@ -510,7 +574,7 @@ export class NewReservationComponent implements OnInit {
         if (Array.isArray(parsed) && parsed.length > 0) {
           this.uploadedVouchers = parsed.map((v: any) => ({
             ...v,
-            uploadDate: new Date(v.uploadDate)
+            uploadDate: new Date(v.uploadDate),
           }));
         }
       } catch (e) {
@@ -551,11 +615,16 @@ export class NewReservationComponent implements OnInit {
       const newVoucher = {
         url: response.secure_url,
         uploadDate: new Date(),
-        fileName: response.original_filename || response.public_id || `Justificante ${this.uploadedVouchers.length + 1}.pdf`
+        fileName:
+          response.original_filename ||
+          response.public_id ||
+          `Justificante ${this.uploadedVouchers.length + 1}.pdf`,
       };
-      
+
       // Si no existe ya, añadirlo
-      const exists = this.uploadedVouchers.some(v => v.url === response.secure_url);
+      const exists = this.uploadedVouchers.some(
+        (v) => v.url === response.secure_url
+      );
       if (!exists) {
         this.uploadedVouchers.push(newVoucher);
         this.saveVouchersToStorage();
@@ -575,7 +644,9 @@ export class NewReservationComponent implements OnInit {
         },
         error: (error) => {
           // Revertir si falla
-          const index = this.uploadedVouchers.findIndex(v => v.url === response.secure_url);
+          const index = this.uploadedVouchers.findIndex(
+            (v) => v.url === response.secure_url
+          );
           if (index > -1) {
             this.uploadedVouchers.splice(index, 1);
             this.saveVouchersToStorage();
@@ -607,7 +678,10 @@ export class NewReservationComponent implements OnInit {
    * Visualiza el justificante subido
    */
   viewVoucher(voucherUrl?: string): void {
-    const urlToOpen = voucherUrl || this.payment?.attachmentUrl || this.uploadedVouchers[0]?.url;
+    const urlToOpen =
+      voucherUrl ||
+      this.payment?.attachmentUrl ||
+      this.uploadedVouchers[0]?.url;
     if (urlToOpen) {
       window.open(urlToOpen, '_blank');
     }
@@ -701,15 +775,10 @@ export class NewReservationComponent implements OnInit {
    * Disparar evento purchase cuando se completa la compra
    */
   private trackPurchase(): void {
-    if (!this.reservation) return;
+    if (!this.reservation || !this.reservation.tourId) return;
 
-    const reservationData = this.reservation as any; // Usar any para acceder a propiedades dinámicas
-    const tourData = reservationData.tour || {};
-
-    // Obtener item_list_id y item_list_name desde el state del router (heredados desde home)
-    const state = window.history.state;
-    const itemListId = state?.['listId'] || '';
-    const itemListName = state?.['listName'] || '';
+    const reservationData = this.reservation as any;
+    const tourId = this.reservation.tourId;
 
     // Obtener información del pago
     const paymentType = this.paymentType || 'completo, transferencia';
@@ -719,136 +788,19 @@ export class NewReservationComponent implements OnInit {
       `#${this.reservationId}`;
     const totalValue = this.reservation.totalAmount || 0;
 
-    // Obtener actividades seleccionadas (si están disponibles)
-    const activitiesText =
-      reservationData.activities && reservationData.activities.length > 0
-        ? reservationData.activities
-            .map((a: any) => a.description || a.name)
-            .join(', ')
-        : '';
-
-    // Obtener seguro seleccionado
-    const selectedInsurance = reservationData.insurance?.name || '';
-
-    // Obtener información de vuelo (si está disponible)
-    const flightCity = reservationData.flight?.originCity || 'Sin vuelo';
-
-    // Calcular pasajeros niños dinámicamente desde los travelers
-    this.reservationTravelerService
-      .getByReservation(this.reservationId)
-      .subscribe({
-        next: (travelers) => {
-          // Contar travelers que NO son adultos (ageGroupId !== 1)
-          const childrenCount = travelers.filter(
-            (traveler) => traveler.ageGroupId !== 1
-          ).length;
-
-          this.analyticsService.purchase(
-            {
-              transaction_id: transactionId,
-              value: totalValue,
-              tax: 0.6, // IVA fijo según el documento
-              shipping: 0.0, // Sin gastos de envío
-              currency: 'EUR',
-              coupon: reservationData.coupon?.code || '',
-              payment_type: paymentType,
-              items: [
-                {
-                  item_id:
-                    tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
-                  item_name: reservationData.tourName || tourData.name || '',
-                  coupon: '',
-                  discount: 0,
-                  index: 1,
-                  item_brand: 'Different Roads',
-                  item_category: tourData.destination?.continent || '',
-                  item_category2: tourData.destination?.country || '',
-                  item_category3:
-                    tourData.marketingSection?.marketingSeasonTag || '',
-                  item_category4: tourData.monthTags?.join(', ') || '',
-                  item_category5: tourData.tourType || '',
-                  item_list_id: itemListId,
-                  item_list_name: itemListName,
-                  item_variant: `${
-                    tourData.tkId || tourData.id
-                  } - ${flightCity}`,
-                  price: totalValue,
-                  quantity: 1,
-                  puntuacion: tourData.rating?.toString() || '',
-                  duracion: tourData.days
-                    ? `${tourData.days} días, ${
-                        tourData.nights || tourData.days - 1
-                      } noches`
-                    : '',
-                  start_date: reservationData.departureDate || '',
-                  end_date: reservationData.returnDate || '',
-                  pasajeros_adultos:
-                    this.reservation?.totalPassengers?.toString() || '0',
-                  pasajeros_niños: childrenCount.toString(),
-                  actividades: activitiesText,
-                  seguros: selectedInsurance,
-                  vuelo: flightCity,
-                },
-              ],
-            },
-            this.getUserData()
-          );
-        },
-        error: (error) => {
-          console.error('Error obteniendo travelers para analytics:', error);
-          // Si hay error, disparar el evento con niños = 0
-          this.analyticsService.purchase(
-            {
-              transaction_id: transactionId,
-              value: totalValue,
-              tax: 0.6,
-              shipping: 0.0,
-              currency: 'EUR',
-              coupon: reservationData.coupon?.code || '',
-              payment_type: paymentType,
-              items: [
-                {
-                  item_id:
-                    tourData.id?.toString() || tourData.tkId?.toString() || '', // ✅ Priorizar ID real de BD
-                  item_name: reservationData.tourName || tourData.name || '',
-                  coupon: '',
-                  discount: 0,
-                  index: 1,
-                  item_brand: 'Different Roads',
-                  item_category: tourData.destination?.continent || '',
-                  item_category2: tourData.destination?.country || '',
-                  item_category3:
-                    tourData.marketingSection?.marketingSeasonTag || '',
-                  item_category4: tourData.monthTags?.join(', ') || '',
-                  item_category5: tourData.tourType || '',
-                  item_list_id: itemListId,
-                  item_list_name: itemListName,
-                  item_variant: `${
-                    tourData.tkId || tourData.id
-                  } - ${flightCity}`,
-                  price: totalValue,
-                  quantity: 1,
-                  puntuacion: tourData.rating?.toString() || '',
-                  duracion: tourData.days
-                    ? `${tourData.days} días, ${
-                        tourData.nights || tourData.days - 1
-                      } noches`
-                    : '',
-                  start_date: reservationData.departureDate || '',
-                  end_date: reservationData.returnDate || '',
-                  pasajeros_adultos:
-                    this.reservation?.totalPassengers?.toString() || '0',
-                  pasajeros_niños: '0',
-                  actividades: activitiesText,
-                  seguros: selectedInsurance,
-                  vuelo: flightCity,
-                },
-              ],
-            },
-            this.getUserData()
-          );
-        },
-      });
+    // Usar el método centralizado del servicio que obtiene todos los datos dinámicamente
+    this.analyticsService.trackPurchaseFromReservation(
+      this.reservationId,
+      tourId,
+      {
+        transactionId: transactionId,
+        paymentType: paymentType,
+        totalValue: totalValue,
+        tax: 0.6,
+        shipping: 0.0,
+        coupon: reservationData.coupon?.code || '',
+      }
+    );
   }
 
   /**
@@ -870,9 +822,10 @@ export class NewReservationComponent implements OnInit {
    */
   private async generatePointsAfterPayment(): Promise<void> {
     try {
-      
       if (!this.reservation?.id || !this.reservation?.totalAmount) {
-        console.warn('No se puede generar puntos: falta reservationId o totalAmount');
+        console.warn(
+          'No se puede generar puntos: falta reservationId o totalAmount'
+        );
         return;
       }
 
@@ -908,8 +861,10 @@ export class NewReservationComponent implements OnInit {
 
       await this.pointsService.createLoyaltyTransaction(transaction);
       */
-      
-      console.log('⚠️ Acumulación de puntos temporalmente deshabilitada - pendiente de actualizar a nuevo esquema');
+
+      console.log(
+        '⚠️ Acumulación de puntos temporalmente deshabilitada - pendiente de actualizar a nuevo esquema'
+      );
 
       // 5. Mostrar mensaje al usuario
       this.messageService.add({
@@ -918,7 +873,6 @@ export class NewReservationComponent implements OnInit {
         detail: `Se han generado ${pointsToGenerate} puntos por tu compra`,
         life: 5000,
       });
-
     } catch (error) {
       console.error('Error generando puntos:', error);
       // No mostrar error al usuario para no interrumpir el flujo de pago
@@ -936,10 +890,13 @@ export class NewReservationComponent implements OnInit {
       }
 
       // Cambiar estado a BOOKED (5)
-      await this.reservationService.updateStatus(this.reservation.id, 5).toPromise();
-      
-      console.log(`Reserva ${this.reservation.id} actualizada a estado BOOKED (5)`);
-      
+      await this.reservationService
+        .updateStatus(this.reservation.id, 5)
+        .toPromise();
+
+      console.log(
+        `Reserva ${this.reservation.id} actualizada a estado BOOKED (5)`
+      );
     } catch (error) {
       console.error('Error actualizando estado de reserva a BOOKED:', error);
       // No lanzar error para no interrumpir el flujo de pago

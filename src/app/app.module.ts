@@ -220,6 +220,7 @@ import { SobreNosotrosComponent } from './pages/basic-page/components/sobre-noso
 import { PorQueDifferentComponent } from './pages/basic-page/components/por-que-different/por-que-different.component';
 import { ReviewSurveyComponent } from './pages/review-survey/review-survey.component';
 import { ImageUploadModalComponent } from './pages/review-survey/image-upload-modal/image-upload-modal.component';
+import { CompleteInformationComponent } from './pages/complete-information/complete-information.component';
 
 // ========================================
 // SHARED COMPONENTS
@@ -238,6 +239,7 @@ import { SeoLinksComponent } from './shared/components/seo-links/seo-links.compo
 import { AdditionalInfoComponent } from './shared/components/additional-info/additional-info.component';
 import { EnvironmentBannerComponent } from './shared/components/environment-banner/environment-banner.component';
 import { SeoManagerComponent } from './shared/components/seo-manager/seo-manager.component';
+import { PhonePrefixSelectComponent } from './shared/components/phone-prefix-select/phone-prefix-select.component';
 
 // Tour Cards
 import { TourCardComponent } from './shared/components/tour-card/tour-card.component';
@@ -401,6 +403,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     PorQueDifferentComponent,
     ReviewSurveyComponent,
     ImageUploadModalComponent,
+    CompleteInformationComponent,
 
     // ========================================
     // SHARED COMPONENTS
@@ -419,6 +422,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     AdditionalInfoComponent,
     EnvironmentBannerComponent,
     SeoManagerComponent,
+    PhonePrefixSelectComponent,
 
     // Tour Cards
     TourCardComponent,

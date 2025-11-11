@@ -25,7 +25,17 @@
         <ng-template #body let-documentReservation>
           <tr>
             <td>
-              {{ documentReservation.document?.fileName || "Sin nombre" }}
+              <span
+                [pTooltip]="
+                  documentReservation.document?.fileName &&
+                  documentReservation.document.fileName.length > 25
+                    ? documentReservation.document.fileName
+                    : ''
+                "
+                tooltipPosition="top"
+              >
+                {{ truncateFileName(documentReservation.document?.fileName) }}
+              </span>
             </td>
             <td>
               <p-tag
@@ -52,8 +62,13 @@
                 icon="pi pi-download"
                 severity="secondary"
                 rounded
-                [disabled]="true"
-                pTooltip="Descarga no disponible"
+                [disabled]="
+                  downloadLoading[documentReservation.document?.id] ||
+                  !documentReservation.document?.fileName
+                "
+                [loading]="downloadLoading[documentReservation.document?.id]"
+                (click)="downloadDocument(documentReservation)"
+                pTooltip="Descargar documento"
               >
               </p-button>
             </td>
@@ -85,6 +100,8 @@
         <ng-template #header>
           <tr>
             <th>Tipo</th>
+            <th>Email</th>
+            <th>Estado</th>
             <th>Fecha de envío</th>
           </tr>
         </ng-template>
@@ -94,13 +111,27 @@
             <td>
               {{ getNotificationTypeText(notification.notificationTypeId) }}
             </td>
+            <td>
+              {{ notification.recipientEmail || "N/A" }}
+            </td>
+            <td>
+              <p-tag
+                [value]="
+                  getNotificationStatusText(notification.notificationStatusId)
+                "
+                [severity]="
+                  getNotificationStatusColor(notification.notificationStatusId)
+                "
+              >
+              </p-tag>
+            </td>
             <td>{{ formatNotificationDate(notification.createdAt) }}</td>
           </tr>
         </ng-template>
 
         <ng-template #emptymessage>
           <tr>
-            <td colspan="2">No hay notificaciones registradas.</td>
+            <td colspan="4">No hay notificaciones registradas.</td>
           </tr>
         </ng-template>
       </p-table>
@@ -135,13 +166,19 @@
       </div>
 
       <!-- No logs message -->
-      <div *ngIf="!tkLogsLoading && tkLogs.length === 0" class="no-logs-message">
+      <div
+        *ngIf="!tkLogsLoading && tkLogs.length === 0"
+        class="no-logs-message"
+      >
         <i class="pi pi-info-circle"></i>
         <p>No hay logs de comunicación con TK para esta reserva</p>
       </div>
 
       <!-- TKLogs Table -->
-      <div *ngIf="showTkLogsTable && !tkLogsLoading && tkLogs.length > 0" class="tklogs-table-container">
+      <div
+        *ngIf="showTkLogsTable && !tkLogsLoading && tkLogs.length > 0"
+        class="tklogs-table-container"
+      >
         <p-table
           [value]="tkLogs"
           [tableStyle]="{ 'min-width': '50rem' }"
@@ -158,6 +195,7 @@
               <th style="width: 4rem">Estado</th>
               <th style="width: 8rem">Fecha Envío</th>
               <th style="width: 4rem">HTTP Status</th>
+              <th style="width: 10rem">Contenido Enviado</th>
               <th style="width: 10rem">Contenido Respuesta</th>
               <th style="width: 20rem">Error TK</th>
               <th style="width: 15rem">Notas</th>
@@ -170,8 +208,10 @@
               <!-- Estado con icono y color -->
               <td>
                 <div class="flex align-items-center gap-2">
-                  <i [class]="getLogIcon(getLogSeverity(log))"
-                     [ngClass]="getLogClass(getLogSeverity(log))"></i>
+                  <i
+                    [class]="getLogIcon(getLogSeverity(log))"
+                    [ngClass]="getLogClass(getLogSeverity(log))"
+                  ></i>
                   <span [ngClass]="getLogClass(getLogSeverity(log))">
                     {{ getLogSeverity(log) | titlecase }}
                   </span>
@@ -189,8 +229,21 @@
               <td>
                 <p-tag
                   [value]="log.httpStatusCode?.toString() || '-'"
-                  [severity]="log.httpStatusCode >= 400 ? 'danger' : (log.httpStatusCode >= 200 && log.httpStatusCode < 300 ? 'success' : 'warn')"
+                  [severity]="
+                    log.httpStatusCode >= 400
+                      ? 'danger'
+                      : log.httpStatusCode >= 200 && log.httpStatusCode < 300
+                      ? 'success'
+                      : 'warn'
+                  "
                 ></p-tag>
+              </td>
+
+              <!-- Contenido enviado -->
+              <td>
+                <span [title]="log.sentContent" class="sent-content">
+                  {{ formatSentContent(log.sentContent) }}
+                </span>
               </td>
 
               <!-- Contenido de respuesta -->
@@ -202,16 +255,25 @@
 
               <!-- Error TK -->
               <td>
-                <div *ngIf="log.tkErrorCode || log.tkErrorMessage; else noError" class="tk-error">
+                <div
+                  *ngIf="log.tkErrorCode || log.tkErrorMessage; else noError"
+                  class="tk-error"
+                >
                   <div *ngIf="log.tkErrorCode" class="error-code">
-                    <p-tag [value]="log.tkErrorCode" severity="danger" styleClass="error-tag"></p-tag>
+                    <p-tag
+                      [value]="log.tkErrorCode"
+                      severity="danger"
+                      styleClass="error-tag"
+                    ></p-tag>
                   </div>
                   <div *ngIf="log.tkErrorMessage" class="error-message">
-                    <span [pTooltip]="getFullErrorMessage(log)"
-                          tooltipPosition="top"
-                          [escape]="false"
-                          [showDelay]="300"
-                          [hideDelay]="100">
+                    <span
+                      [pTooltip]="getFullErrorMessage(log)"
+                      tooltipPosition="top"
+                      [escape]="false"
+                      [showDelay]="300"
+                      [hideDelay]="100"
+                    >
                       {{ log.tkErrorMessage }}
                     </span>
                   </div>
@@ -224,11 +286,13 @@
               <!-- Notas -->
               <td>
                 <div *ngIf="log.notes; else noNotes" class="notes-content">
-                  <span [pTooltip]="log.notes"
-                        tooltipPosition="top"
-                        [escape]="false"
-                        [showDelay]="300"
-                        [hideDelay]="100">
+                  <span
+                    [pTooltip]="log.notes"
+                    tooltipPosition="top"
+                    [escape]="false"
+                    [showDelay]="300"
+                    [hideDelay]="100"
+                  >
                     {{ log.notes }}
                   </span>
                 </div>
@@ -242,7 +306,7 @@
           <!-- Empty message -->
           <ng-template #emptymessage>
             <tr>
-              <td colspan="6" class="text-center">
+              <td colspan="7" class="text-center">
                 No se encontraron logs de TK
               </td>
             </tr>
@@ -251,8 +315,6 @@
       </div>
     </p-panel>
   </div>
-
-
 
   <!-- <div class="notes-container">
     <p-panel header="Notas">

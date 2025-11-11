@@ -255,3 +255,94 @@
         }
     }
 }
+
+/* Estilos para el modal de email */
+.email-modal-container {
+    padding: 1rem 0;
+}
+
+.email-input-section {
+    .input-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: #333;
+        font-size: 0.95rem;
+
+        .required {
+            color: #e74c3c;
+        }
+    }
+
+    .input-with-icon {
+        position: relative;
+        width: 100%;
+        display: flex;
+        align-items: center;
+
+        .input-icon {
+            position: absolute;
+            left: 0.75rem;
+            color: #6c757d;
+            font-size: 1rem;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .email-input {
+            width: 100%;
+            padding: 0.75rem;
+            padding-left: 2.5rem;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            transition: border-color 0.3s ease;
+
+            &:focus {
+                outline: none;
+                border-color: #007bff;
+                box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            }
+
+            &:disabled {
+                background-color: #e9ecef;
+                cursor: not-allowed;
+            }
+        }
+    }
+
+    .help-text {
+        display: block;
+        margin-top: 0.5rem;
+        color: #6c757d;
+        font-size: 0.85rem;
+    }
+
+    .loading-text {
+        display: block;
+        margin-top: 0.5rem;
+        color: #007bff;
+        font-size: 0.85rem;
+        font-style: italic;
+    }
+}
+
+.dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding-top: 1rem;
+}
+
+::ng-deep {
+    .email-modal-dialog {
+        .p-dialog-content {
+            padding: 1.5rem;
+        }
+
+        .p-dialog-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid #dee2e6;
+        }
+    }
+}

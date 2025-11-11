@@ -3,6 +3,10 @@ import {
   AuthenticationDetails,
   CognitoUser,
   CognitoUserPool,
+  CognitoUserSession,
+  CognitoAccessToken,
+  CognitoIdToken,
+  CognitoRefreshToken,
 } from 'amazon-cognito-identity-js';
 import { Router } from '@angular/router';
 import { environment } from '../../../../environments/environment';
@@ -14,6 +18,10 @@ import {
   fetchUserAttributes,
 } from 'aws-amplify/auth';
 import { AnalyticsService } from '../analytics/analytics.service'; // new import
+import {
+  CognitoIdentityProviderClient,
+  InitiateAuthCommand,
+} from '@aws-sdk/client-cognito-identity-provider';
 
 @Injectable({
   providedIn: 'root',
@@ -21,6 +29,7 @@ import { AnalyticsService } from '../analytics/analytics.service'; // new import
 export class AuthenticateService {
   private userPool: CognitoUserPool;
   private cognitoUser!: CognitoUser;
+  private cognitoClient: CognitoIdentityProviderClient;
 
   // Nuevo BehaviorSubject para mantener el estado actual de autenticación
   private isAuthenticated = new BehaviorSubject<boolean>(false);
@@ -47,6 +56,13 @@ export class AuthenticateService {
       ClientId: environment.cognitoAppClientId,
     });
 
+    // Inicializar el cliente de Cognito para usar USER_PASSWORD_AUTH
+    // Extraer la región del User Pool ID (formato: region_xxxxx)
+    const region = environment.cognitoUserPoolId.split('_')[0];
+    this.cognitoClient = new CognitoIdentityProviderClient({
+      region: region,
+    });
+
     // ✅ NUEVO: Inicializar la Promise que se resolverá cuando termine checkAuthStatus
     this.authCheckPromise = new Promise((resolve) => {
       this.authCheckResolve = resolve;
@@ -67,12 +83,18 @@ export class AuthenticateService {
           if (attributes && attributes.email) {
             this.currentUserEmail.next(attributes.email);
 
-            // Obtener el Cognito ID del usuario actual
-            const user = await getCurrentUser();
-            if (user) {
-              this.currentUserCognitoId.next(user.userId);
-            }
-
+            // ✅ CORREGIDO: Obtener el Cognito ID (sub) - priorizar sub de atributos, luego user.userId
+            // El sub es el Cognito User ID real (UUID), mientras que user.userId puede ser el username
+            const cognitoUserId = attributes.sub || user.userId;
+            
+            console.log('🔐 [checkAuthStatus] Cognito ID obtenido:', {
+              subFromAttributes: attributes.sub,
+              userIdFromUser: user.userId,
+              finalCognitoUserId: cognitoUserId,
+              email: attributes.email
+            });
+            
+            this.currentUserCognitoId.next(cognitoUserId);
           }
         } catch (error) {
           console.error('Error fetching user attributes:', error);
@@ -92,35 +114,105 @@ export class AuthenticateService {
     return this.authCheckPromise;
   }
 
+  /**
+   * Extrae el Cognito User ID (sub) del ID token JWT
+   * @param idToken El ID token JWT
+   * @returns El Cognito User ID (sub) o null si no se puede extraer
+   */
+  private extractSubFromIdToken(idToken: string): string | null {
+    try {
+      // Decodificar el JWT (es Base64URL)
+      const parts = idToken.split('.');
+      if (parts.length !== 3) {
+        console.error('Token JWT inválido');
+        return null;
+      }
+
+      // Decodificar el payload (segunda parte)
+      const payload = parts[1];
+      // Reemplazar caracteres de Base64URL a Base64 estándar
+      const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+      // Agregar padding si es necesario
+      const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+      // Decodificar
+      const decoded = JSON.parse(atob(padded));
+
+      return decoded.sub || null;
+    } catch (error) {
+      console.error('Error al extraer sub del ID token:', error);
+      return null;
+    }
+  }
+
   // Obtener el estado de autenticación como Observable
   // ✅ MEJORADO: Ahora espera a que termine la verificación inicial
   isLoggedIn(): Observable<boolean> {
-    return new Observable<boolean>(observer => {
+    return new Observable<boolean>((observer) => {
+      let subscription: any = null;
+
       // Esperar a que termine la verificación inicial
-      this.authCheckPromise.then(() => {
-        // Una vez completada, suscribirse al BehaviorSubject
-        const subscription = this.isAuthenticated.subscribe(value => {
-          observer.next(value);
+      this.authCheckPromise
+        .then(() => {
+          // Una vez completada, suscribirse al BehaviorSubject
+          subscription = this.isAuthenticated.subscribe((value) => {
+            observer.next(value);
+          });
+        })
+        .catch((error) => {
+          console.error('Error en verificación de autenticación:', error);
+          observer.next(false);
+          observer.complete();
         });
-        
-        // Devolver función de cleanup
-        return () => subscription.unsubscribe();
-      }).catch(error => {
-        console.error('Error en verificación de autenticación:', error);
-        observer.next(false);
-        observer.complete();
-      });
+
+      // Devolver función de cleanup
+      return () => {
+        if (subscription) {
+          subscription.unsubscribe();
+        }
+      };
     });
   }
-
+  async getCognitoSub(): Promise<string> {
+    try {
+      const attributes = await fetchUserAttributes();
+      return attributes.sub || '';
+    } catch (error) {
+      console.error('Error obteniendo sub:', error);
+      return '';
+    }
+  }
   // Obtener el email del usuario actual como Observable
   getUserEmail(): Observable<string> {
     return this.currentUserEmail.asObservable();
   }
 
   // Obtener el Cognito ID del usuario actual como Observable
+  // ✅ MEJORADO: Ahora espera a que termine la verificación inicial
   getCognitoId(): Observable<string> {
-    return this.currentUserCognitoId.asObservable();
+    return new Observable<string>((observer) => {
+      let subscription: any = null;
+
+      // Esperar a que termine la verificación inicial
+      this.authCheckPromise
+        .then(() => {
+          // Una vez completada, suscribirse al BehaviorSubject
+          subscription = this.currentUserCognitoId.subscribe((value) => {
+            observer.next(value);
+          });
+        })
+        .catch((error) => {
+          console.error('Error en verificación de autenticación:', error);
+          observer.next('');
+          observer.complete();
+        });
+
+      // Devolver función de cleanup
+      return () => {
+        if (subscription) {
+          subscription.unsubscribe();
+        }
+      };
+    });
   }
 
   // Obtener el valor actual del estado de autenticación
@@ -142,71 +234,164 @@ export class AuthenticateService {
     return new CognitoUser({ Username: username, Pool: this.userPool });
   }
 
-  // Login
+  /**
+   * Crea una CognitoUserSession a partir de los tokens de AWS SDK
+   * Esto permite mantener compatibilidad con amazon-cognito-identity-js
+   */
+  private createCognitoSession(
+    accessToken: string,
+    idToken: string,
+    refreshToken: string
+  ): CognitoUserSession {
+    const accessTokenObj = new CognitoAccessToken({
+      AccessToken: accessToken,
+    });
+    const idTokenObj = new CognitoIdToken({ IdToken: idToken });
+    const refreshTokenObj = new CognitoRefreshToken({
+      RefreshToken: refreshToken,
+    });
+
+    return new CognitoUserSession({
+      IdToken: idTokenObj,
+      AccessToken: accessTokenObj,
+      RefreshToken: refreshTokenObj,
+    });
+  }
+
+  // Login usando USER_PASSWORD_AUTH para activar el lambda de migración
   login(emailaddress: string, password: string): Observable<any> {
     return new Observable((observer) => {
-      const authenticationDetails = new AuthenticationDetails({
-        Username: emailaddress,
-        Password: password,
+      // Usar AWS SDK con USER_PASSWORD_AUTH para activar el lambda de migración
+      const command = new InitiateAuthCommand({
+        AuthFlow: 'USER_PASSWORD_AUTH',
+        ClientId: environment.cognitoAppClientId,
+        AuthParameters: {
+          USERNAME: emailaddress,
+          PASSWORD: password,
+        },
       });
 
-      this.cognitoUser = this.getUserData(emailaddress);
+      this.cognitoClient
+        .send(command)
+        .then((response) => {
+          if (
+            response.AuthenticationResult &&
+            response.AuthenticationResult.AccessToken &&
+            response.AuthenticationResult.IdToken &&
+            response.AuthenticationResult.RefreshToken
+          ) {
+            // Crear CognitoUser y establecer la sesión
+            this.cognitoUser = this.getUserData(emailaddress);
 
-      this.cognitoUser.authenticateUser(authenticationDetails, {
-        onSuccess: (result: any) => {
-          this.isAuthenticated.next(true);
-          this.currentUserEmail.next(emailaddress);
-          this.currentUserCognitoId.next(this.cognitoUser.getUsername());
-          this.userAttributesChanged.next();
+            // Crear sesión de Cognito desde los tokens
+            const session = this.createCognitoSession(
+              response.AuthenticationResult.AccessToken,
+              response.AuthenticationResult.IdToken,
+              response.AuthenticationResult.RefreshToken
+            );
 
-          // Agregar la integración con Hubspot
-          const contactData = {
-            email: emailaddress,
-          };
+            // Almacenar los tokens en localStorage para que CognitoUser pueda usarlos
+            const keyPrefix = `CognitoIdentityServiceProvider.${environment.cognitoAppClientId}`;
+            const usernameKey = `${keyPrefix}.LastAuthUser`;
+            const accessTokenKey = `${keyPrefix}.${emailaddress}.accessToken`;
+            const idTokenKey = `${keyPrefix}.${emailaddress}.idToken`;
+            const refreshTokenKey = `${keyPrefix}.${emailaddress}.refreshToken`;
 
-          this.hubspotService.createContact(contactData).subscribe({
-            next: (hubspotResponse) => {
-              console.log(
-                'Contacto creado en Hubspot exitosamente:',
-                hubspotResponse
-              );
+            localStorage.setItem(usernameKey, emailaddress);
+            localStorage.setItem(
+              accessTokenKey,
+              session.getAccessToken().getJwtToken()
+            );
+            localStorage.setItem(
+              idTokenKey,
+              session.getIdToken().getJwtToken()
+            );
+            localStorage.setItem(
+              refreshTokenKey,
+              session.getRefreshToken().getToken()
+            );
 
-              // Retornar el usuario de Cognito para que el componente maneje la navegación
-              observer.next(this.cognitoUser);
-              observer.complete();
-            },
-            error: (hubspotError) => {
-              console.error(
-                'Error al crear contacto en Hubspot:',
-                hubspotError
-              );
+            // Establecer la sesión en el CognitoUser
+            this.cognitoUser.setSignInUserSession(session);
 
-              // Even if Hubspot fails, return the Cognito user for component to handle navigation
-              observer.next(this.cognitoUser);
-              observer.complete();
-            },
-          });
-        },
-        newPasswordRequired: () => {
-          observer.error('Se requiere una nueva contraseña');
-        },
-        onFailure: (error: any) => {
+            // ✅ CORREGIDO: Extraer el Cognito User ID (sub) del ID token en lugar del username
+            const idTokenString = response.AuthenticationResult.IdToken;
+            const cognitoUserId = this.extractSubFromIdToken(idTokenString) || this.cognitoUser.getUsername();
+
+            console.log('🔐 [login] Cognito ID obtenido:', {
+              extractedFromToken: this.extractSubFromIdToken(idTokenString),
+              usernameFallback: this.cognitoUser.getUsername(),
+              finalCognitoUserId: cognitoUserId,
+              email: emailaddress
+            });
+
+            this.isAuthenticated.next(true);
+            this.currentUserEmail.next(emailaddress);
+            this.currentUserCognitoId.next(cognitoUserId);
+            this.userAttributesChanged.next();
+
+            // Agregar la integración con Hubspot
+            const contactData = {
+              email: emailaddress,
+            };
+
+            this.hubspotService.createContact(contactData).subscribe({
+              next: (hubspotResponse) => {
+                console.log(
+                  'Contacto creado en Hubspot exitosamente:',
+                  hubspotResponse
+                );
+
+                // Retornar el usuario de Cognito para que el componente maneje la navegación
+                observer.next(this.cognitoUser);
+                observer.complete();
+              },
+              error: (hubspotError) => {
+                console.error(
+                  'Error al crear contacto en Hubspot:',
+                  hubspotError
+                );
+
+                // Even if Hubspot fails, return the Cognito user for component to handle navigation
+                observer.next(this.cognitoUser);
+                observer.complete();
+              },
+            });
+          } else if (response.ChallengeName) {
+            // Manejar desafíos como NEW_PASSWORD_REQUIRED
+            if (response.ChallengeName === 'NEW_PASSWORD_REQUIRED') {
+              observer.error('Se requiere una nueva contraseña');
+            } else {
+              observer.error({
+                message: `Desafío requerido: ${response.ChallengeName}`,
+              });
+            }
+          } else {
+            observer.error({ message: 'Respuesta de autenticación inválida' });
+          }
+        })
+        .catch((error: any) => {
           let errorMessage = 'Error al iniciar sesión';
-          if (error.code === 'UserNotFoundException') {
-            errorMessage = 'El usuario no existe';
-          } else if (error.code === 'NotAuthorizedException') {
+          if (error.name === 'UserNotFoundException') {
+            errorMessage = 'Email o contraseña incorrectos'; //'El usuario no existe';
+          } else if (error.name === 'NotAuthorizedException') {
             errorMessage = 'La contraseña es incorrecta';
-          } else if (error.code === 'UserNotConfirmedException') {
+          } else if (error.name === 'UserNotConfirmedException') {
             errorMessage =
               'El usuario no ha sido confirmado. Por favor, verifica tu correo electrónico';
             this.resendConfirmationCode(emailaddress);
-          } else if (error.code === 'TooManyFailedAttemptsException') {
+          } else if (error.name === 'TooManyFailedAttemptsException') {
             errorMessage =
               'Demasiados intentos fallidos. Intenta de nuevo más tarde';
+          } else if (error.name === 'InvalidParameterException') {
+            errorMessage =
+              'El flujo USER_PASSWORD_AUTH no está habilitado para este cliente';
+            console.error(
+              'Error: USER_PASSWORD_AUTH no está habilitado. Verifica la configuración del User Pool Client.'
+            );
           }
-          observer.error({ message: errorMessage });
-        },
-      });
+          observer.error({ message: errorMessage, error });
+        });
     });
   }
 
@@ -374,11 +559,46 @@ export class AuthenticateService {
             this.currentUserEmail.next(formattedResult.email);
           }
 
-          // Obtener el Cognito ID del usuario actual
-          const currentUser = this.userPool.getCurrentUser();
-          if (currentUser) {
-            this.currentUserCognitoId.next(currentUser.getUsername());
+          // ✅ CORREGIDO: Obtener el Cognito ID (sub) desde los atributos del usuario o del token
+          const cognitoUserId = formattedResult.sub || null;
+          let finalCognitoUserId = cognitoUserId;
+          
+          if (cognitoUserId) {
+            // Si tenemos el sub en los atributos, usarlo directamente
+            this.currentUserCognitoId.next(cognitoUserId);
+          } else {
+            // Si no está en atributos, intentar extraerlo del ID token
+            try {
+              const idToken = session.getIdToken().getJwtToken();
+              const subFromToken = this.extractSubFromIdToken(idToken);
+              if (subFromToken) {
+                finalCognitoUserId = subFromToken;
+                this.currentUserCognitoId.next(subFromToken);
+              } else {
+                // Fallback: usar username (aunque sea el email)
+                const currentUser = this.userPool.getCurrentUser();
+                if (currentUser) {
+                  finalCognitoUserId = currentUser.getUsername();
+                  this.currentUserCognitoId.next(currentUser.getUsername());
+                }
+              }
+            } catch (error) {
+              console.error('Error al extraer Cognito ID del token:', error);
+              // Fallback: usar username
+              const currentUser = this.userPool.getCurrentUser();
+              if (currentUser) {
+                finalCognitoUserId = currentUser.getUsername();
+                this.currentUserCognitoId.next(currentUser.getUsername());
+              }
+            }
           }
+
+          console.log('🔐 [getUserAttributes] Cognito ID obtenido:', {
+            subFromAttributes: formattedResult.sub,
+            extractedFromToken: finalCognitoUserId !== formattedResult.sub ? finalCognitoUserId : null,
+            finalCognitoUserId: finalCognitoUserId,
+            email: formattedResult.email
+          });
 
           this.userAttributesChanged.next();
           observer.next(formattedResult);
@@ -397,15 +617,18 @@ export class AuthenticateService {
 
   // Navegar al perfil del usuario
   navigateToProfile() {
-    this.router.navigate(['/profile']).then(success => {
-      if (!success) {
-        // Si la navegación falla, intentar con la ruta absoluta
+    this.router
+      .navigate(['/profile'])
+      .then((success) => {
+        if (!success) {
+          // Si la navegación falla, intentar con la ruta absoluta
+          window.location.href = `/profile`;
+        }
+      })
+      .catch((error) => {
+        // En caso de error, usar navegación directa
         window.location.href = `/profile`;
-      }
-    }).catch(error => {
-      // En caso de error, usar navegación directa
-      window.location.href = `/profile`;
-    });
+      });
   }
 
   // Navegar a la página de login
@@ -464,9 +687,19 @@ export class AuthenticateService {
       if (user) {
         const attributes = await fetchUserAttributes();
         if (attributes && attributes.email) {
+          // ✅ CORREGIDO: Obtener el Cognito ID (sub) - priorizar sub de atributos, luego user.userId
+          const cognitoUserId = attributes.sub || user.userId;
+          
+          console.log('🔐 [handleAuthRedirect] Cognito ID obtenido:', {
+            subFromAttributes: attributes.sub,
+            userIdFromUser: user.userId,
+            finalCognitoUserId: cognitoUserId,
+            email: attributes.email
+          });
+          
           this.isAuthenticated.next(true);
           this.currentUserEmail.next(attributes.email);
-          this.currentUserCognitoId.next(user.userId);
+          this.currentUserCognitoId.next(cognitoUserId);
 
           this.userAttributesChanged.next();
         }
@@ -475,7 +708,6 @@ export class AuthenticateService {
       console.error('Error al manejar la redirección de autenticación:', error);
     }
   }
-
 
   /**
    * Dispara evento sign_up para analytics

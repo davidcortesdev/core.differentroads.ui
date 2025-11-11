@@ -185,15 +185,7 @@ export class SignUpFormComponent {
                             // Guardar el usuario para verificar después de la confirmación
                             this.registeredUser = existingUser;
                             
-                            // Disparar evento sign_up con los datos disponibles
-                            const phone = existingUser.phone || this.signUpForm.value.phone || '';
-                            const formattedPhone = phone ? this.analyticsService.formatPhoneNumber(phone) : '';
-                            const userData = {
-                              email_address: existingUser.email || this.signUpForm.value.email || '',
-                              phone_number: formattedPhone,
-                              user_id: cognitoUserId || ''
-                            };
-                            this.analyticsService.signUp('manual', userData);
+                            // NO disparar evento sign_up aquí - solo se disparará cuando se confirme la cuenta
                             
                             this.isLoading = false;
                             this.isConfirming = true;
@@ -219,15 +211,7 @@ export class SignUpFormComponent {
                             // Guardar el usuario para verificar después de la confirmación
                             this.registeredUser = user;
                             
-                            // Disparar evento sign_up con los datos disponibles
-                            const phone = user.phone || this.signUpForm.value.phone || '';
-                            const formattedPhone = phone ? this.analyticsService.formatPhoneNumber(phone) : '';
-                            const analyticsUserData = {
-                              email_address: user.email || this.signUpForm.value.email || '',
-                              phone_number: formattedPhone,
-                              user_id: cognitoUserId || ''
-                            };
-                            this.analyticsService.signUp('manual', analyticsUserData);
+                            // NO disparar evento sign_up aquí - solo se disparará cuando se confirme la cuenta
                             
                             this.isLoading = false;
                             this.isConfirming = true;
@@ -327,6 +311,7 @@ export class SignUpFormComponent {
 
   /**
    * Disparar evento sign_up con datos completos después de verificación exitosa
+   * Solo se dispara UNA VEZ cuando se confirma la cuenta exitosamente
    */
   private trackSignUpWithCompleteData(method: string): void {
     // Si tenemos el usuario registrado, usar sus datos directamente
@@ -343,6 +328,7 @@ export class SignUpFormComponent {
     }
 
     // Si no tenemos el usuario registrado, intentar obtenerlo con getCurrentUserData
+    // Solo disparar UNA VEZ, no hacer múltiples fallbacks
     this.analyticsService.getCurrentUserData().subscribe({
       next: (userData) => {
         // Si getCurrentUserData ya tiene phone_number formateado, usarlo; si no, formatear desde formulario
@@ -360,7 +346,7 @@ export class SignUpFormComponent {
       },
       error: (error) => {
         console.error('Error obteniendo datos de usuario para analytics:', error);
-        // Fallback con datos del formulario
+        // Fallback con datos del formulario - solo UNA VEZ
         const phone = this.signUpForm.value.phone || '';
         const formattedPhone = phone ? this.analyticsService.formatPhoneNumber(phone) : '';
         const fallbackUserData = {

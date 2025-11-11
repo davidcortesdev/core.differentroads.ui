@@ -15,6 +15,13 @@ import {
   ReservationTKLogService,
   IReservationTKLogResponse,
 } from '../../../core/services/reservation/reservation-tk-log.service';
+import {
+  DocumentServicev2,
+  DocumentType,
+  DocumentDownloadResult,
+} from '../../../core/services/v2/document.service';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { environment } from '../../../../environments/environment';
 import { MessageService } from 'primeng/api';
 import { BookingNote } from '../../../core/models/bookings/booking-note.model';
 import { catchError, of } from 'rxjs';
@@ -63,11 +70,16 @@ export class BookingDocumentationV2Component implements OnInit {
   // Propiedad para detectar si es ATC
   isAtc: boolean = false;
 
+  // Propiedad para el estado de carga de descarga por documento
+  downloadLoading: { [key: number]: boolean } = {};
+
   constructor(
     private documentationService: DocumentationService,
     private notificationService: NotificationService,
     private messageService: MessageService,
     private reservationTKLogService: ReservationTKLogService,
+    private documentServicev2: DocumentServicev2,
+    private http: HttpClient,
     private route: ActivatedRoute
   ) {}
 
@@ -448,6 +460,33 @@ export class BookingDocumentationV2Component implements OnInit {
   }
 
   /**
+   * Formatea el contenido enviado truncándolo si es muy largo
+   */
+  formatSentContent(content: string): string {
+    if (!content) return '-';
+    const maxLength = 60;
+    return content.length > maxLength
+      ? content.substring(0, maxLength) + '...'
+      : content;
+  }
+
+  /**
+   * Trunca el nombre del documento si es muy largo
+   * @param fileName - Nombre del archivo
+   * @param maxLength - Longitud máxima (por defecto 25)
+   * @returns Nombre truncado con "..." si es necesario
+   */
+  truncateFileName(
+    fileName: string | null | undefined,
+    maxLength: number = 25
+  ): string {
+    if (!fileName) return 'Sin nombre';
+    return fileName.length > maxLength
+      ? fileName.substring(0, maxLength) + '...'
+      : fileName;
+  }
+
+  /**
    * Obtiene el icono apropiado según la severidad del log
    */
   getLogIcon(severity: string): string {
@@ -506,5 +545,145 @@ export class BookingDocumentationV2Component implements OnInit {
     }
 
     return parts.join('<br><br>');
+  }
+
+  /**
+   * Descarga un documento individual
+   * Similar al método del perfil, usando la ruta completa del documento
+   * @param documentReservation - Documento de reserva a descargar
+   */
+  downloadDocument(
+    documentReservation: IDocumentReservationResponse & {
+      document?: { id: number; fileName: string; documentTypeId: number };
+    }
+  ): void {
+    const documentId = documentReservation.document?.id;
+    const fileName = documentReservation.document?.fileName;
+    const documentTypeId = documentReservation.document?.documentTypeId;
+    const reservationId = parseInt(this.bookingId, 10);
+
+    if (!documentId || !fileName || !documentTypeId) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Advertencia',
+        detail: 'No se puede descargar el documento: información incompleta',
+      });
+      return;
+    }
+
+    this.downloadLoading[documentId] = true;
+
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Info',
+      detail: 'Descargando documento...',
+    });
+
+    // Obtener el código del tipo de documento
+    const documentType = this.documentTypes.find(
+      (t) => t.id === documentTypeId
+    );
+    const documentTypeCode = documentType?.code?.toUpperCase();
+
+    // Si tenemos el código del tipo de documento, usar el método unificado
+    if (documentTypeCode) {
+      this.documentServicev2
+        .downloadDocumentByCode(reservationId, documentTypeCode)
+        .subscribe({
+          next: (result: DocumentDownloadResult) => {
+            this.downloadLoading[documentId] = false;
+
+            const downloadUrl = window.URL.createObjectURL(result.blob);
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = result.fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(downloadUrl);
+
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Éxito',
+              detail: 'Documento descargado exitosamente',
+            });
+          },
+          error: (error) => {
+            // Si falla el método unificado, intentar con el método alternativo
+            console.warn(
+              'No se pudo descargar con el método unificado, intentando método alternativo:',
+              error
+            );
+            this.downloadDocumentAlternative(fileName, documentId);
+          },
+        });
+    } else {
+      // Si no tenemos el código, usar método alternativo
+      this.downloadDocumentAlternative(fileName, documentId);
+    }
+  }
+
+  /**
+   * Método alternativo para descargar documento usando solo el fileName
+   * @param fileName - Nombre del archivo
+   * @param documentId - ID del documento
+   */
+  private downloadDocumentAlternative(
+    fileName: string,
+    documentId: number
+  ): void {
+    this.documentServicev2.getDocument(fileName).subscribe({
+      next: (blob) => {
+        this.downloadLoading[documentId] = false;
+
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Éxito',
+          detail: 'Documento descargado exitosamente',
+        });
+      },
+      error: (error) => {
+        this.downloadLoading[documentId] = false;
+        console.error('Error al descargar documento:', error);
+        this.handleDownloadError(error);
+      },
+    });
+  }
+
+  /**
+   * Maneja los errores de descarga de documentos
+   * @param error - Error recibido
+   */
+  private handleDownloadError(error: any): void {
+    let errorDetail =
+      'No se pudo descargar el documento. Por favor, inténtalo más tarde.';
+
+    if (error.status === 404) {
+      errorDetail = 'Documento no encontrado.';
+    } else if (error.status === 403) {
+      errorDetail = 'No tienes permisos para descargar este documento.';
+    } else if (error.status === 500) {
+      if (error.error?.message?.includes('KeyNotFoundException')) {
+        errorDetail =
+          'Hay datos incompletos en este documento. Por favor, contacta con soporte.';
+      } else {
+        errorDetail = 'Error interno del servidor. Inténtalo más tarde.';
+      }
+    }
+
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Error al descargar documento',
+      detail: errorDetail,
+    });
   }
 }

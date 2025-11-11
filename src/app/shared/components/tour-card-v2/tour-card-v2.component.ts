@@ -29,6 +29,10 @@ export class TourCardV2Component implements OnInit, AfterViewInit {
   private originalConsoleWarn: any = null;
   private scalapayInitAttempts = 0;
   private maxScalapayInitAttempts = 3;
+  private scalapayReloadAttempts = 0;
+  private maxScalapayReloadAttempts = 2;
+  private scalapayReadyListener?: () => void;
+  
   constructor(
     private router: Router,
     @Inject(DOCUMENT) private document: Document,
@@ -56,10 +60,13 @@ export class TourCardV2Component implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     if (this.showScalapayPrice) {
-      // Suprimir warnings específicos de Scalapay en la consola
       this.suppressScalapayWarnings();
 
-      // Primero cargar el script de ScalaPay
+      this.scalapayReadyListener = () => {
+        this.initializeScalapayWidget();
+      };
+      window.addEventListener('scalapay-ready', this.scalapayReadyListener);
+
       this.initializeScalapayScript();
     }
   }
@@ -69,39 +76,29 @@ export class TourCardV2Component implements OnInit, AfterViewInit {
     if (this.originalConsoleWarn) {
       console.warn = this.originalConsoleWarn;
     }
+    
+    // Remover el listener de scalapay-ready
+    if (this.scalapayReadyListener) {
+      window.removeEventListener('scalapay-ready', this.scalapayReadyListener);
+    }
   }
 
   handleTourClick(): void {
     // Disparar evento select_item si tenemos información de la lista
     if (this.itemListId && this.itemListName) {
       this.analyticsService.getCurrentUserData().subscribe(userData => {
-        this.analyticsService.selectItem(
-          this.itemListId!, // Usar el ID real de la lista directamente
+        // Usar el método helper para construir el item de forma consistente
+        const item = this.analyticsService.convertTourToEcommerceItem(
+          this.tourData,
+          this.itemListId!,
           this.itemListName!,
-          {
-            item_id: this.tourData.id?.toString() || '', // ✅ ID REAL DE BASE DE DATOS
-            item_name: this.tourData.title || '',
-            coupon: '',
-            discount: 0,
-            index: (this.index || 0) + 1, // GA4 usa índice basado en 1
-            item_brand: 'Different Roads',
-            item_category: this.tourData.continent || '',
-            item_category2: this.tourData.country || '',
-            item_category3: this.tourData.tag || '',
-            item_category4: this.tourData.availableMonths?.join(', ').toLowerCase() || '',
-            item_category5: this.tourData.tripType && this.tourData.tripType.length > 0
-              ? this.tourData.tripType.join(', ')
-              : (this.tourData.isByDr ? 'Grupos' : 'Privados'),
-            item_list_id: this.itemListId!, // Usar el ID real de la lista directamente
-            item_list_name: this.itemListName!,
-            item_variant: '',
-            price: this.tourData.price || 0,
-            quantity: 1,
-            puntuacion: this.analyticsService.formatRating(this.tourData.rating, '5.0'),
-            duracion: this.tourData.itineraryDaysCount 
-              ? `${this.tourData.itineraryDaysCount} días, ${Math.max(0, this.tourData.itineraryDaysCount - 1)} noches`
-              : ''
-          },
+          this.index || 0
+        );
+        
+        this.analyticsService.selectItem(
+          this.itemListId!,
+          this.itemListName!,
+          item,
           userData
         );
       });
@@ -167,46 +164,35 @@ export class TourCardV2Component implements OnInit, AfterViewInit {
    * Inicializa el script de Scalapay
    */
   private initializeScalapayScript(): void {
-    if (this.isScalapayScriptLoaded()) {
-      // Si el script ya existe, inicializar el widget directamente
+    const customElementDefined = customElements.get('scalapay-widget') !== undefined;
+    
+    if (customElementDefined) {
       setTimeout(() => {
         this.initializeScalapayWidget();
       }, 100);
-      return;
+    } else {
+      this.scalapayInitAttempts++;
+      if (this.scalapayInitAttempts < 5) {
+        setTimeout(() => {
+          this.initializeScalapayScript();
+        }, 500);
+      }
     }
-
-    const script = this.document.createElement('script');
-    script.type = 'module';
-    script.src = 'https://cdn.scalapay.com/widget/scalapay-widget-loader.js?version=V5';
-    
-    script.onload = () => {
-      // Inicializar el widget después de que se cargue el script
-      setTimeout(() => {
-        this.initializeScalapayWidget();
-      }, 500);
-    };
-    
-    script.onerror = (error) => {
-      console.error('Error al cargar widget de Scalapay:', error);
-    };
-    
-    this.document.head.appendChild(script);
   }
 
   /**
    * Verifica si el script de Scalapay ya está cargado
    */
   private isScalapayScriptLoaded(): boolean {
-    return !!this.document.querySelector('script[src*="scalapay-widget-loader.js?version=V5"]');
+    return customElements.get('scalapay-widget') !== undefined;
   }
 
   /**
    * Inicializa el widget de Scalapay después de que esté cargado el script
    */
   private initializeScalapayWidget(): void {
-    this.scalapayInitAttempts++;
-
     if (!this.tourData.price) {
+      this.scalapayInitAttempts++;
       if (this.scalapayInitAttempts < this.maxScalapayInitAttempts) {
         setTimeout(() => {
           this.initializeScalapayWidget();
@@ -215,11 +201,9 @@ export class TourCardV2Component implements OnInit, AfterViewInit {
       return;
     }
     
-    // Dar tiempo para que el DOM se actualice antes de disparar el evento
     setTimeout(() => {
       this.dispatchScalapayReloadEvent();
       
-      // Verificar si el widget se inicializó correctamente después de un tiempo
       setTimeout(() => {
         this.verifyWidgetInitialization();
       }, 2000);
@@ -238,20 +222,17 @@ export class TourCardV2Component implements OnInit, AfterViewInit {
    * Verifica que el widget se haya inicializado correctamente
    */
   private verifyWidgetInitialization(): void {
-    const widget = this.document.querySelector('scalapay-widget');
-    
-    if (!widget) {
-      console.error('Widget de Scalapay no encontrado');
-      return;
-    }
-    
-    const isVisible = this.isScalapayWidgetVisible();
-    
-    if (!isVisible) {
-      setTimeout(() => {
+    setTimeout(() => {
+      const widget = this.document.querySelector('scalapay-widget');
+      
+      if (!widget) return;
+      
+      const isVisible = this.isScalapayWidgetVisible();
+      
+      if (!isVisible) {
         this.forceScalapayReload();
-      }, 1000);
-    }
+      }
+    }, 500);
   }
 
   /**
@@ -272,16 +253,14 @@ export class TourCardV2Component implements OnInit, AfterViewInit {
    * Fuerza la recarga completa del widget de Scalapay
    */
   private forceScalapayReload(): void {
-    // Disparar los eventos necesarios
+    this.scalapayReloadAttempts++;
+    
+    if (this.scalapayReloadAttempts > this.maxScalapayReloadAttempts) {
+      return;
+    }
+    
     setTimeout(() => {
       this.dispatchScalapayReloadEvent();
-      
-      // Si no funciona, intentar inicializar de nuevo
-      setTimeout(() => {
-        if (!this.isScalapayWidgetVisible()) {
-          this.initializeScalapayWidget();
-        }
-      }, 1000);
     }, 100);
   }
 }

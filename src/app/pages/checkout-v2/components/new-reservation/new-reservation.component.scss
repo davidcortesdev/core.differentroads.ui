@@ -217,6 +217,34 @@ $button-border-radius: 114.398px;
             color: $azul;
           }
         }
+
+        // Estilos para cuenta bancaria centrada (otros retailers)
+        // Mantiene el mismo formato visual pero centrado
+        &.bank-info-centered {
+          display: grid;
+          grid-template-columns: 1fr;
+          justify-items: center;
+          gap: 2rem;
+
+          .bank-column-centered {
+            width: 100%;
+            max-width: 400px;
+
+            .bank-row {
+              margin-bottom: 0.5rem;
+
+              .label {
+                font-weight: 600;
+                margin-right: 0.5rem;
+                color: $azul;
+              }
+
+              .value {
+                color: $azul;
+              }
+            }
+          }
+        }
       }
     }
 

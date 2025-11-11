@@ -8,6 +8,7 @@ import { PaymentMethodNetService } from '../../checkout-v2/services/paymentMetho
 import { NewRedsysService, IFormData } from '../../checkout-v2/services/newRedsys.service';
 import { CurrencyService } from '../../../core/services/masterdata/currency.service';
 import { PaymentService, PaymentInfo } from '../../../core/services/payments/payment.service';
+import { environment } from '../../../../environments/environment';
 
 export interface PaymentData {
   amount: number;
@@ -193,10 +194,18 @@ export class AddPaymentModalComponent implements OnInit {
         throw new Error('Error al crear el pago');
       }
 
+      // Emitir evento de pago procesado para analytics
+      this.paymentProcessed.emit({
+        amount: this.customPaymentAmount,
+        method: 'card'
+      });
+
       // Generar los datos del formulario para Redsys
+      const baseUrlFront = (window.location.href).replace(this.router.url, '');
       const formData: IFormData | undefined = await this.redsysService.generateFormData(
         response.id, 
-        "https://www.differentroads.es/"
+        environment.redsysApiUrl,
+        baseUrlFront
       ).toPromise();
       
       if (formData) {
@@ -215,7 +224,7 @@ export class AddPaymentModalComponent implements OnInit {
     // Crear formulario dinámico para enviar a Redsys
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = 'https://sis-t.redsys.es:25443/sis/realizarPago';
+    form.action = environment.redsysUrl;
 
     const input1 = document.createElement('input');
     input1.type = 'hidden';
@@ -261,6 +270,12 @@ export class AddPaymentModalComponent implements OnInit {
         throw new Error('Error al crear el pago por transferencia');
       }
 
+      // Emitir evento de pago procesado para analytics
+      this.paymentProcessed.emit({
+        amount: this.customPaymentAmount,
+        method: 'transfer'
+      });
+
       // Navegar a la página de confirmación/subida de comprobante
       this.router.navigate([`/reservation/${this.reservationId}/${response.id}`]);
     } catch (error) {
@@ -286,6 +301,12 @@ export class AddPaymentModalComponent implements OnInit {
       console.log('✅ Scalapay - Respuesta recibida:', response);
 
       if (response?.checkoutUrl) {
+        // Emitir evento de pago procesado para analytics (antes de redirigir)
+        this.paymentProcessed.emit({
+          amount: this.customPaymentAmount,
+          method: 'scalapay'
+        });
+
         console.log('🔗 Scalapay - Redirigiendo a:', response.checkoutUrl);
         // Redirigir a Scalapay para completar el pago
         window.location.href = response.checkoutUrl;

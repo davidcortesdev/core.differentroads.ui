@@ -108,15 +108,18 @@
 
         <p-floatlabel variant="on">
           <div class="phone-row">
-            <input
-              pInputText
-              type="text"
-              class="prefix-input"
-              placeholder="+34"
-              inputmode="numeric"
-              maxlength="3"
-              (input)="onPrefixInput($event)"
-            />
+            <app-phone-prefix-select
+              [(ngModel)]="selectedPhonePrefix"
+              name="phonePrefix"
+              [phonePrefixOptions]="phonePrefixOptions"
+              [placeholder]="'Seleccione prefijo'"
+              [showClear]="true"
+              [filter]="true"
+              [styleClass]="'prefix-select'"
+              [errorClass]="hasFieldError('phonePrefix') ? 'error' : ''"
+              [profileStyle]="true"
+              (prefixChange)="onPhonePrefixChange({ value: $event })">
+            </app-phone-prefix-select>
             <input
               pInputText
               type="tel"
@@ -178,6 +181,7 @@
             name="dni"
             (input)="onDniInput($event)"
             [class.error]="hasFieldError('dni')"
+            maxlength="20"
           />
           <label for="dni">DNI/NIE</label>
           <small class="error-message" *ngIf="hasFieldError('dni')">

@@ -2,9 +2,15 @@
 <html lang="es">
 
 <head>
-  <!-- Termly CMP - Debe estar ANTES de GTM -->
-  <script type="text/javascript"
-    src="https://app.termly.io/resource-blocker/c5045a2e-2021-47b5-a00f-e2cce0427476?autoBlock=on"></script>
+  <!-- Termly CMP - Solo en producción (no en localhost) -->
+  <script>
+    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      var termlyScript = document.createElement('script');
+      termlyScript.type = 'text/javascript';
+      termlyScript.src = 'https://app.termly.io/resource-blocker/c5045a2e-2021-47b5-a00f-e2cce0427476?autoBlock=on';
+      document.head.appendChild(termlyScript);
+    }
+  </script>
 
   <!-- Google Tag Manager -->
   <script>(function (w, d, s, l, i) {
@@ -15,6 +21,41 @@
         j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
           'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
     })(window, document, 'script', 'dataLayer', 'GTM-K5KH2X3');</script>
+
+  <!-- Google Analytics Universal (ga) -->
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+    
+    // Inicializar GA con el ID de seguimiento (debe configurarse según el entorno)
+    ga('create', 'UA-XXXXX-Y', 'auto');
+    ga('require', 'ecommerce');
+  </script>
+
+  <!-- Google Tag (gtag) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=AW-969524948"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'AW-969524948');
+  </script>
+
+  <!-- Taboola Pixel -->
+  <script type="text/javascript">
+    window._tfa = window._tfa || [];
+    _tfa.push({notify: 'event', name: 'page_view', id: 1878210});
+    !function (t, f, a, x) {
+          if (!document.getElementById(x)) {
+            t.async = 1;t.src = a;t.id = x;f.parentNode.insertBefore(t, f);
+          }
+    }(document.createElement('script'),
+    document.getElementsByTagName('script')[0],
+    '//cdn.taboola.com/libtrc/unip/1878210/tfa.js',
+    'tb_tfa_script');
+  </script>
 
   <meta charset="utf-8" />
   <title>Different Roads - Viajes y Experiencias Únicas</title>
@@ -32,6 +73,37 @@
       style="display:none;visibility:hidden"></iframe></noscript>
 
   <app-root></app-root>
+  
+  <!-- Scalapay Widget -->
+  <script>
+    (function() {
+      var script = document.createElement('script');
+      script.type = 'module';
+      script.src = 'https://cdn.scalapay.com/widget/scalapay-widget-loader.js?version=V5';
+      script.crossOrigin = 'anonymous';
+      
+      script.onerror = function() {
+        // Fallback sin type="module"
+        var scriptNoModule = document.createElement('script');
+        scriptNoModule.src = 'https://cdn.scalapay.com/widget/scalapay-widget-loader.js?version=V5';
+        scriptNoModule.crossOrigin = 'anonymous';
+        document.body.appendChild(scriptNoModule);
+      };
+      
+      document.body.appendChild(script);
+      
+      // Notificar cuando el widget esté listo
+      var checkInterval = setInterval(function() {
+        if (customElements.get('scalapay-widget')) {
+          window.dispatchEvent(new CustomEvent('scalapay-ready'));
+          clearInterval(checkInterval);
+        }
+      }, 100);
+      
+      // Limpiar después de 10 segundos
+      setTimeout(function() { clearInterval(checkInterval); }, 10000);
+    })();
+  </script>
 </body>
 
 <script>

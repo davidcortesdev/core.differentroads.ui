@@ -6,6 +6,7 @@ import {
   OnInit,
   OnChanges,
   SimpleChanges,
+  OnDestroy,
 } from '@angular/core';
 import {
   FormBuilder,
@@ -23,6 +24,9 @@ import {
 } from '../../../core/models/bookings/booking-traveler.model';
 import { IReservationFieldResponse } from '../../../core/services/reservation/reservation-field.service';
 import { IDepartureReservationFieldResponse } from '../../../core/services/departure/departure-reservation-field.service';
+import { PhonePrefixService, IPhonePrefixResponse } from '../../../core/services/masterdata/phone-prefix.service';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-passenger-card-v2',
@@ -30,7 +34,7 @@ import { IDepartureReservationFieldResponse } from '../../../core/services/depar
   templateUrl: './passenger-card.component.html',
   styleUrls: ['./passenger-card.component.scss'],
 })
-export class PassengerCardV2Component implements OnInit, OnChanges {
+export class PassengerCardV2Component implements OnInit, OnChanges, OnDestroy {
   @Input() passenger!: any;
   @Input() bookingId!: string;
   @Input() travelerId!: string;
@@ -51,6 +55,12 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
   passengerForm!: FormGroup;
   isEditing = false;
   today = new Date();
+
+  // Opciones para el dropdown de prefijo telefónico
+  phonePrefixOptions: IPhonePrefixResponse[] = [];
+  selectedPhonePrefix: string | null = null;
+
+  private destroy$ = new Subject<void>();
 
   // Mapeo de campos de reserva
   reservationFieldMappings: { [key: string]: string } = {
@@ -74,10 +84,27 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private phonePrefixService: PhonePrefixService
   ) {}
 
   ngOnInit(): void {
+    // Cargar prefijos telefónicos
+    this.phonePrefixService.getAllOrdered()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (prefixes) => {
+          this.phonePrefixOptions = prefixes;
+          // Si ya hay un prefijo en el pasajero, establecerlo después de cargar las opciones
+          if (this.passenger?.prefijo) {
+            this.selectedPhonePrefix = this.passenger.prefijo;
+          }
+        },
+        error: (error) => {
+          console.error('Error loading phone prefixes:', error);
+        }
+      });
+
     this.route.data.subscribe((data) => {
       if (data['passenger']) {
         this.passenger = data['passenger'];
@@ -106,6 +133,11 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
     }
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   initForm(): void {
     this.passengerForm = this.fb.group({
       fullName: [this.passenger?.name || '', [Validators.required]],
@@ -115,6 +147,7 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
         [Validators.email, Validators.minLength(5)],
       ],
       phone: [this.passenger?.phone || ''],
+      prefijo: [this.passenger?.prefijo || ''],
       gender: [this.passenger?.gender || ''],
       birthDate: [this.passenger?.birthDate || ''],
       documentType: [this.passenger?.documentType || 'dni'],
@@ -131,6 +164,13 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
       minorIdExpirationDate: [this.passenger?.minorIdExpirationDate],
       minorIdIssueDate: [this.passenger?.minorIdIssueDate],
     });
+
+    // Establecer el prefijo seleccionado si existe
+    if (this.passenger?.prefijo) {
+      this.selectedPhonePrefix = this.passenger.prefijo;
+    } else {
+      this.selectedPhonePrefix = null;
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -171,15 +211,23 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
       email: this.passenger.email || '',
       phone: this.passenger.phone || '',
       gender: this.passenger.gender || '',
+      prefijo: this.passenger.prefijo || '',
     });
+    
+    // Establecer el prefijo seleccionado
+    if (this.passenger?.prefijo) {
+      this.selectedPhonePrefix = this.passenger.prefijo;
+    } else {
+      this.selectedPhonePrefix = null;
+    }
   }
 
-  // Limitar prefijo a 3 dígitos (visual, no se guarda)
-  onPrefixInput(event: Event): void {
-    const inputEl = event.target as HTMLInputElement | null;
-    if (!inputEl) return;
-    const digitsOnly = inputEl.value.replace(/\D/g, '').slice(0, 3);
-    inputEl.value = digitsOnly;
+  onPhonePrefixChange(event: any): void {
+    this.selectedPhonePrefix = event.value;
+    const control = this.passengerForm?.get('prefijo');
+    if (control) {
+      control.setValue(event.value || '', { emitEvent: true });
+    }
   }
 
   // Normalizar teléfono a dígitos y limitar a 14
@@ -248,6 +296,7 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
         passportIssueDate: formValue.passportIssueDate || null,
         minorIdExpirationDate: formValue.minorIdExpirationDate || null,
         minorIdIssueDate: formValue.minorIdIssueDate || null,
+        prefijo: formValue.prefijo || '',
       };
 
       let bookingSID = '';
@@ -278,6 +327,7 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
         type: this.passenger.type || 'adult',
         gender: formValue.gender || '',
         nationality: formValue.nationality || '',
+        prefijo: formValue.prefijo || '',
         _id: this.travelerId
       };
 
@@ -305,6 +355,7 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
             dni: formValue.dni,
             minorIdExpirationDate: formValue.minorIdExpirationDate,
             minorIdIssueDate: formValue.minorIdIssueDate,
+            prefijo: formValue.prefijo,
           };
 
           this.messageService.add({
@@ -472,7 +523,8 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
       'document_type': 'documentType',
       'room': 'room',
       'ciudad': 'ciudad',
-      'codigoPostal': 'codigoPostal'
+      'codigoPostal': 'codigoPostal',
+      'phonePrefix': 'prefijo'  // ✅ Código en BD: phonePrefix, propiedad en passenger: prefijo
     };
     
     const passengerKey = mapping[fieldCode] || fieldCode;
@@ -551,7 +603,8 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
       'minorIdExpirationDate': 'minorIdExpirationDate',  // ✅ Agregado fecha caducidad DNI
       'documentExpeditionDate': 'documentExpeditionDate',  // ✅ Agregado fecha expedición pasaporte
       'documentExpirationDate': 'documentExpirationDate',  // ✅ Agregado fecha caducidad pasaporte
-      'comfortPlan': 'comfortPlan'  // ✅ Agregado plan de seguro
+      'comfortPlan': 'comfortPlan',  // ✅ Agregado plan de seguro
+      'prefijo': 'phonePrefix'  // ✅ Agregado campo prefijo (código en BD: phonePrefix)
     };
     return mapping[fieldKey] || fieldKey;
   }
@@ -662,5 +715,12 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
       }
     }
     return null;
+  }
+
+  /**
+   * TrackBy function para mejorar el rendimiento del *ngFor
+   */
+  trackByReservationFieldId(index: number, item: IDepartureReservationFieldResponse): number {
+    return item.reservationFieldId;
   }
 }

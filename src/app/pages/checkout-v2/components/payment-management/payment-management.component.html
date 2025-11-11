@@ -1,7 +1,5 @@
 <!-- Loading States -->
-<app-loading-section 
-  [isLoading]="isLoading" 
-  [paymentType]="paymentType">
+<app-loading-section [isLoading]="isLoading" [paymentType]="paymentType">
 </app-loading-section>
 
 <!-- Main Content -->
@@ -10,32 +8,48 @@
   <div class="mb-4">
     <p-card>
       <ng-template pTemplate="header">
-        <div class="bg-primary p-4" style="border-radius: 6px 6px 0 0;">
+        <div class="bg-primary p-4" style="border-radius: 6px 6px 0 0">
           <div class="flex align-items-center gap-3">
-            <h3 style="margin: 0; padding-left: 2rem; padding-top: 1rem; color: #002B57;">Información sobre puntos</h3>
+            <h3
+              style="
+                margin: 0;
+                padding-left: 2rem;
+                padding-top: 1rem;
+                color: #002b57;
+              "
+            >
+              Información sobre puntos
+            </h3>
           </div>
         </div>
       </ng-template>
-      
+
       <div>
-        <p style="padding: 1rem; margin: 0; padding-top: 0; line-height: 1.6;">
-          Tanto tú como los viajeros que tengan email registrado en los datos de la reserva recibirán esta reserva en su perfil. 
+        <p style="padding: 1rem; margin: 0; padding-top: 0; line-height: 1.6">
+          Tanto tú como los viajeros que tengan email registrado en los datos de
+          la reserva recibirán esta reserva en su perfil.
         </p>
-        <p style="padding: 1rem; margin: 0; padding-top: 0; line-height: 1.6;">  
-          Además, cada viajero con email acumulará automáticamente <strong class="text-primary">el 3% del importe de su viaje en puntos</strong>, 
-          que podrán utilizarse como descuento en futuras reservas.
+        <p style="padding: 1rem; margin: 0; padding-top: 0; line-height: 1.6">
+          Además, cada viajero con email acumulará automáticamente
+          <strong class="text-primary"
+            >el 3% del importe de su viaje en puntos</strong
+          >, que podrán utilizarse como descuento en futuras reservas.
         </p>
-        
-        <p style="padding: 0 1rem 1rem 1rem; margin: 0; line-height: 1.6;">
-          Si ya dispones de <strong class="text-primary">puntos acumulados</strong>, podrás aplicarlos como descuento en esta reserva 
-          antes de realizar el pago.
+
+        <p style="padding: 0 1rem 1rem 1rem; margin: 0; line-height: 1.6">
+          Si ya dispones de
+          <strong class="text-primary">puntos acumulados</strong>, podrás
+          aplicarlos como descuento en esta reserva antes de realizar el pago.
         </p>
-        
-        <p-message 
+
+        <p-message
           icon="pi pi-exclamation-triangle"
-          severity="warn" 
+          severity="warn"
           styleClass="w-full"
-          [text]="'Importante: Una vez confirmado el pago, ya no será posible descontar puntos de esta reserva.'">
+          [text]="
+            'Importante: Una vez confirmado el pago, ya no será posible descontar puntos de esta reserva.'
+          "
+        >
         </p-message>
       </div>
     </p-card>
@@ -46,25 +60,30 @@
     <div class="header-container" (click)="toggleDropdown('main')">
       <div class="title-with-icon">
         <span class="title">Selecciona la forma de pago</span>
-        <i class="pi" [ngClass]="dropdownStates.main ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+        <i
+          class="pi"
+          [ngClass]="dropdownStates.main ? 'pi-chevron-up' : 'pi-chevron-down'"
+        ></i>
       </div>
       <div class="title-underline"></div>
     </div>
 
     <div *ngIf="dropdownStates.main" class="payment-panels">
       <!-- Complete Payment Panel -->
-      <p-panel 
+      <p-panel
         *ngIf="shouldShowCompleteOption"
-        styleClass="payment-panel" 
-        [ngClass]="{ 'selected': paymentType === 'complete' }" 
+        styleClass="payment-panel"
+        [ngClass]="{ selected: paymentType === 'complete' }"
         (click)="selectPaymentType('complete')"
-        showHeader="false">
+        showHeader="false"
+      >
         <div class="payment-option">
-          <p-radioButton 
-            name="paymentType" 
-            value="complete" 
+          <p-radioButton
+            name="paymentType"
+            value="complete"
             [ngModel]="paymentType"
-            (ngModelChange)="selectPaymentType('complete')">
+            (ngModelChange)="selectPaymentType('complete')"
+          >
           </p-radioButton>
           <span class="option-text">Paga tu viaje al completo</span>
           <span class="option-price" aria-label="Precio total">
@@ -74,79 +93,102 @@
       </p-panel>
 
       <!-- Deposit Payment Panel -->
-      <p-panel 
+      <p-panel
         *ngIf="shouldShowDepositOption"
-        styleClass="payment-panel" 
-        [ngClass]="{ 'selected': paymentType === 'deposit' }" 
+        styleClass="payment-panel"
+        [ngClass]="{ selected: paymentType === 'deposit' }"
         (click)="selectPaymentType('deposit')"
-        showHeader="false">
+        showHeader="false"
+      >
         <div class="payment-option">
-          <p-radioButton 
-            name="paymentType" 
-            value="deposit" 
+          <p-radioButton
+            name="paymentType"
+            value="deposit"
             [ngModel]="paymentType"
-            (ngModelChange)="selectPaymentType('deposit')">
+            (ngModelChange)="selectPaymentType('deposit')"
+          >
           </p-radioButton>
           <span class="option-text">
-            Paga ahora {{ depositTotalAmount | currencyFormat }} y el resto antes del {{ paymentDeadline }}
-            <span *ngIf="hasAmadeusFlight && hasSpecificSearchFlights" class="specific-search-info">
-              (incluye {{ depositAmount | currencyFormat }} depósito + {{ specificSearchFlightsCost | currencyFormat }} vuelos)
+            Paga ahora {{ depositTotalAmount | currencyFormat }} y el resto
+            antes del {{ paymentDeadline }}
+            <span
+              *ngIf="hasAmadeusFlight && hasSpecificSearchFlights"
+              class="specific-search-info"
+            >
+              (incluye {{ depositAmount | currencyFormat }} depósito +
+              {{ specificSearchFlightsCost | currencyFormat }} vuelos)
             </span>
           </span>
-          <span class="option-price">{{ depositTotalAmount | currencyFormat }}</span>
+          <span class="option-price">{{
+            depositTotalAmount | currencyFormat
+          }}</span>
         </div>
       </p-panel>
 
       <!-- Installments Payment Panel -->
-      <p-panel 
+      <p-panel
         *ngIf="shouldShowInstallmentsOption"
-        styleClass="payment-panel" 
-        [ngClass]="{ 'selected': paymentType === 'installments' }" 
+        styleClass="payment-panel"
+        [ngClass]="{ selected: paymentType === 'installments' }"
         (click)="selectPaymentType('installments')"
-        showHeader="false">
+        showHeader="false"
+      >
         <div class="payment-option">
-          <p-radioButton 
-            name="paymentType" 
-            value="installments" 
+          <p-radioButton
+            name="paymentType"
+            value="installments"
             [ngModel]="paymentType"
-            (ngModelChange)="selectPaymentType('installments')">
+            (ngModelChange)="selectPaymentType('installments')"
+          >
           </p-radioButton>
-           <label for="payment-installments" class="option-text">
-             Paga a plazos con 
-             <img src="assets/images/scalapay.svg" 
-                  alt="Scalapay" 
-                  class="scalapay-inline-logo">
-           </label>
-            <div class="scalapay-widget-container" aria-label="Widget de pago fraccionado Scalapay">
-              <div id="price-container-main" style="display: none;" aria-hidden="true">
-                {{ totalPrice | currencyFormat }}
-              </div>
-              <scalapay-widget 
-                merchant-token="9MFV6DMBA" 
-                amount-selectors='["#price-container-main"]' 
-                channel="travel"
-                type="checkout"
-                environment="integration"
-                locale="es"
-                currency-display="symbol">
-              </scalapay-widget>
+          <label for="payment-installments" class="option-text">
+            Paga a plazos con
+            <img
+              src="assets/images/scalapay.svg"
+              alt="Scalapay"
+              class="scalapay-inline-logo"
+            />
+          </label>
+          <div
+            class="scalapay-widget-container"
+            aria-label="Widget de pago fraccionado Scalapay"
+          >
+            <div
+              id="price-container-main"
+              style="display: none"
+              aria-hidden="true"
+            >
+              {{ totalPrice | currencyFormat }}
             </div>
+            <scalapay-widget
+              [attr.merchant-token]="scalapayMerchantToken"
+              amount-selectors='["#price-container-main"]'
+              channel="travel"
+              type="checkout"
+              [attr.environment]="scalapayEnvironment"
+              locale="es"
+              currency-display="symbol"
+            >
+            </scalapay-widget>
+          </div>
         </div>
       </p-panel>
 
       <!-- Transfer 25% Payment Panel - Solo visible en TO -->
-      <p-panel 
+      <p-panel
         *ngIf="shouldShowTransfer25Option"
-        styleClass="payment-panel" 
-        [ngClass]="{ 'selected': paymentType === 'transfer25' }" 
+        styleClass="payment-panel"
+        [ngClass]="{ selected: paymentType === 'transfer25' }"
         (click)="selectPaymentType('transfer25')"
-        showHeader="false">
+        showHeader="false"
+      >
         <div class="payment-option">
-          <p-radioButton 
-            name="paymentType" 
-            value="transfer25" 
+          <p-radioButton
+            name="paymentType"
+            value="transfer25"
             [ngModel]="paymentType"
-            (ngModelChange)="selectPaymentType('transfer25')">
+            (ngModelChange)="selectPaymentType('transfer25')"
+          >
           </p-radioButton>
           <span class="option-text">Hacer transferencia del 25% del total</span>
           <span class="option-price" aria-label="Precio 25%">
@@ -157,98 +199,80 @@
     </div>
   </section>
 
-  <!-- Transfer 25% Upload Section - Solo visible en touroperacion -->
-  <section *ngIf="paymentType === 'transfer25' && shouldShowTransfer25Option" class="transfer25-section">
-    <div class="header-container">
-      <div class="title-with-icon">
-        <span class="title">Adjuntar justificante de transferencia</span>
-      </div>
-      <div class="title-underline"></div>
-    </div>
-
-    <div class="upload-container">
-      <p class="upload-description">
-        Por favor, adjunta el justificante de la transferencia bancaria del 25% ({{ transfer25Amount | currencyFormat }}).
-      </p>
-      
-      <app-upload-button
-        label="Subir justificante de transferencia"
-        accept="image/*, .pdf"
-        [maxFileSize]="1000000"
-        folder="vouchers"
-        [auto]="false"
-        chooseIcon="pi pi-upload"
-        styleClass="upload-button"
-        (onUploadSuccess)="handleTransfer25VoucherUpload($event)"
-        (onUploadError)="handleTransfer25VoucherError($event)">
-      </app-upload-button>
-
-      <div *ngIf="transfer25VoucherUrl" class="voucher-uploaded">
-        <i class="pi pi-check-circle" style="color: var(--success-green); margin-right: 0.5rem;"></i>
-        <span>Justificante subido correctamente</span>
-      </div>
-    </div>
-  </section>
-
   <!-- Payment Methods Section (for complete/deposit) -->
-  <section *ngIf="paymentType === 'complete' || paymentType === 'deposit'" class="payment-methods-section">
+  <section
+    *ngIf="paymentType === 'complete' || paymentType === 'deposit'"
+    class="payment-methods-section"
+  >
     <div class="header-container" (click)="toggleDropdown('paymentMethods')">
       <div class="title-with-icon">
         <span class="title">Selecciona el método de pago</span>
-        <i class="pi" [ngClass]="dropdownStates.paymentMethods ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+        <i
+          class="pi"
+          [ngClass]="
+            dropdownStates.paymentMethods ? 'pi-chevron-up' : 'pi-chevron-down'
+          "
+        ></i>
       </div>
       <div class="title-underline pay"></div>
     </div>
-    
+
     <div *ngIf="dropdownStates.paymentMethods" class="payment-methods-row">
       <!-- Credit Card Method -->
       <div class="payment-method-container">
-        <p-panel 
-          styleClass="payment-panel payment-method-panel" 
-          [ngClass]="{ selected: paymentMethod === 'creditCard' }" 
+        <p-panel
+          styleClass="payment-panel payment-method-panel"
+          [ngClass]="{ selected: paymentMethod === 'creditCard' }"
           (click)="selectPaymentMethod('creditCard')"
-          showHeader="false">
+          showHeader="false"
+        >
           <div class="payment-option">
-            <p-radioButton 
-              name="paymentMethod" 
-              value="creditCard" 
+            <p-radioButton
+              name="paymentMethod"
+              value="creditCard"
               [ngModel]="paymentMethod"
-              (ngModelChange)="selectPaymentMethod('creditCard')">
+              (ngModelChange)="selectPaymentMethod('creditCard')"
+            >
             </p-radioButton>
             <span class="option-text">Tarjeta bancaria</span>
           </div>
         </p-panel>
       </div>
-      
+
       <!-- Bank Transfer Method -->
       <div class="payment-method-container" *ngIf="shouldShowTransferOption">
-        <p-panel 
-          styleClass="payment-panel payment-method-panel" 
-          [ngClass]="{ selected: paymentMethod === 'transfer' }" 
+        <p-panel
+          styleClass="payment-panel payment-method-panel"
+          [ngClass]="{ selected: paymentMethod === 'transfer' }"
           (click)="selectPaymentMethod('transfer')"
-          showHeader="false">
+          showHeader="false"
+        >
           <div class="payment-option">
-            <p-radioButton 
-              name="paymentMethod" 
-              value="transfer" 
+            <p-radioButton
+              name="paymentMethod"
+              value="transfer"
               [ngModel]="paymentMethod"
-              (ngModelChange)="selectPaymentMethod('transfer')">
+              (ngModelChange)="selectPaymentMethod('transfer')"
+            >
             </p-radioButton>
             <span class="option-text">Transferencia bancaria</span>
           </div>
         </p-panel>
       </div>
-      
+
       <!-- Mensaje informativo para vuelos Amadeus -->
       <div class="payment-method-container" *ngIf="hasAmadeusFlight">
-        <p-panel styleClass="payment-panel payment-method-panel"
-          showHeader="false">
+        <p-panel
+          styleClass="payment-panel payment-method-panel"
+          showHeader="false"
+        >
           <div class="payment-option">
             <i class="pi pi-info-circle"></i>
-            <span style="font-weight: 300;padding-left: 10px;">
-              Para vuelos de búsqueda directa:<br>
-              • Pago completo: Tarjeta bancaria o Scalapay<br>
-              • Pago parcial: Tarjeta bancaria (depósito + vuelos de specific-search)
+            <span style="font-weight: 300; padding-left: 10px">
+              Para vuelos de búsqueda directa:<br />
+              • Pago completo: Tarjeta bancaria o Scalapay<br />
+              • Pago parcial: Tarjeta bancaria (depósito + vuelos de
+              specific-search)
             </span>
           </div>
         </p-panel>
@@ -349,73 +373,89 @@
     </div>
   </section> -->
 
-
   <!-- Action Buttons -->
   <footer class="buttons-container">
-    <p-button 
-      [label]="buttonLabel" 
-      styleClass="payment-button" 
-      [disabled]="isLoading || !isPaymentValid" 
-      (click)="submitPayment()">
+    <p-button
+      [label]="buttonLabel"
+      styleClass="payment-button"
+      [disabled]="isLoading || !isPaymentValid"
+      (click)="submitPayment()"
+    >
     </p-button>
   </footer>
 
   <!-- Dialog para cambio de precio de vuelo Amadeus -->
-  <p-dialog 
-    [(visible)]="showPriceChangeDialog" 
-    header="Precio del vuelo cambiado" 
-    [modal]="true" 
+  <p-dialog
+    [(visible)]="showPriceChangeDialog"
+    header="Precio del vuelo cambiado"
+    [modal]="true"
     [closable]="false"
-    styleClass="price-change-dialog">
-    
+    styleClass="price-change-dialog"
+  >
     <div class="price-change-content">
       <div class="price-change-icon">
         <i class="pi pi-exclamation-triangle"></i>
       </div>
-      
+
       <h3>El precio del vuelo ha cambiado</h3>
-      
+
       <div class="price-details" *ngIf="priceValidation">
         <div class="price-row">
           <span class="price-label">Precio anterior:</span>
-          <span class="price-value previous-price">{{ priceValidation.previousPrice | currency:'EUR':'symbol':'1.2-2' }}</span>
+          <span class="price-value previous-price">{{
+            priceValidation.previousPrice
+              | currency : "EUR" : "symbol" : "1.2-2"
+          }}</span>
         </div>
-        
+
         <div class="price-row">
           <span class="price-label">Precio actual:</span>
-          <span class="price-value current-price">{{ priceValidation.currentPrice | currency:'EUR':'symbol':'1.2-2' }}</span>
+          <span class="price-value current-price">{{
+            priceValidation.currentPrice | currency : "EUR" : "symbol" : "1.2-2"
+          }}</span>
         </div>
-        
+
         <div class="price-row">
           <span class="price-label">Diferencia:</span>
-          <span class="price-value difference-price" [ngClass]="priceValidation.isPriceIncrease ? 'increase' : 'decrease'">
-            {{ priceValidation.isPriceIncrease ? '+' : '' }}{{ priceValidation.priceDifference | currency:'EUR':'symbol':'1.2-2' }}
+          <span
+            class="price-value difference-price"
+            [ngClass]="
+              priceValidation.isPriceIncrease ? 'increase' : 'decrease'
+            "
+          >
+            {{ priceValidation.isPriceIncrease ? "+" : ""
+            }}{{
+              priceValidation.priceDifference
+                | currency : "EUR" : "symbol" : "1.2-2"
+            }}
           </span>
         </div>
       </div>
-      
+
       <p class="price-change-message">
-        El precio del vuelo seleccionado ha cambiado desde su búsqueda. <br>
+        El precio del vuelo seleccionado ha cambiado desde su búsqueda. <br />
         ¿Desea continuar con el nuevo precio o volver a seleccionar un vuelo?
       </p>
     </div>
-    
+
     <ng-template #footer>
       <div class="dialog-footer">
-        <p-button 
-          label="Volver a seleccionar vuelo" 
-          severity="secondary" 
-          icon="pi pi-arrow-left" 
-          (click)="handlePriceChangeDecision(false)">
+        <p-button
+          label="Volver a seleccionar vuelo"
+          severity="secondary"
+          icon="pi pi-arrow-left"
+          (click)="handlePriceChangeDecision(false)"
+        >
         </p-button>
-        
-        <p-button 
-          label="Continuar con nuevo precio" 
-          severity="success" 
-          icon="pi pi-check" 
-          (click)="handlePriceChangeDecision(true)">
+
+        <p-button
+          label="Continuar con nuevo precio"
+          severity="success"
+          icon="pi pi-check"
+          (click)="handlePriceChangeDecision(true)"
+        >
         </p-button>
       </div>
     </ng-template>
-    </p-dialog>
+  </p-dialog>
 </div>

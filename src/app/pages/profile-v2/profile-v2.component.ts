@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { switchMap, map, catchError } from 'rxjs/operators';
-import { of } from 'rxjs';
+import { of,from } from 'rxjs';
 import { Title } from '@angular/platform-browser';
 import { PointsSectionV2Component } from './components/points-section-v2/points-section-v2.component';
 import { AuthenticateService } from '../../core/services/auth/auth-service.service';
@@ -32,16 +32,16 @@ export class ProfileV2Component implements OnInit, OnDestroy {
   ngOnInit() {
     this.titleService.setTitle('Mi Perfil - Different Roads');
     
-    // Obtener el userId del usuario logueado a través del cognitoId
-    this.authSubscription = this.authenticateService.getCognitoId().pipe(
-      switchMap(cognitoId => {
-        if (!cognitoId) {
-          console.warn('⚠️ No se encontró Cognito ID');
+    // Obtener el userId del usuario logueado a través del cognitoSub
+    this.authSubscription = from(this.authenticateService.getCognitoSub()).pipe(
+      switchMap(cognitoSub => {
+        if (!cognitoSub) {
+          console.warn('⚠️ No se encontró Cognito Sub');
           return of([]);
         }
-        this.cognitoId = cognitoId;
+        this.cognitoId = cognitoSub;
         // Buscar el usuario por Cognito ID para obtener su ID en la base de datos
-        return this.usersNetService.getUsersByCognitoId(cognitoId);
+        return this.usersNetService.getUsersByCognitoId(cognitoSub);
       }),
       map((users: IUserResponse[]) => {
         // Extraer el userId del primer usuario encontrado

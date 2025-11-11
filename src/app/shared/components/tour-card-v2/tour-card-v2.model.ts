@@ -2,7 +2,7 @@ export interface TourDataV2 {
   id?: number; // ID real de base de datos del tour
   imageUrl: string;
   title: string;
-  rating: number;
+  rating: number | undefined;
   isByDr?: boolean;
   tag?: string;
   description: string;
@@ -22,6 +22,12 @@ export interface TourDataV2 {
   country?: string;
   // ✅ NUEVO CAMPO: Para productStyleId
   productStyleId?: number | null;
+  tripTypes?: {
+    name: string;
+    code: string;
+    color: string;
+    abbreviation: string; // Primera letra del nombre
+  }[];
 }
 
 export enum TripTypeV2 {

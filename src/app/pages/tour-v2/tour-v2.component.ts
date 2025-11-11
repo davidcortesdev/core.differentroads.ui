@@ -1,12 +1,23 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TourService, Tour } from '../../core/services/tour/tour.service';
-import { catchError, of } from 'rxjs';
+import { catchError, switchMap, map, first, concatMap } from 'rxjs/operators';
 import { SelectedDepartureEvent } from './components/tour-itinerary-v2/components/selector-itinerary/selector-itinerary.component';
 import { ActivityHighlight } from '../../shared/components/activity-card/activity-card.component';
 import { AnalyticsService } from '../../core/services/analytics/analytics.service';
 import { AuthenticateService } from '../../core/services/auth/auth-service.service';
 import { Title } from '@angular/platform-browser';
+import { TourTagService } from '../../core/services/tag/tour-tag.service';
+import { TagService } from '../../core/services/tag/tag.service';
+import { ItineraryService, ItineraryFilters } from '../../core/services/itinerary/itinerary.service';
+import { ItineraryDayService, IItineraryDayResponse } from '../../core/services/itinerary/itinerary-day/itinerary-day.service';
+import { TourLocationService, ITourLocationResponse } from '../../core/services/tour/tour-location.service';
+import { LocationNetService, Location } from '../../core/services/locations/locationNet.service';
+import { DepartureService, IDepartureResponse } from '../../core/services/departure/departure.service';
+import { TourDataForEcommerce } from '../../core/services/analytics/analytics.service';
+import { ReviewsService } from '../../core/services/reviews/reviews.service';
+import { forkJoin, Observable, of } from 'rxjs';
+import { TripTypeService, ITripTypeResponse } from '../../core/services/trip-type/trip-type.service';
 
 // ✅ INTERFACES para tipado fuerte
 interface PassengersData {
@@ -52,6 +63,13 @@ interface ActivityTypesAnalysis {
   hasPack: boolean;
   actCount: number;
   packCount: number;
+}
+
+interface TourTripType {
+  name: string;
+  code: string;
+  color: string;
+  abbreviation: string;
 }
 
 @Component({
@@ -117,6 +135,11 @@ export class TourV2Component implements OnInit {
   tourTripType: string = '';
   tourProductStyle: string = '';
 
+  private tripTypesMap: Map<number, ITripTypeResponse> = new Map();
+  
+  // ✅ NUEVO: Array para TripTypes del tour actual
+  tourTripTypes: TourTripType[] = [];
+
   constructor(
     private titleService: Title,
     private route: ActivatedRoute,
@@ -124,6 +147,15 @@ export class TourV2Component implements OnInit {
     private tourService: TourService,
     private analyticsService: AnalyticsService,
     private authService: AuthenticateService,
+    private tourTagService: TourTagService,
+    private tagService: TagService,
+    private itineraryService: ItineraryService,
+    private itineraryDayService: ItineraryDayService,
+    private tourLocationService: TourLocationService,
+    private locationService: LocationNetService,
+    private departureService: DepartureService,
+    private reviewsService: ReviewsService,
+    private tripTypeService: TripTypeService
   ) {}
 
   ngOnInit(): void {
@@ -150,32 +182,165 @@ export class TourV2Component implements OnInit {
       }
     });
   }
+  /**
+ * Obtiene los TripTypes del tour para analytics
+ */
+private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
+  const itineraryFilters: ItineraryFilters = {
+    tourId: tourId,
+    isVisibleOnWeb: true,
+    isBookable: true,
+  };
+
+  return this.itineraryService.getAll(itineraryFilters, false).pipe(
+    switchMap((itineraries) => {
+      if (itineraries.length === 0) {
+        return of([]);
+      }
+
+      // Obtener departures de todos los itinerarios
+      const departureRequests = itineraries.map((itinerary) =>
+        this.departureService.getByItinerary(itinerary.id, false).pipe(
+          catchError(() => of([] as IDepartureResponse[]))
+        )
+      );
+
+      return departureRequests.length > 0 
+        ? forkJoin(departureRequests).pipe(
+            map((departureArrays: IDepartureResponse[][]) => {
+              const allDepartures = departureArrays.flat();
+              const tripTypeNames: string[] = [];
+              
+              // Procesar TripTypes desde los departures
+              allDepartures.forEach((departure: IDepartureResponse) => {
+                if (departure.tripTypeId && this.tripTypesMap.size > 0) {
+                  const tripTypeInfo = this.tripTypesMap.get(departure.tripTypeId);
+                  if (tripTypeInfo && !tripTypeNames.includes(tripTypeInfo.name)) {
+                    tripTypeNames.push(tripTypeInfo.name);
+                  }
+                }
+              });
+              
+              return tripTypeNames;
+            }),
+            catchError(() => of([]))
+          )
+        : of([]);
+    }),
+    catchError(() => of([]))
+  );
+}
+
+  private loadTripTypes(): Observable<void> {
+    return this.tripTypeService.getActiveTripTypes().pipe(
+      map((tripTypes: ITripTypeResponse[]) => {
+        this.tripTypesMap.clear();
+        tripTypes.forEach(tripType => {
+          // Crear abreviación (primera letra del nombre)
+          const abbreviation = tripType.name.charAt(0).toUpperCase();
+          
+          this.tripTypesMap.set(tripType.id, {
+            ...tripType,
+            abbreviation: abbreviation
+          });
+        });
+        
+        console.log('✅ TripTypes cargados para tour detail:', this.tripTypesMap.size);
+      }),
+      catchError((error) => {
+        console.error('❌ Error loading trip types:', error);
+        return of(undefined);
+      })
+    );
+  }
+
+  private processTourTripTypes(departures: IDepartureResponse[]): void {
+    const tripTypes: TourTripType[] = [];
+  
+    if (this.tripTypesMap.size > 0 && departures && departures.length > 0) {
+      departures.forEach((departure: IDepartureResponse) => {
+        if (departure.tripTypeId) {
+          const tripTypeInfo = this.tripTypesMap.get(departure.tripTypeId);
+          if (tripTypeInfo && !tripTypes.some(t => t.code === tripTypeInfo.code)) {
+            tripTypes.push({
+              name: tripTypeInfo.name,
+              code: tripTypeInfo.code,
+              color: tripTypeInfo.color,
+              abbreviation: tripTypeInfo.abbreviation
+            });
+          }
+        }
+      });
+    }
+  
+    this.tourTripTypes = tripTypes;
+    
+    console.log('🎯 TripTypes del tour:', this.tourTripTypes);
+  }
+
+  private loadTourTripTypes(tourId: number): void {
+    const itineraryFilters: ItineraryFilters = {
+      tourId: tourId,
+      isVisibleOnWeb: true,
+      isBookable: true,
+    };
+  
+    this.itineraryService.getAll(itineraryFilters, false).pipe(
+      switchMap((itineraries) => {
+        if (itineraries.length === 0) {
+          return of([] as IDepartureResponse[]);
+        }
+  
+        // Obtener departures de todos los itinerarios
+        const departureRequests = itineraries.map((itinerary) =>
+          this.departureService.getByItinerary(itinerary.id, false).pipe(
+            catchError(() => of([] as IDepartureResponse[]))
+          )
+        );
+  
+        return departureRequests.length > 0 
+          ? forkJoin(departureRequests).pipe(
+              map((departureArrays: IDepartureResponse[][]) => {
+                return departureArrays.flat();
+              })
+            )
+          : of([] as IDepartureResponse[]);
+      }),
+      catchError(() => of([] as IDepartureResponse[]))
+    ).subscribe((departures: IDepartureResponse[]) => {
+      // ✅ NUEVO: Procesar TripTypes desde los departures
+      this.processTourTripTypes(departures);
+    });
+  }
 
   private loadTourBySlug(slug: string): void {
     this.loading = true;
     this.error = null;
-
-    this.tourService
-      .getTours({ slug, filterByVisible: !this.preview })
-      .pipe(
-        catchError((err: Error) => {
-          console.error('Error al cargar el tour:', err);
-          this.error =
-            'Error al cargar el tour. Por favor, inténtalo de nuevo más tarde.';
-          return of([]);
-        })
-      )
-      .subscribe((tours: Tour[]) => {
-        if (tours && tours.length > 0) {
-          this.tour = tours[0];
-          
-          // Disparar evento view_item cuando se carga el tour exitosamente
-          this.trackViewItem(this.tour);
-        } else {
-          this.error = 'No se encontró el tour solicitado';
-        }
-        this.loading = false;
-      });
+  
+    // ✅ NUEVO: Cargar TripTypes primero, luego el tour
+    this.loadTripTypes().pipe(
+      switchMap(() => {
+        return this.tourService.getTours({ slug, filterByVisible: !this.preview });
+      }),
+      catchError((err: Error) => {
+        console.error('Error al cargar el tour:', err);
+        this.error = 'Error al cargar el tour. Por favor, inténtalo de nuevo más tarde.';
+        return of([]);
+      })
+    ).subscribe((tours: Tour[]) => {
+      if (tours && tours.length > 0) {
+        this.tour = tours[0];
+        
+        // ✅ NUEVO: Cargar TripTypes específicos del tour
+        this.loadTourTripTypes(this.tour.id!);
+        
+        // Disparar evento view_item cuando se carga el tour exitosamente
+        this.trackViewItem(this.tour);
+      } else {
+        this.error = 'No se encontró el tour solicitado';
+      }
+      this.loading = false;
+    });
   }
 
   onDepartureSelected(event: SelectedDepartureEvent): void {
@@ -292,7 +457,8 @@ export class TourV2Component implements OnInit {
       return;
     }
     
-    const tourData = tour as any;
+    // Marcar como trackeado INMEDIATAMENTE antes de hacer cualquier cosa
+    this.viewItemTracked = true;
     
     // Obtener contexto de navegación desde el state de la navegación (sin modificar URL)
     const navigation = this.router.getCurrentNavigation();
@@ -301,41 +467,222 @@ export class TourV2Component implements OnInit {
     const itemListId = state?.['listId'] || '';
     const itemListName = state?.['listName'] || '';
     
-    this.analyticsService.getCurrentUserData().subscribe((userData: any) => {
-      this.fireViewItemEvent(itemListId, itemListName, tourData, tour, userData);
-      // Marcar como trackeado después de disparar el evento
-      this.viewItemTracked = true;
+    // Obtener todos los datos completos del tour usando buildEcommerceItemFromTourData
+    this.getCompleteTourDataForViewItem(tour.id!).pipe(
+      switchMap((tourDataForEcommerce: TourDataForEcommerce) => {
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId || 'tour_detail',
+          itemListName || 'Detalle de Tour',
+          tour.id?.toString()
+        ).pipe(
+          switchMap((item) => {
+            return this.analyticsService.getCurrentUserData().pipe(
+              first(), // Tomar solo el primer valor
+              map((userData) => ({ item, userData }))
+            );
+          }),
+          catchError(() => {
+            // Si falla getCurrentUserData, usar el item sin userData
+            return this.analyticsService.buildEcommerceItemFromTourData(
+              tourDataForEcommerce,
+              itemListId || 'tour_detail',
+              itemListName || 'Detalle de Tour',
+              tour.id?.toString()
+            ).pipe(
+              map((item) => ({ item, userData: undefined }))
+            );
+          })
+        );
+      }),
+      catchError((error) => {
+        console.error('Error obteniendo datos completos del tour para view_item:', error);
+        return of(null);
+      })
+    ).subscribe((result: { item: any; userData?: any } | null) => {
+      if (result && result.item) {
+        this.analyticsService.viewItem(
+          itemListId || 'tour_detail',
+          itemListName || 'Detalle de Tour',
+          result.item,
+          result.userData
+        );
+      }
     });
   }
-
   /**
-   * Disparar el evento view_item con los datos proporcionados
+   * Obtiene todos los datos completos del tour desde los servicios adicionales para view_item
    */
-  private fireViewItemEvent(itemListId: string, itemListName: string, tourData: any, tour: Tour, userData: any): void {
-    this.analyticsService.viewItem(
-      itemListId,
-      itemListName,
-      {
-        item_id: tour.id?.toString() || tourData.tkId?.toString() || '',
-        item_name: tour.name || '',
-        coupon: '',
-        discount: 0,
-        index: 1, // Un solo item, índice 1
-        item_brand: 'Different Roads',
-        item_category: tourData.destination?.continent || '',
-        item_category2: tourData.destination?.country || '',
-        item_category3: tourData.marketingSection?.marketingSeasonTag || 'Clasico',
-        item_category4: tourData.monthTags?.join(', ') || '',
-        item_category5: tourData.tourType === 'FIT' ? 'Privados' : 'Grupos',
-        item_list_id: itemListId,
-        item_list_name: itemListName,
-        item_variant: '',
-        price: tourData.basePrice || 0,
-        quantity: 1,
-        puntuacion: tourData.rating?.toString() || '5.0',
-        duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : ''
-      },
-      userData
+  private getCompleteTourDataForViewItem(tourId: number): Observable<TourDataForEcommerce> {
+    const itineraryFilters: ItineraryFilters = {
+      tourId: tourId,
+      isVisibleOnWeb: true,
+      isBookable: true,
+    };
+  
+    return this.itineraryService.getAll(itineraryFilters, false).pipe(
+      concatMap((itineraries) => {
+        if (itineraries.length === 0) {
+          return of({
+            id: tourId,
+            days: undefined,
+            nights: undefined,
+            destination: { continent: undefined, country: undefined },
+            monthTags: undefined,
+            tourType: undefined,
+            tripTypes: undefined // ✅ NUEVO: Añadir también aquí
+          } as TourDataForEcommerce);
+        }
+  
+        // Obtener días de itinerario del primer itinerario disponible
+        const itineraryDaysRequest = this.itineraryDayService
+          .getAll({ itineraryId: itineraries[0].id })
+          .pipe(catchError(() => of([] as IItineraryDayResponse[])));
+  
+        // Obtener continent y country
+        const locationRequest = forkJoin({
+          countryLocations: this.tourLocationService.getByTourAndType(tourId, 'COUNTRY').pipe(
+            map((response) => Array.isArray(response) ? response : response ? [response] : []),
+            catchError(() => of([] as ITourLocationResponse[]))
+          ),
+          continentLocations: this.tourLocationService.getByTourAndType(tourId, 'CONTINENT').pipe(
+            map((response) => Array.isArray(response) ? response : response ? [response] : []),
+            catchError(() => of([] as ITourLocationResponse[]))
+          )
+        }).pipe(
+          switchMap(({ countryLocations, continentLocations }) => {
+            const locationIds = [
+              ...countryLocations.map(tl => tl.locationId),
+              ...continentLocations.map(tl => tl.locationId)
+            ].filter(id => id !== undefined && id !== null);
+            
+            if (locationIds.length === 0) {
+              return of({ continent: '', country: '' });
+            }
+            
+            return this.locationService.getLocationsByIds(locationIds).pipe(
+              map((locations: Location[]) => {
+                const countries = countryLocations
+                  .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+                  .map(tl => locations.find(l => l.id === tl.locationId)?.name)
+                  .filter(name => name) as string[];
+                
+                const continents = continentLocations
+                  .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+                  .map(tl => locations.find(l => l.id === tl.locationId)?.name)
+                  .filter(name => name) as string[];
+                
+                return {
+                  continent: continents.join(', ') || '',
+                  country: countries.join(', ') || ''
+                };
+              }),
+              catchError(() => of({ continent: '', country: '' }))
+            );
+          })
+        );
+  
+        // Obtener departures para extraer monthTags desde las fechas
+        const departureRequests = itineraries.map((itinerary) =>
+          this.departureService.getByItinerary(itinerary.id, false).pipe(
+            catchError(() => of([] as IDepartureResponse[]))
+          )
+        );
+  
+        const monthTagsRequest = departureRequests.length > 0 
+          ? forkJoin(departureRequests).pipe(
+              map((departureArrays: IDepartureResponse[][]) => {
+                const allDepartures = departureArrays.flat();
+                const availableMonths: string[] = [];
+                
+                // Extraer meses de las fechas de departure
+                allDepartures.forEach((departure: IDepartureResponse) => {
+                  if (departure.departureDate) {
+                    const date = new Date(departure.departureDate);
+                    const monthIndex = date.getMonth(); // 0-11
+                    const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 
+                                      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+                    if (monthIndex >= 0 && monthIndex < 12) {
+                      const monthName = monthNames[monthIndex];
+                      if (!availableMonths.includes(monthName)) {
+                        availableMonths.push(monthName);
+                      }
+                    }
+                  }
+                });
+                
+                return availableMonths;
+              }),
+              catchError(() => of([]))
+            )
+          : of([]);
+  
+        // ✅ SOLO SE MODIFICA ESTA PARTE: Añadir tripTypes al forkJoin
+        return forkJoin({
+          itineraryDays: itineraryDaysRequest,
+          locationData: locationRequest,
+          monthTags: monthTagsRequest,
+          tour: this.tourService.getById(tourId, false),
+          rating: this.reviewsService.getAverageRating({ tourId: tourId }).pipe(
+            map((ratingResponse) => {
+              const avgRating = ratingResponse?.averageRating;
+              return avgRating && avgRating > 0 ? avgRating : null;
+            }),
+            catchError(() => of(null))
+          ),
+          tripTypes: this.getTourTripTypesForAnalytics(tourId) // ✅ NUEVO
+        }).pipe(
+          map(({ itineraryDays, locationData, monthTags, tour, rating, tripTypes }) => {
+            const days = itineraryDays.length;
+            const nights = days > 0 ? days - 1 : 0;
+            
+            // ✅ ACTUALIZADO: Usar TripTypes para determinar tourType si están disponibles
+            let tourType = tour.tripTypeId === 1 ? 'FIT' : 'Grupos';
+            
+            if (tripTypes && tripTypes.length > 0) {
+              tourType = tripTypes.join(', ');
+            }
+  
+            return {
+              id: tourId,
+              tkId: tour.tkId ?? undefined,
+              name: tour.name ?? undefined,
+              destination: {
+                continent: locationData.continent || undefined,
+                country: locationData.country || undefined
+              },
+              days: days > 0 ? days : undefined,
+              nights: nights > 0 ? nights : undefined,
+              rating: rating !== null ? rating : undefined,
+              monthTags: monthTags.length > 0 ? monthTags : undefined,
+              tourType: tourType,
+              flightCity: 'Sin vuelo',
+              price: tour.minPrice ?? undefined,
+              totalPassengers: undefined,
+              childrenCount: undefined,
+              tripTypes: tripTypes.length > 0 ? tripTypes : undefined // ✅ NUEVO
+            } as TourDataForEcommerce;
+          }),
+          catchError(() => of({
+            id: tourId,
+            days: undefined,
+            nights: undefined,
+            destination: { continent: undefined, country: undefined },
+            monthTags: undefined,
+            tourType: undefined,
+            tripTypes: undefined // ✅ NUEVO
+          } as TourDataForEcommerce))
+        );
+      }),
+      catchError(() => of({
+        id: tourId,
+        days: undefined,
+        nights: undefined,
+        destination: { continent: undefined, country: undefined },
+        monthTags: undefined,
+        tourType: undefined,
+        tripTypes: undefined // ✅ NUEVO
+      } as TourDataForEcommerce))
     );
   }
 

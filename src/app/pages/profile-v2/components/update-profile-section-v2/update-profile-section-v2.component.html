@@ -108,23 +108,18 @@
 
         <p-floatlabel variant="on">
           <div class="phone-row">
-            <p-select
+            <app-phone-prefix-select
               [(ngModel)]="selectedPhonePrefix"
               name="phonePrefix"
-              [options]="phonePrefixOptions"
-              optionLabel="name"
-              optionValue="prefix"
-              placeholder="Seleccione prefijo"
+              [phonePrefixOptions]="phonePrefixOptions"
+              [placeholder]="'Seleccione prefijo'"
               [showClear]="true"
               [filter]="true"
-              filterBy="name,prefix,code"
-              (onChange)="onPhonePrefixChange($event)"
-              [class.error]="hasFieldError('phonePrefix')"
-              styleClass="prefix-select">
-              <ng-template let-prefix pTemplate="item">
-                <div>{{ prefix.prefix }} - {{ prefix.name }}</div>
-              </ng-template>
-            </p-select>
+              [styleClass]="'prefix-select'"
+              [errorClass]="hasFieldError('phonePrefix') ? 'error' : ''"
+              [profileStyle]="true"
+              (prefixChange)="onPhonePrefixChange({ value: $event })">
+            </app-phone-prefix-select>
             <input
               pInputText
               type="tel"

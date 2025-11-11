@@ -539,6 +539,9 @@ export class AnalyticsService {
     };
     
     this.pushEvent(eventData);
+    
+    // También enviar evento Taboola view_content (migrado desde Tour.tsx)
+    this.sendTaboolaEvent('view_content');
   }
 
   /**
@@ -774,6 +777,9 @@ export class AnalyticsService {
     };
     
     this.pushEvent(eventData);
+    
+    // También enviar evento Taboola start_checkout (migrado desde CustomizeTrip.tsx)
+    this.sendTaboolaEvent('start_checkout');
   }
 
   /**
@@ -1078,6 +1084,52 @@ export class AnalyticsService {
     };
     
     this.pushEvent(eventData);
+    
+    // También enviar eventos adicionales de Pay.tsx cuando se visualiza el paso de pago
+    this.sendViewPaymentInfoToLegacyPlatforms();
+  }
+
+  /**
+   * Envía eventos adicionales cuando se visualiza el paso de pago (migrado desde Pay.tsx)
+   */
+  private sendViewPaymentInfoToLegacyPlatforms(): void {
+    try {
+      // 1. Google Analytics Universal - evento booking/checkout/Booked (tal cual Pay.tsx)
+      const ga = (window as any).ga;
+      if (typeof ga === 'function') {
+        ga('send', {
+          hitType: 'event',
+          eventCategory: 'booking',
+          eventAction: 'checkout',
+          eventLabel: 'Booked'
+        });
+      }
+
+      // 2. Taboola Pixel - evento add_payment_info (tal cual Pay.tsx)
+      this.sendTaboolaEvent('add_payment_info');
+    } catch (error) {
+      console.error('Error enviando eventos view_payment_info a plataformas legacy:', error);
+    }
+  }
+
+  /**
+   * Envía evento Booked_Blocked cuando la reserva está bloqueada (migrado desde BookingForm.tsx - BookingRequest)
+   * Se dispara cuando la reserva está en estado PENDING (pendiente de confirmación)
+   */
+  sendBookedBlockedEvent(): void {
+    try {
+      const ga = (window as any).ga;
+      if (typeof ga === 'function') {
+        ga('send', {
+          hitType: 'event',
+          eventCategory: 'booking',
+          eventAction: 'checkout',
+          eventLabel: 'Booked_Blocked'
+        });
+      }
+    } catch (error) {
+      console.error('Error enviando evento Booked_Blocked a Google Analytics Universal:', error);
+    }
   }
 
   /**
@@ -1205,7 +1257,180 @@ export class AnalyticsService {
     };
     
     this.pushEvent(eventData);
+    
+    // También enviar a otras plataformas de seguimiento
+    // Los datos ya están disponibles en ecommerceData y filteredItems
+    this.sendPurchaseToLegacyPlatforms(ecommerceData, filteredItems);
   }
+
+  /**
+   * Envía eventos purchase a todas las plataformas de seguimiento (GA Universal, gtag, Taboola, Meta)
+   * Este método complementa el evento purchase de GA4 que se envía al dataLayer
+   */
+  private sendPurchaseToLegacyPlatforms(
+    ecommerceData: EcommerceData,
+    items: EcommerceItem[]
+  ): void {
+    if (!items || items.length === 0) {
+      return;
+    }
+
+    const transactionId = ecommerceData.transaction_id || '';
+    const totalValue = ecommerceData.value || 0;
+    const tax = ecommerceData.tax || 0;
+    const shipping = ecommerceData.shipping || 0;
+    const currency = ecommerceData.currency || 'EUR';
+    
+    // Obtener el primer item (normalmente hay solo uno en una reserva)
+    const item = items[0];
+    const itemId = item.item_id || '';
+    const itemName = item.item_name || '';
+    const itemCategory = item.item_category || '';
+    const itemPrice = item.price || totalValue;
+
+    // 1. Google Analytics Universal (ga) - ecommerce:addTransaction y ecommerce:addItem
+    this.sendPurchaseToGAUniversal(transactionId, totalValue, tax, shipping, itemId, itemName, itemPrice);
+
+    // 2. Google Tag (gtag) - evento purchase y evento conversion
+    this.sendPurchaseToGtag(transactionId, totalValue, tax, shipping, currency, itemId, itemName, itemCategory, itemPrice);
+
+    // 3. Taboola Pixel (_tfa) - evento make_purchase
+    this.sendPurchaseToTaboola(totalValue, currency);
+  }
+
+  /**
+   * Envía evento purchase a Google Analytics Universal (ga)
+   */
+  private sendPurchaseToGAUniversal(
+    transactionId: string,
+    revenue: number,
+    tax: number,
+    shipping: number,
+    itemId: string,
+    itemName: string,
+    itemPrice: number
+  ): void {
+    try {
+      const ga = (window as any).ga;
+      if (typeof ga === 'function') {
+        // Enviar transacción
+        ga('ecommerce:addTransaction', {
+          'id': transactionId,
+          'affiliation': 'Different Roads',
+          'revenue': revenue.toString(),
+          'shipping': shipping.toString(),
+          'tax': tax.toString()
+        });
+
+        // Enviar item
+        ga('ecommerce:addItem', {
+          'id': transactionId,
+          'name': itemName,
+          'sku': itemId,
+          'category': '',
+          'price': itemPrice.toString(),
+          'quantity': '1'
+        });
+
+        // Enviar evento
+        ga('ecommerce:send');
+      }
+    } catch (error) {
+      console.error('Error enviando purchase a Google Analytics Universal:', error);
+    }
+  }
+
+  /**
+   * Envía evento purchase a Google Tag (gtag)
+   * Migrado exactamente desde PaymentConfirmation.tsx
+   */
+  private sendPurchaseToGtag(
+    transactionId: string,
+    value: number,
+    tax: number,
+    shipping: number,
+    currency: string,
+    itemId: string,
+    itemName: string,
+    itemCategory: string,
+    itemPrice: number
+  ): void {
+    try {
+      const gtag = (window as any).gtag;
+      if (typeof gtag === 'function') {
+        // Evento purchase - exactamente como en PaymentConfirmation.tsx
+        gtag('event', 'purchase', {
+          'transaction_id': transactionId,
+          'affiliation': 'Google online store', // Tal cual está en el original
+          'value': value,
+          'currency': currency,
+          'tax': 1.24, // Tal cual está en el original (no usar el parámetro tax)
+          'shipping': shipping,
+          'items': [
+            {
+              'id': itemId,
+              'name': itemName,
+              'brand': 'Different Roads',
+              'category': itemCategory,
+              'quantity': 1,
+              'price': itemPrice
+            }
+          ]
+        });
+
+        // Evento conversion para Google Ads - transaction_id vacío tal cual está en el original
+        gtag('event', 'conversion', {
+          'send_to': 'AW-969524948/h16rCKGA1pIDENSNp84D',
+          'transaction_id': '' // Tal cual está en el original
+        });
+      }
+    } catch (error) {
+      console.error('Error enviando purchase a Google Tag (gtag):', error);
+    }
+  }
+
+  /**
+   * Envía evento purchase a Taboola Pixel
+   */
+  private sendPurchaseToTaboola(
+    revenue: number,
+    currency: string
+  ): void {
+    this.sendTaboolaEvent('make_purchase', {
+      revenue: revenue.toString(),
+      currency: currency
+    });
+  }
+
+  /**
+   * Método genérico para enviar eventos a Taboola Pixel
+   * Migrado desde varios componentes del proyecto React
+   */
+  private sendTaboolaEvent(eventName: string, additionalData?: { revenue?: string; currency?: string }): void {
+    try {
+      const _tfa = (window as any)._tfa;
+      if (Array.isArray(_tfa)) {
+        const eventData: { notify: string; name: string; id: number; revenue?: string; currency?: string } = {
+          notify: 'event',
+          name: eventName,
+          id: 1878210
+        };
+        
+        // Agregar datos adicionales si existen (para make_purchase)
+        if (additionalData?.revenue) {
+          eventData.revenue = additionalData.revenue;
+        }
+        if (additionalData?.currency) {
+          eventData.currency = additionalData.currency;
+        }
+        
+        _tfa.push(eventData);
+      }
+    } catch (error) {
+      console.error(`Error enviando evento ${eventName} a Taboola:`, error);
+    }
+  }
+
 
   /**
    * Método centralizado para disparar evento purchase desde una reservación

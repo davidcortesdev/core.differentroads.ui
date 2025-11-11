@@ -596,12 +596,6 @@ export class PaymentManagementComponent
     script.src =
       'https://cdn.scalapay.com/widget/scalapay-widget-loader.js?version=V5';
 
-    script.onload = () => {
-      setTimeout(() => {
-        this.initializeScalapayWidget();
-      }, 500);
-    };
-
     script.onerror = (error) => {
       console.error('❌ Error al cargar script de Scalapay:', error);
     };
@@ -628,7 +622,9 @@ export class PaymentManagementComponent
   }
 
   private updatePriceContainers(): void {
-    if (!this.totalPrice) return;
+    if (!this.totalPrice) {
+      return;
+    }
 
     const formattedPrice = `€ ${this.totalPrice.toFixed(2)}`;
     const mainContainer = document.getElementById('price-container-main');
@@ -825,6 +821,11 @@ export class PaymentManagementComponent
       .getById(this.reservationId)
       .subscribe((reservation) => {
         this.totalPrice = reservation.totalAmount;
+
+        // Después de cargar el precio, forzar recarga del widget de Scalapay
+        setTimeout(() => {
+          this.forceScalapayReload();
+        }, 300);
       });
   }
 

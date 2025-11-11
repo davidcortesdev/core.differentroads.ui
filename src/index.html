@@ -2,27 +2,18 @@
 <html lang="es">
 
 <head>
-  <!-- Termly Custom Blocking Map - Configuración para no bloquear imágenes de nuestros dominios -->
-  <script>
-    window.TERMLY_CUSTOM_BLOCKING_MAP = {
-      "ui-dev.differentroads.es": "essential",
-      "ui.differentroads.es": "essential",
-      "www.differentroads.es": "essential"
-    };
-  </script>
-
   <!-- Termly CMP - Solo en producción (no en localhost) -->
   <script>
     if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
       var termlyScript = document.createElement('script');
       termlyScript.type = 'text/javascript';
-      termlyScript.src = 'https://app.termly.io/resource-blocker/c5045a2e-2021-47b5-a00f-e2cce0427476?autoBlock=on';
+      termlyScript.src = 'https://app.termly.io/resource-blocker/c5045a2e-2021-47b5-a00f-e2cce0427476?autoBlock=off';
       document.head.appendChild(termlyScript);
     }
   </script>
 
   <!-- Google Tag Manager -->
-  <script data-cookieconsent="statistics">(function (w, d, s, l, i) {
+  <script>(function (w, d, s, l, i) {
       w[l] = w[l] || []; w[l].push({
         'gtm.start':
           new Date().getTime(), event: 'gtm.js'
@@ -32,7 +23,7 @@
     })(window, document, 'script', 'dataLayer', 'GTM-K5KH2X3');</script>
 
   <!-- Google Analytics Universal (ga) -->
-  <script data-cookieconsent="statistics">
+  <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
     (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
     m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -44,8 +35,8 @@
   </script>
 
   <!-- Google Tag (gtag) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=AW-969524948" data-cookieconsent="statistics"></script>
-  <script data-cookieconsent="statistics">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=AW-969524948"></script>
+  <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
@@ -53,7 +44,7 @@
   </script>
 
   <!-- Taboola Pixel -->
-  <script type="text/javascript" data-cookieconsent="marketing">
+  <script type="text/javascript">
     window._tfa = window._tfa || [];
     _tfa.push({notify: 'event', name: 'page_view', id: 1878210});
     !function (t, f, a, x) {

@@ -18,6 +18,7 @@ import {
   IReservationStatusResponse,
   ReservationStatusService,
 } from '../../../core/services/reservation/reservation-status.service';
+import { ReservationsSyncsService } from '../../../core/services/reservation/reservations-syncs.service';
 
 interface DocumentActionConfig {
   id: string;
@@ -95,7 +96,8 @@ export class BookingDocumentActionsV2Component implements OnInit {
     private usersNetService: UsersNetService,
     private notificationServicev2: NotificationServicev2,
     private documentServicev2: DocumentServicev2,
-    private reservationStatusService: ReservationStatusService
+    private reservationStatusService: ReservationStatusService,
+    private reservationsSyncsService: ReservationsSyncsService
   ) {}
 
   ngOnInit(): void {
@@ -152,6 +154,7 @@ export class BookingDocumentActionsV2Component implements OnInit {
   // Estado de la reserva actual y soporte para botón de sincronización
   private currentReservation: IReservationResponse | null = null;
   private prebookedStatusId: number | null = null;
+  isProcessingSyncFromTk: boolean = false;
 
   /**
    * Carga el ID del estado PREBOOKED para comparaciones.
@@ -226,7 +229,7 @@ export class BookingDocumentActionsV2Component implements OnInit {
     }
 
     this.isProcessing = true;
-    this.reservationService.enqueueSync(reservationId).subscribe({
+    this.reservationsSyncsService.enqueueByReservationId(reservationId).subscribe({
       next: (success: boolean) => {
         this.isProcessing = false;
         if (success) {
@@ -250,6 +253,89 @@ export class BookingDocumentActionsV2Component implements OnInit {
         const errorMessage =
           error?.error?.message ||
           'Error al encolar la sincronización. Inténtalo más tarde.';
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: errorMessage,
+          life: 4000,
+        });
+      },
+    });
+  }
+
+  /**
+   * Indica si se puede habilitar el botón de traer información desde TK:
+   * - Reserva con tkId
+   */
+  get canSyncFromTk(): boolean {
+    if (!this.currentReservation) {
+      return false;
+    }
+    const hasTkId = !!this.currentReservation.tkId;
+    return hasTkId && !this.isProcessingSyncFromTk;
+  }
+
+  /**
+   * Obtiene el mensaje del tooltip para el botón de traer información desde TK
+   * según las condiciones que impiden su uso
+   */
+  getSyncFromTkTooltip(): string {
+    if (this.isProcessingSyncFromTk) {
+      return 'La sincronización desde TourKnife se está procesando...';
+    }
+    if (!this.currentReservation) {
+      return 'Cargando información de la reserva...';
+    }
+    const hasTkId = !!this.currentReservation.tkId;
+    
+    if (!hasTkId) {
+      return 'La reserva debe tener un tkId para traer información desde TourKnife';
+    }
+    return '';
+  }
+
+  /**
+   * Ejecuta la llamada para traer la información de la reserva desde TK.
+   */
+  onSyncFromTk(): void {
+    if (!this.currentReservation || !this.currentReservation.tkId) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'La reserva no tiene tkId',
+        life: 3000,
+      });
+      return;
+    }
+    if (!this.canSyncFromTk) {
+      return;
+    }
+
+    this.isProcessingSyncFromTk = true;
+    this.reservationsSyncsService.enqueueByTkId(this.currentReservation.tkId).subscribe({
+      next: (success: boolean) => {
+        this.isProcessingSyncFromTk = false;
+        if (success) {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Sincronización encolada',
+            detail: 'La sincronización desde TourKnife se ha encolado correctamente.',
+            life: 3000,
+          });
+        } else {
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Aviso',
+            detail: 'No se pudo encolar la sincronización desde TourKnife.',
+            life: 3000,
+          });
+        }
+      },
+      error: (error) => {
+        this.isProcessingSyncFromTk = false;
+        const errorMessage =
+          error?.error?.message ||
+          'Error al encolar la sincronización desde TourKnife. Inténtalo más tarde.';
         this.messageService.add({
           severity: 'error',
           summary: 'Error',

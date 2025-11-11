@@ -12,6 +12,16 @@
       >
       </p-button>
       <p-button
+        label="Traer de TK"
+        icon="pi pi-download"
+        [disabled]="!canSyncFromTk"
+        (onClick)="onSyncFromTk()"
+        [pTooltip]="!canSyncFromTk ? getSyncFromTkTooltip() : ''"
+        tooltipPosition="top"
+        [loading]="isProcessingSyncFromTk"
+      >
+      </p-button>
+      <p-button
         *ngFor="let action of getVisibleActions()"
         [icon]="action.icon"
         [label]="action.test"

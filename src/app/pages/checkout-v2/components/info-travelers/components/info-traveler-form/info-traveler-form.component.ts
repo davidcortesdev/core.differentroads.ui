@@ -434,9 +434,15 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     });
 
     if (hasPhoneField && !hasPhonePrefixField && this.traveler) {
-      // Buscar el campo phonePrefix en reservationFields
+      // Buscar el campo phone y phonePrefix en reservationFields
+      const phoneField = this.departureReservationFields.find(field => {
+        const fieldDetails = this.getReservationFieldDetails(field.reservationFieldId);
+        return fieldDetails?.code === 'phone';
+      });
+      
       const phonePrefixField = this.reservationFields.find(f => f.code === 'phonePrefix');
-      if (phonePrefixField) {
+      
+      if (phoneField && phonePrefixField) {
         const prefixControlName = `phonePrefix_${this.traveler.id}`;
         const existingControl = this.travelerForm.get(prefixControlName);
         
@@ -462,7 +468,15 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
             console.log(`[VACÍO] phonePrefix → Sin datos`);
           }
           
-          const prefixControl = this.fb.control(prefixValue);
+          // ⭐ NUEVO: Aplicar las mismas validaciones que el teléfono
+          const phoneFieldDetails = this.getReservationFieldDetails(phoneField.reservationFieldId);
+          const prefixValidators = this.getValidatorsForField(
+            phonePrefixField,
+            phoneField, // Usar el mismo field de departure para heredar la obligatoriedad
+            this.traveler.isLeadTraveler
+          );
+          
+          const prefixControl = this.fb.control(prefixValue, prefixValidators);
           
           // Si el valor viene del perfil del usuario (no de BD), marcarlo como dirty
           if (this.traveler.isLeadTraveler && this.currentPersonalInfo && !existingPrefixValue && prefixValue) {
@@ -472,7 +486,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
           }
           
           this.travelerForm.addControl(prefixControlName, prefixControl);
-          console.log(`[CONTROL CREADO] ${prefixControlName} con valor: "${prefixValue}"`);
+          console.log(`[CONTROL CREADO] ${prefixControlName} con valor: "${prefixValue}" y validaciones: ${prefixValidators.length > 0 ? 'SÍ' : 'NO'}`);
         } else {
           // Actualizar el valor del control existente con el valor de BD
           const existingPrefixValue = this.getExistingFieldValue(this.traveler.id, phonePrefixField.id);
@@ -1936,6 +1950,20 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
             mandatoryFieldsInvalid.push(`${fieldDetails.code} (${this.getControlErrorMessage(control, fieldDetails.code)})`);
           } else if (!control.value || control.value === '') {
             mandatoryFieldsMissing.push(`${fieldDetails.code} (vacío)`);
+          }
+
+          // NUEVO: Si el campo es phone y es obligatorio, también validar phonePrefix
+          if (fieldDetails.code === 'phone') {
+            const prefixControlName = `phonePrefix_${this.traveler!.id}`;
+            const prefixControl = this.travelerForm.get(prefixControlName);
+            
+            if (prefixControl) {
+              if (prefixControl.invalid) {
+                mandatoryFieldsInvalid.push(`phonePrefix (${this.getControlErrorMessage(prefixControl, 'phonePrefix')})`);
+              } else if (!prefixControl.value || prefixControl.value === '') {
+                mandatoryFieldsMissing.push(`phonePrefix (vacío)`);
+              }
+            }
           }
         }
       }

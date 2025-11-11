@@ -295,6 +295,17 @@ $azul: var(--background-azul);
   }
 }
 
+
+.discount-content {
+  margin-top: 0.5rem;
+
+  .discount-input-group {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+}
+
 :host ::ng-deep {
   .payment-button {
     margin: 10px 0;

@@ -3,6 +3,25 @@
   <p-panel styleClass="custom-panel">
     <div class="buttons-container">
       <p-button
+        label="Enviar a TK"
+        icon="pi pi-refresh"
+        [disabled]="!canEnqueueSync"
+        (onClick)="onEnqueueSync()"
+        [pTooltip]="!canEnqueueSync ? getEnqueueSyncTooltip() : ''"
+        tooltipPosition="top"
+      >
+      </p-button>
+      <p-button
+        label="Traer de TK"
+        icon="pi pi-download"
+        [disabled]="!canSyncFromTk"
+        (onClick)="onSyncFromTk()"
+        [pTooltip]="!canSyncFromTk ? getSyncFromTkTooltip() : ''"
+        tooltipPosition="top"
+        [loading]="isProcessingSyncFromTk"
+      >
+      </p-button>
+      <p-button
         *ngFor="let action of getVisibleActions()"
         [icon]="action.icon"
         [label]="action.test"

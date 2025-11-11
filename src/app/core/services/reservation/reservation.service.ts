@@ -363,15 +363,6 @@ export class ReservationService {
   }
 
   /**
-   * Encola una tarea de sincronización de reservación con TourKnife en Hangfire para procesamiento en segundo plano.
-   * @param reservationId ID interno de la reservación.
-   * @returns Resultado de la operación.
-   */
-  enqueueSync(reservationId: number): Observable<boolean> {
-    return this.http.post<boolean>(`${environment.reservationsApiUrl}/ReservationsSyncs/${reservationId}/enqueue`, {});
-  }
-
-  /**
    * Cancela una reservación.
    * @param reservationId ID de la reservación a cancelar.
    * @param canceledBy Indica quién cancela: 1 si viene de UI directo, 2 si viene desde ATC.

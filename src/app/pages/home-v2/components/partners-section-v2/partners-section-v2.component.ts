@@ -61,15 +61,11 @@ export class PartnersSectionV2Component implements OnInit {
       return;
     }
 
-    console.log('PartnersSectionV2 - Loading partners for configurationId:', this.configurationId);
-
     // Primero cargar la configuración para obtener el título
     this.homeSectionConfigurationService.getById(this.configurationId).subscribe({
       next: (configuration) => {
         // Establecer el título desde la configuración
         this.title = configuration.title || 'Colaboradores';
-        console.log('PartnersSectionV2 - Configuration loaded:', configuration);
-        console.log('PartnersSectionV2 - Title:', this.title);
 
         // Luego cargar las imágenes de la configuración
         this.loadPartnersImages();
@@ -93,24 +89,9 @@ export class PartnersSectionV2Component implements OnInit {
       .getByConfiguration(this.configurationId, true)
       .subscribe({
         next: (images: IHomeSectionImageResponse[]) => {
-          console.log('Partners images received:', images);
-          console.log('ConfigurationId used:', this.configurationId);
-          console.log('Total images:', images.length);
-          images.forEach((image, index) => {
-            console.log(`Image ${index + 1}:`, {
-              id: image.id,
-              imageUrl: image.imageUrl,
-              altText: image.altText,
-              title: image.title,
-              homeSectionConfigurationId: image.homeSectionConfigurationId,
-              isActive: image.isActive,
-              displayOrder: image.displayOrder,
-            });
-          });
           // Ordenar por displayOrder y limitar a 8 partners si es necesario
           const sortedImages = images.sort((a, b) => a.displayOrder - b.displayOrder);
           this.partners = sortedImages.slice(0, 8);
-          console.log('Partners displayed (first 8, sorted by displayOrder):', this.partners);
         },
         error: (error) => {
           console.error('Error loading partners images:', error);

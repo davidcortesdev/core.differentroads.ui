@@ -844,4 +844,18 @@ export class PaymentManagementComponent
       return;
     }
   }
+
+  validateDiscountCode(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const value = input.value;
+    // Solo permitir letras (mayúsculas y minúsculas), números y guiones
+    const filteredValue = value.replace(/[^a-zA-Z0-9-]/g, '');
+    // Limitar a 20 caracteres
+    const limitedValue = filteredValue.substring(0, 20);
+    
+    if (value !== limitedValue) {
+      this.discountCode = limitedValue;
+      input.value = limitedValue;
+    }
+  }
 }

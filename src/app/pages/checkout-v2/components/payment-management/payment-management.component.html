@@ -76,6 +76,8 @@
           [(ngModel)]="discountCode"
           placeholder="Ingresa tu código de descuento"
           class="discount-input"
+          maxlength="20"
+          (input)="validateDiscountCode($event)"
           (keyup.enter)="applyDiscount()"
         />
         <p-button

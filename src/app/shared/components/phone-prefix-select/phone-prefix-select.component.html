@@ -12,7 +12,7 @@
   [styleClass]="styleClass"
   (ngModelChange)="onValueChange($event)">
   <ng-template let-prefix pTemplate="item">
-    <div style="font-size: 1.1em;">
+    <div style="font-size: 1.3em; text-align: center;">
       <span>{{ getCountryFlag(prefix.isoCode2) }}</span>
       <strong>{{ prefix.prefix }}</strong>
     </div>

@@ -117,6 +117,7 @@
               [filter]="true"
               [styleClass]="'prefix-select'"
               [errorClass]="hasFieldError('phonePrefix') ? 'error' : ''"
+              [profileStyle]="true"
               (prefixChange)="onPhonePrefixChange({ value: $event })">
             </app-phone-prefix-select>
             <input

@@ -7,31 +7,42 @@
       background: white !important;
       --p-select-background: white !important;
     }
-    
-    .p-select-label {
-      background: white !important;
-    }
-    
-    .p-select-trigger {
-      background: white !important;
-    }
+
   }
 }
 
 ::ng-deep {
   // Estilos solo para el contenido del dropdown (items de la lista)
   .phone-prefix-dropdown-item {
-    font-size: 1.3em;
+    font-size: 1em;
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     
     .flag {
       margin-right: 0.5rem;
+    }
+    
+    // Estilos específicos para el perfil de usuario
+    &.profile-style {
+      font-size: 1.2em;
+    }
+  }
+  
+  // Estilos específicos del dropdown para el perfil de usuario
+  app-phone-prefix-select[ng-reflect-profile-style="true"] {
+    .p-select-overlay {
+      .p-select-panel {
+        max-width: 200px !important;
+        margin: 0 auto !important;
+      }
     }
   }
   
   // El campo seleccionado mantiene el estilo del componente padre
   .phone-prefix-selected {
-    font-size: 1.3em;
+    font-size: 1.2em;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -41,7 +52,7 @@
     }
     
     &.small-size {
-      font-size: 0.9em;
+      font-size: 0.8em;
     }
   }
 }

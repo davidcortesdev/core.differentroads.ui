@@ -10,9 +10,10 @@
   [disabled]="disabled"
   [ngClass]="errorClass"
   [styleClass]="styleClass"
+  appendTo="body"
   (ngModelChange)="onValueChange($event)">
   <ng-template let-prefix pTemplate="item">
-    <div class="phone-prefix-dropdown-item">
+    <div class="phone-prefix-dropdown-item" [ngClass]="{'profile-style': profileStyle}">
       <span class="flag">{{ getCountryFlag(prefix.isoCode2) }}</span>
       <span class="prefix">{{ prefix.prefix }}</span>
     </div>

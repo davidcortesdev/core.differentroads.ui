@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { MessageService } from 'primeng/api';
 import { ReservationService } from '../../../core/services/reservation/reservation.service';
+import { IReservationResponse } from '../../../core/services/reservation/reservation.service';
 import { UsersNetService } from '../../../core/services/users/usersNet.service';
 import {
   NotificationServicev2,
@@ -13,6 +14,10 @@ import {
 } from '../../../core/services/v2/document.service';
 import { of } from 'rxjs';
 import { switchMap, catchError } from 'rxjs/operators';
+import {
+  IReservationStatusResponse,
+  ReservationStatusService,
+} from '../../../core/services/reservation/reservation-status.service';
 
 interface DocumentActionConfig {
   id: string;
@@ -89,7 +94,8 @@ export class BookingDocumentActionsV2Component implements OnInit {
     private reservationService: ReservationService,
     private usersNetService: UsersNetService,
     private notificationServicev2: NotificationServicev2,
-    private documentServicev2: DocumentServicev2
+    private documentServicev2: DocumentServicev2,
+    private reservationStatusService: ReservationStatusService
   ) {}
 
   ngOnInit(): void {
@@ -111,11 +117,12 @@ export class BookingDocumentActionsV2Component implements OnInit {
 
     this.isLoadingEmail = true;
 
-    // Obtener la reserva para obtener el userId
+    // Obtener la reserva para obtener el userId y datos para el botón de sincronización
     this.reservationService
       .getById(reservationId)
       .pipe(
-        switchMap((reservation) => {
+        switchMap((reservation: IReservationResponse) => {
+          this.currentReservation = reservation;
           if (!reservation || !reservation.userId) {
             return of('');
           }
@@ -134,11 +141,123 @@ export class BookingDocumentActionsV2Component implements OnInit {
         next: (email: string) => {
           this.userEmail = email;
           this.isLoadingEmail = false;
+          this.loadPrebookedStatusId();
         },
         error: () => {
           this.isLoadingEmail = false;
         },
       });
+  }
+
+  // Estado de la reserva actual y soporte para botón de sincronización
+  private currentReservation: IReservationResponse | null = null;
+  private prebookedStatusId: number | null = null;
+
+  /**
+   * Carga el ID del estado PREBOOKED para comparaciones.
+   */
+  private loadPrebookedStatusId(): void {
+    this.reservationStatusService.getByCode('PREBOOKED').subscribe({
+      next: (statuses: IReservationStatusResponse[]) => {
+        this.prebookedStatusId = statuses && statuses.length > 0 ? statuses[0].id : null;
+      },
+      error: () => {
+        this.prebookedStatusId = null;
+      },
+    });
+  }
+
+  /**
+   * Indica si se puede habilitar el botón de sincronización:
+   * - Reserva en estado PREBOOKED
+   * - Reserva sin tkId
+   */
+  get canEnqueueSync(): boolean {
+    if (!this.currentReservation || this.prebookedStatusId == null) {
+      return false;
+    }
+    const isPrebooked = this.currentReservation.reservationStatusId === this.prebookedStatusId;
+    const hasNoTkId = !this.currentReservation.tkId;
+    return isPrebooked && hasNoTkId && !this.isProcessing;
+  }
+
+  /**
+   * Obtiene el mensaje del tooltip para el botón de sincronización
+   * según las condiciones que impiden su uso
+   */
+  getEnqueueSyncTooltip(): string {
+    if (this.isProcessing) {
+      return 'El envío a TourKnife se está procesando...';
+    }
+    if (!this.currentReservation) {
+      return 'Cargando información de la reserva...';
+    }
+    if (this.prebookedStatusId == null) {
+      return 'Cargando estados de reserva...';
+    }
+    const isPrebooked = this.currentReservation.reservationStatusId === this.prebookedStatusId;
+    const hasTkId = !!this.currentReservation.tkId;
+    
+    if (!isPrebooked) {
+      return 'La reserva debe estar en estado PREBOOK para enviar a TourKnife';
+    }
+    if (hasTkId) {
+      return 'Esta reserva ya tiene un tkId asignado';
+    }
+    return '';
+  }
+
+  /**
+   * Ejecuta la llamada para encolar la sincronización con TK.
+   */
+  onEnqueueSync(): void {
+    const reservationId = parseInt(this.bookingId, 10);
+    if (isNaN(reservationId)) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'ID de reserva inválido',
+        life: 3000,
+      });
+      return;
+    }
+    if (!this.canEnqueueSync) {
+      return;
+    }
+
+    this.isProcessing = true;
+    this.reservationService.enqueueSync(reservationId).subscribe({
+      next: (success: boolean) => {
+        this.isProcessing = false;
+        if (success) {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Sincronización encolada',
+            detail: 'La sincronización con TourKnife se ha encolado correctamente.',
+            life: 3000,
+          });
+        } else {
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Aviso',
+            detail: 'No se pudo encolar la sincronización.',
+            life: 3000,
+          });
+        }
+      },
+      error: (error) => {
+        this.isProcessing = false;
+        const errorMessage =
+          error?.error?.message ||
+          'Error al encolar la sincronización. Inténtalo más tarde.';
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: errorMessage,
+          life: 4000,
+        });
+      },
+    });
   }
 
   /**

@@ -86,10 +86,16 @@ export class PaymentManagementComponent
   hasSpecificSearchFlights: boolean = false;
   specificSearchFlightsCost: number = 0;
 
+  // Discount code
+  discountCode: string = '';
+  discountMessage: string = '';
+  discountMessageSeverity: 'success' | 'error' | 'info' | 'warn' = 'info';
+
   // State management
   readonly dropdownStates = {
     main: true,
     paymentMethods: true,
+    discount: true,
   };
 
   readonly paymentState = {
@@ -831,5 +837,11 @@ export class PaymentManagementComponent
 
   reloadReservationTotalAmount(): void {
     this.loadReservationTotalAmount();
+  }
+
+  applyDiscount(): void {
+    if (!this.discountCode || this.discountCode.trim() === '') {
+      return;
+    }
   }
 }

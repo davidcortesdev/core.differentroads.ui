@@ -55,6 +55,46 @@
     </p-card>
   </div>
 
+  <!-- Discount Code Section -->
+  <section class="discount-section">
+    <div class="header-container" (click)="toggleDropdown('discount')">
+      <div class="title-with-icon">
+        <span class="title">Canjear código de descuento</span>
+        <i
+          class="pi"
+          [ngClass]="dropdownStates.discount ? 'pi-chevron-up' : 'pi-chevron-down'"
+        ></i>
+      </div>
+      <div class="title-underline"></div>
+    </div>
+
+    <div *ngIf="dropdownStates.discount" class="discount-content">
+      <div class="discount-input-group">
+        <input
+          id="discount-code"
+          pInputText
+          [(ngModel)]="discountCode"
+          placeholder="Ingresa tu código de descuento"
+          class="discount-input"
+          (keyup.enter)="applyDiscount()"
+        />
+        <p-button
+          label="Aplicar"
+          icon="pi pi-check"
+          (onClick)="applyDiscount()"
+          [disabled]="!discountCode || discountCode.trim() === ''"
+          styleClass="discount-button"
+        ></p-button>
+      </div>
+      <p-message
+        *ngIf="discountMessage"
+        [severity]="discountMessageSeverity"
+        [text]="discountMessage"
+        styleClass="discount-message"
+      ></p-message>
+    </div>
+  </section>
+
   <!-- Payment Type Selection -->
   <section class="payment-type-section">
     <div class="header-container" (click)="toggleDropdown('main')">

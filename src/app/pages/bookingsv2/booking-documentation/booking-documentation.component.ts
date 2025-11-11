@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import {
   DocumentationService,
   IDocumentReservationResponse,
@@ -73,6 +74,11 @@ export class BookingDocumentationV2Component implements OnInit {
   // Propiedad para el estado de carga de descarga por documento
   downloadLoading: { [key: number]: boolean } = {};
 
+  // Propiedades para el modal de contenido de notificación
+  showNotificationContentModal: boolean = false;
+  selectedNotificationContent: string | null = null;
+  notificationContentUrl: SafeResourceUrl | null = null;
+
   constructor(
     private documentationService: DocumentationService,
     private notificationService: NotificationService,
@@ -80,7 +86,8 @@ export class BookingDocumentationV2Component implements OnInit {
     private reservationTKLogService: ReservationTKLogService,
     private documentServicev2: DocumentServicev2,
     private http: HttpClient,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private sanitizer: DomSanitizer
   ) {}
 
   /**
@@ -256,7 +263,7 @@ export class BookingDocumentationV2Component implements OnInit {
   /**
    * Formatea la fecha de creación de una notificación
    */
-  formatNotificationDate(dateString: string): string {
+  formatNotificationDate(dateString: string | null): string {
     if (!dateString) return 'Fecha no disponible';
 
     try {
@@ -271,6 +278,60 @@ export class BookingDocumentationV2Component implements OnInit {
     } catch (error) {
       return 'Fecha no válida';
     }
+  }
+
+  /**
+   * Abre el modal para ver el contenido de una notificación
+   * @param content - Contenido de la notificación a mostrar
+   */
+  openNotificationContentModal(content: string | null): void {
+    this.selectedNotificationContent = content;
+    
+    // Crear un blob URL para el iframe para preservar mejor los estilos
+    const htmlContent = this.getNotificationContentForIframe(content);
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    
+    // Revocar la URL anterior si existe
+    if (this.notificationContentUrl) {
+      const url = this.notificationContentUrl.toString();
+      if (url.startsWith('blob:')) {
+        URL.revokeObjectURL(url);
+      }
+    }
+    
+    const blobUrl = URL.createObjectURL(blob);
+    this.notificationContentUrl = this.sanitizer.bypassSecurityTrustResourceUrl(blobUrl);
+    this.showNotificationContentModal = true;
+  }
+
+  /**
+   * Cierra el modal de contenido de notificación
+   */
+  closeNotificationContentModal(): void {
+    this.showNotificationContentModal = false;
+    
+    // Limpiar el blob URL
+    if (this.notificationContentUrl) {
+      const url = this.notificationContentUrl.toString();
+      if (url.startsWith('blob:')) {
+        URL.revokeObjectURL(url);
+      }
+      this.notificationContentUrl = null;
+    }
+    
+    this.selectedNotificationContent = null;
+  }
+
+  /**
+   * Obtiene el contenido para el iframe tal cual viene
+   * @param content - Contenido de la notificación
+   * @returns Contenido sin modificaciones
+   */
+  getNotificationContentForIframe(content: string | null): string {
+    if (!content) {
+      return '<p>No hay contenido disponible</p>';
+    }
+    return content;
   }
 
   /**

@@ -102,7 +102,9 @@
             <th>Tipo</th>
             <th>Email</th>
             <th>Estado</th>
+            <th>Fecha de creación</th>
             <th>Fecha de envío</th>
+            <th style="width: 5rem">Acciones</th>
           </tr>
         </ng-template>
 
@@ -126,12 +128,24 @@
               </p-tag>
             </td>
             <td>{{ formatNotificationDate(notification.createdAt) }}</td>
+            <td>{{ formatNotificationDate(notification.sentAt) }}</td>
+            <td>
+              <p-button
+                icon="pi pi-eye"
+                severity="secondary"
+                rounded
+                [disabled]="!notification.content"
+                (click)="openNotificationContentModal(notification.content)"
+                pTooltip="Ver contenido"
+              >
+              </p-button>
+            </td>
           </tr>
         </ng-template>
 
         <ng-template #emptymessage>
           <tr>
-            <td colspan="4">No hay notificaciones registradas.</td>
+            <td colspan="6">No hay notificaciones registradas.</td>
           </tr>
         </ng-template>
       </p-table>
@@ -366,4 +380,27 @@
       </p-table>
     </p-panel>
   </div> -->
+
+  <!-- Modal para ver el contenido de la notificación -->
+  <p-dialog
+    [(visible)]="showNotificationContentModal"
+    [modal]="true"
+    [breakpoints]="{ '1199px': '90vw', '575px': '95vw' }"
+    [style]="{ width: '80vw', height: '80vh' }"
+    [draggable]="false"
+    [resizable]="true"
+    [closeOnEscape]="true"
+    [dismissableMask]="true"
+    (onHide)="closeNotificationContentModal()"
+    header="Contenido de la Notificación"
+  >
+    <div class="notification-content-container">
+      <iframe
+        [src]="notificationContentUrl"
+        style="width: 100%; height: 70vh; border: none;"
+        title="Contenido de la notificación"
+        sandbox="allow-same-origin allow-scripts"
+      ></iframe>
+    </div>
+  </p-dialog>
 </div>

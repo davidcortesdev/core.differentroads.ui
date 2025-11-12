@@ -30,8 +30,6 @@ import {
   IPriceChangeInfo,
 } from '../../../../core/services/flight/flight-search.service';
 import { environment } from '../../../../../environments/environment';
-import { DiscountCodeService, IDiscountCodeResponse } from '../../../../core/services/checkout/discount-code.service';
-import { DiscountTypeService } from '../../../../core/services/checkout/discount-type.service';
 
 // Interfaces y tipos
 export type PaymentType =
@@ -73,7 +71,6 @@ export class PaymentManagementComponent
   // Outputs
   @Output() paymentCompleted = new EventEmitter<PaymentOption>();
   @Output() navigateToStep = new EventEmitter<number>();
-  @Output() discountApplied = new EventEmitter<{ code: string; amount: number }>();
 
   // Payment IDs
   transferMethodId: number = 0;
@@ -93,9 +90,6 @@ export class PaymentManagementComponent
   discountCode: string = '';
   discountMessage: string = '';
   discountMessageSeverity: 'success' | 'error' | 'info' | 'warn' = 'info';
-  appliedDiscount: IDiscountCodeResponse | null = null;
-  discountAmount: number = 0;
-  originalTotalPrice: number = 0;
 
   // State management
   readonly dropdownStates = {
@@ -121,9 +115,7 @@ export class PaymentManagementComponent
     private readonly reservationService: ReservationService,
     private readonly messageService: MessageService,
     private readonly currencyService: CurrencyService,
-    private readonly flightSearchService: FlightSearchService,
-    private readonly discountCodeService: DiscountCodeService,
-    private readonly discountTypeService: DiscountTypeService
+    private readonly flightSearchService: FlightSearchService
   ) {}
 
   ngOnInit(): void {
@@ -834,21 +826,7 @@ export class PaymentManagementComponent
     this.reservationService
       .getById(this.reservationId)
       .subscribe((reservation) => {
-        // Si hay un descuento aplicado, usar el precio original guardado
-        // Si no hay descuento, guardar el precio actual como original
-        if (!this.appliedDiscount) {
-          this.originalTotalPrice = reservation.totalAmount;
-          this.totalPrice = reservation.totalAmount;
-        } else {
-          // Si hay descuento aplicado, recalcular desde el precio original
-          // o usar el precio de la reserva si es menor (ya tiene descuento aplicado)
-          if (this.originalTotalPrice === 0) {
-            // Si no tenemos el precio original guardado, asumir que el precio actual es el original
-            this.originalTotalPrice = reservation.totalAmount;
-          }
-          // Recalcular el descuento desde el precio original
-          this.calculateDiscountedPrice(this.originalTotalPrice);
-        }
+        this.totalPrice = reservation.totalAmount;
 
         // Después de cargar el precio, forzar recarga del widget de Scalapay
         setTimeout(() => {
@@ -868,220 +846,10 @@ export class PaymentManagementComponent
       return;
     }
 
-    this.discountMessage = 'Validando código de descuento...';
+    this.discountMessage = 'Código de descuento enviado';
     this.discountMessageSeverity = 'info';
-
-    this.discountCodeService.getByCode(this.discountCode.trim()).subscribe({
-      next: (discounts: IDiscountCodeResponse[]) => {
-        if (discounts && discounts.length > 0) {
-          // Buscar el código que coincida exactamente (case-sensitive)
-          const enteredCode = this.discountCode.trim();
-          const discount = discounts.find(d => d.code === enteredCode);
-          
-          if (!discount) {
-            this.discountMessage = 'Código de descuento no válido';
-            this.discountMessageSeverity = 'error';
-            this.appliedDiscount = null;
-            this.discountAmount = 0;
-            this.totalPrice = this.originalTotalPrice || this.totalPrice;
-            // Limpiar el descuento del resumen
-            this.discountApplied.emit({ code: '', amount: 0 });
-            return;
-          }
-          
-          // Validar que el código esté activo
-          if (discount.isActive === false) {
-            this.discountMessage = 'Código de descuento no válido.';
-            this.discountMessageSeverity = 'error';
-            this.appliedDiscount = null;
-            this.discountAmount = 0;
-            this.totalPrice = this.originalTotalPrice || this.totalPrice;
-            // Limpiar el descuento del resumen
-            this.discountApplied.emit({ code: '', amount: 0 });
-            return;
-          }
-
-          // Validar fechas de validez si existen
-          if (discount.validFrom) {
-            const now = new Date();
-            const validFrom = new Date(discount.validFrom);
-            
-            if (now < validFrom) {
-              this.discountMessage = 'Este código de descuento aún no está disponible.';
-              this.discountMessageSeverity = 'error';
-              this.appliedDiscount = null;
-              this.discountAmount = 0;
-              this.totalPrice = this.originalTotalPrice || this.totalPrice;
-              // Limpiar el descuento del resumen
-              this.discountApplied.emit({ code: '', amount: 0 });
-              return;
-            }
-          }
-          
-          if (discount.validTo) {
-            const now = new Date();
-            const validTo = new Date(discount.validTo);
-            
-            if (now > validTo) {
-              this.discountMessage = 'Este código de descuento ya no está disponible.';
-              this.discountMessageSeverity = 'error';
-              this.appliedDiscount = null;
-              this.discountAmount = 0;
-              this.totalPrice = this.originalTotalPrice || this.totalPrice;
-              // Limpiar el descuento del resumen
-              this.discountApplied.emit({ code: '', amount: 0 });
-              return;
-            }
-          }
-
-          // Aplicar el descuento
-          this.appliedDiscount = discount;
-          
-          // Calcular el descuento y cuando termine, emitir el evento y actualizar la reserva
-          this.calculateDiscountedPrice(this.originalTotalPrice || this.totalPrice, () => {
-            // Emitir evento para que el componente padre pueda actualizar el resumen
-            this.discountApplied.emit({
-              code: discount.code,
-              amount: this.discountAmount
-            });
-            
-            // Actualizar el precio de la reserva en la base de datos
-            this.updateReservationWithDiscount();
-            
-            this.discountMessage = `Código de descuento aplicado correctamente`;
-            this.discountMessageSeverity = 'success';
-            
-            // Recargar el precio total para actualizar el widget de Scalapay
-            this.reloadReservationTotalAmount();
-          });
-        } else {
-          this.discountMessage = 'Código de descuento no válido';
-          this.discountMessageSeverity = 'error';
-          this.appliedDiscount = null;
-          this.discountAmount = 0;
-          this.totalPrice = this.originalTotalPrice || this.totalPrice;
-          // Limpiar el descuento del resumen
-          this.discountApplied.emit({ code: '', amount: 0 });
-        }
-      },
-      error: (error) => {
-        console.error('Error al validar código de descuento:', error);
-        this.discountMessage = 'Error al validar el código de descuento. Por favor, inténtalo de nuevo';
-        this.discountMessageSeverity = 'error';
-        this.appliedDiscount = null;
-        this.discountAmount = 0;
-        // Limpiar el descuento del resumen
-        this.discountApplied.emit({ code: '', amount: 0 });
-      }
-    });
   }
 
-  private calculateDiscountedPrice(basePrice: number, callback?: () => void): void {
-    if (!this.appliedDiscount) {
-      this.totalPrice = basePrice;
-      this.discountAmount = 0;
-      if (callback) callback();
-      return;
-    }
-
-    // Obtener el tipo de descuento para saber cómo calcularlo
-    this.discountTypeService.getById(this.appliedDiscount.discountTypeId).subscribe({
-      next: (discountType) => {
-        const discountTypeCode = discountType.code.toUpperCase();
-        
-        if (discountTypeCode === 'PORCENTAJE') {
-          // Descuento porcentual: amount es el porcentaje (ej: 10 = 10%)
-          this.discountAmount = basePrice * (this.appliedDiscount!.amount / 100);
-        } else if (discountTypeCode === 'FIJO') {
-          // Descuento fijo: amount es el valor en euros
-          this.discountAmount = this.appliedDiscount!.amount;
-        } else {
-          // Tipo desconocido, usar valor fijo por defecto
-          console.warn(`Tipo de descuento desconocido: ${discountTypeCode}. Usando valor fijo.`);
-          this.discountAmount = this.appliedDiscount!.amount;
-        }
-        
-        // Calcular el precio final (no puede ser negativo)
-        this.totalPrice = Math.max(0, basePrice - this.discountAmount);
-        
-        // Guardar el precio original si no está guardado
-        if (this.originalTotalPrice === 0) {
-          this.originalTotalPrice = basePrice;
-        }
-        
-        // Ejecutar callback si existe
-        if (callback) {
-          callback();
-        }
-        
-        // Actualizar el widget de Scalapay con el nuevo precio
-        setTimeout(() => {
-          this.forceScalapayReload();
-        }, 100);
-      },
-      error: (error) => {
-        console.error('Error al obtener el tipo de descuento:', error);
-        // En caso de error, usar valor fijo por defecto
-        this.discountAmount = this.appliedDiscount!.amount;
-        this.totalPrice = Math.max(0, basePrice - this.discountAmount);
-        
-        if (this.originalTotalPrice === 0) {
-          this.originalTotalPrice = basePrice;
-        }
-        
-        // Ejecutar callback incluso en caso de error
-        if (callback) {
-          callback();
-        }
-      }
-    });
-  }
-
-  private updateReservationWithDiscount(): void {
-    if (!this.reservationId || !this.appliedDiscount) {
-      return;
-    }
-
-    // Obtener la reserva actual para mantener los demás campos
-    this.reservationService.getById(this.reservationId).subscribe({
-      next: (reservation) => {
-        // Actualizar el precio total de la reserva con el descuento aplicado
-        const updateData = {
-          tkId: reservation.tkId,
-          reservationStatusId: reservation.reservationStatusId,
-          retailerId: reservation.retailerId,
-          tourId: reservation.tourId,
-          departureId: reservation.departureId,
-          userId: reservation.userId,
-          totalPassengers: reservation.totalPassengers,
-          totalAmount: this.totalPrice, // Precio con descuento aplicado
-        };
-
-        this.reservationService.update(this.reservationId, updateData).subscribe({
-          next: (success) => {
-            if (success) {
-              console.log('Reserva actualizada con descuento aplicado');
-              // El resumen se actualizará automáticamente cuando se recargue
-            } else {
-              console.error('Error al actualizar la reserva');
-            }
-          },
-          error: (error) => {
-            console.error('Error al actualizar la reserva con descuento:', error);
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Error',
-              detail: 'No se pudo actualizar el precio de la reserva. El descuento se aplicará localmente.',
-              life: 5000,
-            });
-          }
-        });
-      },
-      error: (error) => {
-        console.error('Error al obtener la reserva:', error);
-      }
-    });
-  }
 
   validateDiscountCode(event: Event): void {
     const input = event.target as HTMLInputElement;

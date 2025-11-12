@@ -194,9 +194,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   // NUEVO: Trigger para refrescar el resumen
   summaryRefreshTrigger: any = null;
 
-  // NUEVO: Descuento del cupón aplicado
-  couponDiscountAmount: number = 0;
-
   constructor(
     private titleService: Title,
     private route: ActivatedRoute,
@@ -2797,15 +2794,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     this.trackAddPaymentInfo(paymentOption);
   }
 
-  /**
-   * Maneja el evento de descuento aplicado
-   * @param discount Información del descuento aplicado
-   */
-  public onDiscountApplied(discount: { code: string; amount: number }): void {
-    this.couponDiscountAmount = discount.amount;
-    // Disparar actualización del resumen para que se muestre el descuento
-    this.triggerSummaryRefresh();
-  }
 
   /**
    * ✅ NUEVO: Limpia el estado relacionado con la selección de vuelos

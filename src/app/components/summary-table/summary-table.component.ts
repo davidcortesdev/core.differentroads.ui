@@ -53,7 +53,6 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
   @Input() isAuthenticated: boolean = false;
   @Input() selectedFlight: any = null;
   @Input() pointsDiscount: number = 0;
-  @Input() couponDiscount: number = 0; // NUEVO: Descuento del cupón
 
   // NUEVO: Output para emitir cambios en el total
   @Output() totalChanged = new EventEmitter<number>();
@@ -99,11 +98,6 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
     // Actualizar descuento por puntos cuando cambie
     if (changes['pointsDiscount'] && this.reservationSummary) {
       this.updatePointsDiscount();
-    }
-    
-    // Actualizar descuento del cupón cuando cambie
-    if (changes['couponDiscount'] !== undefined && this.reservationSummary) {
-      this.updateSummaryData(this.reservationSummary);
     }
   }
 
@@ -203,19 +197,9 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
       });
     }
 
-    // Agregar descuento del cupón si existe
-    if (this.couponDiscount > 0) {
-      this.summary.push({
-        description: `Cupón de descuento`,
-        qty: 1,
-        value: -this.couponDiscount, // Valor negativo para descuento
-        isDiscount: true
-      });
-    }
-
     // Usar el totalAmount que viene del backend y restar los descuentos
     this.subtotal = summary.totalAmount;
-    this.total = summary.totalAmount - this.pointsDiscount - this.couponDiscount;
+    this.total = summary.totalAmount - this.pointsDiscount;
 
     // Emitir el cambio de total para que el componente padre pueda actualizarse
     this.totalChanged.emit(this.total);

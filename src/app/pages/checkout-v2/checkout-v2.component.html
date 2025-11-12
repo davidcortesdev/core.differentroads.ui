@@ -174,7 +174,6 @@
               [isTourOperator]="isTourOperator"
               (navigateToStep)="onNavigateToStep($event)"
               (paymentCompleted)="onPaymentCompleted($event)"
-              (discountApplied)="onDiscountApplied($event)"
             >
             </app-payment-management>
           </div>
@@ -223,7 +222,6 @@
         [showFlightSection]="true"
         [currency]="'EUR'"
         [title]="'Resumen del pedido'"
-        [couponDiscount]="couponDiscountAmount"
         (totalChanged)="onTotalChanged($event)"
       >
       </app-summary-table>

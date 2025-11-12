@@ -62,7 +62,7 @@ export class SignUpFormComponent {
     },
     phone: {
       required: 'El teléfono es requerido.',
-      pattern: 'Ingresa un número de teléfono válido. Puede incluir código de país.',
+      pattern: 'Ingresa un número de teléfono válido.',
     },
     password: {
       required: 'La contraseña es requerida.',

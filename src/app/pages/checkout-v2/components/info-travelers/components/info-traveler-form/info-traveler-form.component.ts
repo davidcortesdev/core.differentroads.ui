@@ -128,13 +128,13 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     },
     phone: {
       required: () => 'El teléfono es requerido.',
-      pattern: () => 'Ingresa un número de teléfono válido. Puede incluir código de país.',
+      pattern: () => 'Ingresa un número de teléfono válido.',
     },
     text: {
       required: () => 'Este campo es obligatorio.',
       minlength: (params) => `Debe tener al menos ${params?.['minLength']} caracteres.`,
       maxlength: (params) => `No puede tener más de ${params?.['maxLength']} caracteres.`,
-      pattern: () => 'Ingresa un número de teléfono válido. Puede incluir código de país.',
+      pattern: () => 'Ingresa un número de teléfono válido.',
     },
     number: {
       required: () => 'Este campo es obligatorio.',
@@ -462,10 +462,14 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
               prefixValue = userPrefixValue;
               console.log(`[PERFIL] phonePrefix → Pre-llenado desde perfil: "${prefixValue}"`);
             } else {
-              console.log(`[VACÍO] phonePrefix → Sin datos en BD ni en perfil`);
+              // TERCERO: Si no hay datos en BD ni en perfil, establecer +34 (España) por defecto
+              prefixValue = '+34';
+              console.log(`[DEFAULT] phonePrefix → Valor por defecto: "${prefixValue}"`);
             }
           } else {
-            console.log(`[VACÍO] phonePrefix → Sin datos`);
+            // Si no es lead traveler o no hay perfil, establecer +34 (España) por defecto
+            prefixValue = '+34';
+            console.log(`[DEFAULT] phonePrefix → Valor por defecto: "${prefixValue}"`);
           }
           
           // ⭐ NUEVO: Aplicar las mismas validaciones que el teléfono
@@ -612,7 +616,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
 
   /**
    * Validador personalizado para teléfono
-   * Permite números internacionales con código de país y espacios
+   * Solo acepta dígitos (6-14 dígitos), sin prefijo ya que el prefijo va por separado
    */
   private phoneValidator() {
     return (control: AbstractControl): ValidationErrors | null => {
@@ -628,9 +632,9 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       // Normalizar el teléfono eliminando espacios y guiones
       const normalizedPhone = phoneValue.replace(/[\s-]/g, '');
       
-      // Patrón que acepta: +código_país (1-3 dígitos) + número (6-14 dígitos)
-      // También acepta solo el número sin código de país
-      const phoneRegex = /^(\+\d{1,3})?\d{6,14}$/;
+      // Patrón que solo acepta dígitos (6-14 dígitos)
+      // No acepta prefijo + ya que el prefijo va por separado
+      const phoneRegex = /^\d{6,14}$/;
       
       if (!phoneRegex.test(normalizedPhone)) {
         return { pattern: true };
@@ -1283,6 +1287,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
 
   /**
    * Maneja el cambio en campos de teléfono
+   * Solo permite dígitos, espacios y guiones (el prefijo va por separado)
    */
   onPhoneFieldChange(fieldCode: string, event: Event): void {
     if (!this.traveler) {
@@ -1290,20 +1295,10 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     const input = event.target as HTMLInputElement;
-    // Permitir números, +, espacios y guiones
-    let filtered = input.value.replace(/[^\d+\s-]/g, '');
+    // Solo permitir números, espacios y guiones (no permitir + ya que el prefijo va por separado)
+    let filtered = input.value.replace(/[^\d\s-]/g, '');
     
-    // Si hay un +, asegurarse de que esté solo al inicio
-    const plusIndex = filtered.indexOf('+');
-    if (plusIndex > 0) {
-      // Si hay un + que no está al inicio, eliminarlo
-      filtered = filtered.replace(/\+/g, '');
-    } else if (plusIndex === 0 && filtered.indexOf('+', 1) > 0) {
-      // Si hay múltiples +, mantener solo el primero
-      filtered = filtered.substring(0, 1) + filtered.substring(1).replace(/\+/g, '');
-    }
-    
-    // Limitar la longitud total (considerando +, espacios y guiones)
+    // Limitar la longitud total (considerando espacios y guiones)
     filtered = filtered.slice(0, 20);
     
     input.value = filtered;

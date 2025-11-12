@@ -145,13 +145,13 @@ export class TravelerFieldComponent implements OnChanges {
       },
       phone: {
         required: () => 'El teléfono es requerido.',
-        pattern: () => 'Ingresa un número de teléfono válido. Puede incluir código de país.',
+        pattern: () => 'Ingresa un número de teléfono válido.',
       },
       text: {
         required: () => 'Este campo es obligatorio.',
         minlength: (params) => `Debe tener al menos ${params?.['minLength']} caracteres.`,
         maxlength: (params) => `No puede tener más de ${params?.['maxLength']} caracteres.`,
-        pattern: () => 'Ingresa un número de teléfono válido. Puede incluir código de país.',
+        pattern: () => 'Ingresa un número de teléfono válido.',
       },
       number: {
         required: () => 'Este campo es obligatorio.',

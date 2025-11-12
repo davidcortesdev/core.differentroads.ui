@@ -341,11 +341,11 @@ export class UpdateProfileV2Service {
     if (personalInfo.telefono?.trim()) {
       // Normalizar el teléfono eliminando espacios y guiones para la validación
       const normalizedPhone = personalInfo.telefono.trim().replace(/[\s-]/g, '');
-      // Patrón que acepta: +código_país (1-3 dígitos) + número (6-14 dígitos)
-      // También acepta solo el número sin código de país
-      const phoneRegex = /^(\+\d{1,3})?\d{6,14}$/;
+      // Patrón que solo acepta dígitos (6-14 dígitos)
+      // No acepta prefijo + ya que el prefijo va por separado
+      const phoneRegex = /^\d{6,14}$/;
       if (!phoneRegex.test(normalizedPhone)) {
-        errors['telefono'] = 'Ingresa un número de teléfono válido. Puede incluir código de país.';
+        errors['telefono'] = 'Ingresa un número de teléfono válido.';
         isValid = false;
       }
     }

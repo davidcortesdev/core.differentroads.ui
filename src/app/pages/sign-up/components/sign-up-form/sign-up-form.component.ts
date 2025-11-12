@@ -88,7 +88,7 @@ export class SignUpFormComponent {
         firstName: ['', [Validators.required]],
         lastName: ['', [Validators.required]],
         email: ['', [Validators.required, Validators.email]],
-        phone: ['', [Validators.required, Validators.pattern(/^(\+\d{1,3})?\s?\d{6,14}$/)]],
+        phone: ['', [Validators.required, Validators.pattern(/^\d{6,14}$/)]],
         password: ['', [Validators.required, Validators.minLength(8)]],
         confirmPassword: ['', [Validators.required]],
       },

@@ -62,7 +62,7 @@ export class SignUpFormComponent {
     },
     phone: {
       required: 'El teléfono es requerido.',
-      pattern: 'Ingresa un número de teléfono válido. Puede incluir código de país.',
+      pattern: 'Ingresa un número de teléfono válido.',
     },
     password: {
       required: 'La contraseña es requerida.',
@@ -88,7 +88,7 @@ export class SignUpFormComponent {
         firstName: ['', [Validators.required]],
         lastName: ['', [Validators.required]],
         email: ['', [Validators.required, Validators.email]],
-        phone: ['', [Validators.required, Validators.pattern(/^(\+\d{1,3})?\s?\d{6,14}$/)]],
+        phone: ['', [Validators.required, Validators.pattern(/^\d{6,14}$/)]],
         password: ['', [Validators.required, Validators.minLength(8)]],
         confirmPassword: ['', [Validators.required]],
       },

@@ -60,6 +60,10 @@ export class UpdateProfileSectionV2Component implements OnInit, OnDestroy {
           // Si hay un prefijo guardado en personalInfo, establecerlo
           if (this.personalInfo.phonePrefix) {
             this.selectedPhonePrefix = this.personalInfo.phonePrefix;
+          } else {
+            // Si no hay prefijo guardado, establecer +34 (España) por defecto
+            this.selectedPhonePrefix = '+34';
+            this.personalInfo.phonePrefix = '+34';
           }
         },
         error: (error) => {

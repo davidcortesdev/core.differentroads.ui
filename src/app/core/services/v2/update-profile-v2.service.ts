@@ -100,6 +100,21 @@ export class UpdateProfileV2Service {
       switchMap(existingFieldValues => {
         const fieldValues = this.mapToFieldValues(userId, personalInfo);
         
+        // Crear un mapa de los userFieldIds que se están enviando
+        const newFieldIds = new Set(fieldValues.map(fv => fv.userFieldId));
+        
+        // Agregar campos que existían antes pero ahora están vacíos (para eliminarlos)
+        existingFieldValues.forEach(existing => {
+          // Si el campo existía antes pero no está en los nuevos valores, agregarlo con valor vacío
+          if (!newFieldIds.has(existing.userFieldId)) {
+            fieldValues.push({
+              userId: parseInt(userId),
+              userFieldId: existing.userFieldId,
+              value: '' // Valor vacío para eliminar el campo
+            });
+          }
+        });
+        
         if (fieldValues.length === 0) {
           return of([]);
         }
@@ -341,11 +356,11 @@ export class UpdateProfileV2Service {
     if (personalInfo.telefono?.trim()) {
       // Normalizar el teléfono eliminando espacios y guiones para la validación
       const normalizedPhone = personalInfo.telefono.trim().replace(/[\s-]/g, '');
-      // Patrón que acepta: +código_país (1-3 dígitos) + número (6-14 dígitos)
-      // También acepta solo el número sin código de país
-      const phoneRegex = /^(\+\d{1,3})?\d{6,14}$/;
+      // Patrón que solo acepta dígitos (6-14 dígitos)
+      // No acepta prefijo + ya que el prefijo va por separado
+      const phoneRegex = /^\d{6,14}$/;
       if (!phoneRegex.test(normalizedPhone)) {
-        errors['telefono'] = 'Ingresa un número de teléfono válido. Puede incluir código de país.';
+        errors['telefono'] = 'Ingresa un número de teléfono válido.';
         isValid = false;
       }
     }
@@ -477,11 +492,12 @@ export class UpdateProfileV2Service {
 
   /**
    * Valida y filtra el input de dirección
+   * Permite letras, números, acentos y espacios (necesario para direcciones con números de casa, apartamento, etc.)
    * @param value - Valor del input
    * @returns Valor filtrado
    */
   validateDireccionInput(value: string): string {
-    return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚàèìòùÀÈÌÒÙâêîôûÂÊÎÔÛäëïöüÄËÏÖÜñÑçÇ\s]/g, '').slice(0, 100);
+    return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚàèìòùÀÈÌÒÙâêîôûÂÊÎÔÛäëïöüÄËÏÖÜñÑçÇ0-9\s]/g, '').slice(0, 100);
   }
 
   /**

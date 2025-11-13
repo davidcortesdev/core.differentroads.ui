@@ -41,6 +41,10 @@ import {
   TourDeparturesPricesService,
   ITourDeparturesPriceResponse,
 } from '../../../../core/services/tour/tour-departures-prices.service';
+import {
+  ActivityAvailabilityService,
+  IActivityAvailabilityResponse,
+} from '../../../../core/services/activity/activity-availability.service';
 
 // Interfaces para los datos
 interface City {
@@ -173,6 +177,11 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   // Mapa de horarios de vuelos por departureId
   flightTimesByDepartureId: { [departureId: number]: string } = {};
 
+  // Mapa de disponibilidad de plazas por departureId
+  availabilityByDepartureId: {
+    [departureId: number]: IActivityAvailabilityResponse | null;
+  } = {};
+
   constructor(
     private departureService: DepartureService,
     private itineraryService: ItineraryService,
@@ -183,7 +192,8 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     private messageService: MessageService,
     private analyticsService: AnalyticsService,
     private flightsNetService: FlightsNetService,
-    private airportCityCacheService: AirportCityCacheService
+    private airportCityCacheService: AirportCityCacheService,
+    private activityAvailabilityService: ActivityAvailabilityService
   ) {
     this.updatePassengerText();
 
@@ -677,6 +687,10 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           this.allDepartures.forEach(departure => {
             if (departure.id) {
               this.loadFlightTimes(departure.id);
+              // Cargar disponibilidad de plazas si hay ciudad seleccionada
+              if (this.selectedCity?.activityId) {
+                this.loadAvailability(departure.id, this.selectedCity.activityId);
+              }
             }
           });
 
@@ -756,6 +770,14 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
         this.selectedCity.activityId,
         this.departureDetails.id
       );
+      
+      // Cargar disponibilidad de plazas
+      if (this.departureDetails.id) {
+        this.loadAvailability(
+          this.departureDetails.id,
+          this.selectedCity.activityId
+        );
+      }
     }
 
     // Auto-selección del departure desde el selector
@@ -908,6 +930,10 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       if (!this.departureDetails) return [];
 
       const adultPrice = this.getPriceByPassengerType('adults');
+      const availabilityStatus = this.getAvailabilityStatus(this.departureDetails.id);
+      const spots = this.getAvailableSpots(this.departureDetails.id);
+      const isBookable = (this.departureDetails.isBookable ?? true) && (spots === -1 || spots > 0);
+      
       const departure = {
         id: this.departureDetails.id,
         departureDate: this.departureDetails.departureDate,
@@ -916,7 +942,10 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
         status: 'available',
         waitingList: false,
         group: this.selectedDeparture?.tripType?.name || 'group',
-        isBookable: this.departureDetails.isBookable ?? true,
+        isBookable: isBookable,
+        availabilityStatus: availabilityStatus.status,
+        availabilityMessage: availabilityStatus.message,
+        availableSpots: spots,
       };
       return [departure];
     }
@@ -935,6 +964,14 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
     return filteredDepartures.map((departure) => {
       const adultPrice = this.getPriceForDeparture(departure.id);
+      const availabilityStatus = this.getAvailabilityStatus(departure.id);
+      const spots = this.getAvailableSpots(departure.id);
+      
+      // Un departure no es reservable si:
+      // 1. No es bookable por defecto, O
+      // 2. Las plazas ya se cargaron (spots !== -1) y no hay plazas disponibles (spots === 0)
+      // Si spots === -1 significa que aún se está cargando, así que permitimos la reserva
+      const isBookable = (departure.isBookable ?? true) && (spots === -1 || spots > 0);
 
       return {
         id: departure.id,
@@ -944,7 +981,10 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
         status: 'available',
         waitingList: false,
         group: 'group',
-        isBookable: departure.isBookable ?? true,
+        isBookable: isBookable,
+        availabilityStatus: availabilityStatus.status,
+        availabilityMessage: availabilityStatus.message,
+        availableSpots: this.getAvailableSpots(departure.id),
       };
     });
   }
@@ -979,6 +1019,14 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       );
     }
 
+    // Cargar disponibilidad de plazas para todos los departures cuando cambia la ciudad
+    if (this.selectedCity?.activityId) {
+      this.allDepartures.forEach(departure => {
+        if (departure.id) {
+          this.loadAvailability(departure.id, this.selectedCity!.activityId!);
+        }
+      });
+    }
 
     this.emitCityUpdate();
 
@@ -1160,10 +1208,19 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   addToCart(item: any): void {
     // Validar que la salida sea reservable
     if (!item.isBookable) {
+      const availabilityStatus = this.getAvailabilityStatus(item.id);
+      let detail = 'Esta salida no está disponible para reservar.';
+      
+      if (availabilityStatus.status === 'no-spots') {
+        detail = 'No hay plazas disponibles para esta salida.';
+      } else if (availabilityStatus.status === 'last-spots') {
+        detail = 'Quedan muy pocas plazas disponibles.';
+      }
+      
       this.messageService.add({
         severity: 'warn',
         summary: 'Salida no disponible',
-        detail: 'Esta salida no está disponible para reservar.',
+        detail: detail,
         life: 3000,
       });
       return;
@@ -1323,6 +1380,65 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           console.error(`Error cargando horarios de vuelos para departure ${departureId}:`, err);
         }
       });
+  }
+
+  // Cargar disponibilidad de plazas para un departure específico
+  private loadAvailability(departureId: number, activityId: number): void {
+    this.activityAvailabilityService
+      .getByActivityAndDeparture(activityId, departureId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (availabilityArray: IActivityAvailabilityResponse[]) => {
+          // Tomar la primera disponibilidad si existe
+          if (availabilityArray && availabilityArray.length > 0) {
+            this.availabilityByDepartureId[departureId] = availabilityArray[0];
+          } else {
+            this.availabilityByDepartureId[departureId] = null;
+          }
+        },
+        error: (err: unknown) => {
+          console.error(
+            `Error cargando disponibilidad para departure ${departureId}:`,
+            err
+          );
+          this.availabilityByDepartureId[departureId] = null;
+        },
+      });
+  }
+
+  // Obtener el número de plazas disponibles para un departure
+  getAvailableSpots(departureId: number): number {
+    const availability = this.availabilityByDepartureId[departureId];
+    if (!availability) return -1; // -1 significa que no se ha cargado aún
+    return availability.bookableAvailability || 0;
+  }
+
+  // Verificar si hay plazas disponibles
+  hasAvailableSpots(departureId: number): boolean {
+    const spots = this.getAvailableSpots(departureId);
+    return spots > 0;
+  }
+
+  // Obtener el estado de plazas para mostrar en la UI
+  getAvailabilityStatus(departureId: number): {
+    status: 'available' | 'last-spots' | 'no-spots' | 'loading';
+    message: string;
+  } {
+    const spots = this.getAvailableSpots(departureId);
+    
+    if (spots === -1) {
+      return { status: 'loading', message: '' };
+    }
+    
+    if (spots === 0) {
+      return { status: 'no-spots', message: 'SIN PLAZAS' };
+    }
+    
+    if (spots < 4) {
+      return { status: 'last-spots', message: 'Últimas plazas' };
+    }
+    
+    return { status: 'available', message: '' };
   }
 
   private formatTime(timeString: string): string {

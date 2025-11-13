@@ -75,6 +75,7 @@ export class PaymentManagementComponent
   // Outputs
   @Output() paymentCompleted = new EventEmitter<PaymentOption>();
   @Output() navigateToStep = new EventEmitter<number>();
+  @Output() discountApplied = new EventEmitter<void>();
 
   // Payment IDs
   transferMethodId: number = 0;
@@ -875,6 +876,7 @@ export class PaymentManagementComponent
         if (success) {
           this.discountMessage = 'Código de descuento aplicado correctamente';
           this.discountMessageSeverity = 'success';
+          this.discountApplied.emit();
         } else {
           this.discountMessage = 'No se pudo aplicar el código de descuento';
           this.discountMessageSeverity = 'error';

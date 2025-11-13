@@ -175,6 +175,7 @@
               [userId]="userIdForCoupon ?? 0"
               (navigateToStep)="onNavigateToStep($event)"
               (paymentCompleted)="onPaymentCompleted($event)"
+              (discountApplied)="triggerSummaryRefresh()"
             >
             </app-payment-management>
           </div>

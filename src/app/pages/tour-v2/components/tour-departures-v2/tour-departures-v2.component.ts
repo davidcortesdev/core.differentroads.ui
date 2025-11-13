@@ -268,8 +268,29 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
             (city) => !city.name || city.name.trim() === ''
           );
 
+          // Eliminar duplicados basándose en el nombre normalizado (sin espacios extra, case-insensitive)
+          const uniqueCitiesMap = new Map<string, City>();
+          validCities.forEach((city) => {
+            const normalizedName = city.name.trim().toLowerCase();
+            // Si ya existe, mantener la que tenga activityId y activityPackId (más completa)
+            if (uniqueCitiesMap.has(normalizedName)) {
+              const existingCity = uniqueCitiesMap.get(normalizedName);
+              if (existingCity) {
+                // Preferir la ciudad que tenga activityId y activityPackId
+                const existingHasIds = existingCity.activityId && existingCity.activityPackId;
+                const currentHasIds = city.activityId && city.activityPackId;
+                if (currentHasIds && !existingHasIds) {
+                  uniqueCitiesMap.set(normalizedName, city);
+                }
+              }
+            } else {
+              uniqueCitiesMap.set(normalizedName, city);
+            }
+          });
+          const uniqueCities = Array.from(uniqueCitiesMap.values());
+
           // Verificar si realmente existe alguna ciudad "Sin Vuelos" en los datos
-          const hasSinVuelosCities = validCities.some(
+          const hasSinVuelosCities = uniqueCities.some(
             (city) =>
               city.name.toLowerCase().includes('sin vuelos') ||
               city.name.toLowerCase().includes('sin vuelo')
@@ -277,7 +298,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
           // Solo aplicar lógica de "Sin Vuelos" si realmente existen esas ciudades
           if (hasSinVuelosCities) {
-            this.cities = validCities.sort((a, b) => {
+            this.cities = uniqueCities.sort((a, b) => {
               const aIsSinVuelos =
                 a.name.toLowerCase().includes('sin vuelos') ||
                 a.name.toLowerCase().includes('sin vuelo');
@@ -305,7 +326,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
             }
           } else {
             // Si no hay ciudades "Sin Vuelos", usar ordenamiento alfabético normal
-            this.cities = validCities.sort((a, b) =>
+            this.cities = uniqueCities.sort((a, b) =>
               a.name.localeCompare(b.name)
             );
 

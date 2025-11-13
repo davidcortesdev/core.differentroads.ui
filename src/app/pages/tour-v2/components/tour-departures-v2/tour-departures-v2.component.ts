@@ -45,6 +45,10 @@ import {
   ActivityAvailabilityService,
   IActivityAvailabilityResponse,
 } from '../../../../core/services/activity/activity-availability.service';
+import {
+  DepartureAvailabilityService,
+  IDepartureAvailabilityResponse,
+} from '../../../../core/services/departure/departure-availability.service';
 
 // Interfaces para los datos
 interface City {
@@ -177,9 +181,14 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   // Mapa de horarios de vuelos por departureId
   flightTimesByDepartureId: { [departureId: number]: string } = {};
 
-  // Mapa de disponibilidad de plazas por departureId
-  availabilityByDepartureId: {
+  // Mapa de disponibilidad de plazas por departureId (Activity)
+  activityAvailabilityByDepartureId: {
     [departureId: number]: IActivityAvailabilityResponse | null;
+  } = {};
+
+  // Mapa de disponibilidad de plazas por departureId (Departure)
+  departureAvailabilityByDepartureId: {
+    [departureId: number]: IDepartureAvailabilityResponse | null;
   } = {};
 
   constructor(
@@ -193,7 +202,8 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     private analyticsService: AnalyticsService,
     private flightsNetService: FlightsNetService,
     private airportCityCacheService: AirportCityCacheService,
-    private activityAvailabilityService: ActivityAvailabilityService
+    private activityAvailabilityService: ActivityAvailabilityService,
+    private departureAvailabilityService: DepartureAvailabilityService
   ) {
     this.updatePassengerText();
 
@@ -683,13 +693,15 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
                 new Date(b.departureDate ?? '').getTime()
             );
 
-          // Cargar horarios de vuelos para todos los departures
+          // Cargar horarios de vuelos y disponibilidad para todos los departures
           this.allDepartures.forEach(departure => {
             if (departure.id) {
               this.loadFlightTimes(departure.id);
-              // Cargar disponibilidad de plazas si hay ciudad seleccionada
+              // Siempre cargar disponibilidad de departure
+              this.loadDepartureAvailability(departure.id);
+              // Cargar disponibilidad de activity si hay ciudad seleccionada
               if (this.selectedCity?.activityId) {
-                this.loadAvailability(departure.id, this.selectedCity.activityId);
+                this.loadActivityAvailability(departure.id, this.selectedCity.activityId);
               }
             }
           });
@@ -773,7 +785,8 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       
       // Cargar disponibilidad de plazas
       if (this.departureDetails.id) {
-        this.loadAvailability(
+        this.loadDepartureAvailability(this.departureDetails.id);
+        this.loadActivityAvailability(
           this.departureDetails.id,
           this.selectedCity.activityId
         );
@@ -1023,7 +1036,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     if (this.selectedCity?.activityId) {
       this.allDepartures.forEach(departure => {
         if (departure.id) {
-          this.loadAvailability(departure.id, this.selectedCity!.activityId!);
+          this.loadActivityAvailability(departure.id, this.selectedCity!.activityId!);
         }
       });
     }
@@ -1382,8 +1395,8 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       });
   }
 
-  // Cargar disponibilidad de plazas para un departure específico
-  private loadAvailability(departureId: number, activityId: number): void {
+  // Cargar disponibilidad de plazas para un departure específico (Activity)
+  private loadActivityAvailability(departureId: number, activityId: number): void {
     this.activityAvailabilityService
       .getByActivityAndDeparture(activityId, departureId)
       .pipe(takeUntil(this.destroy$))
@@ -1391,26 +1404,72 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
         next: (availabilityArray: IActivityAvailabilityResponse[]) => {
           // Tomar la primera disponibilidad si existe
           if (availabilityArray && availabilityArray.length > 0) {
-            this.availabilityByDepartureId[departureId] = availabilityArray[0];
+            this.activityAvailabilityByDepartureId[departureId] = availabilityArray[0];
           } else {
-            this.availabilityByDepartureId[departureId] = null;
+            this.activityAvailabilityByDepartureId[departureId] = null;
           }
         },
         error: (err: unknown) => {
           console.error(
-            `Error cargando disponibilidad para departure ${departureId}:`,
+            `Error cargando disponibilidad de actividad para departure ${departureId}:`,
             err
           );
-          this.availabilityByDepartureId[departureId] = null;
+          this.activityAvailabilityByDepartureId[departureId] = null;
         },
       });
   }
 
+  // Cargar disponibilidad de plazas para un departure específico (Departure)
+  private loadDepartureAvailability(departureId: number): void {
+    this.departureAvailabilityService
+      .getByDeparture(departureId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (availabilityArray: IDepartureAvailabilityResponse[]) => {
+          // Tomar la primera disponibilidad si existe
+          if (availabilityArray && availabilityArray.length > 0) {
+            this.departureAvailabilityByDepartureId[departureId] = availabilityArray[0];
+          } else {
+            this.departureAvailabilityByDepartureId[departureId] = null;
+          }
+        },
+        error: (err: unknown) => {
+          console.error(
+            `Error cargando disponibilidad de departure ${departureId}:`,
+            err
+          );
+          this.departureAvailabilityByDepartureId[departureId] = null;
+        },
+      });
+  }
+
+  // Cargar ambas disponibilidades (Activity y Departure)
+  private loadAvailability(departureId: number, activityId: number): void {
+    this.loadActivityAvailability(departureId, activityId);
+    this.loadDepartureAvailability(departureId);
+  }
+
   // Obtener el número de plazas disponibles para un departure
+  // Usa el valor más restrictivo (mínimo) entre ActivityAvailability y DepartureAvailability
   getAvailableSpots(departureId: number): number {
-    const availability = this.availabilityByDepartureId[departureId];
-    if (!availability) return -1; // -1 significa que no se ha cargado aún
-    return availability.bookableAvailability || 0;
+    const activityAvailability = this.activityAvailabilityByDepartureId[departureId];
+    const departureAvailability = this.departureAvailabilityByDepartureId[departureId];
+    
+    // Si ninguna está cargada, retornar -1 (aún cargando)
+    if (!activityAvailability && !departureAvailability) {
+      return -1;
+    }
+    
+    const activitySpots = activityAvailability?.bookableAvailability ?? Number.MAX_SAFE_INTEGER;
+    const departureSpots = departureAvailability?.bookableAvailability ?? Number.MAX_SAFE_INTEGER;
+    
+    // Retornar el mínimo (más restrictivo) entre ambos
+    // Si uno no está disponible, usar el otro
+    if (activitySpots === Number.MAX_SAFE_INTEGER && departureSpots === Number.MAX_SAFE_INTEGER) {
+      return -1; // Ninguno cargado aún
+    }
+    
+    return Math.min(activitySpots, departureSpots);
   }
 
   // Verificar si hay plazas disponibles
@@ -1434,7 +1493,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       return { status: 'no-spots', message: 'SIN PLAZAS' };
     }
     
-    if (spots < 4) {
+    if (spots <= 4) {
       return { status: 'last-spots', message: 'Últimas plazas' };
     }
     

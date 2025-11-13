@@ -2551,7 +2551,19 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
    * Combina email, cognitoId y datos de la base de datos
    */
   getCurrentUserData(): Observable<UserData> {
-    // Verificar primero el valor actual del email (síncrono)
+    // Verificar primero si el usuario está autenticado
+    const isAuthenticated = this.authService.isAuthenticatedValue();
+    
+    // Si NO está autenticado, devolver datos vacíos inmediatamente
+    if (!isAuthenticated) {
+      return of({
+        email_address: '',
+        phone_number: '',
+        user_id: ''
+      } as UserData);
+    }
+    
+    // Si está autenticado, verificar el valor actual del email (síncrono)
     const currentEmail = this.authService.getUserEmailValue();
     
     // Si ya hay email, procesarlo directamente
@@ -2559,24 +2571,56 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
       return this.processUserDataWithEmail(currentEmail);
     }
     
-    // Si no hay email, esperar a que se actualice (asíncrono)
-    return this.authService.getUserEmail().pipe(
-      // Filtrar valores vacíos
-      filter((email: string) => !!email && email.length > 0),
-      // Tomar el primer valor válido
-      first(),
-      switchMap((email: string) => {
-        return this.processUserDataWithEmail(email);
-      }),
-      catchError(() => {
-        // Devolver objeto con campos vacíos en lugar de undefined
-        return of({
-          email_address: '',
-          phone_number: '',
-          user_id: ''
-        } as UserData);
-      })
-    );
+    // Si está autenticado pero no hay email, devolver los datos disponibles sin esperar
+    // Obtener cognitoId si existe
+    const currentCognitoId = this.authService.getCognitoIdValue();
+    
+    if (currentCognitoId && currentCognitoId.length > 0) {
+      // Intentar obtener datos del usuario por cognitoId, pero sin esperar por email
+      return this.usersNetService.getUsersByCognitoId(currentCognitoId).pipe(
+        switchMap((users) => {
+          if (users && users.length > 0) {
+            const user = users[0];
+            return this.personalInfoService.getUserData(user.id.toString()).pipe(
+              map((personalInfo: any) => {
+                const phone = personalInfo?.telefono ? this.formatPhoneNumber(personalInfo.telefono, '+34', personalInfo?.phonePrefix) : '';
+                return {
+                  email_address: personalInfo?.email || '',
+                  phone_number: phone,
+                  user_id: currentCognitoId
+                };
+              }),
+              catchError(() => {
+                return of({
+                  email_address: '',
+                  phone_number: '',
+                  user_id: currentCognitoId
+                });
+              })
+            );
+          }
+          return of({
+            email_address: '',
+            phone_number: '',
+            user_id: currentCognitoId
+          });
+        }),
+        catchError(() => {
+          return of({
+            email_address: '',
+            phone_number: '',
+            user_id: currentCognitoId
+          });
+        })
+      );
+    }
+    
+    // Si está autenticado pero no hay email ni cognitoId, devolver datos vacíos
+    return of({
+      email_address: '',
+      phone_number: '',
+      user_id: ''
+    } as UserData);
   }
 
   private processUserDataWithEmail(email: string): Observable<UserData> {

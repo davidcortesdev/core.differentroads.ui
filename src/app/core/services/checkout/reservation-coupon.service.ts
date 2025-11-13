@@ -35,7 +35,7 @@ export class ReservationCouponService {
       params = params.set('travelerId', travelerId.toString());
     }
 
-    return this.http.get<boolean>(`${this.API_URL}/apply`, { params });
+    return this.http.post<boolean>(`${this.API_URL}/apply`, {}, { params });
   }
 }
 

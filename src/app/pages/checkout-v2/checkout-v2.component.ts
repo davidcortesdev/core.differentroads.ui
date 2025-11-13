@@ -134,6 +134,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   ageGroups: IAgeGroupResponse[] = [];
   pricesByAgeGroup: { [ageGroupId: number]: number } = {};
   reservationData: any = null;
+  userIdForCoupon: number | null = null;
 
   // Propiedades para seguros
   selectedInsurance: any = null;
@@ -614,6 +615,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         this.tourId = reservation.tourId;
         this.totalPassengers = reservation.totalPassengers;
         this.reservationData = reservation; // Guardar datos completos de la reserva
+
+        // Guardar userId para el cupón
+        this.userIdForCoupon = reservation.userId ?? null;
 
         // Verificar si el userId está vacío y el usuario está logueado
         console.log('🔍 [loadReservationData] Llamando a checkAndUpdateUserId()...');
@@ -2388,6 +2392,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           // Actualizar los datos locales
           const previousUserId = this.reservationData.userId;
           this.reservationData.userId = userId;
+          this.userIdForCoupon = userId;
           
           console.log('✅ [updateReservationUserId] userId actualizado exitosamente:', {
             reservationId: this.reservationId,
@@ -2438,6 +2443,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       },
     });
   }
+
 
   // Métodos para autenticación
   async checkAuthAndContinue(

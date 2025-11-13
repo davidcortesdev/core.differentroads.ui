@@ -86,6 +86,19 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
     return this.infoCards;
   }
 
+  // ✅ GETTER: Verificar si hay fecha seleccionada
+  get hasSelectedDate(): boolean {
+    // En modo checkout siempre hay fecha (ya hay una reserva)
+    if (this.context === 'checkout') {
+      return true;
+    }
+    // En modo tour, verificar si hay selectedDeparture con fecha
+    return !!(
+      this.selectedDeparture &&
+      this.selectedDeparture.departureDate
+    );
+  }
+
   constructor(
     private additionalInfoService: AdditionalInfoService,
     private router: Router,
@@ -167,6 +180,39 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * ✅ MÉTODO: Obtener tooltip para el botón de guardar
+   */
+  getSaveButtonTooltip(): string {
+    if (!this.hasSelectedDate && this.context === 'tour') {
+      return 'Debes seleccionar una fecha de salida para poder guardar el presupuesto';
+    }
+    if (!this.isAuthenticated) {
+      return 'Para guardar tu presupuesto debes iniciar sesión o registrarte en la plataforma';
+    }
+    return 'Guarda este presupuesto en tu perfil para consultarlo más tarde';
+  }
+
+  /**
+   * ✅ MÉTODO: Obtener tooltip para el botón de descargar
+   */
+  getDownloadButtonTooltip(): string {
+    if (!this.hasSelectedDate && this.context === 'tour') {
+      return 'Debes seleccionar una fecha de salida para poder descargar el presupuesto';
+    }
+    return 'Envia un email con un PDF con toda la información de este presupuesto';
+  }
+
+  /**
+   * ✅ MÉTODO: Obtener tooltip para el botón de compartir
+   */
+  getShareButtonTooltip(): string {
+    if (!this.hasSelectedDate && this.context === 'tour') {
+      return 'Debes seleccionar una fecha de salida para poder compartir el presupuesto';
+    }
+    return 'Comparte este presupuesto con amigos o familiares';
+  }
+
+  /**
    * Inicializa el formulario reactivo
    */
   private initializeForm(): void {
@@ -230,6 +276,14 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
    * Maneja el guardado del presupuesto
    */
   handleSaveTrip(): void {
+    // Verificar que haya fecha seleccionada en modo tour
+    if (this.context === 'tour' && !this.hasSelectedDate) {
+      this.additionalInfoService.showInfo(
+        'Debes seleccionar una fecha de salida para poder guardar el presupuesto.'
+      );
+      return;
+    }
+
     this.isDownloadMode = false;
     this.isShareMode = false;
 
@@ -251,6 +305,14 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
    * Maneja la descarga directa del presupuesto
    */
   handleDownloadTrip(): void {
+    // Verificar que haya fecha seleccionada en modo tour
+    if (this.context === 'tour' && !this.hasSelectedDate) {
+      this.additionalInfoService.showInfo(
+        'Debes seleccionar una fecha de salida para poder descargar el presupuesto.'
+      );
+      return;
+    }
+
     // Si es standalone (TourOperator), no pedir autenticación
     if (!this.isStandaloneMode && !this.isAuthenticated) {
       const currentUrl = window.location.pathname;
@@ -320,6 +382,14 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
    * Maneja compartir el presupuesto con alguien
    */
   handleInviteFriend(): void {
+    // Verificar que haya fecha seleccionada en modo tour
+    if (this.context === 'tour' && !this.hasSelectedDate) {
+      this.additionalInfoService.showInfo(
+        'Debes seleccionar una fecha de salida para poder compartir el presupuesto.'
+      );
+      return;
+    }
+
     this.shouldClearFields = true;
     this.isShareMode = true;
     this.isDownloadMode = false;

@@ -236,12 +236,29 @@
                   </div>
                 </div>
 
-                <p-tag
-                  severity="warn"
-                  value="Lista de espera"
-                  *ngIf="item.waitingList"
-                  ><i class="pi pi-clock" style="font-size: 0.7rem"></i>
-                </p-tag>
+                <!-- Contenedor de tags con espaciado -->
+                <div class="tags-container">
+                  <p-tag
+                    severity="warn"
+                    value="Lista de espera"
+                    *ngIf="item.waitingList"
+                    ><i class="pi pi-clock" style="font-size: 0.7rem"></i>
+                  </p-tag>
+
+                  <!-- Estado de disponibilidad de plazas -->
+                  <p-tag
+                    *ngIf="item.availabilityStatus === 'no-spots'"
+                    severity="danger"
+                    value="SIN PLAZAS"
+                    styleClass="availability-tag"
+                  ></p-tag>
+                  <p-tag
+                    *ngIf="item.availabilityStatus === 'last-spots'"
+                    severity="warn"
+                    value="Últimas plazas"
+                    styleClass="availability-tag"
+                  ></p-tag>
+                </div>
               </div>
 
               <div class="f-price">

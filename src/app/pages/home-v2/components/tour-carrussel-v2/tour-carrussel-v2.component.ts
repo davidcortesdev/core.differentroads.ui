@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   TourService,
@@ -55,6 +55,7 @@ import {
   IItineraryDayResponse,
 } from '../../../../core/services/itinerary/itinerary-day/itinerary-day.service';
 import { ReviewsService } from '../../../../core/services/reviews/reviews.service';
+import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
 
 @Component({
   selector: 'app-tour-carrussel-v2',
@@ -62,7 +63,7 @@ import { ReviewsService } from '../../../../core/services/reviews/reviews.servic
   templateUrl: './tour-carrussel-v2.component.html',
   styleUrls: ['./tour-carrussel-v2.component.scss'],
 })
-export class TourCarrusselV2Component implements OnInit, OnDestroy {
+export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewInit {
   @Input() configurationId?: number; // ID de la configuración específica (opcional)
   @Input() sectionDisplayOrder?: number; // Orden de visualización de la sección (opcional)
 
@@ -83,6 +84,11 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
   protected carouselConfig = CAROUSEL_CONFIG;
+
+  // Intersection Observer para detectar cuando el carrusel aparece en pantalla
+  @ViewChild('tourCarouselContainer', { static: false }) tourCarouselContainer!: ElementRef;
+  private intersectionObserver?: IntersectionObserver;
+  private hasTrackedVisibility: boolean = false;
 
   responsiveOptions = [
     {
@@ -122,7 +128,8 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
     private readonly itineraryService: ItineraryService,
     private readonly itineraryDayService: ItineraryDayService,
     private readonly reviewsService: ReviewsService,
-    private readonly tripTypeService: TripTypeService
+    private readonly tripTypeService: TripTypeService,
+    private readonly analyticsService: AnalyticsService
   ) { }
 
   ngOnInit(): void {
@@ -133,9 +140,77 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
     });
   }
 
+  ngAfterViewInit(): void {
+    // Configurar Intersection Observer después de que la vista se inicialice
+    this.setupIntersectionObserver();
+  }
+
   ngOnDestroy(): void {
+    // Limpiar Intersection Observer
+    if (this.intersectionObserver) {
+      this.intersectionObserver.disconnect();
+      this.intersectionObserver = undefined;
+    }
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  /**
+   * Configura el Intersection Observer para detectar cuando el carrusel aparece en pantalla
+   */
+  private setupIntersectionObserver(): void {
+    // Verificar que el elemento existe y que no se haya trackeado ya
+    if (!this.tourCarouselContainer?.nativeElement || this.hasTrackedVisibility) {
+      return;
+    }
+
+    // Crear Intersection Observer con threshold del 10%
+    this.intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          // Si el elemento es visible y tiene tours cargados, disparar el evento
+          if (entry.isIntersecting && this.tours.length > 0 && !this.hasTrackedVisibility) {
+            this.hasTrackedVisibility = true;
+            this.trackViewItemList();
+            // Desconectar el observer después de disparar el evento
+            if (this.intersectionObserver) {
+              this.intersectionObserver.disconnect();
+            }
+          }
+        });
+      },
+      {
+        threshold: 0.1, // Disparar cuando 10% del elemento es visible
+        rootMargin: '0px'
+      }
+    );
+
+    // Observar el contenedor
+    this.intersectionObserver.observe(this.tourCarouselContainer.nativeElement);
+  }
+
+  /**
+   * Dispara el evento view_item_list cuando el carrusel aparece en pantalla
+   */
+  private trackViewItemList(): void {
+    if (!this.tours || this.tours.length === 0) {
+      return;
+    }
+
+    const itemListId = this.configurationId?.toString() || 'home_carousel';
+    const itemListName = this.title || 'Carrusel de tours';
+
+    // Verificar si ya se trackeó esta lista
+    if (this.analyticsService.isListTracked(itemListId)) {
+      return;
+    }
+
+    // Disparar el evento
+    this.analyticsService.trackViewItemListFromTours(
+      this.tours,
+      itemListId,
+      itemListName
+    );
   }
 
   private loadTripTypes(): Observable<void> {
@@ -692,6 +767,13 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy {
       )
       .subscribe((accumulatedTours: TourDataV2[]) => {
         this.tours = accumulatedTours;
+        // Si el elemento ya es visible y los tours están cargados, configurar el observer
+        if (this.tours.length > 0 && this.tourCarouselContainer?.nativeElement) {
+          // Si el observer no está configurado, configurarlo ahora
+          if (!this.intersectionObserver && !this.hasTrackedVisibility) {
+            setTimeout(() => this.setupIntersectionObserver(), 100);
+          }
+        }
       });
   }
 

@@ -34,9 +34,6 @@ export class HomeV2Component implements OnInit, OnDestroy {
   isLoading = true;
   hasError = false;
 
-  // Control simple: solo trackear qué listas ya dispararon el evento
-  private trackedListIds = new Set<string>();
-  private isTrackingInProgress = false;
 
   private destroy$ = new Subject<void>();
 
@@ -163,8 +160,6 @@ export class HomeV2Component implements OnInit, OnDestroy {
     this.hasError = false;
 
     // Limpiar tracking previo al cargar nuevas secciones
-    this.trackedListIds.clear();
-    this.isTrackingInProgress = false;
     this.analyticsService.clearTrackedListIds();
 
     // Cargar todas las configuraciones activas ordenadas
@@ -178,9 +173,8 @@ export class HomeV2Component implements OnInit, OnDestroy {
         next: (configurations) => {
           this.distributeConfigurationsBySection(configurations);
           this.isLoading = false;
-          // Disparar eventos view_item_list para todas las secciones con tours
-          // Solo se ejecuta una vez cuando se cargan las configuraciones
-          this.trackViewItemListForAllSections();
+          // Los eventos view_item_list se dispararán cuando cada lista aparezca en pantalla
+          // mediante Intersection Observer en los componentes hijos
         },
         error: (error) => {
           console.error('Error loading home configurations:', error);
@@ -248,65 +242,6 @@ export class HomeV2Component implements OnInit, OnDestroy {
     return sectionNames[sectionId] || 'Sección desconocida';
   }
 
-  /**
-   * Dispara eventos view_item_list para todas las secciones que contienen tours
-   * Solo dispara un evento por lista cuando se carga
-   */
-  private trackViewItemListForAllSections(): void {
-    // Evitar ejecución múltiple
-    if (this.isTrackingInProgress) {
-      return;
-    }
-
-    // Filtrar solo las secciones que contienen tours (tour-carousel ID:2 y tour-grid ID:3)
-    const tourSections = this.orderedConfigurations.filter(
-      (config) => config.homeSectionId === 2 || config.homeSectionId === 3
-    );
-
-    if (tourSections.length === 0) {
-      return;
-    }
-
-    // Marcar como en progreso inmediatamente
-    this.isTrackingInProgress = true;
-
-    // Para cada sección, obtener sus tours y disparar el evento solo una vez
-    tourSections.forEach((config) => {
-      const itemListId = config.id.toString();
-      
-      // Verificar tanto en componente como en servicio
-      if (this.trackedListIds.has(itemListId) || this.analyticsService.isListTracked(itemListId)) {
-        return;
-      }
-
-      // Marcar como trackeada ANTES de cargar para evitar race conditions
-      this.trackedListIds.add(itemListId);
-
-      this.loadToursForSection(config).pipe(
-        take(1), // Solo tomar el primer valor
-        takeUntil(this.destroy$)
-      ).subscribe({
-        next: (tours) => {
-          // Verificar nuevamente antes de disparar
-          if (this.analyticsService.isListTracked(itemListId)) {
-            this.trackedListIds.delete(itemListId);
-            return;
-          }
-
-          if (tours && tours.length > 0) {
-            this.trackViewItemListForSection(config, tours);
-          } else {
-            // Si no hay tours, remover del tracking para permitir reintento
-            this.trackedListIds.delete(itemListId);
-          }
-        },
-        error: (error) => {
-          console.error(`[Analytics] Error cargando tours para sección ${config.id}:`, error);
-          this.trackedListIds.delete(itemListId);
-        }
-      });
-    });
-  }
 
   /**
    * Carga los tours de una sección específica
@@ -724,25 +659,4 @@ export class HomeV2Component implements OnInit, OnDestroy {
     );
   }
 
-  /**
-   * Dispara el evento view_item_list para una sección específica
-   */
-  private trackViewItemListForSection(
-    config: IHomeSectionConfigurationResponse,
-    tours: TourDataV2[]
-  ): void {
-    if (!tours || tours.length === 0) {
-      return;
-    }
-
-    const itemListId = config.id.toString();
-    const itemListName = config.title || this.getSectionName(config.homeSectionId);
-
-    // Disparar el evento directamente
-    this.analyticsService.trackViewItemListFromTours(
-      tours,
-      itemListId,
-      itemListName
-    );
-  }
 }

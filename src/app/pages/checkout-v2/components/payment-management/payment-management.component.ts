@@ -30,6 +30,9 @@ import {
   IPriceChangeInfo,
 } from '../../../../core/services/flight/flight-search.service';
 import { environment } from '../../../../../environments/environment';
+import { ReservationCouponService } from '../../../../core/services/checkout/reservation-coupon.service';
+import { catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 // Interfaces y tipos
 export type PaymentType =
@@ -86,10 +89,16 @@ export class PaymentManagementComponent
   hasSpecificSearchFlights: boolean = false;
   specificSearchFlightsCost: number = 0;
 
+  // Discount code
+  discountCode: string = '';
+  discountMessage: string = '';
+  discountMessageSeverity: 'success' | 'error' | 'info' | 'warn' = 'info';
+
   // State management
   readonly dropdownStates = {
     main: true,
     paymentMethods: true,
+    discount: true,
   };
 
   readonly paymentState = {
@@ -109,7 +118,8 @@ export class PaymentManagementComponent
     private readonly reservationService: ReservationService,
     private readonly messageService: MessageService,
     private readonly currencyService: CurrencyService,
-    private readonly flightSearchService: FlightSearchService
+    private readonly flightSearchService: FlightSearchService,
+    private readonly reservationCouponService: ReservationCouponService
   ) {}
 
   ngOnInit(): void {
@@ -832,5 +842,50 @@ export class PaymentManagementComponent
 
   reloadReservationTotalAmount(): void {
     this.loadReservationTotalAmount();
+  }
+
+  applyDiscount(): void {
+    if (!this.discountCode || this.discountCode.trim() === '') {
+      this.discountMessage = 'Por favor, ingresa un código de descuento';
+      this.discountMessageSeverity = 'warn';
+      return;
+    }
+
+    const trimmedCode = this.discountCode.trim();
+
+    this.reservationCouponService
+      .apply(trimmedCode, this.reservationId)
+      .pipe(
+        catchError((error) => {
+          console.error('Error al aplicar código de descuento:', error);
+          this.discountMessage = 'Error al aplicar el código de descuento';
+          this.discountMessageSeverity = 'error';
+          return of(false);
+        })
+      )
+      .subscribe((success: boolean) => {
+        if (success) {
+          this.discountMessage = 'Código de descuento aplicado correctamente';
+          this.discountMessageSeverity = 'success';
+        } else {
+          this.discountMessage = 'No se pudo aplicar el código de descuento';
+          this.discountMessageSeverity = 'error';
+        }
+      });
+  }
+
+
+  validateDiscountCode(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const value = input.value;
+    // Solo permitir letras (mayúsculas y minúsculas), números y guiones
+    const filteredValue = value.replace(/[^a-zA-Z0-9-]/g, '');
+    // Limitar a 20 caracteres
+    const limitedValue = filteredValue.substring(0, 20);
+    
+    if (value !== limitedValue) {
+      this.discountCode = limitedValue;
+      input.value = limitedValue;
+    }
   }
 }

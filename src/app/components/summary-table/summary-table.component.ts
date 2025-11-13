@@ -197,7 +197,7 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
       });
     }
 
-    // Usar el totalAmount que viene del backend y restar el descuento de puntos
+    // Usar el totalAmount que viene del backend y restar los descuentos
     this.subtotal = summary.totalAmount;
     this.total = summary.totalAmount - this.pointsDiscount;
 

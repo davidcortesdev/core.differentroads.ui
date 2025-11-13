@@ -2794,6 +2794,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     this.trackAddPaymentInfo(paymentOption);
   }
 
+
   /**
    * ✅ NUEVO: Limpia el estado relacionado con la selección de vuelos
    */

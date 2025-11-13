@@ -33,7 +33,10 @@
         >
           <div
             class="dataview-card"
-            [ngClass]="{ 'dataview-card-border': !first }"
+            [ngClass]="{ 
+              'dataview-card-border': !first,
+              'unavailable': item.availablePlaces !== undefined && item.availablePlaces === 0 && !isActivityAdded(item)
+            }"
           >
             <div class="dataview-image">
               <img
@@ -65,13 +68,25 @@
                   <span class="dataview-per-person"> por persona </span>
                 </div>
 
+                <!-- Información de disponibilidad -->
+                <div class="activity-availability-info" *ngIf="item.availablePlaces !== undefined && item.type === 'act'">
+                  <span *ngIf="item.availablePlaces > 0" class="availability-available">
+                    <i class="pi pi-check-circle"></i>
+                    {{ item.availablePlaces }} {{ item.availablePlaces === 1 ? ' disponible' : ' disponibles' }}
+                  </span>
+                  <span *ngIf="item.availablePlaces === 0" class="availability-unavailable">
+                    <i class="pi pi-times-circle"></i>
+                    Sin disponibilidad
+                  </span>
+                </div>
+
                 <div class="dataview-buttons">
                   <p-button
                     class="dataview-buy-button"
                     [label]="isActivityAdded(item) ? 'Eliminar' : 'Añadir'"
                     [rounded]="true"
                     [loading]="isActivityLoading(item)"
-                    [disabled]="isActivityLoading(item)"
+                    [disabled]="isActivityLoading(item) || (item.availablePlaces !== undefined && item.availablePlaces === 0 && !isActivityAdded(item))"
                     [styleClass]="isActivityAdded(item) ? 'added-button' : ''"
                     (click)="toggleActivity(item)"
                   />

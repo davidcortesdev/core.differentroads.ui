@@ -33,6 +33,10 @@ import {
   AgeGroupService,
   IAgeGroupResponse,
 } from '../../../../core/services/agegroup/age-group.service';
+import {
+  ActivityAvailabilityService,
+  IActivityAvailabilityResponse,
+} from '../../../../core/services/activity/activity-availability.service';
 import { catchError, map } from 'rxjs/operators';
 import { of, forkJoin, firstValueFrom } from 'rxjs';
 
@@ -46,6 +50,8 @@ interface PriceData {
 // Interface simplificada siguiendo el patrón del ejemplo
 interface ActivityWithPrice extends IActivityResponse {
   priceData: PriceData[];
+  availablePlaces?: number; // Disponibilidad de plazas
+  lastAvailabilityUpdate?: string; // Última actualización de disponibilidad
 }
 
 @Component({
@@ -84,6 +90,7 @@ export class ActivitiesOptionalsComponent
     private activityService: ActivityService,
     private activityPriceService: ActivityPriceService,
     private activityPackPriceService: ActivityPackPriceService,
+    private activityAvailabilityService: ActivityAvailabilityService,
     private reservationTravelerActivityService: ReservationTravelerActivityService,
     private reservationTravelerActivityPackService: ReservationTravelerActivityPackService,
     private reservationTravelerService: ReservationTravelerService,
@@ -155,9 +162,12 @@ export class ActivitiesOptionalsComponent
           this.optionalActivities = activities.map((activity) => ({
             ...activity,
             priceData: [],
+            availablePlaces: undefined,
+            lastAvailabilityUpdate: undefined,
           }));
 
           this.loadPricesForActivities();
+          this.loadAvailabilityForActivities();
         },
         error: (error) => {
           console.error('Error loading activities:', error);
@@ -239,6 +249,53 @@ export class ActivitiesOptionalsComponent
     this.optionalActivities.forEach((activity, index) => {
       this.loadPriceForActivity(activity, index);
     });
+  }
+
+  // NUEVO: Método para cargar disponibilidad de actividades
+  private loadAvailabilityForActivities(): void {
+    if (!this.departureId) return;
+
+    this.optionalActivities.forEach((activity, index) => {
+      this.loadAvailabilityForActivity(activity, index);
+    });
+  }
+
+  // NUEVO: Método para cargar disponibilidad de una actividad específica
+  private loadAvailabilityForActivity(
+    activity: ActivityWithPrice,
+    index: number
+  ): void {
+    if (!this.departureId) return;
+
+    // Solo cargar disponibilidad para actividades individuales (no packs)
+    if (activity.type === 'act') {
+      this.activityAvailabilityService
+        .getByActivityAndDeparture(activity.id, this.departureId)
+        .pipe(
+          map((availabilities) => (availabilities.length > 0 ? availabilities : [])),
+          catchError((error) => {
+            console.error(
+              `Error loading availability for activity ${activity.id}:`,
+              error
+            );
+            return of([]);
+          })
+        )
+        .subscribe((availabilities) => {
+          if (availabilities && availabilities.length > 0) {
+            // Usar bookableAvailability como disponibilidad principal
+            const availability = availabilities[0];
+            this.optionalActivities[index].availablePlaces = availability.bookableAvailability;
+            this.optionalActivities[index].lastAvailabilityUpdate = availability.lastAvailabilityUpdate;
+          } else {
+            // Si no hay disponibilidad, establecer en 0
+            this.optionalActivities[index].availablePlaces = 0;
+          }
+        });
+    } else {
+      // Para packs, no hay disponibilidad específica (o se puede implementar después)
+      this.optionalActivities[index].availablePlaces = undefined;
+    }
   }
 
   private loadPriceForActivity(
@@ -350,6 +407,14 @@ export class ActivitiesOptionalsComponent
       return;
     }
 
+    // Validar disponibilidad antes de añadir
+    if (!this.addedActivities.has(item.id)) {
+      if (item.availablePlaces !== undefined && item.availablePlaces === 0) {
+        this.errorMessage = 'No hay disponibilidad para esta actividad.';
+        return;
+      }
+    }
+
     if (this.addedActivities.has(item.id)) {
       this.addedActivities.delete(item.id);
       this.debouncedSave(item, 'remove');
@@ -359,6 +424,14 @@ export class ActivitiesOptionalsComponent
     }
 
     // No emitir aquí, solo después de guardar
+  }
+
+  // NUEVO: Método para verificar si una actividad está disponible
+  isActivityAvailable(item: ActivityWithPrice): boolean {
+    if (item.availablePlaces === undefined) {
+      return true; // Si no hay información de disponibilidad, permitir
+    }
+    return item.availablePlaces > 0;
   }
 
   private addActivityToAllTravelers(item: ActivityWithPrice): void {

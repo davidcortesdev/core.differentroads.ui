@@ -1963,7 +1963,11 @@ export class AnalyticsService {
     );
   }
 
-  private extractActivitiesFromSummary(summary: IReservationSummaryResponse | null): string {
+  /**
+   * Extrae las actividades desde el summary de la reservación
+   * Método público para uso en componentes
+   */
+  extractActivitiesFromSummary(summary: IReservationSummaryResponse | null): string {
     if (!summary || !summary.items || summary.items.length === 0) {
       return '';
     }
@@ -1976,7 +1980,11 @@ export class AnalyticsService {
     return activityDescriptions.join(', ');
   }
 
-  private extractInsuranceFromSummary(
+  /**
+   * Extrae el seguro desde el summary de la reservación
+   * Método público para uso en componentes
+   */
+  extractInsuranceFromSummary(
     summary: IReservationSummaryResponse | null,
     reservationData?: any,
     storedInsurance?: string
@@ -2017,6 +2025,43 @@ export class AnalyticsService {
       type.includes('insurance') ||
       type.includes('seguro') ||
       description.includes('seguro')
+    );
+  }
+
+  /**
+   * Extrae el vuelo desde el summary de la reservación
+   * Método público para uso en componentes
+   */
+  extractFlightFromSummary(
+    summary: IReservationSummaryResponse | null,
+    reservationData?: any,
+    selectedFlight?: any
+  ): string {
+    if (!summary || !summary.items || summary.items.length === 0) {
+      return selectedFlight?.name || reservationData?.flight?.name || 'Sin vuelo';
+    }
+
+    const flightDescriptions = summary.items
+      .filter((item) => this.isFlightSummaryItem(item))
+      .map((item) => item.description?.trim())
+      .filter((description): description is string => !!description && description.length > 0);
+
+    if (flightDescriptions.length > 0) {
+      return flightDescriptions.join(', ');
+    }
+
+    return selectedFlight?.name || reservationData?.flight?.name || 'Sin vuelo';
+  }
+
+  private isFlightSummaryItem(item: ReservationSummaryItem): boolean {
+    const type = item.itemType?.toLowerCase() || '';
+    const description = item.description?.toLowerCase() || '';
+
+    return (
+      type.includes('flight') ||
+      type.includes('vuelo') ||
+      description.includes('vuelo') ||
+      description.includes('flight')
     );
   }
 

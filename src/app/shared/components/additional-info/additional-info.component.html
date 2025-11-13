@@ -3,14 +3,13 @@
   class="action-card"
   [ngClass]="{
     'checkout-style': context === 'checkout',
-    'tour-style': context === 'tour'
+    'tour-style': context === 'tour',
+    'disabled': !hasSelectedDate && context === 'tour'
   }"
-  (click)="handleSaveTrip()"
-  [title]="
-    !isAuthenticated
-      ? 'Para guardar tu presupuesto debes iniciar sesión o registrarte en la plataforma'
-      : 'Guarda este presupuesto en tu perfil para consultarlo más tarde'
-  "
+  (click)="hasSelectedDate || context === 'checkout' ? handleSaveTrip() : null"
+  [title]="getSaveButtonTooltip()"
+  [style.pointer-events]="!hasSelectedDate && context === 'tour' ? 'none' : 'auto'"
+  [style.opacity]="!hasSelectedDate && context === 'tour' ? '0.6' : '1'"
 >
   <div class="card-content">
     <span class="bg-pink-100">
@@ -25,10 +24,13 @@
   class="action-card"
   [ngClass]="{
     'checkout-style': context === 'checkout',
-    'tour-style': context === 'tour'
+    'tour-style': context === 'tour',
+    'disabled': !hasSelectedDate && context === 'tour'
   }"
-  (click)="handleDownloadTrip()"
-  title="Envia un email con un PDF con toda la información de este presupuesto"
+  (click)="hasSelectedDate || context === 'checkout' ? handleDownloadTrip() : null"
+  [title]="getDownloadButtonTooltip()"
+  [style.pointer-events]="!hasSelectedDate && context === 'tour' ? 'none' : 'auto'"
+  [style.opacity]="!hasSelectedDate && context === 'tour' ? '0.6' : '1'"
 >
   <div class="card-content">
     <span class="bg-pink-100">
@@ -43,10 +45,13 @@
   class="action-card"
   [ngClass]="{
     'checkout-style': context === 'checkout',
-    'tour-style': context === 'tour'
+    'tour-style': context === 'tour',
+    'disabled': !hasSelectedDate && context === 'tour'
   }"
-  (click)="handleInviteFriend()"
-  title="Comparte este presupuesto con amigos o familiares"
+  (click)="hasSelectedDate || context === 'checkout' ? handleInviteFriend() : null"
+  [title]="getShareButtonTooltip()"
+  [style.pointer-events]="!hasSelectedDate && context === 'tour' ? 'none' : 'auto'"
+  [style.opacity]="!hasSelectedDate && context === 'tour' ? '0.6' : '1'"
 >
   <div class="card-content">
     <span class="bg-pink-100">

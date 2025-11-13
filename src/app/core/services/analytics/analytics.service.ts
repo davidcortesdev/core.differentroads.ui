@@ -2248,12 +2248,24 @@ export class AnalyticsService {
   }
 
   /**
-   * Formatea el teléfono con el código de país
+   * Formatea el teléfono con el prefijo y código de país
    */
-  formatPhoneNumber(phone: string, countryCode: string = '+34'): string {
+  formatPhoneNumber(phone: string, countryCode: string = '+34', phonePrefix?: string): string {
+    if (!phone) {
+      return '';
+    }
+    
+    // Si hay phonePrefix, formatear como "prefix + teléfono" con espacio
+    if (phonePrefix) {
+      return `${phonePrefix} ${phone}`;
+    }
+    
+    // Si el teléfono ya empieza con '+', devolverlo tal cual
     if (phone.startsWith('+')) {
       return phone;
     }
+    
+    // Si no hay prefijo, usar el código de país por defecto
     return `${countryCode}${phone}`;
   }
 
@@ -2562,7 +2574,7 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
           const user = users[0];
           return this.personalInfoService.getUserData(user.id.toString()).pipe(
             map((personalInfo: any) => {
-              const phone = personalInfo?.telefono ? this.formatPhoneNumber(personalInfo.telefono) : '';
+              const phone = personalInfo?.telefono ? this.formatPhoneNumber(personalInfo.telefono, '+34', personalInfo?.phonePrefix) : '';
               return {
                 email_address: personalInfo?.email || email,
                 phone_number: phone,
@@ -2585,7 +2597,7 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
               const user = usersByEmail[0];
               return this.personalInfoService.getUserData(user.id.toString()).pipe(
                 map((personalInfo: any) => {
-                  const phone = personalInfo?.telefono ? this.formatPhoneNumber(personalInfo.telefono) : '';
+                  const phone = personalInfo?.telefono ? this.formatPhoneNumber(personalInfo.telefono, '+34', personalInfo?.phonePrefix) : '';
                   return {
                     email_address: personalInfo?.email || email,
                     phone_number: phone,

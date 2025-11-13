@@ -70,6 +70,7 @@ export class PaymentManagementComponent
   @Input() departureDate: string = '';
   @Input() showTransfer25Option: boolean = false;
   @Input() isTourOperator: boolean = false;
+  @Input() userId!: number;
 
   // Outputs
   @Output() paymentCompleted = new EventEmitter<PaymentOption>();
@@ -851,10 +852,17 @@ export class PaymentManagementComponent
       return;
     }
 
+    if (!this.userId) {
+      this.discountMessage = 'Error: faltan datos necesarios para aplicar el descuento';
+      this.discountMessageSeverity = 'error';
+      return;
+    }
+
     const trimmedCode = this.discountCode.trim();
 
+    // travelerId se pasa como null por ahora, preparado para enviarse en el futuro
     this.reservationCouponService
-      .apply(trimmedCode, this.reservationId)
+      .apply(trimmedCode, this.reservationId, this.userId, null)
       .pipe(
         catchError((error) => {
           console.error('Error al aplicar código de descuento:', error);

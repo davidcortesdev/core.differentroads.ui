@@ -30,6 +30,9 @@ import {
   IPriceChangeInfo,
 } from '../../../../core/services/flight/flight-search.service';
 import { environment } from '../../../../../environments/environment';
+import { ReservationCouponService } from '../../../../core/services/checkout/reservation-coupon.service';
+import { catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 // Interfaces y tipos
 export type PaymentType =
@@ -115,7 +118,8 @@ export class PaymentManagementComponent
     private readonly reservationService: ReservationService,
     private readonly messageService: MessageService,
     private readonly currencyService: CurrencyService,
-    private readonly flightSearchService: FlightSearchService
+    private readonly flightSearchService: FlightSearchService,
+    private readonly reservationCouponService: ReservationCouponService
   ) {}
 
   ngOnInit(): void {
@@ -846,8 +850,27 @@ export class PaymentManagementComponent
       return;
     }
 
-    this.discountMessage = 'Código de descuento enviado';
-    this.discountMessageSeverity = 'info';
+    const trimmedCode = this.discountCode.trim();
+
+    this.reservationCouponService
+      .apply(trimmedCode, this.reservationId)
+      .pipe(
+        catchError((error) => {
+          console.error('Error al aplicar código de descuento:', error);
+          this.discountMessage = 'Error al aplicar el código de descuento';
+          this.discountMessageSeverity = 'error';
+          return of(false);
+        })
+      )
+      .subscribe((success: boolean) => {
+        if (success) {
+          this.discountMessage = 'Código de descuento aplicado correctamente';
+          this.discountMessageSeverity = 'success';
+        } else {
+          this.discountMessage = 'No se pudo aplicar el código de descuento';
+          this.discountMessageSeverity = 'error';
+        }
+      });
   }
 
 

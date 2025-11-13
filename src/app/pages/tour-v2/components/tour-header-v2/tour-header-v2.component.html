@@ -63,9 +63,9 @@
         label="Reservar mi tour"
         styleClass="p-button-rounded"
         (onClick)="onBookingClick()"
-        [pTooltip]="preview ? 'No es posible reservar un tour en modo preview' : ''"
+        [pTooltip]="getBookingTooltip()"
         [tooltipPosition]="'top'"
-        [disabled]="preview">
+        [disabled]="preview || !hasSelectedDate">
       </p-button>
     </div>
   </div>

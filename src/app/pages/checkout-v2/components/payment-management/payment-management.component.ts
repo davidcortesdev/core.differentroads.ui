@@ -443,13 +443,14 @@ export class PaymentManagementComponent
         life: 3000,
       });
 
-      await this.processPaymentBasedOnMethod();
-
-      // Emitir evento de pago completado para analytics
+      // Emitir evento de pago completado para analytics ANTES de procesar el pago
+      // Esto asegura que el evento se dispare incluso si el procesamiento redirige o falla
       this.paymentCompleted.emit({
         type: this.paymentState.type || 'complete',
         method: this.paymentState.method || 'transfer',
       });
+
+      await this.processPaymentBasedOnMethod();
 
       this.messageService.add({
         severity: 'success',

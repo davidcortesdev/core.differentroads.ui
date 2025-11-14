@@ -52,6 +52,12 @@
                 styleClass="p-button-rounded p-button-lg"
                 (onClick)="navigateToPayment()"
               ></p-button>
+              <p-button
+                label="Canjear cupón"
+                icon="pi pi-ticket"
+                styleClass="p-button-rounded p-button-lg"
+                (onClick)="openCouponModal()"
+              ></p-button>
             </div>
           </div>
         </div>
@@ -262,3 +268,11 @@
   [reservationId]="reservationId"
   (paymentProcessed)="onPaymentProcessed($event)">
 </app-add-payment-modal>
+
+<!-- Modal para aplicar cupón -->
+<app-apply-coupon-modal
+  [(visible)]="displayCouponModal"
+  [reservationId]="reservationId"
+  [userId]="userId"
+  (couponApplied)="onCouponApplied()">
+</app-apply-coupon-modal>

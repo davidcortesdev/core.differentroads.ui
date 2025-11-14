@@ -469,6 +469,13 @@ export class NewReservationComponent implements OnInit {
       this.checkAndBookAmadeusFlight();
       return;
     }
+    
+    if (this.payment?.transactionReference) {
+      console.log('🔄 Pago pendiente, procediendo con captura...');
+      this.captureOrder();
+    } else {
+      console.log('❌ No hay transaction reference disponible para captura');
+    }
   }
 
   /**

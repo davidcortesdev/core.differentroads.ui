@@ -11,6 +11,10 @@ import {
   IActivityPriceResponse,
 } from '../../../core/services/activity/activity-price.service';
 import {
+  ActivityPackPriceService,
+  IActivityPackPriceResponse,
+} from '../../../core/services/activity/activity-pack-price.service';
+import {
   ReservationTravelerActivityService,
   IReservationTravelerActivityResponse,
 } from '../../../core/services/reservation/reservation-traveler-activity.service';
@@ -86,6 +90,7 @@ export class BookingActivitiesV2Component implements OnInit {
     private messageService: MessageService,
     private activityService: ActivityService,
     private activityPriceService: ActivityPriceService,
+    private activityPackPriceService: ActivityPackPriceService,
     private reservationTravelerActivityService: ReservationTravelerActivityService,
     private reservationTravelerActivityPackService: ReservationTravelerActivityPackService,
     private reservationTravelerService: ReservationTravelerService,
@@ -171,26 +176,61 @@ export class BookingActivitiesV2Component implements OnInit {
   }
 
   private loadPricesForActivities(): void {
-    const pricePromises = this.availableActivities.map((activity) =>
-      this.activityPriceService
-        .getAll({ ActivityId: [activity.id] })
-        .pipe(
-          catchError(() => of([])),
-          map((prices: IActivityPriceResponse[]) => ({
-            activityId: activity.id,
-            prices: prices.map((price) => ({
-              age_group_name: this.getAgeGroupName(price.ageGroupId),
-              value: price.basePrice,
-              currency: 'EUR', // Usar currencyId para obtener la moneda real si es necesario
-            })),
-          }))
-        )
-        .toPromise()
-    );
+    if (!this.periodId) return;
+    const departureId = parseInt(this.periodId);
+
+    const pricePromises = this.availableActivities.map((activity) => {
+      // 🔥 CORREGIDO: Manejar precios según el tipo de actividad
+      if (activity.type === 'act') {
+        // Para actividades individuales, usar ActivityPriceService
+        return this.activityPriceService
+          .getAll({ 
+            ActivityId: [activity.id],
+            DepartureId: departureId
+          })
+          .pipe(
+            catchError(() => of([])),
+            map((prices: IActivityPriceResponse[]) => ({
+              activityId: activity.id,
+              prices: prices.map((price) => ({
+                age_group_name: this.getAgeGroupName(price.ageGroupId),
+                value: price.campaignPrice || price.basePrice,
+                currency: 'EUR',
+              })),
+            }))
+          )
+          .toPromise();
+      } else if (activity.type === 'pack') {
+        // 🔥 NUEVO: Para paquetes de actividades, usar ActivityPackPriceService
+        return this.activityPackPriceService
+          .getAll({ 
+            activityPackId: activity.id,
+            departureId: departureId
+          })
+          .pipe(
+            catchError(() => of([])),
+            map((prices: IActivityPackPriceResponse[]) => ({
+              activityId: activity.id,
+              prices: prices.map((price) => ({
+                age_group_name: this.getAgeGroupName(price.ageGroupId),
+                value: price.campaignPrice || price.basePrice,
+                currency: 'EUR',
+              })),
+            }))
+          )
+          .toPromise();
+      }
+      
+      // Fallback para tipos desconocidos
+      return Promise.resolve({
+        activityId: activity.id,
+        prices: []
+      });
+    });
 
     Promise.all(pricePromises).then((results: any[]) => {
       results.forEach((result) => {
-    const activity = this.availableActivities.find(
+        const activity = this.availableActivities.find(
           (a) => a.id === result.activityId
         );
         if (activity) {
@@ -208,7 +248,6 @@ export class BookingActivitiesV2Component implements OnInit {
   private loadActivitiesByTraveler(): void {
     if (!this.reservationId || this.activitiesByTravelerLoaded) return;
 
-
     this.reservationTravelerService
       .getByReservation(this.reservationId)
       .subscribe({
@@ -218,13 +257,11 @@ export class BookingActivitiesV2Component implements OnInit {
           let processedTravelers = 0;
 
           travelers.forEach((traveler) => {
-            
             forkJoin({
               activities: this.reservationTravelerActivityService.getByReservationTraveler(traveler.id),
               activityPacks: this.reservationTravelerActivityPackService.getByReservationTraveler(traveler.id),
             }).subscribe({
               next: (result) => {
-                
                 this.travelerActivities[traveler.id] = result.activities;
                 this.travelerActivityPacks[traveler.id] = result.activityPacks;
 
@@ -241,7 +278,6 @@ export class BookingActivitiesV2Component implements OnInit {
                 if (processedTravelers === travelers.length) {
                   this.markAssignedActivitiesAsAdded(assignedActivities);
                   this.activitiesByTravelerLoaded = true;
-                  // Cargar nombres de viajeros después de cargar actividades
                   this.loadTravelerNames();
                 }
               },
@@ -251,7 +287,6 @@ export class BookingActivitiesV2Component implements OnInit {
                 if (processedTravelers === travelers.length) {
                   this.markAssignedActivitiesAsAdded(assignedActivities);
                   this.activitiesByTravelerLoaded = true;
-                  // Cargar nombres de viajeros después de cargar actividades
                   this.loadTravelerNames();
                 }
               },
@@ -277,14 +312,10 @@ export class BookingActivitiesV2Component implements OnInit {
   }
 
   private loadTravelerNames(): void {
-    
     this.travelers.forEach((traveler) => {
-      
       this.reservationTravelerFieldService.getByReservationTraveler(traveler.id).subscribe({
         next: (travelerFields: IReservationTravelerFieldResponse[]) => {
-          
           if (travelerFields.length > 0) {
-            // Obtener los IDs de los campos para obtener sus nombres
             const fieldIds = [...new Set(travelerFields.map((field: IReservationTravelerFieldResponse) => field.reservationFieldId))];
             
             const fieldObservables = fieldIds.map(fieldId => 
@@ -293,14 +324,11 @@ export class BookingActivitiesV2Component implements OnInit {
 
             forkJoin(fieldObservables).subscribe({
               next: (fields: IReservationFieldResponse[]) => {
-                
-                // Crear un mapa de fieldId -> fieldName
                 const fieldMap = new Map<number, string>();
                 fields.forEach(field => {
                   fieldMap.set(field.id, field.name);
                 });
 
-                // Buscar nombre y apellido
                 let name = '';
                 let surname = '';
 
@@ -317,10 +345,8 @@ export class BookingActivitiesV2Component implements OnInit {
                   }
                 });
 
-                // Crear el nombre completo
                 const fullName = [name, surname].filter(Boolean).join(' ');
                 this.travelerNames[traveler.id] = fullName || `Viajero ${traveler.travelerNumber}`;
-                
               }
             });
           } else {
@@ -351,7 +377,7 @@ export class BookingActivitiesV2Component implements OnInit {
 
         return {
           id: traveler.id,
-          selected: false, // Inicializar como NO seleccionado
+          selected: false,
           ageGroup,
           price,
         };
@@ -381,7 +407,6 @@ export class BookingActivitiesV2Component implements OnInit {
 
     this.isLoading = true;
 
-    // Guardar las actividades para los viajeros seleccionados
     const savePromises = selectedTravelers.map((traveler) => {
       if (activity.type === 'act') {
         const createData = {
@@ -414,7 +439,6 @@ export class BookingActivitiesV2Component implements OnInit {
           life: 3000,
         });
         
-        // Emitir evento al componente padre
         this.emitDataUpdated();
       })
       .catch((error) => {
@@ -432,29 +456,18 @@ export class BookingActivitiesV2Component implements OnInit {
     return this.travelerNames[travelerId] || `Viajero ${travelerId}`;
   }
 
-  /**
-   * Verifica si un viajero tiene una actividad específica asignada
-   */
   hasTravelerActivity(travelerId: number, activityId: number): boolean {
-    // Verificar actividades individuales
     const hasIndividualActivity = this.travelerActivities[travelerId]?.some(
       activity => activity.activityId === activityId
     );
 
-    // Verificar paquetes de actividades
     const hasPackActivity = this.travelerActivityPacks[travelerId]?.some(
       pack => pack.activityPackId === activityId
     );
 
-    const result = hasIndividualActivity || hasPackActivity || false;
-    
-
-    return result;
+    return hasIndividualActivity || hasPackActivity || false;
   }
 
-  /**
-   * Verifica si algún viajero tiene una actividad específica asignada
-   */
   hasAnyTravelerWithActivity(activityId: number): boolean {
     return this.travelers.some(traveler => 
       this.hasTravelerActivity(traveler.id, activityId)
@@ -466,16 +479,10 @@ export class BookingActivitiesV2Component implements OnInit {
     return activity?.name || 'Actividad desconocida';
   }
 
-  /**
-   * Verifica si una actividad está agregada (al menos un viajero la tiene)
-   */
   isActivityAdded(activity: ActivityWithPrice): boolean {
     return this.hasAnyTravelerWithActivity(activity.id);
   }
 
-  /**
-   * Verifica si TODOS los viajeros tienen la actividad
-   */
   isAllTravelersHaveActivity(activity: ActivityWithPrice): boolean {
     return this.travelers.length > 0 && 
            this.travelers.every(traveler => 
@@ -483,16 +490,10 @@ export class BookingActivitiesV2Component implements OnInit {
            );
   }
 
-  /**
-   * Maneja el toggle de agregar/eliminar actividad para TODOS los viajeros
-   */
   toggleActivityForAllTravelers(activity: ActivityWithPrice): void {
-    
     if (this.isAllTravelersHaveActivity(activity)) {
-      // Si todos la tienen, eliminar de todos los viajeros
       this.removeActivityFromAllTravelers(activity);
     } else {
-      // Si no todos la tienen, agregar a todos los viajeros
       this.addActivityToAllTravelers(activity);
     }
   }
@@ -507,21 +508,16 @@ export class BookingActivitiesV2Component implements OnInit {
     }
   }
 
-  /**
-   * Agrega una actividad a un viajero
-   */
   private addActivityToTraveler(travelerId: number, activityId: number): void {
     const activity = this.availableActivities.find(a => a.id === activityId);
     if (!activity) return;
 
     if (activity.type === 'act') {
-      // Agregar actividad individual
       const createData = {
         id: 0,
         reservationTravelerId: travelerId,
         activityId: activityId
       };
-      
       
       this.reservationTravelerActivityService.create(createData).subscribe({
         next: (response) => {
@@ -532,24 +528,22 @@ export class BookingActivitiesV2Component implements OnInit {
             life: 3000,
           });
           this.emitDataUpdated();
-      },
-      error: (error) => {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
+        },
+        error: (error) => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
             detail: 'No se pudo agregar la actividad',
-          life: 3000,
-        });
+            life: 3000,
+          });
         }
       });
     } else if (activity.type === 'pack') {
-      // Agregar paquete de actividades
       const createData = {
         id: 0,
         reservationTravelerId: travelerId,
         activityPackId: activityId
       };
-      
       
       this.reservationTravelerActivityPackService.create(createData).subscribe({
         next: (response) => {
@@ -573,15 +567,11 @@ export class BookingActivitiesV2Component implements OnInit {
     }
   }
 
-  /**
-   * Remueve una actividad de un viajero
-   */
   private removeActivityFromTraveler(travelerId: number, activityId: number): void {
     const activity = this.availableActivities.find(a => a.id === activityId);
     if (!activity) return;
 
     if (activity.type === 'act') {
-      // Buscar la actividad individual asignada
       const travelerActivity = this.travelerActivities[travelerId]?.find(
         ta => ta.activityId === activityId
       );
@@ -608,7 +598,6 @@ export class BookingActivitiesV2Component implements OnInit {
         });
       }
     } else if (activity.type === 'pack') {
-      // Buscar el paquete de actividades asignado
       const travelerActivityPack = this.travelerActivityPacks[travelerId]?.find(
         tap => tap.activityPackId === activityId
       );
@@ -637,16 +626,11 @@ export class BookingActivitiesV2Component implements OnInit {
     }
   }
 
-  /**
-   * Agrega una actividad a todos los viajeros
-   */
   private addActivityToAllTravelers(activity: ActivityWithPrice): void {
-    
     this.reservationTravelerService
       .getByReservation(this.reservationId)
       .subscribe({
         next: (travelers) => {
-          
           if (travelers.length === 0) {
             this.messageService.add({
               severity: 'warn',
@@ -710,16 +694,11 @@ export class BookingActivitiesV2Component implements OnInit {
       });
   }
 
-  /**
-   * Remueve una actividad de todos los viajeros
-   */
   private removeActivityFromAllTravelers(activity: ActivityWithPrice): void {
-    
     this.reservationTravelerService
       .getByReservation(this.reservationId)
       .subscribe({
         next: (travelers) => {
-          
           if (travelers.length === 0) {
             this.messageService.add({
               severity: 'warn',
@@ -809,85 +788,56 @@ export class BookingActivitiesV2Component implements OnInit {
       });
   }
 
-  /**
-   * Emite evento al componente padre indicando que los datos han sido actualizados
-   */
   private emitDataUpdated(): void {
     this.dataUpdated.emit();
-    // Recargar los datos del componente para actualizar el estado
     this.reloadComponentData();
   }
 
-  /**
-   * Recarga los datos del componente para actualizar el estado
-   */
   private reloadComponentData(): void {
-    // Resetear el estado de carga de actividades por viajero
     this.activitiesByTravelerLoaded = false;
-    
-    // Limpiar datos existentes
     this.travelerActivities = {};
     this.travelerActivityPacks = {};
     this.travelerNames = {};
     
-    // Recargar actividades por viajero
     if (this.reservationId) {
       this.loadActivitiesByTraveler();
     }
   }
 
-
-  /**
-   * Determina si se debe mostrar el precio de la actividad
-   * Mostrar cuando hay al menos un precio mayor a 0
-   */
   shouldShowPrice(activity: ActivityWithPrice): boolean {
     if (!activity.priceData || activity.priceData.length === 0) {
       return false;
     }
 
-    // Obtener el precio mayor
     const maxPrice = Math.max(...activity.priceData.map(p => p.value));
     
-    // Si el precio mayor es 0, no mostrar
     if (maxPrice === 0) {
-    return false;
+      return false;
     }
 
     return true;
   }
 
-  /**
-   * Obtiene el precio de la actividad para mostrar
-   */
   getActivityPrice(activity: ActivityWithPrice): number {
     if (!activity.priceData || activity.priceData.length === 0) {
       return 0;
     }
 
-    // Obtener el precio mayor
     return Math.max(...activity.priceData.map(p => p.value));
   }
 
-  /**
-   * Obtiene la imagen de la actividad
-   */
   getActivityImage(activity: ActivityWithPrice): string {
     if (activity.imageUrl) {
       return activity.imageUrl;
     }
     
-    // Si no hay imagen, usar picsum como placeholder
     return 'https://picsum.photos/400/200';
   }
 
-  // Método para sanitizar y limpiar la descripción si contiene etiquetas HTML
   getSafeDescription(description: string | null): SafeHtml {
     if (!description) return '';
 
-    // Si hay etiquetas HTML visibles como texto, reemplazarlas
     if (description.includes('<p') || description.includes('&lt;p')) {
-      // Remover etiquetas visibles como texto
       const cleaned = description
         .replace(/&lt;/g, '<')
         .replace(/&gt;/g, '>')
@@ -897,7 +847,6 @@ export class BookingActivitiesV2Component implements OnInit {
       return this.sanitizer.bypassSecurityTrustHtml(cleaned);
     }
 
-    // Si no hay etiquetas HTML, devolver el texto tal como está
     return this.sanitizer.bypassSecurityTrustHtml(description);
   }
 }

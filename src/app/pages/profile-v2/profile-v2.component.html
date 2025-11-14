@@ -1,28 +1,56 @@
 <div class="container">
-    <!-- Loading state mientras se obtiene el userId -->
-    <div *ngIf="!userId && isLoadingUserId" class="loading-container">
-      <p>Cargando perfil...</p>
-      <!-- Aquí puedes agregar un spinner si lo deseas -->
-    </div>
-    
-    <!-- Error state si no se puede obtener el userId -->
-    <div *ngIf="!userId && !isLoadingUserId" class="error-container">
-      <p>No se pudo cargar la información del perfil. Por favor, inténtalo de nuevo.</p>
-    </div>
-    
-    <!-- Contenido principal - solo se muestra cuando tenemos userId -->
-    <div *ngIf="userId" class="profile-content">
-      <div class="column left-column">
-        <app-personal-info-section-v2 [userId]="userId" [cognitoId]="cognitoId"></app-personal-info-section-v2>
-      </div>
-      <div class="column right-column">
-        <app-points-section-v2 [userId]="userId" #pointsSection></app-points-section-v2>
-        <!-- Orden: Activas -> Pendientes -> Presupuestos -> Historial -->
-        <app-booking-list-section-v2 [userId]="userId" [listType]="'active-bookings'" [parentComponent]="this"></app-booking-list-section-v2>
-        <app-booking-list-section-v2 [userId]="userId" [listType]="'pending-bookings'"></app-booking-list-section-v2>
-        <app-booking-list-section-v2 [userId]="userId" [listType]="'recent-budgets'"></app-booking-list-section-v2>
-        <app-booking-list-section-v2 [userId]="userId" [listType]="'travel-history'"></app-booking-list-section-v2>
-        <app-review-section-v2 [userId]="userId"></app-review-section-v2>
-      </div>
+  <!-- Overlay de redirección - Modal centrado -->
+  <div *ngIf="showRedirectMessage" class="redirect-overlay" (click)="closeRedirectMessage()">
+    <div class="redirect-modal" (click)="$event.stopPropagation()">
+      <p-card>
+        <ng-template #header>
+          <div class="card-header-info">
+            <i class="pi pi-info-circle"></i>
+          </div>
+        </ng-template>
+        <ng-template #title>Has sido redirigido a tu perfil</ng-template>
+        <ng-template #subtitle>Información importante sobre tu reserva</ng-template>
+        <p class="m-0">
+          Por favor, revisa tus <strong>reservas activas</strong> a continuación. 
+          Selecciona la reserva correspondiente y edita los datos 
+          de los pasajeros que faltan para completar tu información.
+        </p>
+        <ng-template #footer>
+          <div class="flex">
+            <p-button 
+              label="Entendido" 
+              icon="pi pi-check"
+              (onClick)="closeRedirectMessage()"
+              styleClass="w-auto"
+            />
+          </div>
+        </ng-template>
+      </p-card>
     </div>
   </div>
+
+  <!-- Loading state mientras se obtiene el userId -->
+  <div *ngIf="!userId && isLoadingUserId" class="loading-container">
+    <p>Cargando perfil...</p>
+  </div>
+  
+  <!-- Error state si no se puede obtener el userId -->
+  <div *ngIf="!userId && !isLoadingUserId" class="error-container">
+    <p>No se pudo cargar la información del perfil. Por favor, inténtalo de nuevo.</p>
+  </div>
+  
+  <!-- Contenido principal - solo se muestra cuando tenemos userId -->
+  <div *ngIf="userId" class="profile-content">
+    <div class="column left-column">
+      <app-personal-info-section-v2 [userId]="userId" [cognitoId]="cognitoId"></app-personal-info-section-v2>
+    </div>
+    <div class="column right-column">
+      <app-points-section-v2 [userId]="userId" #pointsSection></app-points-section-v2>
+      <app-booking-list-section-v2 [userId]="userId" [listType]="'active-bookings'" [parentComponent]="this"></app-booking-list-section-v2>
+      <app-booking-list-section-v2 [userId]="userId" [listType]="'pending-bookings'"></app-booking-list-section-v2>
+      <app-booking-list-section-v2 [userId]="userId" [listType]="'recent-budgets'"></app-booking-list-section-v2>
+      <app-booking-list-section-v2 [userId]="userId" [listType]="'travel-history'"></app-booking-list-section-v2>
+      <app-review-section-v2 [userId]="userId"></app-review-section-v2>
+    </div>
+  </div>
+</div>

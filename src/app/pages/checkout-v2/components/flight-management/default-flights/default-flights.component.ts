@@ -22,12 +22,22 @@ import {
   IReservationTravelerActivityPackResponse,
 } from '../../../../../core/services/reservation/reservation-traveler-activity-pack.service';
 import { FlightSearchService } from '../../../../../core/services/flight/flight-search.service';
+import {
+  ActivityPackAvailabilityService,
+  IActivityPackAvailabilityResponse,
+} from '../../../../../core/services/activity/activity-pack-availability.service';
+import { of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+
+interface FlightPackWithAvailability extends IFlightPackDTO {
+  availablePlaces?: number;
+}
 
 @Component({
   selector: 'app-default-flights',
   standalone: false,
   templateUrl: './default-flights.component.html',
-  styleUrl: './default-flights.component.scss',
+  styleUrls: ['./default-flights.component.scss'],
 })
 export class DefaultFlightsComponent implements OnInit, OnChanges {
   @Input() departureId: number | null = null;
@@ -50,7 +60,7 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
   private isInternalSelection: boolean = false;
 
   selectedFlight: IFlightPackDTO | null = null;
-  flightPacks: IFlightPackDTO[] = [];
+  flightPacks: FlightPackWithAvailability[] = [];
   loginDialogVisible: boolean = false;
   flightDetails: Map<number, IFlightDetailDTO> = new Map();
   travelers: IReservationTravelerResponse[] = [];
@@ -60,7 +70,8 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
     private flightsNetService: FlightsNetService,
     private reservationTravelerService: ReservationTravelerService,
     private reservationTravelerActivityPackService: ReservationTravelerActivityPackService,
-    private flightSearchService: FlightSearchService
+    private flightSearchService: FlightSearchService,
+    private activityPackAvailabilityService: ActivityPackAvailabilityService
   ) {}
 
   ngOnInit(): void {
@@ -157,11 +168,16 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       return;
     }
     this.flightsNetService.getFlights(this.departureId).subscribe((flights) => {
-      this.flightPacks = flights;
-      this.flightPacks.forEach((pack) => {
+      this.flightPacks = flights.map((pack) => ({
+        ...pack,
+        availablePlaces: undefined,
+      }));
+
+      this.flightPacks.forEach((pack, index) => {
         pack.flights.forEach((flight) => {
           this.getFlightDetail(flight.id);
         });
+        this.loadAvailabilityForFlightPack(pack, index);
       });
 
       // MODIFICADO: Ejecutar en orden correcto para asegurar actualización
@@ -191,6 +207,39 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
         }
       }
     });
+  }
+
+  private loadAvailabilityForFlightPack(
+    pack: FlightPackWithAvailability,
+    index: number
+  ): void {
+    if (!this.departureId) return;
+
+    this.activityPackAvailabilityService
+      .getByActivityPackAndDeparture(pack.id, this.departureId)
+      .pipe(
+        map((availabilities) =>
+          availabilities.length > 0 ? availabilities : []
+        ),
+        catchError((error) => {
+          console.error(
+            `Error loading availability for flight pack ${pack.id}:`,
+            error
+          );
+          return of([]);
+        })
+      )
+      .subscribe((availabilities: IActivityPackAvailabilityResponse[]) => {
+        const availablePlaces =
+          availabilities.length > 0
+            ? availabilities[0].bookableAvailability
+            : 0;
+
+        this.flightPacks[index] = {
+          ...this.flightPacks[index],
+          availablePlaces,
+        };
+      });
   }
 
   // ✅ MÉTODO NUEVO: Cargar y mostrar como seleccionado el vuelo que ya existe en la BD

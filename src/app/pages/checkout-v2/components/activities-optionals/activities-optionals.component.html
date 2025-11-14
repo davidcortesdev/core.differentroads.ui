@@ -69,7 +69,7 @@
                 </div>
 
                 <!-- Información de disponibilidad -->
-                <div class="activity-availability-info" *ngIf="item.availablePlaces !== undefined && item.type === 'act'">
+                <div class="activity-availability-info" *ngIf="item.availablePlaces !== undefined">
                   <span *ngIf="item.availablePlaces > 0" class="availability-available">
                     <i class="pi pi-check-circle"></i>
                     {{ item.availablePlaces }} {{ item.availablePlaces === 1 ? ' disponible' : ' disponibles' }}

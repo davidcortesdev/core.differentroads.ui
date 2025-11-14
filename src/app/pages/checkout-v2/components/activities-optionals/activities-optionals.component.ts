@@ -37,6 +37,10 @@ import {
   ActivityAvailabilityService,
   IActivityAvailabilityResponse,
 } from '../../../../core/services/activity/activity-availability.service';
+import {
+  ActivityPackAvailabilityService,
+  IActivityPackAvailabilityResponse,
+} from '../../../../core/services/activity/activity-pack-availability.service';
 import { catchError, map } from 'rxjs/operators';
 import { of, forkJoin, firstValueFrom } from 'rxjs';
 
@@ -91,6 +95,7 @@ export class ActivitiesOptionalsComponent
     private activityPriceService: ActivityPriceService,
     private activityPackPriceService: ActivityPackPriceService,
     private activityAvailabilityService: ActivityAvailabilityService,
+    private activityPackAvailabilityService: ActivityPackAvailabilityService,
     private reservationTravelerActivityService: ReservationTravelerActivityService,
     private reservationTravelerActivityPackService: ReservationTravelerActivityPackService,
     private reservationTravelerService: ReservationTravelerService,
@@ -267,8 +272,8 @@ export class ActivitiesOptionalsComponent
   ): void {
     if (!this.departureId) return;
 
-    // Solo cargar disponibilidad para actividades individuales (no packs)
     if (activity.type === 'act') {
+      // Cargar disponibilidad para actividades individuales
       this.activityAvailabilityService
         .getByActivityAndDeparture(activity.id, this.departureId)
         .pipe(
@@ -292,9 +297,31 @@ export class ActivitiesOptionalsComponent
             this.optionalActivities[index].availablePlaces = 0;
           }
         });
-    } else {
-      // Para packs, no hay disponibilidad específica (o se puede implementar después)
-      this.optionalActivities[index].availablePlaces = undefined;
+    } else if (activity.type === 'pack') {
+      // Cargar disponibilidad para activity packs
+      this.activityPackAvailabilityService
+        .getByActivityPackAndDeparture(activity.id, this.departureId)
+        .pipe(
+          map((availabilities) => (availabilities.length > 0 ? availabilities : [])),
+          catchError((error) => {
+            console.error(
+              `Error loading availability for activity pack ${activity.id}:`,
+              error
+            );
+            return of([]);
+          })
+        )
+        .subscribe((availabilities) => {
+          if (availabilities && availabilities.length > 0) {
+            // Usar bookableAvailability como disponibilidad principal
+            const availability = availabilities[0];
+            this.optionalActivities[index].availablePlaces = availability.bookableAvailability;
+            this.optionalActivities[index].lastAvailabilityUpdate = availability.lastAvailabilityUpdate;
+          } else {
+            // Si no hay disponibilidad, establecer en 0
+            this.optionalActivities[index].availablePlaces = 0;
+          }
+        });
     }
   }
 

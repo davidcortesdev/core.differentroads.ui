@@ -1364,8 +1364,8 @@ export class AnalyticsService {
           'affiliation': 'Google online store', // Tal cual está en el original
           'value': value,
           'currency': currency,
-          'tax': 1.24, // Tal cual está en el original (no usar el parámetro tax)
-          'shipping': shipping,
+          'tax': 0.00, // Enviar tax como 0.00
+          'shipping': 0.00, // Enviar shipping como 0.00
           'items': [
             {
               'id': itemId,
@@ -1616,8 +1616,8 @@ export class AnalyticsService {
           {
             transaction_id: paymentData.transactionId,
             value: paymentData.totalValue,
-            tax: paymentData.tax || 0.6,
-            shipping: paymentData.shipping || 0.0,
+            tax: 0.00, // Enviar tax como 0.00
+            shipping: 0.00, // Enviar shipping como 0.00
             currency: 'EUR',
             coupon: paymentData.coupon || '',
             payment_type: paymentData.paymentType,

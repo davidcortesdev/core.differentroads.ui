@@ -56,6 +56,7 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   @Input() tourId: number = 0; // NUEVO: Para analytics
 
   @Output() registerPayment = new EventEmitter<number>();
+  @Output() couponApplied = new EventEmitter<void>();
 
   paymentInfo: PaymentInfo = { totalPrice: 0, pendingAmount: 0, paidAmount: 0 };
   paymentHistory: Payment[] = [];
@@ -64,6 +65,10 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   
   // NUEVO: Modal para añadir pago
   displayAddPaymentModal: boolean = false;
+
+  // Modal para aplicar cupón
+  displayCouponModal: boolean = false;
+  userId: number = 0;
 
   displayReviewModal: boolean = false;
   selectedReviewVoucherUrl: string = '';
@@ -130,6 +135,11 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
     
     // Cargar estados de pago desde la API (siempre, para todos)
     this.loadPaymentStatuses();
+
+    // Obtener userId desde la reserva si está disponible
+    if (this.reservationId && this.reservationId > 0) {
+      this.loadUserId();
+    }
 
     // Obtener el id del método de pago de transferencia para filtrar
     this.paymentMethodService.getPaymentMethodByCode('TRANSFER').subscribe({
@@ -302,6 +312,40 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   navigateToPayment(): void {
     // Abrir modal de añadir pago
     this.displayAddPaymentModal = true;
+  }
+
+  openCouponModal(): void {
+    // Si no tenemos userId, intentar obtenerlo desde la reserva
+    if (!this.userId || this.userId <= 0) {
+      this.loadUserId();
+    }
+    this.displayCouponModal = true;
+  }
+
+  onCouponApplied(): void {
+    // Emitir evento al componente padre para que recargue los datos
+    this.couponApplied.emit();
+    
+    // Refrescar los pagos por si el cupón afecta el total
+    this.refreshPayments();
+  }
+
+  private loadUserId(): void {
+    if (!this.reservationId || this.reservationId <= 0) {
+      return;
+    }
+
+    this.reservationService.getById(this.reservationId).subscribe({
+      next: (reservation: IReservationResponse) => {
+        const reservationData = reservation as any;
+        if (reservationData.userId) {
+          this.userId = reservationData.userId;
+        }
+      },
+      error: (error) => {
+        console.error('Error obteniendo userId desde la reserva:', error);
+      }
+    });
   }
 
   onPaymentProcessed(paymentData: PaymentData): void {

@@ -57,6 +57,7 @@
       [tourId]="reservation?.tourId || 0"
       (registerPayment)="registerPayment($event)"
       (fileUploaded)="handleFileUploaded($event)"
+      (couponApplied)="handleCouponApplied()"
     >
     </app-booking-payment-history-v2>
 

@@ -113,7 +113,7 @@ const routes: Routes = [
       { path: 'tours', component: ToursComponent },
       { path: 'tour/:slug', component: TourV2Component },
       { path: 'tour/:slug/preview', component: TourV2Component },
-      { path: 'tour/:slug-tour/completa-tus-datos/:idreserva', component: CompleteInformationComponent },
+      { path: 'tour/:slug-tour/completa-tus-datos/:idreserva', component: ProfileV2Component },
 
       // ========================================
       // CHECKOUT ROUTES

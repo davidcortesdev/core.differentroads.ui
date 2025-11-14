@@ -861,9 +861,8 @@ export class PaymentManagementComponent
 
     const trimmedCode = this.discountCode.trim();
 
-    // travelerId se pasa como null por ahora, preparado para enviarse en el futuro
     this.reservationCouponService
-      .apply(trimmedCode, this.reservationId, this.userId, null)
+      .apply(trimmedCode, this.reservationId, this.userId)
       .pipe(
         catchError((error) => {
           console.error('Error al aplicar código de descuento:', error);

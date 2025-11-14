@@ -65,6 +65,10 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   // NUEVO: Modal para añadir pago
   displayAddPaymentModal: boolean = false;
 
+  // Modal para aplicar cupón
+  displayCouponModal: boolean = false;
+  userId: number = 0;
+
   displayReviewModal: boolean = false;
   selectedReviewVoucherUrl: string = '';
   selectedPayment: Payment | null = null;
@@ -130,6 +134,11 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
     
     // Cargar estados de pago desde la API (siempre, para todos)
     this.loadPaymentStatuses();
+
+    // Obtener userId desde la reserva si está disponible
+    if (this.reservationId && this.reservationId > 0) {
+      this.loadUserId();
+    }
 
     // Obtener el id del método de pago de transferencia para filtrar
     this.paymentMethodService.getPaymentMethodByCode('TRANSFER').subscribe({
@@ -302,6 +311,43 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   navigateToPayment(): void {
     // Abrir modal de añadir pago
     this.displayAddPaymentModal = true;
+  }
+
+  openCouponModal(): void {
+    // Si no tenemos userId, intentar obtenerlo desde la reserva
+    if (!this.userId || this.userId <= 0) {
+      this.loadUserId();
+    }
+    this.displayCouponModal = true;
+  }
+
+  onCouponApplied(): void {
+    // Refrescar el resumen de la reserva después de aplicar el cupón
+    // Esto puede disparar una actualización del summary-table si tiene refreshTrigger
+    if (this.refreshTrigger !== null && this.refreshTrigger !== undefined) {
+      // Incrementar o cambiar el refreshTrigger para forzar actualización
+      this.refreshTrigger = this.refreshTrigger === 0 ? 1 : this.refreshTrigger + 1;
+    }
+    // También refrescar los pagos por si el cupón afecta el total
+    this.refreshPayments();
+  }
+
+  private loadUserId(): void {
+    if (!this.reservationId || this.reservationId <= 0) {
+      return;
+    }
+
+    this.reservationService.getById(this.reservationId).subscribe({
+      next: (reservation: IReservationResponse) => {
+        const reservationData = reservation as any;
+        if (reservationData.userId) {
+          this.userId = reservationData.userId;
+        }
+      },
+      error: (error) => {
+        console.error('Error obteniendo userId desde la reserva:', error);
+      }
+    });
   }
 
   onPaymentProcessed(paymentData: PaymentData): void {

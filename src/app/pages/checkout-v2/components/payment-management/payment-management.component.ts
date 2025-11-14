@@ -30,6 +30,9 @@ import {
   IPriceChangeInfo,
 } from '../../../../core/services/flight/flight-search.service';
 import { environment } from '../../../../../environments/environment';
+import { ReservationCouponService } from '../../../../core/services/checkout/reservation-coupon.service';
+import { catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 // Interfaces y tipos
 export type PaymentType =
@@ -67,10 +70,12 @@ export class PaymentManagementComponent
   @Input() departureDate: string = '';
   @Input() showTransfer25Option: boolean = false;
   @Input() isTourOperator: boolean = false;
+  @Input() userId!: number;
 
   // Outputs
   @Output() paymentCompleted = new EventEmitter<PaymentOption>();
   @Output() navigateToStep = new EventEmitter<number>();
+  @Output() discountApplied = new EventEmitter<void>();
 
   // Payment IDs
   transferMethodId: number = 0;
@@ -86,10 +91,16 @@ export class PaymentManagementComponent
   hasSpecificSearchFlights: boolean = false;
   specificSearchFlightsCost: number = 0;
 
+  // Discount code
+  discountCode: string = '';
+  discountMessage: string = '';
+  discountMessageSeverity: 'success' | 'error' | 'info' | 'warn' = 'info';
+
   // State management
   readonly dropdownStates = {
     main: true,
     paymentMethods: true,
+    discount: true,
   };
 
   readonly paymentState = {
@@ -109,7 +120,8 @@ export class PaymentManagementComponent
     private readonly reservationService: ReservationService,
     private readonly messageService: MessageService,
     private readonly currencyService: CurrencyService,
-    private readonly flightSearchService: FlightSearchService
+    private readonly flightSearchService: FlightSearchService,
+    private readonly reservationCouponService: ReservationCouponService
   ) {}
 
   ngOnInit(): void {
@@ -443,13 +455,14 @@ export class PaymentManagementComponent
         life: 3000,
       });
 
-      await this.processPaymentBasedOnMethod();
-
-      // Emitir evento de pago completado para analytics
+      // Emitir evento de pago completado para analytics ANTES de procesar el pago
+      // Esto asegura que el evento se dispare incluso si el procesamiento redirige o falla
       this.paymentCompleted.emit({
         type: this.paymentState.type || 'complete',
         method: this.paymentState.method || 'transfer',
       });
+
+      await this.processPaymentBasedOnMethod();
 
       this.messageService.add({
         severity: 'success',
@@ -831,5 +844,58 @@ export class PaymentManagementComponent
 
   reloadReservationTotalAmount(): void {
     this.loadReservationTotalAmount();
+  }
+
+  applyDiscount(): void {
+    if (!this.discountCode || this.discountCode.trim() === '') {
+      this.discountMessage = 'Por favor, ingresa un código de descuento';
+      this.discountMessageSeverity = 'warn';
+      return;
+    }
+
+    if (!this.userId) {
+      this.discountMessage = 'Error: faltan datos necesarios para aplicar el descuento';
+      this.discountMessageSeverity = 'error';
+      return;
+    }
+
+    const trimmedCode = this.discountCode.trim();
+
+    // travelerId se pasa como null por ahora, preparado para enviarse en el futuro
+    this.reservationCouponService
+      .apply(trimmedCode, this.reservationId, this.userId, null)
+      .pipe(
+        catchError((error) => {
+          console.error('Error al aplicar código de descuento:', error);
+          this.discountMessage = 'Error al aplicar el código de descuento';
+          this.discountMessageSeverity = 'error';
+          return of(false);
+        })
+      )
+      .subscribe((success: boolean) => {
+        if (success) {
+          this.discountMessage = 'Código de descuento aplicado correctamente';
+          this.discountMessageSeverity = 'success';
+          this.discountApplied.emit();
+        } else {
+          this.discountMessage = 'No se pudo aplicar el código de descuento';
+          this.discountMessageSeverity = 'error';
+        }
+      });
+  }
+
+
+  validateDiscountCode(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const value = input.value;
+    // Solo permitir letras (mayúsculas y minúsculas), números y guiones
+    const filteredValue = value.replace(/[^a-zA-Z0-9-]/g, '');
+    // Limitar a 20 caracteres
+    const limitedValue = filteredValue.substring(0, 20);
+    
+    if (value !== limitedValue) {
+      this.discountCode = limitedValue;
+      input.value = limitedValue;
+    }
   }
 }

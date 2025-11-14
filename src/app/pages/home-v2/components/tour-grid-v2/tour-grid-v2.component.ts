@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, OnChanges, SimpleChanges, EventEmitter, Output } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, OnChanges, SimpleChanges, EventEmitter, Output, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
 import {
   TourService,
   Tour as TourNetTour,
@@ -60,7 +60,7 @@ export interface FilterChangeEvent {
   templateUrl: './tour-grid-v2.component.html',
   styleUrls: ['./tour-grid-v2.component.scss'],
 })
-export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
+export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterViewInit {
   /**
    * Lista de IDs de tours a mostrar en el grid
    */
@@ -134,6 +134,11 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
   // Control de disparo del evento durante la carga inicial
   private hasFiredInitialViewItemList: boolean = false;
   private isInitialLoadingView: boolean = false;
+  
+  // Intersection Observer para detectar cuando la lista aparece en pantalla
+  @ViewChild('tourGridContainer', { static: false }) tourGridContainer!: ElementRef;
+  private intersectionObserver?: IntersectionObserver;
+  private hasTrackedVisibility: boolean = false;
 
   constructor(
     private readonly tourService: TourService,
@@ -189,14 +194,64 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
     if (changes['tourIds'] && !changes['tourIds'].firstChange) {
       // Reiniciar control de evento para nueva carga
       this.hasFiredInitialViewItemList = false;
+      this.hasTrackedVisibility = false;
       this.isInitialLoadingView = true;
+      // Limpiar observer anterior si existe
+      if (this.intersectionObserver) {
+        this.intersectionObserver.disconnect();
+        this.intersectionObserver = undefined;
+      }
       this.loadTours();
     }
   }
 
+  ngAfterViewInit(): void {
+    // Configurar Intersection Observer después de que la vista se inicialice
+    this.setupIntersectionObserver();
+  }
+
   ngOnDestroy(): void {
+    // Limpiar Intersection Observer
+    if (this.intersectionObserver) {
+      this.intersectionObserver.disconnect();
+      this.intersectionObserver = undefined;
+    }
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  /**
+   * Configura el Intersection Observer para detectar cuando la lista aparece en pantalla
+   */
+  private setupIntersectionObserver(): void {
+    // Verificar que el elemento existe y que no se haya trackeado ya
+    if (!this.tourGridContainer?.nativeElement || this.hasTrackedVisibility) {
+      return;
+    }
+
+    // Crear Intersection Observer con threshold del 10%
+    this.intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          // Si el elemento es visible y tiene tours cargados, disparar el evento
+          if (entry.isIntersecting && this.tours.length > 0 && !this.hasTrackedVisibility) {
+            this.hasTrackedVisibility = true;
+            this.trackViewItemList(this.tours);
+            // Desconectar el observer después de disparar el evento
+            if (this.intersectionObserver) {
+              this.intersectionObserver.disconnect();
+            }
+          }
+        });
+      },
+      {
+        threshold: 0.1, // Disparar cuando 10% del elemento es visible
+        rootMargin: '0px'
+      }
+    );
+
+    // Observar el contenedor
+    this.intersectionObserver.observe(this.tourGridContainer.nativeElement);
   }
 
   /**
@@ -515,10 +570,14 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges {
             console.log('✅ Carga de tours completada');
           }
           this.isLoading = false;
-          // Disparar evento view_item_list cuando la carga está completa y la lista es visible
-          if (this.tours.length > 0 && !this.hasFiredInitialViewItemList) {
-            this.trackViewItemList(this.tours);
-            this.hasFiredInitialViewItemList = true;
+          // El evento view_item_list se disparará cuando la lista aparezca en pantalla
+          // mediante Intersection Observer en ngAfterViewInit
+          // Si el elemento ya es visible, configurar el observer de nuevo
+          if (this.tours.length > 0 && this.tourGridContainer?.nativeElement) {
+            // Si el observer no está configurado, configurarlo ahora
+            if (!this.intersectionObserver && !this.hasTrackedVisibility) {
+              setTimeout(() => this.setupIntersectionObserver(), 100);
+            }
           }
           // A partir de aquí, siguientes cambios son por filtros/orden
           this.isInitialLoadingView = false;

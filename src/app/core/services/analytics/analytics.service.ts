@@ -1364,8 +1364,8 @@ export class AnalyticsService {
           'affiliation': 'Google online store', // Tal cual está en el original
           'value': value,
           'currency': currency,
-          'tax': 1.24, // Tal cual está en el original (no usar el parámetro tax)
-          'shipping': shipping,
+          'tax': 0.00, // Enviar tax como 0.00
+          'shipping': 0.00, // Enviar shipping como 0.00
           'items': [
             {
               'id': itemId,
@@ -1616,8 +1616,8 @@ export class AnalyticsService {
           {
             transaction_id: paymentData.transactionId,
             value: paymentData.totalValue,
-            tax: paymentData.tax || 0.6,
-            shipping: paymentData.shipping || 0.0,
+            tax: 0.00, // Enviar tax como 0.00
+            shipping: 0.00, // Enviar shipping como 0.00
             currency: 'EUR',
             coupon: paymentData.coupon || '',
             payment_type: paymentData.paymentType,
@@ -1963,7 +1963,11 @@ export class AnalyticsService {
     );
   }
 
-  private extractActivitiesFromSummary(summary: IReservationSummaryResponse | null): string {
+  /**
+   * Extrae las actividades desde el summary de la reservación
+   * Método público para uso en componentes
+   */
+  extractActivitiesFromSummary(summary: IReservationSummaryResponse | null): string {
     if (!summary || !summary.items || summary.items.length === 0) {
       return '';
     }
@@ -1976,7 +1980,11 @@ export class AnalyticsService {
     return activityDescriptions.join(', ');
   }
 
-  private extractInsuranceFromSummary(
+  /**
+   * Extrae el seguro desde el summary de la reservación
+   * Método público para uso en componentes
+   */
+  extractInsuranceFromSummary(
     summary: IReservationSummaryResponse | null,
     reservationData?: any,
     storedInsurance?: string
@@ -2017,6 +2025,43 @@ export class AnalyticsService {
       type.includes('insurance') ||
       type.includes('seguro') ||
       description.includes('seguro')
+    );
+  }
+
+  /**
+   * Extrae el vuelo desde el summary de la reservación
+   * Método público para uso en componentes
+   */
+  extractFlightFromSummary(
+    summary: IReservationSummaryResponse | null,
+    reservationData?: any,
+    selectedFlight?: any
+  ): string {
+    if (!summary || !summary.items || summary.items.length === 0) {
+      return selectedFlight?.name || reservationData?.flight?.name || 'Sin vuelo';
+    }
+
+    const flightDescriptions = summary.items
+      .filter((item) => this.isFlightSummaryItem(item))
+      .map((item) => item.description?.trim())
+      .filter((description): description is string => !!description && description.length > 0);
+
+    if (flightDescriptions.length > 0) {
+      return flightDescriptions.join(', ');
+    }
+
+    return selectedFlight?.name || reservationData?.flight?.name || 'Sin vuelo';
+  }
+
+  private isFlightSummaryItem(item: ReservationSummaryItem): boolean {
+    const type = item.itemType?.toLowerCase() || '';
+    const description = item.description?.toLowerCase() || '';
+
+    return (
+      type.includes('flight') ||
+      type.includes('vuelo') ||
+      description.includes('vuelo') ||
+      description.includes('flight')
     );
   }
 
@@ -2248,12 +2293,24 @@ export class AnalyticsService {
   }
 
   /**
-   * Formatea el teléfono con el código de país
+   * Formatea el teléfono con el prefijo y código de país
    */
-  formatPhoneNumber(phone: string, countryCode: string = '+34'): string {
+  formatPhoneNumber(phone: string, countryCode: string = '+34', phonePrefix?: string): string {
+    if (!phone) {
+      return '';
+    }
+    
+    // Si hay phonePrefix, formatear como "prefix + teléfono" con espacio
+    if (phonePrefix) {
+      return `${phonePrefix} ${phone}`;
+    }
+    
+    // Si el teléfono ya empieza con '+', devolverlo tal cual
     if (phone.startsWith('+')) {
       return phone;
     }
+    
+    // Si no hay prefijo, usar el código de país por defecto
     return `${countryCode}${phone}`;
   }
 
@@ -2494,7 +2551,19 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
    * Combina email, cognitoId y datos de la base de datos
    */
   getCurrentUserData(): Observable<UserData> {
-    // Verificar primero el valor actual del email (síncrono)
+    // Verificar primero si el usuario está autenticado
+    const isAuthenticated = this.authService.isAuthenticatedValue();
+    
+    // Si NO está autenticado, devolver datos vacíos inmediatamente
+    if (!isAuthenticated) {
+      return of({
+        email_address: '',
+        phone_number: '',
+        user_id: ''
+      } as UserData);
+    }
+    
+    // Si está autenticado, verificar el valor actual del email (síncrono)
     const currentEmail = this.authService.getUserEmailValue();
     
     // Si ya hay email, procesarlo directamente
@@ -2502,24 +2571,56 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
       return this.processUserDataWithEmail(currentEmail);
     }
     
-    // Si no hay email, esperar a que se actualice (asíncrono)
-    return this.authService.getUserEmail().pipe(
-      // Filtrar valores vacíos
-      filter((email: string) => !!email && email.length > 0),
-      // Tomar el primer valor válido
-      first(),
-      switchMap((email: string) => {
-        return this.processUserDataWithEmail(email);
-      }),
-      catchError(() => {
-        // Devolver objeto con campos vacíos en lugar de undefined
-        return of({
-          email_address: '',
-          phone_number: '',
-          user_id: ''
-        } as UserData);
-      })
-    );
+    // Si está autenticado pero no hay email, devolver los datos disponibles sin esperar
+    // Obtener cognitoId si existe
+    const currentCognitoId = this.authService.getCognitoIdValue();
+    
+    if (currentCognitoId && currentCognitoId.length > 0) {
+      // Intentar obtener datos del usuario por cognitoId, pero sin esperar por email
+      return this.usersNetService.getUsersByCognitoId(currentCognitoId).pipe(
+        switchMap((users) => {
+          if (users && users.length > 0) {
+            const user = users[0];
+            return this.personalInfoService.getUserData(user.id.toString()).pipe(
+              map((personalInfo: any) => {
+                const phone = personalInfo?.telefono ? this.formatPhoneNumber(personalInfo.telefono, '+34', personalInfo?.phonePrefix) : '';
+                return {
+                  email_address: personalInfo?.email || '',
+                  phone_number: phone,
+                  user_id: currentCognitoId
+                };
+              }),
+              catchError(() => {
+                return of({
+                  email_address: '',
+                  phone_number: '',
+                  user_id: currentCognitoId
+                });
+              })
+            );
+          }
+          return of({
+            email_address: '',
+            phone_number: '',
+            user_id: currentCognitoId
+          });
+        }),
+        catchError(() => {
+          return of({
+            email_address: '',
+            phone_number: '',
+            user_id: currentCognitoId
+          });
+        })
+      );
+    }
+    
+    // Si está autenticado pero no hay email ni cognitoId, devolver datos vacíos
+    return of({
+      email_address: '',
+      phone_number: '',
+      user_id: ''
+    } as UserData);
   }
 
   private processUserDataWithEmail(email: string): Observable<UserData> {
@@ -2562,7 +2663,7 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
           const user = users[0];
           return this.personalInfoService.getUserData(user.id.toString()).pipe(
             map((personalInfo: any) => {
-              const phone = personalInfo?.telefono ? this.formatPhoneNumber(personalInfo.telefono) : '';
+              const phone = personalInfo?.telefono ? this.formatPhoneNumber(personalInfo.telefono, '+34', personalInfo?.phonePrefix) : '';
               return {
                 email_address: personalInfo?.email || email,
                 phone_number: phone,
@@ -2585,7 +2686,7 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
               const user = usersByEmail[0];
               return this.personalInfoService.getUserData(user.id.toString()).pipe(
                 map((personalInfo: any) => {
-                  const phone = personalInfo?.telefono ? this.formatPhoneNumber(personalInfo.telefono) : '';
+                  const phone = personalInfo?.telefono ? this.formatPhoneNumber(personalInfo.telefono, '+34', personalInfo?.phonePrefix) : '';
                   return {
                     email_address: personalInfo?.email || email,
                     phone_number: phone,

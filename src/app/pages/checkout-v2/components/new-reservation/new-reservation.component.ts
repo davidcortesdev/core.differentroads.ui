@@ -803,8 +803,8 @@ export class NewReservationComponent implements OnInit {
         transactionId: transactionId,
         paymentType: paymentType,
         totalValue: totalValue,
-        tax: 0.6,
-        shipping: 0.0,
+        tax: 0.00, // Enviar tax como 0.00
+        shipping: 0.00, // Enviar shipping como 0.00
         coupon: reservationData.coupon?.code || '',
       }
     );

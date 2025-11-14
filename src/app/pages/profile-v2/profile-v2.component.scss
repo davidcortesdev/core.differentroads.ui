@@ -1,76 +1,212 @@
 .container {
-    background-color: var(--light-blue-50);
-    padding: 35px;
-    width: 100%;
-    height: 100%;
-  
-    @media (min-width: 768px) and (max-width: 1024px) {
-      padding: 25px;
-    }
-  
-    @media (max-width: 480px) {
-      padding: 20px;
-    }
+  background-color: var(--light-blue-50);
+  padding: 35px;
+  width: 100%;
+  height: 100%;
 
-    // Estilos para estados de loading y error
-    .loading-container, .error-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 400px;
+  @media (min-width: 768px) and (max-width: 1024px) {
+    padding: 25px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 20px;
+  }
+
+  // Overlay y modal centrado para el mensaje de redirección
+  .redirect-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  .redirect-modal {
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideIn 0.3s ease-out;
+
+    @media (max-width: 480px) {
+      width: 95%;
+      max-width: none;
+    }
+    
+    ::ng-deep .p-card {
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
       
-      p {
-        font-size: 16px;
-        color: var(--gray-600);
+      .card-header-info {
+        background: #ea685c;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px 8px 0 0;
+        
+        i {
+          font-size: 3rem;
+          color: white;
+          animation: pulse 2s infinite;
+        }
+      }
+      
+      .p-card-title {
+        color: #1e293b;
+        font-weight: 600;
+        font-size: 1.25rem;
         text-align: center;
       }
+      
+      .p-card-subtitle {
+        color: #64748b;
+        margin-top: 0.25rem;
+        text-align: center;
+      }
+      
+      .p-card-content {
+        padding-bottom: 0.5rem;
+        
+        p {
+          line-height: 1.6;
+          color: #334155;
+          text-align: center;
+          margin: 0;
+          
+          strong {
+            color: #1e293b;
+            font-weight: 600;
+          }
+        }
+      }
+
+      .p-card-footer {
+        border-top: 1px solid #e2e8f0;
+        padding-top: 1rem;
+        display: flex;
+        justify-content: center;
+        
+        .flex {
+          width: 100%;
+          display: flex;
+          justify-content: center;
+        }
+      }
     }
 
-    .error-container p {
-      color: var(--red-600);
-    }
-  
-    // Contenedor principal de las columnas - donde se aplica flex
-    .profile-content {
-      display: flex;
-      width: 100%;
-      height: 100%;
-      gap: 20px;
-
-      @media (max-width: 480px) {
-        flex-direction: column;
-        gap: 0;
-      }
-    }
-  
-    .column {
-      height: 100%;
-  
-      @media (min-width: 768px) and (max-width: 1024px) {
-        height: auto;
-      }
-  
-      @media (max-width: 480px) {
-        height: auto;
-        width: 100% !important;
-        margin-bottom: 20px;
-      }
-    }
-  
-    .left-column {
-      width: 30%;
-  
-      @media (min-width: 768px) and (max-width: 1024px) {
-        width: 38%;
-      }
-    }
-  
-    .right-column {
-      width: 70%;
-  
-      @media (min-width: 768px) and (max-width: 1024px) {
-        width: 62%; // Ajustado para complementar left-column 38%
+    @media (max-width: 480px) {
+      ::ng-deep .p-card {
+        .card-header-info {
+          padding: 1rem;
+          
+          i {
+            font-size: 2rem;
+          }
+        }
+        
+        .p-card-title {
+          font-size: 1.1rem;
+        }
       }
     }
   }
-  
+
+  // Animaciones
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateY(-30px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+  }
+
+  // Estilos para estados de loading y error
+  .loading-container, .error-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+    
+    p {
+      font-size: 16px;
+      color: var(--gray-600);
+      text-align: center;
+    }
+  }
+
+  .error-container p {
+    color: var(--red-600);
+  }
+
+  // Contenedor principal de las columnas - donde se aplica flex
+  .profile-content {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    gap: 20px;
+
+    @media (max-width: 480px) {
+      flex-direction: column;
+      gap: 0;
+    }
+  }
+
+  .column {
+    height: 100%;
+
+    @media (min-width: 768px) and (max-width: 1024px) {
+      height: auto;
+    }
+
+    @media (max-width: 480px) {
+      height: auto;
+      width: 100% !important;
+      margin-bottom: 20px;
+    }
+  }
+
+  .left-column {
+    width: 30%;
+
+    @media (min-width: 768px) and (max-width: 1024px) {
+      width: 38%;
+    }
+  }
+
+  .right-column {
+    width: 70%;
+
+    @media (min-width: 768px) and (max-width: 1024px) {
+      width: 62%;
+    }
+  }
+}

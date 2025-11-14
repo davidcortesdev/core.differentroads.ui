@@ -231,6 +231,14 @@ export class TourHeaderV2Component
     );
   }
 
+  // ✅ GETTER: Verificar si hay fecha seleccionada
+  get hasSelectedDate(): boolean {
+    return !!(
+      this.selectedDeparture &&
+      this.selectedDeparture.departureDate
+    );
+  }
+
   // ✅ GETTER dinámico para texto de actividades
   get activitiesStatusText(): string {
     if (!this.hasAddedActivities) {
@@ -325,6 +333,17 @@ export class TourHeaderV2Component
     } catch {
       return this.selectedDeparture.departureDate;
     }
+  }
+
+  // ✅ MÉTODO: Obtener tooltip para el botón de reservar
+  getBookingTooltip(): string {
+    if (this.preview) {
+      return 'No es posible reservar un tour en modo preview';
+    }
+    if (!this.hasSelectedDate) {
+      return 'Debes seleccionar una fecha de salida para poder reservar';
+    }
+    return '';
   }
 
   private loadTourData(tourId: number) {

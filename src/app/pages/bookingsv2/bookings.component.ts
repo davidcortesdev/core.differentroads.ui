@@ -838,6 +838,16 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
     });
   }
 
+  handleCouponApplied(): void {
+    // Recargar los datos de la reserva para obtener los montos actualizados después de aplicar el cupón
+    if (this.bookingId) {
+      this.loadBookingData(this.bookingId);
+    }
+
+    // Disparar trigger de refresh para actualizar el resumen
+    this.summaryRefreshTrigger = Date.now();
+  }
+
   showPaymentModal(): void {
     this.displayPaymentModal = true;
   }

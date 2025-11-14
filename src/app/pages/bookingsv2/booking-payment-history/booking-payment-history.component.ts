@@ -56,6 +56,7 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   @Input() tourId: number = 0; // NUEVO: Para analytics
 
   @Output() registerPayment = new EventEmitter<number>();
+  @Output() couponApplied = new EventEmitter<void>();
 
   paymentInfo: PaymentInfo = { totalPrice: 0, pendingAmount: 0, paidAmount: 0 };
   paymentHistory: Payment[] = [];
@@ -322,13 +323,10 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   }
 
   onCouponApplied(): void {
-    // Refrescar el resumen de la reserva después de aplicar el cupón
-    // Esto puede disparar una actualización del summary-table si tiene refreshTrigger
-    if (this.refreshTrigger !== null && this.refreshTrigger !== undefined) {
-      // Incrementar o cambiar el refreshTrigger para forzar actualización
-      this.refreshTrigger = this.refreshTrigger === 0 ? 1 : this.refreshTrigger + 1;
-    }
-    // También refrescar los pagos por si el cupón afecta el total
+    // Emitir evento al componente padre para que recargue los datos
+    this.couponApplied.emit();
+    
+    // Refrescar los pagos por si el cupón afecta el total
     this.refreshPayments();
   }
 

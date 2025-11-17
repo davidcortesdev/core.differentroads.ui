@@ -106,6 +106,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   }>();
   @Output() ageGroupsUpdate = new EventEmitter<AgeGroupCategories>();
   @Output() activityPackIdUpdate = new EventEmitter<number | null>();
+  @Output() citiesLoadingUpdate = new EventEmitter<boolean>();
 
   // Control de destrucción del componente
   private destroy$ = new Subject<void>();
@@ -257,6 +258,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     if (!this.tourId) return;
 
     this.citiesLoading = true;
+    this.citiesLoadingUpdate.emit(true);
 
     this.tourDepartureCitiesService
       .getAll(this.tourId, {}, !this.preview)
@@ -272,6 +274,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
             this.filteredCities = [];
             this.selectedCity = null;
             this.citiesLoading = false;
+            this.citiesLoadingUpdate.emit(false);
             // Emitir cityUpdate con string vacío cuando no hay ciudades
             this.emitCityUpdate();
             return;
@@ -374,6 +377,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           }
 
           this.citiesLoading = false;
+          this.citiesLoadingUpdate.emit(false);
           
           // Después de cargar ciudades, intentar cargar departures
           this.loadAllDeparturesForTour();
@@ -384,6 +388,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           this.filteredCities = [];
           this.selectedCity = null;
           this.citiesLoading = false;
+          this.citiesLoadingUpdate.emit(false);
 
           // Emitir cityUpdate con string vacío en caso de error
           this.emitCityUpdate();

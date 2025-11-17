@@ -8,8 +8,8 @@ import {
   Output,
   EventEmitter,
 } from '@angular/core';
-import { Subject, forkJoin, of } from 'rxjs';
-import { takeUntil, switchMap, catchError } from 'rxjs/operators';
+import { Subject, forkJoin, of, Observable, combineLatest, ReplaySubject } from 'rxjs';
+import { takeUntil, switchMap, catchError, map, tap, filter } from 'rxjs/operators';
 import { MessageService } from 'primeng/api';
 import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
 
@@ -109,6 +109,12 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
   // Control de destrucción del componente
   private destroy$ = new Subject<void>();
+  
+  // Subject para notificar cuando allDepartures esté disponible (ReplaySubject para mantener último valor)
+  private allDeparturesReady$ = new ReplaySubject<void>(1);
+  
+  // Subject para notificar cuando los precios estén disponibles (ReplaySubject para mantener último valor)
+  private pricesReady$ = new ReplaySubject<void>(1);
 
   // Estados del componente
   loading = false;
@@ -208,11 +214,9 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     this.updatePassengerText();
 
     // Emitir estado inicial
-    setTimeout(() => {
-      this.emitPassengersUpdate();
-      this.priceUpdate.emit(0);
-      this.departureUpdate.emit(null);
-    }, 0);
+    this.emitPassengersUpdate();
+    this.priceUpdate.emit(0);
+    this.departureUpdate.emit(null);
   }
 
   ngOnInit(): void {
@@ -384,18 +388,23 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       });
   }
 
-  private loadDeparturesPrices(activityId: number, departureId: number): void {
-    if (!activityId || !departureId) return;
+  private loadDeparturesPrices(activityId: number, departureId: number): Observable<ITourDeparturesPriceResponse[]> {
+    if (!activityId || !departureId) {
+      return of([]);
+    }
 
     this.pricesLoading = true;
 
-    this.tourDeparturesPricesService
+    return this.tourDeparturesPricesService
       .getAll(activityId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (pricesResponse: ITourDeparturesPriceResponse[]) => {
+      .pipe(
+        takeUntil(this.destroy$),
+        tap((pricesResponse: ITourDeparturesPriceResponse[]) => {
           this.departuresPrices = pricesResponse;
           this.pricesLoading = false;
+
+          // Notificar que los precios están listos
+          this.pricesReady$.next();
 
           // Recargar horarios de vuelos cuando se cargan los precios
           if (this.filteredDepartures && this.filteredDepartures.length > 0) {
@@ -406,17 +415,13 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
               }
             });
           }
-
-          // Calcular precio si hay departure seleccionado
-          if (this.selectedDepartureId) {
-            this.calculateAndEmitPrice();
-          }
-        },
-        error: (error) => {
+        }),
+        catchError((error) => {
           console.error('Error cargando precios:', error);
           this.pricesLoading = false;
-        },
-      });
+          return of([]);
+        })
+      );
   }
 
   private loadAgeGroups(): void {
@@ -708,11 +713,12 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
           this.loading = false;
 
+          // Notificar que allDepartures está listo
+          this.allDeparturesReady$.next();
+
           // Si no hay departure preseleccionado, auto-seleccionar la más cercana reservable
           if (!this.selectedDeparture && this.allDepartures.length > 0) {
-            setTimeout(() => {
-              this.autoSelectNearestBookableDeparture();
-            }, 200);
+            this.autoSelectNearestBookableDeparture();
           }
         },
         error: (error) => {
@@ -729,15 +735,44 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
     this.departureService
       .getById(departureId, this.preview)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (departure) => {
+      .pipe(
+        takeUntil(this.destroy$),
+        switchMap((departure) => {
           this.departureDetails = departure;
-          this.updateDepartureInfo();
+          
+          // Si hay ciudad seleccionada con activityId, cargar precios
+          if (
+            this.selectedCity &&
+            this.selectedCity.activityId &&
+            this.departureDetails
+          ) {
+            return this.loadDeparturesPrices(
+              this.selectedCity.activityId,
+              this.departureDetails.id
+            ).pipe(
+              map((prices) => ({ departure, prices }))
+            );
+          }
+          
+          // Si no hay ciudad, retornar solo el departure
+          return of({ departure, prices: [] });
+        }),
+        catchError((error) => {
+          console.error('Error cargando detalles del departure:', error);
+          this.error = 'Error al cargar los detalles del departure';
+          this.loading = false;
+          return of({ departure: null, prices: [] });
+        })
+      )
+      .subscribe({
+        next: ({ departure, prices }) => {
+          if (departure) {
+            this.updateDepartureInfo();
+          }
           this.loading = false;
         },
         error: (error) => {
-          console.error('Error cargando detalles del departure:', error);
+          console.error('Error en el flujo de carga:', error);
           this.error = 'Error al cargar los detalles del departure';
           this.loading = false;
         },
@@ -773,19 +808,10 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       }
     }
 
-    if (
-      this.selectedCity &&
-      this.selectedCity.activityId &&
-      this.departureDetails
-    ) {
-      this.loadDeparturesPrices(
-        this.selectedCity.activityId,
-        this.departureDetails.id
-      );
-      
-      // Cargar disponibilidad de plazas
-      if (this.departureDetails.id) {
-        this.loadDepartureAvailability(this.departureDetails.id);
+    // Cargar disponibilidad de plazas
+    if (this.departureDetails.id) {
+      this.loadDepartureAvailability(this.departureDetails.id);
+      if (this.selectedCity?.activityId) {
         this.loadActivityAvailability(
           this.departureDetails.id,
           this.selectedCity.activityId
@@ -794,24 +820,85 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     }
 
     // Auto-selección del departure desde el selector
-    setTimeout(() => {
-      const selectedDepartureFromSelector = this.filteredDepartures.find(
-        (dep) => dep.id === this.selectedDeparture?.departure.id
-      );
+    // Si allDepartures ya está cargado, proceder inmediatamente
+    // Si no, esperar a que esté disponible
+    this.processDepartureSelection();
+  }
 
-      // Intentar seleccionar la salida del selector si es reservable
-      if (selectedDepartureFromSelector && selectedDepartureFromSelector.isBookable) {
-        this.addToCart(selectedDepartureFromSelector);
-      } else if (selectedDepartureFromSelector && !selectedDepartureFromSelector.isBookable) {
-        // Si la salida del selector no es reservable, buscar la más cercana que sí lo sea
-        this.autoSelectNearestBookableDeparture();
-      } else {
-        // Si no hay salida del selector, auto-seleccionar la más cercana reservable
-        this.autoSelectNearestBookableDeparture();
-      }
+  /**
+   * Procesa la selección del departure, esperando a que allDepartures esté disponible si es necesario
+   */
+  private processDepartureSelection(): void {
+    // Si allDepartures ya está cargado, proceder inmediatamente
+    if (this.allDepartures.length > 0) {
+      this.executeDepartureSelection();
+      return;
+    }
 
-      this.emitCityUpdate();
-    }, 100);
+    // Si no está cargado, esperar a que allDeparturesReady$ emita
+    this.allDeparturesReady$
+      .pipe(
+        takeUntil(this.destroy$),
+        // Usar take(1) para completar después de la primera emisión
+        // Si ya se emitió antes, usar of para proceder inmediatamente
+        switchMap(() => {
+          if (this.allDepartures.length > 0) {
+            return of(true);
+          }
+          return of(false);
+        })
+      )
+      .subscribe({
+        next: (hasDepartures) => {
+          if (hasDepartures) {
+            this.executeDepartureSelection();
+          } else {
+            // Si no hay departures después de esperar, usar departureDetails directamente
+            this.executeDepartureSelectionFromDetails();
+          }
+        }
+      });
+  }
+
+  /**
+   * Ejecuta la selección del departure cuando allDepartures está disponible
+   */
+  private executeDepartureSelection(): void {
+    const selectedDepartureFromSelector = this.filteredDepartures.find(
+      (dep) => dep.id === this.selectedDeparture?.departure.id
+    );
+
+    // Intentar seleccionar la salida del selector si es reservable
+    if (selectedDepartureFromSelector && selectedDepartureFromSelector.isBookable) {
+      this.addToCart(selectedDepartureFromSelector);
+    } else if (selectedDepartureFromSelector && !selectedDepartureFromSelector.isBookable) {
+      // Si la salida del selector no es reservable, buscar la más cercana que sí lo sea
+      this.autoSelectNearestBookableDeparture();
+    } else {
+      // Si no hay salida del selector, auto-seleccionar la más cercana reservable
+      this.autoSelectNearestBookableDeparture();
+    }
+
+    this.emitCityUpdate();
+  }
+
+  /**
+   * Ejecuta la selección del departure usando departureDetails cuando allDepartures no está disponible
+   */
+  private executeDepartureSelectionFromDetails(): void {
+    if (!this.departureDetails) return;
+
+    const departureFromDetails = {
+      id: this.departureDetails.id,
+      departureDate: this.departureDetails.departureDate,
+      returnDate: this.departureDetails.arrivalDate,
+      isBookable: this.departureDetails.isBookable ?? true,
+    };
+    
+    if (departureFromDetails.isBookable) {
+      this.addToCart(departureFromDetails);
+    }
+    this.emitCityUpdate();
   }
 
   /**
@@ -1045,9 +1132,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
     // Recalcular precio si hay departure seleccionado
     if (this.selectedDepartureId) {
-      setTimeout(() => {
-        this.calculateAndEmitPrice();
-      }, 300);
+      this.calculateAndEmitPrice();
     }
   }
 
@@ -1240,30 +1325,57 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     }
 
     this.selectedDepartureId = item.id;
-    this.calculateAndEmitPrice();
-    this.departureUpdate.emit(item);
+    
+    // Calcular precio y luego emitir departureUpdate
+    this.calculateAndEmitPriceObservable().subscribe({
+      next: () => {
+        this.departureUpdate.emit(item);
+      }
+    });
   }
 
   private calculateAndEmitPrice(): void {
+    this.calculateAndEmitPriceObservable().subscribe();
+  }
+
+  private calculateAndEmitPriceObservable(): Observable<void> {
     if (!this.selectedDepartureId) {
       this.priceUpdate.emit(0);
-      return;
+      return of(undefined);
     }
 
+    // Si los precios ya están disponibles, calcular inmediatamente
     if (
-      !this.departuresPrices ||
-      this.departuresPrices.length === 0 ||
-      this.pricesLoading
+      this.departuresPrices &&
+      this.departuresPrices.length > 0 &&
+      !this.pricesLoading
     ) {
-      setTimeout(() => {
-        if (
+      this.doCalculateAndEmitPrice();
+      return of(undefined);
+    }
+
+    // Si no están disponibles, esperar a que pricesReady$ emita
+    return this.pricesReady$
+      .pipe(
+        takeUntil(this.destroy$),
+        filter(() => 
           this.departuresPrices &&
           this.departuresPrices.length > 0 &&
           !this.pricesLoading
-        ) {
-          this.calculateAndEmitPrice();
-        }
-      }, 100);
+        ),
+        map(() => {
+          this.doCalculateAndEmitPrice();
+          return undefined;
+        })
+      );
+  }
+
+  /**
+   * Calcula y emite el precio (asume que los precios ya están disponibles)
+   */
+  private doCalculateAndEmitPrice(): void {
+    if (!this.selectedDepartureId) {
+      this.priceUpdate.emit(0);
       return;
     }
 

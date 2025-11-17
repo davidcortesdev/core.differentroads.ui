@@ -101,7 +101,6 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   isApproveSuccess: boolean = false;
 
   isLoadingPayments: boolean = false;
-  transferMethodId: number = 0;
 
   constructor(
     private fb: FormBuilder,
@@ -141,21 +140,6 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
       this.loadUserId();
     }
 
-    // Obtener el id del método de pago de transferencia para filtrar
-    this.paymentMethodService.getPaymentMethodByCode('TRANSFER').subscribe({
-      next: (methods: any) => {
-        if (methods && methods.length > 0) {
-          this.transferMethodId = methods[0].id;
-          // Refiltrar si ya había datos cargados
-          if (this.paymentHistory?.length) {
-            this.filterPaymentHistoryForDisplay();
-          }
-        }
-      },
-      error: () => {
-        this.transferMethodId = 0;
-      }
-    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -197,7 +181,6 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
       .subscribe({
         next: (payments) => {
           this.paymentHistory = payments;
-          this.filterPaymentHistoryForDisplay();
           // Inicializar selección por cada pago al estado actual
           this.paymentHistory.forEach(p => {
             if (p.publicID) {
@@ -215,23 +198,6 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
       });
   }
 
-  /**
-   * Filtra el historial para que los pagos por transferencia solo aparezcan
-   * cuando ya existe justificante (voucher). El estado puede permanecer en PENDING
-   * hasta que ATC lo cambie; no mostramos el registro mientras no haya justificante.
-   */
-  private filterPaymentHistoryForDisplay(): void {
-    if (!this.paymentHistory || this.paymentHistory.length === 0) return;
-    this.paymentHistory = this.paymentHistory.filter(p => {
-      const isTransfer = this.transferMethodId && p.paymentMethodId === this.transferMethodId;
-      const hasVoucher = !!(p.vouchers && p.vouchers.length > 0);
-      // Ocultar transferencias recién creadas (sin voucher), independientemente del estado
-      if (isTransfer && !hasVoucher) {
-        return false;
-      }
-      return true;
-    });
-  }
 
   public refreshPayments(): void {
     if (this.reservationId) {

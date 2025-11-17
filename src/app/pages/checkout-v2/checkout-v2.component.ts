@@ -264,7 +264,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
         // Cargar datos de la reservación desde el backend
         this.loadReservationData(this.reservationId);
-        this.cleanScalapayPendingPayments();
       } else {
         this.error = 'No se proporcionó un ID de reservación válido';
       }

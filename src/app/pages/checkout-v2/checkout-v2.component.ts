@@ -1087,9 +1087,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         );
 
         // Verificar disponibilidad del pack "sin vuelos" si existe
-        if (flightlessPack && this.departureActivityPackId) {
+        if (flightlessPack) {
+          // Usar el ID del pack "sin vuelos" para verificar su disponibilidad
+          const flightlessPackId = flightlessPack.id;
+          
           this.activityPackAvailabilityService
-            .getByActivityPackAndDeparture(this.departureActivityPackId, departureId)
+            .getByActivityPackAndDeparture(flightlessPackId, departureId)
             .pipe(
               map((availabilities) => {
                 if (availabilities && availabilities.length > 0) {
@@ -1109,8 +1112,34 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
               }
             });
         } else {
-          // Si no hay pack "sin vuelos" o no hay departureActivityPackId, no hay disponibilidad
-          this.hasFlightlessAvailability = false;
+          // Si no hay pack "sin vuelos", verificar usando departureActivityPackId como fallback
+          // Esto puede ser necesario si "sin vuelos" no aparece como un pack separado
+          if (this.departureActivityPackId) {
+            this.activityPackAvailabilityService
+              .getByActivityPackAndDeparture(this.departureActivityPackId, departureId)
+              .pipe(
+                map((availabilities) => {
+                  if (availabilities && availabilities.length > 0) {
+                    const availability = availabilities[0];
+                    return availability.bookableAvailability > 0;
+                  }
+                  return false;
+                }),
+                catchError(() => of(false))
+              )
+              .subscribe({
+                next: (hasAvailability) => {
+                  this.hasFlightlessAvailability = hasAvailability;
+                },
+                error: () => {
+                  this.hasFlightlessAvailability = false;
+                }
+              });
+          } else {
+            // Si no hay pack "sin vuelos" ni departureActivityPackId, asumir que hay disponibilidad
+            // para no bloquear el botón innecesariamente
+            this.hasFlightlessAvailability = true;
+          }
         }
 
         // Verificar disponibilidad real para cada pack usando el endpoint

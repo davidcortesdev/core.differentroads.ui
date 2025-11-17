@@ -114,17 +114,21 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Inicializar prefijo por defecto antes de cargar opciones
+    if (!this.selectedPhonePrefix) {
+      this.selectedPhonePrefix = '+34';
+    }
+    
     // Cargar prefijos telefónicos
     this.phonePrefixService.getAllOrdered()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (prefixes) => {
           this.phonePrefixOptions = prefixes;
-          console.log('Prefijos cargados:', prefixes.length);
+          // Asegurar que el prefijo seleccionado esté establecido después de cargar las opciones
           if (!this.selectedPhonePrefix) {
             this.selectedPhonePrefix = '+34';
           }
-          console.log('Prefijo seleccionado:', this.selectedPhonePrefix);
         },
         error: (error) => {
           console.error('Error loading phone prefixes:', error);

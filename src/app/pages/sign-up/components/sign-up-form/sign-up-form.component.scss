@@ -246,8 +246,7 @@
           background: transparent;
           min-height: auto;
           height: auto;
-          display: flex;
-          align-items: flex-end;
+          padding: 0;
           
           .p-select-label {
             padding: 0;
@@ -255,19 +254,22 @@
             height: auto;
             display: flex;
             align-items: center;
+            min-height: auto;
           }
           
           .p-select-trigger {
             padding: 0;
-            width: auto;
+            width: 100%;
             min-width: auto;
             height: auto;
             display: flex;
             align-items: center;
+            justify-content: space-between;
           }
           
           .p-select-trigger-icon {
             margin-left: 0.5rem;
+            flex-shrink: 0;
           }
         }
         

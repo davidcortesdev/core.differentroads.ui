@@ -39,7 +39,7 @@ import { PaymentsNetService } from './services/paymentsNet.service';
 import { AuthenticateService } from '../../core/services/auth/auth-service.service';
 import { UsersNetService } from '../../core/services/users/usersNet.service';
 import { AnalyticsService } from '../../core/services/analytics/analytics.service';
-import { IFlightPackDTO } from './services/flightsNet.service';
+import { IFlightPackDTO, FlightsNetService } from './services/flightsNet.service';
 import {
   ReservationTravelerService,
 } from '../../core/services/reservation/reservation-traveler.service';
@@ -226,7 +226,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     private locationNetService: LocationNetService,
     private itineraryDayService: ItineraryDayService,
     private activityService: ActivityService,
-    private activityPackAvailabilityService: ActivityPackAvailabilityService
+    private activityPackAvailabilityService: ActivityPackAvailabilityService,
+    private flightsNetService: FlightsNetService
   ) {}
 
   ngOnInit(): void {
@@ -1060,57 +1061,55 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     this.hasAvailableFlights = false;
     this.availableFlights = [];
 
-    // Importar el servicio de vuelos
-    import('./services/flightsNet.service').then(({ FlightsNetService }) => {
-      const flightsService = new FlightsNetService(this.http);
+    this.flightsNetService.getFlights(departureId).subscribe({
+      next: (flights) => {
+        // Almacenar los vuelos disponibles
+        this.availableFlights = flights || [];
 
-      flightsService.getFlights(departureId).subscribe({
-        next: (flights) => {
-          // Almacenar los vuelos disponibles
-          this.availableFlights = flights || [];
-
-          if (!flights || flights.length === 0) {
-            this.hasAvailableFlights = false;
-            return;
-          }
-
-          // Verificar disponibilidad real para cada pack usando el endpoint
-          const availabilityChecks = flights.map((pack) =>
-            this.activityPackAvailabilityService
-              .getByActivityPackAndDeparture(pack.id, departureId)
-              .pipe(
-                map((availabilities) => {
-                  // Si hay disponibilidad y bookableAvailability > 0, hay vuelos disponibles
-                  if (availabilities && availabilities.length > 0) {
-                    const availability = availabilities[0];
-                    return availability.bookableAvailability > 0;
-                  }
-                  return false;
-                }),
-                catchError(() => {
-                  // Si hay error, asumir que no hay disponibilidad
-                  return of(false);
-                })
-              )
-          );
-
-          // Verificar si hay al menos un pack con disponibilidad > 0
-          forkJoin(availabilityChecks).subscribe({
-            next: (results) => {
-              this.hasAvailableFlights = results.some((hasAvailability) => hasAvailability);
-            },
-            error: (error) => {
-              console.error('Error al verificar disponibilidad de vuelos:', error);
-              this.hasAvailableFlights = false;
-            },
-          });
-        },
-        error: (error) => {
-          console.error('Error al obtener vuelos:', error);
+        if (!flights || flights.length === 0) {
           this.hasAvailableFlights = false;
-          this.availableFlights = [];
-        },
-      });
+          return;
+        }
+
+        // Verificar disponibilidad real para cada pack usando el endpoint
+        const availabilityChecks = flights.map((pack) =>
+          this.activityPackAvailabilityService
+            .getByActivityPackAndDeparture(pack.id, departureId)
+            .pipe(
+              map((availabilities) => {
+                // Si hay disponibilidad y bookableAvailability > 0, hay vuelos disponibles
+                if (availabilities && availabilities.length > 0) {
+                  const availability = availabilities[0];
+                  return availability.bookableAvailability > 0;
+                }
+                return false;
+              }),
+              catchError(() => {
+                // Si hay error, asumir que no hay disponibilidad
+                return of(false);
+              })
+            )
+        );
+
+        // Verificar si hay al menos un pack con disponibilidad > 0
+        if (availabilityChecks.length === 0) {
+          this.hasAvailableFlights = false;
+          return;
+        }
+
+        forkJoin(availabilityChecks).subscribe({
+          next: (results) => {
+            this.hasAvailableFlights = results.some((hasAvailability) => hasAvailability);
+          },
+          error: () => {
+            this.hasAvailableFlights = false;
+          },
+        });
+      },
+      error: () => {
+        this.hasAvailableFlights = false;
+        this.availableFlights = [];
+      },
     });
   }
 

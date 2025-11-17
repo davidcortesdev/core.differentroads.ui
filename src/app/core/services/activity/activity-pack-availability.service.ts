@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 
 /**
@@ -37,7 +38,7 @@ export class ActivityPackAvailabilityService {
 
   /**
    * Obtiene todas las disponibilidades de activity pack disponibles.
-   * @param filters Filtros para aplicar en la búsqueda (Id, DepartureId, ActivityPackId).
+   * @param filters Filtros para aplicar en la búsqueda (activityPackId, departureId).
    * @returns Lista de disponibilidades de activity pack.
    */
   getAll(
@@ -49,24 +50,43 @@ export class ActivityPackAvailabilityService {
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
-          params = params.set(
-            key.charAt(0).toUpperCase() + key.slice(1),
-            value.toString()
-          );
+          // Usar el nombre del parámetro tal cual (camelCase) sin capitalizar
+          params = params.set(key, value.toString());
         }
       });
     }
 
-    return this.http.get<IActivityPackAvailabilityResponse[]>(this.API_URL, {
-      params,
-    });
+    return this.http
+      .get<IActivityPackAvailabilityResponse | IActivityPackAvailabilityResponse[]>(
+        this.API_URL,
+        { params }
+      )
+      .pipe(
+        // Convertir objeto único a array si es necesario
+        map((response) => {
+          if (Array.isArray(response)) {
+            return response;
+          } else if (response && typeof response === 'object') {
+            // Si es un objeto único, convertirlo a array
+            return [response];
+          } else {
+            // Si no hay respuesta, devolver array vacío
+            return [];
+          }
+        }),
+        // Manejar errores 500 cuando los parámetros son inválidos
+        catchError((error) => {
+          // Si es un error 500 o cualquier otro error, devolver array vacío
+          return of([]);
+        })
+      );
   }
 
   /**
    * Obtiene la disponibilidad de un activity pack específico por su ID y departureId.
    * @param activityPackId ID del activity pack.
    * @param departureId ID del departure.
-   * @returns Disponibilidad del activity pack.
+   * @returns Disponibilidad del activity pack (array, puede estar vacío si no hay disponibilidad o hay error).
    */
   getByActivityPackAndDeparture(
     activityPackId: number,

@@ -139,6 +139,20 @@
           </small>
         </div>
 
+        <!-- Checkbox de política de privacidad -->
+        <div class="input-group mt-4 col-span-2 privacy-policy-container">
+          <div class="privacy-policy-wrapper">
+            <p-checkbox
+              formControlName="acceptPrivacyPolicy"
+              inputId="acceptPrivacyPolicy"
+              [binary]="true"
+            ></p-checkbox>
+            <label for="acceptPrivacyPolicy" class="privacy-policy-label">
+              Acepto la <a href="/pages/politica-de-privacidad" target="_blank" class="privacy-policy-link">política de privacidad</a>
+            </label>
+          </div>
+        </div>
+
         <!-- Botón de registro -->
         <p-button
           type="submit"

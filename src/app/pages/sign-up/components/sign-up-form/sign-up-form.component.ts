@@ -14,6 +14,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { SelectModule } from 'primeng/select';
+import { CheckboxModule } from 'primeng/checkbox';
 import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 import { UsersNetService } from '../../../../core/services/users/usersNet.service';
 import { HubspotService } from '../../../../core/services/integrations/hubspot.service';
@@ -41,7 +42,8 @@ import { takeUntil, switchMap, catchError } from 'rxjs/operators';
     ButtonModule,
     DividerModule,
     ProgressSpinnerModule,
-    SelectModule
+    SelectModule,
+    CheckboxModule
   ],
   templateUrl: './sign-up-form.component.html',
   styleUrls: ['./sign-up-form.component.scss'],
@@ -86,7 +88,10 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
     confirmPassword: {
       required: 'Confirma tu contraseña.',
       mismatch: 'Las contraseñas no coinciden.',
-    }
+    },
+    acceptPrivacyPolicy: {
+      required: 'Debes aceptar la política de privacidad para continuar',
+    },
   };
 
   constructor(
@@ -108,6 +113,7 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
         phone: ['', [Validators.required, Validators.pattern(/^\d{6,14}$/)]],
         password: ['', [Validators.required, Validators.minLength(8)]],
         confirmPassword: ['', [Validators.required]],
+        acceptPrivacyPolicy: [false, [Validators.requiredTrue]],
       },
       { validators: this.passwordMatchValidator }
     );

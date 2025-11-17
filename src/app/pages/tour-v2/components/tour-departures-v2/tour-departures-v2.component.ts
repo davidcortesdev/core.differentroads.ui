@@ -272,6 +272,8 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
             this.filteredCities = [];
             this.selectedCity = null;
             this.citiesLoading = false;
+            // Emitir cityUpdate con string vacío cuando no hay ciudades
+            this.emitCityUpdate();
             return;
           }
 
@@ -345,8 +347,10 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
             if (sinVuelosCity) {
               this.selectedCity = sinVuelosCity;
+              this.emitCityUpdate();
             } else if (this.cities.length > 0) {
               this.selectedCity = this.cities[0];
+              this.emitCityUpdate();
             }
           } else {
             // Si no hay ciudades "Sin Vuelos", usar ordenamiento alfabético normal
@@ -359,11 +363,14 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
             // Seleccionar la primera ciudad disponible
             if (this.cities.length > 0) {
               this.selectedCity = this.cities[0];
+              this.emitCityUpdate();
             }
           }
 
           if (this.cities.length === 0) {
             console.warn('⚠️ No hay ciudades disponibles para seleccionar');
+            // Emitir cityUpdate con string vacío cuando no hay ciudades
+            this.emitCityUpdate();
           }
 
           this.citiesLoading = false;
@@ -377,6 +384,9 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           this.filteredCities = [];
           this.selectedCity = null;
           this.citiesLoading = false;
+
+          // Emitir cityUpdate con string vacío en caso de error
+          this.emitCityUpdate();
 
           this.messageService.add({
             severity: 'warn',

@@ -18,6 +18,7 @@ export class FlightItemComponent implements OnInit, OnDestroy {
   @Input() flightPack: IFlightPackDTO | null = null;
   @Input() selectedFlight: IFlightPackDTO | null = null;
   @Input() flightDetails: Map<number, IFlightDetailDTO> = new Map();
+  @Input() availablePlaces?: number;
   /**
    * Controla qué servicio usar en el componente flight-stops:
    * - false (default): Usa FlightsNetService (comportamiento actual)

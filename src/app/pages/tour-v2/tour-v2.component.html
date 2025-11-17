@@ -27,7 +27,8 @@
           [activityTypesAnalysis]="activityTypesAnalysis"
           [preview]="preview"
           [selectedActivityPackId]="selectedActivityPackId"
-          [tourTripTypes]="tourTripTypes"> <!-- ✅ NUEVO: Añadir tourTripTypes -->
+          [tourTripTypes]="tourTripTypes"
+          [citiesLoading]="citiesLoading"> <!-- ✅ NUEVO: Añadir citiesLoading -->
         </app-tour-header-v2>
       </section>
     </section>
@@ -65,7 +66,8 @@
         (passengersUpdate)="onPassengersUpdate($event)"
         (ageGroupsUpdate)="onAgeGroupsUpdate($event)"
         [preview]="preview"
-        (activityPackIdUpdate)="onActivityPackIdUpdate($event)">
+        (activityPackIdUpdate)="onActivityPackIdUpdate($event)"
+        (citiesLoadingUpdate)="onCitiesLoadingUpdate($event)">
       </app-tour-departures-v2>
     </section>
     

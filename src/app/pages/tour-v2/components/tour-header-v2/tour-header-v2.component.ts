@@ -108,6 +108,7 @@ export class TourHeaderV2Component
   @Input() tourId: number | undefined;
   @Input() totalPrice: number = 0;
   @Input() selectedCity: string = '';
+  @Input() citiesLoading: boolean = false;
   @Input() selectedDeparture: any = null;
   @Input() totalPassengers: number = 1;
   @Input() selectedActivities: ActivityHighlight[] = [];
@@ -237,6 +238,30 @@ export class TourHeaderV2Component
       this.selectedDeparture &&
       this.selectedDeparture.departureDate
     );
+  }
+
+  // ✅ GETTER: Verificar si todos los datos del header están listos
+  get isHeaderDataReady(): boolean {
+    // Verificar que las ciudades ya no están cargando
+    if (this.citiesLoading) {
+      return false;
+    }
+    
+    // Verificar que hay ciudad seleccionada
+    if (!this.selectedCity || this.selectedCity.trim() === '') {
+      return false;
+    }
+    
+    // Verificar que hay departure seleccionado con fecha
+    if (!this.selectedDeparture || !this.selectedDeparture.departureDate) {
+      return false;
+    }
+    
+    // Verificar que el precio se ha establecido (puede ser 0, pero debe haberse establecido)
+    // Si totalPrice es 0 pero citiesLoading es false y hay ciudad, significa que ya se procesó
+    // Por lo tanto, consideramos que está listo si citiesLoading es false
+    
+    return true;
   }
 
   // ✅ GETTER dinámico para texto de actividades

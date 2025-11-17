@@ -264,6 +264,22 @@ export class TourHeaderV2Component
     return true;
   }
 
+  // ✅ GETTER: Verificar si el departure seleccionado es reservable
+  get isDepartureBookable(): boolean {
+    if (!this.selectedDeparture) {
+      return false;
+    }
+    
+    // Verificar isBookable del departure
+    // Si isBookable es explícitamente false, no es reservable
+    if (this.selectedDeparture.isBookable === false) {
+      return false;
+    }
+    
+    // Si isBookable es true o undefined, es reservable
+    return true;
+  }
+
   // ✅ GETTER dinámico para texto de actividades
   get activitiesStatusText(): string {
     if (!this.hasAddedActivities) {
@@ -367,6 +383,9 @@ export class TourHeaderV2Component
     }
     if (!this.hasSelectedDate) {
       return 'Debes seleccionar una fecha de salida para poder reservar';
+    }
+    if (!this.isDepartureBookable) {
+      return 'Esta salida no tiene disponibilidad';
     }
     return '';
   }

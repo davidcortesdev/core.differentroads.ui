@@ -73,7 +73,7 @@
         (onClick)="onBookingClick()"
         [pTooltip]="getBookingTooltip()"
         [tooltipPosition]="'top'"
-        [disabled]="preview || !hasSelectedDate">
+        [disabled]="preview || !hasSelectedDate || !isDepartureBookable">
       </p-button>
     </div>
   </div>

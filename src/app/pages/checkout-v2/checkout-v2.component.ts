@@ -59,6 +59,10 @@ import { TourLocationService, ITourLocationResponse } from '../../core/services/
 import { LocationNetService, Location } from '../../core/services/locations/locationNet.service';
 import { ItineraryDayService, IItineraryDayResponse } from '../../core/services/itinerary/itinerary-day/itinerary-day.service';
 import { ActivityService, IActivityResponse } from '../../core/services/activity/activity.service';
+import {
+  ActivityPackAvailabilityService,
+  IActivityPackAvailabilityResponse,
+} from '../../core/services/activity/activity-pack-availability.service';
 
 @Component({
   selector: 'app-checkout-v2',
@@ -221,7 +225,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     private tourLocationService: TourLocationService,
     private locationNetService: LocationNetService,
     private itineraryDayService: ItineraryDayService,
-    private activityService: ActivityService
+    private activityService: ActivityService,
+    private activityPackAvailabilityService: ActivityPackAvailabilityService
   ) {}
 
   ngOnInit(): void {
@@ -1048,8 +1053,13 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
   /**
    * Método para verificar la disponibilidad de vuelos en el sistema
+   * Verifica la disponibilidad real usando el endpoint ActivityPackAvailability
    */
   private checkFlightsAvailability(departureId: number): void {
+    // Resetear estado al inicio de la carga
+    this.hasAvailableFlights = false;
+    this.availableFlights = [];
+
     // Importar el servicio de vuelos
     import('./services/flightsNet.service').then(({ FlightsNetService }) => {
       const flightsService = new FlightsNetService(this.http);
@@ -1059,26 +1069,44 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           // Almacenar los vuelos disponibles
           this.availableFlights = flights || [];
 
-          // Verificar si hay vuelos disponibles basándose en name y description
-          this.hasAvailableFlights =
-            flights &&
-            flights.length > 0 &&
-            flights.some((pack) => {
-              const name = pack.name?.toLowerCase() || '';
-              const description = pack.description?.toLowerCase() || '';
+          if (!flights || flights.length === 0) {
+            this.hasAvailableFlights = false;
+            return;
+          }
 
-              // Verificar que SÍ sea una opción sin vuelos
-              const isFlightlessOption =
-                name.includes('sin vuelos') ||
-                description.includes('sin vuelos') ||
-                name.includes('pack sin vuelos') ||
-                description.includes('pack sin vuelos');
+          // Verificar disponibilidad real para cada pack usando el endpoint
+          const availabilityChecks = flights.map((pack) =>
+            this.activityPackAvailabilityService
+              .getByActivityPackAndDeparture(pack.id, departureId)
+              .pipe(
+                map((availabilities) => {
+                  // Si hay disponibilidad y bookableAvailability > 0, hay vuelos disponibles
+                  if (availabilities && availabilities.length > 0) {
+                    const availability = availabilities[0];
+                    return availability.bookableAvailability > 0;
+                  }
+                  return false;
+                }),
+                catchError(() => {
+                  // Si hay error, asumir que no hay disponibilidad
+                  return of(false);
+                })
+              )
+          );
 
-              return isFlightlessOption;
-            });
+          // Verificar si hay al menos un pack con disponibilidad > 0
+          forkJoin(availabilityChecks).subscribe({
+            next: (results) => {
+              this.hasAvailableFlights = results.some((hasAvailability) => hasAvailability);
+            },
+            error: (error) => {
+              console.error('Error al verificar disponibilidad de vuelos:', error);
+              this.hasAvailableFlights = false;
+            },
+          });
         },
         error: (error) => {
-          console.error('Error al verificar disponibilidad de vuelos:', error);
+          console.error('Error al obtener vuelos:', error);
           this.hasAvailableFlights = false;
           this.availableFlights = [];
         },

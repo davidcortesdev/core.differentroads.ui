@@ -92,6 +92,10 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       changes['departureId'].currentValue !==
         changes['departureId'].previousValue
     ) {
+      // Resetear estado cuando cambia el departureId
+      this.flightPacks = [];
+      this.selectedFlight = null;
+      this.flightDetails.clear();
       this.getFlights();
     }
 
@@ -165,8 +169,17 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
 
   getFlights(): void {
     if (!this.departureId) {
+      // Resetear estado si no hay departureId
+      this.flightPacks = [];
+      this.selectedFlight = null;
       return;
     }
+    
+    // Resetear estado antes de cargar nuevos vuelos
+    this.flightPacks = [];
+    this.selectedFlight = null;
+    this.flightDetails.clear();
+    
     this.flightsNetService.getFlights(this.departureId).subscribe((flights) => {
       this.flightPacks = flights.map((pack) => ({
         ...pack,

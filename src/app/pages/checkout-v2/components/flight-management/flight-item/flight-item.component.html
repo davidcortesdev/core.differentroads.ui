@@ -50,7 +50,7 @@
         <span class="flight-itinerary-price-wrapper-text">Por persona</span>
       </div>
 
-      <div class="flight-availability-info" *ngIf="availablePlaces !== undefined">
+      <div class="flight-availability-info" *ngIf="availablePlaces !== undefined && availablePlaces <= 4">
         <span *ngIf="availablePlaces > 0" class="availability-available">
           <i class="pi pi-check-circle"></i>
           {{ availablePlaces }} {{ availablePlaces === 1 ? ' disponible' : ' disponibles' }}

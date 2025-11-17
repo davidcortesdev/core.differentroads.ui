@@ -150,6 +150,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   hasAvailableFlights: boolean = false; // Nueva propiedad para controlar la visibilidad del botón
   availableFlights: IFlightPackDTO[] = []; // Nueva propiedad para almacenar los vuelos disponibles
   departureActivityPackId: number | null = null; // NUEVO: ID del paquete de actividad del departure
+  hasFlightlessAvailability: boolean = false; // Nueva propiedad para controlar si "sin vuelos" tiene disponibilidad
 
   // Steps configuration
   items: MenuItem[] = [];
@@ -1059,6 +1060,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   private checkFlightsAvailability(departureId: number): void {
     // Resetear estado al inicio de la carga
     this.hasAvailableFlights = false;
+    this.hasFlightlessAvailability = false;
     this.availableFlights = [];
 
     this.flightsNetService.getFlights(departureId).subscribe({
@@ -1068,7 +1070,47 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
         if (!flights || flights.length === 0) {
           this.hasAvailableFlights = false;
+          this.hasFlightlessAvailability = false;
           return;
+        }
+
+        // Buscar el pack "sin vuelos" para verificar su disponibilidad
+        const flightlessPack = flights.find(
+          (pack: IFlightPackDTO) => {
+            const name = pack.name?.toLowerCase() || '';
+            const description = pack.description?.toLowerCase() || '';
+            return name.includes('sin vuelos') ||
+                   description.includes('sin vuelos') ||
+                   name.includes('pack sin vuelos') ||
+                   description.includes('pack sin vuelos');
+          }
+        );
+
+        // Verificar disponibilidad del pack "sin vuelos" si existe
+        if (flightlessPack && this.departureActivityPackId) {
+          this.activityPackAvailabilityService
+            .getByActivityPackAndDeparture(this.departureActivityPackId, departureId)
+            .pipe(
+              map((availabilities) => {
+                if (availabilities && availabilities.length > 0) {
+                  const availability = availabilities[0];
+                  return availability.bookableAvailability > 0;
+                }
+                return false;
+              }),
+              catchError(() => of(false))
+            )
+            .subscribe({
+              next: (hasAvailability) => {
+                this.hasFlightlessAvailability = hasAvailability;
+              },
+              error: () => {
+                this.hasFlightlessAvailability = false;
+              }
+            });
+        } else {
+          // Si no hay pack "sin vuelos" o no hay departureActivityPackId, no hay disponibilidad
+          this.hasFlightlessAvailability = false;
         }
 
         // Verificar disponibilidad real para cada pack usando el endpoint
@@ -1108,6 +1150,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       },
       error: () => {
         this.hasAvailableFlights = false;
+        this.hasFlightlessAvailability = false;
         this.availableFlights = [];
       },
     });

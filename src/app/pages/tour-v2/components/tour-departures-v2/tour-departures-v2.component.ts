@@ -1126,6 +1126,8 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           if (this.selectedCity!.activityPackId) {
             this.loadActivityPackAvailability(departure.id, this.selectedCity!.activityPackId!);
           }
+          // Recargar horarios de vuelos con la nueva ciudad seleccionada
+          this.loadFlightTimes(departure.id);
         }
       });
     }
@@ -1786,10 +1788,24 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     if (cityWithAvailability) {
       this.selectedCity = cityWithAvailability;
       this.emitCityUpdate();
+      
+      // Recargar vuelos con la ciudad seleccionada
+      this.allDepartures.forEach(departure => {
+        if (departure.id) {
+          this.loadFlightTimes(departure.id);
+        }
+      });
     } else {
       // Si ninguna tiene disponibilidad, seleccionar la primera (fallback)
       this.selectedCity = this.cities[0];
       this.emitCityUpdate();
+      
+      // Recargar vuelos con la ciudad seleccionada
+      this.allDepartures.forEach(departure => {
+        if (departure.id) {
+          this.loadFlightTimes(departure.id);
+        }
+      });
     }
   }
 

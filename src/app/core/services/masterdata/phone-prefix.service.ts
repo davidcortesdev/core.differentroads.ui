@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 
 export interface IPhonePrefixResponse {
@@ -29,6 +29,13 @@ export interface PhonePrefixFilters {
 })
 export class PhonePrefixService {
   private readonly API_URL = `${environment.masterdataApiUrl}/PhonePrefix`;
+  private readonly USER_FIELD_VALUE_API_URL = `${environment.usersApiUrl}/UserFieldValue`;
+  
+  private readonly httpOptions = {
+    headers: new HttpHeaders({
+      'Content-Type': 'application/json',
+    }),
+  };
 
   constructor(private http: HttpClient) {}
 
@@ -100,6 +107,33 @@ export class PhonePrefixService {
     }
     
     return String(prefix);
+  }
+
+  /**
+   * Guarda el prefijo telefónico de un usuario como UserFieldValue
+   * @param userId - ID del usuario
+   * @param phonePrefix - Prefijo telefónico a guardar (ej: "+34")
+   * @returns Observable con el resultado de la operación
+   */
+  saveUserPhonePrefix(userId: string, phonePrefix: string): Observable<any> {
+    if (!phonePrefix) {
+      return of(null);
+    }
+
+    // userFieldId: 15 corresponde al campo 'phonePrefix' según el mapeo en UpdateProfileV2Service
+    const fieldValue = {
+      userId: parseInt(userId),
+      userFieldId: 15,
+      value: phonePrefix.toString().trim()
+    };
+
+    // POST directo a UserFieldValue para crear el campo
+    return this.http.post(this.USER_FIELD_VALUE_API_URL, fieldValue, this.httpOptions).pipe(
+      catchError((error) => {
+        console.error('Error al guardar prefijo telefónico:', error);
+        return of(null);
+      })
+    );
   }
 }
 

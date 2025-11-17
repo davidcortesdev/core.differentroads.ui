@@ -221,4 +221,68 @@
     display: flex;
     justify-content: center;
   }
+
+  // Fila especial para prefijo + teléfono
+  .phone-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    width: 100%;
+
+    app-phone-prefix-select {
+      flex: 0 0 auto;
+      width: 140px;
+      min-width: 140px;
+      display: flex;
+      align-items: flex-end;
+
+      ::ng-deep {
+        .p-select {
+          width: 100%;
+          border: none;
+          border-bottom: .0625rem solid var(--background-azul);
+          box-shadow: none;
+          border-radius: 0;
+          background: transparent;
+          min-height: auto;
+          height: auto;
+          display: flex;
+          align-items: flex-end;
+          
+          .p-select-label {
+            padding: 0;
+            line-height: 1.5;
+            height: auto;
+            display: flex;
+            align-items: center;
+          }
+          
+          .p-select-trigger {
+            padding: 0;
+            width: auto;
+            min-width: auto;
+            height: auto;
+            display: flex;
+            align-items: center;
+          }
+          
+          .p-select-trigger-icon {
+            margin-left: 0.5rem;
+          }
+        }
+        
+        .p-select:focus,
+        .p-select:focus-within {
+          border-bottom-color: var(--background-azul);
+          box-shadow: none;
+        }
+      }
+    }
+
+    .phone-input {
+      flex: 1 1 auto;
+      width: 100%;
+      height: auto;
+    }
+  }
 }

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   FormBuilder,
@@ -7,19 +7,25 @@ import {
   ReactiveFormsModule,
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DividerModule } from 'primeng/divider';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { SelectModule } from 'primeng/select';
 import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 import { UsersNetService } from '../../../../core/services/users/usersNet.service';
 import { HubspotService } from '../../../../core/services/integrations/hubspot.service';
 import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
 import { ConfirmationCodeComponent } from '../../../../shared/components/confirmation-code/confirmation-code.component';
+import { PhonePrefixSelectComponent } from '../../../../shared/components/phone-prefix-select/phone-prefix-select.component';
+import { PhonePrefixService, IPhonePrefixResponse } from '../../../../core/services/masterdata/phone-prefix.service';
 import { IUserResponse } from '../../../../core/models/users/user.model';
 import { environment } from '../../../../../environments/environment';
 import { MessageService } from 'primeng/api';
+import { Subject, of, Observable } from 'rxjs';
+import { takeUntil, switchMap, catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-sign-up-form',
@@ -27,17 +33,20 @@ import { MessageService } from 'primeng/api';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     ConfirmationCodeComponent,
+    PhonePrefixSelectComponent,
     InputTextModule,
     PasswordModule,
     ButtonModule,
     DividerModule,
-    ProgressSpinnerModule
+    ProgressSpinnerModule,
+    SelectModule
   ],
   templateUrl: './sign-up-form.component.html',
   styleUrls: ['./sign-up-form.component.scss'],
 })
-export class SignUpFormComponent {
+export class SignUpFormComponent implements OnInit, OnDestroy {
   signUpForm: FormGroup;
   isLoading: boolean = false;
   isConfirming: boolean = false;
@@ -47,6 +56,12 @@ export class SignUpFormComponent {
   registeredUsername: string = '';
   userPassword: string = '';
   registeredUser: IUserResponse | null = null;
+
+  // Opciones para el dropdown de prefijo telefónico
+  phonePrefixOptions: IPhonePrefixResponse[] = [];
+  selectedPhonePrefix: string | null = '+34';
+
+  private destroy$ = new Subject<void>();
 
   // Mensajes de error personalizados
   errorMessages: { [key: string]: { [key: string]: string } } = {
@@ -81,19 +96,51 @@ export class SignUpFormComponent {
     private usersNetService: UsersNetService,
     private hubspotService: HubspotService,
     private analyticsService: AnalyticsService,
-    private messageService: MessageService // <--- INYECTAR!
+    private messageService: MessageService,
+    private phonePrefixService: PhonePrefixService
   ) {
     this.signUpForm = this.fb.group(
       {
         firstName: ['', [Validators.required]],
         lastName: ['', [Validators.required]],
         email: ['', [Validators.required, Validators.email]],
+        phonePrefix: ['+34'],
         phone: ['', [Validators.required, Validators.pattern(/^\d{6,14}$/)]],
         password: ['', [Validators.required, Validators.minLength(8)]],
         confirmPassword: ['', [Validators.required]],
       },
       { validators: this.passwordMatchValidator }
     );
+  }
+
+  ngOnInit(): void {
+    // Cargar prefijos telefónicos
+    this.phonePrefixService.getAllOrdered()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (prefixes) => {
+          this.phonePrefixOptions = prefixes;
+          console.log('Prefijos cargados:', prefixes.length);
+          if (!this.selectedPhonePrefix) {
+            this.selectedPhonePrefix = '+34';
+          }
+          console.log('Prefijo seleccionado:', this.selectedPhonePrefix);
+        },
+        error: (error) => {
+          console.error('Error loading phone prefixes:', error);
+        }
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  onPhonePrefixChange(event: any): void {
+    const value = event?.value || event || null;
+    this.selectedPhonePrefix = value;
+    this.signUpForm.patchValue({ phonePrefix: value || '+34' });
   }
 
   showToastError(msg: string) {
@@ -178,10 +225,17 @@ export class SignUpFormComponent {
                       
                       this.usersNetService
                         .updateUser(existingUser.id, updateData)
+                        .pipe(
+                          switchMap(() => {
+                            return this.phonePrefixService.saveUserPhonePrefix(
+                              existingUser.id.toString(), 
+                              this.selectedPhonePrefix || '+34'
+                            );
+                          })
+                        )
                         .subscribe({
-                          next: (updated) => {
-                            console.log('Usuario actualizado exitosamente:', updated);
-                            
+                          next: () => {
+                            console.log('Usuario actualizado exitosamente con prefijo telefónico');
                             // Guardar el usuario para verificar después de la confirmación
                             this.registeredUser = existingUser;
                             
@@ -204,10 +258,19 @@ export class SignUpFormComponent {
                       
                       this.usersNetService
                         .createUser(userData)
+                        .pipe(
+                          switchMap((user) => {
+                            console.log('Usuario creado exitosamente:', user);
+                            return this.phonePrefixService.saveUserPhonePrefix(
+                              user.id.toString(), 
+                              this.selectedPhonePrefix || '+34'
+                            ).pipe(
+                              switchMap(() => of(user))
+                            );
+                          })
+                        )
                         .subscribe({
                           next: (user) => {
-                            console.log('Usuario creado exitosamente:', user);
-                            
                             // Guardar el usuario para verificar después de la confirmación
                             this.registeredUser = user;
                             
@@ -217,7 +280,7 @@ export class SignUpFormComponent {
                             this.isConfirming = true;
                             this.registeredUsername = this.signUpForm.value.email;
                             this.userPassword = this.signUpForm.value.password;
-                            console.log('Registro completado. Esperando confirmación.');
+                            console.log('Registro completado con prefijo telefónico. Esperando confirmación.');
                           },
                           error: (error: unknown) => {
                             this.isLoading = false;

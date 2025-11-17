@@ -1,10 +1,13 @@
 import { Component, Input, Output, EventEmitter, forwardRef, ChangeDetectorRef } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { SelectModule } from 'primeng/select';
 import { IPhonePrefixResponse, PhonePrefixService } from '../../../core/services/masterdata/phone-prefix.service';
 
 @Component({
   selector: 'app-phone-prefix-select',
-  standalone: false,
+  standalone: true,
+  imports: [CommonModule, FormsModule, SelectModule],
   templateUrl: './phone-prefix-select.component.html',
   styleUrls: ['./phone-prefix-select.component.scss'],
   providers: [

@@ -17,7 +17,6 @@ import { SelectModule } from 'primeng/select';
 import { CheckboxModule } from 'primeng/checkbox';
 import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 import { UsersNetService } from '../../../../core/services/users/usersNet.service';
-import { HubspotService } from '../../../../core/services/integrations/hubspot.service';
 import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
 import { ConfirmationCodeComponent } from '../../../../shared/components/confirmation-code/confirmation-code.component';
 import { PhonePrefixSelectComponent } from '../../../../shared/components/phone-prefix-select/phone-prefix-select.component';
@@ -99,7 +98,6 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
     private router: Router,
     private authService: AuthenticateService,
     private usersNetService: UsersNetService,
-    private hubspotService: HubspotService,
     private analyticsService: AnalyticsService,
     private messageService: MessageService,
     private phonePrefixService: PhonePrefixService
@@ -183,23 +181,10 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     console.log('Formulario enviado:', this.signUpForm.value);
 
-    // Crear el contacto en Hubspot primero
-    const contactData = {
-      email: this.signUpForm.value.email,
-      firstname: this.signUpForm.value.firstName,
-      lastname: this.signUpForm.value.lastName,
-      phone: this.signUpForm.value.phone,
-    };
-
-    this.hubspotService.createContact(contactData)
-      .subscribe({
-        next: (hubspotResponse) => {
-          console.log('Contacto creado en Hubspot exitosamente:', hubspotResponse);
-
-          // Si Hubspot responde correctamente, proceder con el registro del usuario
-          this.authService
-            .signUp(this.signUpForm.value.email, this.signUpForm.value.password)
-            .then((cognitoUserId) => {
+    // Proceder con el registro del usuario
+    this.authService
+      .signUp(this.signUpForm.value.email, this.signUpForm.value.password)
+      .then((cognitoUserId) => {
               console.log('Usuario creado en Cognito con ID:', cognitoUserId);
               
               // Primero buscar si el usuario ya existe en UsersNet por email
@@ -216,7 +201,9 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
                       phone: this.signUpForm.value.phone,
                       hasWebAccess: true,
                       hasMiddleAccess: false,
-                      retailerId: environment.retaileriddefault
+                      retailerId: environment.retaileriddefault,
+                      politicasAceptadas: this.signUpForm.value.acceptPrivacyPolicy === true ? true : false,
+                      detalleDeLaFuenteDeRegistro1: 'Formulario de registro.'
                     };
 
                     if (existingUsers && existingUsers.length > 0) {
@@ -309,13 +296,6 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
               this.isLoading = false;
               this.showToastError(error instanceof Error ? error.message : 'Registro fallido');
             });
-        },
-        error: (hubspotError) => {
-          this.isLoading = false;
-          this.showToastError('Error al crear el contacto en Hubspot');
-          console.error('Error al crear contacto en Hubspot:', hubspotError);
-        }
-      });
   }
 
   onConfirmSuccess(): void {

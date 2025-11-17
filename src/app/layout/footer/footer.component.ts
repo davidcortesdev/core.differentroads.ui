@@ -22,7 +22,7 @@ import { AuthenticateService } from '../../core/services/auth/auth-service.servi
 // Constants for contact information
 const CONTACT_INFO = {
   PHONE: '+34 96 502 71 04',
-  EMAIL: 'info@differentroads.com',
+  EMAIL: 'info@differentroads.es',
 } as const;
 
 @Component({

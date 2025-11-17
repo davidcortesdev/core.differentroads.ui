@@ -1,10 +1,13 @@
-import { Component, Input, Output, EventEmitter, forwardRef, ChangeDetectorRef } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Component, Input, Output, EventEmitter, forwardRef, ChangeDetectorRef, OnChanges, SimpleChanges } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { SelectModule } from 'primeng/select';
 import { IPhonePrefixResponse, PhonePrefixService } from '../../../core/services/masterdata/phone-prefix.service';
 
 @Component({
   selector: 'app-phone-prefix-select',
-  standalone: false,
+  standalone: true,
+  imports: [CommonModule, FormsModule, SelectModule],
   templateUrl: './phone-prefix-select.component.html',
   styleUrls: ['./phone-prefix-select.component.scss'],
   providers: [
@@ -15,7 +18,7 @@ import { IPhonePrefixResponse, PhonePrefixService } from '../../../core/services
     }
   ]
 })
-export class PhonePrefixSelectComponent implements ControlValueAccessor {
+export class PhonePrefixSelectComponent implements ControlValueAccessor, OnChanges {
   @Input() phonePrefixOptions: IPhonePrefixResponse[] = [];
   @Input() placeholder: string = 'Seleccione prefijo';
   @Input() showClear: boolean = true;
@@ -39,6 +42,14 @@ export class PhonePrefixSelectComponent implements ControlValueAccessor {
     private phonePrefixService: PhonePrefixService,
     private cdr: ChangeDetectorRef
   ) {}
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // Cuando se cargan las opciones, actualizar el prefijo seleccionado
+    if (changes['phonePrefixOptions'] && this.phonePrefixOptions.length > 0 && this.selectedValue) {
+      this.updateSelectedPrefix();
+      this.cdr.markForCheck();
+    }
+  }
 
   writeValue(value: string | null): void {
     this.selectedValue = value;

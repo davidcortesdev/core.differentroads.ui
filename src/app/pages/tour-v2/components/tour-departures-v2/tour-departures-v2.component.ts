@@ -46,6 +46,10 @@ import {
   IActivityAvailabilityResponse,
 } from '../../../../core/services/activity/activity-availability.service';
 import {
+  ActivityPackAvailabilityService,
+  IActivityPackAvailabilityResponse,
+} from '../../../../core/services/activity/activity-pack-availability.service';
+import {
   DepartureAvailabilityService,
   IDepartureAvailabilityResponse,
 } from '../../../../core/services/departure/departure-availability.service';
@@ -193,6 +197,11 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     [departureId: number]: IActivityAvailabilityResponse | null;
   } = {};
 
+  // Mapa de disponibilidad de plazas por departureId (ActivityPack)
+  activityPackAvailabilityByDepartureId: {
+    [departureId: number]: IActivityPackAvailabilityResponse | null;
+  } = {};
+
   // Mapa de disponibilidad de plazas por departureId (Departure)
   departureAvailabilityByDepartureId: {
     [departureId: number]: IDepartureAvailabilityResponse | null;
@@ -210,6 +219,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     private flightsNetService: FlightsNetService,
     private airportCityCacheService: AirportCityCacheService,
     private activityAvailabilityService: ActivityAvailabilityService,
+    private activityPackAvailabilityService: ActivityPackAvailabilityService,
     private departureAvailabilityService: DepartureAvailabilityService
   ) {
     this.updatePassengerText();
@@ -318,68 +328,25 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           });
           const uniqueCities = Array.from(uniqueCitiesMap.values());
 
-          // Verificar si realmente existe alguna ciudad "Sin Vuelos" en los datos
-          const hasSinVuelosCities = uniqueCities.some(
-            (city) =>
-              city.name.toLowerCase().includes('sin vuelos') ||
-              city.name.toLowerCase().includes('sin vuelo')
-          );
-
-          // Solo aplicar lógica de "Sin Vuelos" si realmente existen esas ciudades
-          if (hasSinVuelosCities) {
-            this.cities = uniqueCities.sort((a, b) => {
-              const aIsSinVuelos =
-                a.name.toLowerCase().includes('sin vuelos') ||
-                a.name.toLowerCase().includes('sin vuelo');
-              const bIsSinVuelos =
-                b.name.toLowerCase().includes('sin vuelos') ||
-                b.name.toLowerCase().includes('sin vuelo');
-
-              if (aIsSinVuelos && !bIsSinVuelos) return -1;
-              if (!aIsSinVuelos && bIsSinVuelos) return 1;
-              return a.name.localeCompare(b.name);
-            });
-
-            this.filteredCities = [...this.cities];
-
-            const sinVuelosCity = this.cities.find(
-              (city) =>
-                city.name.toLowerCase().includes('sin vuelos') ||
-                city.name.toLowerCase().includes('sin vuelo')
-            );
-
-            if (sinVuelosCity) {
-              this.selectedCity = sinVuelosCity;
-              this.emitCityUpdate();
-            } else if (this.cities.length > 0) {
-              this.selectedCity = this.cities[0];
-              this.emitCityUpdate();
-            }
-          } else {
-            // Si no hay ciudades "Sin Vuelos", usar ordenamiento alfabético normal
-            this.cities = uniqueCities.sort((a, b) =>
-              a.name.localeCompare(b.name)
-            );
-
-            this.filteredCities = [...this.cities];
-
-            // Seleccionar la primera ciudad disponible
-            if (this.cities.length > 0) {
-              this.selectedCity = this.cities[0];
-              this.emitCityUpdate();
-            }
-          }
+          // Asignar ciudades sin seleccionar ninguna todavía
+          // La selección se hará después de cargar disponibilidades
+          this.cities = uniqueCities;
+          this.filteredCities = [...this.cities];
 
           if (this.cities.length === 0) {
             console.warn('⚠️ No hay ciudades disponibles para seleccionar');
+            this.citiesLoading = false;
+            this.citiesLoadingUpdate.emit(false);
             // Emitir cityUpdate con string vacío cuando no hay ciudades
             this.emitCityUpdate();
+            return;
           }
 
           this.citiesLoading = false;
           this.citiesLoadingUpdate.emit(false);
           
           // Después de cargar ciudades, intentar cargar departures
+          // La selección de ciudad se hará después de cargar disponibilidades
           this.loadAllDeparturesForTour();
         },
         error: (error) => {
@@ -713,28 +680,41 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
                 new Date(b.departureDate ?? '').getTime()
             );
 
-          // Cargar horarios de vuelos y disponibilidad para todos los departures
+          // Cargar horarios de vuelos para todos los departures
           this.allDepartures.forEach(departure => {
             if (departure.id) {
               this.loadFlightTimes(departure.id);
-              // Siempre cargar disponibilidad de departure
-              this.loadDepartureAvailability(departure.id);
-              // Cargar disponibilidad de activity si hay ciudad seleccionada
-              if (this.selectedCity?.activityId) {
-                this.loadActivityAvailability(departure.id, this.selectedCity.activityId);
-              }
             }
           });
 
-          this.loading = false;
+          // Cargar disponibilidades para todas las ciudades y departures
+          this.loadAllAvailabilities().subscribe({
+            next: () => {
+              this.loading = false;
 
-          // Notificar que allDepartures está listo
-          this.allDeparturesReady$.next();
+              // Notificar que allDepartures está listo
+              this.allDeparturesReady$.next();
 
-          // Si no hay departure preseleccionado, auto-seleccionar la más cercana reservable
-          if (!this.selectedDeparture && this.allDepartures.length > 0) {
-            this.autoSelectNearestBookableDeparture();
-          }
+              // Seleccionar ciudad por defecto con disponibilidad
+              if (!this.selectedCity && this.cities.length > 0) {
+                this.selectDefaultCityWithAvailability();
+              }
+
+              // Si no hay departure preseleccionado, auto-seleccionar la más cercana reservable
+              if (!this.selectedDeparture && this.allDepartures.length > 0) {
+                this.autoSelectNearestBookableDeparture();
+              }
+            },
+            error: (error) => {
+              console.error('Error cargando disponibilidades:', error);
+              this.loading = false;
+              // Continuar de todas formas
+              this.allDeparturesReady$.next();
+              if (!this.selectedCity && this.cities.length > 0) {
+                this.selectDefaultCityWithAvailability();
+              }
+            }
+          });
         },
         error: (error) => {
           console.error('Error cargando departures del tour:', error);
@@ -1135,10 +1115,17 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     }
 
     // Cargar disponibilidad de plazas para todos los departures cuando cambia la ciudad
-    if (this.selectedCity?.activityId) {
+    if (this.selectedCity) {
       this.allDepartures.forEach(departure => {
         if (departure.id) {
-          this.loadActivityAvailability(departure.id, this.selectedCity!.activityId!);
+          // Cargar activityAvailability si la ciudad tiene activityId
+          if (this.selectedCity!.activityId) {
+            this.loadActivityAvailability(departure.id, this.selectedCity!.activityId!);
+          }
+          // Cargar activityPackAvailability si la ciudad tiene activityPackId
+          if (this.selectedCity!.activityPackId) {
+            this.loadActivityPackAvailability(departure.id, this.selectedCity!.activityPackId!);
+          }
         }
       });
     }
@@ -1341,10 +1328,20 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
     this.selectedDepartureId = item.id;
     
-    // Calcular precio y luego emitir departureUpdate
+    // Calcular precio y luego emitir departureUpdate con isBookable actualizado
     this.calculateAndEmitPriceObservable().subscribe({
       next: () => {
-        this.departureUpdate.emit(item);
+        // Recalcular isBookable antes de emitir
+        const spots = this.getAvailableSpots(item.id);
+        const isBookable = (item.isBookable ?? true) && (spots === -1 || spots > 0);
+        
+        // Crear objeto con isBookable actualizado
+        const departureWithAvailability = {
+          ...item,
+          isBookable: isBookable
+        };
+        
+        this.departureUpdate.emit(departureWithAvailability);
       }
     });
   }
@@ -1535,6 +1532,8 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           } else {
             this.activityAvailabilityByDepartureId[departureId] = null;
           }
+          // Si este departure está seleccionado, actualizar y re-emitir
+          this.updateSelectedDepartureIfNeeded(departureId);
         },
         error: (err: unknown) => {
           console.error(
@@ -1542,6 +1541,34 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
             err
           );
           this.activityAvailabilityByDepartureId[departureId] = null;
+          this.updateSelectedDepartureIfNeeded(departureId);
+        },
+      });
+  }
+
+  // Cargar disponibilidad de plazas para un departure específico (ActivityPack)
+  private loadActivityPackAvailability(departureId: number, activityPackId: number): void {
+    this.activityPackAvailabilityService
+      .getByActivityPackAndDeparture(activityPackId, departureId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (availabilityArray: IActivityPackAvailabilityResponse[]) => {
+          // Tomar la primera disponibilidad si existe
+          if (availabilityArray && availabilityArray.length > 0) {
+            this.activityPackAvailabilityByDepartureId[departureId] = availabilityArray[0];
+          } else {
+            this.activityPackAvailabilityByDepartureId[departureId] = null;
+          }
+          // Si este departure está seleccionado, actualizar y re-emitir
+          this.updateSelectedDepartureIfNeeded(departureId);
+        },
+        error: (err: unknown) => {
+          console.error(
+            `Error cargando disponibilidad de activity pack para departure ${departureId}:`,
+            err
+          );
+          this.activityPackAvailabilityByDepartureId[departureId] = null;
+          this.updateSelectedDepartureIfNeeded(departureId);
         },
       });
   }
@@ -1559,6 +1586,8 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           } else {
             this.departureAvailabilityByDepartureId[departureId] = null;
           }
+          // Si este departure está seleccionado, actualizar y re-emitir
+          this.updateSelectedDepartureIfNeeded(departureId);
         },
         error: (err: unknown) => {
           console.error(
@@ -1566,6 +1595,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
             err
           );
           this.departureAvailabilityByDepartureId[departureId] = null;
+          this.updateSelectedDepartureIfNeeded(departureId);
         },
       });
   }
@@ -1576,33 +1606,213 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     this.loadDepartureAvailability(departureId);
   }
 
+  // Cargar todas las disponibilidades para todas las ciudades y departures
+  private loadAllAvailabilities(): Observable<void> {
+    const availabilityObservables: Observable<any>[] = [];
+
+    // Cargar disponibilidad de departure para todos los departures
+    this.allDepartures.forEach(departure => {
+      if (departure.id) {
+        availabilityObservables.push(
+          this.departureAvailabilityService.getByDeparture(departure.id).pipe(
+            takeUntil(this.destroy$),
+            tap((availabilityArray: IDepartureAvailabilityResponse[]) => {
+              if (availabilityArray && availabilityArray.length > 0) {
+                this.departureAvailabilityByDepartureId[departure.id!] = availabilityArray[0];
+              } else {
+                this.departureAvailabilityByDepartureId[departure.id!] = null;
+              }
+            }),
+            catchError(() => {
+              this.departureAvailabilityByDepartureId[departure.id!] = null;
+              return of(null);
+            })
+          )
+        );
+      }
+    });
+
+    // Cargar disponibilidades de activity y activityPack para cada combinación ciudad-departure
+    this.cities.forEach(city => {
+      this.allDepartures.forEach(departure => {
+        if (!departure.id) return;
+
+        // Cargar activityAvailability si la ciudad tiene activityId
+        if (city.activityId) {
+          availabilityObservables.push(
+            this.activityAvailabilityService.getByActivityAndDeparture(city.activityId, departure.id).pipe(
+              takeUntil(this.destroy$),
+              tap((availabilityArray: IActivityAvailabilityResponse[]) => {
+                if (availabilityArray && availabilityArray.length > 0) {
+                  this.activityAvailabilityByDepartureId[departure.id] = availabilityArray[0];
+                } else {
+                  this.activityAvailabilityByDepartureId[departure.id] = null;
+                }
+              }),
+              catchError(() => {
+                this.activityAvailabilityByDepartureId[departure.id] = null;
+                return of(null);
+              })
+            )
+          );
+        }
+
+        // Cargar activityPackAvailability si la ciudad tiene activityPackId
+        if (city.activityPackId) {
+          availabilityObservables.push(
+            this.activityPackAvailabilityService.getByActivityPackAndDeparture(city.activityPackId, departure.id).pipe(
+              takeUntil(this.destroy$),
+              tap((availabilityArray: IActivityPackAvailabilityResponse[]) => {
+                if (availabilityArray && availabilityArray.length > 0) {
+                  this.activityPackAvailabilityByDepartureId[departure.id] = availabilityArray[0];
+                } else {
+                  this.activityPackAvailabilityByDepartureId[departure.id] = null;
+                }
+              }),
+              catchError(() => {
+                this.activityPackAvailabilityByDepartureId[departure.id] = null;
+                return of(null);
+              })
+            )
+          );
+        }
+      });
+    });
+
+    // Si no hay observables, retornar un observable que completa inmediatamente
+    if (availabilityObservables.length === 0) {
+      return of(undefined);
+    }
+
+    // Usar forkJoin para cargar todas las disponibilidades en paralelo
+    return forkJoin(availabilityObservables).pipe(
+      map(() => undefined),
+      takeUntil(this.destroy$)
+    );
+  }
+
   // Obtener el número de plazas disponibles para un departure
-  // Usa el valor más restrictivo (mínimo) entre ActivityAvailability y DepartureAvailability
+  // Usa el valor más restrictivo (mínimo) entre ActivityAvailability, ActivityPackAvailability y DepartureAvailability
   getAvailableSpots(departureId: number): number {
     const activityAvailability = this.activityAvailabilityByDepartureId[departureId];
+    const activityPackAvailability = this.activityPackAvailabilityByDepartureId[departureId];
     const departureAvailability = this.departureAvailabilityByDepartureId[departureId];
     
     // Si ninguna está cargada, retornar -1 (aún cargando)
-    if (!activityAvailability && !departureAvailability) {
+    if (!activityAvailability && !activityPackAvailability && !departureAvailability) {
       return -1;
     }
     
     const activitySpots = activityAvailability?.bookableAvailability ?? Number.MAX_SAFE_INTEGER;
+    const activityPackSpots = activityPackAvailability?.bookableAvailability ?? Number.MAX_SAFE_INTEGER;
     const departureSpots = departureAvailability?.bookableAvailability ?? Number.MAX_SAFE_INTEGER;
     
-    // Retornar el mínimo (más restrictivo) entre ambos
-    // Si uno no está disponible, usar el otro
-    if (activitySpots === Number.MAX_SAFE_INTEGER && departureSpots === Number.MAX_SAFE_INTEGER) {
+    // Retornar el mínimo (más restrictivo) entre todos
+    // Si uno no está disponible, usar los otros
+    if (activitySpots === Number.MAX_SAFE_INTEGER && 
+        activityPackSpots === Number.MAX_SAFE_INTEGER && 
+        departureSpots === Number.MAX_SAFE_INTEGER) {
       return -1; // Ninguno cargado aún
     }
     
-    return Math.min(activitySpots, departureSpots);
+    return Math.min(activitySpots, activityPackSpots, departureSpots);
   }
 
   // Verificar si hay plazas disponibles
   hasAvailableSpots(departureId: number): boolean {
     const spots = this.getAvailableSpots(departureId);
     return spots > 0;
+  }
+
+  // Verificar si una ciudad tiene al menos un departure con disponibilidad
+  private hasCityAvailability(city: City): boolean {
+    if (!city || (!city.activityId && !city.activityPackId)) {
+      return false;
+    }
+
+    // Verificar si hay al menos un departure con disponibilidad para esta ciudad
+    // Necesitamos verificar la disponibilidad específica de esta ciudad (activityId o activityPackId)
+    for (const departure of this.allDepartures) {
+      if (!departure.id) continue;
+
+      // Obtener disponibilidad específica para esta ciudad
+      let spots = -1;
+      
+      if (city.activityId) {
+        const activityAvailability = this.activityAvailabilityByDepartureId[departure.id];
+        if (activityAvailability) {
+          spots = activityAvailability.bookableAvailability;
+        }
+      } else if (city.activityPackId) {
+        const activityPackAvailability = this.activityPackAvailabilityByDepartureId[departure.id];
+        if (activityPackAvailability) {
+          spots = activityPackAvailability.bookableAvailability;
+        }
+      }
+
+      // También considerar departureAvailability como mínimo común
+      const departureAvailability = this.departureAvailabilityByDepartureId[departure.id];
+      const departureSpots = departureAvailability?.bookableAvailability ?? Number.MAX_SAFE_INTEGER;
+
+      // Calcular el mínimo entre la disponibilidad de la ciudad y la del departure
+      let finalSpots = spots;
+      if (spots === -1 && departureSpots === Number.MAX_SAFE_INTEGER) {
+        continue; // Aún cargando, continuar con el siguiente
+      }
+      if (spots === -1) {
+        finalSpots = departureSpots;
+      } else if (departureSpots !== Number.MAX_SAFE_INTEGER) {
+        finalSpots = Math.min(spots, departureSpots);
+      }
+
+      // Si tiene disponibilidad (finalSpots > 0), la ciudad tiene disponibilidad
+      if (finalSpots > 0) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  // Seleccionar la primera ciudad que tenga disponibilidad
+  private selectDefaultCityWithAvailability(): void {
+    if (this.cities.length === 0) {
+      return;
+    }
+
+    // Buscar la primera ciudad con disponibilidad
+    const cityWithAvailability = this.cities.find(city => this.hasCityAvailability(city));
+
+    if (cityWithAvailability) {
+      this.selectedCity = cityWithAvailability;
+      this.emitCityUpdate();
+    } else {
+      // Si ninguna tiene disponibilidad, seleccionar la primera (fallback)
+      this.selectedCity = this.cities[0];
+      this.emitCityUpdate();
+    }
+  }
+
+  // Actualizar y re-emitir departureUpdate si el departure está seleccionado
+  private updateSelectedDepartureIfNeeded(departureId: number): void {
+    if (this.selectedDepartureId === departureId) {
+      // Buscar el departure en filteredDepartures
+      const selectedDeparture = this.filteredDepartures.find(dep => dep.id === departureId);
+      if (selectedDeparture) {
+        // Recalcular isBookable
+        const spots = this.getAvailableSpots(departureId);
+        const isBookable = (selectedDeparture.isBookable ?? true) && (spots === -1 || spots > 0);
+        
+        // Crear objeto con isBookable actualizado
+        const departureWithAvailability = {
+          ...selectedDeparture,
+          isBookable: isBookable
+        };
+        
+        // Re-emitir con disponibilidad actualizada
+        this.departureUpdate.emit(departureWithAvailability);
+      }
+    }
   }
 
   // Obtener el estado de plazas para mostrar en la UI

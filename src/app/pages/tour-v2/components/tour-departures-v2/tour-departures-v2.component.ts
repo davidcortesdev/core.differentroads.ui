@@ -370,10 +370,11 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       });
   }
 
-  private loadDeparturesPrices(activityId: number, departureId: number): Observable<ITourDeparturesPriceResponse[]> {
-    if (!activityId || !departureId) {
+  private loadDeparturesPrices(activityId: number, departureId?: number): Observable<ITourDeparturesPriceResponse[]> {
+    if (!activityId) {
       return of([]);
     }
+    // departureId es opcional - si es 0 o undefined, cargar todos los precios para el activityId
 
     this.pricesLoading = true;
 
@@ -1103,15 +1104,11 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   onCityChange(event: any): void {
     this.selectedCity = event;
 
-    if (
-      this.selectedCity &&
-      this.selectedCity.activityId &&
-      this.departureDetails
-    ) {
-      this.loadDeparturesPrices(
-        this.selectedCity.activityId,
-        this.departureDetails.id
-      );
+    // Cargar precios para la ciudad seleccionada (para todos los departures)
+    if (this.selectedCity && this.selectedCity.activityId) {
+      // Cargar precios para todos los departures de esta ciudad
+      // Usamos departureId = 0 para indicar que queremos todos los precios
+      this.loadDeparturesPrices(this.selectedCity.activityId, 0).subscribe();
     }
 
     // Cargar disponibilidad de plazas para todos los departures cuando cambia la ciudad
@@ -1789,6 +1786,11 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       this.selectedCity = cityWithAvailability;
       this.emitCityUpdate();
       
+      // Cargar precios para la ciudad seleccionada
+      if (this.selectedCity.activityId) {
+        this.loadDeparturesPrices(this.selectedCity.activityId, 0).subscribe();
+      }
+      
       // Recargar vuelos con la ciudad seleccionada
       this.allDepartures.forEach(departure => {
         if (departure.id) {
@@ -1799,6 +1801,11 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       // Si ninguna tiene disponibilidad, seleccionar la primera (fallback)
       this.selectedCity = this.cities[0];
       this.emitCityUpdate();
+      
+      // Cargar precios para la ciudad seleccionada
+      if (this.selectedCity.activityId) {
+        this.loadDeparturesPrices(this.selectedCity.activityId, 0).subscribe();
+      }
       
       // Recargar vuelos con la ciudad seleccionada
       this.allDepartures.forEach(departure => {

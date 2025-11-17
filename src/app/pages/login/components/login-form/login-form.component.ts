@@ -380,6 +380,7 @@ export class LoginFormComponent implements OnInit {
       phone: undefined, // Teléfono por defecto
       hasWebAccess: true,
       hasMiddleAccess: false,
+      politicasAceptadas: false,
       detalleDeLaFuenteDeRegistro1: 'Formulario de inicio de sesión'
     };
 

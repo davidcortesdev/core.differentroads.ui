@@ -50,12 +50,14 @@
                 label="Añadir pago"
                 icon="pi pi-plus-circle"
                 styleClass="p-button-rounded p-button-lg"
+                [disabled]="paymentInfo.pendingAmount === 0"
                 (onClick)="navigateToPayment()"
               ></p-button>
               <p-button
                 label="Canjear cupón"
                 icon="pi pi-ticket"
                 styleClass="p-button-rounded p-button-lg"
+                [disabled]="paymentInfo.pendingAmount === 0"
                 (onClick)="openCouponModal()"
               ></p-button>
             </div>

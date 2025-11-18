@@ -181,41 +181,79 @@ export class AddPaymentModalComponent implements OnInit {
       }
 
       // Crear el pago en la base de datos
-      const response = await this.paymentsService.create({
+      this.paymentsService.create({
         reservationId: this.reservationId,
         amount: this.customPaymentAmount,
         paymentDate: new Date(),
         paymentMethodId: this.redsysMethodId,
         paymentStatusId: this.pendingStatusId,
         currencyId: currencyId
-      }).toPromise();
+      }).subscribe({
+        next: (response: any) => {
+          response.transactionReference = response.id + "F" + this.reservationId + "R";
+          this.paymentsService.update(response).subscribe({
+            next: (updatedResponse: any) => {
+              console.log('🔵 Respuesta de actualización de pago:', updatedResponse);
+              
+              // Emitir evento de pago procesado para analytics
+              this.paymentProcessed.emit({
+                amount: this.customPaymentAmount,
+                method: 'card'
+              });
 
-      if (!response) {
-        throw new Error('Error al crear el pago');
-      }
-
-      // Emitir evento de pago procesado para analytics
-      this.paymentProcessed.emit({
-        amount: this.customPaymentAmount,
-        method: 'card'
+              // Generar los datos del formulario para Redsys
+              const baseUrlFront = (window.location.href).replace(this.router.url, '');
+              this.redsysService.generateFormData(
+                updatedResponse.id, 
+                environment.redsysApiUrl,
+                baseUrlFront
+              ).subscribe({
+                next: (formData: IFormData | undefined) => {
+                  if (formData) {
+                    // Enviar el formulario a Redsys
+                    this.enviarFormARedsys(formData);
+                  } else {
+                    throw new Error('No se pudieron generar los datos del formulario de Redsys');
+                  }
+                },
+                error: (error: any) => {
+                  console.error('Error generando formulario Redsys:', error);
+                  this.processingPayment = false;
+                  this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'No se pudieron generar los datos del formulario de pago',
+                    life: 7000,
+                  });
+                }
+              });
+            },
+            error: (error: any) => {
+              console.error('Error al actualizar el pago:', error);
+              this.processingPayment = false;
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Error al actualizar la referencia de transacción',
+                life: 7000,
+              });
+            }
+          });
+        },
+        error: (error: any) => {
+          console.error('Error al crear el pago:', error);
+          this.processingPayment = false;
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al crear el pago',
+            life: 7000,
+          });
+        }
       });
-
-      // Generar los datos del formulario para Redsys
-      const baseUrlFront = (window.location.href).replace(this.router.url, '');
-      const formData: IFormData | undefined = await this.redsysService.generateFormData(
-        response.id, 
-        environment.redsysApiUrl,
-        baseUrlFront
-      ).toPromise();
-      
-      if (formData) {
-        // Enviar el formulario a Redsys
-        await this.enviarFormARedsys(formData);
-      } else {
-        throw new Error('No se pudieron generar los datos del formulario de Redsys');
-      }
     } catch (error) {
       console.error('Error procesando pago con tarjeta:', error);
+      this.processingPayment = false;
       throw error;
     }
   }
@@ -257,29 +295,55 @@ export class AddPaymentModalComponent implements OnInit {
       }
 
       // Crear el pago por transferencia
-      const response = await this.paymentsService.create({
+      this.paymentsService.create({
         reservationId: this.reservationId,
         amount: this.customPaymentAmount,
         paymentDate: new Date(),
         paymentMethodId: this.transferMethodId,
         paymentStatusId: this.pendingStatusId,
         currencyId: currencyId
-      }).toPromise();
+      }).subscribe({
+        next: (response: any) => {
+          response.transactionReference = response.id + "F" + this.reservationId + "R";
+          this.paymentsService.update(response).subscribe({
+            next: (updatedResponse: any) => {
+              console.log('🔵 Respuesta de actualización de pago:', updatedResponse);
+              
+              // Emitir evento de pago procesado para analytics
+              this.paymentProcessed.emit({
+                amount: this.customPaymentAmount,
+                method: 'transfer'
+              });
 
-      if (!response) {
-        throw new Error('Error al crear el pago por transferencia');
-      }
-
-      // Emitir evento de pago procesado para analytics
-      this.paymentProcessed.emit({
-        amount: this.customPaymentAmount,
-        method: 'transfer'
+              // Navegar a la página de confirmación/subida de comprobante
+              this.router.navigate([`/reservation/${this.reservationId}/${updatedResponse.id}`]);
+            },
+            error: (error: any) => {
+              console.error('Error al actualizar el pago:', error);
+              this.processingPayment = false;
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Error al actualizar la referencia de transacción',
+                life: 7000,
+              });
+            }
+          });
+        },
+        error: (error: any) => {
+          console.error('Error al crear el pago:', error);
+          this.processingPayment = false;
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al crear el pago por transferencia',
+            life: 7000,
+          });
+        }
       });
-
-      // Navegar a la página de confirmación/subida de comprobante
-      this.router.navigate([`/reservation/${this.reservationId}/${response.id}`]);
     } catch (error) {
       console.error('Error procesando transferencia bancaria:', error);
+      this.processingPayment = false;
       throw error;
     }
   }

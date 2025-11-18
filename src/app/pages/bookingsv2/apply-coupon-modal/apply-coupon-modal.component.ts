@@ -1,6 +1,8 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ReservationCouponService } from '../../../core/services/checkout/reservation-coupon.service';
-import { catchError } from 'rxjs/operators';
+import { AuthenticateService } from '../../../core/services/auth/auth-service.service';
+import { UsersNetService } from '../../../core/services/users/usersNet.service';
+import { catchError, switchMap, take } from 'rxjs/operators';
 import { of } from 'rxjs';
 
 @Component({
@@ -12,7 +14,6 @@ import { of } from 'rxjs';
 export class ApplyCouponModalComponent {
   @Input() visible: boolean = false;
   @Input() reservationId: number = 0;
-  @Input() userId: number = 0;
 
   @Output() visibleChange = new EventEmitter<boolean>();
   @Output() couponApplied = new EventEmitter<void>();
@@ -23,7 +24,9 @@ export class ApplyCouponModalComponent {
   isApplying: boolean = false;
 
   constructor(
-    private readonly reservationCouponService: ReservationCouponService
+    private readonly reservationCouponService: ReservationCouponService,
+    private readonly authService: AuthenticateService,
+    private readonly usersNetService: UsersNetService
   ) {}
 
   closeModal(): void {
@@ -60,12 +63,6 @@ export class ApplyCouponModalComponent {
       return;
     }
 
-    if (!this.userId || this.userId <= 0) {
-      this.discountMessage = 'Error: faltan datos necesarios para aplicar el descuento';
-      this.discountMessageSeverity = 'error';
-      return;
-    }
-
     if (!this.reservationId || this.reservationId <= 0) {
       this.discountMessage = 'Error: faltan datos de la reserva';
       this.discountMessageSeverity = 'error';
@@ -76,23 +73,88 @@ export class ApplyCouponModalComponent {
     this.isApplying = true;
     this.discountMessage = '';
 
-    this.reservationCouponService
-      .apply(trimmedCode, this.reservationId, this.userId)
+    // Obtener el userId del usuario logueado (NO de la reserva)
+    this.authService
+      .getUserAttributes()
       .pipe(
+        take(1),
         catchError((error) => {
-          console.error('Error al aplicar código de descuento:', error);
-          this.discountMessage = 'Error al aplicar el código de descuento';
+          console.error('Error obteniendo atributos del usuario:', error);
+          this.discountMessage = 'Error: No se pudo obtener la información del usuario logueado';
           this.discountMessageSeverity = 'error';
           this.isApplying = false;
-          return of(false);
+          return of(null);
+        }),
+        switchMap((attributes) => {
+          if (!attributes) {
+            this.discountMessage = 'Error: Debes estar logueado para aplicar un cupón';
+            this.discountMessageSeverity = 'error';
+            this.isApplying = false;
+            return of(null);
+          }
+
+          const email = attributes?.email;
+          if (!email) {
+            this.discountMessage = 'Error: Debes estar logueado para aplicar un cupón';
+            this.discountMessageSeverity = 'error';
+            this.isApplying = false;
+            return of(null);
+          }
+
+          // Obtener usuario por email directamente (mismo patrón que el header)
+          return this.usersNetService.getUsersByEmail(email).pipe(
+            take(1),
+            catchError((error) => {
+              console.error('Error buscando usuario por email:', error);
+              this.discountMessage = 'Error: No se pudo buscar el usuario';
+              this.discountMessageSeverity = 'error';
+              this.isApplying = false;
+              return of(null);
+            })
+          );
+        }),
+        switchMap((users) => {
+          if (!users) {
+            return of(null);
+          }
+
+          if (!users || users.length === 0) {
+            this.discountMessage = 'Error: No se encontró el usuario logueado';
+            this.discountMessageSeverity = 'error';
+            this.isApplying = false;
+            return of(null);
+          }
+
+          const userId = users[0]?.id;
+          if (!userId) {
+            this.discountMessage = 'Error: No se pudo obtener el ID del usuario';
+            this.discountMessageSeverity = 'error';
+            this.isApplying = false;
+            return of(null);
+          }
+
+          // Aplicar el cupón con el userId del usuario logueado (NO de la reserva)
+          return this.reservationCouponService.apply(trimmedCode, this.reservationId, userId).pipe(
+            catchError((error) => {
+              console.error('Error al aplicar código de descuento:', error);
+              this.discountMessage = 'Error al aplicar el código de descuento';
+              this.discountMessageSeverity = 'error';
+              this.isApplying = false;
+              return of(false);
+            })
+          );
         })
       )
-      .subscribe((success: boolean) => {
+      .subscribe((success: boolean | null) => {
         this.isApplying = false;
+        
+        if (success === null) {
+          return;
+        }
+
         if (success) {
           this.discountMessage = 'Código de descuento aplicado correctamente';
           this.discountMessageSeverity = 'success';
-          // Emitir evento después de un breve delay para que el usuario vea el mensaje
           setTimeout(() => {
             this.couponApplied.emit();
             this.closeModal();

@@ -147,63 +147,144 @@
 }
 
 .history-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0;
+  padding: 0.75rem 0;
   border-bottom: 1px solid #eee;
   &:last-child {
     border-bottom: none;
   }
   
-  .method {
-    flex: 1;
-    display: inline-flex;
+  .history-item-content {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1.2fr 2fr 1fr auto;
+    gap: 1rem;
     align-items: center;
-    gap: 0.4rem;
-    font-size: 0.938rem;
-    font-weight: 500;
-    color: var(--background-azul);
     
-    i {
-      font-size: 0.938rem;
+    @media (max-width: 1200px) {
+      grid-template-columns: 1.2fr 0.8fr 1fr 1.5fr 0.9fr auto;
+      gap: 0.75rem;
+    }
+    
+    @media (max-width: 992px) {
+      grid-template-columns: 1fr 0.8fr 1fr;
+      gap: 0.75rem;
+      
+      .notes-column,
+      .date-column {
+        display: none;
+      }
+      
+      .method-column {
+        grid-column: 1;
+      }
+      
+      .amount-column {
+        grid-column: 2;
+      }
+      
+      .status-column {
+        grid-column: 3;
+      }
+      
+      .actions-column {
+        grid-column: 1 / -1;
+        margin-top: 0.5rem;
+      }
     }
   }
   
-  .date {
-    flex: 1;
-    font-weight: 500;
-    font-size: 0.938rem;
-  }
-  
-  .notes {
-    flex: 1;
-    display: inline-flex;
+  .history-column {
+    display: flex;
     align-items: center;
-    gap: 0.4rem;
-    font-size: 0.813rem;
-    font-style: italic;
-    color: #888;
     
-    i {
-      font-size: 0.813rem;
+    &.method-column {
+      .method {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.938rem;
+        font-weight: 500;
+        color: var(--background-azul);
+        
+        i {
+          font-size: 0.938rem;
+        }
+      }
     }
-  }
-  
-  .status {
-    flex: 1;
-    text-align: center;
-    .status-text {
-      padding-right: 10px;
-      color: var(--background-azul);
-      font-size: 0.938rem;
+    
+    &.amount-column {
+      .amount {
+        font-weight: 600;
+        font-size: 0.938rem;
+        color: var(--background-azul);
+      }
     }
-  }
-  
-  .amount {
-    flex: 1;
-    font-weight: 600;
-    font-size: 0.938rem;
+    
+    &.status-column {
+      .status-text {
+        color: var(--background-azul);
+        font-size: 0.938rem;
+      }
+    }
+    
+    &.notes-column {
+      .notes-content {
+        display: flex;
+        flex-direction: row;
+        gap: 0.75rem;
+        align-items: center;
+        flex-wrap: wrap;
+        
+        .notes {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+          font-size: 0.813rem;
+          font-style: italic;
+          color: #888;
+          word-break: break-word;
+          flex: 1;
+          min-width: 0;
+          
+          i {
+            font-size: 0.813rem;
+            flex-shrink: 0;
+          }
+        }
+        
+        .upload-voucher-action {
+          display: inline-flex;
+          align-items: center;
+          flex-shrink: 0;
+        }
+      }
+    }
+    
+    &.date-column {
+      .date {
+        font-weight: 500;
+        font-size: 0.938rem;
+        color: #666;
+      }
+    }
+    
+    &.actions-column {
+      justify-content: flex-end;
+      
+      .actions-container {
+        display: inline-flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        
+        .upload-voucher-action,
+        .actions {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+      }
+    }
   }
 }
 :host ::ng-deep {

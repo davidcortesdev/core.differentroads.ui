@@ -11,7 +11,7 @@ import { BookingsServiceV2 } from '../../../core/services/v2/bookings-v2.service
 import { PaymentService, PaymentInfo } from '../../../core/services/payments/payment.service';
 import { IPaymentStatusResponse } from '../../checkout-v2/services/paymentStatusNet.service';
 import { PaymentsNetService } from '../../checkout-v2/services/paymentsNet.service';
-import { PaymentMethodNetService } from '../../checkout-v2/services/paymentMethodNet.service';
+import { PaymentMethodNetService, IPaymentMethodResponse } from '../../checkout-v2/services/paymentMethodNet.service';
 import { AnalyticsService, TourDataForEcommerce } from '../../../core/services/analytics/analytics.service';
 import { ReservationService, IReservationResponse } from '../../../core/services/reservation/reservation.service';
 import { TourService } from '../../../core/services/tour/tour.service';
@@ -78,6 +78,10 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   paymentStatuses: IPaymentStatusResponse[] = [];
   loadingStatuses: boolean = false;
 
+  // NUEVO: Métodos de pago disponibles
+  paymentMethods: IPaymentMethodResponse[] = [];
+  loadingMethods: boolean = false;
+
   // Estado local para selección y loading por pago
   selectedStatusByPaymentId: { [publicID: string]: number } = {};
   isChanging: { [publicID: string]: boolean } = {};
@@ -135,6 +139,9 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
     // Cargar estados de pago desde la API (siempre, para todos)
     this.loadPaymentStatuses();
 
+    // Cargar métodos de pago desde la API
+    this.loadPaymentMethods();
+
     // Obtener userId desde la reserva si está disponible
     if (this.reservationId && this.reservationId > 0) {
       this.loadUserId();
@@ -160,6 +167,11 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
     // Cargar estados si aún no están cargados
     if (changes['isATC'] && !this.paymentStatuses.length) {
       this.loadPaymentStatuses();
+    }
+
+    // Cargar métodos si aún no están cargados
+    if (!this.paymentMethods.length) {
+      this.loadPaymentMethods();
     }
   }
 
@@ -663,9 +675,30 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
       switchMap((data) => {
         if (!data) return of(null);
 
-        // Determinar payment_type
-        const method = paymentData.method === 'card' ? 'tarjeta' : 
-                      paymentData.method === 'transfer' ? 'transferencia' : 'scalapay';
+        // Determinar payment_type usando los métodos de pago cargados
+        const methodCode = paymentData.method === 'card' ? 'REDSYS' : 
+                          paymentData.method === 'transfer' ? 'TRANSFER' : 
+                          paymentData.method === 'scalapay' ? 'SCALAPAY' : null;
+        
+        let method = 'scalapay'; // default
+        if (methodCode && this.paymentMethods.length > 0) {
+          const paymentMethod = this.getPaymentMethodByCode(methodCode);
+          if (paymentMethod) {
+            // Mapear el nombre del método a español para analytics
+            if (paymentMethod.code === 'REDSYS') {
+              method = 'tarjeta';
+            } else if (paymentMethod.code === 'TRANSFER') {
+              method = 'transferencia';
+            } else if (paymentMethod.code === 'SCALAPAY') {
+              method = 'scalapay';
+            }
+          }
+        } else {
+          // Fallback si no están cargados los métodos
+          method = paymentData.method === 'card' ? 'tarjeta' : 
+                   paymentData.method === 'transfer' ? 'transferencia' : 'scalapay';
+        }
+        
         const paymentType = `completo, ${method}`;
 
         // Construir item usando el servicio de analytics
@@ -741,6 +774,37 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
         this.loadingStatuses = false;
       }
     });
+  }
+
+  /**
+   * Carga todos los métodos de pago disponibles desde la API
+   */
+  private loadPaymentMethods(): void {
+    this.loadingMethods = true;
+    this.paymentMethodService.getAllPaymentMethods().subscribe({
+      next: (methods) => {
+        this.paymentMethods = methods;
+        this.loadingMethods = false;
+      },
+      error: (error) => {
+        console.error('Error cargando métodos de pago:', error);
+        this.loadingMethods = false;
+      }
+    });
+  }
+
+  /**
+   * Obtiene el método de pago por ID
+   */
+  private getPaymentMethodById(methodId: number): IPaymentMethodResponse | null {
+    return this.paymentMethods.find(m => m.id === methodId) || null;
+  }
+
+  /**
+   * Obtiene el método de pago por código
+   */
+  private getPaymentMethodByCode(code: string): IPaymentMethodResponse | null {
+    return this.paymentMethods.find(m => m.code === code) || null;
   }
 
   /**
@@ -832,5 +896,39 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
     } catch (error) {
       return 'Fecha no válida';
     }
+  }
+
+  /**
+   * Verifica si un pago es transferencia comparando por ID
+   */
+  isTransfer(payment: Payment): boolean {
+    if (!payment || !payment.paymentMethodId || this.paymentMethods.length === 0) {
+      return false;
+    }
+    
+    // Buscar el método de pago por ID y verificar si es TRANSFER
+    const method = this.getPaymentMethodById(payment.paymentMethodId);
+    return method?.code === 'TRANSFER';
+  }
+
+  /**
+   * Obtiene el texto del botón según si ya hay vouchers subidos
+   */
+  getUploadVoucherButtonLabel(payment: Payment): string {
+    const hasVouchers = payment.vouchers && payment.vouchers.length > 0;
+    return hasVouchers ? 'Subir otro justificante' : 'Subir justificante';
+  }
+
+  /**
+   * Navega a la página de subir justificante de pago
+   */
+  navigateToUploadVoucher(payment: Payment): void {
+    if (!this.reservationId || !payment.id) {
+      console.error('No se puede navegar: falta reservationId o payment.id');
+      return;
+    }
+
+    // Navegar a la página de justificantes con el paymentId específico
+    this.router.navigate([`/reservation/${this.reservationId}/${payment.id}`]);
   }
 }

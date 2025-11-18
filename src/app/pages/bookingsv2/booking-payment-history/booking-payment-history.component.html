@@ -80,43 +80,79 @@
 
             <!-- Payment history list -->
             <div *ngIf="!isLoadingPayments">
-              <div *ngFor="let item of paymentHistory" class="history-item" style="display: flex; align-items: center; gap: 1rem;">
-                <span class="method" *ngIf="item.method">
-                  <i class="pi pi-credit-card"></i> {{ item.method }}
-                </span>
-                <span class="amount">{{ item.amount | currencyFormat }}</span>
+              <div *ngFor="let item of paymentHistory" class="history-item">
+                <div class="history-item-content">
+                  <!-- Columna 1: Método de pago -->
+                  <div class="history-column method-column">
+                    <span class="method" *ngIf="item.method">
+                      <i class="pi pi-credit-card"></i> {{ item.method }}
+                    </span>
+                  </div>
 
-                <!-- Label del estado actual (desde BBDD) -->
-                <span class="status-text">
-                  <p-tag [value]="getPaymentStatusDisplayName(item)" severity="info"></p-tag>
-                </span>
+                  <!-- Columna 2: Importe -->
+                  <div class="history-column amount-column">
+                    <span class="amount">{{ item.amount | currencyFormat }}</span>
+                  </div>
 
-                <span class="notes" *ngIf="item.notes">
-                  <i class="pi pi-comment"></i> {{ item.notes }}
-                </span>
-                <span class="date">{{ item.createdAt | date }}</span>
+                  <!-- Columna 3: Estado -->
+                  <div class="history-column status-column">
+                    <span class="status-text">
+                      <p-tag [value]="getPaymentStatusDisplayName(item)" severity="info"></p-tag>
+                    </span>
+                  </div>
 
-                <!-- Acciones a la derecha -->
-                <span class="actions" *ngIf="isATC" style="margin-left: auto; display: inline-flex; gap: .5rem; align-items: center;">
-                  <p-dropdown
-                    [options]="paymentStatuses"
-                    [(ngModel)]="selectedStatusByPaymentId[item.publicID]"
-                    optionLabel="name"
-                    optionValue="id"
-                    [placeholder]="getPaymentStatusDisplayName(item)"
-                    [style]="{ minWidth: '200px' }"
-                    [disabled]="loadingStatuses || paymentStatuses.length === 0 || isChanging[item.publicID]"
-                    appendTo="body"
-                  ></p-dropdown>
-                  <button
-                    pButton
-                    label="Aceptar"
-                    class="status-change-btn"
-                    [disabled]="isChangeDisabled(item)"
-                    [loading]="isChanging[item.publicID]"
-                    (click)="onChangeStatusClick(item)"
-                  ></button>
-                </span>
+                  <!-- Columna 4: Notas y botón justificante (comparten columna) -->
+                  <div class="history-column notes-column">
+                    <div class="notes-content">
+                      <span class="notes" *ngIf="item.notes">
+                        <i class="pi pi-comment"></i> {{ item.notes }}
+                      </span>
+                      <!-- Botón para subir justificante si es transferencia -->
+                      <span class="upload-voucher-action" *ngIf="isTransfer(item)">
+                        <p-button
+                          [label]="getUploadVoucherButtonLabel(item)"
+                          icon="pi pi-upload"
+                          severity="warning"
+                          size="small"
+                          (onClick)="navigateToUploadVoucher(item)"
+                          [pTooltip]="getUploadVoucherButtonLabel(item)"
+                        ></p-button>
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Columna 5: Fecha -->
+                  <div class="history-column date-column">
+                    <span class="date">{{ item.createdAt | date }}</span>
+                  </div>
+
+                  <!-- Columna 6: Acciones ATC -->
+                  <div class="history-column actions-column">
+                    <div class="actions-container">
+                      <!-- Acciones de ATC -->
+                      <span class="actions" *ngIf="isATC">
+                        <p-dropdown
+                          [options]="paymentStatuses"
+                          [(ngModel)]="selectedStatusByPaymentId[item.publicID]"
+                          optionLabel="name"
+                          optionValue="id"
+                          [placeholder]="getPaymentStatusDisplayName(item)"
+                          [style]="{ minWidth: '200px' }"
+                          [disabled]="loadingStatuses || paymentStatuses.length === 0 || isChanging[item.publicID]"
+                          appendTo="body"
+                        ></p-dropdown>
+                        <button
+                          pButton
+                          label="Aceptar"
+                          class="status-change-btn"
+                          [disabled]="isChangeDisabled(item)"
+                          [loading]="isChanging[item.publicID]"
+                          (click)="onChangeStatusClick(item)"
+                        ></button>
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div
                 *ngIf="!paymentHistory || paymentHistory.length === 0"

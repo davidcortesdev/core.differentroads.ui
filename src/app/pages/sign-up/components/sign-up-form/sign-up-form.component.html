@@ -79,17 +79,29 @@
           </small>
         </div>
 
-        <!-- Campo de teléfono -->
+        <!-- Campo de teléfono con prefijo -->
         <div class="input-group mt-4 col-span-2">
-          <input
-            type="tel"
-            id="phone"
-            pInputText
-            formControlName="phone"
-            placeholder="Teléfono"
-            class="input-field"
-            [ngClass]="{ 'p-invalid': signUpForm.get('phone')?.errors }"
-          />
+          <div class="phone-row">
+            <app-phone-prefix-select
+              [(ngModel)]="selectedPhonePrefix"
+              [ngModelOptions]="{standalone: true}"
+              [phonePrefixOptions]="phonePrefixOptions"
+              [placeholder]="'Seleccione prefijo'"
+              [showClear]="true"
+              [filter]="true"
+              [styleClass]="'prefix-select'"
+              (prefixChange)="onPhonePrefixChange($event)"
+            ></app-phone-prefix-select>
+            <input
+              type="tel"
+              id="phone"
+              pInputText
+              formControlName="phone"
+              placeholder="Teléfono"
+              class="input-field phone-input"
+              [ngClass]="{ 'p-invalid': signUpForm.get('phone')?.errors }"
+            />
+          </div>
           <small *ngIf="signUpForm.get('phone')?.errors" class="p-error">
             {{ getErrorMessage('phone', signUpForm.get('phone')?.errors) }}
           </small>
@@ -125,6 +137,20 @@
           <small *ngIf="signUpForm.get('confirmPassword')?.errors" class="p-error">
             {{ getErrorMessage('confirmPassword', signUpForm.get('confirmPassword')?.errors) }}
           </small>
+        </div>
+
+        <!-- Checkbox de política de privacidad -->
+        <div class="input-group mt-4 col-span-2 privacy-policy-container">
+          <div class="privacy-policy-wrapper">
+            <p-checkbox
+              formControlName="acceptPrivacyPolicy"
+              inputId="acceptPrivacyPolicy"
+              [binary]="true"
+            ></p-checkbox>
+            <label for="acceptPrivacyPolicy" class="privacy-policy-label">
+              Acepto la <a href="/pages/politica-de-privacidad" target="_blank" class="privacy-policy-link">política de privacidad</a>
+            </label>
+          </div>
         </div>
 
         <!-- Botón de registro -->

@@ -221,4 +221,107 @@
     display: flex;
     justify-content: center;
   }
+
+  // Fila especial para prefijo + teléfono
+  .phone-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    width: 100%;
+
+    app-phone-prefix-select {
+      flex: 0 0 auto;
+      width: 140px;
+      min-width: 140px;
+      display: flex;
+      align-items: flex-end;
+
+      ::ng-deep {
+        .p-select {
+          width: 100%;
+          border: none;
+          border-bottom: .0625rem solid var(--background-azul);
+          box-shadow: none;
+          border-radius: 0;
+          background: transparent;
+          min-height: auto;
+          height: auto;
+          padding: 0;
+          
+          .p-select-label {
+            padding: 0;
+            line-height: 1.5;
+            height: auto;
+            display: flex;
+            align-items: center;
+            min-height: auto;
+          }
+          
+          .p-select-trigger {
+            padding: 0;
+            width: 100%;
+            min-width: auto;
+            height: auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          }
+          
+          .p-select-trigger-icon {
+            margin-left: 0.5rem;
+            flex-shrink: 0;
+          }
+        }
+        
+        .p-select:focus,
+        .p-select:focus-within {
+          border-bottom-color: var(--background-azul);
+          box-shadow: none;
+        }
+      }
+    }
+
+    .phone-input {
+      flex: 1 1 auto;
+      width: 100%;
+      height: auto;
+    }
+  }
+
+  // Checkbox de política de privacidad
+  .privacy-policy-container {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .privacy-policy-wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .privacy-policy-label {
+    font-size: 0.875rem;
+    color: #666;
+    cursor: pointer;
+    line-height: 1.5;
+    margin: 0;
+    
+    .privacy-policy-link {
+      color: var(--background-azul);
+      text-decoration: underline;
+      
+      &:hover {
+        text-decoration: none;
+      }
+    }
+  }
+
+  ::ng-deep {
+    .privacy-policy-wrapper {
+      .p-checkbox {
+        margin-top: 0.125rem;
+      }
+    }
+  }
 }

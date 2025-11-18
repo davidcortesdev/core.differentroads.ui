@@ -424,7 +424,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     AdditionalInfoComponent,
     EnvironmentBannerComponent,
     SeoManagerComponent,
-    PhonePrefixSelectComponent,
 
     // Tour Cards
     TourCardComponent,
@@ -526,6 +525,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     // ========================================
     ForgetPasswordComponent,
     NewsLetterSectionV2Component,
+    PhonePrefixSelectComponent,
 
     // ========================================
     // PIPES

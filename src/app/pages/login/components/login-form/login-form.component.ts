@@ -381,7 +381,7 @@ export class LoginFormComponent implements OnInit {
       hasWebAccess: true,
       hasMiddleAccess: false,
       politicasAceptadas: false,
-      detalleDeLaFuenteDeRegistro1: 'Formulario de inicio de sesión'
+      detalleDeLaFuenteDeRegistro1: 'INTEGRATION',
     };
 
     console.log('🚀 Enviando petición de creación...');

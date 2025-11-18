@@ -203,7 +203,7 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
                       hasMiddleAccess: false,
                       retailerId: environment.retaileriddefault,
                       politicasAceptadas: this.signUpForm.value.acceptPrivacyPolicy === true ? true : false,
-                      detalleDeLaFuenteDeRegistro1: 'Formulario de registro.'
+                      detalleDeLaFuenteDeRegistro1: 'Form-signup.'
                     };
 
                     if (existingUsers && existingUsers.length > 0) {

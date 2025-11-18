@@ -342,6 +342,7 @@ export class BookingsServiceV2 {
         notes: payment.notes,
         createdAt: new Date(payment.paymentDate).toISOString(),
         updatedAt: new Date(payment.paymentDate).toISOString(),
+        id: payment.id, // NUEVO: Incluir el ID numérico para navegación
       };
 
       // Agregar vouchers si hay archivo adjunto

@@ -15,6 +15,7 @@ export interface Payment {
   notes?: string;
   paymentMethodId?: number;
   paymentStatusId?: number; // NUEVO: Para el dropdown de estados en ATC
+  id?: number; // ID numérico del pago para navegación
 }
 
 export interface IPaymentVoucher {

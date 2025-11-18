@@ -54,8 +54,7 @@ export interface PaymentOption {
   styleUrl: './payment-management.component.scss',
 })
 export class PaymentManagementComponent
-  implements OnInit, OnDestroy, OnChanges, AfterViewInit
-{
+  implements OnInit, OnDestroy, OnChanges, AfterViewInit {
   //Total reservation amount
   totalPrice: number = 0;
 
@@ -122,7 +121,7 @@ export class PaymentManagementComponent
     private readonly currencyService: CurrencyService,
     private readonly flightSearchService: FlightSearchService,
     private readonly reservationCouponService: ReservationCouponService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.loadReservationTotalAmount();
@@ -485,7 +484,7 @@ export class PaymentManagementComponent
             'Error al procesar el pago. La reservación se mantendrá en su estado actual.';
         }
       }
-      
+
       this.paymentState.isLoading = false;
 
       this.messageService.add({
@@ -494,8 +493,8 @@ export class PaymentManagementComponent
         detail: errorMessage,
         life: 5000,
       });
-    
-      
+
+
     }
   }
 
@@ -713,8 +712,8 @@ export class PaymentManagementComponent
       throw new Error('No se pudo obtener el ID de la moneda EUR');
     }
 
-    const response = await this.paymentsService
-      .create({
+    const response = await firstValueFrom(
+      this.paymentsService.create({
         reservationId: this.reservationId,
         amount: amount,
         paymentDate: new Date(),
@@ -722,11 +721,18 @@ export class PaymentManagementComponent
         paymentStatusId: this.pendingStatusId,
         currencyId: currencyId,
       })
-      .toPromise();
+    );
 
     if (!response) {
       throw new Error('Error al crear el pago');
     }
+
+    response.transactionReference = response.id + "F" + this.reservationId + "R";
+    // Actualizar con la referencia de transacción
+    await firstValueFrom(
+      this.paymentsService.update(response
+      )
+    );
 
     const baseUrlFront = window.location.href.replace(this.router.url, '');
     const formData: IFormData | undefined = await this.redsysService
@@ -781,8 +787,8 @@ export class PaymentManagementComponent
       throw new Error('No se pudo obtener el ID de la moneda EUR');
     }
 
-    const response = await this.paymentsService
-      .create({
+    const response = await firstValueFrom(
+      this.paymentsService.create({
         reservationId: this.reservationId,
         amount: amount,
         paymentDate: new Date(),
@@ -790,11 +796,17 @@ export class PaymentManagementComponent
         paymentStatusId: this.pendingStatusId,
         currencyId: currencyId,
       })
-      .toPromise();
+    );
 
     if (!response) {
       throw new Error('Error al crear el pago por transferencia');
     }
+
+    response.transactionReference = response.id + "F" + this.reservationId + "R";
+    // Actualizar con la referencia de transacción
+    await firstValueFrom(
+      this.paymentsService.update(response)
+    );
 
     this.router.navigate([`/reservation/${this.reservationId}/${response.id}`]);
   }
@@ -810,8 +822,8 @@ export class PaymentManagementComponent
       throw new Error('No se pudo obtener el ID de la moneda EUR');
     }
 
-    const response = await this.paymentsService
-      .create({
+    const response = await firstValueFrom(
+      this.paymentsService.create({
         reservationId: this.reservationId,
         amount: amount,
         paymentDate: new Date(),
@@ -819,11 +831,17 @@ export class PaymentManagementComponent
         paymentStatusId: this.pendingStatusId,
         currencyId: currencyId,
       })
-      .toPromise();
+    );
 
     if (!response) {
       throw new Error('Error al crear el pago por transferencia 25%');
     }
+
+    response.transactionReference = response.id + "F" + this.reservationId + "R";
+    // Actualizar con la referencia de transacción
+    await firstValueFrom(
+      this.paymentsService.update(response)
+    );
 
     // TODO: Implementar lógica adicional para transferencia 25% con voucher
     this.router.navigate([`/reservation/${this.reservationId}/${response.id}`]);
@@ -891,7 +909,7 @@ export class PaymentManagementComponent
     const filteredValue = value.replace(/[^a-zA-Z0-9-]/g, '');
     // Limitar a 20 caracteres
     const limitedValue = filteredValue.substring(0, 20);
-    
+
     if (value !== limitedValue) {
       this.discountCode = limitedValue;
       input.value = limitedValue;

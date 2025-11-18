@@ -28,6 +28,8 @@ export interface UserCreate {
   hasMiddleAtcAccess?: boolean;
   hasTourOperationAccess?: boolean;
   retailerId?: number;
+  politicasAceptadas?: boolean;
+  detalleDeLaFuenteDeRegistro1?: string;
 }
 
 export interface UserUpdate {

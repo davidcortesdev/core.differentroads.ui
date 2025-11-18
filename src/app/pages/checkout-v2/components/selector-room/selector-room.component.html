@@ -23,7 +23,10 @@
   <div
     *ngFor="let room of roomsAvailabilityForTravelersNumber; let i = index"
     class="room-item"
-    [ngClass]="{ selected: selectedRooms[room.tkId] > 0 }"
+    [ngClass]="{ 
+      selected: selectedRooms[room.tkId] > 0,
+      unavailable: room.availablePlaces !== undefined && room.availablePlaces === 0
+    }"
   >
     <div class="room-price-data">
       <p>
@@ -40,11 +43,12 @@
         [(ngModel)]="selectedRooms[room.tkId]"
         (ngModelChange)="onRoomSpacesChange(room, $event)"
         [min]="0"
-        [max]="8"
+        [max]="getMaxRoomsForAvailability(room)"
         [showButtons]="true"
         buttonLayout="horizontal"
         spinnerMode="horizontal"
         placeholder="0"
+        [disabled]="room.availablePlaces !== undefined && room.availablePlaces === 0"
       >
         <ng-template #incrementbuttonicon>
           <span class="pi pi-chevron-up"></span>
@@ -58,6 +62,18 @@
     <p class="room-description">
       {{ room.description }}
     </p>
+
+    <!-- Información de disponibilidad -->
+    <div class="room-availability-info" *ngIf="room.availablePlaces !== undefined">
+      <span *ngIf="room.availablePlaces > 0" class="availability-available">
+        <i class="pi pi-check-circle"></i>
+        {{ room.availablePlaces }} {{ room.availablePlaces === 1 ? ' disponible' : ' disponibles' }}
+      </span>
+      <span *ngIf="room.availablePlaces === 0" class="availability-unavailable">
+        <i class="pi pi-times-circle"></i>
+        Sin disponibilidad
+      </span>
+    </div>
   </div>
 </div>
 

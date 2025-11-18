@@ -1,21 +1,12 @@
-// Botón "Cambiar estado" con estilo naranja y texto blanco
 :host ::ng-deep .status-change-btn.p-button {
   background-color: #ea6a5c;
   border: none;
-  color: #ffffff;
-  border-radius: 9999px; // pill shape similar al ejemplo
+  color: #fff;
+  border-radius: 9999px;
   padding: 0.6rem 1.2rem;
   font-weight: 600;
-
-  &:hover {
-    background-color: #e65e50;
-    color: #ffffff;
-  }
-
-  &:disabled {
-    opacity: .6;
-    cursor: not-allowed;
-  }
+  &:hover { background-color: #e65e50; }
+  &:disabled { opacity: .6; cursor: not-allowed; }
 }
 .payment-history-container {
   --p-panel-background: var(--background-azul-color-letra);
@@ -324,59 +315,40 @@
     }
   }
 
-  .p-panel-content {
-    padding: 1rem;
-  }
   .p-button {
     &.p-button-success {
-      background-color: transparent;
+      background: transparent;
       border-color: #4ecdc4 !important;
       color: #4ecdc4 !important;
       border-radius: 50px;
-      .p-button-icon {
-        color: #4ecdc4 !important;
-      }
-      &:hover {
-        background-color: #f0fffd !important;
-      }
+      .p-button-icon { color: #4ecdc4 !important; }
+      &:hover { background-color: #f0fffd !important; }
     }
     &.p-button-outlined {
       border-color: #ff6b6b !important;
       color: #ff6b6b !important;
       border-radius: 50px;
-      .p-button-icon {
-        color: #ff6b6b !important;
-      }
-      &:hover {
-        background-color: #fff0f0 !important;
-      }
+      .p-button-icon { color: #ff6b6b !important; }
+      &:hover { background-color: #fff0f0 !important; }
     }
     &.p-button-danger {
       background: transparent !important;
       border-color: var(--primary-color-300) !important;
       color: #ff6b6b !important;
       border-radius: 50px !important;
-      .p-button-icon {
-        color: #ff6b6b !important;
-      }
-      &:hover {
-        background-color: var(--primary-color-50) !important;
-      }
+      .p-button-icon { color: #ff6b6b !important; }
+      &:hover { background-color: var(--primary-color-50) !important; }
     }
     &.p-button-info {
       background-color: var(--background-azul);
       border-color: var(--background-azul) !important;
       color: #fff !important;
       border-radius: 22px !important;
-      .p-button-icon {
-        color: #fff !important;
-      }
+      .p-button-icon { color: #fff !important; }
       &:hover {
         background-color: transparent !important;
         color: var(--background-azul) !important;
-        .p-button-icon {
-          color: var(--background-azul) !important;
-        }
+        .p-button-icon { color: var(--background-azul) !important; }
       }
     }
   }
@@ -407,10 +379,7 @@
       max-width: 300px;
       word-wrap: break-word;
       overflow-wrap: break-word;
-      .p-toast-message-content {
-        padding: 0.75rem;
-        word-break: break-word;
-      }
+      .p-toast-message-content { padding: 0.75rem; word-break: break-word; }
     }
   }
   .p-dialog {
@@ -422,29 +391,7 @@
     }
   }
 }
-.required {
-  color: red;
-}
-
-.p-button-text {
-  background: transparent;
-  border-color: var(--p-button-primary-border-color);
-  color: var(--primary-color-500);
-  &.p-button {
-    background: transparent;
-    border-radius: var(--p-button-border-radius);
-    border-top-left-radius: 20px;
-    border-top-right-radius: 20px;
-    border-bottom-right-radius: 20px;
-    border-bottom-left-radius: 20px;
-    padding-left: 12px;
-  }
-  &:hover {
-    background-color: var(--primary-color-50) !important;
-    border-color: var(--p-button-primary-border-color);
-    color: var(--primary-color-500) !important;
-  }
-}
+.required { color: red; }
 :host ::ng-deep {
   .payment-dialog .p-dialog-content {
     display: flex;
@@ -483,7 +430,6 @@
     }
   }
 
-  // Estilos para la lista de justificantes de pago
   .vouchers-list {
     display: flex;
     flex-direction: column;
@@ -517,35 +463,21 @@
           flex-direction: column;
           gap: 4px;
 
-          .voucher-name {
-            font-weight: 600;
-            color: #333;
-            font-size: 0.95rem;
-          }
-
-          .voucher-date {
-            font-size: 0.85rem;
-            color: #777;
-          }
+          .voucher-name { font-weight: 600; color: #333; font-size: 0.95rem; }
+          .voucher-date { font-size: 0.85rem; color: #777; }
         }
       }
 
-      // Estilos para el botón "Ver"
       ::ng-deep p-button .p-button.p-button-text {
-        color: white !important;
+        color: #fff !important;
         background-color: #ea6a5c !important;
         border: none !important;
-        
         &:hover {
           background-color: rgba(234, 104, 92, 0.1) !important;
           color: #ea685c !important;
           border: 1px solid #ea6a5c !important;
-
-          & .pi-external-link:hover {
-            color: #ea685c !important;
-          }
+          & .pi-external-link:hover { color: #ea685c !important; }
         }
-        
       }
 
       @media (max-width: 768px) {

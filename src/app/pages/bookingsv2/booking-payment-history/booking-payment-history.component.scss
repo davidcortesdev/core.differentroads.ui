@@ -175,31 +175,16 @@
     .p-dialog-title { flex: 1; text-align: center; margin-left: 2.3rem; }
     .p-dialog-header-icons { position: absolute; right: 1.5rem; top: 50%; transform: translateY(-50%); }
   }
+}
 
-  .vouchers-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 0.5rem 0;
-    .voucher-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px;
-      background: #f8f9fa;
-      border-radius: 8px;
-      border: 1px solid #e9ecef;
-      &:hover { background: #e9ecef; border-color: #dee2e6; }
-      .voucher-info { display: flex; align-items: center; flex: 1; gap: 12px;
-        .voucher-details { display: flex; flex-direction: column; gap: 4px;
-          .voucher-name { font-weight: 600; color: #333; }
-          .voucher-date { font-size: 0.85rem; color: #777; }
-        }
-      }
-      ::ng-deep p-button .p-button.p-button-text {
-        color: #fff !important;
-        background: #ea6a5c !important;
-        &:hover { background: rgba(234,104,92,0.1) !important; color: #ea685c !important; border: 1px solid #ea6a5c !important; }
+.vouchers-list { display: flex; flex-direction: column; gap: 12px; padding: .5rem 0; width: 100%;
+  .voucher-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;
+    &:hover { background: #e9ecef; border-color: #dee2e6; }
+    .voucher-info { display: flex; align-items: center; flex: 1; gap: 12px;
+      .pi-file-pdf { margin-right: 8px; color: #f05a4c; font-size: 1.5rem; }
+      .voucher-details { display: flex; flex-direction: column; gap: 4px;
+        .voucher-name { font-weight: 600; color: #333; }
+        .voucher-date { font-size: .85rem; color: #777; }
       }
     }
   }

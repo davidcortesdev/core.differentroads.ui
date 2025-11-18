@@ -12,70 +12,27 @@
   --p-panel-background: var(--background-azul-color-letra);
   --p-panel-color: var(--background-azul);
   --p-panel-header-color: var(--background-azul);
-  .payment-row {
-    display: flex;
-    flex-direction: row;
-    .payment-column-left,
-    .payment-column-right {
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-    }
-    .payment-column-right {
-      flex: 1.5;
-    }
-    p-panel {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-    }
-  }
-  @media (max-width: 768px) {
-    .payment-row {
-      flex-direction: column;
-    }
+  .payment-row { display: flex;
+    .payment-column-left, .payment-column-right { padding: 0; display: flex; flex-direction: column; flex: 1; }
+    .payment-column-right { flex: 1.5; }
+    p-panel { height: 100%; display: flex; flex-direction: column; flex: 1; }
+    @media (max-width: 768px) { flex-direction: column; }
   }
 }
 
 .payment-info {
   font-size: 14px;
-  .payment-unified-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10rem;
-    padding: 0.1rem 0;
-    .payment-info-columns {
-      display: flex;
-      flex: 1;
-      justify-content: space-between;
-      .payment-column {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        .label {
-          font-size: 0.875rem;
-          color: var(--background-azul);
-        }
-        .amount {
-          font-size: 1.5rem;
-          font-weight: 600;
-          &.paid {
-            color: #28a745;
-          }
+  .payment-unified-row { display: flex; justify-content: space-between; align-items: center; gap: 10rem; padding: 0.1rem 0;
+    .payment-info-columns { display: flex; flex: 1; justify-content: space-between;
+      .payment-column { display: flex; flex-direction: column; align-items: center; text-align: center;
+        .label { font-size: 0.875rem; color: var(--background-azul); }
+        .amount { font-size: 1.5rem; font-weight: 600;
+          &.paid { color: #28a745; }
         }
       }
     }
-    .payment-buttons {
-      display: flex;
-      gap: 10px;
-      .p-button {
-        font-size: 0.85rem;
-        padding: 0.5rem 0.75rem;
-      }
+    .payment-buttons { display: flex; gap: 10px;
+      .p-button { font-size: 0.85rem; padding: 0.5rem 0.75rem; }
     }
   }
   @media (max-width: 992px) {
@@ -100,15 +57,8 @@
     }
   }
 }
-.payment-columns-container {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  margin-top: 1rem;
+.payment-columns-container { display: flex; flex-direction: column; gap: 20px; margin-top: 1rem;
   p-panel { flex: 1; }
-  @media (max-width: 992px) {
-    p-panel { margin-bottom: 1rem; }
-  }
 }
 
 .history-item {
@@ -188,122 +138,42 @@
   .p-panel {
     border: 1px solid #eaeaea;
     border-radius: 12px;
-    margin: 0.75rem;
-    margin-top: 0.5rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    transition: all 0.3s ease;
+    margin: 0.75rem 0.75rem 0 0.75rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     height: 100%;
     display: flex;
     flex-direction: column;
-    &:hover {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    }
-    .p-panel-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      font-size: 14px;
-      padding: 1rem;
-    }
-    .p-panel-header {
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      height: 50px;
-      padding-left: 1rem;
-      border-radius: 10px;
-      margin-bottom: -10px;
-      border-bottom: 1px solid #66666627;
-      .p-panel-title {
-        font-weight: 600;
-        font-size: 16px;
-      }
+    &:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .p-panel-content { flex: 1; display: flex; flex-direction: column; font-size: 14px; padding: 1rem; }
+    .p-panel-header { display: flex; height: 50px; padding-left: 1rem; border-radius: 10px; margin-bottom: -10px; border-bottom: 1px solid #66666627;
+      .p-panel-title { font-weight: 600; font-size: 16px; }
     }
   }
 
   .p-button {
-    &.p-button-success {
-      background: transparent;
-      border-color: #4ecdc4 !important;
-      color: #4ecdc4 !important;
-      border-radius: 50px;
-      .p-button-icon { color: #4ecdc4 !important; }
-      &:hover { background-color: #f0fffd !important; }
+    &.p-button-success, &.p-button-outlined, &.p-button-danger { background: transparent; border-radius: 50px; }
+    &.p-button-success { border-color: #4ecdc4 !important; color: #4ecdc4 !important;
+      &:hover { background: #f0fffd !important; }
     }
-    &.p-button-outlined {
-      border-color: #ff6b6b !important;
-      color: #ff6b6b !important;
-      border-radius: 50px;
-      .p-button-icon { color: #ff6b6b !important; }
-      &:hover { background-color: #fff0f0 !important; }
+    &.p-button-outlined, &.p-button-danger { border-color: #ff6b6b !important; color: #ff6b6b !important;
+      &:hover { background: #fff0f0 !important; }
     }
-    &.p-button-danger {
-      background: transparent !important;
-      border-color: var(--primary-color-300) !important;
-      color: #ff6b6b !important;
-      border-radius: 50px !important;
-      .p-button-icon { color: #ff6b6b !important; }
-      &:hover { background-color: var(--primary-color-50) !important; }
-    }
-    &.p-button-info {
-      background-color: var(--background-azul);
-      border-color: var(--background-azul) !important;
-      color: #fff !important;
-      border-radius: 22px !important;
-      .p-button-icon { color: #fff !important; }
-      &:hover {
-        background-color: transparent !important;
-        color: var(--background-azul) !important;
-        .p-button-icon { color: var(--background-azul) !important; }
-      }
+    &.p-button-info { background: var(--background-azul); color: #fff !important; border-radius: 22px !important;
+      &:hover { background: transparent !important; color: var(--background-azul) !important; }
     }
   }
-  .p-divider {
-    --p-divider-horizontal-margin: 0px;
-  }
-  .p-inputgroup {
-    width: 100%;
-    .p-inputgroup-addon {
-      margin-left: 10px;
-    }
-    .p-inputtext {
-      width: 50%;
-      margin-bottom: 20px;
-    }
-  }
-  .p-dialog-footer { padding: 1rem 0; flex-shrink: 0; display: flex; justify-content: center; }
-  .p-toast {
-    z-index: 9999;
-    position: fixed;
-    .p-toast-message {
-      width: 90vw;
-      max-width: 300px;
-      word-wrap: break-word;
-      .p-toast-message-content { padding: 0.75rem; word-break: break-word; }
-    }
-  }
-  .p-dialog { @media (max-width: 768px) { width: 90% !important; max-height: 80vh; overflow-y: auto; } }
+  .p-divider { --p-divider-horizontal-margin: 0; }
+  .p-inputgroup { width: 100%; }
+  .p-dialog-footer { padding: 1rem 0; display: flex; justify-content: center; }
 }
 .required { color: red; }
-:host ::ng-deep {
-  .payment-dialog {
-    .p-dialog-content {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      p { width: 100%; }
-      .p-button { margin-top: 1.5rem; }
-    }
-    .p-dialog-header {
-      display: flex !important;
-      justify-content: center !important;
-      align-items: center;
-      width: 100%;
-      position: relative;
-      .p-dialog-title { flex: 1; text-align: center; margin-left: 2.3rem; }
-      .p-dialog-header-icons { position: absolute; right: 1.5rem; top: 50%; transform: translateY(-50%); }
-    }
+:host ::ng-deep .payment-dialog {
+  .p-dialog-content { display: flex; flex-direction: column; align-items: center; text-align: center;
+    .p-button { margin-top: 1.5rem; }
+  }
+  .p-dialog-header { display: flex !important; justify-content: center !important; width: 100%; position: relative;
+    .p-dialog-title { flex: 1; text-align: center; margin-left: 2.3rem; }
+    .p-dialog-header-icons { position: absolute; right: 1.5rem; top: 50%; transform: translateY(-50%); }
   }
 
   .vouchers-list {
@@ -319,29 +189,17 @@
       background: #f8f9fa;
       border-radius: 8px;
       border: 1px solid #e9ecef;
-      transition: all 0.2s;
-      &:hover { background: #e9ecef; border-color: #dee2e6; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-      .voucher-info {
-        display: flex;
-        align-items: center;
-        flex: 1;
-        gap: 12px;
-        .voucher-details {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-          .voucher-name { font-weight: 600; color: #333; font-size: 0.95rem; }
+      &:hover { background: #e9ecef; border-color: #dee2e6; }
+      .voucher-info { display: flex; align-items: center; flex: 1; gap: 12px;
+        .voucher-details { display: flex; flex-direction: column; gap: 4px;
+          .voucher-name { font-weight: 600; color: #333; }
           .voucher-date { font-size: 0.85rem; color: #777; }
         }
       }
       ::ng-deep p-button .p-button.p-button-text {
         color: #fff !important;
         background: #ea6a5c !important;
-        border: none !important;
         &:hover { background: rgba(234,104,92,0.1) !important; color: #ea685c !important; border: 1px solid #ea6a5c !important; }
-      }
-      @media (max-width: 768px) { flex-direction: column; align-items: flex-start; gap: 12px;
-        .voucher-info { width: 100%; }
       }
     }
   }

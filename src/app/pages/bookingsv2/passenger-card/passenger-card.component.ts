@@ -178,9 +178,11 @@ export class PassengerCardV2Component implements OnInit, OnChanges, OnDestroy {
             const validators = this.getFieldValidators(drf, fieldDetails);
             formControls[formControlName] = [passengerValue || '', validators];
           } else {
-            // Actualizar validadores si el campo ya existe
+            // Actualizar validadores y valor si el campo ya existe
             const validators = this.getFieldValidators(drf, fieldDetails);
-            formControls[formControlName] = [formControls[formControlName][0], validators];
+            // Usar el valor del passenger si está disponible, de lo contrario mantener el existente
+            const finalValue = passengerValue !== undefined && passengerValue !== null ? passengerValue : formControls[formControlName][0];
+            formControls[formControlName] = [finalValue, validators];
           }
 
           // Si es campo de teléfono, asegurar que existe el control de prefijo
@@ -377,6 +379,7 @@ export class PassengerCardV2Component implements OnInit, OnChanges, OnDestroy {
         gender: formValue.gender || '',
         nationality: formValue.nationality || '',
         prefijo: formValue.prefijo || '',
+        dni: formValue.dni || '',  // ✅ Agregar campo DNI para que se guarde
         _id: this.travelerId
       };
 
@@ -587,6 +590,7 @@ export class PassengerCardV2Component implements OnInit, OnChanges, OnDestroy {
       'sex': 'gender',
       'birthdate': 'birthDate',
       'dni': 'dni',
+      'national_id': 'dni',  // ✅ Código en BD: national_id, propiedad en passenger: dni
       'passport': 'passportID',
       'nationality': 'nationality',
       'document_type': 'documentType',
@@ -612,6 +616,7 @@ export class PassengerCardV2Component implements OnInit, OnChanges, OnDestroy {
       'sex': 'Sexo',
       'birthdate': 'Fecha de nacimiento',
       'dni': 'DNI',
+      'national_id': 'DNI',  // ✅ Código en BD: national_id
       'passport': 'Pasaporte',
       'nationality': 'Nacionalidad',
       'document_type': 'Tipo de documento',
@@ -664,7 +669,7 @@ export class PassengerCardV2Component implements OnInit, OnChanges, OnDestroy {
       'documentType': 'document_type',
       'passportID': 'passport',
       'nationality': 'nationality',
-      'dni': 'dni',  // ✅ Agregado campo DNI
+      'dni': 'national_id',  // ✅ Código en BD: national_id, propiedad en passenger: dni
       'room': 'room',  // ✅ Agregado campo habitación
       'ciudad': 'ciudad',  // ✅ Agregado campo ciudad
       'codigoPostal': 'codigoPostal',  // ✅ Agregado campo código postal
@@ -805,6 +810,7 @@ export class PassengerCardV2Component implements OnInit, OnChanges, OnDestroy {
       'sex': 'gender',
       'birthdate': 'birthDate',
       'dni': 'dni',
+      'national_id': 'dni',  // ✅ Código en BD: national_id, control del formulario: dni
       'passport': 'passportID',
       'nationality': 'nationality',
       'document_type': 'documentType',
@@ -855,6 +861,7 @@ export class PassengerCardV2Component implements OnInit, OnChanges, OnDestroy {
       'sex': 'gender',
       'birthdate': 'birthDate',
       'dni': 'dni',
+      'national_id': 'dni',  // ✅ Código en BD: national_id, propiedad en passenger: dni
       'passport': 'passportID',
       'nationality': 'nationality',
       'document_type': 'documentType',

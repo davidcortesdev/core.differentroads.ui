@@ -255,8 +255,8 @@ export class BookingPersonalDataV2Component implements OnInit {
                 passengerData.passportID = field.value;
               } else if (normalizedCode === 'nationality' || normalizedCode === 'nacionalidad') {
                 passengerData.nationality = field.value;
-              } else if (normalizedCode === 'dni') {
-                passengerData.dni = field.value;
+              } else if (normalizedCode === 'dni' || normalizedCode === 'national_id') {
+                passengerData.dni = field.value;  // ✅ Código en BD: national_id, propiedad en passenger: dni
               } else if (normalizedCode === 'room' || normalizedCode === 'habitacion') {
                 passengerData.room = field.value;
               } else if (normalizedCode === 'ciudad' || normalizedCode === 'city') {
@@ -524,7 +524,7 @@ export class BookingPersonalDataV2Component implements OnInit {
       'passport': passenger.passportID,
       'nationality': passenger.nationality,
       'room': passenger.room,
-      'dni': passenger.dni,
+      'national_id': passenger.dni,  // ✅ Código en BD: national_id, propiedad en passenger: dni
       'ciudad': passenger.ciudad,
       'codigoPostal': passenger.codigoPostal,
       'minorIdIssueDate': passenger.minorIdIssueDate,

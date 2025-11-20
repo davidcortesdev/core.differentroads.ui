@@ -81,6 +81,18 @@ interface AllowedPassengerTypes {
   babies: boolean;
 }
 
+interface ActivityPackAvailabilityData {
+  id: number;
+  departureId: number;
+  activityPackId: number;
+  bookableAvailability: number;
+  guaranteedAvailability: number;
+  onRequestAvailability: number;
+  availabilityMargin: number;
+  adjustedAvailability: number;
+  lastAvailabilityUpdate: string;
+}
+
 @Component({
   selector: 'app-tour-departures-v2',
   standalone: false,
@@ -194,7 +206,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
   // Mapa de disponibilidad de plazas por departureId (ActivityPack)
   activityPackAvailabilityByDepartureId: {
-    [departureId: number]: any | null;
+    [departureId: number]: ActivityPackAvailabilityData | null;
   } = {};
 
   // Mapa de disponibilidad de plazas por departureId (Departure)
@@ -415,8 +427,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
           const ageGroupRequests = ageGroupIds.map((id) =>
             this.ageGroupService.getById(id).pipe(
-              catchError((error) => {
-                console.error(`Error obteniendo Age Group ${id}:`, error);
+              catchError(() => {
                 return of(null);
               })
             )
@@ -582,8 +593,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
         next: (count) => {
           // Conteo obtenido
         },
-        error: (error) => {
-          console.error('Error obteniendo conteo:', error);
+        error: () => {
         },
       });
 
@@ -594,8 +604,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
         next: (hasAgeGroups) => {
           // Información de grupos obtenida
         },
-        error: (error) => {
-          console.error('Error verificando grupos de edad:', error);
+        error: () => {
         },
       });
   }
@@ -627,18 +636,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       .subscribe({
         next: (defaultSelection) => {
           this.defaultSelection = defaultSelection;
-          
-          if (defaultSelection && defaultSelection.activityPackId) {
-            const defaultCity = this.cities.find(
-              (city) => city.activityPackId === defaultSelection.activityPackId
-            );
-            
-            if (defaultCity) {
-              this.selectedCity = defaultCity;
-              this.emitCityUpdate();
-            }
-          }
-          
           this.loadDeparturesForAllCities();
         },
         error: () => {
@@ -707,41 +704,48 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
           this.buildAllDeparturesFromCityData();
 
-          if (!this.selectedCity && this.defaultSelection?.activityPackId) {
-            const defaultCity = this.cities.find(
-              (city) => city.activityPackId === this.defaultSelection?.activityPackId
-            );
-            if (defaultCity) {
-              this.selectedCity = defaultCity;
-              this.emitCityUpdate();
-              
-              this.loadCityRelatedData();
-              
-              if (this.selectedCity.activityId) {
-                this.loadDeparturesPrices(this.selectedCity.activityId, 0).subscribe({
-                  next: () => {
-                    if (this.defaultSelection?.departureId) {
-                      this.selectDefaultDeparture(this.defaultSelection.departureId);
-                    } else if (this.filteredDepartures.length > 0) {
-                      this.autoSelectNearestBookableDeparture();
+          // Seleccionar ciudad por defecto si no hay una seleccionada
+          if (!this.selectedCity && this.cities.length > 0) {
+            // Priorizar ciudad del defaultSelection si existe
+            if (this.defaultSelection?.activityPackId) {
+              const defaultCity = this.cities.find(
+                (city) => city.activityPackId === this.defaultSelection?.activityPackId
+              );
+              if (defaultCity) {
+                this.selectedCity = defaultCity;
+                this.emitCityUpdate();
+                this.loadCityRelatedData();
+                
+                // Cargar precios y seleccionar departure
+                if (this.selectedCity.activityId) {
+                  this.loadDeparturesPrices(this.selectedCity.activityId, 0).subscribe({
+                    next: () => {
+                      if (this.defaultSelection?.departureId) {
+                        this.selectDefaultDeparture(this.defaultSelection.departureId);
+                      } else if (this.filteredDepartures.length > 0) {
+                        this.autoSelectNearestBookableDeparture();
+                      }
                     }
+                  });
+                } else {
+                  if (this.defaultSelection?.departureId) {
+                    this.selectDefaultDeparture(this.defaultSelection.departureId);
+                  } else if (this.filteredDepartures.length > 0) {
+                    this.autoSelectNearestBookableDeparture();
                   }
-                });
-              } else {
-                if (this.defaultSelection?.departureId) {
-                  this.selectDefaultDeparture(this.defaultSelection.departureId);
-                } else if (this.filteredDepartures.length > 0) {
-                  this.autoSelectNearestBookableDeparture();
                 }
+              } else {
+                // Si no se encuentra la ciudad del defaultSelection, usar selectDefaultCityWithAvailability
+                this.selectDefaultCityWithAvailability();
               }
+            } else {
+              // Si no hay defaultSelection, usar selectDefaultCityWithAvailability
+              this.selectDefaultCityWithAvailability();
             }
           }
 
-          if (!this.selectedCity && this.cities.length > 0) {
-            this.selectDefaultCityWithAvailability();
-          }
-
-          if (!this.selectedDepartureId && !this.defaultSelection?.departureId && this.filteredDepartures.length > 0) {
+          // Si hay ciudad seleccionada pero no departure, seleccionar uno
+          if (this.selectedCity && !this.selectedDepartureId && !this.defaultSelection?.departureId && this.filteredDepartures.length > 0) {
             this.autoSelectNearestBookableDeparture();
           }
         },
@@ -1244,11 +1248,15 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       this.loadDeparturesPrices(this.selectedCity.activityId, 0).subscribe();
     }
 
-    this.allDepartures.forEach(departure => {
-      if (departure.id) {
-        this.loadFlightTimes(departure.id);
-      }
-    });
+    // Solo cargar flight times para los departures de la ciudad seleccionada
+    const cityDepartures = this.departuresByCity.get(this.selectedCity.activityPackId!);
+    if (cityDepartures) {
+      cityDepartures.forEach(departureData => {
+        if (departureData.departureId) {
+          this.loadFlightTimes(departureData.departureId);
+        }
+      });
+    }
   }
 
   private emitCityUpdate(): void {
@@ -1683,71 +1691,29 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
     // Buscar la primera ciudad con disponibilidad
     const cityWithAvailability = this.cities.find(city => this.hasCityAvailability(city));
-
-    if (cityWithAvailability) {
-      this.selectedCity = cityWithAvailability;
-      this.emitCityUpdate();
-      
-      this.loadCityRelatedData();
-      
-      if (this.selectedCity.activityId) {
-        this.loadDeparturesPrices(this.selectedCity.activityId, 0).subscribe({
-          next: () => {
-            if (this.filteredDepartures.length > 0) {
-              this.autoSelectNearestBookableDeparture();
-            }
+    this.selectedCity = cityWithAvailability || this.cities[0];
+    
+    this.emitCityUpdate();
+    this.loadCityRelatedData();
+    
+    // Cargar precios y seleccionar departure si hay activityId
+    if (this.selectedCity.activityId) {
+      this.loadDeparturesPrices(this.selectedCity.activityId, 0).subscribe({
+        next: () => {
+          if (this.filteredDepartures.length > 0) {
+            this.autoSelectNearestBookableDeparture();
           }
-        });
-      } else {
-        const cityDepartures = this.departuresByCity.get(this.selectedCity.activityPackId!);
-        if (cityDepartures && cityDepartures.length > 0) {
-          this.autoSelectNearestBookableDeparture();
         }
-      }
+      });
     } else {
-      this.selectedCity = this.cities[0];
-      this.emitCityUpdate();
-      
-      this.loadCityRelatedData();
-      
-      if (this.selectedCity.activityId) {
-        this.loadDeparturesPrices(this.selectedCity.activityId, 0).subscribe({
-          next: () => {
-            if (this.filteredDepartures.length > 0) {
-              this.autoSelectNearestBookableDeparture();
-            }
-          }
-        });
-      } else {
-        const cityDepartures = this.departuresByCity.get(this.selectedCity.activityPackId!);
-        if (cityDepartures && cityDepartures.length > 0) {
-          this.autoSelectNearestBookableDeparture();
-        }
+      // Si no hay activityId, verificar si hay departures disponibles
+      const cityDepartures = this.departuresByCity.get(this.selectedCity.activityPackId!);
+      if (cityDepartures && cityDepartures.length > 0) {
+        this.autoSelectNearestBookableDeparture();
       }
     }
   }
 
-  // Actualizar y re-emitir departureUpdate si el departure está seleccionado
-  private updateSelectedDepartureIfNeeded(departureId: number): void {
-    if (this.selectedDepartureId === departureId) {
-      // Buscar el departure en filteredDepartures
-      const selectedDeparture = this.filteredDepartures.find(dep => dep.id === departureId);
-      if (selectedDeparture) {
-        // Recalcular isBookable
-        const spots = this.getAvailableSpots(departureId);
-        const isBookable = (selectedDeparture.isBookable ?? true) && (spots === -1 || spots > 0);
-        
-        // Crear objeto con isBookable actualizado
-        const departureWithAvailability = {
-          ...selectedDeparture,
-          isBookable: isBookable
-        };
-        
-        // Re-emitir con disponibilidad actualizada
-        this.departureUpdate.emit(departureWithAvailability);
-      }
-    }
-  }
 
   // Obtener el estado de plazas para mostrar en la UI
   getAvailabilityStatus(departureId: number): {
@@ -1816,8 +1782,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           year: 'numeric',
         })
         .replace(/^\w/, (c) => c.toUpperCase());
-    } catch (error) {
-      console.error('Error formatting date:', error);
+    } catch {
       return '';
     }
   }

@@ -31,6 +31,34 @@ export interface DepartureAvailabilityFilters {
   useExactMatchForStrings?: boolean;
 }
 
+/**
+ * Interfaz para la respuesta de selección por defecto.
+ */
+export interface IDefaultDepartureSelectionResponse {
+  departureId: number;
+  departureName: string;
+  departureCode: string;
+  departureDate: string;
+  activityPackId: number;
+  activityPackName: string;
+  availability: number;
+}
+
+/**
+ * Interfaz para la respuesta de disponibilidad por tour y activity pack.
+ */
+export interface IDepartureAvailabilityByTourResponse {
+  departureId: number;
+  departureName: string;
+  departureCode: string;
+  departureDate: string;
+  arrivalDate: string;
+  mostRestrictiveAvailability: number;
+  departureAvailability: number;
+  activityPackAvailability: number;
+  restrictiveSource: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -78,6 +106,36 @@ export class DepartureAvailabilityService {
       departureId,
     };
     return this.getAll(filters);
+  }
+
+  /**
+   * Obtiene la salida por defecto y el ActivityPack por defecto para un tour.
+   * Selecciona la salida más cercana disponible, reservable y con disponibilidad > 0.
+   * @param tourId ID del tour.
+   * @returns Respuesta con la salida y ciudad por defecto.
+   */
+  getDefaultSelectionByTour(
+    tourId: number
+  ): Observable<IDefaultDepartureSelectionResponse> {
+    return this.http.get<IDefaultDepartureSelectionResponse>(
+      `${this.API_URL}/default-selection/tour/${tourId}`
+    );
+  }
+
+  /**
+   * Obtiene todas las disponibilidades de todos los períodos (salidas) para un Tour y un ActivityPackId.
+   * Para cada período, calcula la disponibilidad más restrictiva entre DepartureAvailability y ActivityPackAvailability.
+   * @param tourId ID del tour.
+   * @param activityPackId ID del ActivityPack (ciudad de salida).
+   * @returns Lista de disponibilidades por salida.
+   */
+  getByTourAndActivityPack(
+    tourId: number,
+    activityPackId: number
+  ): Observable<IDepartureAvailabilityByTourResponse[]> {
+    return this.http.get<IDepartureAvailabilityByTourResponse[]>(
+      `${this.API_URL}/by-tour/${tourId}/activitypack/${activityPackId}`
+    );
   }
 }
 

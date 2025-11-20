@@ -202,9 +202,11 @@ export class AddPaymentModalComponent implements OnInit {
               });
 
               // Generar los datos del formulario para Redsys
+              // Usar response.id como fallback si updatedResponse.id es undefined
+              const paymentId = updatedResponse?.id || response.id;
               const baseUrlFront = (window.location.href).replace(this.router.url, '');
               this.redsysService.generateFormData(
-                updatedResponse.id, 
+                paymentId, 
                 environment.redsysApiUrl,
                 baseUrlFront
               ).subscribe({
@@ -316,7 +318,9 @@ export class AddPaymentModalComponent implements OnInit {
               });
 
               // Navegar a la página de confirmación/subida de comprobante
-              this.router.navigate([`/reservation/${this.reservationId}/${updatedResponse.id}`]);
+              // Usar response.id como fallback si updatedResponse.id es undefined
+              const paymentId = updatedResponse?.id || response.id;
+              this.router.navigate([`/reservation/${this.reservationId}/${paymentId}`]);
             },
             error: (error: any) => {
               console.error('Error al actualizar el pago:', error);
@@ -360,7 +364,7 @@ export class AddPaymentModalComponent implements OnInit {
       });
 
       // Crear orden en Scalapay
-      const response = await this.scalapayService.createOrder(this.reservationId, baseUrl).toPromise();
+      const response = await this.scalapayService.createOrder(this.reservationId, baseUrl, this.customPaymentAmount).toPromise();
 
       console.log('✅ Scalapay - Respuesta recibida:', response);
 

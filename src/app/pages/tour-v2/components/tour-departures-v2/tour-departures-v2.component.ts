@@ -657,7 +657,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       .filter((city) => city.activityPackId)
       .map((city) =>
         this.departureAvailabilityService
-          .getByTourAndActivityPack(this.tourId!, city.activityPackId!)
+          .getByTourAndActivityPack(this.tourId!, city.activityPackId!, true)
           .pipe(
             takeUntil(this.destroy$),
             map((departures) => ({
@@ -767,7 +767,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
             tkId: '',
             itineraryId: 0,
             isVisibleOnWeb: true,
-            isBookable: departureData.mostRestrictiveAvailability > 0,
+            isBookable: departureData.isBookable ?? false,
             departureDate: departureData.departureDate,
             arrivalDate: departureData.arrivalDate,
             departureStatusId: 0,
@@ -956,7 +956,20 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     if (selectedDepartureFromSelector && selectedDepartureFromSelector.isBookable) {
       this.addToCart(selectedDepartureFromSelector);
     } else if (selectedDepartureFromSelector && !selectedDepartureFromSelector.isBookable) {
-      // Si la salida del selector no es reservable, buscar la más cercana que sí lo sea
+      // Si la salida del selector no es reservable, emitir evento con isBookable: false para deshabilitar el botón
+      this.selectedDepartureId = selectedDepartureFromSelector.id;
+      const departureWithAvailability = {
+        id: selectedDepartureFromSelector.id,
+        departureDate: selectedDepartureFromSelector.departureDate,
+        returnDate: selectedDepartureFromSelector.returnDate,
+        price: selectedDepartureFromSelector.price,
+        status: selectedDepartureFromSelector.status,
+        waitingList: selectedDepartureFromSelector.waitingList,
+        group: selectedDepartureFromSelector.group,
+        isBookable: false
+      };
+      this.departureUpdate.emit(departureWithAvailability);
+      // Luego buscar la más cercana que sí lo sea
       this.autoSelectNearestBookableDeparture();
     } else {
       // Si no hay salida del selector, auto-seleccionar la más cercana reservable
@@ -972,15 +985,32 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   private executeDepartureSelectionFromDetails(): void {
     if (!this.departureDetails) return;
 
+    const spots = this.getAvailableSpots(this.departureDetails.id);
+    const isBookable = (this.departureDetails.isBookable ?? true) && (spots === -1 || spots > 0);
+    
     const departureFromDetails = {
       id: this.departureDetails.id,
       departureDate: this.departureDetails.departureDate,
       returnDate: this.departureDetails.arrivalDate,
-      isBookable: this.departureDetails.isBookable ?? true,
+      isBookable: isBookable,
     };
     
     if (departureFromDetails.isBookable) {
       this.addToCart(departureFromDetails);
+    } else {
+      // Si no es bookable, emitir evento con isBookable: false para deshabilitar el botón
+      this.selectedDepartureId = departureFromDetails.id;
+      const departureWithAvailability = {
+        id: departureFromDetails.id,
+        departureDate: departureFromDetails.departureDate,
+        returnDate: departureFromDetails.returnDate,
+        price: this.getPriceForDeparture(departureFromDetails.id),
+        status: 'available',
+        waitingList: false,
+        group: '',
+        isBookable: false
+      };
+      this.departureUpdate.emit(departureWithAvailability);
     }
     this.emitCityUpdate();
   }
@@ -1444,6 +1474,20 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
         detail: detail,
         life: 3000,
       });
+      
+      // IMPORTANTE: Emitir el evento con isBookable: false para que el botón "Reservar mi tour" se deshabilite
+      this.selectedDepartureId = item.id;
+      const departureWithAvailability = {
+        id: item.id,
+        departureDate: item.departureDate,
+        returnDate: item.returnDate,
+        price: item.price,
+        status: item.status,
+        waitingList: item.waitingList,
+        group: item.group,
+        isBookable: false
+      };
+      this.departureUpdate.emit(departureWithAvailability);
       return;
     }
 

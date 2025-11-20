@@ -58,6 +58,7 @@ export interface IDepartureAvailabilityByTourResponse {
   departureAvailability: number;
   activityPackAvailability: number;
   restrictiveSource: string;
+  isBookable: boolean;
 }
 
 @Injectable({
@@ -142,14 +143,20 @@ export class DepartureAvailabilityService {
    * Para cada período, calcula la disponibilidad más restrictiva entre DepartureAvailability y ActivityPackAvailability.
    * @param tourId ID del tour.
    * @param activityPackId ID del ActivityPack (ciudad de salida).
+   * @param filterByVisible Indica si se deben incluir solo salidas visibles. Por defecto true.
    * @returns Lista de disponibilidades por salida.
    */
   getByTourAndActivityPack(
     tourId: number,
-    activityPackId: number
+    activityPackId: number,
+    filterByVisible: boolean = true
   ): Observable<IDepartureAvailabilityByTourResponse[]> {
+    let params = new HttpParams();
+    params = params.set('filterByVisible', filterByVisible.toString());
+
     return this.http.get<IDepartureAvailabilityByTourResponse[]>(
-      `${this.API_URL}/by-tour/${tourId}/activitypack/${activityPackId}`
+      `${this.API_URL}/by-tour/${tourId}/activitypack/${activityPackId}`,
+      { params }
     );
   }
 }

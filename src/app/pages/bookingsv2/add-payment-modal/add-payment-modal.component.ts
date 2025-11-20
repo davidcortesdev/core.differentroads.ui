@@ -360,7 +360,7 @@ export class AddPaymentModalComponent implements OnInit {
       });
 
       // Crear orden en Scalapay
-      const response = await this.scalapayService.createOrder(this.reservationId, baseUrl).toPromise();
+      const response = await this.scalapayService.createOrder(this.reservationId, baseUrl, this.customPaymentAmount).toPromise();
 
       console.log('✅ Scalapay - Respuesta recibida:', response);
 

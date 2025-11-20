@@ -391,16 +391,21 @@ export class TourHeaderV2Component
   }
 
   private loadTourData(tourId: number) {
+    console.log('🔍 Cargando tour, preview mode:', this.preview);
+    
+    // ✅ LÓGICA: Si es preview, buscar tours no visibles también
+    const filterByVisible = !this.preview;
+    
     this.subscriptions.add(
-      this.tourService.getTourById(tourId).pipe(
+      this.tourService.getById(tourId, filterByVisible).pipe(
         switchMap((tourData) => {
+          console.log('✅ Tour cargado exitosamente:', tourData.name);
           this.tour = { ...tourData };
           this.loadCountryAndContinent(tourId);
           
           // Obtener el primer tag visible del tour
           return this.tourTagService.getByTourAndType(tourId, 'VISIBLE').pipe(
             switchMap((tourTags) => {
-              // Validar que haya tags y que el primer tag tenga un tagId válido
               if (tourTags.length > 0 && tourTags[0]?.tagId && tourTags[0].tagId > 0) {
                 const firstTagId = tourTags[0].tagId;
                 return this.tagService.getById(firstTagId).pipe(
@@ -412,7 +417,6 @@ export class TourHeaderV2Component
             }),
             catchError(() => of(null)),
             map((tagName) => {
-              // Agregar el tag al objeto tour si existe
               if (tagName && tagName.trim().length > 0) {
                 (this.tour as any).tag = tagName.trim();
               }
@@ -421,7 +425,7 @@ export class TourHeaderV2Component
           );
         }),
         catchError((error) => {
-          console.error('Error cargando tour:', error);
+          console.error('💥 Error cargando tour:', error);
           return of(null);
         })
       ).subscribe()

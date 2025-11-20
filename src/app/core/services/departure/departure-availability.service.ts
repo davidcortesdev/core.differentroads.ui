@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 
 /**
@@ -112,13 +113,27 @@ export class DepartureAvailabilityService {
    * Obtiene la salida por defecto y el ActivityPack por defecto para un tour.
    * Selecciona la salida más cercana disponible, reservable y con disponibilidad > 0.
    * @param tourId ID del tour.
-   * @returns Respuesta con la salida y ciudad por defecto.
+   * @returns Respuesta con la salida y ciudad por defecto, o null si no hay selección por defecto (204).
    */
   getDefaultSelectionByTour(
     tourId: number
-  ): Observable<IDefaultDepartureSelectionResponse> {
+  ): Observable<IDefaultDepartureSelectionResponse | null> {
     return this.http.get<IDefaultDepartureSelectionResponse>(
-      `${this.API_URL}/default-selection/tour/${tourId}`
+      `${this.API_URL}/default-selection/tour/${tourId}`,
+      { observe: 'response' }
+    ).pipe(
+      map(response => {
+        if (response.status === 204 || !response.body) {
+          return null;
+        }
+        return response.body;
+      }),
+      catchError((error) => {
+        if (error.status === 204 || error.status === 404) {
+          return of(null);
+        }
+        return of(null);
+      })
     );
   }
 

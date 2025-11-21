@@ -66,6 +66,8 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
   private readonly MAX_RETRY_ATTEMPTS: number = 5;
   private readonly RETRY_DELAY: number = 1000; // 1 segundo
   private isRetrying: boolean = false;
+  // NUEVO: AbortController para cancelar peticiones HTTP anteriores
+  private abortController: AbortController | null = null;
 
   // NUEVO: Inyectar servicios necesarios
   constructor(
@@ -81,6 +83,8 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   ngOnDestroy(): void {
+    // Cancelar cualquier petición en curso antes de destruir el componente
+    this.cancelPendingRequest();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -105,6 +109,9 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
   private loadReservationSummary(): void {
     if (!this.reservationId) return;
 
+    // Cancelar petición anterior si existe
+    this.cancelPendingRequest();
+
     this.loading = true;
     this.error = false;
     this.retryAttempts = 0;
@@ -113,15 +120,33 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
     this.attemptLoadSummary();
   }
 
+  // NUEVO: Cancelar petición HTTP pendiente
+  private cancelPendingRequest(): void {
+    if (this.abortController) {
+      this.abortController.abort();
+      this.abortController = null;
+    }
+  }
+
   // NUEVO: Intentar cargar el resumen con retry automático
   private attemptLoadSummary(): void {
     if (!this.reservationId) return;
 
+    // Crear nuevo AbortController para esta petición
+    this.abortController = new AbortController();
+    const signal = this.abortController.signal;
+
     this.reservationService
-      .getSummary(this.reservationId)
+      .getSummary(this.reservationId, signal)
       .pipe(
         takeUntil(this.destroy$),
         catchError((err) => {
+          // Si la petición fue cancelada, no hacer retry
+          if (err.name === 'AbortError' || signal.aborted) {
+            console.log('Petición de resumen cancelada');
+            return EMPTY;
+          }
+
           this.retryAttempts++;
           
           if (this.retryAttempts < this.MAX_RETRY_ATTEMPTS && !this.isRetrying) {
@@ -149,12 +174,18 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
       )
       .subscribe({
         next: (summary: IReservationSummaryResponse) => {
+          // Verificar que la petición no fue cancelada antes de procesar
+          if (signal.aborted) {
+            return;
+          }
+
           this.reservationSummary = summary;
           this.updateSummaryData(summary);
           this.loading = false;
           this.error = false;
           this.retryAttempts = 0; // Reset retry attempts on success
           this.isRetrying = false;
+          this.abortController = null; // Limpiar el controller después de éxito
         },
       });
   }
@@ -208,6 +239,8 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
   // NUEVO: Método para recargar información
   refreshSummary(): void {
     if (this.reservationId) {
+      // Cancelar petición anterior si existe
+      this.cancelPendingRequest();
       // Resetear contadores de reintentos cuando se recarga manualmente
       this.retryAttempts = 0;
       this.isRetrying = false;

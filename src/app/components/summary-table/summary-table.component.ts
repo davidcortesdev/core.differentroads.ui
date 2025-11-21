@@ -68,6 +68,8 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
   private isRetrying: boolean = false;
   // NUEVO: Subject para gestionar las peticiones de carga con switchMap
   private loadSummary$: Subject<number> = new Subject<number>();
+  // NUEVO: Flag para rastrear si es la primera carga
+  private isFirstLoad: boolean = true;
 
   // NUEVO: Inyectar servicios necesarios
   constructor(
@@ -86,7 +88,10 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
             return EMPTY;
           }
 
-          this.loading = true;
+          // Solo mostrar spinner en la primera carga
+          if (this.isFirstLoad) {
+            this.loading = true;
+          }
           this.error = false;
           this.retryAttempts = 0;
           this.isRetrying = false;
@@ -98,7 +103,10 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
                   this.retryAttempts = index + 1;
                   if (this.retryAttempts >= this.MAX_RETRY_ATTEMPTS) {
                     this.error = true;
-                    this.loading = false;
+                    // Solo ocultar spinner si estaba visible (primera carga)
+                    if (this.isFirstLoad) {
+                      this.loading = false;
+                    }
                     this.isRetrying = false;
                     console.error(`Error fetching reservation summary after ${this.retryAttempts} attempts:`, err);
                     return throwError(() => err);
@@ -111,7 +119,10 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
             ),
             catchError((err) => {
               this.error = true;
-              this.loading = false;
+              // Solo ocultar spinner si estaba visible (primera carga)
+              if (this.isFirstLoad) {
+                this.loading = false;
+              }
               this.isRetrying = false;
               console.error('Error fetching reservation summary:', err);
               return EMPTY;
@@ -124,7 +135,11 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
         next: (summary: IReservationSummaryResponse) => {
           this.reservationSummary = summary;
           this.updateSummaryData(summary);
-          this.loading = false;
+          // Ocultar spinner solo si era la primera carga
+          if (this.isFirstLoad) {
+            this.loading = false;
+            this.isFirstLoad = false; // Marcar que ya no es la primera carga
+          }
           this.error = false;
           this.retryAttempts = 0;
           this.isRetrying = false;
@@ -147,6 +162,8 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
   // NUEVO: Escuchar cambios en refreshTrigger
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['reservationId'] && this.reservationId) {
+      // Si cambia el reservationId, resetear el flag de primera carga
+      this.isFirstLoad = true;
       this.loadReservationSummary();
     }
     

@@ -931,4 +931,25 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
     // Navegar a la página de justificantes con el paymentId específico
     this.router.navigate([`/reservation/${this.reservationId}/${payment.id}`]);
   }
+
+  /**
+   * Traduce mensajes técnicos de error a mensajes amigables para el usuario
+   */
+  getFriendlyErrorMessage(notes: string | undefined): string {
+    if (!notes) {
+      return '';
+    }
+
+    // Detectar si es un mensaje de error técnico (Redsys, failed, rejected, etc.)
+    const isError = 
+      /Redsys\s+response/i.test(notes) ||
+      /failed|fallido|rejected|rechazado|error/i.test(notes.toLowerCase());
+
+    if (isError) {
+      return 'Pago rechazado';
+    }
+
+    // Si no es un error, devolver el mensaje original
+    return notes;
+  }
 }

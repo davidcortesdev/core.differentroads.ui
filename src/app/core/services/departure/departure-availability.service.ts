@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 
 /**
@@ -29,6 +30,35 @@ export interface DepartureAvailabilityFilters {
   minBookableAvailability?: number;
   minGuaranteedAvailability?: number;
   useExactMatchForStrings?: boolean;
+}
+
+/**
+ * Interfaz para la respuesta de selección por defecto.
+ */
+export interface IDefaultDepartureSelectionResponse {
+  departureId: number;
+  departureName: string;
+  departureCode: string;
+  departureDate: string;
+  activityPackId: number;
+  activityPackName: string;
+  availability: number;
+}
+
+/**
+ * Interfaz para la respuesta de disponibilidad por tour y activity pack.
+ */
+export interface IDepartureAvailabilityByTourResponse {
+  departureId: number;
+  departureName: string;
+  departureCode: string;
+  departureDate: string;
+  arrivalDate: string;
+  mostRestrictiveAvailability: number;
+  departureAvailability: number;
+  activityPackAvailability: number;
+  restrictiveSource: string;
+  isBookable: boolean;
 }
 
 @Injectable({
@@ -78,6 +108,56 @@ export class DepartureAvailabilityService {
       departureId,
     };
     return this.getAll(filters);
+  }
+
+  /**
+   * Obtiene la salida por defecto y el ActivityPack por defecto para un tour.
+   * Selecciona la salida más cercana disponible, reservable y con disponibilidad > 0.
+   * @param tourId ID del tour.
+   * @returns Respuesta con la salida y ciudad por defecto, o null si no hay selección por defecto (204).
+   */
+  getDefaultSelectionByTour(
+    tourId: number
+  ): Observable<IDefaultDepartureSelectionResponse | null> {
+    return this.http.get<IDefaultDepartureSelectionResponse>(
+      `${this.API_URL}/default-selection/tour/${tourId}`,
+      { observe: 'response' }
+    ).pipe(
+      map(response => {
+        if (response.status === 204 || !response.body) {
+          return null;
+        }
+        return response.body;
+      }),
+      catchError((error) => {
+        if (error.status === 204 || error.status === 404) {
+          return of(null);
+        }
+        return of(null);
+      })
+    );
+  }
+
+  /**
+   * Obtiene todas las disponibilidades de todos los períodos (salidas) para un Tour y un ActivityPackId.
+   * Para cada período, calcula la disponibilidad más restrictiva entre DepartureAvailability y ActivityPackAvailability.
+   * @param tourId ID del tour.
+   * @param activityPackId ID del ActivityPack (ciudad de salida).
+   * @param filterByVisible Indica si se deben incluir solo salidas visibles. Por defecto true.
+   * @returns Lista de disponibilidades por salida.
+   */
+  getByTourAndActivityPack(
+    tourId: number,
+    activityPackId: number,
+    filterByVisible: boolean = true
+  ): Observable<IDepartureAvailabilityByTourResponse[]> {
+    let params = new HttpParams();
+    params = params.set('filterByVisible', filterByVisible.toString());
+
+    return this.http.get<IDepartureAvailabilityByTourResponse[]>(
+      `${this.API_URL}/by-tour/${tourId}/activitypack/${activityPackId}`,
+      { params }
+    );
   }
 }
 

@@ -30,8 +30,9 @@
                     *ngIf="!hasAnyTravelerWithActivity(activity.id)"
                     pButton
                     type="button"
-                    label="Añadir"
+                    [label]="isCancelled ? 'No disponible' : 'Añadir'"
                     class="p-button-rounded"
+                    [disabled]="isCancelled"
                     (click)="toggleAddActivity(activity.id)"
                   ></button>
                   <button
@@ -53,7 +54,7 @@
                   >
                     <p-toggleswitch
                       [(ngModel)]="traveler.selected"
-                      [disabled]="traveler.price === 0"
+                      [disabled]="traveler.price === 0 || isCancelled"
                     ></p-toggleswitch>
                     <span
                       >{{ getTravelerNameById(traveler.id) }} ({{
@@ -67,10 +68,10 @@
                   </div>
                   <div class="passenger-actions">
                     <p-button
-                      label="Agregar"
+                      [label]="isCancelled ? 'No disponible' : 'Agregar'"
                       (click)="onContinueActivity(activity.id)"
                       [rounded]="true"
-                      [disabled]="isLoading"
+                      [disabled]="isLoading || isCancelled"
                       [icon]="isLoading ? 'pi pi-spin pi-spinner' : ''"
                       [iconPos]="isLoading ? 'left' : 'right'"
                     ></p-button>
@@ -97,7 +98,8 @@
                             <p-toggleSwitch 
                               [ngModel]="hasTravelerActivity(traveler.id, activity.id)"
                               (ngModelChange)="onActivityToggleChange(traveler.id, activity.id, $event)"
-                              [ngModelOptions]="{standalone: true}">
+                              [ngModelOptions]="{standalone: true}"
+                              [disabled]="isCancelled">
                             </p-toggleSwitch>
                           </div>
                         </div>

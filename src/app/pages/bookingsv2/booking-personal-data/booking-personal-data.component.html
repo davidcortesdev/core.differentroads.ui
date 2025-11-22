@@ -29,6 +29,7 @@
             [mandatoryFields]="mandatoryFields"
             [isLeadTraveler]="pass.type === 'lead'"
             (passengerUpdated)="updatePassenger($event)"
+            [isEditingBlocked]="isEditingBlocked"
           >
           </app-passenger-card-v2>
         </div>

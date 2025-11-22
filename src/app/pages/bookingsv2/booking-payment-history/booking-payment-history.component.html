@@ -54,11 +54,11 @@
                 (onClick)="navigateToPayment()"
               ></p-button>
               <p-button
-                label="Canjear cupón"
-                icon="pi pi-ticket"
-                styleClass="p-button-rounded p-button-lg"
-                [disabled]="paymentInfo.pendingAmount === 0"
-                (onClick)="openCouponModal()"
+               label="Canjear cupón"
+               icon="pi pi-ticket"
+               styleClass="p-button-rounded p-button-lg"
+               [disabled]="paymentInfo.pendingAmount === 0 || isCancelled"
+               (onClick)="openCouponModal()"
               ></p-button>
             </div>
           </div>

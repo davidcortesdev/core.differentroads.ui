@@ -690,7 +690,7 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
     if (this.cancelForm.valid) {
       const comentario = this.cancelForm.get('comentario')?.value?.trim();
       const cancelationFee = this.cancelForm.get('cancelationFee')?.value;
-
+      
       // Validar que el comentario no esté vacío
       if (!comentario) {
         this.messageService.add({
@@ -702,33 +702,29 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
         });
         return;
       }
-
+      
       // Verificar si viene desde ATC
       if (this.isATC && window.parent && window.parent !== window) {
         // Enviar mensaje al iframe padre (ATC)
         window.parent.postMessage(
           {
             type: 'cancel_reservation_request',
-            comment: comentario, // El campo se llama "comment" en el backend
+            comment: comentario,
             cancelationFee: cancelationFee,
             reservationId: this.reservation?.id,
           },
           '*'
         );
-
-        // Cerrar el modal y mostrar mensaje de confirmación
+        
+        // Cerrar el modal
         this.hideCancelModal();
-        this.messageService.add({
-          key: 'center',
-          severity: 'info',
-          summary: 'Solicitud enviada',
-          detail: 'La solicitud de cancelación ha sido enviada a ATC',
-          life: 3000,
-        });
-
-        return; // NO continuar con la cancelación normal
+        
+        // Recargar la ventana inmediatamente
+        window.location.reload();
+        
+        return;
       }
-
+      
       // Si NO viene desde ATC, hacer la cancelación normal con canceledBy=1
       const reservationId = this.reservation?.id;
       if (!reservationId) {
@@ -741,7 +737,7 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
         });
         return;
       }
-
+      
       this.isLoading = true;
       this.reservationService
         .cancelReservation(reservationId, 1, comentario, cancelationFee)
@@ -753,36 +749,33 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
         .subscribe({
           next: (response) => {
             this.hideCancelModal();
-            if (response.isSuccess) {
-              this.messageService.add({
-                key: 'center',
-                severity: 'success',
-                summary: 'Cancelación exitosa',
-                detail: 'La reserva ha sido cancelada correctamente',
-                life: 3000,
-              });
-
-              // Recargar los datos de la reserva
-              this.loadBookingData(this.bookingId);
-            } else {
-              this.messageService.add({
-                key: 'center',
-                severity: 'error',
-                summary: 'Error',
-                detail: 'No ha sido posible cancelar la reserva',
-                life: 3000,
-              });
-            }
+            this.reservationService.getById(reservationId).subscribe({
+              next: (updatedReservation) => {
+                window.location.reload();
+              },
+              error: () => {
+                window.location.reload();
+              }
+            });
           },
           error: (error) => {
             this.hideCancelModal();
             console.error('Error al cancelar la reserva:', error);
-            this.messageService.add({
-              key: 'center',
-              severity: 'error',
-              summary: 'Error',
-              detail: 'Ocurrió un error al cancelar la reserva',
-              life: 3000,
+            this.reservationService.getById(reservationId).subscribe({
+              next: (updatedReservation) => {
+                // Recargar la página para reflejar cualquier cambio
+                window.location.reload();
+              },
+              error: () => {
+                this.messageService.add({
+                  key: 'center',
+                  severity: 'error',
+                  summary: 'Error',
+                  detail: 'Ocurrió un error al cancelar la reserva',
+                  life: 3000,
+                });
+                window.location.reload();
+              }
             });
           },
         });

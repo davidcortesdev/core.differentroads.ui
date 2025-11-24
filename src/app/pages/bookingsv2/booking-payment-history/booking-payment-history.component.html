@@ -197,7 +197,7 @@
                   <div class="voucher-info">
                     <i class="pi pi-file-pdf" style="margin-right: 8px; color: #f05a4c; font-size: 1.5rem;"></i>
                     <div class="voucher-details">
-                      <span class="voucher-name">Justificante {{ i + 1 }}</span>
+                      <span class="voucher-name">{{ voucher.fileName || ('Justificante ' + (i + 1)) }}</span>
                       <span class="voucher-date">{{ formatVoucherDate(voucher.uploadDate) }}</span>
                     </div>
                   </div>

@@ -1054,15 +1054,20 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
           }
 
           // Remover la URL del voucher del attachmentUrl
-          const voucherUrls = apiPayment.attachmentUrl.split(',').map((url) => url.trim());
-          const updatedUrls = voucherUrls.filter((url) => url !== voucher.fileUrl);
+          // Formato puede ser "url|filename" o solo "url"
+          const voucherEntries = apiPayment.attachmentUrl.split(',').map((entry) => entry.trim());
+          const updatedEntries = voucherEntries.filter((entry) => {
+            // Extraer la URL del formato "url|filename" o usar la entrada completa
+            const url = entry.split('|')[0].trim();
+            return url !== voucher.fileUrl;
+          });
 
-          if (updatedUrls.length === voucherUrls.length) {
+          if (updatedEntries.length === voucherEntries.length) {
             throw new Error('No se encontró el justificante en el pago');
           }
 
           // Si no quedan vouchers, dejar attachmentUrl vacío, sino concatenar los restantes
-          const newAttachmentUrl = updatedUrls.length > 0 ? updatedUrls.join(',') : '';
+          const newAttachmentUrl = updatedEntries.length > 0 ? updatedEntries.join(',') : '';
 
           // Actualizar el pago con el nuevo attachmentUrl
           const updateData: any = {
@@ -1257,11 +1262,14 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
           // Obtener el pago completo desde la API para actualizarlo
           return this.paymentsNetService.getPaymentById(payment.id!).pipe(
             switchMap((apiPayment) => {
+              // Guardar el nombre del archivo junto con la URL usando formato "url|filename"
+              const urlWithFileName = `${response.secure_url}|${file.name}`;
+              
               // Manejar múltiples vouchers: concatenar URLs separadas por comas
-              let newAttachmentUrl = response.secure_url;
+              let newAttachmentUrl = urlWithFileName;
               if (apiPayment.attachmentUrl) {
                 // Si ya existe un voucher, agregar el nuevo separado por coma
-                newAttachmentUrl = `${apiPayment.attachmentUrl},${response.secure_url}`;
+                newAttachmentUrl = `${apiPayment.attachmentUrl},${urlWithFileName}`;
               }
 
               // Actualizar el pago con el nuevo attachmentUrl

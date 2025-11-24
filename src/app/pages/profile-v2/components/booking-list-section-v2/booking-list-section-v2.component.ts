@@ -694,7 +694,8 @@ export class BookingListSectionV2Component
   }
 
   viewItem(item: BookingItem) {
-    if (this.listType === 'active-bookings') {
+    if (this.listType === 'active-bookings' || this.listType === 'travel-history') {
+      // Para reservas activas e historial de viajes, navegar al detalle de la reserva
       this.router.navigate(['/bookings', item.id]).then(
         (success) => {
           if (!success) {

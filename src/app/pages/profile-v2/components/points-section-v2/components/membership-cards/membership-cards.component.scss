@@ -9,11 +9,12 @@
 
 .cards-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(250px, 1fr));
+    grid-template-columns: repeat(3, minmax(280px, 1fr));
     gap: 1.5rem;
+    align-items: stretch;
 
     @media screen and (max-width: 1200px) {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(280px, 1fr));
         gap: 1rem;
     }
 
@@ -43,13 +44,13 @@
 
 ::ng-deep {
     .p-card {
-        height: 420px;
         --p-card-border-radius: 1rem;
         overflow: hidden;
         transition: all 0.3s ease;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
         display: flex;
         flex-direction: column;
+        height: 100%;
 
         &:hover {
             transform: translateY(-5px);
@@ -121,6 +122,9 @@
 
 .card-content {
     padding: 0rem 1rem;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
 }
 
 .formated-content p {
@@ -153,6 +157,7 @@
         flex-direction: column;
         gap: 0.5rem;
         flex: 1;
+        min-height: 0;
         justify-content: space-between;
     }
 }

@@ -118,7 +118,7 @@
                     styleClass="p-button-rounded" 
                     (click)="viewItem(item)"></p-button>
                   <p-button *ngIf="shouldShowReserve(item)" 
-                    [label]="getReserveLabel()" 
+                    [label]="getReserveLabel(item)" 
                     styleClass="p-button-rounded" 
                     (click)="reserveItem(item)"></p-button>
                   <p-button *ngIf="shouldShowPointsDiscount(item)" 

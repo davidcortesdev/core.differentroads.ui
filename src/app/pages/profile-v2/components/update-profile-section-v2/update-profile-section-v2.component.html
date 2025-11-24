@@ -189,6 +189,21 @@
           </small>
         </p-floatlabel>
 
+        <p-floatlabel variant="on">
+          <p-datepicker 
+            inputId="fechaExpiracionDni"
+            name="fechaExpiracionDni"
+            [(ngModel)]="personalInfo.fechaExpiracionDni"
+            showIcon
+            iconDisplay="input"
+            (onSelect)="onFechaExpiracionDniChange($event)"
+            [class.error]="hasFieldError('fechaExpiracionDni')"/>
+          <label for="fechaExpiracionDni">Fecha caducidad DNI</label>
+          <small class="error-message" *ngIf="hasFieldError('fechaExpiracionDni')">
+            {{ getFieldError('fechaExpiracionDni') }}
+          </small>
+      </p-floatlabel>
+
         <!-- Dirección -->
         <p-floatlabel variant="on">
           <input

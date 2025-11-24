@@ -185,6 +185,7 @@ export class UpdateProfileV2Service {
       { fieldCode: 'phonePrefix', value: personalInfo.phonePrefix },
       { fieldCode: 'birth_date', value: this.formatDate(personalInfo.fechaNacimiento) },
       { fieldCode: 'national_id', value: personalInfo.dni },
+      { fieldCode: 'dniexpiration', value: this.formatDate(personalInfo.fechaExpiracionDni) },
       { fieldCode: 'address', value: personalInfo.direccion },
       { fieldCode: 'city', value: personalInfo.ciudad },
       { fieldCode: 'postal_code', value: personalInfo.codigoPostal },
@@ -231,7 +232,8 @@ export class UpdateProfileV2Service {
       'notes': 10,
       'image': 12,
       'sexo': 14,
-      'phonePrefix': 15
+      'phonePrefix': 15,
+      'dniexpiration': 16
     };
     
     return fieldIdMap[fieldCode] || 0;

@@ -920,12 +920,30 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
 
   /**
    * Parsear string ISO (YYYY-MM-DD) a Date
+   * Maneja correctamente fechas sin hora para evitar problemas de zona horaria
    */
   private parseDateFromISO(dateString: string): Date | null {
     if (!dateString || typeof dateString !== 'string') {
       return null;
     }
 
+    // Si es formato YYYY-MM-DD sin hora, parsear como fecha local para evitar problemas de zona horaria
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      const [year, month, day] = dateString.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
+      
+      // Verificar que la fecha es válida
+      if (
+        date.getFullYear() === year &&
+        date.getMonth() === month - 1 &&
+        date.getDate() === day
+      ) {
+        return date;
+      }
+      return null;
+    }
+
+    // Para otros formatos ISO (con hora), usar el constructor estándar
     const date = new Date(dateString);
     
     if (isNaN(date.getTime())) {

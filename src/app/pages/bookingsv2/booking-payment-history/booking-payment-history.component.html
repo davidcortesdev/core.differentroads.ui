@@ -107,7 +107,7 @@
                   <div class="history-column notes-column">
                     <div class="notes-content">
                       <span class="notes" *ngIf="item.notes">
-                        <i class="pi pi-comment"></i> {{ item.notes }}
+                        <i class="pi pi-comment"></i> {{ getFriendlyErrorMessage(item.notes) }}
                       </span>
                       <!-- Botón para subir justificante si es transferencia -->
                       <span class="upload-voucher-action" *ngIf="isTransfer(item)">

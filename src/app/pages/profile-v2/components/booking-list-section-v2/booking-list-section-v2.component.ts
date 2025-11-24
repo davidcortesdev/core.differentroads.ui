@@ -1163,10 +1163,13 @@ export class BookingListSectionV2Component
     if (this.listType === 'recent-budgets') {
       return false;
     }
+    // No mostrar el botón de compartir para reservas activas
+    if (this.listType === 'active-bookings') {
+      return false;
+    }
     // Ocultar cuando es borrador (1) o carrito en proceso (2)
     if (this.isDraft(item) || this.isCartInProcess(item)) return false;
     return (
-      this.listType === 'active-bookings' ||
       this.listType === 'pending-bookings'
     );
   }

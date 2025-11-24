@@ -202,6 +202,10 @@ export class UpdateProfileSectionV2Component implements OnInit, OnDestroy {
     this.clearFieldError('fechaNacimiento');
   }
 
+  onFechaExpiracionDniChange(event: any) {
+    this.clearFieldError('fechaExpiracionDni');
+  }
+
   onSexoChange(event: any) {
     this.clearFieldError('sexo');
   }

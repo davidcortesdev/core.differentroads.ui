@@ -20,6 +20,7 @@ export interface Payment {
 
 export interface IPaymentVoucher {
   fileUrl: string;
+  fileName?: string; // Nombre del archivo original
   metadata: any;
   uploadDate: Date;
   reviewStatus: VoucherReviewStatus;

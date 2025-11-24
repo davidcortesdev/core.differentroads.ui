@@ -38,6 +38,12 @@ export class PersonalInfoV2Service {
       return dateInput;
     }
     
+    // Si es un string ISO (YYYY-MM-DD), convertir directamente sin problemas de zona horaria
+    if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+      const [year, month, day] = dateInput.split('-');
+      return `${day}/${month}/${year}`;
+    }
+    
     const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
     
     // Verificar si la fecha es válida
@@ -45,9 +51,10 @@ export class PersonalInfoV2Service {
       return 'Pendiente';
     }
     
-    const day = String(date.getUTCDate()).padStart(2, '0');
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-    const year = date.getUTCFullYear();
+    // Usar métodos locales en lugar de UTC para evitar desfases de zona horaria
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
     
     // Verificar si los valores son válidos
     if (day === 'NaN' || month === 'NaN' || isNaN(year)) {

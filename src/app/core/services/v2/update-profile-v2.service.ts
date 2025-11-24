@@ -271,6 +271,7 @@ export class UpdateProfileV2Service {
     if (!dateInput) return '';
     
     if (dateInput instanceof Date) {
+      // Usar métodos locales directamente para evitar problemas de zona horaria
       const year = dateInput.getFullYear();
       const month = String(dateInput.getMonth() + 1).padStart(2, '0');
       const day = String(dateInput.getDate()).padStart(2, '0');
@@ -285,8 +286,14 @@ export class UpdateProfileV2Service {
     
     if (typeof dateInput === 'string') {
       try {
+        // Si es un string ISO (YYYY-MM-DD), devolverlo directamente
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+          return dateInput;
+        }
+        
         const date = new Date(dateInput);
         if (!isNaN(date.getTime())) {
+          // Usar métodos locales directamente
           const year = date.getFullYear();
           const month = String(date.getMonth() + 1).padStart(2, '0');
           const day = String(date.getDate()).padStart(2, '0');

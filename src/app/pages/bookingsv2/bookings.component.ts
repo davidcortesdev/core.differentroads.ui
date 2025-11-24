@@ -35,6 +35,7 @@ import { CMSTourService } from '../../core/services/cms/cms-tour.service';
 import { RetailerService } from '../../core/services/retailer/retailer.service';
 import { DepartureService } from '../../core/services/departure/departure.service';
 import { Title } from '@angular/platform-browser';
+import { ReservationStatusService } from '../../core/services/reservation/reservation-status.service';
 
 interface BookingData {
   title: string;
@@ -42,6 +43,7 @@ interface BookingData {
   bookingCode: string;
   bookingReference: string;
   status: string;
+  statusCode?: string;
   retailer: string;
   creationDate: string;
   price: number;
@@ -244,7 +246,8 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
     private cmsTourService: CMSTourService,
     @Inject(RetailerService) private retailerService: RetailerService,
     private departureService: DepartureService,
-    private titleService: Title
+    private titleService: Title,
+    private reservationStatusService: ReservationStatusService
   ) {
     this.paymentForm = this.fb.group({
       amount: [0, [Validators.required, Validators.min(1)]],
@@ -423,6 +426,7 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
       bookingCode: reservation.id.toString() || reservation.tkId || 'N/A',
       bookingReference: reservation.tkId || '',
       status: this.getStatusText(reservation.reservationStatusId),
+      statusCode: undefined,
       retailer: 'Cargando...', // Temporal mientras cargamos el nombre real
       creationDate: reservation.createdAt
         ? new Date(reservation.createdAt).toLocaleDateString()
@@ -434,6 +438,7 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
     this.loadTourData(reservation.tourId);
     this.loadRetailerData(reservation.retailerId);
     this.loadDepartureData(reservation.departureId);
+    this.loadReservationStatusCode(reservation.reservationStatusId);
   }
 
   // Método para obtener el texto del estado
@@ -455,6 +460,23 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
       14: 'Reserva suspendida',
     };
     return statusMap[statusId] || 'Unknown';
+  }
+
+  private loadReservationStatusCode(statusId: number): void {
+    this.reservationStatusService.getById(statusId).subscribe({
+      next: (status) => {
+        // Añadir el código como información adicional
+        this.bookingData.statusCode = status.code;
+        
+        console.log('Status ID:', statusId);
+        console.log('Status Code:', status.code);
+        console.log('Status Name:', status.name);
+      },
+      error: (error) => {
+        console.error('Error loading reservation status code:', error);
+        // El statusCode permanece undefined en caso de error
+      },
+    });
   }
 
   // Método para cargar datos del tour

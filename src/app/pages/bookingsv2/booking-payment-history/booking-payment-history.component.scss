@@ -135,25 +135,7 @@
   }
 }
 :host ::ng-deep {
-  .delete-voucher-btn {
-    background-color: #dc3545 !important;
-    border-color: #dc3545 !important;
-    color: #ffffff !important;
-    
-    &:hover:not(:disabled) {
-      background-color: #c82333 !important;
-      border-color: #bd2130 !important;
-    }
-    
-    &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    
-    .p-button-icon {
-      color: #ffffff !important;
-    }
-  }
+
   
   .p-panel {
     border: 1px solid #eaeaea;

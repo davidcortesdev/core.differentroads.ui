@@ -1207,6 +1207,10 @@ export class BookingListSectionV2Component
 
   // Button label methods
   getDownloadLabel(): string {
+    // Para presupuestos, mostrar "Descargar presupuesto"
+    if (this.listType === 'recent-budgets') {
+      return 'Descargar presupuesto';
+    }
     return 'Descargar';
   }
 

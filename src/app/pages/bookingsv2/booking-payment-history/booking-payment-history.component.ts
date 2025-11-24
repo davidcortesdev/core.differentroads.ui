@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, OnChanges, SimpleChanges, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
@@ -25,8 +25,10 @@ import { DepartureService, IDepartureResponse } from '../../../core/services/dep
 import { ReservationTravelerService, IReservationTravelerResponse } from '../../../core/services/reservation/reservation-traveler.service';
 import { ReservationTravelerActivityService, IReservationTravelerActivityResponse } from '../../../core/services/reservation/reservation-traveler-activity.service';
 import { ActivityService, IActivityResponse } from '../../../core/services/activity/activity.service';
-import { switchMap, map, catchError, concatMap } from 'rxjs/operators';
-import { forkJoin, of, Observable } from 'rxjs';
+import { switchMap, map, catchError, concatMap, takeUntil, finalize } from 'rxjs/operators';
+import { forkJoin, of, Observable, Subject } from 'rxjs';
+import { FileUploadService, CloudinaryResponse } from '../../../core/services/media/file-upload.service';
+import { MessageService } from 'primeng/api';
 
 // Interfaces existentes
 interface TripItemData {
@@ -44,7 +46,7 @@ interface TripItemData {
   styleUrls: ['./booking-payment-history.component.scss'],
   standalone: false,
 })
-export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
+export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDestroy {
   @Input() bookingID: string = '';
   @Input() bookingTotal: number = 0;
   @Input() tripItems: TripItemData[] = [];
@@ -87,6 +89,18 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   selectedStatusByPaymentId: { [publicID: string]: number } = {};
   isChanging: { [publicID: string]: boolean } = {};
 
+  // Estado para tracking de subida de vouchers por payment
+  isUploadingVoucher: { [paymentId: string]: boolean } = {};
+
+  // Estado para tracking de eliminación de vouchers
+  isDeletingVoucher: { [voucherId: string]: boolean } = {};
+
+  // Fecha de salida para mostrar en el historial
+  displayDepartureDate: string = '';
+
+  // Subject para manejar la limpieza de suscripciones
+  private destroy$ = new Subject<void>();
+
   deadlines: {
     date: string;
     amount: number;
@@ -126,7 +140,9 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
     private departureService: DepartureService,
     private reservationTravelerService: ReservationTravelerService,
     private reservationTravelerActivityService: ReservationTravelerActivityService,
-    private activityService: ActivityService
+    private activityService: ActivityService,
+    private fileUploadService: FileUploadService,
+    private messageService: MessageService
   ) {
     this.paymentForm = this.fb.group({
       amount: [0, [Validators.required, Validators.min(1)]],
@@ -135,7 +151,6 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
 
   ngOnInit(): void {
     this.calculatePaymentInfo();
-    this.loadPayments();
     
     // Cargar estados de pago desde la API (siempre, para todos)
     this.loadPaymentStatuses();
@@ -143,11 +158,17 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
     // Cargar métodos de pago desde la API
     this.loadPaymentMethods();
 
-    // Obtener userId desde la reserva si está disponible
-    if (this.reservationId && this.reservationId > 0) {
-      this.loadUserId();
-    }
+    // Cargar pagos (loadPayments tiene guard interno para reservationId)
+    this.loadPayments();
 
+    // Inicializar datos si reservationId está disponible desde el inicio
+    // (ngOnChanges manejará los cambios posteriores)
+    if (this.reservationId && this.reservationId > 0) {
+      this.loadReservationData();
+    } else if (this.departureDate) {
+      // Si ya tenemos departureDate como input, usarlo directamente
+      this.displayDepartureDate = this.departureDate;
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -156,9 +177,23 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
       this.calculatePaymentInfo();
     }
     
-    // Cargar pagos si cambia reservationId
+    // Cargar pagos si cambia reservationId (solo si no es el primer cambio, para evitar duplicados con ngOnInit)
     if (changes['reservationId'] && changes['reservationId'].currentValue) {
-      this.loadPayments();
+      // Solo cargar si no es el primer cambio (ngOnInit ya lo maneja)
+      if (!changes['reservationId'].firstChange) {
+        this.loadPayments();
+        this.loadReservationData();
+      }
+    }
+    
+    // Actualizar fecha de salida si cambia el input (incluso si cambia a cadena vacía)
+    if (changes['departureDate']) {
+      this.displayDepartureDate = this.departureDate || '';
+      // Si departureDate se vuelve vacío y tenemos reservationId, intentar cargar desde la API
+      // Solo si no es el primer cambio (ngOnInit ya maneja la inicialización)
+      if (!changes['departureDate'].firstChange && !this.departureDate && this.reservationId && this.reservationId > 0) {
+        this.loadReservationData();
+      }
     }
     
     if (changes['refreshTrigger'] && changes['refreshTrigger'].currentValue) {
@@ -174,6 +209,12 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
     if (!this.paymentMethods.length) {
       this.loadPaymentMethods();
     }
+  }
+
+  ngOnDestroy(): void {
+    // Completar el Subject para cancelar todas las suscripciones activas
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private calculatePaymentInfo(): void {
@@ -195,6 +236,7 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
     this.isLoadingPayments = true;
 
     this.bookingsService.getPaymentsByReservationId(this.reservationId, this.bookingID)
+      .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (payments) => {
           this.paymentHistory = payments;
@@ -300,7 +342,7 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   openCouponModal(): void {
     // Si no tenemos userId, intentar obtenerlo desde la reserva
     if (!this.userId || this.userId <= 0) {
-      this.loadUserId();
+      this.loadReservationData();
     }
     this.displayCouponModal = true;
   }
@@ -313,22 +355,103 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
     this.refreshPayments();
   }
 
-  private loadUserId(): void {
+  /**
+   * Carga los datos de la reserva (userId y fecha de salida) en una sola llamada
+   * Usa switchMap para evitar suscripciones anidadas y memory leaks
+   */
+  private loadReservationData(): void {
     if (!this.reservationId || this.reservationId <= 0) {
       return;
     }
 
-    this.reservationService.getById(this.reservationId).subscribe({
-      next: (reservation: IReservationResponse) => {
-        const reservationData = reservation as any;
-        if (reservationData.userId) {
-          this.userId = reservationData.userId;
+    // Si ya tenemos departureDate como input, usarlo directamente
+    if (this.departureDate) {
+      this.displayDepartureDate = this.departureDate;
+      // Aún necesitamos obtener el userId
+      this.reservationService.getById(this.reservationId)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (reservation: IReservationResponse) => {
+            const reservationData = reservation as any;
+            if (reservationData.userId) {
+              this.userId = reservationData.userId;
+            }
+          },
+          error: (error) => {
+            console.error('Error obteniendo userId desde la reserva:', error);
+          }
+        });
+      return;
+    }
+
+    // Obtener la reserva y luego el departure si es necesario usando switchMap
+    this.reservationService.getById(this.reservationId)
+      .pipe(
+        takeUntil(this.destroy$),
+        switchMap((reservation: IReservationResponse) => {
+          const reservationData = reservation as any;
+          
+          // Obtener userId
+          if (reservationData.userId) {
+            this.userId = reservationData.userId;
+          }
+
+          // Intentar obtener departureDate desde reservationData.departure si está disponible
+          if (reservationData.departure?.departureDate) {
+            this.displayDepartureDate = reservationData.departure.departureDate;
+            return of(null); // Ya tenemos la fecha, no necesitamos obtener el departure
+          }
+
+          // Si no está disponible en la reserva, obtener desde el departure service
+          if (reservation.departureId) {
+            return this.departureService.getById(reservation.departureId).pipe(
+              catchError((error) => {
+                console.error('Error obteniendo fecha de salida desde departure:', error);
+                return of(null);
+              })
+            );
+          }
+
+          return of(null);
+        })
+      )
+      .subscribe({
+        next: (departure: IDepartureResponse | null) => {
+          if (departure?.departureDate) {
+            this.displayDepartureDate = departure.departureDate;
+          }
+        },
+        error: (error) => {
+          console.error('Error obteniendo datos desde la reserva:', error);
         }
-      },
-      error: (error) => {
-        console.error('Error obteniendo userId desde la reserva:', error);
-      }
-    });
+      });
+  }
+
+  /**
+   * @deprecated Usar loadReservationData() en su lugar
+   * Mantenido por compatibilidad
+   */
+  private loadUserId(): void {
+    this.loadReservationData();
+  }
+
+  /**
+   * Carga la fecha de salida desde la reserva y su departure asociado
+   * @deprecated Usar loadReservationData() en su lugar
+   * Mantenido por compatibilidad
+   */
+  private loadDepartureDate(): void {
+    if (!this.reservationId || this.reservationId <= 0) {
+      return;
+    }
+
+    // Si ya tenemos departureDate como input, usarlo directamente
+    if (this.departureDate) {
+      this.displayDepartureDate = this.departureDate;
+      return;
+    }
+
+    this.loadReservationData();
   }
 
   onPaymentProcessed(paymentData: PaymentData): void {
@@ -769,16 +892,18 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
    */
   private loadPaymentStatuses(): void {
     this.loadingStatuses = true;
-    this.paymentService.getAllPaymentStatuses().subscribe({
-      next: (statuses) => {
-        this.paymentStatuses = statuses;
-        this.loadingStatuses = false;
-      },
-      error: (error) => {
-        console.error('Error cargando estados de pago:', error);
-        this.loadingStatuses = false;
-      }
-    });
+    this.paymentService.getAllPaymentStatuses()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (statuses) => {
+          this.paymentStatuses = statuses;
+          this.loadingStatuses = false;
+        },
+        error: (error) => {
+          console.error('Error cargando estados de pago:', error);
+          this.loadingStatuses = false;
+        }
+      });
   }
 
   /**
@@ -786,16 +911,18 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
    */
   private loadPaymentMethods(): void {
     this.loadingMethods = true;
-    this.paymentMethodService.getAllPaymentMethods().subscribe({
-      next: (methods) => {
-        this.paymentMethods = methods;
-        this.loadingMethods = false;
-      },
-      error: (error) => {
-        console.error('Error cargando métodos de pago:', error);
-        this.loadingMethods = false;
-      }
-    });
+    this.paymentMethodService.getAllPaymentMethods()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (methods) => {
+          this.paymentMethods = methods;
+          this.loadingMethods = false;
+        },
+        error: (error) => {
+          console.error('Error cargando métodos de pago:', error);
+          this.loadingMethods = false;
+        }
+      });
   }
 
   /**
@@ -884,6 +1011,126 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   }
 
   /**
+   * Elimina un justificante de pago
+   */
+  deleteVoucher(voucher: IPaymentVoucher): void {
+    if (!voucher.id || !voucher.fileUrl) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se puede eliminar el justificante: falta información.',
+        life: 5000,
+      });
+      return;
+    }
+
+    // Confirmar eliminación
+    if (!confirm('¿Está seguro de que desea eliminar este justificante?')) {
+      return;
+    }
+
+    this.isDeletingVoucher[voucher.id] = true;
+
+    // Encontrar el payment que contiene este voucher
+    const payment = this.paymentHistory.find((p) => {
+      if (!p.vouchers || p.vouchers.length === 0) return false;
+      return p.vouchers.some((v) => v.id === voucher.id);
+    });
+
+    if (!payment || !payment.id) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudo encontrar el pago asociado al justificante.',
+        life: 5000,
+      });
+      this.isDeletingVoucher[voucher.id] = false;
+      return;
+    }
+
+    // Obtener el pago completo desde la API
+    this.paymentsNetService
+      .getPaymentById(payment.id)
+      .pipe(
+        takeUntil(this.destroy$),
+        switchMap((apiPayment) => {
+          if (!apiPayment.attachmentUrl) {
+            throw new Error('El pago no tiene justificantes asociados');
+          }
+
+          // Remover la URL del voucher del attachmentUrl
+          // Formato puede ser "url|filename" o solo "url"
+          const voucherEntries = apiPayment.attachmentUrl.split(',').map((entry) => entry.trim());
+          const updatedEntries = voucherEntries.filter((entry) => {
+            // Extraer la URL del formato "url|filename" o usar la entrada completa
+            const url = entry.split('|')[0].trim();
+            return url !== voucher.fileUrl;
+          });
+
+          if (updatedEntries.length === voucherEntries.length) {
+            throw new Error('No se encontró el justificante en el pago');
+          }
+
+          // Si no quedan vouchers, dejar attachmentUrl vacío, sino concatenar los restantes
+          const newAttachmentUrl = updatedEntries.length > 0 ? updatedEntries.join(',') : '';
+
+          // Actualizar el pago con el nuevo attachmentUrl
+          const updateData: any = {
+            id: apiPayment.id,
+            amount: apiPayment.amount,
+            paymentDate: apiPayment.paymentDate,
+            paymentMethodId: apiPayment.paymentMethodId,
+            paymentStatusId: apiPayment.paymentStatusId,
+            transactionReference: apiPayment.transactionReference,
+            notes: apiPayment.notes,
+            currencyId: apiPayment.currencyId,
+            reservationId: apiPayment.reservationId,
+            attachmentUrl: newAttachmentUrl,
+          };
+
+          return this.paymentsNetService.update(updateData);
+        }),
+        catchError((error) => {
+          console.error('Error eliminando justificante:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al eliminar el justificante. Por favor, intente nuevamente.',
+            life: 5000,
+          });
+          return of(null);
+        }),
+        finalize(() => {
+          this.isDeletingVoucher[voucher.id] = false;
+        })
+      )
+      .subscribe({
+        next: (updatedPayment) => {
+          if (updatedPayment) {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Justificante eliminado',
+              detail: 'El justificante se ha eliminado correctamente.',
+              life: 5000,
+            });
+
+            // Recargar los pagos para actualizar la lista
+            this.loadPayments();
+          }
+        },
+        error: (error) => {
+          console.error('Error en el flujo de eliminación:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al procesar la eliminación. Por favor, intente nuevamente.',
+            life: 5000,
+          });
+        },
+      });
+  }
+
+  /**
    * Formatea la fecha de subida del justificante
    */
   formatVoucherDate(date: Date | string): string {
@@ -926,6 +1173,7 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
 
   /**
    * Navega a la página de subir justificante de pago
+   * @deprecated Ahora se usa uploadVoucher directamente
    */
   navigateToUploadVoucher(payment: Payment): void {
     if (!this.reservationId || !payment.id) {
@@ -956,5 +1204,155 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
 
     // Si no es un error, devolver el mensaje original
     return notes;
+  }
+
+  /**
+   * Dispara el click en el input file oculto
+   */
+  triggerFileInput(payment: Payment): void {
+    const inputId = `file-input-${payment.id || payment.publicID}`;
+    const fileInput = document.getElementById(inputId) as HTMLInputElement;
+    if (fileInput) {
+      fileInput.click();
+    }
+  }
+
+  /**
+   * Maneja la selección de archivo para subir justificante
+   */
+  onVoucherFileSelect(event: any, payment: Payment): void {
+    const fileInput = event.target as HTMLInputElement;
+    if (!fileInput.files || fileInput.files.length === 0) {
+      return;
+    }
+
+    const file = fileInput.files[0];
+    this.uploadVoucher(payment, file);
+    
+    // Limpiar el input para permitir seleccionar el mismo archivo nuevamente si es necesario
+    fileInput.value = '';
+  }
+
+
+  /**
+   * Sube un justificante de pago directamente sin redirigir
+   */
+  uploadVoucher(payment: Payment, file: File): void {
+    if (!payment.id || !this.reservationId) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se puede subir el justificante: falta información del pago o reserva.',
+        life: 5000,
+      });
+      return;
+    }
+
+    // Validar tipo de archivo
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf'];
+    if (!validTypes.includes(file.type)) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Tipo de archivo no válido',
+        detail: 'Solo se permiten archivos PDF o imágenes (JPG, PNG, WEBP).',
+        life: 5000,
+      });
+      return;
+    }
+
+    // Validar tamaño (10MB máximo)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Archivo demasiado grande',
+        detail: 'El archivo no puede ser mayor a 10MB.',
+        life: 5000,
+      });
+      return;
+    }
+
+    const paymentKey = payment.id.toString();
+    this.isUploadingVoucher[paymentKey] = true;
+
+    // Subir archivo a Cloudinary
+    this.fileUploadService
+      .uploadFile(file, 'vouchers')
+      .pipe(
+        takeUntil(this.destroy$),
+        switchMap((response: CloudinaryResponse) => {
+          if (!response.secure_url) {
+            throw new Error('No se recibió la URL del archivo subido');
+          }
+
+          // Obtener el pago completo desde la API para actualizarlo
+          return this.paymentsNetService.getPaymentById(payment.id!).pipe(
+            switchMap((apiPayment) => {
+              // Guardar el nombre del archivo junto con la URL usando formato "url|filename"
+              const urlWithFileName = `${response.secure_url}|${file.name}`;
+              
+              // Manejar múltiples vouchers: concatenar URLs separadas por comas
+              let newAttachmentUrl = urlWithFileName;
+              if (apiPayment.attachmentUrl) {
+                // Si ya existe un voucher, agregar el nuevo separado por coma
+                newAttachmentUrl = `${apiPayment.attachmentUrl},${urlWithFileName}`;
+              }
+
+              // Actualizar el pago con el nuevo attachmentUrl
+              const updateData: any = {
+                id: apiPayment.id,
+                amount: apiPayment.amount,
+                paymentDate: apiPayment.paymentDate,
+                paymentMethodId: apiPayment.paymentMethodId,
+                paymentStatusId: apiPayment.paymentStatusId,
+                transactionReference: apiPayment.transactionReference,
+                notes: apiPayment.notes,
+                currencyId: apiPayment.currencyId,
+                reservationId: apiPayment.reservationId,
+                attachmentUrl: newAttachmentUrl,
+              };
+
+              return this.paymentsNetService.update(updateData);
+            })
+          );
+        }),
+        catchError((error) => {
+          console.error('Error subiendo justificante:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al subir el justificante. Por favor, intente nuevamente.',
+            life: 5000,
+          });
+          return of(null);
+        }),
+        finalize(() => {
+          this.isUploadingVoucher[paymentKey] = false;
+        })
+      )
+      .subscribe({
+        next: (updatedPayment) => {
+          if (updatedPayment) {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Justificante subido',
+              detail: 'El justificante se ha subido correctamente. Nuestro equipo lo revisará pronto.',
+              life: 5000,
+            });
+
+            // Recargar los pagos para mostrar el nuevo justificante
+            this.loadPayments();
+          }
+        },
+        error: (error) => {
+          console.error('Error en el flujo de subida:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al procesar el justificante. Por favor, intente nuevamente.',
+            life: 5000,
+          });
+        },
+      });
   }
 }

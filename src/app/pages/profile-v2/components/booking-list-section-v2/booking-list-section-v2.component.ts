@@ -25,6 +25,7 @@ import {
 } from '../../../../core/services/v2/notification.service';
 import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 import { PointsV2Service } from '../../../../core/services/v2/points-v2.service';
+import { DepartureService } from '../../../../core/services/departure/departure.service';
 import { switchMap, map, catchError, of, forkJoin, Subscription } from 'rxjs';
 
 @Component({
@@ -71,7 +72,8 @@ export class BookingListSectionV2Component
     private documentServicev2: DocumentServicev2,
     private notificationServicev2: NotificationServicev2,
     private authService: AuthenticateService,
-    private pointsService: PointsV2Service
+    private pointsService: PointsV2Service,
+    private departureService: DepartureService
   ) {}
 
   /**
@@ -155,13 +157,88 @@ export class BookingListSectionV2Component
     this.bookingsService
       .getPendingBookings(userId)
       .pipe(
-        map((reservations: ReservationResponse[]) =>
-          this.dataMappingService.mapReservationsToBookingItems(
-            reservations,
-            [],
-            'active-bookings' // reutilizamos el mapeo genérico
-          )
-        ),
+        switchMap((reservations: ReservationResponse[]) => {
+          if (!reservations || reservations.length === 0) {
+            return of([]);
+          }
+
+          // Obtener información de tours, imágenes CMS y departures para cada reserva
+          const tourPromises = reservations.map((reservation) =>
+            forkJoin({
+              tour: this.toursService.getTourById(reservation.tourId).pipe(
+                catchError((error) => {
+                  console.warn(
+                    `Error obteniendo tour ${reservation.tourId}:`,
+                    error
+                  );
+                  return of(null);
+                })
+              ),
+              cmsTour: this.cmsTourService
+                .getAllTours({ tourId: reservation.tourId })
+                .pipe(
+                  map((cmsTours: ICMSTourResponse[]) =>
+                    cmsTours.length > 0 ? cmsTours[0] : null
+                  ),
+                  catchError((error) => {
+                    console.warn(
+                      `Error obteniendo CMS tour ${reservation.tourId}:`,
+                      error
+                    );
+                    return of(null);
+                  })
+                ),
+              departure: reservation.departureId
+                ? this.departureService.getById(reservation.departureId).pipe(
+                    catchError((error) => {
+                      console.warn(
+                        `Error obteniendo departure ${reservation.departureId}:`,
+                        error
+                      );
+                      return of(null);
+                    })
+                  )
+                : of(null),
+            }).pipe(
+              map(({ tour, cmsTour, departure }) => ({
+                reservation,
+                tour,
+                cmsTour,
+                departureDate: departure?.departureDate || null,
+              }))
+            )
+          );
+
+          return forkJoin(tourPromises).pipe(
+            catchError((error) => {
+              console.error('Error obteniendo información de tours:', error);
+              // Si falla la obtención de tours, retornar las reservas sin información de tour
+              return of(
+                reservations.map((reservation) => ({
+                  reservation,
+                  tour: null,
+                  cmsTour: null,
+                  departureDate: null,
+                }))
+              );
+            })
+          );
+        }),
+        map((reservationTourPairs: any[]) => {
+          // Verificar que reservationTourPairs tenga datos
+          if (!reservationTourPairs || reservationTourPairs.length === 0) {
+            return [];
+          }
+
+          // Mapear usando el servicio de mapeo con imágenes CMS y fechas de salida
+          return this.dataMappingService.mapReservationsToBookingItems(
+            reservationTourPairs.map((pair) => pair.reservation),
+            reservationTourPairs.map((pair) => pair.tour),
+            'active-bookings',
+            reservationTourPairs.map((pair) => pair.cmsTour),
+            reservationTourPairs.map((pair) => pair.departureDate)
+          );
+        }),
         catchError((error) => {
           console.error('Error obteniendo reservas pendientes:', error);
           this.messageService.add({
@@ -287,7 +364,7 @@ export class BookingListSectionV2Component
             return of([]);
           }
 
-          // Obtener información de tours y imágenes CMS para cada reserva
+          // Obtener información de tours, imágenes CMS y departures para cada reserva
           const tourPromises = uniqueReservations.map((reservation) =>
             forkJoin({
               tour: this.toursService.getTourById(reservation.tourId).pipe(
@@ -313,8 +390,24 @@ export class BookingListSectionV2Component
                     return of(null);
                   })
                 ),
+              departure: reservation.departureId
+                ? this.departureService.getById(reservation.departureId).pipe(
+                    catchError((error) => {
+                      console.warn(
+                        `Error obteniendo departure ${reservation.departureId}:`,
+                        error
+                      );
+                      return of(null);
+                    })
+                  )
+                : of(null),
             }).pipe(
-              map(({ tour, cmsTour }) => ({ reservation, tour, cmsTour }))
+              map(({ tour, cmsTour, departure }) => ({
+                reservation,
+                tour,
+                cmsTour,
+                departureDate: departure?.departureDate || null,
+              }))
             )
           );
 
@@ -327,6 +420,7 @@ export class BookingListSectionV2Component
                   reservation,
                   tour: null,
                   cmsTour: null,
+                  departureDate: null,
                 }))
               );
             })
@@ -338,12 +432,13 @@ export class BookingListSectionV2Component
             return [];
           }
 
-          // Mapear usando el servicio de mapeo con imágenes CMS
+          // Mapear usando el servicio de mapeo con imágenes CMS y fechas de salida
           return this.dataMappingService.mapReservationsToBookingItems(
             reservationTourPairs.map((pair) => pair.reservation),
             reservationTourPairs.map((pair) => pair.tour),
             'active-bookings',
-            reservationTourPairs.map((pair) => pair.cmsTour)
+            reservationTourPairs.map((pair) => pair.cmsTour),
+            reservationTourPairs.map((pair) => pair.departureDate)
           );
         }),
         catchError((error) => {
@@ -420,7 +515,7 @@ export class BookingListSectionV2Component
             return of([]);
           }
 
-          // Obtener información de tours y imágenes CMS para cada reserva
+          // Obtener información de tours, imágenes CMS y departures para cada reserva
           const tourPromises = uniqueReservations.map((reservation) =>
             forkJoin({
               tour: this.toursService.getTourById(reservation.tourId).pipe(
@@ -446,20 +541,37 @@ export class BookingListSectionV2Component
                     return of(null);
                   })
                 ),
+              departure: reservation.departureId
+                ? this.departureService.getById(reservation.departureId).pipe(
+                    catchError((error) => {
+                      console.warn(
+                        `Error obteniendo departure ${reservation.departureId}:`,
+                        error
+                      );
+                      return of(null);
+                    })
+                  )
+                : of(null),
             }).pipe(
-              map(({ tour, cmsTour }) => ({ reservation, tour, cmsTour }))
+              map(({ tour, cmsTour, departure }) => ({
+                reservation,
+                tour,
+                cmsTour,
+                departureDate: departure?.departureDate || null,
+              }))
             )
           );
 
           return forkJoin(tourPromises);
         }),
         map((reservationTourPairs: any[]) => {
-          // Mapear usando el servicio de mapeo con imágenes CMS
+          // Mapear usando el servicio de mapeo con imágenes CMS y fechas de salida
           return this.dataMappingService.mapReservationsToBookingItems(
             reservationTourPairs.map((pair) => pair.reservation),
             reservationTourPairs.map((pair) => pair.tour),
             'travel-history',
-            reservationTourPairs.map((pair) => pair.cmsTour)
+            reservationTourPairs.map((pair) => pair.cmsTour),
+            reservationTourPairs.map((pair) => pair.departureDate)
           );
         }),
         catchError((error) => {
@@ -501,7 +613,7 @@ export class BookingListSectionV2Component
             return of([]);
           }
 
-          // Obtener información de tours y imágenes CMS para cada presupuesto
+          // Obtener información de tours, imágenes CMS y departures para cada presupuesto
           const tourPromises = reservations.map((reservation) =>
             forkJoin({
               tour: this.toursService.getTourById(reservation.tourId).pipe(
@@ -527,20 +639,37 @@ export class BookingListSectionV2Component
                     return of(null);
                   })
                 ),
+              departure: reservation.departureId
+                ? this.departureService.getById(reservation.departureId).pipe(
+                    catchError((error) => {
+                      console.warn(
+                        `Error obteniendo departure ${reservation.departureId}:`,
+                        error
+                      );
+                      return of(null);
+                    })
+                  )
+                : of(null),
             }).pipe(
-              map(({ tour, cmsTour }) => ({ reservation, tour, cmsTour }))
+              map(({ tour, cmsTour, departure }) => ({
+                reservation,
+                tour,
+                cmsTour,
+                departureDate: departure?.departureDate || null,
+              }))
             )
           );
 
           return forkJoin(tourPromises);
         }),
         map((reservationTourPairs: any[]) => {
-          // Mapear usando el servicio de mapeo con imágenes CMS
+          // Mapear usando el servicio de mapeo con imágenes CMS y fechas de salida
           return this.dataMappingService.mapReservationsToBookingItems(
             reservationTourPairs.map((pair) => pair.reservation),
             reservationTourPairs.map((pair) => pair.tour),
             'recent-budgets',
-            reservationTourPairs.map((pair) => pair.cmsTour)
+            reservationTourPairs.map((pair) => pair.cmsTour),
+            reservationTourPairs.map((pair) => pair.departureDate)
           );
         }),
         catchError((error) => {
@@ -614,7 +743,8 @@ export class BookingListSectionV2Component
   }
 
   viewItem(item: BookingItem) {
-    if (this.listType === 'active-bookings') {
+    if (this.listType === 'active-bookings' || this.listType === 'travel-history') {
+      // Para reservas activas e historial de viajes, navegar al detalle de la reserva
       this.router.navigate(['/bookings', item.id]).then(
         (success) => {
           if (!success) {
@@ -1078,11 +1208,17 @@ export class BookingListSectionV2Component
   }
 
   shouldShowSend(item: BookingItem): boolean {
+    // No mostrar el botón de compartir para presupuestos
+    if (this.listType === 'recent-budgets') {
+      return false;
+    }
+    // No mostrar el botón de compartir para reservas activas
+    if (this.listType === 'active-bookings') {
+      return false;
+    }
     // Ocultar cuando es borrador (1) o carrito en proceso (2)
     if (this.isDraft(item) || this.isCartInProcess(item)) return false;
     return (
-      this.listType === 'active-bookings' ||
-      this.listType === 'recent-budgets' ||
       this.listType === 'pending-bookings'
     );
   }
@@ -1123,6 +1259,10 @@ export class BookingListSectionV2Component
 
   // Button label methods
   getDownloadLabel(): string {
+    // Para presupuestos, mostrar "Descargar presupuesto"
+    if (this.listType === 'recent-budgets') {
+      return 'Descargar presupuesto';
+    }
     return 'Descargar';
   }
 
@@ -1134,7 +1274,16 @@ export class BookingListSectionV2Component
     return 'Ver detalle';
   }
 
-  getReserveLabel(): string {
+  getReserveLabel(item?: BookingItem): string {
+    // Si es carrito en proceso (estado 2), mostrar "Terminar reserva"
+    if (item && this.isCartInProcess(item)) {
+      return 'Terminar reserva';
+    }
+    // Si es reserva pendiente, mostrar "Continuar reserva"
+    if (this.listType === 'pending-bookings') {
+      return 'Continuar reserva';
+    }
+    // Para presupuestos, mantener "Reservar"
     return 'Reservar';
   }
 

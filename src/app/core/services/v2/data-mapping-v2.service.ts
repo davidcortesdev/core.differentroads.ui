@@ -21,26 +21,43 @@ export class DataMappingV2Service {
    * @param tour - Información del tour (opcional)
    * @param listType - Tipo de lista para configurar campos específicos
    * @param cmsTour - Información del tour CMS con imagen (opcional)
+   * @param departureDate - Fecha de salida del departure (opcional, si se proporciona se usa en lugar de extraerla)
    * @returns BookingItem V2
    */
   mapReservationToBookingItem(
     reservation: ReservationResponse, 
     tour: TourV2 | null = null,
     listType: 'active-bookings' | 'travel-history' | 'recent-budgets' = 'active-bookings',
-    cmsTour: ICMSTourResponse | null = null
+    cmsTour: ICMSTourResponse | null = null,
+    departureDate?: string | null
   ): BookingItem {
     // Usar siempre el id de la reserva (no tkId)
     const reservationNumber = reservation.id.toString();
+    
+    // Determinar la fecha de salida: usar la proporcionada, o extraerla de la reserva
+    let finalDepartureDate: Date;
+    if (departureDate) {
+      // Validar que la fecha proporcionada sea válida
+      const parsedDate = this.parseValidDate(departureDate);
+      if (parsedDate) {
+        finalDepartureDate = parsedDate;
+      } else {
+        // Si la fecha proporcionada es inválida, usar el método de extracción como fallback
+        finalDepartureDate = this.extractReservationDepartureDate(reservation);
+      }
+    } else {
+      finalDepartureDate = this.extractReservationDepartureDate(reservation);
+    }
     
     const bookingItem: BookingItem = {
       id: reservation.id.toString(),
       title: tour?.name || `Reserva ${reservationNumber}`,
       number: reservationNumber,
       reservationNumber: reservationNumber,
-      creationDate: new Date(reservation.createdAt),
+      creationDate: this.parseValidDate(reservation.createdAt) || new Date(),
       status: this.mapReservationStatus(reservation.reservationStatusId),
       reservationStatusId: reservation.reservationStatusId,
-      departureDate: this.extractReservationDepartureDate(reservation),
+      departureDate: finalDepartureDate,
       image: this.getImageFromCMS(cmsTour) || this.getDefaultImage(),
       passengers: reservation.totalPassengers,
       price: reservation.totalAmount,
@@ -66,20 +83,23 @@ export class DataMappingV2Service {
    * @param tours - Array de tours correspondientes
    * @param listType - Tipo de lista
    * @param cmsTours - Array de tours CMS con imágenes (opcional)
+   * @param departureDates - Array de fechas de salida correspondientes (opcional)
    * @returns Array de BookingItem V2 ordenado por fecha de creación (más recientes primero)
    */
   mapReservationsToBookingItems(
     reservations: ReservationResponse[],
     tours: (TourV2 | null)[],
     listType: 'active-bookings' | 'travel-history' | 'recent-budgets' = 'active-bookings',
-    cmsTours: (ICMSTourResponse | null)[] = []
+    cmsTours: (ICMSTourResponse | null)[] = [],
+    departureDates?: (string | null | undefined)[]
   ): BookingItem[] {
     const bookingItems = reservations.map((reservation, index) => 
       this.mapReservationToBookingItem(
         reservation, 
         tours[index] || null, 
         listType,
-        cmsTours[index] || null
+        cmsTours[index] || null,
+        departureDates && departureDates[index] !== undefined ? departureDates[index] : undefined
       )
     );
 
@@ -139,21 +159,63 @@ export class DataMappingV2Service {
   }
 
   /**
-   * Extrae la fecha de salida de una reserva
+   * Valida y crea un objeto Date desde un string, retornando null si la fecha es inválida
+   * @param dateString - String de fecha a validar
+   * @returns Date válida o null si es inválida
    */
-  private extractReservationDepartureDate(reservation: ReservationResponse): Date {
+  private parseValidDate(dateString: string | null | undefined): Date | null {
+    if (!dateString || dateString === 'null' || dateString.trim() === '') {
+      return null;
+    }
+    
+    const date = new Date(dateString);
+    // Verificar si la fecha es válida
+    if (isNaN(date.getTime())) {
+      return null;
+    }
+    
+    return date;
+  }
+
+  /**
+   * Extrae la fecha de salida de una reserva
+   * Prioridad: departure.departureDate > reservedAt > budgetAt > cartAt > createdAt + 30 días
+   */
+  private extractReservationDepartureDate(reservation: ReservationResponse | any): Date {
+    // Intentar obtener la fecha de salida desde el departure si está disponible en la respuesta
+    // (la API puede incluir el objeto departure completo en algunos casos)
+    if (reservation.departure?.departureDate) {
+      const parsedDate = this.parseValidDate(reservation.departure.departureDate);
+      if (parsedDate) {
+        return parsedDate;
+      }
+    }
+    
+    // Si no está disponible el departure, usar fechas de la reserva como fallback
     // Prioridad: reservedAt > budgetAt > cartAt > createdAt + 30 días
-    if (reservation.reservedAt && reservation.reservedAt !== 'null') {
-      return new Date(reservation.reservedAt);
+    const reservedAtDate = this.parseValidDate(reservation.reservedAt);
+    if (reservedAtDate) {
+      return reservedAtDate;
     }
-    if (reservation.budgetAt && reservation.budgetAt !== 'null') {
-      return new Date(reservation.budgetAt);
+    
+    const budgetAtDate = this.parseValidDate(reservation.budgetAt);
+    if (budgetAtDate) {
+      return budgetAtDate;
     }
-    if (reservation.cartAt && reservation.cartAt !== 'null') {
-      return new Date(reservation.cartAt);
+    
+    const cartAtDate = this.parseValidDate(reservation.cartAt);
+    if (cartAtDate) {
+      return cartAtDate;
     }
-    // Fallback: fecha de creación + 30 días
-    return new Date(new Date(reservation.createdAt).getTime() + 30 * 24 * 60 * 60 * 1000);
+    
+    // Fallback: fecha de creación + 30 días (validar que createdAt sea válido)
+    const createdAtDate = this.parseValidDate(reservation.createdAt);
+    if (createdAtDate) {
+      return new Date(createdAtDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+    }
+    
+    // Último fallback: fecha actual + 30 días si createdAt también es inválido
+    return new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
   }
 
   /**
@@ -188,7 +250,7 @@ export class DataMappingV2Service {
       title: this.extractBookingTitle(apiResponse),
       number: apiResponse.number || apiResponse.reservation_number || apiResponse.id.toString(),
       reservationNumber: apiResponse.reservation_number || apiResponse.number,
-      creationDate: apiResponse.created_at ? new Date(apiResponse.created_at) : new Date(),
+      creationDate: this.parseValidDate(apiResponse.created_at) || new Date(),
       status: this.mapBookingStatus(apiResponse.status),
       departureDate: this.extractDepartureDate(apiResponse),
       image: this.extractBookingImage(apiResponse),
@@ -207,9 +269,16 @@ export class DataMappingV2Service {
   }
 
   private extractDepartureDate(apiResponse: any): Date {
-    if (apiResponse.departure_date) return new Date(apiResponse.departure_date);
-    if (apiResponse.start_date) return new Date(apiResponse.start_date);
-    if (apiResponse.tour?.departure_date) return new Date(apiResponse.tour.departure_date);
+    const departureDate = this.parseValidDate(apiResponse.departure_date);
+    if (departureDate) return departureDate;
+    
+    const startDate = this.parseValidDate(apiResponse.start_date);
+    if (startDate) return startDate;
+    
+    const tourDepartureDate = this.parseValidDate(apiResponse.tour?.departure_date);
+    if (tourDepartureDate) return tourDepartureDate;
+    
+    // Fallback: fecha actual + 30 días
     return new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
   }
 

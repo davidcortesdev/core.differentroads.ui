@@ -346,6 +346,7 @@ export class DataMappingV2Service {
       codigoPostal: '',
       pais: '',
       fechaNacimiento: '',
+      fechaExpiracionDni: '',
       notas: ''
     };
 
@@ -376,6 +377,15 @@ export class DataMappingV2Service {
             break;
           case 'DNI/NIE':
             combinedData.dni = fieldValue.value;
+            break;
+          case 'Fecha expiración DNI':
+            // Convertir de YYYY-MM-DD (API) a DD/MM/YYYY (visualización)
+            if (fieldValue.value && fieldValue.value.includes('-')) {
+              const [year, month, day] = fieldValue.value.split('-');
+              combinedData.fechaExpiracionDni = `${day}/${month}/${year}`;
+            } else {
+              combinedData.fechaExpiracionDni = fieldValue.value;
+            }
             break;
           case 'Dirección':
             combinedData.direccion = fieldValue.value;

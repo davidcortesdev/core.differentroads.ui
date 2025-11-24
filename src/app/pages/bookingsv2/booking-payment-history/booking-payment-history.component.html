@@ -123,9 +123,10 @@
                     </div>
                   </div>
 
-                  <!-- Columna 5: Fecha -->
+                  <!-- Columna 5: Fecha de salida -->
                   <div class="history-column date-column">
-                    <span class="date">{{ item.createdAt | date }}</span>
+                    <span class="date" *ngIf="displayDepartureDate">{{ displayDepartureDate | date : 'dd/MM/yyyy' }}</span>
+                    <span class="date" *ngIf="!displayDepartureDate">{{ item.createdAt | date : 'dd/MM/yyyy' }}</span>
                   </div>
 
                   <!-- Columna 6: Acciones ATC -->

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, OnChanges, SimpleChanges, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
@@ -25,8 +25,8 @@ import { DepartureService, IDepartureResponse } from '../../../core/services/dep
 import { ReservationTravelerService, IReservationTravelerResponse } from '../../../core/services/reservation/reservation-traveler.service';
 import { ReservationTravelerActivityService, IReservationTravelerActivityResponse } from '../../../core/services/reservation/reservation-traveler-activity.service';
 import { ActivityService, IActivityResponse } from '../../../core/services/activity/activity.service';
-import { switchMap, map, catchError, concatMap } from 'rxjs/operators';
-import { forkJoin, of, Observable } from 'rxjs';
+import { switchMap, map, catchError, concatMap, takeUntil } from 'rxjs/operators';
+import { forkJoin, of, Observable, Subject } from 'rxjs';
 
 // Interfaces existentes
 interface TripItemData {
@@ -44,7 +44,7 @@ interface TripItemData {
   styleUrls: ['./booking-payment-history.component.scss'],
   standalone: false,
 })
-export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
+export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDestroy {
   @Input() bookingID: string = '';
   @Input() bookingTotal: number = 0;
   @Input() tripItems: TripItemData[] = [];
@@ -85,6 +85,12 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   // Estado local para selección y loading por pago
   selectedStatusByPaymentId: { [publicID: string]: number } = {};
   isChanging: { [publicID: string]: boolean } = {};
+
+  // Fecha de salida para mostrar en el historial
+  displayDepartureDate: string = '';
+
+  // Subject para manejar la limpieza de suscripciones
+  private destroy$ = new Subject<void>();
 
   deadlines: {
     date: string;
@@ -134,7 +140,6 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
 
   ngOnInit(): void {
     this.calculatePaymentInfo();
-    this.loadPayments();
     
     // Cargar estados de pago desde la API (siempre, para todos)
     this.loadPaymentStatuses();
@@ -142,11 +147,15 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
     // Cargar métodos de pago desde la API
     this.loadPaymentMethods();
 
-    // Obtener userId desde la reserva si está disponible
+    // Inicializar datos si reservationId está disponible desde el inicio
+    // (ngOnChanges manejará los cambios posteriores)
     if (this.reservationId && this.reservationId > 0) {
-      this.loadUserId();
+      this.loadPayments();
+      this.loadReservationData();
+    } else if (this.departureDate) {
+      // Si ya tenemos departureDate como input, usarlo directamente
+      this.displayDepartureDate = this.departureDate;
     }
-
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -155,9 +164,23 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
       this.calculatePaymentInfo();
     }
     
-    // Cargar pagos si cambia reservationId
+    // Cargar pagos si cambia reservationId (solo si no es el primer cambio, para evitar duplicados con ngOnInit)
     if (changes['reservationId'] && changes['reservationId'].currentValue) {
-      this.loadPayments();
+      // Solo cargar si no es el primer cambio (ngOnInit ya lo maneja)
+      if (!changes['reservationId'].firstChange) {
+        this.loadPayments();
+        this.loadReservationData();
+      }
+    }
+    
+    // Actualizar fecha de salida si cambia el input (incluso si cambia a cadena vacía)
+    if (changes['departureDate']) {
+      this.displayDepartureDate = this.departureDate || '';
+      // Si departureDate se vuelve vacío y tenemos reservationId, intentar cargar desde la API
+      // Solo si no es el primer cambio (ngOnInit ya maneja la inicialización)
+      if (!changes['departureDate'].firstChange && !this.departureDate && this.reservationId && this.reservationId > 0) {
+        this.loadReservationData();
+      }
     }
     
     if (changes['refreshTrigger'] && changes['refreshTrigger'].currentValue) {
@@ -175,6 +198,12 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
     }
   }
 
+  ngOnDestroy(): void {
+    // Completar el Subject para cancelar todas las suscripciones activas
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   private calculatePaymentInfo(): void {
     this.paymentInfo = this.bookingsService.calculatePaymentInfo(
       this.paymentHistory,
@@ -190,6 +219,7 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
     this.isLoadingPayments = true;
 
     this.bookingsService.getPaymentsByReservationId(this.reservationId, this.bookingID)
+      .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (payments) => {
           this.paymentHistory = payments;
@@ -295,7 +325,7 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
   openCouponModal(): void {
     // Si no tenemos userId, intentar obtenerlo desde la reserva
     if (!this.userId || this.userId <= 0) {
-      this.loadUserId();
+      this.loadReservationData();
     }
     this.displayCouponModal = true;
   }
@@ -308,22 +338,104 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
     this.refreshPayments();
   }
 
-  private loadUserId(): void {
+  /**
+   * Carga los datos de la reserva (userId y fecha de salida) en una sola llamada
+   * Usa switchMap para evitar suscripciones anidadas y memory leaks
+   */
+  private loadReservationData(): void {
     if (!this.reservationId || this.reservationId <= 0) {
       return;
     }
 
-    this.reservationService.getById(this.reservationId).subscribe({
-      next: (reservation: IReservationResponse) => {
-        const reservationData = reservation as any;
-        if (reservationData.userId) {
-          this.userId = reservationData.userId;
+    // Si ya tenemos departureDate como input, usarlo directamente
+    if (this.departureDate) {
+      this.displayDepartureDate = this.departureDate;
+      // Aún necesitamos obtener el userId
+      this.reservationService.getById(this.reservationId)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (reservation: IReservationResponse) => {
+            const reservationData = reservation as any;
+            if (reservationData.userId) {
+              this.userId = reservationData.userId;
+            }
+          },
+          error: (error) => {
+            console.error('Error obteniendo userId desde la reserva:', error);
+          }
+        });
+      return;
+    }
+
+    // Obtener la reserva y luego el departure si es necesario usando switchMap
+    this.reservationService.getById(this.reservationId)
+      .pipe(
+        takeUntil(this.destroy$),
+        switchMap((reservation: IReservationResponse) => {
+          const reservationData = reservation as any;
+          
+          // Obtener userId
+          if (reservationData.userId) {
+            this.userId = reservationData.userId;
+          }
+
+          // Intentar obtener departureDate desde reservationData.departure si está disponible
+          if (reservationData.departure?.departureDate) {
+            this.displayDepartureDate = reservationData.departure.departureDate;
+            return of(null); // Ya tenemos la fecha, no necesitamos obtener el departure
+          }
+
+          // Si no está disponible en la reserva, obtener desde el departure service
+          if (reservation.departureId) {
+            return this.departureService.getById(reservation.departureId).pipe(
+              catchError((error) => {
+                console.error('Error obteniendo fecha de salida desde departure:', error);
+                return of(null);
+              })
+            );
+          }
+
+          return of(null);
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe({
+        next: (departure: IDepartureResponse | null) => {
+          if (departure?.departureDate) {
+            this.displayDepartureDate = departure.departureDate;
+          }
+        },
+        error: (error) => {
+          console.error('Error obteniendo datos desde la reserva:', error);
         }
-      },
-      error: (error) => {
-        console.error('Error obteniendo userId desde la reserva:', error);
-      }
-    });
+      });
+  }
+
+  /**
+   * @deprecated Usar loadReservationData() en su lugar
+   * Mantenido por compatibilidad
+   */
+  private loadUserId(): void {
+    this.loadReservationData();
+  }
+
+  /**
+   * Carga la fecha de salida desde la reserva y su departure asociado
+   * @deprecated Usar loadReservationData() en su lugar
+   * Mantenido por compatibilidad
+   */
+  private loadDepartureDate(): void {
+    if (!this.reservationId || this.reservationId <= 0) {
+      return;
+    }
+
+    // Si ya tenemos departureDate como input, usarlo directamente
+    if (this.departureDate) {
+      this.displayDepartureDate = this.departureDate;
+      return;
+    }
+
+    this.loadReservationData();
   }
 
   onPaymentProcessed(paymentData: PaymentData): void {
@@ -764,16 +876,18 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
    */
   private loadPaymentStatuses(): void {
     this.loadingStatuses = true;
-    this.paymentService.getAllPaymentStatuses().subscribe({
-      next: (statuses) => {
-        this.paymentStatuses = statuses;
-        this.loadingStatuses = false;
-      },
-      error: (error) => {
-        console.error('Error cargando estados de pago:', error);
-        this.loadingStatuses = false;
-      }
-    });
+    this.paymentService.getAllPaymentStatuses()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (statuses) => {
+          this.paymentStatuses = statuses;
+          this.loadingStatuses = false;
+        },
+        error: (error) => {
+          console.error('Error cargando estados de pago:', error);
+          this.loadingStatuses = false;
+        }
+      });
   }
 
   /**
@@ -781,16 +895,18 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges {
    */
   private loadPaymentMethods(): void {
     this.loadingMethods = true;
-    this.paymentMethodService.getAllPaymentMethods().subscribe({
-      next: (methods) => {
-        this.paymentMethods = methods;
-        this.loadingMethods = false;
-      },
-      error: (error) => {
-        console.error('Error cargando métodos de pago:', error);
-        this.loadingMethods = false;
-      }
-    });
+    this.paymentMethodService.getAllPaymentMethods()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (methods) => {
+          this.paymentMethods = methods;
+          this.loadingMethods = false;
+        },
+        error: (error) => {
+          console.error('Error cargando métodos de pago:', error);
+          this.loadingMethods = false;
+        }
+      });
   }
 
   /**

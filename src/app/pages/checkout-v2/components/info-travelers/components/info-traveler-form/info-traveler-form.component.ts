@@ -595,7 +595,8 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
                                 fieldDetails.name.toLowerCase().includes('expiración') ||
                                 fieldDetails.name.toLowerCase().includes('vencimiento') ||
                                 fieldDetails.code.toLowerCase().includes('expiration') ||
-                                fieldDetails.code.toLowerCase().includes('expiry');
+                                fieldDetails.code.toLowerCase().includes('expiry') ||
+                                fieldDetails.code.toLowerCase() === 'dniexpiration';
         
         if (isBirthDate && this.traveler) {
           validators.push(this.birthdateValidator(this.traveler.ageGroupId));
@@ -794,7 +795,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
 
     this.travelerFieldDates = {};
     
-    const dateFields = ['birthdate', 'expirationdate'];
+    const dateFields = ['birthdate', 'expirationdate', 'dniexpiration'];
     
     dateFields.forEach(fieldCode => {
       const minDate = this.getMinDateForField(fieldCode);
@@ -825,7 +826,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
         const minDate = new Date(today.getFullYear() - 100, 0, 1);
         return minDate;
       }
-    } else if (fieldCode === 'expirationdate') {
+    } else if (fieldCode === 'expirationdate' || fieldCode === 'dniexpiration') {
       const today = new Date();
       return today;
     }
@@ -851,7 +852,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       } else {
         return today;
       }
-    } else if (fieldCode === 'expirationdate') {
+    } else if (fieldCode === 'expirationdate' || fieldCode === 'dniexpiration') {
       const today = new Date();
       return new Date(today.getFullYear() + 30, 11, 31);
     }
@@ -967,72 +968,37 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
         returnValue = userData.email || null;
         break;
       case 'phone':
-      case 'telefono':
         returnValue = userData.telefono || null;
         break;
-      case 'firstname':
-      case 'first_name':
       case 'name':
-      case 'nombre':
         returnValue = userData.nombre || null;
         break;
-      case 'lastname':
-      case 'last_name':
       case 'surname':
-      case 'apellido':
-      case 'apellidos':
         returnValue = userData.apellido || null;
         break;
       case 'birthdate':
-      case 'fecha_nacimiento':
         returnValue = userData.fechaNacimiento || null;
         break;
-      case 'dni':
       case 'national_id':
         returnValue = userData.dni || null;
         break;
+      case 'dniexpiration':
+        returnValue = userData.fechaExpiracionDni || null;
+        break;
       case 'nationality':
-      case 'country':
-      case 'pais':
         returnValue = userData.pais || null;
         break;
-      case 'city':
-      case 'ciudad':
-        returnValue = userData.ciudad || null;
-        break;
       case 'postal_code':
-      case 'codigo_postal':
         returnValue = userData.codigoPostal || null;
         break;
-      case 'address':
-      case 'direccion':
-        returnValue = userData.direccion || null;
-        break;
       case 'sex':
-      case 'sexo':
         returnValue = this.normalizeSexValue(userData.sexo);
         break;
       case 'phonePrefix':
-      case 'phone_prefix':
-      case 'prefijo':
         returnValue = userData.phonePrefix || null;
         break;
       default:
-        const codeLower = (fieldCode || '').toLowerCase();
-        switch (codeLower) {
-          case 'sex':
-          case 'gender':
-          case 'sexo':
-            returnValue = this.normalizeSexValue(userData.sexo);
-            break;
-          case 'phoneprefix':
-          case 'phone_prefix':
-          case 'prefijo':
-            returnValue = userData.phonePrefix || null;
-            break;
-          default:
-            returnValue = null;
-        }
+        returnValue = null;
     }
     
     console.log(`[getUserDataForField] Campo: ${fieldCode} → Valor retornado: "${returnValue}"`);
@@ -2183,72 +2149,37 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
         returnValue = userData.email || null;
         break;
       case 'phone':
-      case 'telefono':
         returnValue = userData.telefono || null;
         break;
-      case 'firstname':
-      case 'first_name':
       case 'name':
-      case 'nombre':
         returnValue = userData.nombre || null;
         break;
-      case 'lastname':
-      case 'last_name':
       case 'surname':
-      case 'apellido':
-      case 'apellidos':
         returnValue = userData.apellido || null;
         break;
       case 'birthdate':
-      case 'fecha_nacimiento':
         returnValue = userData.fechaNacimiento || null;
         break;
-      case 'dni':
       case 'national_id':
         returnValue = userData.dni || null;
         break;
+      case 'dniexpiration':
+        returnValue = userData.fechaExpiracionDni || null;
+        break;
       case 'nationality':
-      case 'country':
-      case 'pais':
         returnValue = userData.pais || null;
         break;
-      case 'city':
-      case 'ciudad':
-        returnValue = userData.ciudad || null;
-        break;
       case 'postal_code':
-      case 'codigo_postal':
         returnValue = userData.codigoPostal || null;
         break;
-      case 'address':
-      case 'direccion':
-        returnValue = userData.direccion || null;
-        break;
       case 'sex':
-      case 'sexo':
         returnValue = this.normalizeSexValue(userData.sexo);
         break;
       case 'phonePrefix':
-      case 'phone_prefix':
-      case 'prefijo':
         returnValue = userData.phonePrefix || null;
         break;
       default:
-        const codeLower = (fieldCode || '').toLowerCase();
-        switch (codeLower) {
-          case 'sex':
-          case 'gender':
-          case 'sexo':
-            returnValue = this.normalizeSexValue(userData.sexo);
-            break;
-          case 'phoneprefix':
-          case 'phone_prefix':
-          case 'prefijo':
-            returnValue = userData.phonePrefix || null;
-            break;
-          default:
-            returnValue = null;
-        }
+        returnValue = null;
     }
     
     console.log(`[getUserDataForFieldFromData] Campo: ${fieldCode} → Valor: "${returnValue}"`);

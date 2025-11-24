@@ -79,6 +79,12 @@
           {{ personalInfo.dni || 'Pendiente' }}
         </span>
       </div>
+      <div class="info-item">
+        <span class="label">Fecha caducidad DNI:</span>
+        <span class="value" [class.pending]="!personalInfo.fechaExpiracionDni">
+          {{ personalInfo.fechaExpiracionDni || 'Pendiente' }}
+        </span>
+      </div>
 
       <p-divider></p-divider>
 

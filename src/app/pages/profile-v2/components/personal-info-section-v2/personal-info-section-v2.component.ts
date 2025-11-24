@@ -60,6 +60,11 @@ export class PersonalInfoSectionV2Component implements OnInit, OnChanges {
           this.personalInfo.fechaNacimiento = this.personalInfoService.formatDateForDisplay(this.personalInfo.fechaNacimiento);
         }
 
+        // Formatear fecha de caducidad DNI para mostrar
+        if (this.personalInfo.fechaExpiracionDni) {
+          this.personalInfo.fechaExpiracionDni = this.personalInfoService.formatDateForDisplay(this.personalInfo.fechaExpiracionDni);
+        }
+
         // Guardar datos originales para poder restaurarlos
         this.originalPersonalInfo = { ...this.personalInfo };
         
@@ -212,6 +217,11 @@ export class PersonalInfoSectionV2Component implements OnInit, OnChanges {
     // Formatear la fecha de nacimiento para mostrar correctamente
     if (this.personalInfo.fechaNacimiento) {
       this.personalInfo.fechaNacimiento = this.personalInfoService.formatDateForDisplay(this.personalInfo.fechaNacimiento);
+    }
+    
+    // Formatear la fecha de caducidad DNI para mostrar correctamente
+    if (this.personalInfo.fechaExpiracionDni) {
+      this.personalInfo.fechaExpiracionDni = this.personalInfoService.formatDateForDisplay(this.personalInfo.fechaExpiracionDni);
     }
     
     // Actualizar los datos originales con los nuevos datos formateados

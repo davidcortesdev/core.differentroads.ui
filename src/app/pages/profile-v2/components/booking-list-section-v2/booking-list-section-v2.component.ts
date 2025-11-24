@@ -1218,7 +1218,16 @@ export class BookingListSectionV2Component
     return 'Ver detalle';
   }
 
-  getReserveLabel(): string {
+  getReserveLabel(item?: BookingItem): string {
+    // Si es carrito en proceso (estado 2), mostrar "Terminar reserva"
+    if (item && this.isCartInProcess(item)) {
+      return 'Terminar reserva';
+    }
+    // Si es reserva pendiente, mostrar "Continuar reserva"
+    if (this.listType === 'pending-bookings') {
+      return 'Continuar reserva';
+    }
+    // Para presupuestos, mantener "Reservar"
     return 'Reservar';
   }
 

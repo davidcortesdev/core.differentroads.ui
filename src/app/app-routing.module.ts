@@ -80,6 +80,7 @@ const routes: Routes = [
         path: 'reservation/:reservationId',
         component: NewReservationComponent,
       },
+      { path: 'forget-password', component: ForgetPasswordComponent },
     ],
   },
 

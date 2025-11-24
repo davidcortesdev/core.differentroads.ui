@@ -111,14 +111,28 @@
                       </span>
                       <!-- Botón para subir justificante si es transferencia -->
                       <span class="upload-voucher-action" *ngIf="isTransfer(item)">
+                        <input
+                          type="file"
+                          [id]="'file-input-' + (item.id || item.publicID)"
+                          accept="image/*,.pdf"
+                          style="display: none;"
+                          (change)="onVoucherFileSelect($event, item)"
+                          [disabled]="isUploadingVoucher[item.id || item.publicID]"
+                        />
                         <p-button
                           [label]="getUploadVoucherButtonLabel(item)"
                           icon="pi pi-upload"
                           severity="warning"
                           size="small"
-                          (onClick)="navigateToUploadVoucher(item)"
+                          [disabled]="isUploadingVoucher[item.id || item.publicID]"
+                          (onClick)="triggerFileInput(item)"
                           [pTooltip]="getUploadVoucherButtonLabel(item)"
                         ></p-button>
+                        <p-progressSpinner
+                          *ngIf="isUploadingVoucher[item.id || item.publicID]"
+                          styleClass="upload-spinner"
+                          [style]="{ width: '20px', height: '20px' }"
+                        ></p-progressSpinner>
                       </span>
                     </div>
                   </div>
@@ -187,15 +201,31 @@
                       <span class="voucher-date">{{ formatVoucherDate(voucher.uploadDate) }}</span>
                     </div>
                   </div>
-                  <p-button
-                    label="Ver"
-                    icon="pi pi-external-link"
-                    severity="info"
-                    size="small"
-                    [text]="true"
-                    (onClick)="viewVoucher(voucher)"
-                    pTooltip="Ver justificante"
-                  ></p-button>
+                  <div class="voucher-actions">
+                    <p-button
+                      label="Ver"
+                      icon="pi pi-external-link"
+                      severity="info"
+                      size="small"
+                      [text]="true"
+                      (onClick)="viewVoucher(voucher)"
+                      pTooltip="Ver justificante"
+                    ></p-button>
+                    <p-button
+                      icon="pi pi-trash"
+                      severity="danger"
+                      size="small"
+                      styleClass="delete-voucher-btn"
+                      [disabled]="isDeletingVoucher[voucher.id]"
+                      (onClick)="deleteVoucher(voucher)"
+                      pTooltip="Eliminar justificante"
+                    ></p-button>
+                    <p-progressSpinner
+                      *ngIf="isDeletingVoucher[voucher.id]"
+                      styleClass="delete-spinner"
+                      [style]="{ width: '16px', height: '16px' }"
+                    ></p-progressSpinner>
+                  </div>
                 </div>
               </div>
 

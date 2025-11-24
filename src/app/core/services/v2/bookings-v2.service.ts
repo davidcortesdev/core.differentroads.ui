@@ -346,15 +346,19 @@ export class BookingsServiceV2 {
       };
 
       // Agregar vouchers si hay archivo adjunto
+      // attachmentUrl puede contener múltiples URLs separadas por comas
       if (payment.attachmentUrl) {
-        const voucher: IPaymentVoucher = {
-          fileUrl: payment.attachmentUrl,
-          metadata: {},
-          uploadDate: new Date(payment.paymentDate),
-          reviewStatus: VoucherReviewStatus.PENDING,
-          id: payment.id.toString()
-        };
-        mappedPayment.vouchers = [voucher];
+        const voucherUrls = payment.attachmentUrl.split(',').map(url => url.trim()).filter(url => url.length > 0);
+        mappedPayment.vouchers = voucherUrls.map((url, index) => {
+          const voucher: IPaymentVoucher = {
+            fileUrl: url,
+            metadata: {},
+            uploadDate: new Date(payment.paymentDate),
+            reviewStatus: VoucherReviewStatus.PENDING,
+            id: `${payment.id}-${index}`
+          };
+          return voucher;
+        });
       }
 
       return mappedPayment;

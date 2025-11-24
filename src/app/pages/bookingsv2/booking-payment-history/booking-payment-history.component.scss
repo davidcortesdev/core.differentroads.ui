@@ -135,6 +135,26 @@
   }
 }
 :host ::ng-deep {
+  .delete-voucher-btn {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    color: #ffffff !important;
+    
+    &:hover:not(:disabled) {
+      background-color: #c82333 !important;
+      border-color: #bd2130 !important;
+    }
+    
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .p-button-icon {
+      color: #ffffff !important;
+    }
+  }
+  
   .p-panel {
     border: 1px solid #eaeaea;
     border-radius: 12px;
@@ -186,6 +206,34 @@
         .voucher-name { font-weight: 600; color: #333; }
         .voucher-date { font-size: .85rem; color: #777; }
       }
+    }
+    .voucher-actions { display: flex; align-items: center; gap: 0.5rem;
+      .delete-spinner {
+        width: 16px;
+        height: 16px;
+      }
+    }
+  }
+}
+
+:host ::ng-deep {
+  .delete-voucher-btn {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    color: #ffffff !important;
+    
+    &:hover:not(:disabled) {
+      background-color: #c82333 !important;
+      border-color: #bd2130 !important;
+    }
+    
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .p-button-icon {
+      color: #ffffff !important;
     }
   }
 }

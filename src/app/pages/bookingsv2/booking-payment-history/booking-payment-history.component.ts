@@ -25,8 +25,10 @@ import { DepartureService, IDepartureResponse } from '../../../core/services/dep
 import { ReservationTravelerService, IReservationTravelerResponse } from '../../../core/services/reservation/reservation-traveler.service';
 import { ReservationTravelerActivityService, IReservationTravelerActivityResponse } from '../../../core/services/reservation/reservation-traveler-activity.service';
 import { ActivityService, IActivityResponse } from '../../../core/services/activity/activity.service';
-import { switchMap, map, catchError, concatMap, takeUntil } from 'rxjs/operators';
+import { switchMap, map, catchError, concatMap, takeUntil, finalize } from 'rxjs/operators';
 import { forkJoin, of, Observable, Subject } from 'rxjs';
+import { FileUploadService, CloudinaryResponse } from '../../../core/services/media/file-upload.service';
+import { MessageService } from 'primeng/api';
 
 // Interfaces existentes
 interface TripItemData {
@@ -86,6 +88,12 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
   selectedStatusByPaymentId: { [publicID: string]: number } = {};
   isChanging: { [publicID: string]: boolean } = {};
 
+  // Estado para tracking de subida de vouchers por payment
+  isUploadingVoucher: { [paymentId: string]: boolean } = {};
+
+  // Estado para tracking de eliminación de vouchers
+  isDeletingVoucher: { [voucherId: string]: boolean } = {};
+
   // Fecha de salida para mostrar en el historial
   displayDepartureDate: string = '';
 
@@ -131,7 +139,9 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
     private departureService: DepartureService,
     private reservationTravelerService: ReservationTravelerService,
     private reservationTravelerActivityService: ReservationTravelerActivityService,
-    private activityService: ActivityService
+    private activityService: ActivityService,
+    private fileUploadService: FileUploadService,
+    private messageService: MessageService
   ) {
     this.paymentForm = this.fb.group({
       amount: [0, [Validators.required, Validators.min(1)]],
@@ -147,10 +157,12 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
     // Cargar métodos de pago desde la API
     this.loadPaymentMethods();
 
+    // Cargar pagos (loadPayments tiene guard interno para reservationId)
+    this.loadPayments();
+
     // Inicializar datos si reservationId está disponible desde el inicio
     // (ngOnChanges manejará los cambios posteriores)
     if (this.reservationId && this.reservationId > 0) {
-      this.loadPayments();
       this.loadReservationData();
     } else if (this.departureDate) {
       // Si ya tenemos departureDate como input, usarlo directamente
@@ -396,8 +408,7 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
           }
 
           return of(null);
-        }),
-        takeUntil(this.destroy$)
+        })
       )
       .subscribe({
         next: (departure: IDepartureResponse | null) => {
@@ -995,6 +1006,121 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
   }
 
   /**
+   * Elimina un justificante de pago
+   */
+  deleteVoucher(voucher: IPaymentVoucher): void {
+    if (!voucher.id || !voucher.fileUrl) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se puede eliminar el justificante: falta información.',
+        life: 5000,
+      });
+      return;
+    }
+
+    // Confirmar eliminación
+    if (!confirm('¿Está seguro de que desea eliminar este justificante?')) {
+      return;
+    }
+
+    this.isDeletingVoucher[voucher.id] = true;
+
+    // Encontrar el payment que contiene este voucher
+    const payment = this.paymentHistory.find((p) => {
+      if (!p.vouchers || p.vouchers.length === 0) return false;
+      return p.vouchers.some((v) => v.id === voucher.id);
+    });
+
+    if (!payment || !payment.id) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudo encontrar el pago asociado al justificante.',
+        life: 5000,
+      });
+      this.isDeletingVoucher[voucher.id] = false;
+      return;
+    }
+
+    // Obtener el pago completo desde la API
+    this.paymentsNetService
+      .getPaymentById(payment.id)
+      .pipe(
+        takeUntil(this.destroy$),
+        switchMap((apiPayment) => {
+          if (!apiPayment.attachmentUrl) {
+            throw new Error('El pago no tiene justificantes asociados');
+          }
+
+          // Remover la URL del voucher del attachmentUrl
+          const voucherUrls = apiPayment.attachmentUrl.split(',').map((url) => url.trim());
+          const updatedUrls = voucherUrls.filter((url) => url !== voucher.fileUrl);
+
+          if (updatedUrls.length === voucherUrls.length) {
+            throw new Error('No se encontró el justificante en el pago');
+          }
+
+          // Si no quedan vouchers, dejar attachmentUrl vacío, sino concatenar los restantes
+          const newAttachmentUrl = updatedUrls.length > 0 ? updatedUrls.join(',') : '';
+
+          // Actualizar el pago con el nuevo attachmentUrl
+          const updateData: any = {
+            id: apiPayment.id,
+            amount: apiPayment.amount,
+            paymentDate: apiPayment.paymentDate,
+            paymentMethodId: apiPayment.paymentMethodId,
+            paymentStatusId: apiPayment.paymentStatusId,
+            transactionReference: apiPayment.transactionReference,
+            notes: apiPayment.notes,
+            currencyId: apiPayment.currencyId,
+            reservationId: apiPayment.reservationId,
+            attachmentUrl: newAttachmentUrl,
+          };
+
+          return this.paymentsNetService.update(updateData);
+        }),
+        catchError((error) => {
+          console.error('Error eliminando justificante:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al eliminar el justificante. Por favor, intente nuevamente.',
+            life: 5000,
+          });
+          return of(null);
+        }),
+        finalize(() => {
+          this.isDeletingVoucher[voucher.id] = false;
+        })
+      )
+      .subscribe({
+        next: (updatedPayment) => {
+          if (updatedPayment) {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Justificante eliminado',
+              detail: 'El justificante se ha eliminado correctamente.',
+              life: 5000,
+            });
+
+            // Recargar los pagos para actualizar la lista
+            this.loadPayments();
+          }
+        },
+        error: (error) => {
+          console.error('Error en el flujo de eliminación:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al procesar la eliminación. Por favor, intente nuevamente.',
+            life: 5000,
+          });
+        },
+      });
+  }
+
+  /**
    * Formatea la fecha de subida del justificante
    */
   formatVoucherDate(date: Date | string): string {
@@ -1037,6 +1163,7 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
 
   /**
    * Navega a la página de subir justificante de pago
+   * @deprecated Ahora se usa uploadVoucher directamente
    */
   navigateToUploadVoucher(payment: Payment): void {
     if (!this.reservationId || !payment.id) {
@@ -1046,5 +1173,152 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
 
     // Navegar a la página de justificantes con el paymentId específico
     this.router.navigate([`/reservation/${this.reservationId}/${payment.id}`]);
+  }
+
+  /**
+   * Dispara el click en el input file oculto
+   */
+  triggerFileInput(payment: Payment): void {
+    const inputId = `file-input-${payment.id || payment.publicID}`;
+    const fileInput = document.getElementById(inputId) as HTMLInputElement;
+    if (fileInput) {
+      fileInput.click();
+    }
+  }
+
+  /**
+   * Maneja la selección de archivo para subir justificante
+   */
+  onVoucherFileSelect(event: any, payment: Payment): void {
+    const fileInput = event.target as HTMLInputElement;
+    if (!fileInput.files || fileInput.files.length === 0) {
+      return;
+    }
+
+    const file = fileInput.files[0];
+    this.uploadVoucher(payment, file);
+    
+    // Limpiar el input para permitir seleccionar el mismo archivo nuevamente si es necesario
+    fileInput.value = '';
+  }
+
+
+  /**
+   * Sube un justificante de pago directamente sin redirigir
+   */
+  uploadVoucher(payment: Payment, file: File): void {
+    if (!payment.id || !this.reservationId) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se puede subir el justificante: falta información del pago o reserva.',
+        life: 5000,
+      });
+      return;
+    }
+
+    // Validar tipo de archivo
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf'];
+    if (!validTypes.includes(file.type)) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Tipo de archivo no válido',
+        detail: 'Solo se permiten archivos PDF o imágenes (JPG, PNG, WEBP).',
+        life: 5000,
+      });
+      return;
+    }
+
+    // Validar tamaño (10MB máximo)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Archivo demasiado grande',
+        detail: 'El archivo no puede ser mayor a 10MB.',
+        life: 5000,
+      });
+      return;
+    }
+
+    const paymentKey = payment.id.toString();
+    this.isUploadingVoucher[paymentKey] = true;
+
+    // Subir archivo a Cloudinary
+    this.fileUploadService
+      .uploadFile(file, 'vouchers')
+      .pipe(
+        takeUntil(this.destroy$),
+        switchMap((response: CloudinaryResponse) => {
+          if (!response.secure_url) {
+            throw new Error('No se recibió la URL del archivo subido');
+          }
+
+          // Obtener el pago completo desde la API para actualizarlo
+          return this.paymentsNetService.getPaymentById(payment.id!).pipe(
+            switchMap((apiPayment) => {
+              // Manejar múltiples vouchers: concatenar URLs separadas por comas
+              let newAttachmentUrl = response.secure_url;
+              if (apiPayment.attachmentUrl) {
+                // Si ya existe un voucher, agregar el nuevo separado por coma
+                newAttachmentUrl = `${apiPayment.attachmentUrl},${response.secure_url}`;
+              }
+
+              // Actualizar el pago con el nuevo attachmentUrl
+              const updateData: any = {
+                id: apiPayment.id,
+                amount: apiPayment.amount,
+                paymentDate: apiPayment.paymentDate,
+                paymentMethodId: apiPayment.paymentMethodId,
+                paymentStatusId: apiPayment.paymentStatusId,
+                transactionReference: apiPayment.transactionReference,
+                notes: apiPayment.notes,
+                currencyId: apiPayment.currencyId,
+                reservationId: apiPayment.reservationId,
+                attachmentUrl: newAttachmentUrl,
+              };
+
+              return this.paymentsNetService.update(updateData);
+            })
+          );
+        }),
+        catchError((error) => {
+          console.error('Error subiendo justificante:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al subir el justificante. Por favor, intente nuevamente.',
+            life: 5000,
+          });
+          return of(null);
+        }),
+        finalize(() => {
+          this.isUploadingVoucher[paymentKey] = false;
+        })
+      )
+      .subscribe({
+        next: (updatedPayment) => {
+          if (updatedPayment) {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Justificante subido',
+              detail: 'El justificante se ha subido correctamente. Nuestro equipo lo revisará pronto.',
+              life: 5000,
+            });
+
+            // Recargar los pagos para mostrar el nuevo justificante
+            this.loadPayments();
+          }
+        },
+        error: (error) => {
+          console.error('Error en el flujo de subida:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al procesar el justificante. Por favor, intente nuevamente.',
+            life: 5000,
+          });
+        },
+      });
   }
 }

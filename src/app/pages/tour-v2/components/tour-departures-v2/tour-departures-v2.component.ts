@@ -188,6 +188,8 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   cities: City[] = [];
   filteredCities: City[] = [];
   selectedCity: City | null = null;
+  // Mantener todas las ciudades originales para poder obtener todos los activityIds por nombre
+  allCitiesFromService: ITourDepartureCityResponse[] = [];
 
   // Pasajeros
   travelers: Travelers = {
@@ -286,6 +288,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           if (!citiesResponse || citiesResponse.length === 0) {
             this.cities = [];
             this.filteredCities = [];
+            this.allCitiesFromService = [];
             this.selectedCity = null;
             this.citiesLoading = false;
             this.citiesLoadingUpdate.emit(false);
@@ -293,6 +296,9 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
             this.emitCityUpdate();
             return;
           }
+
+          // Guardar todas las ciudades originales para poder obtener todos los activityIds
+          this.allCitiesFromService = citiesResponse;
 
           const mappedCities = citiesResponse.map((city, index) => {
             return {
@@ -312,6 +318,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           );
 
           // Eliminar duplicados basándose en el nombre normalizado (sin espacios extra, case-insensitive)
+          // Mantener la primera ciudad encontrada para cada nombre (para mostrar en el selector)
           const uniqueCitiesMap = new Map<string, City>();
           validCities.forEach((city) => {
             const normalizedName = city.name.trim().toLowerCase();
@@ -355,6 +362,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           console.error('Error cargando ciudades:', error);
           this.cities = [];
           this.filteredCities = [];
+          this.allCitiesFromService = [];
           this.selectedCity = null;
           this.citiesLoading = false;
           this.citiesLoadingUpdate.emit(false);
@@ -372,11 +380,40 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       });
   }
 
-  private loadDeparturesPrices(activityId: number, departureId?: number): Observable<ITourDeparturesPriceResponse[]> {
-    if (!activityId) {
+  /**
+   * Obtiene todos los activityIds que coinciden con el nombre de la ciudad seleccionada
+   */
+  private getActivityIdsForSelectedCity(): number[] {
+    if (!this.selectedCity) {
+      return [];
+    }
+
+    const normalizedSelectedName = this.selectedCity.name.trim().toLowerCase();
+    
+    // Buscar todas las ciudades que coincidan con el nombre (case-insensitive)
+    const matchingCities = this.allCitiesFromService.filter(
+      (city) => city.name.trim().toLowerCase() === normalizedSelectedName && city.activityId
+    );
+
+    // Extraer todos los activityIds únicos
+    const activityIds = matchingCities
+      .map(city => city.activityId)
+      .filter((id, index, self) => self.indexOf(id) === index); // Eliminar duplicados
+
+    return activityIds;
+  }
+
+  private loadDeparturesPrices(activityIds: number[] | number, departureId?: number): Observable<ITourDeparturesPriceResponse[]> {
+    // Normalizar a array
+    const activityIdsArray = Array.isArray(activityIds) ? activityIds : [activityIds];
+    
+    // Filtrar activityIds válidos
+    const validActivityIds = activityIdsArray.filter(id => id && id > 0);
+    
+    if (validActivityIds.length === 0) {
       return of([]);
     }
-    // departureId es opcional - si es 0 o undefined, cargar todos los precios para el activityId
+    // departureId es opcional - si es 0 o undefined, cargar todos los precios para los activityIds
 
     this.pricesLoading = true;
     this.pricesError = false;
@@ -390,7 +427,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     }
 
     return this.tourDeparturesPricesService
-      .getAll(activityId, filters)
+      .getAll(validActivityIds, filters)
       .pipe(
         takeUntil(this.destroy$),
         tap((pricesResponse: ITourDeparturesPriceResponse[]) => {
@@ -733,8 +770,9 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
                 this.loadCityRelatedData();
                 
                 // Cargar precios y seleccionar departure
-                if (this.selectedCity.activityId) {
-                  this.loadDeparturesPrices(this.selectedCity.activityId, 0).subscribe({
+                const activityIds = this.getActivityIdsForSelectedCity();
+                if (activityIds.length > 0) {
+                  this.loadDeparturesPrices(activityIds, 0).subscribe({
                     next: () => {
                       if (this.defaultSelection?.departureId) {
                         this.selectDefaultDeparture(this.defaultSelection.departureId);
@@ -853,15 +891,17 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           // Si hay ciudad seleccionada con activityId, cargar precios
           if (
             this.selectedCity &&
-            this.selectedCity.activityId &&
             this.departureDetails
           ) {
-            return this.loadDeparturesPrices(
-              this.selectedCity.activityId,
-              this.departureDetails.id
-            ).pipe(
-              map((prices) => ({ departure, prices }))
-            );
+            const activityIds = this.getActivityIdsForSelectedCity();
+            if (activityIds.length > 0) {
+              return this.loadDeparturesPrices(
+                activityIds,
+                this.departureDetails.id
+              ).pipe(
+                map((prices) => ({ departure, prices }))
+              );
+            }
           }
           
           // Si no hay ciudad, retornar solo el departure
@@ -1330,8 +1370,9 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   private loadCityRelatedData(): void {
     if (!this.selectedCity) return;
 
-    if (this.selectedCity.activityId) {
-      this.loadDeparturesPrices(this.selectedCity.activityId, 0).subscribe();
+    const activityIds = this.getActivityIdsForSelectedCity();
+    if (activityIds.length > 0) {
+      this.loadDeparturesPrices(activityIds, 0).subscribe();
     }
 
     // Solo cargar flight times para los departures de la ciudad seleccionada
@@ -1809,9 +1850,10 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     this.emitCityUpdate();
     this.loadCityRelatedData();
     
-    // Cargar precios y seleccionar departure si hay activityId
-    if (this.selectedCity.activityId) {
-      this.loadDeparturesPrices(this.selectedCity.activityId, 0).subscribe({
+    // Cargar precios y seleccionar departure si hay activityIds
+    const activityIds = this.getActivityIdsForSelectedCity();
+    if (activityIds.length > 0) {
+      this.loadDeparturesPrices(activityIds, 0).subscribe({
         next: () => {
           if (this.filteredDepartures.length > 0) {
             this.autoSelectNearestBookableDeparture();

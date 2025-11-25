@@ -19,6 +19,7 @@ export interface TourDeparturesPriceFilters {
   total?: number;
   minTotal?: number;
   maxTotal?: number;
+  tourVisibility?: boolean;
 }
 
 @Injectable({

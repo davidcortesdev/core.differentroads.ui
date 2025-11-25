@@ -40,6 +40,7 @@ import {
 import {
   TourDeparturesPricesService,
   ITourDeparturesPriceResponse,
+  TourDeparturesPriceFilters,
 } from '../../../../core/services/tour/tour-departures-prices.service';
 import {
   DepartureAvailabilityService,
@@ -380,8 +381,16 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     this.pricesLoading = true;
     this.pricesError = false;
 
+    // Construir filtros con tourVisibility según la lógica de preview
+    // Si preview === false: pasar tourVisibility = true (filtrar solo visibles)
+    // Si preview === true: no pasar tourVisibility (mostrar todos)
+    const filters: TourDeparturesPriceFilters = {};
+    if (!this.preview) {
+      filters.tourVisibility = !this.preview; // Esto será true cuando preview es false
+    }
+
     return this.tourDeparturesPricesService
-      .getAll(activityId)
+      .getAll(activityId, filters)
       .pipe(
         takeUntil(this.destroy$),
         tap((pricesResponse: ITourDeparturesPriceResponse[]) => {

@@ -264,7 +264,8 @@
               <div class="f-price">
                 <div class="p-container">
                   <span>desde</span>
-                  <span class="amount">{{ item.price | currency:'EUR':'symbol':'1.0-0' }}</span>
+                  <span class="amount" *ngIf="!item.priceError && item.price !== null && item.price !== undefined">{{ item.price | currency:'EUR':'symbol':'1.0-0' }}</span>
+                  <span class="amount error-text" *ngIf="item.priceError || item.price === null || item.price === undefined">error</span>
                 </div>
               </div>
 

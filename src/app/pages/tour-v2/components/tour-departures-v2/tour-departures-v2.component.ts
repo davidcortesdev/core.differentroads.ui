@@ -40,6 +40,7 @@ import {
 import {
   TourDeparturesPricesService,
   ITourDeparturesPriceResponse,
+  TourDeparturesPriceFilters,
 } from '../../../../core/services/tour/tour-departures-prices.service';
 import {
   DepartureAvailabilityService,
@@ -132,6 +133,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   error: string | undefined;
   citiesLoading = false;
   pricesLoading = false;
+  pricesError = false;
 
   // Propiedades para precios
   departuresPrices: ITourDeparturesPriceResponse[] = [];
@@ -377,14 +379,24 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     // departureId es opcional - si es 0 o undefined, cargar todos los precios para el activityId
 
     this.pricesLoading = true;
+    this.pricesError = false;
+
+    // Construir filtros con tourVisibility según la lógica de preview
+    // Si preview === false: pasar tourVisibility = true (filtrar solo visibles)
+    // Si preview === true: no pasar tourVisibility (mostrar todos)
+    const filters: TourDeparturesPriceFilters = {};
+    if (!this.preview) {
+      filters.tourVisibility = !this.preview; // Esto será true cuando preview es false
+    }
 
     return this.tourDeparturesPricesService
-      .getAll(activityId)
+      .getAll(activityId, filters)
       .pipe(
         takeUntil(this.destroy$),
         tap((pricesResponse: ITourDeparturesPriceResponse[]) => {
           this.departuresPrices = pricesResponse;
           this.pricesLoading = false;
+          this.pricesError = false;
 
           // Notificar que los precios están listos
           this.pricesReady$.next();
@@ -402,6 +414,10 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
         catchError((error) => {
           console.error('Error cargando precios:', error);
           this.pricesLoading = false;
+          this.pricesError = true;
+          this.departuresPrices = [];
+          // Notificar que hubo un error para que se actualice la UI
+          this.pricesReady$.next();
           return of([]);
         })
       );
@@ -988,23 +1004,28 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     const spots = this.getAvailableSpots(this.departureDetails.id);
     const isBookable = (this.departureDetails.isBookable ?? true) && (spots === -1 || spots > 0);
     
-    const departureFromDetails = {
-      id: this.departureDetails.id,
-      departureDate: this.departureDetails.departureDate,
-      returnDate: this.departureDetails.arrivalDate,
-      isBookable: isBookable,
-    };
+      const adultPrice = this.getPriceForDeparture(this.departureDetails.id);
+      const departureFromDetails = {
+        id: this.departureDetails.id,
+        departureDate: this.departureDetails.departureDate,
+        returnDate: this.departureDetails.arrivalDate,
+        price: adultPrice,
+        priceError: adultPrice === null,
+        isBookable: isBookable,
+      };
     
     if (departureFromDetails.isBookable) {
       this.addToCart(departureFromDetails);
     } else {
       // Si no es bookable, emitir evento con isBookable: false para deshabilitar el botón
       this.selectedDepartureId = departureFromDetails.id;
+      const price = this.getPriceForDeparture(departureFromDetails.id);
       const departureWithAvailability = {
         id: departureFromDetails.id,
         departureDate: departureFromDetails.departureDate,
         returnDate: departureFromDetails.returnDate,
-        price: this.getPriceForDeparture(departureFromDetails.id),
+        price: price,
+        priceError: price === null,
         status: 'available',
         waitingList: false,
         group: '',
@@ -1042,6 +1063,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           departureDate: departureFromAll.departureDate,
           returnDate: departureFromAll.arrivalDate,
           price: adultPrice,
+          priceError: adultPrice === null,
           status: 'available',
           waitingList: false,
           group: '',
@@ -1156,8 +1178,21 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
   private getPriceByPassengerType(
     passengerType: 'adults' | 'children' | 'babies'
-  ): number {
-    if (!this.departuresPrices || this.departuresPrices.length === 0) return 0;
+  ): number | null {
+    // Si hubo un error al cargar los precios, retornar null para indicar error
+    if (this.pricesError) {
+      return null;
+    }
+
+    // Si se intentó cargar precios (no está cargando) pero no hay precios y hay error, retornar null
+    if ((!this.departuresPrices || this.departuresPrices.length === 0) && !this.pricesLoading && this.pricesError) {
+      return null;
+    }
+
+    // Si no hay precios cargados pero aún está cargando, retornar 0 (esperando)
+    if (!this.departuresPrices || this.departuresPrices.length === 0) {
+      return 0;
+    }
 
     const ageGroupId = this.ageGroupCategories[passengerType].id;
     if (!ageGroupId) return 0;
@@ -1171,8 +1206,25 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     return priceData ? priceData.total : 0;
   }
 
-  private getPriceForDeparture(departureId: number): number {
-    if (!this.selectedCity?.activityId || !this.departuresPrices) return 0;
+  private getPriceForDeparture(departureId: number): number | null {
+    // Si hubo un error al cargar los precios, retornar null para indicar error
+    if (this.pricesError) {
+      return null;
+    }
+
+    // Si no hay activityId, no se pueden cargar precios, retornar 0
+    if (!this.selectedCity?.activityId) {
+      return 0;
+    }
+
+    // Si no hay precios cargados pero aún está cargando, retornar 0 (esperando)
+    if (!this.departuresPrices || this.departuresPrices.length === 0) {
+      // Si ya se intentó cargar (no está cargando) y hay error, retornar null
+      if (!this.pricesLoading && this.pricesError) {
+        return null;
+      }
+      return 0;
+    }
 
     const priceData = this.departuresPrices.find(
       (price) =>
@@ -1197,6 +1249,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
         departureDate: this.departureDetails.departureDate,
         returnDate: this.departureDetails.arrivalDate,
         price: adultPrice,
+        priceError: adultPrice === null,
         status: 'available',
         waitingList: false,
         group: this.selectedDeparture?.tripType?.name || 'group',
@@ -1229,11 +1282,14 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       
       const isBookable = (departure.isBookable ?? true) && (spots === -1 || spots > 0);
 
+      const priceError = adultPrice === null || this.pricesError;
+
       return {
         id: departure.id,
         departureDate: departure.departureDate,
         returnDate: departure.arrivalDate,
         price: adultPrice,
+        priceError: priceError,
         status: 'available',
         waitingList: false,
         group: 'group',
@@ -1521,6 +1577,12 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       return of(undefined);
     }
 
+    // Si hay un error, calcular inmediatamente para mostrar el error
+    if (this.pricesError && !this.pricesLoading) {
+      this.doCalculateAndEmitPrice();
+      return of(undefined);
+    }
+
     // Si los precios ya están disponibles, calcular inmediatamente
     if (
       this.departuresPrices &&
@@ -1531,14 +1593,15 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       return of(undefined);
     }
 
-    // Si no están disponibles, esperar a que pricesReady$ emita
+    // Si no están disponibles, esperar a que pricesReady$ emita o haya un error
     return this.pricesReady$
       .pipe(
         takeUntil(this.destroy$),
         filter(() => 
-          this.departuresPrices &&
+          (this.departuresPrices &&
           this.departuresPrices.length > 0 &&
-          !this.pricesLoading
+          !this.pricesLoading) ||
+          (this.pricesError && !this.pricesLoading)
         ),
         map(() => {
           this.doCalculateAndEmitPrice();
@@ -1568,6 +1631,12 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     const adultPrice = this.getPriceByPassengerType('adults');
     const childPrice = this.getPriceByPassengerType('children');
     const babyPrice = this.getPriceByPassengerType('babies');
+
+    // Si hay algún error (precio null), emitir -1 para indicar error
+    if (adultPrice === null || childPrice === null || babyPrice === null) {
+      this.priceUpdate.emit(-1);
+      return;
+    }
 
     const totalPrice =
       this.travelers.adults * adultPrice +

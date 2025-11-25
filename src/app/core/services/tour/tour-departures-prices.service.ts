@@ -31,27 +31,65 @@ export class TourDeparturesPricesService {
   constructor(private http: HttpClient) {}
 
   /**
-   * Obtiene todos los precios de departures de una actividad específica.
-   * @param activityId ID de la actividad.
+   * Obtiene todos los precios de departures de una o múltiples actividades.
+   * @param activityIds Array de IDs de actividades. Si se pasa un solo ID, se puede pasar como número o array con un elemento.
    * @param filters Filtros para aplicar en la búsqueda.
-   * @returns Lista de precios de departures de la actividad.
+   * @returns Lista de precios de departures de las actividades.
    */
-  getAll(activityId: number, filters?: TourDeparturesPriceFilters): Observable<ITourDeparturesPriceResponse[]> {
-    let params = new HttpParams();
-
-    // Add filter parameters if provided
-    if (filters) {
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          params = params.set(
-            key.charAt(0).toUpperCase() + key.slice(1),
-            value.toString()
-          );
-        }
+  getAll(activityIds: number[] | number, filters?: TourDeparturesPriceFilters): Observable<ITourDeparturesPriceResponse[]> {
+    // Normalizar activityIds a array
+    const activityIdsArray = Array.isArray(activityIds) ? activityIds : [activityIds];
+    
+    if (activityIdsArray.length === 0) {
+      return new Observable(observer => {
+        observer.next([]);
+        observer.complete();
       });
     }
 
-    return this.http.get<ITourDeparturesPriceResponse[]>(`${this.API_URL}/${activityId}/departures-prices`, { params });
+    let params = new HttpParams();
+
+    // Agregar activityIds como parámetros de query
+    // Si hay múltiples IDs, se envían como array en query params
+    if (activityIdsArray.length === 1) {
+      // Si solo hay un ID, mantener compatibilidad con la URL anterior
+      const activityId = activityIdsArray[0];
+      
+      // Add filter parameters if provided
+      if (filters) {
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            params = params.set(
+              key.charAt(0).toUpperCase() + key.slice(1),
+              value.toString()
+            );
+          }
+        });
+      }
+
+      return this.http.get<ITourDeparturesPriceResponse[]>(`${this.API_URL}/${activityId}/departures-prices`, { params });
+    } else {
+      // Si hay múltiples IDs, usar el endpoint con query params
+      // Agregar cada activityId como parámetro de query
+      activityIdsArray.forEach(id => {
+        params = params.append('activityIds', id.toString());
+      });
+
+      // Add filter parameters if provided
+      if (filters) {
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            params = params.set(
+              key.charAt(0).toUpperCase() + key.slice(1),
+              value.toString()
+            );
+          }
+        });
+      }
+
+      // Usar el endpoint base sin activityId en la URL cuando hay múltiples IDs
+      return this.http.get<ITourDeparturesPriceResponse[]>(`${this.API_URL}/departures-prices`, { params });
+    }
   }
 
   /**

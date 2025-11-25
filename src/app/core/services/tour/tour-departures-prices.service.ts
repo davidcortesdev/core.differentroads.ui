@@ -49,26 +49,7 @@ export class TourDeparturesPricesService {
 
     let params = new HttpParams();
 
-    // Agregar activityIds como parámetros de query
-    // Si hay múltiples IDs, se envían como array en query params
-    if (activityIdsArray.length === 1) {
-      // Si solo hay un ID, mantener compatibilidad con la URL anterior
-      const activityId = activityIdsArray[0];
-      
-      // Add filter parameters if provided
-      if (filters) {
-        Object.entries(filters).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) {
-            params = params.set(
-              key.charAt(0).toUpperCase() + key.slice(1),
-              value.toString()
-            );
-          }
-        });
-      }
 
-      return this.http.get<ITourDeparturesPriceResponse[]>(`${this.API_URL}/${activityId}/departures-prices`, { params });
-    } else {
       // Si hay múltiples IDs, usar el endpoint con query params
       // Agregar cada activityId como parámetro de query
       activityIdsArray.forEach(id => {
@@ -89,7 +70,7 @@ export class TourDeparturesPricesService {
 
       // Usar el endpoint base sin activityId en la URL cuando hay múltiples IDs
       return this.http.get<ITourDeparturesPriceResponse[]>(`${this.API_URL}/departures-prices`, { params });
-    }
+    
   }
 
   /**

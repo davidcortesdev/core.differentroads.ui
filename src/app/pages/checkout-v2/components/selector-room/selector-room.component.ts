@@ -345,7 +345,9 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
         );
 
         if (room && availabilities && availabilities.length > 0) {
-          // Sumar todas las plazas disponibles (puede haber múltiples registros por sexType)
+          // Sumar todas las disponibilidades (puede haber múltiples registros por sexType)
+          // Para habitaciones compartidas: representa plazas disponibles
+          // Para habitaciones normales: representa habitaciones disponibles
           const totalAvailablePlaces = availabilities.reduce(
             (sum, avail) => sum + (avail.availablePlaces || 0),
             0
@@ -864,13 +866,26 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
     // Validar disponibilidad de habitaciones
     for (const room of selectedRoomsWithQty) {
       if (room.availablePlaces !== undefined && room.qty) {
-        const roomCapacity = room.capacity || 1;
-        const requestedPlaces = (room.isShared ? 1 : roomCapacity) * room.qty;
-        if (requestedPlaces > room.availablePlaces) {
-          return {
-            isValid: false,
-            message: `No hay suficiente disponibilidad para ${room.name}. Disponible: ${room.availablePlaces} plazas, solicitadas: ${requestedPlaces} plazas.`,
-          };
+        const availablePlaces = Number(room.availablePlaces);
+        
+        if (room.isShared) {
+          // Para habitaciones compartidas, availablePlaces representa plazas disponibles
+          // Cada habitación compartida ocupa 1 plaza
+          const requestedPlaces = room.qty;
+          if (requestedPlaces > availablePlaces) {
+            return {
+              isValid: false,
+              message: `No hay suficiente disponibilidad para ${room.name}. Disponible: ${availablePlaces} ${availablePlaces === 1 ? 'plaza' : 'plazas'}.`,
+            };
+          }
+        } else {
+          // Para habitaciones normales, availablePlaces representa habitaciones disponibles (no plazas)
+          if (room.qty > availablePlaces) {
+            return {
+              isValid: false,
+              message: `No hay suficiente disponibilidad para ${room.name}. Disponible: ${availablePlaces} ${availablePlaces === 1 ? 'habitación' : 'habitaciones'}.`,
+            };
+          }
         }
       }
     }
@@ -983,18 +998,37 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
   onRoomSpacesChange(changedRoom: RoomAvailability, newValue: number): void {
     // Validar disponibilidad antes de actualizar
     if (newValue > 0 && changedRoom.availablePlaces !== undefined) {
-      const requestedPlaces = (changedRoom.isShared ? 1 : changedRoom.capacity) * newValue;
-      if (requestedPlaces > changedRoom.availablePlaces) {
-        this.errorMsg = `No hay suficiente disponibilidad. Disponible: ${changedRoom.availablePlaces} plazas.`;
-        this.errorMsgType = 'error';
-        // Revertir al valor anterior
-        const previousValue = this.selectedRooms[changedRoom.tkId] || 0;
-        this.selectedRooms[changedRoom.tkId] = previousValue;
-        // Forzar actualización del input
-        setTimeout(() => {
+      const availablePlaces = Number(changedRoom.availablePlaces);
+      
+      if (changedRoom.isShared) {
+        // Para habitaciones compartidas, availablePlaces representa plazas disponibles
+        // Cada habitación compartida ocupa 1 plaza
+        if (newValue > availablePlaces) {
+          this.errorMsg = `No hay suficiente disponibilidad. Disponible: ${availablePlaces} ${availablePlaces === 1 ? 'plaza' : 'plazas'}.`;
+          this.errorMsgType = 'error';
+          // Revertir al valor anterior
+          const previousValue = this.selectedRooms[changedRoom.tkId] || 0;
           this.selectedRooms[changedRoom.tkId] = previousValue;
-        }, 0);
-        return;
+          // Forzar actualización del input
+          setTimeout(() => {
+            this.selectedRooms[changedRoom.tkId] = previousValue;
+          }, 0);
+          return;
+        }
+      } else {
+        // Para habitaciones normales, availablePlaces representa habitaciones disponibles (no plazas)
+        if (newValue > availablePlaces) {
+          this.errorMsg = `No hay suficiente disponibilidad. Disponible: ${availablePlaces} ${availablePlaces === 1 ? 'habitación' : 'habitaciones'}.`;
+          this.errorMsgType = 'error';
+          // Revertir al valor anterior
+          const previousValue = this.selectedRooms[changedRoom.tkId] || 0;
+          this.selectedRooms[changedRoom.tkId] = previousValue;
+          // Forzar actualización del input
+          setTimeout(() => {
+            this.selectedRooms[changedRoom.tkId] = previousValue;
+          }, 0);
+          return;
+        }
       }
     }
 
@@ -1017,18 +1051,22 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
   // Método para obtener el máximo de habitaciones disponibles según disponibilidad
   getMaxRoomsForAvailability(room: RoomAvailability): number {
     if (room.availablePlaces === undefined) {
-      return 8; // Valor por defecto si no hay información de disponibilidad
+      return 0; // Si no hay información de disponibilidad, no se puede reservar
+    }
+
+    const availablePlaces = Number(room.availablePlaces);
+
+    if (availablePlaces === 0) {
+      return 0; // Si no hay disponibilidad, no se puede reservar
     }
 
     if (room.isShared) {
-      // Para habitaciones compartidas, el máximo es la disponibilidad
-      return Math.min(room.availablePlaces, 8);
+      // Para habitaciones compartidas, availablePlaces representa plazas disponibles
+      return availablePlaces;
     }
 
-    // Para habitaciones normales, calcular cuántas habitaciones completas se pueden reservar
-    const roomCapacity = room.capacity || 1;
-    const maxRooms = Math.floor(room.availablePlaces / roomCapacity);
-    return Math.min(maxRooms, 8);
+    // Para habitaciones normales, availablePlaces representa habitaciones disponibles (no plazas)
+    return availablePlaces;
   }
 
   // Procesar todas las selecciones

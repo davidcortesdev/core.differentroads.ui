@@ -51,6 +51,7 @@ interface DateOption {
   itineraryName: string;
   tripType: string;
   tripTypeId: number;
+  tripTypeData?: ITripTypeResponse;
   departure: IDepartureResponseExtended;
   itinerary: IItineraryResponse;
 }
@@ -273,10 +274,14 @@ export class SelectorItineraryComponent
   private loadDeparturesForItinerary(itinerary: IItineraryResponse) {
     return this.departureService.getByItinerary(itinerary.id, this.preview).pipe(
       map((departures) => {
-        const departuresData: DepartureData[] = departures.map((departure) => ({
-          departure,
-          tripType: this.tripTypesMap.get(departure.tripTypeId ?? 0),
-        }));
+        const departuresData: DepartureData[] = departures.map((departure) => {
+          const tripTypeId = departure.tripTypeId ?? 0;
+          const tripType = tripTypeId > 0 ? this.tripTypesMap.get(tripTypeId) : undefined;
+          return {
+            departure,
+            tripType: tripType,
+          };
+        });
 
         // Ordenar departures por fecha de salida (orden cronológico)
         const sortedDepartures = departuresData.sort((a, b) => {
@@ -316,6 +321,14 @@ export class SelectorItineraryComponent
 
     this.itinerariesWithDepartures.forEach((itineraryData) => {
       itineraryData.departures.forEach((departureData) => {
+        const tripTypeId = departureData.departure.tripTypeId ?? 0;
+        // Asegurar que tenemos el tripType, si no está en departureData, obtenerlo del mapa
+        const tripTypeData = departureData.tripType || (tripTypeId > 0 ? this.tripTypesMap.get(tripTypeId) : undefined);
+        
+        // Debug: verificar que tripTypeData se asigne correctamente
+        if (!tripTypeData && tripTypeId > 0) {
+          console.warn('⚠️ TripType no encontrado para tripTypeId:', tripTypeId, 'Mapa tiene:', Array.from(this.tripTypesMap.keys()));
+        }
 
         const option: DateOption = {
           label: this.formatDate(departureData.departure?.departureDate ?? ''), // Solo la fecha en el dropdown
@@ -324,10 +337,9 @@ export class SelectorItineraryComponent
           departureName: departureData.departure.name || 'Sin nombre',
           itineraryName:
             itineraryData.itinerary.name || 'Itinerario sin nombre',
-          tripType: this.getTripTypeFirstLetter(
-            departureData.departure.tripTypeId
-           ?? 0),
-          tripTypeId: departureData.departure.tripTypeId ?? 0,
+          tripType: this.getTripTypeFirstLetter(tripTypeId),
+          tripTypeId: tripTypeId,
+          tripTypeData: tripTypeData,
           departure: departureData.departure,
           itinerary: itineraryData.itinerary,
         };

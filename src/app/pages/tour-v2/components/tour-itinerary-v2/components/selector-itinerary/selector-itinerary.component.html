@@ -59,9 +59,6 @@
           <span class="date-option-item-text">
             {{ option.departureDate | date : "dd/MM/yyyy" }}
           </span>
-          <span class="itinerary-name">
-            {{ option.itineraryName }}
-          </span>
           <!-- Mostrar p-tag con el tipo de viaje y su color -->
           <p-tag
             *ngIf="option.tripTypeData"

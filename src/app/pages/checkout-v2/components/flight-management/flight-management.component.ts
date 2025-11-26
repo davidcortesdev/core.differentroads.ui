@@ -122,12 +122,6 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   private loadTourAndDepartureData(): void {
-    console.log('🔍 [FlightManagement] loadTourAndDepartureData called', {
-      tourId: this.tourId,
-      departureId: this.departureId,
-      timestamp: new Date().toISOString()
-    });
-
     // Cancelar suscripción anterior si existe
     if (this.dataSubscription) {
       this.dataSubscription.unsubscribe();
@@ -135,7 +129,6 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
 
     // Si no hay IDs válidos, resetear y salir
     if (!this.tourId || !this.departureId) {
-      console.log('⚠️ [FlightManagement] Missing tourId or departureId');
       this.isConsolidadorVuelosActive = false;
       return;
     }
@@ -151,17 +144,11 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
 
         this.isConsolidadorVuelosActive = tourActive && departureActive;
 
-        console.log('✅ [FlightManagement] isConsolidadorVuelosActive calculated:', {
-          result: this.isConsolidadorVuelosActive,
-          tourActive,
-          departureActive
-        });
-
         // Forzar detección de cambios
         this.cdr.markForCheck();
       },
       error: (error) => {
-        console.error('❌ [FlightManagement] Error loading data:', error);
+        console.error('Error loading flight consolidator data:', error);
         this.isConsolidadorVuelosActive = false;
         this.cdr.markForCheck();
       }

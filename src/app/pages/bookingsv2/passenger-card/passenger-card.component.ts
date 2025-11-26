@@ -463,7 +463,7 @@ export class PassengerCardV2Component implements OnInit, OnChanges, OnDestroy {
         key: 'center',
         severity: 'warn',
         summary: 'Edición bloqueada',
-        detail: 'No se pueden modificar los datos personales 40 días antes del viaje',
+        detail: `No se pueden modificar los datos personales ${this.Days} días antes del viaje`,
         life: 5000,
       });
       return;

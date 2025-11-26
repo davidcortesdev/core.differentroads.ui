@@ -700,6 +700,13 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     return tripType ? tripType.name : 'Sin tipo';
   }
 
+  getTripType(tripTypeId: number | null | undefined): ITripTypeResponse | null {
+    if (!tripTypeId) {
+      return null;
+    }
+    return this.tripTypesMap.get(tripTypeId) || null;
+  }
+
   private handleDepartureSelection(event: SelectedDepartureEvent): void {
     this.selectedDeparture = event;
     this.selectedDepartureId = null;

@@ -21,6 +21,10 @@ import {
   IDepartureAccommodationTypeResponse,
 } from '../../../../core/services/departure/departure-accommodation-type.service';
 import {
+  DepartureAccommodationAvailabilityService,
+  IDepartureAccommodationAvailabilityResponse,
+} from '../../../../core/services/departure/departure-accommodation-availability.service';
+import {
   ReservationTravelerService,
   IReservationTravelerResponse,
 } from '../../../../core/services/reservation/reservation-traveler.service';
@@ -54,6 +58,8 @@ interface RoomAvailability {
   qty?: number;
   isShared?: boolean;
   accommodationTypeId?: number;
+  availablePlaces?: number; // Disponibilidad de plazas
+  lastAvailabilityUpdate?: string; // Última actualización de disponibilidad
 }
 
 interface TravelerRoomAssignment {
@@ -146,6 +152,7 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
     private departureAccommodationService: DepartureAccommodationService,
     private departureAccommodationPriceService: DepartureAccommodationPriceService,
     private departureAccommodationTypeService: DepartureAccommodationTypeService,
+    private departureAccommodationAvailabilityService: DepartureAccommodationAvailabilityService,
     private reservationTravelerService: ReservationTravelerService,
     private reservationTravelerAccommodationService: ReservationTravelerAccommodationService,
     private ageGroupService: AgeGroupService,
@@ -267,6 +274,9 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
       this.processBasicData(accommodations || [], types || []);
       this.assignPricesToRooms(prices || []);
 
+      // Cargar disponibilidad de habitaciones
+      await this.loadRoomAvailability(accommodations || []);
+
       // Actualizar contadores de viajeros
       if (travelers && travelers.length > 0) {
         this.updateTravelersNumbersFromExistingTravelers();
@@ -298,11 +308,72 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
       qty: 0,
       isShared: false,
       accommodationTypeId: accommodation.accommodationTypeId,
+      availablePlaces: undefined, // Se asignará cuando se cargue la disponibilidad
+      lastAvailabilityUpdate: undefined,
     }));
 
     // Asignar tipos de alojamiento
     this.accommodationTypes = types;
     this.updateRoomSharedStatus();
+  }
+
+  // NUEVO: Método para cargar disponibilidad de habitaciones
+  private async loadRoomAvailability(
+    accommodations: IDepartureAccommodationResponse[]
+  ): Promise<void> {
+    if (!accommodations || accommodations.length === 0) {
+      return;
+    }
+
+    try {
+      // Obtener disponibilidad para cada habitación
+      const availabilityPromises = accommodations.map((accommodation) =>
+        firstValueFrom(
+          this.departureAccommodationAvailabilityService.getByDepartureAccommodation(
+            accommodation.id
+          )
+        )
+      );
+
+      const availabilityResults = await Promise.all(availabilityPromises);
+
+      // Procesar resultados y asignar disponibilidad a cada habitación
+      availabilityResults.forEach((availabilities, index) => {
+        const accommodation = accommodations[index];
+        const room = this.allRoomsAvailability.find(
+          (r) => r.id === accommodation.id
+        );
+
+        if (room && availabilities && availabilities.length > 0) {
+          // Sumar todas las disponibilidades (puede haber múltiples registros por sexType)
+          // Para habitaciones compartidas: representa plazas disponibles
+          // Para habitaciones normales: representa habitaciones disponibles
+          const totalAvailablePlaces = availabilities.reduce(
+            (sum, avail) => sum + (avail.availablePlaces || 0),
+            0
+          );
+
+          room.availablePlaces = totalAvailablePlaces;
+
+          // Obtener la última actualización (si existe)
+          const lastUpdate = availabilities
+            .map((avail) => avail.lastAvailabilityUpdate)
+            .filter((date) => date)
+            .sort()
+            .pop();
+
+          if (lastUpdate) {
+            room.lastAvailabilityUpdate = lastUpdate;
+          }
+        } else if (room) {
+          // Si no hay disponibilidad, establecer en 0
+          room.availablePlaces = 0;
+        }
+      });
+    } catch (error) {
+      console.error('Error loading room availability:', error);
+      // En caso de error, establecer disponibilidad en undefined para no bloquear la UI
+    }
   }
 
   // Método para emitir que se actualizaron las habitaciones
@@ -790,7 +861,34 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
         const room = this.allRoomsAvailability.find((r) => r.tkId === tkId);
         return { ...room, qty: this.selectedRooms[tkId] };
       })
-      .filter((room) => room.qty > 0);
+      .filter((room) => room && room.qty > 0);
+
+    // Validar disponibilidad de habitaciones
+    for (const room of selectedRoomsWithQty) {
+      if (room.availablePlaces !== undefined && room.qty) {
+        const availablePlaces = Number(room.availablePlaces);
+        
+        if (room.isShared) {
+          // Para habitaciones compartidas, availablePlaces representa plazas disponibles
+          // Cada habitación compartida ocupa 1 plaza
+          const requestedPlaces = room.qty;
+          if (requestedPlaces > availablePlaces) {
+            return {
+              isValid: false,
+              message: `No hay suficiente disponibilidad para ${room.name}. Disponible: ${availablePlaces} ${availablePlaces === 1 ? 'plaza' : 'plazas'}.`,
+            };
+          }
+        } else {
+          // Para habitaciones normales, availablePlaces representa habitaciones disponibles (no plazas)
+          if (room.qty > availablePlaces) {
+            return {
+              isValid: false,
+              message: `No hay suficiente disponibilidad para ${room.name}. Disponible: ${availablePlaces} ${availablePlaces === 1 ? 'habitación' : 'habitaciones'}.`,
+            };
+          }
+        }
+      }
+    }
 
     if (selectedRoomsWithQty.length === 0) {
       return { isValid: true, message: null };
@@ -890,13 +988,50 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
           return true;
         }
         // Habitaciones normales: solo si capacidad <= total travelers
-        return room.capacity <= totalTravelers;
+        const roomCapacity = room.capacity || 1;
+        return roomCapacity <= totalTravelers;
       }
     );
   }
 
   // Manejar cambios en selección (procesamiento inmediato)
   onRoomSpacesChange(changedRoom: RoomAvailability, newValue: number): void {
+    // Validar disponibilidad antes de actualizar
+    if (newValue > 0 && changedRoom.availablePlaces !== undefined) {
+      const availablePlaces = Number(changedRoom.availablePlaces);
+      
+      if (changedRoom.isShared) {
+        // Para habitaciones compartidas, availablePlaces representa plazas disponibles
+        // Cada habitación compartida ocupa 1 plaza
+        if (newValue > availablePlaces) {
+          this.errorMsg = `No hay suficiente disponibilidad. Disponible: ${availablePlaces} ${availablePlaces === 1 ? 'plaza' : 'plazas'}.`;
+          this.errorMsgType = 'error';
+          // Revertir al valor anterior
+          const previousValue = this.selectedRooms[changedRoom.tkId] || 0;
+          this.selectedRooms[changedRoom.tkId] = previousValue;
+          // Forzar actualización del input
+          setTimeout(() => {
+            this.selectedRooms[changedRoom.tkId] = previousValue;
+          }, 0);
+          return;
+        }
+      } else {
+        // Para habitaciones normales, availablePlaces representa habitaciones disponibles (no plazas)
+        if (newValue > availablePlaces) {
+          this.errorMsg = `No hay suficiente disponibilidad. Disponible: ${availablePlaces} ${availablePlaces === 1 ? 'habitación' : 'habitaciones'}.`;
+          this.errorMsgType = 'error';
+          // Revertir al valor anterior
+          const previousValue = this.selectedRooms[changedRoom.tkId] || 0;
+          this.selectedRooms[changedRoom.tkId] = previousValue;
+          // Forzar actualización del input
+          setTimeout(() => {
+            this.selectedRooms[changedRoom.tkId] = previousValue;
+          }, 0);
+          return;
+        }
+      }
+    }
+
     // Actualizar la UI local inmediatamente
     if (newValue === 0) {
       delete this.selectedRooms[changedRoom.tkId];
@@ -904,8 +1039,34 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
       this.selectedRooms[changedRoom.tkId] = newValue;
     }
 
+    // Limpiar errores si la validación es exitosa
+    if (this.errorMsg && this.errorMsg.includes('disponibilidad')) {
+      this.errorMsg = null;
+    }
+
     // Procesar inmediatamente (el debounce solo está en el guardado)
     this.processAllRoomSelections();
+  }
+
+  // Método para obtener el máximo de habitaciones disponibles según disponibilidad
+  getMaxRoomsForAvailability(room: RoomAvailability): number {
+    if (room.availablePlaces === undefined) {
+      return 0; // Si no hay información de disponibilidad, no se puede reservar
+    }
+
+    const availablePlaces = Number(room.availablePlaces);
+
+    if (availablePlaces === 0) {
+      return 0; // Si no hay disponibilidad, no se puede reservar
+    }
+
+    if (room.isShared) {
+      // Para habitaciones compartidas, availablePlaces representa plazas disponibles
+      return availablePlaces;
+    }
+
+    // Para habitaciones normales, availablePlaces representa habitaciones disponibles (no plazas)
+    return availablePlaces;
   }
 
   // Procesar todas las selecciones
@@ -1616,8 +1777,9 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
 
         // Verificar si la habitación ya no es válida
         if (room) {
+          const roomCapacity = room.capacity || 1;
           const isRoomValid =
-            room.isShared || room.capacity <= newTotalTravelers;
+            room.isShared || roomCapacity <= newTotalTravelers;
 
           if (!isRoomValid) {
             roomsToRemove.push(tkId);

@@ -39,7 +39,7 @@ import { PaymentsNetService } from './services/paymentsNet.service';
 import { AuthenticateService } from '../../core/services/auth/auth-service.service';
 import { UsersNetService } from '../../core/services/users/usersNet.service';
 import { AnalyticsService } from '../../core/services/analytics/analytics.service';
-import { IFlightPackDTO } from './services/flightsNet.service';
+import { IFlightPackDTO, FlightsNetService } from './services/flightsNet.service';
 import {
   ReservationTravelerService,
 } from '../../core/services/reservation/reservation-traveler.service';
@@ -59,6 +59,10 @@ import { TourLocationService, ITourLocationResponse } from '../../core/services/
 import { LocationNetService, Location } from '../../core/services/locations/locationNet.service';
 import { ItineraryDayService, IItineraryDayResponse } from '../../core/services/itinerary/itinerary-day/itinerary-day.service';
 import { ActivityService, IActivityResponse } from '../../core/services/activity/activity.service';
+import {
+  ActivityPackAvailabilityService,
+  IActivityPackAvailabilityResponse,
+} from '../../core/services/activity/activity-pack-availability.service';
 
 @Component({
   selector: 'app-checkout-v2',
@@ -134,6 +138,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   ageGroups: IAgeGroupResponse[] = [];
   pricesByAgeGroup: { [ageGroupId: number]: number } = {};
   reservationData: any = null;
+  userIdForCoupon: number | null = null;
 
   // Propiedades para seguros
   selectedInsurance: any = null;
@@ -145,6 +150,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   hasAvailableFlights: boolean = false; // Nueva propiedad para controlar la visibilidad del botón
   availableFlights: IFlightPackDTO[] = []; // Nueva propiedad para almacenar los vuelos disponibles
   departureActivityPackId: number | null = null; // NUEVO: ID del paquete de actividad del departure
+  hasFlightlessAvailability: boolean = false; // Nueva propiedad para controlar si "sin vuelos" tiene disponibilidad
 
   // Steps configuration
   items: MenuItem[] = [];
@@ -220,7 +226,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     private tourLocationService: TourLocationService,
     private locationNetService: LocationNetService,
     private itineraryDayService: ItineraryDayService,
-    private activityService: ActivityService
+    private activityService: ActivityService,
+    private activityPackAvailabilityService: ActivityPackAvailabilityService,
+    private flightsNetService: FlightsNetService
   ) {}
 
   ngOnInit(): void {
@@ -263,7 +271,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
         // Cargar datos de la reservación desde el backend
         this.loadReservationData(this.reservationId);
-        this.cleanScalapayPendingPayments();
       } else {
         this.error = 'No se proporcionó un ID de reservación válido';
       }
@@ -614,6 +621,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         this.tourId = reservation.tourId;
         this.totalPassengers = reservation.totalPassengers;
         this.reservationData = reservation; // Guardar datos completos de la reserva
+
+        // Guardar userId para el cupón
+        this.userIdForCoupon = reservation.userId ?? null;
 
         // Verificar si el userId está vacío y el usuario está logueado
         console.log('🔍 [loadReservationData] Llamando a checkAndUpdateUserId()...');
@@ -1044,41 +1054,133 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
   /**
    * Método para verificar la disponibilidad de vuelos en el sistema
+   * Verifica la disponibilidad real usando el endpoint ActivityPackAvailability
    */
   private checkFlightsAvailability(departureId: number): void {
-    // Importar el servicio de vuelos
-    import('./services/flightsNet.service').then(({ FlightsNetService }) => {
-      const flightsService = new FlightsNetService(this.http);
+    // Resetear estado al inicio de la carga
+    this.hasAvailableFlights = false;
+    this.hasFlightlessAvailability = false;
+    this.availableFlights = [];
 
-      flightsService.getFlights(departureId).subscribe({
-        next: (flights) => {
-          // Almacenar los vuelos disponibles
-          this.availableFlights = flights || [];
+    this.flightsNetService.getFlights(departureId).subscribe({
+      next: (flights) => {
+        // Almacenar los vuelos disponibles
+        this.availableFlights = flights || [];
 
-          // Verificar si hay vuelos disponibles basándose en name y description
-          this.hasAvailableFlights =
-            flights &&
-            flights.length > 0 &&
-            flights.some((pack) => {
-              const name = pack.name?.toLowerCase() || '';
-              const description = pack.description?.toLowerCase() || '';
-
-              // Verificar que SÍ sea una opción sin vuelos
-              const isFlightlessOption =
-                name.includes('sin vuelos') ||
-                description.includes('sin vuelos') ||
-                name.includes('pack sin vuelos') ||
-                description.includes('pack sin vuelos');
-
-              return isFlightlessOption;
-            });
-        },
-        error: (error) => {
-          console.error('Error al verificar disponibilidad de vuelos:', error);
+        if (!flights || flights.length === 0) {
           this.hasAvailableFlights = false;
-          this.availableFlights = [];
-        },
-      });
+          this.hasFlightlessAvailability = false;
+          return;
+        }
+
+        // Buscar el pack "sin vuelos" para verificar su disponibilidad
+        const flightlessPack = flights.find(
+          (pack: IFlightPackDTO) => {
+            const name = pack.name?.toLowerCase() || '';
+            const description = pack.description?.toLowerCase() || '';
+            return name.includes('sin vuelos') ||
+                   description.includes('sin vuelos') ||
+                   name.includes('pack sin vuelos') ||
+                   description.includes('pack sin vuelos');
+          }
+        );
+
+        // Verificar disponibilidad del pack "sin vuelos" si existe
+        if (flightlessPack) {
+          // Usar el ID del pack "sin vuelos" para verificar su disponibilidad
+          const flightlessPackId = flightlessPack.id;
+          
+          this.activityPackAvailabilityService
+            .getByActivityPackAndDeparture(flightlessPackId, departureId)
+            .pipe(
+              map((availabilities) => {
+                if (availabilities && availabilities.length > 0) {
+                  const availability = availabilities[0];
+                  return availability.bookableAvailability > 0;
+                }
+                return false;
+              }),
+              catchError(() => of(false))
+            )
+            .subscribe({
+              next: (hasAvailability) => {
+                this.hasFlightlessAvailability = hasAvailability;
+              },
+              error: () => {
+                this.hasFlightlessAvailability = false;
+              }
+            });
+        } else {
+          // Si no hay pack "sin vuelos", verificar usando departureActivityPackId como fallback
+          // Esto puede ser necesario si "sin vuelos" no aparece como un pack separado
+          if (this.departureActivityPackId) {
+            this.activityPackAvailabilityService
+              .getByActivityPackAndDeparture(this.departureActivityPackId, departureId)
+              .pipe(
+                map((availabilities) => {
+                  if (availabilities && availabilities.length > 0) {
+                    const availability = availabilities[0];
+                    return availability.bookableAvailability > 0;
+                  }
+                  return false;
+                }),
+                catchError(() => of(false))
+              )
+              .subscribe({
+                next: (hasAvailability) => {
+                  this.hasFlightlessAvailability = hasAvailability;
+                },
+                error: () => {
+                  this.hasFlightlessAvailability = false;
+                }
+              });
+          } else {
+            // Si no hay pack "sin vuelos" ni departureActivityPackId, asumir que hay disponibilidad
+            // para no bloquear el botón innecesariamente
+            this.hasFlightlessAvailability = true;
+          }
+        }
+
+        // Verificar disponibilidad real para cada pack usando el endpoint
+        const availabilityChecks = flights.map((pack) =>
+          this.activityPackAvailabilityService
+            .getByActivityPackAndDeparture(pack.id, departureId)
+            .pipe(
+              map((availabilities) => {
+                // Si hay disponibilidad y bookableAvailability > 0, hay vuelos disponibles
+                if (availabilities && availabilities.length > 0) {
+                  const availability = availabilities[0];
+                  return availability.bookableAvailability > 0;
+                }
+                return false;
+              }),
+              catchError(() => {
+                // Si hay error, asumir que no hay disponibilidad
+                return of(false);
+              })
+            )
+        );
+
+        // Verificar si hay al menos un pack con disponibilidad > 0
+        if (availabilityChecks.length === 0) {
+          this.hasAvailableFlights = false;
+          return;
+        }
+
+        forkJoin(availabilityChecks).subscribe({
+          next: (results) => {
+            this.hasAvailableFlights = results.some((hasAvailability) => hasAvailability);
+          },
+          error: () => {
+            this.hasAvailableFlights = false;
+          },
+        });
+      },
+      error: () => {
+        this.hasAvailableFlights = false;
+        this.hasFlightlessAvailability = false;
+        this.availableFlights = [];
+      },
     });
   }
 
@@ -2388,6 +2490,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           // Actualizar los datos locales
           const previousUserId = this.reservationData.userId;
           this.reservationData.userId = userId;
+          this.userIdForCoupon = userId;
           
           console.log('✅ [updateReservationUserId] userId actualizado exitosamente:', {
             reservationId: this.reservationId,
@@ -2438,6 +2541,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       },
     });
   }
+
 
   // Métodos para autenticación
   async checkAuthAndContinue(
@@ -2793,6 +2897,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   public onPaymentCompleted(paymentOption: any): void {
     this.trackAddPaymentInfo(paymentOption);
   }
+
 
   /**
    * ✅ NUEVO: Limpia el estado relacionado con la selección de vuelos
@@ -3315,7 +3420,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Disparar evento begin_checkout cuando el usuario continúa del paso 1
    */
   private trackBeginCheckout(): void {
-    if (!this.reservationData || !this.tourId) return;
+    if (!this.reservationData || !this.tourId || !this.reservationId) return;
     
     // Usar los valores guardados al cargar el componente
     const itemListId = this.savedItemListId;
@@ -3325,16 +3430,24 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     forkJoin({
       tourData: this.getCompleteTourDataForEcommerce(this.tourId),
       activitiesText: this.getActivitiesFromTravelers(),
-      passengersCount: this.getPassengersCount()
+      passengersCount: this.getPassengersCount(),
+      summary: this.reservationService.getSummary(this.reservationId).pipe(catchError(() => of(null)))
     }).pipe(
-      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount }) => {
+      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount, summary }) => {
         // Actualizar con datos adicionales del contexto
         const additionalData = this.prepareTourDataForEcommerce();
-        tourDataForEcommerce.flightCity = additionalData.flightCity || tourDataForEcommerce.flightCity;
-        // Usar actividades obtenidas dinámicamente desde viajeros, o fallback a additionalData
-        tourDataForEcommerce.activitiesText = activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
-        // Usar seguro del componente o del contexto
-        tourDataForEcommerce.selectedInsurance = this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
+        
+        // Obtener datos del summary cuando sea posible (prioridad: summary > métodos actuales > additionalData)
+        const summaryFlight = this.analyticsService.extractFlightFromSummary(summary, this.reservationData, this.selectedFlight);
+        const summaryActivities = this.analyticsService.extractActivitiesFromSummary(summary);
+        const storedInsurance = sessionStorage.getItem('checkout_selectedInsurance') || '';
+        const summaryInsurance = this.analyticsService.extractInsuranceFromSummary(summary, this.reservationData, storedInsurance);
+        
+        tourDataForEcommerce.flightCity = summaryFlight || additionalData.flightCity || tourDataForEcommerce.flightCity || 'Sin vuelo';
+        // Usar actividades del summary, luego desde viajeros, o fallback a additionalData
+        tourDataForEcommerce.activitiesText = summaryActivities || activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
+        // Usar seguro del summary, luego del componente o del contexto
+        tourDataForEcommerce.selectedInsurance = summaryInsurance || this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
         // Usar conteo de pasajeros desde viajeros
         tourDataForEcommerce.totalPassengers = parseInt(passengersCount.adults) + parseInt(passengersCount.children);
         tourDataForEcommerce.childrenCount = passengersCount.children;
@@ -3393,7 +3506,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Disparar evento view_flights_info cuando se visualiza el paso de vuelos
    */
   private trackViewFlightsInfo(): void {
-    if (!this.reservationData || !this.tourId) return;
+    if (!this.reservationData || !this.tourId || !this.reservationId) return;
     
     // Usar los valores guardados al cargar el componente
     const itemListId = this.savedItemListId;
@@ -3403,16 +3516,24 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     forkJoin({
       tourData: this.getCompleteTourDataForEcommerce(this.tourId),
       activitiesText: this.getActivitiesFromTravelers(),
-      passengersCount: this.getPassengersCount()
+      passengersCount: this.getPassengersCount(),
+      summary: this.reservationService.getSummary(this.reservationId).pipe(catchError(() => of(null)))
     }).pipe(
-      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount }) => {
+      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount, summary }) => {
         // Actualizar con datos adicionales del contexto
         const additionalData = this.prepareTourDataForEcommerce();
-        tourDataForEcommerce.flightCity = additionalData.flightCity || tourDataForEcommerce.flightCity;
-        // Usar actividades obtenidas dinámicamente desde viajeros, o fallback a additionalData
-        tourDataForEcommerce.activitiesText = activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
-        // Usar seguro del componente o del contexto
-        tourDataForEcommerce.selectedInsurance = this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
+        
+        // Obtener datos del summary cuando sea posible (prioridad: summary > métodos actuales > additionalData)
+        const summaryFlight = this.analyticsService.extractFlightFromSummary(summary, this.reservationData, this.selectedFlight);
+        const summaryActivities = this.analyticsService.extractActivitiesFromSummary(summary);
+        const storedInsurance = sessionStorage.getItem('checkout_selectedInsurance') || '';
+        const summaryInsurance = this.analyticsService.extractInsuranceFromSummary(summary, this.reservationData, storedInsurance);
+        
+        tourDataForEcommerce.flightCity = summaryFlight || additionalData.flightCity || tourDataForEcommerce.flightCity || 'Sin vuelo';
+        // Usar actividades del summary, luego desde viajeros, o fallback a additionalData
+        tourDataForEcommerce.activitiesText = summaryActivities || activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
+        // Usar seguro del summary, luego del componente o del contexto
+        tourDataForEcommerce.selectedInsurance = summaryInsurance || this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
         // Usar conteo de pasajeros desde viajeros
         tourDataForEcommerce.totalPassengers = parseInt(passengersCount.adults) + parseInt(passengersCount.children);
         tourDataForEcommerce.childrenCount = passengersCount.children;
@@ -3469,7 +3590,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Disparar evento add_flights_info cuando el usuario selecciona vuelo y continúa
    */
   private trackAddFlightsInfo(): void {
-    if (!this.reservationData || !this.tourId) return;
+    if (!this.reservationData || !this.tourId || !this.reservationId) return;
     
     // Usar los valores guardados al cargar el componente
     const itemListId = this.savedItemListId;
@@ -3479,16 +3600,24 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     forkJoin({
       tourData: this.getCompleteTourDataForEcommerce(this.tourId),
       activitiesText: this.getActivitiesFromTravelers(),
-      passengersCount: this.getPassengersCount()
+      passengersCount: this.getPassengersCount(),
+      summary: this.reservationService.getSummary(this.reservationId).pipe(catchError(() => of(null)))
     }).pipe(
-      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount }) => {
+      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount, summary }) => {
         // Actualizar con datos adicionales del contexto
         const additionalData = this.prepareTourDataForEcommerce();
-        tourDataForEcommerce.flightCity = additionalData.flightCity || tourDataForEcommerce.flightCity;
-        // Usar actividades obtenidas dinámicamente desde viajeros, o fallback a additionalData
-        tourDataForEcommerce.activitiesText = activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
-        // Usar seguro del componente o del contexto
-        tourDataForEcommerce.selectedInsurance = this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
+        
+        // Obtener datos del summary cuando sea posible (prioridad: summary > métodos actuales > additionalData)
+        const summaryFlight = this.analyticsService.extractFlightFromSummary(summary, this.reservationData, this.selectedFlight);
+        const summaryActivities = this.analyticsService.extractActivitiesFromSummary(summary);
+        const storedInsurance = sessionStorage.getItem('checkout_selectedInsurance') || '';
+        const summaryInsurance = this.analyticsService.extractInsuranceFromSummary(summary, this.reservationData, storedInsurance);
+        
+        tourDataForEcommerce.flightCity = summaryFlight || additionalData.flightCity || tourDataForEcommerce.flightCity || 'Sin vuelo';
+        // Usar actividades del summary, luego desde viajeros, o fallback a additionalData
+        tourDataForEcommerce.activitiesText = summaryActivities || activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
+        // Usar seguro del summary, luego del componente o del contexto
+        tourDataForEcommerce.selectedInsurance = summaryInsurance || this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
         // Usar conteo de pasajeros desde viajeros
         tourDataForEcommerce.totalPassengers = parseInt(passengersCount.adults) + parseInt(passengersCount.children);
         tourDataForEcommerce.childrenCount = passengersCount.children;
@@ -3545,7 +3674,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Disparar evento view_personal_info cuando se visualiza el paso de datos de pasajeros
    */
   private trackViewPersonalInfo(): void {
-    if (!this.reservationData || !this.tourId) return;
+    if (!this.reservationData || !this.tourId || !this.reservationId) return;
     
     // Usar los valores guardados al cargar el componente
     const itemListId = this.savedItemListId;
@@ -3555,16 +3684,24 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     forkJoin({
       tourData: this.getCompleteTourDataForEcommerce(this.tourId),
       activitiesText: this.getActivitiesFromTravelers(),
-      passengersCount: this.getPassengersCount()
+      passengersCount: this.getPassengersCount(),
+      summary: this.reservationService.getSummary(this.reservationId).pipe(catchError(() => of(null)))
     }).pipe(
-      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount }) => {
+      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount, summary }) => {
         // Actualizar con datos adicionales del contexto
         const additionalData = this.prepareTourDataForEcommerce();
-        tourDataForEcommerce.flightCity = additionalData.flightCity || tourDataForEcommerce.flightCity;
-        // Usar actividades obtenidas dinámicamente desde viajeros, o fallback a additionalData
-        tourDataForEcommerce.activitiesText = activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
-        // Usar seguro del componente o del contexto
-        tourDataForEcommerce.selectedInsurance = this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
+        
+        // Obtener datos del summary cuando sea posible (prioridad: summary > métodos actuales > additionalData)
+        const summaryFlight = this.analyticsService.extractFlightFromSummary(summary, this.reservationData, this.selectedFlight);
+        const summaryActivities = this.analyticsService.extractActivitiesFromSummary(summary);
+        const storedInsurance = sessionStorage.getItem('checkout_selectedInsurance') || '';
+        const summaryInsurance = this.analyticsService.extractInsuranceFromSummary(summary, this.reservationData, storedInsurance);
+        
+        tourDataForEcommerce.flightCity = summaryFlight || additionalData.flightCity || tourDataForEcommerce.flightCity || 'Sin vuelo';
+        // Usar actividades del summary, luego desde viajeros, o fallback a additionalData
+        tourDataForEcommerce.activitiesText = summaryActivities || activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
+        // Usar seguro del summary, luego del componente o del contexto
+        tourDataForEcommerce.selectedInsurance = summaryInsurance || this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
         // Usar conteo de pasajeros desde viajeros
         tourDataForEcommerce.totalPassengers = parseInt(passengersCount.adults) + parseInt(passengersCount.children);
         tourDataForEcommerce.childrenCount = passengersCount.children;
@@ -3621,7 +3758,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Disparar evento add_payment_info cuando el usuario selecciona método de pago
    */
   private trackAddPaymentInfo(paymentOption?: any): void {
-    if (!this.reservationData || !this.tourId) return;
+    if (!this.reservationData || !this.tourId || !this.reservationId) return;
     
     // Usar los valores guardados al cargar el componente
     const itemListId = this.savedItemListId;
@@ -3641,16 +3778,24 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     forkJoin({
       tourData: this.getCompleteTourDataForEcommerce(this.tourId),
       activitiesText: this.getActivitiesFromTravelers(),
-      passengersCount: this.getPassengersCount()
+      passengersCount: this.getPassengersCount(),
+      summary: this.reservationService.getSummary(this.reservationId).pipe(catchError(() => of(null)))
     }).pipe(
-      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount }) => {
+      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount, summary }) => {
         // Actualizar con datos adicionales del contexto
         const additionalData = this.prepareTourDataForEcommerce();
-        tourDataForEcommerce.flightCity = additionalData.flightCity || tourDataForEcommerce.flightCity;
-        // Usar actividades obtenidas dinámicamente desde viajeros, o fallback a additionalData
-        tourDataForEcommerce.activitiesText = activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
-        // Usar seguro del componente o del contexto
-        tourDataForEcommerce.selectedInsurance = this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
+        
+        // Obtener datos del summary cuando sea posible (prioridad: summary > métodos actuales > additionalData)
+        const summaryFlight = this.analyticsService.extractFlightFromSummary(summary, this.reservationData, this.selectedFlight);
+        const summaryActivities = this.analyticsService.extractActivitiesFromSummary(summary);
+        const storedInsurance = sessionStorage.getItem('checkout_selectedInsurance') || '';
+        const summaryInsurance = this.analyticsService.extractInsuranceFromSummary(summary, this.reservationData, storedInsurance);
+        
+        tourDataForEcommerce.flightCity = summaryFlight || additionalData.flightCity || tourDataForEcommerce.flightCity || 'Sin vuelo';
+        // Usar actividades del summary, luego desde viajeros, o fallback a additionalData
+        tourDataForEcommerce.activitiesText = summaryActivities || activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
+        // Usar seguro del summary, luego del componente o del contexto
+        tourDataForEcommerce.selectedInsurance = summaryInsurance || this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
         // Usar conteo de pasajeros desde viajeros
         tourDataForEcommerce.totalPassengers = parseInt(passengersCount.adults) + parseInt(passengersCount.children);
         tourDataForEcommerce.childrenCount = passengersCount.children;
@@ -3708,7 +3853,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Disparar evento view_payment_info cuando el usuario visualiza el paso de pago
    */
   private trackViewPaymentInfo(): void {
-    if (!this.reservationData || !this.tourId) return;
+    if (!this.reservationData || !this.tourId || !this.reservationId) return;
     
     // Usar los valores guardados al cargar el componente
     const itemListId = this.savedItemListId;
@@ -3718,16 +3863,24 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     forkJoin({
       tourData: this.getCompleteTourDataForEcommerce(this.tourId),
       activitiesText: this.getActivitiesFromTravelers(),
-      passengersCount: this.getPassengersCount()
+      passengersCount: this.getPassengersCount(),
+      summary: this.reservationService.getSummary(this.reservationId).pipe(catchError(() => of(null)))
     }).pipe(
-      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount }) => {
+      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount, summary }) => {
         // Actualizar con datos adicionales del contexto
         const additionalData = this.prepareTourDataForEcommerce();
-        tourDataForEcommerce.flightCity = additionalData.flightCity || tourDataForEcommerce.flightCity;
-        // Usar actividades obtenidas dinámicamente desde viajeros, o fallback a additionalData
-        tourDataForEcommerce.activitiesText = activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
-        // Usar seguro del componente o del contexto
-        tourDataForEcommerce.selectedInsurance = this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
+        
+        // Obtener datos del summary cuando sea posible (prioridad: summary > métodos actuales > additionalData)
+        const summaryFlight = this.analyticsService.extractFlightFromSummary(summary, this.reservationData, this.selectedFlight);
+        const summaryActivities = this.analyticsService.extractActivitiesFromSummary(summary);
+        const storedInsurance = sessionStorage.getItem('checkout_selectedInsurance') || '';
+        const summaryInsurance = this.analyticsService.extractInsuranceFromSummary(summary, this.reservationData, storedInsurance);
+        
+        tourDataForEcommerce.flightCity = summaryFlight || additionalData.flightCity || tourDataForEcommerce.flightCity || 'Sin vuelo';
+        // Usar actividades del summary, luego desde viajeros, o fallback a additionalData
+        tourDataForEcommerce.activitiesText = summaryActivities || activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
+        // Usar seguro del summary, luego del componente o del contexto
+        tourDataForEcommerce.selectedInsurance = summaryInsurance || this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
         // Usar conteo de pasajeros desde viajeros
         tourDataForEcommerce.totalPassengers = parseInt(passengersCount.adults) + parseInt(passengersCount.children);
         tourDataForEcommerce.childrenCount = passengersCount.children;
@@ -3784,7 +3937,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Disparar evento add_personal_info cuando el usuario completa datos de pasajeros
    */
   private trackAddPersonalInfo(): void {
-    if (!this.reservationData || !this.tourId) return;
+    if (!this.reservationData || !this.tourId || !this.reservationId) return;
     
     // Usar los valores guardados al cargar el componente
     const itemListId = this.savedItemListId;
@@ -3794,16 +3947,24 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     forkJoin({
       tourData: this.getCompleteTourDataForEcommerce(this.tourId),
       activitiesText: this.getActivitiesFromTravelers(),
-      passengersCount: this.getPassengersCount()
+      passengersCount: this.getPassengersCount(),
+      summary: this.reservationService.getSummary(this.reservationId).pipe(catchError(() => of(null)))
     }).pipe(
-      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount }) => {
+      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount, summary }) => {
         // Actualizar con datos adicionales del contexto
         const additionalData = this.prepareTourDataForEcommerce();
-        tourDataForEcommerce.flightCity = additionalData.flightCity || tourDataForEcommerce.flightCity;
-        // Usar actividades obtenidas dinámicamente desde viajeros, o fallback a additionalData
-        tourDataForEcommerce.activitiesText = activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
-        // Usar seguro del componente o del contexto
-        tourDataForEcommerce.selectedInsurance = this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
+        
+        // Obtener datos del summary cuando sea posible (prioridad: summary > métodos actuales > additionalData)
+        const summaryFlight = this.analyticsService.extractFlightFromSummary(summary, this.reservationData, this.selectedFlight);
+        const summaryActivities = this.analyticsService.extractActivitiesFromSummary(summary);
+        const storedInsurance = sessionStorage.getItem('checkout_selectedInsurance') || '';
+        const summaryInsurance = this.analyticsService.extractInsuranceFromSummary(summary, this.reservationData, storedInsurance);
+        
+        tourDataForEcommerce.flightCity = summaryFlight || additionalData.flightCity || tourDataForEcommerce.flightCity || 'Sin vuelo';
+        // Usar actividades del summary, luego desde viajeros, o fallback a additionalData
+        tourDataForEcommerce.activitiesText = summaryActivities || activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
+        // Usar seguro del summary, luego del componente o del contexto
+        tourDataForEcommerce.selectedInsurance = summaryInsurance || this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
         // Usar conteo de pasajeros desde viajeros
         tourDataForEcommerce.totalPassengers = parseInt(passengersCount.adults) + parseInt(passengersCount.children);
         tourDataForEcommerce.childrenCount = passengersCount.children;

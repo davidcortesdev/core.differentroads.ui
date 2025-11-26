@@ -190,6 +190,7 @@ import { BookingPersonalDataV2Component } from './pages/bookingsv2/booking-perso
 import { BookingUpdateTravelV2Component } from './pages/bookingsv2/booking-update-travel/booking-update-travel.component';
 import { PassengerCardV2Component } from './pages/bookingsv2/passenger-card/passenger-card.component';
 import { AddPaymentModalComponent } from './pages/bookingsv2/add-payment-modal/add-payment-modal.component';
+import { ApplyCouponModalComponent } from './pages/bookingsv2/apply-coupon-modal/apply-coupon-modal.component';
 
 // ========================================
 // PAGE COMPONENTS - PROFILE
@@ -239,6 +240,7 @@ import { SeoLinksComponent } from './shared/components/seo-links/seo-links.compo
 import { AdditionalInfoComponent } from './shared/components/additional-info/additional-info.component';
 import { EnvironmentBannerComponent } from './shared/components/environment-banner/environment-banner.component';
 import { SeoManagerComponent } from './shared/components/seo-manager/seo-manager.component';
+import { PhonePrefixSelectComponent } from './shared/components/phone-prefix-select/phone-prefix-select.component';
 
 // Tour Cards
 import { TourCardComponent } from './shared/components/tour-card/tour-card.component';
@@ -372,6 +374,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     BookingUpdateTravelV2Component,
     PassengerCardV2Component,
     AddPaymentModalComponent,
+    ApplyCouponModalComponent,
 
     // ========================================
     // PAGE COMPONENTS - PROFILE
@@ -522,6 +525,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     // ========================================
     ForgetPasswordComponent,
     NewsLetterSectionV2Component,
+    PhonePrefixSelectComponent,
 
     // ========================================
     // PIPES

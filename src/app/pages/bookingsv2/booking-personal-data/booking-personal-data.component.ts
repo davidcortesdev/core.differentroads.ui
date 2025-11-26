@@ -21,8 +21,6 @@ import {
   ReservationTravelerFieldCreate,
   ReservationTravelerFieldUpdate 
 } from '../../../core/services/reservation/reservation-traveler-field.service';
-import { CheckoutUserDataService } from '../../../core/services/v2/checkout-user-data.service';
-import { PersonalInfo } from '../../../core/models/v2/profile-v2.model';
 import { forkJoin, Observable, of } from 'rxjs';
 import { map, switchMap, catchError } from 'rxjs/operators';
 
@@ -60,17 +58,13 @@ export class BookingPersonalDataV2Component implements OnInit {
   
   // Array para almacenar los campos configurados para este departure (igual que checkout)
   departureReservationFields: IDepartureReservationFieldResponse[] = [];
-  
-  // Información del perfil del usuario para rellenar campos vacíos
-  currentUserData: PersonalInfo | null = null;
 
   constructor(
     private fb: FormBuilder,
     private reservationTravelerService: ReservationTravelerService,
     private reservationTravelerFieldService: ReservationTravelerFieldService,
     private reservationFieldService: ReservationFieldService,
-    private departureReservationFieldService: DepartureReservationFieldService,
-    private checkoutUserDataService: CheckoutUserDataService
+    private departureReservationFieldService: DepartureReservationFieldService
   ) {}
 
   ngOnInit(): void {
@@ -141,41 +135,23 @@ export class BookingPersonalDataV2Component implements OnInit {
     this.loading = true;
     this.passengers = [];
 
-    // Paso 0: Cargar datos del perfil del usuario si está autenticado
-    const userDataObservable = this.checkoutUserDataService.getCurrentUserData().pipe(
-      catchError((error) => {
-        console.warn('No se pudieron cargar los datos del usuario:', error);
-        return of(null);
-      })
-    );
+    // Obtener los viajeros de la reserva
+    this.reservationTravelerService.getByReservation(this.reservationId).subscribe({
+      next: (travelers) => {
+        if (travelers.length === 0) {
+          this.loading = false;
+          return;
+        }
 
-    userDataObservable.subscribe({
-      next: (userData) => {
-        this.currentUserData = userData;
-        
-        // Paso 1: Obtener los viajeros de la reserva
-        this.reservationTravelerService.getByReservation(this.reservationId).subscribe({
-          next: (travelers) => {
-            
-            if (travelers.length === 0) {
-              this.loading = false;
-              return;
-            }
+        // Para cada viajero, obtener sus campos
+        const travelerDataObservables = travelers.map((traveler, index) => 
+          this.loadTravelerData(traveler, index)
+        );
 
-            // Paso 2: Para cada viajero, obtener sus campos
-            const travelerDataObservables = travelers.map((traveler, index) => 
-              this.loadTravelerData(traveler, index)
-            );
-
-            forkJoin(travelerDataObservables).subscribe({
-              next: (travelerDataList) => {
-                this.passengers = travelerDataList.filter(data => data !== null) as PassengerData[];
-                this.loading = false;
-              },
-              error: (error) => {
-                this.loading = false;
-              }
-            });
+        forkJoin(travelerDataObservables).subscribe({
+          next: (travelerDataList) => {
+            this.passengers = travelerDataList.filter(data => data !== null) as PassengerData[];
+            this.loading = false;
           },
           error: (error) => {
             this.loading = false;
@@ -183,7 +159,6 @@ export class BookingPersonalDataV2Component implements OnInit {
         });
       },
       error: (error) => {
-        console.error('Error al cargar datos del usuario:', error);
         this.loading = false;
       }
     });
@@ -216,16 +191,6 @@ export class BookingPersonalDataV2Component implements OnInit {
             type: traveler.isLeadTraveler ? 'lead' : `passenger${passengerIndex + 1}`,
             _id: traveler.id.toString()
           };
-          
-          // Rellenar con datos del perfil si es lead traveler
-          if (traveler.isLeadTraveler && this.currentUserData) {
-            if (this.currentUserData.nombre) emptyPassenger.name = this.currentUserData.nombre;
-            if (this.currentUserData.apellido) emptyPassenger.surname = this.currentUserData.apellido;
-            if (this.currentUserData.email) emptyPassenger.email = this.currentUserData.email;
-            if (this.currentUserData.telefono) emptyPassenger.phone = this.currentUserData.telefono;
-            if (this.currentUserData.fechaNacimiento) emptyPassenger.birthDate = this.currentUserData.fechaNacimiento;
-            if (this.currentUserData.sexo) emptyPassenger.gender = this.currentUserData.sexo;
-          }
           
           return of(emptyPassenger);
         }
@@ -290,8 +255,8 @@ export class BookingPersonalDataV2Component implements OnInit {
                 passengerData.passportID = field.value;
               } else if (normalizedCode === 'nationality' || normalizedCode === 'nacionalidad') {
                 passengerData.nationality = field.value;
-              } else if (normalizedCode === 'dni') {
-                passengerData.dni = field.value;
+              } else if (normalizedCode === 'dni' || normalizedCode === 'national_id') {
+                passengerData.dni = field.value;  // ✅ Código en BD: national_id, propiedad en passenger: dni
               } else if (normalizedCode === 'room' || normalizedCode === 'habitacion') {
                 passengerData.room = field.value;
               } else if (normalizedCode === 'ciudad' || normalizedCode === 'city') {
@@ -327,28 +292,6 @@ export class BookingPersonalDataV2Component implements OnInit {
                 }
               }
             });
-
-            // Rellenar campos vacíos con datos del perfil del usuario (solo para el primer pasajero/lead traveler)
-            if (traveler.isLeadTraveler && this.currentUserData) {
-              if (!passengerData.name && this.currentUserData.nombre) {
-                passengerData.name = this.currentUserData.nombre;
-              }
-              if (!passengerData.surname && this.currentUserData.apellido) {
-                passengerData.surname = this.currentUserData.apellido;
-              }
-              if (!passengerData.email && this.currentUserData.email) {
-                passengerData.email = this.currentUserData.email;
-              }
-              if (!passengerData.phone && this.currentUserData.telefono) {
-                passengerData.phone = this.currentUserData.telefono;
-              }
-              if (!passengerData.birthDate && this.currentUserData.fechaNacimiento) {
-                passengerData.birthDate = this.currentUserData.fechaNacimiento;
-              }
-              if (!passengerData.gender && this.currentUserData.sexo) {
-                passengerData.gender = this.currentUserData.sexo;
-              }
-            }
 
             return passengerData;
           })
@@ -510,11 +453,11 @@ export class BookingPersonalDataV2Component implements OnInit {
         if (field && value) {
           const existingField = existingFieldsMap.get(field.id);
           
-          // ⭐ IMPORTANTE: Formatear el valor antes de guardar
+          // ⭐ IMPORTANTE: Formatear el valor según el tipo de campo de BD
           let formattedValue = value;
           
-          // Si es una fecha, convertir al formato dd/mm/yyyy
-          if (this.isDateField(fieldCode) && value) {
+          // Usar el tipo de campo de la BD para determinar si es fecha
+          if (this.isDateFieldByType(field) && value) {
             formattedValue = this.formatDate(value);
           }
           
@@ -557,24 +500,12 @@ export class BookingPersonalDataV2Component implements OnInit {
   }
 
   /**
-   * Verifica si un campo es de tipo fecha
+   * Verifica si un campo es de tipo fecha usando la propiedad fieldType de BD
    */
-  private isDateField(fieldCode: string): boolean {
-    const dateFields = [
-      'birthdate',
-      'fecha_nacimiento',
-      'birth_date',
-      'minorIdIssueDate',
-      'minor_id_issue_date',
-      'minorIdExpirationDate',
-      'minor_id_expiration_date',
-      'documentExpeditionDate',
-      'document_expedition_date',
-      'documentExpirationDate',
-      'document_expiration_date'
-    ];
-    
-    return dateFields.includes(fieldCode.toLowerCase());
+  private isDateFieldByType(field: IReservationFieldResponse): boolean {
+    // Usar la propiedad fieldType que viene de la BD
+    const normalizedFieldType = field.fieldType.toLowerCase();
+    return normalizedFieldType === 'date' || normalizedFieldType === 'datetime';
   }
 
   /**
@@ -593,7 +524,7 @@ export class BookingPersonalDataV2Component implements OnInit {
       'passport': passenger.passportID,
       'nationality': passenger.nationality,
       'room': passenger.room,
-      'dni': passenger.dni,
+      'national_id': passenger.dni,  // ✅ Código en BD: national_id, propiedad en passenger: dni
       'ciudad': passenger.ciudad,
       'codigoPostal': passenger.codigoPostal,
       'minorIdIssueDate': passenger.minorIdIssueDate,

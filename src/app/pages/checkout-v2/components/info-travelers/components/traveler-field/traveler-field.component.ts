@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, ChangeDetectorRef, OnChanges, SimpleChanges } from '@angular/core';
 import { FormGroup, ValidationErrors, AbstractControl } from '@angular/forms';
 import { IReservationFieldResponse } from '../../../../../../core/services/reservation/reservation-field.service';
+import { IPhonePrefixResponse } from '../../../../../../core/services/masterdata/phone-prefix.service';
 
 @Component({
   selector: 'app-traveler-field',
@@ -16,6 +17,7 @@ export class TravelerFieldComponent implements OnChanges {
   @Input() isMandatory: boolean = false;
   @Input() sexOptions: Array<{ label: string; value: string }> = [];
   @Input() countryOptions: Array<{ name: string; code: string; value: string }> = [];
+  @Input() phonePrefixOptions: IPhonePrefixResponse[] = [];
   @Input() minDate: Date | null = null;
   @Input() maxDate: Date | null = null;
 
@@ -59,6 +61,20 @@ export class TravelerFieldComponent implements OnChanges {
     return this.control?.errors || null;
   }
 
+  /**
+   * Obtiene los errores del prefijo telefónico
+   */
+  get prefixErrors(): ValidationErrors | null {
+    return this.prefixControl?.errors || null;
+  }
+
+  /**
+   * Verifica si el prefijo tiene errores
+   */
+  get hasPrefixError(): boolean {
+    return this.prefixControl ? this.prefixControl.invalid && (this.prefixControl.dirty || this.prefixControl.touched) : false;
+  }
+
   get validationState(): 'valid' | 'invalid' | 'empty' | 'untouched' {
     if (!this.control) {
       return 'untouched';
@@ -77,6 +93,13 @@ export class TravelerFieldComponent implements OnChanges {
 
   get isRequiredEmpty(): boolean {
     return this.isMandatory && !this.fieldValue;
+  }
+
+  /**
+   * Verifica si el prefijo telefónico es obligatorio (mismo que el teléfono)
+   */
+  get isPrefixMandatory(): boolean {
+    return this.isMandatory; // El prefijo es obligatorio si el teléfono es obligatorio
   }
 
   get placeholder(): string {
@@ -107,20 +130,9 @@ export class TravelerFieldComponent implements OnChanges {
     this.dateFieldBlur.emit(this.fieldDetails.code);
   }
 
-  // Input helper: limitar prefijo a 3 dígitos y sincronizar con FormControl
-  onPrefixInput(event: Event): void {
-    const inputEl = event.target as HTMLInputElement | null;
-    if (!inputEl) return;
-    const digitsOnly = inputEl.value.replace(/\D/g, '').slice(0, 3);
-    inputEl.value = digitsOnly;
-    
-    // Obtener el control directamente del formulario
-    const control = this.prefixControl;
-    if (control) {
-      control.setValue(digitsOnly, { emitEvent: true });
-      control.markAsDirty();
-      control.markAsTouched();
-    }
+  onPrefixChange(): void {
+    this.cdr.markForCheck(); // Forzar detección de cambios para OnPush
+    this.fieldChange.emit('phonePrefix');
   }
 
   getErrorMessage(errors: ValidationErrors | null): string {
@@ -133,13 +145,13 @@ export class TravelerFieldComponent implements OnChanges {
       },
       phone: {
         required: () => 'El teléfono es requerido.',
-        pattern: () => 'Ingresa un número de teléfono válido. Puede incluir código de país.',
+        pattern: () => 'Ingresa un número de teléfono válido.',
       },
       text: {
         required: () => 'Este campo es obligatorio.',
         minlength: (params) => `Debe tener al menos ${params?.['minLength']} caracteres.`,
         maxlength: (params) => `No puede tener más de ${params?.['maxLength']} caracteres.`,
-        pattern: () => 'Ingresa un número de teléfono válido. Puede incluir código de país.',
+        pattern: () => 'Ingresa un número de teléfono válido.',
       },
       number: {
         required: () => 'Este campo es obligatorio.',
@@ -179,6 +191,29 @@ export class TravelerFieldComponent implements OnChanges {
     }
 
     return 'Campo inválido';
+  }
+
+  /**
+   * Obtiene el mensaje de error para el prefijo telefónico
+   */
+  getPrefixErrorMessage(errors: ValidationErrors | null): string {
+    if (!errors) return '';
+
+    // Para el prefijo, usar mensajes similares a los del teléfono
+    const errorMessages: { [key: string]: (params?: Record<string, unknown>) => string } = {
+      required: () => 'El prefijo telefónico es requerido.',
+      pattern: () => 'Ingresa un prefijo telefónico válido.',
+    };
+
+    for (const errorKey in errors) {
+      const messageFunction = errorMessages[errorKey];
+      if (messageFunction) {
+        const params = errors[errorKey] as Record<string, unknown>;
+        return messageFunction(params);
+      }
+    }
+
+    return 'Prefijo inválido';
   }
 }
 

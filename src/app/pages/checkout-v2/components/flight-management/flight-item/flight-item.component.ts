@@ -18,6 +18,7 @@ export class FlightItemComponent implements OnInit, OnDestroy {
   @Input() flightPack: IFlightPackDTO | null = null;
   @Input() selectedFlight: IFlightPackDTO | null = null;
   @Input() flightDetails: Map<number, IFlightDetailDTO> = new Map();
+  @Input() availablePlaces?: number;
   /**
    * Controla qué servicio usar en el componente flight-stops:
    * - false (default): Usa FlightsNetService (comportamiento actual)
@@ -256,6 +257,27 @@ export class FlightItemComponent implements OnInit, OnDestroy {
 
   formatTime(time: any): string {
     return time ? time.slice(0, 5) : '--:--';
+  }
+
+  /**
+   * Obtiene el precio del vuelo formateado o "N/A" si es null o undefined
+   */
+  getFlightPrice(): string {
+    const price = this.flightPack?.ageGroupPrices?.[0]?.price;
+    
+    // Si el precio es null o undefined, mostrar N/A
+    if (price == null) {
+      return 'N/A';
+    }
+    
+    // Formatear el precio usando el mismo formato que el pipe currencyFormat
+    return new Intl.NumberFormat('es-ES', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+      useGrouping: true,
+    }).format(price);
   }
 
   selectFlight(flightPack: IFlightPackDTO): void {

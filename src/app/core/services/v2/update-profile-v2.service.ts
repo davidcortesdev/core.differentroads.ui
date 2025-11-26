@@ -100,6 +100,21 @@ export class UpdateProfileV2Service {
       switchMap(existingFieldValues => {
         const fieldValues = this.mapToFieldValues(userId, personalInfo);
         
+        // Crear un mapa de los userFieldIds que se están enviando
+        const newFieldIds = new Set(fieldValues.map(fv => fv.userFieldId));
+        
+        // Agregar campos que existían antes pero ahora están vacíos (para eliminarlos)
+        existingFieldValues.forEach(existing => {
+          // Si el campo existía antes pero no está en los nuevos valores, agregarlo con valor vacío
+          if (!newFieldIds.has(existing.userFieldId)) {
+            fieldValues.push({
+              userId: parseInt(userId),
+              userFieldId: existing.userFieldId,
+              value: '' // Valor vacío para eliminar el campo
+            });
+          }
+        });
+        
         if (fieldValues.length === 0) {
           return of([]);
         }
@@ -126,7 +141,16 @@ export class UpdateProfileV2Service {
       existingMap.set(existing.userFieldId, existing);
     });
     
-    const updateObservables = fieldValues.map(fieldValue => {
+    // Filtrar duplicados por userFieldId antes de procesar
+    const uniqueFieldValues = new Map();
+    fieldValues.forEach(fieldValue => {
+      const key = `${fieldValue.userId}-${fieldValue.userFieldId}`;
+      if (!uniqueFieldValues.has(key)) {
+        uniqueFieldValues.set(key, fieldValue);
+      }
+    });
+    
+    const updateObservables = Array.from(uniqueFieldValues.values()).map(fieldValue => {
       const existing = existingMap.get(fieldValue.userFieldId);
       
       if (existing) {
@@ -158,8 +182,10 @@ export class UpdateProfileV2Service {
     const fieldMappings = [
       { fieldCode: 'image', value: personalInfo.avatarUrl },
       { fieldCode: 'phone', value: personalInfo.telefono },
+      { fieldCode: 'phonePrefix', value: personalInfo.phonePrefix },
       { fieldCode: 'birth_date', value: this.formatDate(personalInfo.fechaNacimiento) },
       { fieldCode: 'national_id', value: personalInfo.dni },
+      { fieldCode: 'dniexpiration', value: this.formatDate(personalInfo.fechaExpiracionDni) },
       { fieldCode: 'address', value: personalInfo.direccion },
       { fieldCode: 'city', value: personalInfo.ciudad },
       { fieldCode: 'postal_code', value: personalInfo.codigoPostal },
@@ -170,13 +196,18 @@ export class UpdateProfileV2Service {
 
     fieldMappings.forEach(mapping => {
       if (mapping.value && mapping.value.toString().trim()) {
-        const fieldValue = {
-          userId: parseInt(userId),
-          userFieldId: this.getFieldIdByCode(mapping.fieldCode),
-          value: mapping.value.toString().trim()
-        };
+        const userFieldId = this.getFieldIdByCode(mapping.fieldCode);
         
-        fieldValues.push(fieldValue);
+        // Solo agregar si el userFieldId es válido (no 0)
+        if (userFieldId > 0) {
+          const fieldValue = {
+            userId: parseInt(userId),
+            userFieldId: userFieldId,
+            value: mapping.value.toString().trim()
+          };
+          
+          fieldValues.push(fieldValue);
+        }
       }
     });
     return fieldValues;
@@ -200,7 +231,9 @@ export class UpdateProfileV2Service {
       'country': 9,
       'notes': 10,
       'image': 12,
-      'sexo': 14
+      'sexo': 14,
+      'phonePrefix': 15,
+      'dniexpiration': 16
     };
     
     return fieldIdMap[fieldCode] || 0;
@@ -238,6 +271,7 @@ export class UpdateProfileV2Service {
     if (!dateInput) return '';
     
     if (dateInput instanceof Date) {
+      // Usar métodos locales directamente para evitar problemas de zona horaria
       const year = dateInput.getFullYear();
       const month = String(dateInput.getMonth() + 1).padStart(2, '0');
       const day = String(dateInput.getDate()).padStart(2, '0');
@@ -252,8 +286,14 @@ export class UpdateProfileV2Service {
     
     if (typeof dateInput === 'string') {
       try {
+        // Si es un string ISO (YYYY-MM-DD), devolverlo directamente
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+          return dateInput;
+        }
+        
         const date = new Date(dateInput);
         if (!isNaN(date.getTime())) {
+          // Usar métodos locales directamente
           const year = date.getFullYear();
           const month = String(date.getMonth() + 1).padStart(2, '0');
           const day = String(date.getDate()).padStart(2, '0');
@@ -325,11 +365,11 @@ export class UpdateProfileV2Service {
     if (personalInfo.telefono?.trim()) {
       // Normalizar el teléfono eliminando espacios y guiones para la validación
       const normalizedPhone = personalInfo.telefono.trim().replace(/[\s-]/g, '');
-      // Patrón que acepta: +código_país (1-3 dígitos) + número (6-14 dígitos)
-      // También acepta solo el número sin código de país
-      const phoneRegex = /^(\+\d{1,3})?\d{6,14}$/;
+      // Patrón que solo acepta dígitos (6-14 dígitos)
+      // No acepta prefijo + ya que el prefijo va por separado
+      const phoneRegex = /^\d{6,14}$/;
       if (!phoneRegex.test(normalizedPhone)) {
-        errors['telefono'] = 'Ingresa un número de teléfono válido. Puede incluir código de país.';
+        errors['telefono'] = 'Ingresa un número de teléfono válido.';
         isValid = false;
       }
     }
@@ -461,11 +501,12 @@ export class UpdateProfileV2Service {
 
   /**
    * Valida y filtra el input de dirección
+   * Permite letras, números, acentos y espacios (necesario para direcciones con números de casa, apartamento, etc.)
    * @param value - Valor del input
    * @returns Valor filtrado
    */
   validateDireccionInput(value: string): string {
-    return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚàèìòùÀÈÌÒÙâêîôûÂÊÎÔÛäëïöüÄËÏÖÜñÑçÇ\s]/g, '').slice(0, 100);
+    return value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚàèìòùÀÈÌÒÙâêîôûÂÊÎÔÛäëïöüÄËÏÖÜñÑçÇ0-9\s]/g, '').slice(0, 100);
   }
 
   /**

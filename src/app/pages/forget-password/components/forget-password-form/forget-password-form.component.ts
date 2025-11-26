@@ -1,11 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
   Validators,
   ReactiveFormsModule,
 } from '@angular/forms'; // Import ReactiveFormsModule
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
@@ -27,7 +27,7 @@ import { AuthenticateService } from '../../../../core/services/auth/auth-service
   templateUrl: './forget-password-form.component.html',
   styleUrls: ['./forget-password-form.component.scss'],
 })
-export class PasswordRecoveryFormComponent {
+export class PasswordRecoveryFormComponent implements OnInit {
   step: 'email' | 'reset' = 'email';
   isLoading: boolean = false;
   errorMessage: string = '';
@@ -36,6 +36,7 @@ export class PasswordRecoveryFormComponent {
   showPassword: boolean = false;
   showConfirmPassword: boolean = false;
   isRedirecting: boolean = false;
+  isStandalone: boolean = false;
 
   emailForm: FormGroup;
   resetForm: FormGroup;
@@ -43,6 +44,7 @@ export class PasswordRecoveryFormComponent {
   constructor(
     private fb: FormBuilder,
     private router: Router,
+    private route: ActivatedRoute,
     private authService: AuthenticateService
   ) {
     this.emailForm = this.fb.group({
@@ -74,6 +76,11 @@ export class PasswordRecoveryFormComponent {
       },
       { validators: this.passwordMatchValidator }
     );
+  }
+
+  ngOnInit(): void {
+    // Detectar si estamos en una ruta standalone
+    this.isStandalone = this.router.url.includes('/standalone/');
   }
 
   passwordMatchValidator(form: FormGroup) {

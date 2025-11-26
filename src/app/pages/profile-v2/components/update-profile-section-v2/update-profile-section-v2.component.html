@@ -108,15 +108,18 @@
 
         <p-floatlabel variant="on">
           <div class="phone-row">
-            <input
-              pInputText
-              type="text"
-              class="prefix-input"
-              placeholder="+34"
-              inputmode="numeric"
-              maxlength="3"
-              (input)="onPrefixInput($event)"
-            />
+            <app-phone-prefix-select
+              [(ngModel)]="selectedPhonePrefix"
+              name="phonePrefix"
+              [phonePrefixOptions]="phonePrefixOptions"
+              [placeholder]="'Seleccione prefijo'"
+              [showClear]="true"
+              [filter]="true"
+              [styleClass]="'prefix-select'"
+              [errorClass]="hasFieldError('phonePrefix') ? 'error' : ''"
+              [profileStyle]="true"
+              (prefixChange)="onPhonePrefixChange({ value: $event })">
+            </app-phone-prefix-select>
             <input
               pInputText
               type="tel"
@@ -185,6 +188,21 @@
             {{ getFieldError('dni') }}
           </small>
         </p-floatlabel>
+
+        <p-floatlabel variant="on">
+          <p-datepicker 
+            inputId="fechaExpiracionDni"
+            name="fechaExpiracionDni"
+            [(ngModel)]="personalInfo.fechaExpiracionDni"
+            showIcon
+            iconDisplay="input"
+            (onSelect)="onFechaExpiracionDniChange($event)"
+            [class.error]="hasFieldError('fechaExpiracionDni')"/>
+          <label for="fechaExpiracionDni">Fecha caducidad DNI</label>
+          <small class="error-message" *ngIf="hasFieldError('fechaExpiracionDni')">
+            {{ getFieldError('fechaExpiracionDni') }}
+          </small>
+      </p-floatlabel>
 
         <!-- Dirección -->
         <p-floatlabel variant="on">

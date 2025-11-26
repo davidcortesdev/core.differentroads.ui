@@ -108,6 +108,7 @@ export class TourHeaderV2Component
   @Input() tourId: number | undefined;
   @Input() totalPrice: number = 0;
   @Input() selectedCity: string = '';
+  @Input() citiesLoading: boolean = false;
   @Input() selectedDeparture: any = null;
   @Input() totalPassengers: number = 1;
   @Input() selectedActivities: ActivityHighlight[] = [];
@@ -231,6 +232,54 @@ export class TourHeaderV2Component
     );
   }
 
+  // ✅ GETTER: Verificar si hay fecha seleccionada
+  get hasSelectedDate(): boolean {
+    return !!(
+      this.selectedDeparture &&
+      this.selectedDeparture.departureDate
+    );
+  }
+
+  // ✅ GETTER: Verificar si todos los datos del header están listos
+  get isHeaderDataReady(): boolean {
+    // Verificar que las ciudades ya no están cargando
+    if (this.citiesLoading) {
+      return false;
+    }
+    
+    // Verificar que hay ciudad seleccionada
+    if (!this.selectedCity || this.selectedCity.trim() === '') {
+      return false;
+    }
+    
+    // Verificar que hay departure seleccionado con fecha
+    if (!this.selectedDeparture || !this.selectedDeparture.departureDate) {
+      return false;
+    }
+    
+    // Verificar que el precio se ha establecido (puede ser 0, pero debe haberse establecido)
+    // Si totalPrice es 0 pero citiesLoading es false y hay ciudad, significa que ya se procesó
+    // Por lo tanto, consideramos que está listo si citiesLoading es false
+    
+    return true;
+  }
+
+  // ✅ GETTER: Verificar si el departure seleccionado es reservable
+  get isDepartureBookable(): boolean {
+    if (!this.selectedDeparture) {
+      return false;
+    }
+    
+    // Verificar isBookable del departure
+    // Si isBookable es explícitamente false, no es reservable
+    if (this.selectedDeparture.isBookable === false) {
+      return false;
+    }
+    
+    // Si isBookable es true o undefined, es reservable
+    return true;
+  }
+
   // ✅ GETTER dinámico para texto de actividades
   get activitiesStatusText(): string {
     if (!this.hasAddedActivities) {
@@ -327,17 +376,36 @@ export class TourHeaderV2Component
     }
   }
 
+  // ✅ MÉTODO: Obtener tooltip para el botón de reservar
+  getBookingTooltip(): string {
+    if (this.preview) {
+      return 'No es posible reservar un tour en modo preview';
+    }
+    if (!this.hasSelectedDate) {
+      return 'Debes seleccionar una fecha de salida para poder reservar';
+    }
+    if (!this.isDepartureBookable) {
+      return 'Esta salida no tiene disponibilidad';
+    }
+    return '';
+  }
+
   private loadTourData(tourId: number) {
+    console.log('🔍 Cargando tour, preview mode:', this.preview);
+    
+    // ✅ LÓGICA: Si es preview, buscar tours no visibles también
+    const filterByVisible = !this.preview;
+    
     this.subscriptions.add(
-      this.tourService.getTourById(tourId).pipe(
+      this.tourService.getById(tourId, filterByVisible).pipe(
         switchMap((tourData) => {
+          console.log('✅ Tour cargado exitosamente:', tourData.name);
           this.tour = { ...tourData };
           this.loadCountryAndContinent(tourId);
           
           // Obtener el primer tag visible del tour
           return this.tourTagService.getByTourAndType(tourId, 'VISIBLE').pipe(
             switchMap((tourTags) => {
-              // Validar que haya tags y que el primer tag tenga un tagId válido
               if (tourTags.length > 0 && tourTags[0]?.tagId && tourTags[0].tagId > 0) {
                 const firstTagId = tourTags[0].tagId;
                 return this.tagService.getById(firstTagId).pipe(
@@ -349,7 +417,6 @@ export class TourHeaderV2Component
             }),
             catchError(() => of(null)),
             map((tagName) => {
-              // Agregar el tag al objeto tour si existe
               if (tagName && tagName.trim().length > 0) {
                 (this.tour as any).tag = tagName.trim();
               }
@@ -358,7 +425,7 @@ export class TourHeaderV2Component
           );
         }),
         catchError((error) => {
-          console.error('Error cargando tour:', error);
+          console.error('💥 Error cargando tour:', error);
           return of(null);
         })
       ).subscribe()

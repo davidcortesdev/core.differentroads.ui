@@ -342,18 +342,30 @@ export class BookingsServiceV2 {
         notes: payment.notes,
         createdAt: new Date(payment.paymentDate).toISOString(),
         updatedAt: new Date(payment.paymentDate).toISOString(),
+        id: payment.id, // NUEVO: Incluir el ID numérico para navegación
       };
 
       // Agregar vouchers si hay archivo adjunto
+      // attachmentUrl puede contener múltiples URLs separadas por comas
+      // Formato: "url|filename" o solo "url" (para compatibilidad con datos antiguos)
       if (payment.attachmentUrl) {
-        const voucher: IPaymentVoucher = {
-          fileUrl: payment.attachmentUrl,
-          metadata: {},
-          uploadDate: new Date(payment.paymentDate),
-          reviewStatus: VoucherReviewStatus.PENDING,
-          id: payment.id.toString()
-        };
-        mappedPayment.vouchers = [voucher];
+        const voucherEntries = payment.attachmentUrl.split(',').map(entry => entry.trim()).filter(entry => entry.length > 0);
+        mappedPayment.vouchers = voucherEntries.map((entry, index) => {
+          // Extraer URL y nombre del archivo del formato "url|filename"
+          const parts = entry.split('|');
+          const fileUrl = parts[0].trim();
+          const fileName = parts.length > 1 ? parts[1].trim() : this.extractFileNameFromUrl(fileUrl);
+          
+          const voucher: IPaymentVoucher = {
+            fileUrl: fileUrl,
+            fileName: fileName,
+            metadata: {},
+            uploadDate: new Date(payment.paymentDate),
+            reviewStatus: VoucherReviewStatus.PENDING,
+            id: `${payment.id}-${index}`
+          };
+          return voucher;
+        });
       }
 
       return mappedPayment;
@@ -365,6 +377,34 @@ export class BookingsServiceV2 {
       const dateB = new Date(b.createdAt).getTime();
       return dateB - dateA;
     });
+  }
+
+  /**
+   * Extrae el nombre del archivo desde una URL de Cloudinary
+   * @param url - URL del archivo en Cloudinary
+   * @returns Nombre del archivo o "Justificante" si no se puede extraer
+   */
+  private extractFileNameFromUrl(url: string): string {
+    if (!url) return 'Justificante';
+    
+    try {
+      // Intentar extraer el nombre del archivo de la URL de Cloudinary
+      // Formato típico: https://res.cloudinary.com/.../v1234567890/folder/filename.ext
+      const urlParts = url.split('/');
+      if (urlParts.length > 0) {
+        const lastPart = urlParts[urlParts.length - 1];
+        // Remover parámetros de query si existen
+        const fileName = lastPart.split('?')[0];
+        // Si tiene extensión, devolverlo, sino usar "Justificante"
+        if (fileName && fileName.includes('.')) {
+          return decodeURIComponent(fileName);
+        }
+      }
+    } catch (error) {
+      console.warn('Error extrayendo nombre de archivo de URL:', error);
+    }
+    
+    return 'Justificante';
   }
 
   /**

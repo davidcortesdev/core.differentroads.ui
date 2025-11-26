@@ -94,6 +94,9 @@ export class TourV2Component implements OnInit {
   // Ciudad seleccionada - no debe tener valor inicial
   selectedCity: string = '';
 
+  // Estado de carga de ciudades
+  citiesLoading: boolean = false;
+
   // ✅ TIPADO FUERTE: Departure seleccionado
   selectedDepartureData: SelectedDepartureData | null = null;
 
@@ -419,6 +422,10 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
   // Recibir actualización de ciudad
   onCityUpdate(city: string): void {
     this.selectedCity = city;
+  }
+
+  onCitiesLoadingUpdate(loading: boolean): void {
+    this.citiesLoading = loading;
   }
 
   // ✅ TIPADO FUERTE: Recibir actualización de departure

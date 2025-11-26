@@ -37,12 +37,14 @@ export interface PersonalInfo {
     avatarUrl?: string;
     email?: string;
     telefono?: string;
+    phonePrefix?: string;
     dni?: string;
     direccion?: string;
     ciudad?: string;
     codigoPostal?: string;
     pais?: string;
     fechaNacimiento?: string;
+    fechaExpiracionDni?: string;
     sexo?: string;
     notas?: string;
   }

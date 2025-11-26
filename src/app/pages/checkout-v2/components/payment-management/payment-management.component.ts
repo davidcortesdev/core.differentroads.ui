@@ -30,6 +30,11 @@ import {
   IPriceChangeInfo,
 } from '../../../../core/services/flight/flight-search.service';
 import { environment } from '../../../../../environments/environment';
+import { ReservationCouponService } from '../../../../core/services/checkout/reservation-coupon.service';
+import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
+import { UsersNetService } from '../../../../core/services/users/usersNet.service';
+import { catchError, switchMap, take } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 // Interfaces y tipos
 export type PaymentType =
@@ -51,8 +56,7 @@ export interface PaymentOption {
   styleUrl: './payment-management.component.scss',
 })
 export class PaymentManagementComponent
-  implements OnInit, OnDestroy, OnChanges, AfterViewInit
-{
+  implements OnInit, OnDestroy, OnChanges, AfterViewInit {
   //Total reservation amount
   totalPrice: number = 0;
 
@@ -71,6 +75,7 @@ export class PaymentManagementComponent
   // Outputs
   @Output() paymentCompleted = new EventEmitter<PaymentOption>();
   @Output() navigateToStep = new EventEmitter<number>();
+  @Output() discountApplied = new EventEmitter<void>();
 
   // Payment IDs
   transferMethodId: number = 0;
@@ -86,10 +91,16 @@ export class PaymentManagementComponent
   hasSpecificSearchFlights: boolean = false;
   specificSearchFlightsCost: number = 0;
 
+  // Discount code
+  discountCode: string = '';
+  discountMessage: string = '';
+  discountMessageSeverity: 'success' | 'error' | 'info' | 'warn' = 'info';
+
   // State management
   readonly dropdownStates = {
     main: true,
     paymentMethods: true,
+    discount: true,
   };
 
   readonly paymentState = {
@@ -109,8 +120,11 @@ export class PaymentManagementComponent
     private readonly reservationService: ReservationService,
     private readonly messageService: MessageService,
     private readonly currencyService: CurrencyService,
-    private readonly flightSearchService: FlightSearchService
-  ) {}
+    private readonly flightSearchService: FlightSearchService,
+    private readonly reservationCouponService: ReservationCouponService,
+    private readonly authService: AuthenticateService,
+    private readonly usersNetService: UsersNetService
+  ) { }
 
   ngOnInit(): void {
     this.loadReservationTotalAmount();
@@ -275,6 +289,14 @@ export class PaymentManagementComponent
     return this.paymentState.method;
   }
 
+  get scalapayMerchantToken(): string {
+    return environment.scalapayMerchantToken;
+  }
+
+  get scalapayEnvironment(): string {
+    return environment.scalapayEnvironment;
+  }
+
   get isPaymentValid(): boolean {
     if (!this.paymentState.type) return false;
 
@@ -435,13 +457,14 @@ export class PaymentManagementComponent
         life: 3000,
       });
 
-      await this.processPaymentBasedOnMethod();
-
-      // Emitir evento de pago completado para analytics
+      // Emitir evento de pago completado para analytics ANTES de procesar el pago
+      // Esto asegura que el evento se dispare incluso si el procesamiento redirige o falla
       this.paymentCompleted.emit({
         type: this.paymentState.type || 'complete',
         method: this.paymentState.method || 'transfer',
       });
+
+      await this.processPaymentBasedOnMethod();
 
       this.messageService.add({
         severity: 'success',
@@ -465,14 +488,16 @@ export class PaymentManagementComponent
         }
       }
 
+      this.paymentState.isLoading = false;
+
       this.messageService.add({
         severity: 'error',
         summary: 'Error al procesar el pago',
         detail: errorMessage,
         life: 5000,
       });
-    } finally {
-      this.paymentState.isLoading = false;
+
+
     }
   }
 
@@ -586,12 +611,6 @@ export class PaymentManagementComponent
     script.src =
       'https://cdn.scalapay.com/widget/scalapay-widget-loader.js?version=V5';
 
-    script.onload = () => {
-      setTimeout(() => {
-        this.initializeScalapayWidget();
-      }, 500);
-    };
-
     script.onerror = (error) => {
       console.error('❌ Error al cargar script de Scalapay:', error);
     };
@@ -618,7 +637,9 @@ export class PaymentManagementComponent
   }
 
   private updatePriceContainers(): void {
-    if (!this.totalPrice) return;
+    if (!this.totalPrice) {
+      return;
+    }
 
     const formattedPrice = `€ ${this.totalPrice.toFixed(2)}`;
     const mainContainer = document.getElementById('price-container-main');
@@ -694,8 +715,8 @@ export class PaymentManagementComponent
       throw new Error('No se pudo obtener el ID de la moneda EUR');
     }
 
-    const response = await this.paymentsService
-      .create({
+    const response = await firstValueFrom(
+      this.paymentsService.create({
         reservationId: this.reservationId,
         amount: amount,
         paymentDate: new Date(),
@@ -703,11 +724,18 @@ export class PaymentManagementComponent
         paymentStatusId: this.pendingStatusId,
         currencyId: currencyId,
       })
-      .toPromise();
+    );
 
     if (!response) {
       throw new Error('Error al crear el pago');
     }
+
+    response.transactionReference = response.id + "F" + this.reservationId + "R";
+    // Actualizar con la referencia de transacción
+    await firstValueFrom(
+      this.paymentsService.update(response
+      )
+    );
 
     const baseUrlFront = window.location.href.replace(this.router.url, '');
     const formData: IFormData | undefined = await this.redsysService
@@ -762,8 +790,8 @@ export class PaymentManagementComponent
       throw new Error('No se pudo obtener el ID de la moneda EUR');
     }
 
-    const response = await this.paymentsService
-      .create({
+    const response = await firstValueFrom(
+      this.paymentsService.create({
         reservationId: this.reservationId,
         amount: amount,
         paymentDate: new Date(),
@@ -771,11 +799,17 @@ export class PaymentManagementComponent
         paymentStatusId: this.pendingStatusId,
         currencyId: currencyId,
       })
-      .toPromise();
+    );
 
     if (!response) {
       throw new Error('Error al crear el pago por transferencia');
     }
+
+    response.transactionReference = response.id + "F" + this.reservationId + "R";
+    // Actualizar con la referencia de transacción
+    await firstValueFrom(
+      this.paymentsService.update(response)
+    );
 
     this.router.navigate([`/reservation/${this.reservationId}/${response.id}`]);
   }
@@ -791,8 +825,8 @@ export class PaymentManagementComponent
       throw new Error('No se pudo obtener el ID de la moneda EUR');
     }
 
-    const response = await this.paymentsService
-      .create({
+    const response = await firstValueFrom(
+      this.paymentsService.create({
         reservationId: this.reservationId,
         amount: amount,
         paymentDate: new Date(),
@@ -800,11 +834,17 @@ export class PaymentManagementComponent
         paymentStatusId: this.pendingStatusId,
         currencyId: currencyId,
       })
-      .toPromise();
+    );
 
     if (!response) {
       throw new Error('Error al crear el pago por transferencia 25%');
     }
+
+    response.transactionReference = response.id + "F" + this.reservationId + "R";
+    // Actualizar con la referencia de transacción
+    await firstValueFrom(
+      this.paymentsService.update(response)
+    );
 
     // TODO: Implementar lógica adicional para transferencia 25% con voucher
     this.router.navigate([`/reservation/${this.reservationId}/${response.id}`]);
@@ -815,10 +855,126 @@ export class PaymentManagementComponent
       .getById(this.reservationId)
       .subscribe((reservation) => {
         this.totalPrice = reservation.totalAmount;
+
+        // Después de cargar el precio, forzar recarga del widget de Scalapay
+        setTimeout(() => {
+          this.forceScalapayReload();
+        }, 300);
       });
   }
 
   reloadReservationTotalAmount(): void {
     this.loadReservationTotalAmount();
+  }
+
+  applyDiscount(): void {
+    if (!this.discountCode || this.discountCode.trim() === '') {
+      this.discountMessage = 'Por favor, ingresa un código de descuento';
+      this.discountMessageSeverity = 'warn';
+      return;
+    }
+
+    if (!this.reservationId || this.reservationId <= 0) {
+      this.discountMessage = 'Error: faltan datos de la reserva';
+      this.discountMessageSeverity = 'error';
+      return;
+    }
+
+    const trimmedCode = this.discountCode.trim();
+
+    // Obtener el userId del usuario logueado (NO de la reserva)
+    this.authService
+      .getUserAttributes()
+      .pipe(
+        take(1),
+        catchError((error) => {
+          console.error('Error obteniendo atributos del usuario:', error);
+          this.discountMessage = 'Error: No se pudo obtener la información del usuario logueado';
+          this.discountMessageSeverity = 'error';
+          return of(null);
+        }),
+        switchMap((attributes) => {
+          if (!attributes) {
+            this.discountMessage = 'Error: Debes estar logueado para aplicar un cupón';
+            this.discountMessageSeverity = 'error';
+            return of(null);
+          }
+
+          const email = attributes?.email;
+          if (!email) {
+            this.discountMessage = 'Error: Debes estar logueado para aplicar un cupón';
+            this.discountMessageSeverity = 'error';
+            return of(null);
+          }
+
+          // Obtener usuario por email directamente (mismo patrón que el header)
+          return this.usersNetService.getUsersByEmail(email).pipe(
+            take(1),
+            catchError((error) => {
+              console.error('Error buscando usuario por email:', error);
+              this.discountMessage = 'Error: No se pudo buscar el usuario';
+              this.discountMessageSeverity = 'error';
+              return of(null);
+            })
+          );
+        }),
+        switchMap((users) => {
+          if (!users) {
+            return of(null);
+          }
+
+          if (!users || users.length === 0) {
+            this.discountMessage = 'Error: No se encontró el usuario logueado';
+            this.discountMessageSeverity = 'error';
+            return of(null);
+          }
+
+          const userId = users[0]?.id;
+          if (!userId) {
+            this.discountMessage = 'Error: No se pudo obtener el ID del usuario';
+            this.discountMessageSeverity = 'error';
+            return of(null);
+          }
+
+          // Aplicar el cupón con el userId del usuario logueado (NO de la reserva)
+          return this.reservationCouponService.apply(trimmedCode, this.reservationId, userId).pipe(
+            catchError((error) => {
+              console.error('Error al aplicar código de descuento:', error);
+              this.discountMessage = 'Error al aplicar el código de descuento';
+              this.discountMessageSeverity = 'error';
+              return of(false);
+            })
+          );
+        })
+      )
+      .subscribe((success: boolean | null) => {
+        if (success === null) {
+          return;
+        }
+
+        if (success) {
+          this.discountMessage = 'Código de descuento aplicado correctamente';
+          this.discountMessageSeverity = 'success';
+          this.discountApplied.emit();
+        } else {
+          this.discountMessage = 'No se pudo aplicar el código de descuento';
+          this.discountMessageSeverity = 'error';
+        }
+      });
+  }
+
+
+  validateDiscountCode(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const value = input.value;
+    // Solo permitir letras (mayúsculas y minúsculas), números y guiones
+    const filteredValue = value.replace(/[^a-zA-Z0-9-]/g, '');
+    // Limitar a 20 caracteres
+    const limitedValue = filteredValue.substring(0, 20);
+
+    if (value !== limitedValue) {
+      this.discountCode = limitedValue;
+      input.value = limitedValue;
+    }
   }
 }

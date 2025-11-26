@@ -49,6 +49,7 @@ import {
 import { IBookingRequirements } from '../../../../../../core/services/flight/flight-search.service';
 import { PersonalInfo } from '../../../../../../core/models/v2/profile-v2.model';
 import { CheckoutUserDataService } from '../../../../../../core/services/v2/checkout-user-data.service';
+import { PhonePrefixService, IPhonePrefixResponse } from '../../../../../../core/services/masterdata/phone-prefix.service';
 
 @Component({
   selector: 'app-info-traveler-form',
@@ -78,6 +79,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
   mandatoryTypes: IMandatoryTypeResponse[] = [];
   reservationFields: IReservationFieldResponse[] = [];
   ageGroups: IAgeGroupResponse[] = [];
+  phonePrefixes: IPhonePrefixResponse[] = [];
 
   // Datos existentes del viajero
   existingTravelerFields: IReservationTravelerFieldResponse[] = [];
@@ -126,13 +128,13 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     },
     phone: {
       required: () => 'El teléfono es requerido.',
-      pattern: () => 'Ingresa un número de teléfono válido. Puede incluir código de país.',
+      pattern: () => 'Ingresa un número de teléfono válido.',
     },
     text: {
       required: () => 'Este campo es obligatorio.',
       minlength: (params) => `Debe tener al menos ${params?.['minLength']} caracteres.`,
       maxlength: (params) => `No puede tener más de ${params?.['maxLength']} caracteres.`,
-      pattern: () => 'Ingresa un número de teléfono válido. Puede incluir código de país.',
+      pattern: () => 'Ingresa un número de teléfono válido.',
     },
     number: {
       required: () => 'Este campo es obligatorio.',
@@ -171,7 +173,8 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     private reservationTravelerFieldService: ReservationTravelerFieldService,
     private messageService: MessageService,
     private fb: FormBuilder,
-    private checkoutUserDataService: CheckoutUserDataService
+    private checkoutUserDataService: CheckoutUserDataService,
+    private phonePrefixService: PhonePrefixService
   ) {
     this.travelerForm = this.fb.group({});
   }
@@ -247,6 +250,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
           mandatoryTypes: this.mandatoryTypeService.getAll(),
           reservationFields: this.reservationFieldService.getAllOrdered(),
           ageGroups: this.ageGroupService.getAllOrdered(),
+          phonePrefixes: this.phonePrefixService.getAllOrdered(),
         }).pipe(takeUntil(this.destroy$))
           .subscribe({
             next: ({
@@ -255,12 +259,14 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
               mandatoryTypes,
               reservationFields,
               ageGroups,
+              phonePrefixes,
             }) => {
               this.traveler = traveler;
               this.departureReservationFields = departureFields;
               this.mandatoryTypes = mandatoryTypes;
               this.reservationFields = reservationFields;
               this.ageGroups = ageGroups;
+              this.phonePrefixes = phonePrefixes;
               
               // Buscar el age group del viajero
               this.ageGroup = this.ageGroups.find(ag => ag.id === this.traveler?.ageGroupId) || null;
@@ -428,9 +434,15 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     });
 
     if (hasPhoneField && !hasPhonePrefixField && this.traveler) {
-      // Buscar el campo phonePrefix en reservationFields
+      // Buscar el campo phone y phonePrefix en reservationFields
+      const phoneField = this.departureReservationFields.find(field => {
+        const fieldDetails = this.getReservationFieldDetails(field.reservationFieldId);
+        return fieldDetails?.code === 'phone';
+      });
+      
       const phonePrefixField = this.reservationFields.find(f => f.code === 'phonePrefix');
-      if (phonePrefixField) {
+      
+      if (phoneField && phonePrefixField) {
         const prefixControlName = `phonePrefix_${this.traveler.id}`;
         const existingControl = this.travelerForm.get(prefixControlName);
         
@@ -438,15 +450,47 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
           // Crear el control si no existe
           let prefixValue: string | null = null;
           
-          // Intentar cargar desde BD
+          // PRIMERO: Intentar cargar desde BD
           const existingPrefixValue = this.getExistingFieldValue(this.traveler.id, phonePrefixField.id);
           if (existingPrefixValue) {
             prefixValue = existingPrefixValue;
+            console.log(`[BD] phonePrefix → Valor de BD: "${prefixValue}"`);
+          } else if (this.traveler.isLeadTraveler && this.currentPersonalInfo) {
+            // SEGUNDO: Si NO hay datos en BD Y es lead traveler, prellenar del perfil
+            const userPrefixValue = this.currentPersonalInfo.phonePrefix;
+            if (userPrefixValue) {
+              prefixValue = userPrefixValue;
+              console.log(`[PERFIL] phonePrefix → Pre-llenado desde perfil: "${prefixValue}"`);
+            } else {
+              // TERCERO: Si no hay datos en BD ni en perfil, establecer +34 (España) por defecto
+              prefixValue = '+34';
+              console.log(`[DEFAULT] phonePrefix → Valor por defecto: "${prefixValue}"`);
+            }
+          } else {
+            // Si no es lead traveler o no hay perfil, establecer +34 (España) por defecto
+            prefixValue = '+34';
+            console.log(`[DEFAULT] phonePrefix → Valor por defecto: "${prefixValue}"`);
           }
           
-          const prefixControl = this.fb.control(prefixValue);
+          // ⭐ NUEVO: Aplicar las mismas validaciones que el teléfono
+          const phoneFieldDetails = this.getReservationFieldDetails(phoneField.reservationFieldId);
+          const prefixValidators = this.getValidatorsForField(
+            phonePrefixField,
+            phoneField, // Usar el mismo field de departure para heredar la obligatoriedad
+            this.traveler.isLeadTraveler
+          );
+          
+          const prefixControl = this.fb.control(prefixValue, prefixValidators);
+          
+          // Si el valor viene del perfil del usuario (no de BD), marcarlo como dirty
+          if (this.traveler.isLeadTraveler && this.currentPersonalInfo && !existingPrefixValue && prefixValue) {
+            prefixControl.markAsDirty();
+            prefixControl.markAsTouched();
+            console.log(`[PRE-LLENADO] phonePrefix marcado como dirty desde perfil del usuario`);
+          }
+          
           this.travelerForm.addControl(prefixControlName, prefixControl);
-          console.log(`[CONTROL CREADO] ${prefixControlName} con valor: "${prefixValue}"`);
+          console.log(`[CONTROL CREADO] ${prefixControlName} con valor: "${prefixValue}" y validaciones: ${prefixValidators.length > 0 ? 'SÍ' : 'NO'}`);
         } else {
           // Actualizar el valor del control existente con el valor de BD
           const existingPrefixValue = this.getExistingFieldValue(this.traveler.id, phonePrefixField.id);
@@ -551,7 +595,8 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
                                 fieldDetails.name.toLowerCase().includes('expiración') ||
                                 fieldDetails.name.toLowerCase().includes('vencimiento') ||
                                 fieldDetails.code.toLowerCase().includes('expiration') ||
-                                fieldDetails.code.toLowerCase().includes('expiry');
+                                fieldDetails.code.toLowerCase().includes('expiry') ||
+                                fieldDetails.code.toLowerCase() === 'dniexpiration';
         
         if (isBirthDate && this.traveler) {
           validators.push(this.birthdateValidator(this.traveler.ageGroupId));
@@ -572,7 +617,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
 
   /**
    * Validador personalizado para teléfono
-   * Permite números internacionales con código de país y espacios
+   * Solo acepta dígitos (6-14 dígitos), sin prefijo ya que el prefijo va por separado
    */
   private phoneValidator() {
     return (control: AbstractControl): ValidationErrors | null => {
@@ -588,9 +633,9 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       // Normalizar el teléfono eliminando espacios y guiones
       const normalizedPhone = phoneValue.replace(/[\s-]/g, '');
       
-      // Patrón que acepta: +código_país (1-3 dígitos) + número (6-14 dígitos)
-      // También acepta solo el número sin código de país
-      const phoneRegex = /^(\+\d{1,3})?\d{6,14}$/;
+      // Patrón que solo acepta dígitos (6-14 dígitos)
+      // No acepta prefijo + ya que el prefijo va por separado
+      const phoneRegex = /^\d{6,14}$/;
       
       if (!phoneRegex.test(normalizedPhone)) {
         return { pattern: true };
@@ -750,7 +795,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
 
     this.travelerFieldDates = {};
     
-    const dateFields = ['birthdate', 'expirationdate'];
+    const dateFields = ['birthdate', 'expirationdate', 'dniexpiration'];
     
     dateFields.forEach(fieldCode => {
       const minDate = this.getMinDateForField(fieldCode);
@@ -781,7 +826,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
         const minDate = new Date(today.getFullYear() - 100, 0, 1);
         return minDate;
       }
-    } else if (fieldCode === 'expirationdate') {
+    } else if (fieldCode === 'expirationdate' || fieldCode === 'dniexpiration') {
       const today = new Date();
       return today;
     }
@@ -807,7 +852,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       } else {
         return today;
       }
-    } else if (fieldCode === 'expirationdate') {
+    } else if (fieldCode === 'expirationdate' || fieldCode === 'dniexpiration') {
       const today = new Date();
       return new Date(today.getFullYear() + 30, 11, 31);
     }
@@ -875,12 +920,30 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
 
   /**
    * Parsear string ISO (YYYY-MM-DD) a Date
+   * Maneja correctamente fechas sin hora para evitar problemas de zona horaria
    */
   private parseDateFromISO(dateString: string): Date | null {
     if (!dateString || typeof dateString !== 'string') {
       return null;
     }
 
+    // Si es formato YYYY-MM-DD sin hora, parsear como fecha local para evitar problemas de zona horaria
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      const [year, month, day] = dateString.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
+      
+      // Verificar que la fecha es válida
+      if (
+        date.getFullYear() === year &&
+        date.getMonth() === month - 1 &&
+        date.getDate() === day
+      ) {
+        return date;
+      }
+      return null;
+    }
+
+    // Para otros formatos ISO (con hora), usar el constructor estándar
     const date = new Date(dateString);
     
     if (isNaN(date.getTime())) {
@@ -923,62 +986,37 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
         returnValue = userData.email || null;
         break;
       case 'phone':
-      case 'telefono':
         returnValue = userData.telefono || null;
         break;
-      case 'firstname':
-      case 'first_name':
       case 'name':
-      case 'nombre':
         returnValue = userData.nombre || null;
         break;
-      case 'lastname':
-      case 'last_name':
       case 'surname':
-      case 'apellido':
-      case 'apellidos':
         returnValue = userData.apellido || null;
         break;
       case 'birthdate':
-      case 'fecha_nacimiento':
         returnValue = userData.fechaNacimiento || null;
         break;
-      case 'dni':
       case 'national_id':
         returnValue = userData.dni || null;
         break;
+      case 'dniexpiration':
+        returnValue = userData.fechaExpiracionDni || null;
+        break;
       case 'nationality':
-      case 'country':
-      case 'pais':
         returnValue = userData.pais || null;
         break;
-      case 'city':
-      case 'ciudad':
-        returnValue = userData.ciudad || null;
-        break;
       case 'postal_code':
-      case 'codigo_postal':
         returnValue = userData.codigoPostal || null;
         break;
-      case 'address':
-      case 'direccion':
-        returnValue = userData.direccion || null;
-        break;
       case 'sex':
-      case 'sexo':
         returnValue = this.normalizeSexValue(userData.sexo);
         break;
+      case 'phonePrefix':
+        returnValue = userData.phonePrefix || null;
+        break;
       default:
-        const codeLower = (fieldCode || '').toLowerCase();
-        switch (codeLower) {
-          case 'sex':
-          case 'gender':
-          case 'sexo':
-            returnValue = this.normalizeSexValue(userData.sexo);
-            break;
-          default:
-            returnValue = null;
-        }
+        returnValue = null;
     }
     
     console.log(`[getUserDataForField] Campo: ${fieldCode} → Valor retornado: "${returnValue}"`);
@@ -1233,6 +1271,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
 
   /**
    * Maneja el cambio en campos de teléfono
+   * Solo permite dígitos, espacios y guiones (el prefijo va por separado)
    */
   onPhoneFieldChange(fieldCode: string, event: Event): void {
     if (!this.traveler) {
@@ -1240,20 +1279,10 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     const input = event.target as HTMLInputElement;
-    // Permitir números, +, espacios y guiones
-    let filtered = input.value.replace(/[^\d+\s-]/g, '');
+    // Solo permitir números, espacios y guiones (no permitir + ya que el prefijo va por separado)
+    let filtered = input.value.replace(/[^\d\s-]/g, '');
     
-    // Si hay un +, asegurarse de que esté solo al inicio
-    const plusIndex = filtered.indexOf('+');
-    if (plusIndex > 0) {
-      // Si hay un + que no está al inicio, eliminarlo
-      filtered = filtered.replace(/\+/g, '');
-    } else if (plusIndex === 0 && filtered.indexOf('+', 1) > 0) {
-      // Si hay múltiples +, mantener solo el primero
-      filtered = filtered.substring(0, 1) + filtered.substring(1).replace(/\+/g, '');
-    }
-    
-    // Limitar la longitud total (considerando +, espacios y guiones)
+    // Limitar la longitud total (considerando espacios y guiones)
     filtered = filtered.slice(0, 20);
     
     input.value = filtered;
@@ -1901,6 +1930,20 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
           } else if (!control.value || control.value === '') {
             mandatoryFieldsMissing.push(`${fieldDetails.code} (vacío)`);
           }
+
+          // NUEVO: Si el campo es phone y es obligatorio, también validar phonePrefix
+          if (fieldDetails.code === 'phone') {
+            const prefixControlName = `phonePrefix_${this.traveler!.id}`;
+            const prefixControl = this.travelerForm.get(prefixControlName);
+            
+            if (prefixControl) {
+              if (prefixControl.invalid) {
+                mandatoryFieldsInvalid.push(`phonePrefix (${this.getControlErrorMessage(prefixControl, 'phonePrefix')})`);
+              } else if (!prefixControl.value || prefixControl.value === '') {
+                mandatoryFieldsMissing.push(`phonePrefix (vacío)`);
+              }
+            }
+          }
         }
       }
     });
@@ -2124,62 +2167,37 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
         returnValue = userData.email || null;
         break;
       case 'phone':
-      case 'telefono':
         returnValue = userData.telefono || null;
         break;
-      case 'firstname':
-      case 'first_name':
       case 'name':
-      case 'nombre':
         returnValue = userData.nombre || null;
         break;
-      case 'lastname':
-      case 'last_name':
       case 'surname':
-      case 'apellido':
-      case 'apellidos':
         returnValue = userData.apellido || null;
         break;
       case 'birthdate':
-      case 'fecha_nacimiento':
         returnValue = userData.fechaNacimiento || null;
         break;
-      case 'dni':
       case 'national_id':
         returnValue = userData.dni || null;
         break;
+      case 'dniexpiration':
+        returnValue = userData.fechaExpiracionDni || null;
+        break;
       case 'nationality':
-      case 'country':
-      case 'pais':
         returnValue = userData.pais || null;
         break;
-      case 'city':
-      case 'ciudad':
-        returnValue = userData.ciudad || null;
-        break;
       case 'postal_code':
-      case 'codigo_postal':
         returnValue = userData.codigoPostal || null;
         break;
-      case 'address':
-      case 'direccion':
-        returnValue = userData.direccion || null;
-        break;
       case 'sex':
-      case 'sexo':
         returnValue = this.normalizeSexValue(userData.sexo);
         break;
+      case 'phonePrefix':
+        returnValue = userData.phonePrefix || null;
+        break;
       default:
-        const codeLower = (fieldCode || '').toLowerCase();
-        switch (codeLower) {
-          case 'sex':
-          case 'gender':
-          case 'sexo':
-            returnValue = this.normalizeSexValue(userData.sexo);
-            break;
-          default:
-            returnValue = null;
-        }
+        returnValue = null;
     }
     
     console.log(`[getUserDataForFieldFromData] Campo: ${fieldCode} → Valor: "${returnValue}"`);

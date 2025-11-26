@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import {
   DocumentationService,
   IDocumentReservationResponse,
@@ -18,6 +19,7 @@ import {
 import {
   DocumentServicev2,
   DocumentType,
+  DocumentDownloadResult,
 } from '../../../core/services/v2/document.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
@@ -72,6 +74,11 @@ export class BookingDocumentationV2Component implements OnInit {
   // Propiedad para el estado de carga de descarga por documento
   downloadLoading: { [key: number]: boolean } = {};
 
+  // Propiedades para el modal de contenido de notificación
+  showNotificationContentModal: boolean = false;
+  selectedNotificationContent: string | null = null;
+  notificationContentUrl: SafeResourceUrl | null = null;
+
   constructor(
     private documentationService: DocumentationService,
     private notificationService: NotificationService,
@@ -79,7 +86,8 @@ export class BookingDocumentationV2Component implements OnInit {
     private reservationTKLogService: ReservationTKLogService,
     private documentServicev2: DocumentServicev2,
     private http: HttpClient,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private sanitizer: DomSanitizer
   ) {}
 
   /**
@@ -255,7 +263,7 @@ export class BookingDocumentationV2Component implements OnInit {
   /**
    * Formatea la fecha de creación de una notificación
    */
-  formatNotificationDate(dateString: string): string {
+  formatNotificationDate(dateString: string | null): string {
     if (!dateString) return 'Fecha no disponible';
 
     try {
@@ -270,6 +278,60 @@ export class BookingDocumentationV2Component implements OnInit {
     } catch (error) {
       return 'Fecha no válida';
     }
+  }
+
+  /**
+   * Abre el modal para ver el contenido de una notificación
+   * @param content - Contenido de la notificación a mostrar
+   */
+  openNotificationContentModal(content: string | null): void {
+    this.selectedNotificationContent = content;
+    
+    // Crear un blob URL para el iframe para preservar mejor los estilos
+    const htmlContent = this.getNotificationContentForIframe(content);
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    
+    // Revocar la URL anterior si existe
+    if (this.notificationContentUrl) {
+      const url = this.notificationContentUrl.toString();
+      if (url.startsWith('blob:')) {
+        URL.revokeObjectURL(url);
+      }
+    }
+    
+    const blobUrl = URL.createObjectURL(blob);
+    this.notificationContentUrl = this.sanitizer.bypassSecurityTrustResourceUrl(blobUrl);
+    this.showNotificationContentModal = true;
+  }
+
+  /**
+   * Cierra el modal de contenido de notificación
+   */
+  closeNotificationContentModal(): void {
+    this.showNotificationContentModal = false;
+    
+    // Limpiar el blob URL
+    if (this.notificationContentUrl) {
+      const url = this.notificationContentUrl.toString();
+      if (url.startsWith('blob:')) {
+        URL.revokeObjectURL(url);
+      }
+      this.notificationContentUrl = null;
+    }
+    
+    this.selectedNotificationContent = null;
+  }
+
+  /**
+   * Obtiene el contenido para el iframe tal cual viene
+   * @param content - Contenido de la notificación
+   * @returns Contenido sin modificaciones
+   */
+  getNotificationContentForIframe(content: string | null): string {
+    if (!content) {
+      return '<p>No hay contenido disponible</p>';
+    }
+    return content;
   }
 
   /**
@@ -584,69 +646,40 @@ export class BookingDocumentationV2Component implements OnInit {
     );
     const documentTypeCode = documentType?.code?.toUpperCase();
 
-    // Si tenemos el código del tipo de documento, intentar obtener la ruta completa
-    if (
-      documentTypeCode &&
-      (documentTypeCode === 'BUDGET' ||
-        documentTypeCode === 'RESERVATION_VOUCHER')
-    ) {
+    // Si tenemos el código del tipo de documento, usar el método unificado
+    if (documentTypeCode) {
       this.documentServicev2
-        .getDocumentPath(reservationId, documentTypeCode as DocumentType)
+        .downloadDocumentByCode(reservationId, documentTypeCode)
         .subscribe({
-          next: (documentPath) => {
-            // Usar la ruta completa del documento
-            const baseUrl = environment.documentationApiUrl;
-            const url = `${baseUrl}/File/Get`;
+          next: (result: DocumentDownloadResult) => {
+            this.downloadLoading[documentId] = false;
 
-            const headers = new HttpHeaders({
-              accept: 'application/octet-stream',
+            const downloadUrl = window.URL.createObjectURL(result.blob);
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = result.fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(downloadUrl);
+
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Éxito',
+              detail: 'Documento descargado exitosamente',
             });
-
-            const params = new URLSearchParams();
-            params.set('filepath', documentPath);
-
-            this.http
-              .get(`${url}?${params.toString()}`, {
-                headers,
-                responseType: 'blob',
-              })
-              .subscribe({
-                next: (blob) => {
-                  this.downloadLoading[documentId] = false;
-
-                  const downloadUrl = window.URL.createObjectURL(blob);
-                  const link = document.createElement('a');
-                  link.href = downloadUrl;
-                  link.download = fileName;
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                  window.URL.revokeObjectURL(downloadUrl);
-
-                  this.messageService.add({
-                    severity: 'success',
-                    summary: 'Éxito',
-                    detail: 'Documento descargado exitosamente',
-                  });
-                },
-                error: (error) => {
-                  this.downloadLoading[documentId] = false;
-                  console.error('Error al descargar documento:', error);
-                  this.handleDownloadError(error);
-                },
-              });
           },
           error: (error) => {
-            // Si no se puede obtener la ruta, intentar con el método alternativo
+            // Si falla el método unificado, intentar con el método alternativo
             console.warn(
-              'No se pudo obtener la ruta del documento, intentando método alternativo:',
+              'No se pudo descargar con el método unificado, intentando método alternativo:',
               error
             );
             this.downloadDocumentAlternative(fileName, documentId);
           },
         });
     } else {
-      // Si no es BUDGET o RESERVATION_VOUCHER, usar método alternativo
+      // Si no tenemos el código, usar método alternativo
       this.downloadDocumentAlternative(fileName, documentId);
     }
   }

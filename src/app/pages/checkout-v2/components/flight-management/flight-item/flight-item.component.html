@@ -1,4 +1,4 @@
-<div *ngIf="flightPack && flightPack.ageGroupPrices[0].price > 0" class="flight-item"> <!-- Puede haber errores, se da por hecho que o son iguales o el primero es de adulto-->
+<div *ngIf="flightPack" class="flight-item">
   <div class="flight-departure-title" *ngIf="flightPack">
     <h3>
       Salida {{ flightPack.flights[0].departureCity }} ({{
@@ -45,10 +45,22 @@
     <div class="flight-itinerary-price space-y-4">
       <div class="flight-itinerary-price-wrapper">
         <span class="flight-itinerary-price-wrapper-price">
-          {{ flightPack.ageGroupPrices[0].price || 0 | currencyFormat : "EUR" }} <!-- Puede haber errores, se da por hecho que o son iguales o el primero es de adulto-->
+          {{ getFlightPrice() }}
         </span>
-        <span class="flight-itinerary-price-wrapper-text">Por persona</span>
+        <span class="flight-itinerary-price-wrapper-text" *ngIf="getFlightPrice() !== 'N/A'">Por persona</span>
       </div>
+
+      <div class="flight-availability-info" *ngIf="availablePlaces !== undefined && availablePlaces <= 4">
+        <span *ngIf="availablePlaces > 0" class="availability-available">
+          <i class="pi pi-check-circle"></i>
+          {{ availablePlaces }} {{ availablePlaces === 1 ? ' disponible' : ' disponibles' }}
+        </span>
+        <span *ngIf="availablePlaces === 0" class="availability-unavailable">
+          <i class="pi pi-times-circle"></i>
+          Sin disponibilidad
+        </span>
+      </div>
+
       <p-button
         type="button"
         class="button-rounded is-primary px-6 py-3"

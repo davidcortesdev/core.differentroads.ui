@@ -20,18 +20,17 @@
       <!-- Campo de teléfono (code === 'phone') -->
       <ng-container *ngIf="fieldDetails.code === 'phone'">
         <div class="phone-row">
-          <ng-container *ngIf="travelerForm && travelerId">
-            <input
-              *ngIf="travelerForm.get('phonePrefix_' + travelerId)"
-              pInputText
-              type="text"
-              class="prefix-input"
-              [formControl]="travelerForm.get('phonePrefix_' + travelerId)"
-              placeholder="+34"
-              inputmode="numeric"
-              maxlength="3"
-              (input)="onPrefixInput($event)"
-            />
+          <ng-container *ngIf="prefixControl as prefixCtrl">
+            <app-phone-prefix-select
+              [formControl]="prefixCtrl"
+              [phonePrefixOptions]="phonePrefixOptions"
+              [placeholder]="'Seleccione prefijo'"
+              [showClear]="true"
+              [filter]="true"
+              [styleClass]="'prefix-select'"
+              [errorClass]="hasPrefixError ? 'p-invalid' : ''"
+              (prefixChange)="onPrefixChange()">
+            </app-phone-prefix-select>
           </ng-container>
           <input 
             pInputText 
@@ -45,6 +44,9 @@
         </div>
         <small *ngIf="hasError" class="p-error">
           {{ getErrorMessage(errors) }}
+        </small>
+        <small *ngIf="hasPrefixError" class="p-error">
+          {{ getPrefixErrorMessage(prefixErrors) }}
         </small>
       </ng-container>
       
@@ -82,16 +84,16 @@
     <ng-container *ngSwitchCase="'phone'">
       <div class="phone-row">
         <ng-container *ngIf="prefixControl as prefixCtrl">
-          <input
-            pInputText
-            type="text"
-            class="prefix-input"
+          <app-phone-prefix-select
             [formControl]="prefixCtrl"
-            placeholder="+34"
-            inputmode="numeric"
-            maxlength="3"
-            (input)="onPrefixInput($event)"
-          />
+            [phonePrefixOptions]="phonePrefixOptions"
+            [placeholder]="'Seleccione prefijo'"
+            [showClear]="true"
+            [filter]="true"
+            [styleClass]="'prefix-select'"
+            [errorClass]="hasPrefixError ? 'p-invalid' : ''"
+            (prefixChange)="onPrefixChange()">
+          </app-phone-prefix-select>
         </ng-container>
         <input 
           pInputText 
@@ -105,6 +107,9 @@
       </div>
       <small *ngIf="hasError" class="p-error">
         {{ getErrorMessage(errors) }}
+      </small>
+      <small *ngIf="hasPrefixError" class="p-error">
+        {{ getErrorMessage(prefixErrors) }}
       </small>
     </ng-container>
 

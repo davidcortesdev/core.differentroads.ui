@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   FormBuilder,
@@ -7,19 +7,25 @@ import {
   ReactiveFormsModule,
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DividerModule } from 'primeng/divider';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { SelectModule } from 'primeng/select';
+import { CheckboxModule } from 'primeng/checkbox';
 import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 import { UsersNetService } from '../../../../core/services/users/usersNet.service';
-import { HubspotService } from '../../../../core/services/integrations/hubspot.service';
 import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
 import { ConfirmationCodeComponent } from '../../../../shared/components/confirmation-code/confirmation-code.component';
+import { PhonePrefixSelectComponent } from '../../../../shared/components/phone-prefix-select/phone-prefix-select.component';
+import { PhonePrefixService, IPhonePrefixResponse } from '../../../../core/services/masterdata/phone-prefix.service';
 import { IUserResponse } from '../../../../core/models/users/user.model';
 import { environment } from '../../../../../environments/environment';
 import { MessageService } from 'primeng/api';
+import { Subject, of, Observable } from 'rxjs';
+import { takeUntil, switchMap, catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-sign-up-form',
@@ -27,17 +33,21 @@ import { MessageService } from 'primeng/api';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     ConfirmationCodeComponent,
+    PhonePrefixSelectComponent,
     InputTextModule,
     PasswordModule,
     ButtonModule,
     DividerModule,
-    ProgressSpinnerModule
+    ProgressSpinnerModule,
+    SelectModule,
+    CheckboxModule
   ],
   templateUrl: './sign-up-form.component.html',
   styleUrls: ['./sign-up-form.component.scss'],
 })
-export class SignUpFormComponent {
+export class SignUpFormComponent implements OnInit, OnDestroy {
   signUpForm: FormGroup;
   isLoading: boolean = false;
   isConfirming: boolean = false;
@@ -47,6 +57,12 @@ export class SignUpFormComponent {
   registeredUsername: string = '';
   userPassword: string = '';
   registeredUser: IUserResponse | null = null;
+
+  // Opciones para el dropdown de prefijo telefónico
+  phonePrefixOptions: IPhonePrefixResponse[] = [];
+  selectedPhonePrefix: string | null = '+34';
+
+  private destroy$ = new Subject<void>();
 
   // Mensajes de error personalizados
   errorMessages: { [key: string]: { [key: string]: string } } = {
@@ -62,7 +78,7 @@ export class SignUpFormComponent {
     },
     phone: {
       required: 'El teléfono es requerido.',
-      pattern: 'Ingresa un número de teléfono válido. Puede incluir código de país.',
+      pattern: 'Ingresa un número de teléfono válido.',
     },
     password: {
       required: 'La contraseña es requerida.',
@@ -71,7 +87,10 @@ export class SignUpFormComponent {
     confirmPassword: {
       required: 'Confirma tu contraseña.',
       mismatch: 'Las contraseñas no coinciden.',
-    }
+    },
+    acceptPrivacyPolicy: {
+      required: 'Debes aceptar la política de privacidad para continuar',
+    },
   };
 
   constructor(
@@ -79,21 +98,57 @@ export class SignUpFormComponent {
     private router: Router,
     private authService: AuthenticateService,
     private usersNetService: UsersNetService,
-    private hubspotService: HubspotService,
     private analyticsService: AnalyticsService,
-    private messageService: MessageService // <--- INYECTAR!
+    private messageService: MessageService,
+    private phonePrefixService: PhonePrefixService
   ) {
     this.signUpForm = this.fb.group(
       {
         firstName: ['', [Validators.required]],
         lastName: ['', [Validators.required]],
         email: ['', [Validators.required, Validators.email]],
-        phone: ['', [Validators.required, Validators.pattern(/^(\+\d{1,3})?\s?\d{6,14}$/)]],
+        phonePrefix: ['+34'],
+        phone: ['', [Validators.required, Validators.pattern(/^\d{6,14}$/)]],
         password: ['', [Validators.required, Validators.minLength(8)]],
         confirmPassword: ['', [Validators.required]],
+        acceptPrivacyPolicy: [false, [Validators.requiredTrue]],
       },
       { validators: this.passwordMatchValidator }
     );
+  }
+
+  ngOnInit(): void {
+    // Inicializar prefijo por defecto antes de cargar opciones
+    if (!this.selectedPhonePrefix) {
+      this.selectedPhonePrefix = '+34';
+    }
+    
+    // Cargar prefijos telefónicos
+    this.phonePrefixService.getAllOrdered()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (prefixes) => {
+          this.phonePrefixOptions = prefixes;
+          // Asegurar que el prefijo seleccionado esté establecido después de cargar las opciones
+          if (!this.selectedPhonePrefix) {
+            this.selectedPhonePrefix = '+34';
+          }
+        },
+        error: (error) => {
+          console.error('Error loading phone prefixes:', error);
+        }
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  onPhonePrefixChange(event: any): void {
+    const value = event?.value || event || null;
+    this.selectedPhonePrefix = value;
+    this.signUpForm.patchValue({ phonePrefix: value || '+34' });
   }
 
   showToastError(msg: string) {
@@ -126,23 +181,10 @@ export class SignUpFormComponent {
     this.isLoading = true;
     console.log('Formulario enviado:', this.signUpForm.value);
 
-    // Crear el contacto en Hubspot primero
-    const contactData = {
-      email: this.signUpForm.value.email,
-      firstname: this.signUpForm.value.firstName,
-      lastname: this.signUpForm.value.lastName,
-      phone: this.signUpForm.value.phone,
-    };
-
-    this.hubspotService.createContact(contactData)
-      .subscribe({
-        next: (hubspotResponse) => {
-          console.log('Contacto creado en Hubspot exitosamente:', hubspotResponse);
-
-          // Si Hubspot responde correctamente, proceder con el registro del usuario
-          this.authService
-            .signUp(this.signUpForm.value.email, this.signUpForm.value.password)
-            .then((cognitoUserId) => {
+    // Proceder con el registro del usuario
+    this.authService
+      .signUp(this.signUpForm.value.email, this.signUpForm.value.password)
+      .then((cognitoUserId) => {
               console.log('Usuario creado en Cognito con ID:', cognitoUserId);
               
               // Primero buscar si el usuario ya existe en UsersNet por email
@@ -159,7 +201,9 @@ export class SignUpFormComponent {
                       phone: this.signUpForm.value.phone,
                       hasWebAccess: true,
                       hasMiddleAccess: false,
-                      retailerId: environment.retaileriddefault
+                      retailerId: environment.retaileriddefault,
+                      politicasAceptadas: this.signUpForm.value.acceptPrivacyPolicy === true ? true : false,
+                      detalleDeLaFuenteDeRegistro1: 'Form-signup.'
                     };
 
                     if (existingUsers && existingUsers.length > 0) {
@@ -178,10 +222,17 @@ export class SignUpFormComponent {
                       
                       this.usersNetService
                         .updateUser(existingUser.id, updateData)
+                        .pipe(
+                          switchMap(() => {
+                            return this.phonePrefixService.saveUserPhonePrefix(
+                              existingUser.id.toString(), 
+                              this.selectedPhonePrefix || '+34'
+                            );
+                          })
+                        )
                         .subscribe({
-                          next: (updated) => {
-                            console.log('Usuario actualizado exitosamente:', updated);
-                            
+                          next: () => {
+                            console.log('Usuario actualizado exitosamente con prefijo telefónico');
                             // Guardar el usuario para verificar después de la confirmación
                             this.registeredUser = existingUser;
                             
@@ -204,10 +255,19 @@ export class SignUpFormComponent {
                       
                       this.usersNetService
                         .createUser(userData)
+                        .pipe(
+                          switchMap((user) => {
+                            console.log('Usuario creado exitosamente:', user);
+                            return this.phonePrefixService.saveUserPhonePrefix(
+                              user.id.toString(), 
+                              this.selectedPhonePrefix || '+34'
+                            ).pipe(
+                              switchMap(() => of(user))
+                            );
+                          })
+                        )
                         .subscribe({
                           next: (user) => {
-                            console.log('Usuario creado exitosamente:', user);
-                            
                             // Guardar el usuario para verificar después de la confirmación
                             this.registeredUser = user;
                             
@@ -217,7 +277,7 @@ export class SignUpFormComponent {
                             this.isConfirming = true;
                             this.registeredUsername = this.signUpForm.value.email;
                             this.userPassword = this.signUpForm.value.password;
-                            console.log('Registro completado. Esperando confirmación.');
+                            console.log('Registro completado con prefijo telefónico. Esperando confirmación.');
                           },
                           error: (error: unknown) => {
                             this.isLoading = false;
@@ -236,13 +296,6 @@ export class SignUpFormComponent {
               this.isLoading = false;
               this.showToastError(error instanceof Error ? error.message : 'Registro fallido');
             });
-        },
-        error: (hubspotError) => {
-          this.isLoading = false;
-          this.showToastError('Error al crear el contacto en Hubspot');
-          console.error('Error al crear contacto en Hubspot:', hubspotError);
-        }
-      });
   }
 
   onConfirmSuccess(): void {

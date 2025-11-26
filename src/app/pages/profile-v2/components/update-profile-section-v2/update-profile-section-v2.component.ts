@@ -1,7 +1,10 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
 import { PersonalInfo } from '../../../../core/models/v2/profile-v2.model';
 import { UpdateProfileV2Service } from '../../../../core/services/v2/update-profile-v2.service';
 import { CloudinaryService } from '../../../../core/services/media/cloudinary.service';
+import { PhonePrefixService, IPhonePrefixResponse } from '../../../../core/services/masterdata/phone-prefix.service';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-update-profile-section-v2',
@@ -9,7 +12,7 @@ import { CloudinaryService } from '../../../../core/services/media/cloudinary.se
   templateUrl: './update-profile-section-v2.component.html',
   styleUrls: ['./update-profile-section-v2.component.scss'],
 })
-export class UpdateProfileSectionV2Component{
+export class UpdateProfileSectionV2Component implements OnInit, OnDestroy {
   @Input() userId: string = '';
   @Input() personalInfo: PersonalInfo = {};
   @Input() cognitoId: string = '';
@@ -35,10 +38,44 @@ export class UpdateProfileSectionV2Component{
     { label: 'Otro', value: 'Otro' }
   ];
 
+  // Opciones para el dropdown de prefijo telefónico
+  phonePrefixOptions: IPhonePrefixResponse[] = [];
+  selectedPhonePrefix: string | null = null;
+
+  private destroy$ = new Subject<void>();
+
   constructor(
     private updateProfileService: UpdateProfileV2Service,
-    private cloudinaryService: CloudinaryService
+    private cloudinaryService: CloudinaryService,
+    private phonePrefixService: PhonePrefixService
   ) { }
+
+  ngOnInit(): void {
+    // Cargar prefijos telefónicos
+    this.phonePrefixService.getAllOrdered()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (prefixes) => {
+          this.phonePrefixOptions = prefixes;
+          // Si hay un prefijo guardado en personalInfo, establecerlo
+          if (this.personalInfo.phonePrefix) {
+            this.selectedPhonePrefix = this.personalInfo.phonePrefix;
+          } else {
+            // Si no hay prefijo guardado, establecer +34 (España) por defecto
+            this.selectedPhonePrefix = '+34';
+            this.personalInfo.phonePrefix = '+34';
+          }
+        },
+        error: (error) => {
+          console.error('Error loading phone prefixes:', error);
+        }
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
 
   formatDate(dateInput: string | Date | undefined): string {
@@ -102,12 +139,10 @@ export class UpdateProfileSectionV2Component{
     this.clearFieldError('telefono');
   }
 
-  // Input helper: limitar prefijo a 3 dígitos
-  onPrefixInput(event: Event): void {
-    const inputEl = event.target as HTMLInputElement | null;
-    if (!inputEl) return;
-    const digitsOnly = inputEl.value.replace(/\D/g, '').slice(0, 3);
-    inputEl.value = digitsOnly;
+  onPhonePrefixChange(event: any): void {
+    this.selectedPhonePrefix = event.value;
+    this.personalInfo.phonePrefix = event.value;
+    this.clearFieldError('phonePrefix');
   }
 
   onDniInput(event: any) {
@@ -165,6 +200,10 @@ export class UpdateProfileSectionV2Component{
 
   onFechaNacimientoChange(event: any) {
     this.clearFieldError('fechaNacimiento');
+  }
+
+  onFechaExpiracionDniChange(event: any) {
+    this.clearFieldError('fechaExpiracionDni');
   }
 
   onSexoChange(event: any) {

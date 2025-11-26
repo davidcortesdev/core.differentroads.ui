@@ -6,6 +6,7 @@ import {
   OnInit,
   OnChanges,
   SimpleChanges,
+  OnDestroy,
 } from '@angular/core';
 import {
   FormBuilder,
@@ -23,6 +24,9 @@ import {
 } from '../../../core/models/bookings/booking-traveler.model';
 import { IReservationFieldResponse } from '../../../core/services/reservation/reservation-field.service';
 import { IDepartureReservationFieldResponse } from '../../../core/services/departure/departure-reservation-field.service';
+import { PhonePrefixService, IPhonePrefixResponse } from '../../../core/services/masterdata/phone-prefix.service';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-passenger-card-v2',
@@ -30,7 +34,7 @@ import { IDepartureReservationFieldResponse } from '../../../core/services/depar
   templateUrl: './passenger-card.component.html',
   styleUrls: ['./passenger-card.component.scss'],
 })
-export class PassengerCardV2Component implements OnInit, OnChanges {
+export class PassengerCardV2Component implements OnInit, OnChanges, OnDestroy {
   @Input() passenger!: any;
   @Input() bookingId!: string;
   @Input() travelerId!: string;
@@ -51,6 +55,12 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
   passengerForm!: FormGroup;
   isEditing = false;
   today = new Date();
+
+  // Opciones para el dropdown de prefijo telefónico
+  phonePrefixOptions: IPhonePrefixResponse[] = [];
+  selectedPhonePrefix: string | null = null;
+
+  private destroy$ = new Subject<void>();
 
   // Mapeo de campos de reserva
   reservationFieldMappings: { [key: string]: string } = {
@@ -74,10 +84,27 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private phonePrefixService: PhonePrefixService
   ) {}
 
   ngOnInit(): void {
+    // Cargar prefijos telefónicos
+    this.phonePrefixService.getAllOrdered()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (prefixes) => {
+          this.phonePrefixOptions = prefixes;
+          // Si ya hay un prefijo en el pasajero, establecerlo después de cargar las opciones
+          if (this.passenger?.prefijo) {
+            this.selectedPhonePrefix = this.passenger.prefijo;
+          }
+        },
+        error: (error) => {
+          console.error('Error loading phone prefixes:', error);
+        }
+      });
+
     this.route.data.subscribe((data) => {
       if (data['passenger']) {
         this.passenger = data['passenger'];
@@ -106,8 +133,13 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
     }
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   initForm(): void {
-    this.passengerForm = this.fb.group({
+    const formControls: { [key: string]: any } = {
       fullName: [this.passenger?.name || '', [Validators.required]],
       surname: [this.passenger?.surname || ''],
       email: [
@@ -131,7 +163,44 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
       dni: [this.passenger?.dni || ''],
       minorIdExpirationDate: [this.passenger?.minorIdExpirationDate],
       minorIdIssueDate: [this.passenger?.minorIdIssueDate],
-    });
+    };
+
+    // Inicializar controles dinámicamente basados en departureReservationFields
+    if (this.departureReservationFields && this.departureReservationFields.length > 0) {
+      this.departureReservationFields.forEach((drf) => {
+        const fieldDetails = this.getReservationFieldDetails(drf.reservationFieldId);
+        if (fieldDetails) {
+          const formControlName = this.getFormControlName(fieldDetails.code);
+          const passengerValue = this.getPassengerFieldValue(fieldDetails.code);
+          
+          // Solo agregar si no existe ya en formControls
+          if (!formControls[formControlName]) {
+            const validators = this.getFieldValidators(drf, fieldDetails);
+            formControls[formControlName] = [passengerValue || '', validators];
+          } else {
+            // Actualizar validadores y valor si el campo ya existe
+            const validators = this.getFieldValidators(drf, fieldDetails);
+            // Usar el valor del passenger si está disponible, de lo contrario mantener el existente
+            const finalValue = passengerValue !== undefined && passengerValue !== null ? passengerValue : formControls[formControlName][0];
+            formControls[formControlName] = [finalValue, validators];
+          }
+
+          // Si es campo de teléfono, asegurar que existe el control de prefijo
+          if (fieldDetails.code === 'phone' && !formControls['prefijo']) {
+            formControls['prefijo'] = [this.passenger?.prefijo || ''];
+          }
+        }
+      });
+    }
+
+    this.passengerForm = this.fb.group(formControls);
+
+    // Establecer el prefijo seleccionado si existe
+    if (this.passenger?.prefijo) {
+      this.selectedPhonePrefix = this.passenger.prefijo;
+    } else {
+      this.selectedPhonePrefix = null;
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -140,6 +209,11 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
       if (passenger.documentType) {
         passenger.documentType = passenger.documentType.toLowerCase();
       }
+      this.initForm();
+    }
+    
+    // Reinicializar formulario si cambian los campos de departure o los campos disponibles
+    if ((changes['departureReservationFields'] || changes['availableFields']) && this.passenger) {
       this.initForm();
     }
   }
@@ -166,25 +240,44 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
 
   startEditing(): void {
     this.isEditing = true;
-    this.passengerForm.patchValue({
+    
+    // Inicializar valores básicos
+    const patchValues: any = {
       fullName: this.passenger.name || '',
       surname: this.passenger.surname || '',
       email: this.passenger.email || '',
       phone: this.passenger.phone || '',
       gender: this.passenger.gender || '',
-    });
+      prefijo: this.passenger.prefijo || '',
+    };
+
+    // Inicializar campos dinámicos desde departureReservationFields
+    if (this.departureReservationFields && this.departureReservationFields.length > 0) {
+      this.departureReservationFields.forEach((drf) => {
+        const fieldDetails = this.getReservationFieldDetails(drf.reservationFieldId);
+        if (fieldDetails) {
+          const formControlName = this.getFormControlName(fieldDetails.code);
+          const passengerValue = this.getPassengerFieldValue(fieldDetails.code);
+          patchValues[formControlName] = passengerValue || '';
+        }
+      });
+    }
+
+    this.passengerForm.patchValue(patchValues);
+    
+    // Establecer el prefijo seleccionado
+    if (this.passenger?.prefijo) {
+      this.selectedPhonePrefix = this.passenger.prefijo;
+    } else {
+      this.selectedPhonePrefix = null;
+    }
   }
 
-  // Limitar prefijo a 3 dígitos y sincronizar con FormControl
-  onPrefixInput(event: Event): void {
-    const inputEl = event.target as HTMLInputElement | null;
-    if (!inputEl) return;
-    const digitsOnly = inputEl.value.replace(/\D/g, '').slice(0, 3);
-    inputEl.value = digitsOnly;
-    // Reflejar en el formulario si existe el control
+  onPhonePrefixChange(event: any): void {
+    this.selectedPhonePrefix = event.value;
     const control = this.passengerForm?.get('prefijo');
     if (control) {
-      control.setValue(digitsOnly, { emitEvent: false });
+      control.setValue(event.value || '', { emitEvent: true });
     }
   }
 
@@ -286,35 +379,56 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
         gender: formValue.gender || '',
         nationality: formValue.nationality || '',
         prefijo: formValue.prefijo || '',
+        dni: formValue.dni || '',  // ✅ Agregar campo DNI para que se guarde
         _id: this.travelerId
       };
 
       // Emitir el evento para que el componente padre maneje la actualización
       this.passengerUpdated.emit(updatedPassenger);
 
-      // Actualizar el objeto passenger local
-          this.passenger = {
-            ...this.passenger,
-            fullName: formValue.fullName,
-            documentType: formValue.documentType,
-            passportID: formValue.passportID,
-            birthDate: formValue.birthDate,
-            email: formValue.email,
-            phone: formValue.phone,
-            gender: formValue.gender,
-            room: formValue.room,
-            documentExpeditionDate: formValue.documentExpeditionDate,
-            documentExpirationDate: formValue.documentExpirationDate,
-            comfortPlan: formValue.comfortPlan,
-            insurance: formValue.insurance,
-            ciudad: formValue.ciudad,
-            codigoPostal: formValue.codigoPostal,
-            nationality: formValue.nationality,
-            dni: formValue.dni,
-            minorIdExpirationDate: formValue.minorIdExpirationDate,
-            minorIdIssueDate: formValue.minorIdIssueDate,
-            prefijo: formValue.prefijo,
-          };
+      // Actualizar el objeto passenger local con todos los campos del formulario
+      const updatedPassengerData: any = {
+        ...this.passenger,
+        name: formValue.fullName || formValue.name || this.passenger.name,
+        surname: formValue.surname || this.passenger.surname,
+        fullName: formValue.fullName,
+        documentType: formValue.documentType,
+        passportID: formValue.passportID,
+        birthDate: formValue.birthDate,
+        email: formValue.email,
+        phone: formValue.phone,
+        gender: formValue.gender,
+        room: formValue.room,
+        documentExpeditionDate: formValue.documentExpeditionDate,
+        documentExpirationDate: formValue.documentExpirationDate,
+        comfortPlan: formValue.comfortPlan,
+        insurance: formValue.insurance,
+        ciudad: formValue.ciudad,
+        codigoPostal: formValue.codigoPostal,
+        nationality: formValue.nationality,
+        dni: formValue.dni,
+        minorIdExpirationDate: formValue.minorIdExpirationDate,
+        minorIdIssueDate: formValue.minorIdIssueDate,
+        prefijo: formValue.prefijo,
+      };
+
+      // Agregar campos dinámicos adicionales desde departureReservationFields
+      if (this.departureReservationFields && this.departureReservationFields.length > 0) {
+        this.departureReservationFields.forEach((drf) => {
+          const fieldDetails = this.getReservationFieldDetails(drf.reservationFieldId);
+          if (fieldDetails) {
+            const formControlName = this.getFormControlName(fieldDetails.code);
+            const fieldValue = formValue[formControlName];
+            if (fieldValue !== undefined && fieldValue !== null) {
+              // Mapear el valor al campo correspondiente en passenger
+              const passengerKey = this.getPassengerFieldKey(fieldDetails.code);
+              updatedPassengerData[passengerKey] = fieldValue;
+            }
+          }
+        });
+      }
+
+      this.passenger = updatedPassengerData;
 
           this.messageService.add({
             severity: 'success',
@@ -476,6 +590,7 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
       'sex': 'gender',
       'birthdate': 'birthDate',
       'dni': 'dni',
+      'national_id': 'dni',  // ✅ Código en BD: national_id, propiedad en passenger: dni
       'passport': 'passportID',
       'nationality': 'nationality',
       'document_type': 'documentType',
@@ -501,6 +616,7 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
       'sex': 'Sexo',
       'birthdate': 'Fecha de nacimiento',
       'dni': 'DNI',
+      'national_id': 'DNI',  // ✅ Código en BD: national_id
       'passport': 'Pasaporte',
       'nationality': 'Nacionalidad',
       'document_type': 'Tipo de documento',
@@ -553,7 +669,7 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
       'documentType': 'document_type',
       'passportID': 'passport',
       'nationality': 'nationality',
-      'dni': 'dni',  // ✅ Agregado campo DNI
+      'dni': 'national_id',  // ✅ Código en BD: national_id, propiedad en passenger: dni
       'room': 'room',  // ✅ Agregado campo habitación
       'ciudad': 'ciudad',  // ✅ Agregado campo ciudad
       'codigoPostal': 'codigoPostal',  // ✅ Agregado campo código postal
@@ -680,5 +796,86 @@ export class PassengerCardV2Component implements OnInit, OnChanges {
    */
   trackByReservationFieldId(index: number, item: IDepartureReservationFieldResponse): number {
     return item.reservationFieldId;
+  }
+
+  /**
+   * Obtiene el nombre del control del formulario basado en el código del campo
+   */
+  getFormControlName(fieldCode: string): string {
+    const mapping: { [key: string]: string } = {
+      'name': 'fullName',
+      'surname': 'surname',
+      'email': 'email',
+      'phone': 'phone',
+      'sex': 'gender',
+      'birthdate': 'birthDate',
+      'dni': 'dni',
+      'national_id': 'dni',  // ✅ Código en BD: national_id, control del formulario: dni
+      'passport': 'passportID',
+      'nationality': 'nationality',
+      'document_type': 'documentType',
+      'room': 'room',
+      'ciudad': 'ciudad',
+      'codigoPostal': 'codigoPostal',
+      'phonePrefix': 'prefijo',
+      'minorIdIssueDate': 'minorIdIssueDate',
+      'minorIdExpirationDate': 'minorIdExpirationDate',
+      'documentExpeditionDate': 'documentExpeditionDate',
+      'documentExpirationDate': 'documentExpirationDate',
+      'comfortPlan': 'comfortPlan'
+    };
+    
+    return mapping[fieldCode] || fieldCode;
+  }
+
+  /**
+   * Obtiene los validadores para un campo basado en su configuración
+   */
+  getFieldValidators(drf: IDepartureReservationFieldResponse, fieldDetails: IReservationFieldResponse): any[] {
+    const validators: any[] = [];
+    
+    // Agregar validador requerido si el campo es obligatorio
+    const isMandatory = drf.mandatoryTypeId === 2 || (drf.mandatoryTypeId === 3 && this.isLeadTraveler);
+    if (isMandatory) {
+      validators.push(Validators.required);
+    }
+
+    // Validadores específicos por tipo de campo
+    if (fieldDetails.fieldType === 'email') {
+      validators.push(Validators.email);
+      validators.push(Validators.minLength(5));
+    }
+
+    return validators;
+  }
+
+  /**
+   * Obtiene la clave del campo en el objeto passenger basado en el código del campo
+   */
+  getPassengerFieldKey(fieldCode: string): string {
+    const mapping: { [key: string]: string } = {
+      'name': 'name',
+      'surname': 'surname',
+      'email': 'email',
+      'phone': 'phone',
+      'sex': 'gender',
+      'birthdate': 'birthDate',
+      'dni': 'dni',
+      'national_id': 'dni',  // ✅ Código en BD: national_id, propiedad en passenger: dni
+      'passport': 'passportID',
+      'nationality': 'nationality',
+      'document_type': 'documentType',
+      'room': 'room',
+      'ciudad': 'ciudad',
+      'codigoPostal': 'codigoPostal',
+      'phonePrefix': 'prefijo',
+      'minorIdIssueDate': 'minorIdIssueDate',
+      'minorIdExpirationDate': 'minorIdExpirationDate',
+      'documentExpeditionDate': 'documentExpeditionDate',
+      'documentExpirationDate': 'documentExpirationDate',
+      'comfortPlan': 'comfortPlan'
+    };
+    
+    return mapping[fieldCode] || fieldCode;
   }
 }

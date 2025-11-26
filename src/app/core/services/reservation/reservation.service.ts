@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams, HttpContext } from '@angular/common/http';
 import { map, Observable, switchMap, catchError } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
@@ -178,9 +178,10 @@ export class ReservationService {
   /**
    * Obtiene un resumen completo de una reservación incluyendo todos los ítems y costos.
    * @param id ID de la reservación.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns El resumen de la reservación.
    */
-  getSummary(id: number): Observable<IReservationSummaryResponse> {
+  getSummary(id: number, signal?: AbortSignal): Observable<IReservationSummaryResponse> {
     const headers = new HttpHeaders({
       'Cache-Control': 'no-cache',
       Pragma: 'no-cache',
@@ -188,9 +189,19 @@ export class ReservationService {
     });
     const params = new HttpParams().set('_ts', Date.now().toString());
 
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { headers, params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
     return this.http.get<IReservationSummaryResponse>(
       `${this.API_URL}/${id}/summary`,
-      { headers, params }
+      options
     );
   }
 
@@ -360,15 +371,6 @@ export class ReservationService {
         });
       })
     );
-  }
-
-  /**
-   * Encola una tarea de sincronización de reservación con TourKnife en Hangfire para procesamiento en segundo plano.
-   * @param reservationId ID interno de la reservación.
-   * @returns Resultado de la operación.
-   */
-  enqueueSync(reservationId: number): Observable<boolean> {
-    return this.http.post<boolean>(`${environment.reservationsApiUrl}/ReservationsSyncs/${reservationId}/enqueue`, {});
   }
 
   /**

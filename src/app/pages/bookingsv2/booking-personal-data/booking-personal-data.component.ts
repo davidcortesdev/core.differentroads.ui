@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, SimpleChanges } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { PassengerData } from '../passengerData';
 import { 
@@ -23,6 +23,7 @@ import {
 } from '../../../core/services/reservation/reservation-traveler-field.service';
 import { forkJoin, Observable, of } from 'rxjs';
 import { map, switchMap, catchError } from 'rxjs/operators';
+import { DepartureService } from '../../../core/services/departure/departure.service';
 
 @Component({
   selector: 'app-booking-personal-data-v2',
@@ -34,6 +35,8 @@ export class BookingPersonalDataV2Component implements OnInit {
   @Input() reservationId!: number;
   @Input() bookingId!: string;
   @Input() periodId!: string;
+  departureDate: string = '';
+  isEditingBlocked: boolean = false;
 
   // Datos de pasajeros cargados desde los servicios
   passengers: PassengerData[] = [];
@@ -64,13 +67,42 @@ export class BookingPersonalDataV2Component implements OnInit {
     private reservationTravelerService: ReservationTravelerService,
     private reservationTravelerFieldService: ReservationTravelerFieldService,
     private reservationFieldService: ReservationFieldService,
-    private departureReservationFieldService: DepartureReservationFieldService
+    private departureReservationFieldService: DepartureReservationFieldService,
+    private departureService: DepartureService
   ) {}
 
   ngOnInit(): void {
     // Cargar todos los campos disponibles y obligatorios antes de cargar pasajeros
     this.loadAllFieldsConfiguration();
+    if (this.periodId) {
+      this.loadDepartureData(parseInt(this.periodId));
+    }
   }
+
+  // Método para cargar datos del departure
+private loadDepartureData(departureId: number): void {
+  this.departureService.getById(departureId).subscribe({
+    next: (departure) => {
+      if (departure && departure.departureDate) {
+        this.departureDate = departure.departureDate;
+        
+        const departureDate = new Date(this.departureDate);
+        const today = new Date();
+        
+        departureDate.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0);
+        
+        const diffTime = departureDate.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        this.isEditingBlocked = diffDays <= 40;
+        
+      }
+    },
+    error: (error) => {
+      console.error('Error loading departure data:', error);
+    }
+  });
+}
 
   /**
    * Carga la configuración completa de campos (igual que checkout)

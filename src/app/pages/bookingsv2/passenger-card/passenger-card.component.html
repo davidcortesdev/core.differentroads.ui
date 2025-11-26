@@ -270,13 +270,14 @@
       <!-- Edit button in view mode -->
       <div class="edit-button-container">
         <p-button
-          *ngIf="!isEditing"
-          icon="pi pi-pencil"
-          styleClass="p-button-rounded p-button-text"
-          pTooltip="Editar pasajero"
-          (onClick)="onEdit()"
-        >
-        </p-button>
+    *ngIf="!isEditing"
+    icon="pi pi-pencil"
+    styleClass="p-button-rounded p-button-text"
+    [pTooltip]="isEditingBlocked ? 'Edición bloqueada - Faltan 40 días o menos para el viaje' : 'Editar pasajero'"
+    [disabled]="isEditingBlocked"
+    (onClick)="onEdit()"
+  >
+  </p-button>
       </div>
 
       <!-- Save buttons in edit mode -->

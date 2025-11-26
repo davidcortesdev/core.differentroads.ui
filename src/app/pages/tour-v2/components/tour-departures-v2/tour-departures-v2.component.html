@@ -176,6 +176,7 @@
           <div class="hdr-cols">
             <span>Salida <i class="pi pi-arrow-right header"></i> Regreso</span>
             <span>Información</span>
+            <span>Tipo de salida</span>
             <span>Precio</span>
             <span></span>
           </div>
@@ -259,6 +260,17 @@
                     styleClass="availability-tag"
                   ></p-tag>
                 </div>
+              </div>
+
+              <div class="trip-type">
+                <p-tag
+                  *ngIf="getTripType(item.tripTypeId)"
+                  [value]="getTripType(item.tripTypeId)?.name || 'Sin tipo'"
+                  [style.background-color]="getTripType(item.tripTypeId)?.color || '#ccc'"
+                  [style.color]="'#fff'"
+                  [style.border]="'none'"
+                ></p-tag>
+                <span *ngIf="!getTripType(item.tripTypeId)">Sin tipo</span>
               </div>
 
               <div class="f-price">

@@ -48,6 +48,10 @@ import {
   IDefaultDepartureSelectionResponse,
   IDepartureAvailabilityByTourResponse,
 } from '../../../../core/services/departure/departure-availability.service';
+import {
+  TripTypeService,
+  ITripTypeResponse,
+} from '../../../../core/services/trip-type/trip-type.service';
 
 // Interfaces para los datos
 interface City {
@@ -218,6 +222,9 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     [departureId: number]: IDepartureAvailabilityResponse | null;
   } = {};
 
+  // Mapa de tipos de viaje por ID
+  tripTypesMap: Map<number, ITripTypeResponse> = new Map();
+
   constructor(
     private departureService: DepartureService,
     private itineraryService: ItineraryService,
@@ -229,7 +236,8 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     private analyticsService: AnalyticsService,
     private flightsNetService: FlightsNetService,
     private airportCityCacheService: AirportCityCacheService,
-    private departureAvailabilityService: DepartureAvailabilityService
+    private departureAvailabilityService: DepartureAvailabilityService,
+    private tripTypeService: TripTypeService
   ) {
     this.updatePassengerText();
 
@@ -245,6 +253,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       return;
     }
 
+    this.loadTripTypes();
     this.loadCities();
     this.loadAgeGroups();
   }
@@ -665,6 +674,39 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   private emitAgeGroupsUpdate(): void {
     this.ageGroupsUpdate.emit(this.ageGroupCategories);
   }
+
+  private loadTripTypes(): void {
+    this.tripTypeService
+      .getAll()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (tripTypes: ITripTypeResponse[]) => {
+          this.tripTypesMap.clear();
+          tripTypes.forEach((tripType) => {
+            this.tripTypesMap.set(tripType.id, tripType);
+          });
+        },
+        error: (error) => {
+          console.error('Error cargando tipos de viaje:', error);
+        },
+      });
+  }
+
+  getTripTypeName(tripTypeId: number | null | undefined): string {
+    if (!tripTypeId) {
+      return 'Sin tipo';
+    }
+    const tripType = this.tripTypesMap.get(tripTypeId);
+    return tripType ? tripType.name : 'Sin tipo';
+  }
+
+  getTripType(tripTypeId: number | null | undefined): ITripTypeResponse | null {
+    if (!tripTypeId) {
+      return null;
+    }
+    return this.tripTypesMap.get(tripTypeId) || null;
+  }
+
   private handleDepartureSelection(event: SelectedDepartureEvent): void {
     this.selectedDeparture = event;
     this.selectedDepartureId = null;
@@ -811,6 +853,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
   private buildAllDeparturesFromCityData(): void {
     const allDeparturesMap = new Map<number, IDepartureResponse>();
+    const departureIdsToLoad = new Set<number>();
     
     this.departuresByCity.forEach((departures, activityPackId) => {
       departures.forEach((departureData) => {
@@ -825,7 +868,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
             departureDate: departureData.departureDate,
             arrivalDate: departureData.arrivalDate,
             departureStatusId: 0,
-            tripTypeId: 0,
+            tripTypeId: null,
             isConsolidadorVuelosActive: false,
             includeTourConsolidadorSearchLocations: false,
             maxArrivalDateAtAirport: null,
@@ -837,6 +880,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           };
           
           allDeparturesMap.set(departureData.departureId, departure);
+          departureIdsToLoad.add(departureData.departureId);
           
           this.departureAvailabilityByDepartureId[departureData.departureId] = {
             id: 0,
@@ -874,6 +918,33 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
         new Date(a.departureDate ?? '').getTime() -
         new Date(b.departureDate ?? '').getTime()
     );
+
+    // Cargar tripTypeIds de los departures en paralelo
+    if (departureIdsToLoad.size > 0) {
+      const departureRequests = Array.from(departureIdsToLoad).map((departureId) =>
+        this.departureService.getById(departureId, this.preview).pipe(
+          catchError(() => of(null))
+        )
+      );
+
+      forkJoin(departureRequests)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (departures) => {
+            departures.forEach((departure) => {
+              if (departure && departure.id) {
+                const existingDeparture = allDeparturesMap.get(departure.id);
+                if (existingDeparture) {
+                  existingDeparture.tripTypeId = departure.tripTypeId ?? null;
+                }
+              }
+            });
+          },
+          error: (error) => {
+            console.error('Error cargando tripTypeIds de departures:', error);
+          },
+        });
+    }
   }
 
 
@@ -1293,6 +1364,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
         status: 'available',
         waitingList: false,
         group: this.selectedDeparture?.tripType?.name || 'group',
+        tripTypeId: this.departureDetails.tripTypeId ?? null,
         isBookable: isBookable,
         availabilityStatus: availabilityStatus.status,
         availabilityMessage: availabilityStatus.message,
@@ -1333,6 +1405,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
         status: 'available',
         waitingList: false,
         group: 'group',
+        tripTypeId: departure.tripTypeId ?? null,
         isBookable: isBookable,
         availabilityStatus: availabilityStatus.status,
         availabilityMessage: availabilityStatus.message,

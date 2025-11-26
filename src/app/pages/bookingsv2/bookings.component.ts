@@ -686,101 +686,106 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
     this.cancelForm.reset({ comentario: '', cancelationFee: 0 });
   }
 
-  onSubmitCancellation(): void {
-    if (this.cancelForm.valid) {
-      const comentario = this.cancelForm.get('comentario')?.value?.trim();
-      const cancelationFee = this.cancelForm.get('cancelationFee')?.value;
-      
-      // Validar que el comentario no esté vacío
-      if (!comentario) {
-        this.messageService.add({
-          key: 'center',
-          severity: 'error',
-          summary: 'Error',
-          detail: 'El comentario es requerido',
-          life: 3000,
-        });
-        return;
-      }
-      
-      // Verificar si viene desde ATC
-      if (this.isATC && window.parent && window.parent !== window) {
-        // Enviar mensaje al iframe padre (ATC)
-        window.parent.postMessage(
-          {
-            type: 'cancel_reservation_request',
-            comment: comentario,
-            cancelationFee: cancelationFee,
-            reservationId: this.reservation?.id,
-          },
-          '*'
-        );
-        
-        // Cerrar el modal
-        this.hideCancelModal();
-        
-        // Recargar la ventana inmediatamente
-        window.location.reload();
-        
-        return;
-      }
-      
-      // Si NO viene desde ATC, hacer la cancelación normal con canceledBy=1
-      const reservationId = this.reservation?.id;
-      if (!reservationId) {
-        this.messageService.add({
-          key: 'center',
-          severity: 'error',
-          summary: 'Error',
-          detail: 'No se puede cancelar la reserva: ID no disponible',
-          life: 3000,
-        });
-        return;
-      }
-      
-      this.isLoading = true;
-      this.reservationService
-        .cancelReservation(reservationId, 1, comentario, cancelationFee)
-        .pipe(
-          finalize(() => {
-            this.isLoading = false;
-          })
-        )
-        .subscribe({
-          next: (response) => {
-            this.hideCancelModal();
-            this.reservationService.getById(reservationId).subscribe({
-              next: (updatedReservation) => {
-                window.location.reload();
-              },
-              error: () => {
-                window.location.reload();
-              }
-            });
-          },
-          error: (error) => {
-            this.hideCancelModal();
-            console.error('Error al cancelar la reserva:', error);
-            this.reservationService.getById(reservationId).subscribe({
-              next: (updatedReservation) => {
-                // Recargar la página para reflejar cualquier cambio
-                window.location.reload();
-              },
-              error: () => {
-                this.messageService.add({
-                  key: 'center',
-                  severity: 'error',
-                  summary: 'Error',
-                  detail: 'Ocurrió un error al cancelar la reserva',
-                  life: 3000,
-                });
-                window.location.reload();
-              }
-            });
-          },
-        });
-    }
+ onSubmitCancellation(): void {
+  if (this.cancelForm.invalid) {
+    return;
   }
+
+  const comentario = this.cancelForm.get('comentario')?.value?.trim();
+  const cancelationFee = this.cancelForm.get('cancelationFee')?.value || 0;
+  
+  if (!comentario) {
+    this.messageService.add({
+      key: 'center',
+      severity: 'error',
+      summary: 'Error',
+      detail: 'El comentario es requerido',
+      life: 3000,
+    });
+    return;
+  }
+  
+  const reservationId = this.reservation?.id;
+  if (!reservationId) {
+    this.messageService.add({
+      key: 'center',
+      severity: 'error',
+      summary: 'Error',
+      detail: 'No se puede cancelar la reserva: ID no disponible',
+      life: 3000,
+    });
+    return;
+  }
+  
+  this.hideCancelModal();
+  this.isLoading = true;
+  
+  // Determinar canceledBy según si viene desde ATC o no
+  const canceledBy = this.isATC ? 2 : 1;
+  
+  console.log('🔄 Cancelando reserva...');
+  console.log('   - Reservation ID:', reservationId);
+  console.log('   - CanceledBy:', canceledBy, this.isATC ? '(ATC)' : '(Usuario)');
+  
+  this.reservationService
+    .cancelReservation(reservationId, canceledBy, comentario, cancelationFee)
+    .pipe(
+      finalize(() => {
+        this.isLoading = false;
+      })
+    )
+    .subscribe({
+      next: (response) => {
+        console.log('✅ Cancelación exitosa:', response);
+        
+        this.messageService.add({
+          key: 'center',
+          severity: 'success',
+          summary: 'Reserva cancelada',
+          detail: 'La reserva ha sido cancelada correctamente',
+          life: 3000,
+        });
+        
+        // Recargar los datos de la reserva
+        this.reservationService.getById(reservationId).subscribe({
+          next: (updatedReservation) => {
+            this.reservation = updatedReservation;
+            this.updateBasicBookingData(updatedReservation);
+            this.updateBookingImages(updatedReservation);
+            this.updateTripItemsData(updatedReservation);
+            this.updatePaymentInfo(updatedReservation);
+            this.loadReservationSummary(reservationId);
+            
+            // Si viene desde ATC, notificar al padre
+            if (this.isATC && window.parent && window.parent !== window) {
+              window.parent.postMessage(
+                {
+                  type: 'booking_cancelled',
+                  reservationId: reservationId
+                },
+                '*'
+              );
+            }
+          }
+        });
+      },
+      error: (error) => {
+        console.error('❌ Error al cancelar la reserva:', error);
+        
+        const errorMessage = error?.error?.message || 
+                            error?.message || 
+                            'Ocurrió un error al cancelar la reserva';
+        
+        this.messageService.add({
+          key: 'center',
+          severity: 'error',
+          summary: 'Error',
+          detail: errorMessage,
+          life: 5000,
+        });
+      }
+    });
+}
 
   registerPayment(amount: number): void {
     this.paymentInfo.paidAmount += amount;

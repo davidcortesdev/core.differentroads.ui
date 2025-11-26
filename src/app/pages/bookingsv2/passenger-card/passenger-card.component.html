@@ -273,7 +273,7 @@
     *ngIf="!isEditing"
     icon="pi pi-pencil"
     styleClass="p-button-rounded p-button-text"
-    [pTooltip]="isEditingBlocked ? 'Edición bloqueada - Faltan 40 días o menos para el viaje' : 'Editar pasajero'"
+    [pTooltip]="isEditingBlocked ? 'Edición bloqueada - Faltan ' + Days + ' días o menos para el viaje' : 'Editar pasajero'"
     [disabled]="isEditingBlocked"
     (onClick)="onEdit()"
   >

@@ -170,6 +170,7 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
   isTO: boolean = true;
   isAdmin: boolean = true;
 
+
   bookingImages: BookingImage[] = [
     {
       id: 1,
@@ -233,6 +234,8 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
 
   // Nueva propiedad para almacenar el total de la reserva
   bookingTotal: number = 0;
+//Dias permitidos para la actualizacion del viajero 
+  Days: number= 40;
 
   constructor(
     private router: Router,

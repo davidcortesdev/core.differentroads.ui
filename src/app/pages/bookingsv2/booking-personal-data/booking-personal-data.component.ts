@@ -35,6 +35,7 @@ export class BookingPersonalDataV2Component implements OnInit {
   @Input() reservationId!: number;
   @Input() bookingId!: string;
   @Input() periodId!: string;
+  @Input() Days!: number;
   departureDate: string = '';
   isEditingBlocked: boolean = false;
 
@@ -94,7 +95,7 @@ private loadDepartureData(departureId: number): void {
         
         const diffTime = departureDate.getTime() - today.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        this.isEditingBlocked = diffDays <= 40;
+        this.isEditingBlocked = diffDays <= this.Days;
         
       }
     },

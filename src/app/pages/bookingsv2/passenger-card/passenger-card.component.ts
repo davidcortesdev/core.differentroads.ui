@@ -50,6 +50,7 @@ export class PassengerCardV2Component implements OnInit, OnChanges, OnDestroy {
   @Input() mandatoryFields: IDepartureReservationFieldResponse[] = [];
   @Input() isLeadTraveler: boolean = false;
   @Input() isEditingBlocked: boolean = false;
+  @Input() Days!: number;
 
   @Output() passengerUpdated = new EventEmitter<any>();
 

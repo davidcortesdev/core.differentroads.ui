@@ -72,6 +72,7 @@ interface ActivityWithPrice extends IActivityResponse {
 export class BookingActivitiesV2Component implements OnInit {
   @Input() periodId!: string;
   @Input() reservationId!: number;
+  @Input() statusId: number = 0;
   @Output() dataUpdated = new EventEmitter<void>();
 
   // Estado del componente
@@ -114,6 +115,10 @@ export class BookingActivitiesV2Component implements OnInit {
         this.initializeComponent();
       },
     });
+  }
+
+  get isCancelled(): boolean {
+    return [8, 14, 13,12].includes(this.statusId);
   }
 
   private initializeComponent(): void {

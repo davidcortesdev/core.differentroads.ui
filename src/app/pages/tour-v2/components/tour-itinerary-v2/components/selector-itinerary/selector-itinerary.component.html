@@ -41,34 +41,33 @@
       placeholder="Elige fecha"
       [disabled]="dateOptions.length === 0"
     >
-      <ng-template #selectedItem>
-        <div class="date-option-item">
+      <ng-template pTemplate="selectedItem">
+        <div class="date-option-item" style="display: flex; align-items: center; gap: 0.5rem;">
           <span>{{ selectedDeparture ? (selectedDeparture.departureDate | date : "dd/MM/yyyy") : "Elige fecha" }}</span>
+          <p-tag
+            *ngIf="selectedDeparture?.tripTypeData"
+            [value]="selectedDeparture.tripTypeData.name"
+            [style.background-color]="selectedDeparture.tripTypeData.color || '#ccc'"
+            [style.color]="'#fff'"
+            [style.border]="'none'"
+          ></p-tag>
         </div>
       </ng-template>
            
-      <ng-template let-option #item>
-        <div class="date-option-item">
+      <ng-template let-option pTemplate="item">
+        <div class="date-option-item" style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
           <span class="date-option-item-text">
             {{ option.departureDate | date : "dd/MM/yyyy" }}
           </span>
-          <span class="itinerary-name">
-            {{ option.itineraryName }}
-          </span>
-          <!-- Mostrar la "S" si es tipo Single -->
-          <span
-            *ngIf="option.tripType === 'S'"
-            class="trip-type"
-            [ngClass]="getTripTypeClass(option.tripTypeId)"
-            [title]="getTripTypeFullName(option.tripTypeId)"
-          >
-            {{ option.tripType }}
-          </span>
-          <!-- Placeholder invisible para mantener alineación cuando no hay "S" -->
-          <span
-            *ngIf="option.tripType !== 'S'"
-            class="trip-type-placeholder"
-          ></span>
+          <!-- Mostrar p-tag con el tipo de viaje y su color -->
+          <p-tag
+            *ngIf="option.tripTypeData"
+            [value]="option.tripTypeData.name"
+            [style.background-color]="option.tripTypeData.color || '#ccc'"
+            [style.color]="'#fff'"
+            [style.border]="'none'"
+            styleClass="trip-type-tag"
+          ></p-tag>
         </div>
       </ng-template>
     </p-dropdown>

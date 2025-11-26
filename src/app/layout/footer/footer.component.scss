@@ -317,6 +317,20 @@
         width: auto;
       }
     }
+
+    .cookie-preferences {
+      color: white;
+
+      a {
+        color: white;
+        text-decoration: none;
+
+        &:hover {
+          color: rgba(255, 255, 255, 0.8);
+          text-decoration: underline;
+        }
+      }
+    }
   }
 }
 

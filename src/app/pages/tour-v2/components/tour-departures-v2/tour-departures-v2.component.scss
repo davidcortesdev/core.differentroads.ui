@@ -145,9 +145,10 @@ $primary: var(--p-primary-color);
             .hdr-cols {
                 display: grid;
                 align-items: center;
-                grid-template-columns: repeat(4, 1fr);
+                grid-template-columns: repeat(5, 1fr);
                 padding: 0;
                 width: 100%;
+                gap: 0.5rem;
                 .pi-arrow-right:before {
                     margin: 40px;
                 }
@@ -155,6 +156,7 @@ $primary: var(--p-primary-color);
                     @extend %txt-azul;
                     font-weight: 500;
                     text-align: center;
+                    font-size: 0.9rem;
                 }
             }
         }
@@ -165,14 +167,16 @@ $primary: var(--p-primary-color);
         }
         .dep-item {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             align-items: center;
             border-radius: 17.732px;
             border: 0.985px solid #d9d9d9;
             transition: transform 0.2s ease;
             padding: 1rem 0;
+            gap: 0.5rem;
             .dates,
             .info,
+            .trip-type,
             .f-price,
             .actions {
                 @include flex;
@@ -231,6 +235,13 @@ $primary: var(--p-primary-color);
             width: 100%;
         }
     }
+}
+.trip-type {
+    @include flex(null, center);
+    @extend %txt-azul;
+    font-size: 15px;
+    font-weight: 500;
+    text-align: center;
 }
 .f-price {
     @include flex(null, center);
@@ -309,19 +320,19 @@ $primary: var(--p-primary-color);
         }
         ::ng-deep .p-dataview {
             .dep-hdr .hdr-cols {
-                grid-template-columns: 30% 20% 25% 25%;
-                gap: 0;
+                grid-template-columns: 22% 20% 15% 20% 23%;
+                gap: 0.25rem;
                 span {
-                    font-size: 0.9rem;
-                    padding: 0 0.5rem;
+                    font-size: 0.85rem;
+                    padding: 0 0.25rem;
                     white-space: nowrap;
                     overflow: hidden;
                     text-overflow: ellipsis;
                 }
             }
             .dep-item {
-                grid-template-columns: 30% 20% 25% 25%;
-                gap: 0;
+                grid-template-columns: 22% 20% 15% 20% 23%;
+                gap: 0.25rem;
                 padding: 1rem 0.5rem;
                 .dates {
                     justify-self: start;
@@ -330,7 +341,7 @@ $primary: var(--p-primary-color);
                 .info {
                     justify-self: center;
                     .flight-times {
-                        font-size: 0.8rem;
+                        font-size: 0.75rem;
                         color: #666;
                         text-align: center;
                         max-width: 100%;
@@ -345,7 +356,7 @@ $primary: var(--p-primary-color);
                             }
                         }
                         @media (max-width: 768px) {
-                            font-size: 0.75rem;
+                            font-size: 0.7rem;
                             .flight-line {
                                 line-height: 1.2;
                             }
@@ -361,6 +372,13 @@ $primary: var(--p-primary-color);
                             margin: 0;
                         }
                     }
+                }
+                .trip-type {
+                    justify-self: center;
+                    color: $azul;
+                    font-size: 0.85rem;
+                    font-weight: 500;
+                    text-align: center;
                 }
                 .f-price {
                     justify-self: center;
@@ -415,6 +433,7 @@ $primary: var(--p-primary-color);
                 padding: 1.5rem 1rem;
                 .dates,
                 .info,
+                .trip-type,
                 .f-price,
                 .actions {
                     justify-content: center;

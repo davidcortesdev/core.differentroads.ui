@@ -176,6 +176,7 @@
           <div class="hdr-cols">
             <span>Salida <i class="pi pi-arrow-right header"></i> Regreso</span>
             <span>Información</span>
+            <span>Tipo de salida</span>
             <span>Precio</span>
             <span></span>
           </div>
@@ -259,6 +260,10 @@
                     styleClass="availability-tag"
                   ></p-tag>
                 </div>
+              </div>
+
+              <div class="trip-type">
+                <span>{{ getTripTypeName(item.tripTypeId) }}</span>
               </div>
 
               <div class="f-price">

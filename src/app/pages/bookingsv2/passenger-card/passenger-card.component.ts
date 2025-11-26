@@ -50,6 +50,7 @@ export class PassengerCardV2Component implements OnInit, OnChanges, OnDestroy {
   @Input() mandatoryFields: IDepartureReservationFieldResponse[] = [];
   @Input() isLeadTraveler: boolean = false;
   @Input() isEditingBlocked: boolean = false;
+  @Input() Days!: number;
 
   @Output() passengerUpdated = new EventEmitter<any>();
 
@@ -462,7 +463,7 @@ export class PassengerCardV2Component implements OnInit, OnChanges, OnDestroy {
         key: 'center',
         severity: 'warn',
         summary: 'Edición bloqueada',
-        detail: 'No se pueden modificar los datos personales 40 días antes del viaje',
+        detail: `No se pueden modificar los datos personales ${this.Days} días antes del viaje`,
         life: 5000,
       });
       return;

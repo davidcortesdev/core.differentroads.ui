@@ -293,41 +293,23 @@
   .p-divider { --p-divider-horizontal-margin: 0; }
   .p-inputgroup { width: 100%; }
   .p-dialog-footer { padding: 1rem 0; display: flex; justify-content: center; }
-  .payment-dialog {
-    .p-dialog-content { display: flex; flex-direction: column; align-items: center; text-align: center;
-      .p-button { margin-top: 1.5rem; }
-    }
-    .p-dialog-header { display: flex !important; justify-content: center !important; width: 100%; position: relative;
-      .p-dialog-title { flex: 1; text-align: center; margin-left: 2.3rem; }
-      .p-dialog-header-icons { position: absolute; right: 1.5rem; top: 50%; transform: translateY(-50%); }
-    }
-  }
-  .delete-voucher-btn {
-    background-color: #dc3545 !important;
-    border-color: #dc3545 !important;
-    color: #ffffff !important;
-    
-    &:hover:not(:disabled) {
-      background-color: #c82333 !important;
-      border-color: #bd2130 !important;
-    }
-    
-    &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    
-    .p-button-icon {
-      color: #ffffff !important;
-    }
-  }
 }
 .required { color: red; }
+:host ::ng-deep .payment-dialog {
+  .p-dialog-content { display: flex; flex-direction: column; align-items: center; text-align: center;
+    .p-button { margin-top: 1.5rem; }
+  }
+  .p-dialog-header { display: flex !important; justify-content: center !important; width: 100%; position: relative;
+    .p-dialog-title { flex: 1; text-align: center; margin-left: 2.3rem; }
+    .p-dialog-header-icons { position: absolute; right: 1.5rem; top: 50%; transform: translateY(-50%); }
+  }
+}
 
 .vouchers-list { display: flex; flex-direction: column; gap: 12px; padding: .5rem 0; width: 100%;
   .voucher-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;
     &:hover { background: #e9ecef; border-color: #dee2e6; }
     .voucher-info { display: flex; align-items: center; flex: 1; gap: 12px;
+      .pi-file-pdf { margin-right: 8px; color: #f05a4c; font-size: 1.5rem; }
       .voucher-details { display: flex; flex-direction: column; gap: 4px;
         .voucher-name { font-weight: 600; color: #333; }
         .voucher-date { font-size: .85rem; color: #777; }

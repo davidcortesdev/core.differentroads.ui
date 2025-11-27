@@ -93,6 +93,19 @@
             @media (max-width: 480px) {
                 font-size: 1rem;
             }
+
+            .booking-id-label,
+            .tk-id-label {
+                font-weight: bold;
+                color: inherit;
+            }
+
+            .booking-id-value,
+            .tk-id-separator,
+            .tk-id-value {
+                font-weight: normal;
+                color: inherit;
+            }
         }
 
         /* Ajuste para pantallas pequeñas */

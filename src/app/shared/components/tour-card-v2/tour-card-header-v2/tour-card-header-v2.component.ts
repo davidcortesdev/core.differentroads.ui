@@ -7,7 +7,7 @@ import {
   OnDestroy,
   ChangeDetectionStrategy,
 } from '@angular/core';
-import { Subscription, catchError, finalize, of, tap, forkJoin } from 'rxjs';
+import { Subscription, catchError, finalize, of, tap, forkJoin, Subject, takeUntil } from 'rxjs';
 import { ReviewsService } from '../../../../core/services/reviews/reviews.service';
 import { TourService } from '../../../../core/services/tour/tour.service';
 import { TripTypeService, ITripTypeResponse } from '../../../../core/services/trip-type/trip-type.service';
@@ -28,6 +28,8 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
   isLoadingTripTypes = false;
 
   private subscriptions = new Subscription();
+  // Cancellation token independiente para la petición de trip types
+  private tripTypesDestroy$ = new Subject<void>();
 
   constructor(
     private reviewsService: ReviewsService,
@@ -47,6 +49,10 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    // Cancelar petición de trip types
+    this.tripTypesDestroy$.next();
+    this.tripTypesDestroy$.complete();
+    // Cancelar otras peticiones (rating)
     this.subscriptions.unsubscribe();
   }
 
@@ -56,6 +62,7 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
 
   /**
    * Carga los tipos de viaje usando el nuevo endpoint /api/Tour/{id}/triptype-ids
+   * Esta petición es independiente y tiene su propio cancellation token
    * @param tourId ID del tour
    */
   private loadTripTypes(tourId: number): void {
@@ -63,59 +70,61 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
 
     this.isLoadingTripTypes = true;
 
-    this.subscriptions.add(
-      this.tourService
-        .getTripTypeIds(tourId, true)
-        .pipe(
-          catchError((error) => {
-            console.error('Error al obtener tripTypeIds del tour:', error);
-            return of([]);
-          })
-        )
-        .subscribe((tripTypeIds: number[]) => {
-          if (tripTypeIds.length === 0) {
-            this.isLoadingTripTypes = false;
-            return;
-          }
-
-          // Obtener los detalles de cada trip type
-          const tripTypeRequests = tripTypeIds.map((id) =>
-            this.tripTypeService.getById(id).pipe(
-              catchError((error) => {
-                console.error(`Error al obtener trip type con ID ${id}:`, error);
-                return of(null);
-              })
-            )
-          );
-
-          forkJoin(tripTypeRequests)
-            .pipe(
-              catchError((error) => {
-                console.error('Error al obtener detalles de trip types:', error);
-                return of([]);
-              }),
-              finalize(() => {
-                this.isLoadingTripTypes = false;
-              })
-            )
-            .subscribe((tripTypes: (ITripTypeResponse | null)[]) => {
-              // Filtrar nulls y mapear a el formato esperado
-              const validTripTypes = tripTypes.filter(
-                (tt): tt is ITripTypeResponse => tt !== null
-              );
-
-              const mappedTripTypes = validTripTypes.map((tripType) => ({
-                name: tripType.name,
-                code: tripType.code,
-                color: tripType.color,
-                abbreviation: tripType.abbreviation || tripType.name.charAt(0).toUpperCase(),
-              }));
-
-              // Actualizar tourData con los trip types obtenidos
-              this.tourData.tripTypes = mappedTripTypes;
-            });
+    // Petición independiente con su propio cancellation token
+    this.tourService
+      .getTripTypeIds(tourId, true)
+      .pipe(
+        takeUntil(this.tripTypesDestroy$),
+        catchError((error) => {
+          console.error('Error al obtener tripTypeIds del tour:', error);
+          return of([]);
         })
-    );
+      )
+      .subscribe((tripTypeIds: number[]) => {
+        if (tripTypeIds.length === 0) {
+          this.isLoadingTripTypes = false;
+          return;
+        }
+
+        // Obtener los detalles de cada trip type
+        const tripTypeRequests = tripTypeIds.map((id) =>
+          this.tripTypeService.getById(id).pipe(
+            takeUntil(this.tripTypesDestroy$),
+            catchError((error) => {
+              console.error(`Error al obtener trip type con ID ${id}:`, error);
+              return of(null);
+            })
+          )
+        );
+
+        forkJoin(tripTypeRequests)
+          .pipe(
+            takeUntil(this.tripTypesDestroy$),
+            catchError((error) => {
+              console.error('Error al obtener detalles de trip types:', error);
+              return of([]);
+            }),
+            finalize(() => {
+              this.isLoadingTripTypes = false;
+            })
+          )
+          .subscribe((tripTypes: (ITripTypeResponse | null)[]) => {
+            // Filtrar nulls y mapear a el formato esperado
+            const validTripTypes = tripTypes.filter(
+              (tt): tt is ITripTypeResponse => tt !== null
+            );
+
+            const mappedTripTypes = validTripTypes.map((tripType) => ({
+              name: tripType.name,
+              code: tripType.code,
+              color: tripType.color,
+              abbreviation: tripType.abbreviation || tripType.name.charAt(0).toUpperCase(),
+            }));
+
+            // Actualizar tourData con los trip types obtenidos
+            this.tourData.tripTypes = mappedTripTypes;
+          });
+      });
   }
 
   private loadRatingAndReviewCount(tkId: string) {

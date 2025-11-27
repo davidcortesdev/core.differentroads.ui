@@ -115,10 +115,7 @@
 
   // ===== SECCIÓN DEL EXPERTO =====
   .expert-section {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-    margin-top: 1.5rem;
+    margin-top: 1rem;
     padding: 1rem;
     border-radius: 0.75rem;
 
@@ -137,6 +134,7 @@
     }
 
     .expert-details-container {
+      margin-bottom: 1rem;
       display: flex;
       align-items: center;
       gap: 0.75rem;
@@ -159,8 +157,8 @@
         .p-avatar {
           border-radius: 50% !important;
           overflow: hidden !important;
-          width: 70px !important;
-          height: 70px !important;
+          width: 50px !important;
+          height: 50px !important;
           aspect-ratio: 1 / 1 !important;
           display: block !important;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
@@ -207,30 +205,30 @@
       h4 {
         margin: 0;
         color: var(--text-color);
-        font-size: 1.1rem;
+        font-size: 0.95rem;
         font-weight: 600;
         line-height: 1.3;
 
         @media (max-width: 991px) {
-          font-size: 1rem;
+          font-size: 0.9rem;
         }
 
         @media (max-width: 576px) {
-          font-size: 0.95rem;
+          font-size: 0.85rem;
         }
       }
 
       .expert-role {
         color: var(--text-color-secondary);
-        font-size: 0.85rem;
+        font-size: 0.75rem;
         line-height: 1.4;
 
         @media (max-width: 991px) {
-          font-size: 0.8rem;
+          font-size: 0.7rem;
         }
 
         @media (max-width: 576px) {
-          font-size: 0.75rem;
+          font-size: 0.65rem;
         }
       }
     }
@@ -258,7 +256,7 @@
             border-radius: 1rem !important;
             background-color: #fff !important;
             border: 1px solid #e5e7eb !important;
-            font-size: 0.9rem !important;
+            font-size: 1.05rem !important;
             padding: 1.25rem !important;
             color: var(--text-color) !important;
             line-height: 1.6 !important;

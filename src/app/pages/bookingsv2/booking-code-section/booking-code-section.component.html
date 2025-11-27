@@ -13,7 +13,20 @@
       
       <div class="booking-code">
         <span class="booking-number">
-          {{ bookingReference === '000000' || bookingReference === '' ? bookingCode : bookingCode + ' - ' + bookingReference }}
+          <ng-container *ngIf="hasTkId; else simpleBookingCode">
+            <span class="booking-id">
+              <span class="booking-id-label">Reserva: </span>
+              <span class="booking-id-value">{{ bookingCode }}</span>
+            </span>
+            <span class="tk-id-separator"> - </span>
+            <span class="tk-id-container">
+              <span class="tk-id-label">TK ID: </span>
+              <span class="tk-id-value">{{ bookingReference }}</span>
+            </span>
+          </ng-container>
+          <ng-template #simpleBookingCode>
+            {{ bookingCode }}
+          </ng-template>
         </span>        
         <p-tag value="{{ status }}" severity="info" [rounded]="true"></p-tag>
       </div>

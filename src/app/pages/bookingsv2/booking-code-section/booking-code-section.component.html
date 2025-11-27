@@ -13,7 +13,15 @@
       
       <div class="booking-code">
         <span class="booking-number">
-          {{ bookingReference === '000000' || bookingReference === '' ? bookingCode : bookingCode + ' - ' + bookingReference }}
+          <span>
+            <span><strong>Reserva: </strong></span>
+            <span>{{ bookingCode }}</span>
+          </span>
+          <span *ngIf="hasTkId"> - </span>
+          <span *ngIf="hasTkId">
+            <span><strong>TK ID: </strong></span>
+            <span>{{ bookingReference }}</span>
+          </span>
         </span>        
         <p-tag value="{{ status }}" severity="info" [rounded]="true"></p-tag>
       </div>

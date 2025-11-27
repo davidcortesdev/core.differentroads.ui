@@ -45,4 +45,8 @@ export class BookingCodeSectionV2Component implements OnInit {
   get showCancelButton(): boolean {
     return true; // Siempre mostrar el botón
   }
+
+  get hasTkId(): boolean {
+    return !!(this.bookingReference && this.bookingReference !== '000000' && this.bookingReference !== '');
+  }
 }

@@ -58,6 +58,7 @@
       (registerPayment)="registerPayment($event)"
       (fileUploaded)="handleFileUploaded($event)"
       (couponApplied)="handleCouponApplied()"
+      [statusCode]="bookingData.statusCode"
     >
     </app-booking-payment-history-v2>
 
@@ -66,6 +67,8 @@
       [reservationId]="reservation?.id || 0"
       [bookingId]="bookingId"
       [periodId]="reservation?.departureId?.toString() || ''"
+      [Days]="Days"
+
     />
 
     <!-- Flights -->
@@ -79,6 +82,7 @@
     <app-booking-activities-v2
       *ngIf="reservation?.id"
       [reservationId]="reservation?.id || 0"
+      [statusCode]="bookingData.statusCode"
       [periodId]="reservation?.departureId?.toString() || ''"
       (dataUpdated)="onActivitiesDataUpdated()"
     >

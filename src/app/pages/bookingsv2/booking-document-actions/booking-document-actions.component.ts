@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { MessageService } from 'primeng/api';
 import { ReservationService } from '../../../core/services/reservation/reservation.service';
 import { IReservationResponse } from '../../../core/services/reservation/reservation.service';
@@ -12,13 +12,13 @@ import {
   DocumentType,
   DocumentDownloadResult,
 } from '../../../core/services/v2/document.service';
-import { of } from 'rxjs';
-import { switchMap, catchError } from 'rxjs/operators';
+import { of, timer, Subject } from 'rxjs';
+import { switchMap, catchError, takeUntil, finalize, takeWhile } from 'rxjs/operators';
 import {
   IReservationStatusResponse,
   ReservationStatusService,
 } from '../../../core/services/reservation/reservation-status.service';
-import { ReservationsSyncsService } from '../../../core/services/reservation/reservations-syncs.service';
+import { ReservationsSyncsService, EnqueueSyncResponse, SyncJobStatusResponse } from '../../../core/services/reservation/reservations-syncs.service';
 
 interface DocumentActionConfig {
   id: string;
@@ -35,7 +35,7 @@ interface DocumentActionConfig {
   styleUrls: ['./booking-document-actions.component.scss'],
   standalone: false,
 })
-export class BookingDocumentActionsV2Component implements OnInit {
+export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
   @Input() isVisible: boolean = true;
   @Input() bookingId: string = '';
 
@@ -61,6 +61,13 @@ export class BookingDocumentActionsV2Component implements OnInit {
       icon: 'pi pi-ticket',
       emailCode: 'RESERVATION_VOUCHER',
       documentCode: 'RESERVATION_VOUCHER',
+      visible: true,
+    },
+    {
+      id: 'PROFORMA',
+      test: 'Enviar proforma',
+      icon: 'pi pi-file-pdf',
+      emailCode: 'PROFORMA',
       visible: true,
     },
     {
@@ -102,6 +109,11 @@ export class BookingDocumentActionsV2Component implements OnInit {
 
   ngOnInit(): void {
     this.loadUserEmail();
+  }
+
+  ngOnDestroy(): void {
+    this.enqueueSyncDestroy$.next();
+    this.enqueueSyncDestroy$.complete();
   }
 
   /**
@@ -155,6 +167,9 @@ export class BookingDocumentActionsV2Component implements OnInit {
   private currentReservation: IReservationResponse | null = null;
   private prebookedStatusId: number | null = null;
   isProcessingSyncFromTk: boolean = false;
+  isProcessingEnqueueSync: boolean = false;
+  private enqueueSyncDestroy$ = new Subject<void>();
+  private previousRetryCount: number = 0;
 
   /**
    * Carga el ID del estado PREBOOKED para comparaciones.
@@ -181,7 +196,7 @@ export class BookingDocumentActionsV2Component implements OnInit {
     }
     const isPrebooked = this.currentReservation.reservationStatusId === this.prebookedStatusId;
     const hasNoTkId = !this.currentReservation.tkId;
-    return isPrebooked && hasNoTkId && !this.isProcessing;
+    return isPrebooked && hasNoTkId && !this.isProcessingEnqueueSync;
   }
 
   /**
@@ -189,7 +204,7 @@ export class BookingDocumentActionsV2Component implements OnInit {
    * según las condiciones que impiden su uso
    */
   getEnqueueSyncTooltip(): string {
-    if (this.isProcessing) {
+    if (this.isProcessingEnqueueSync) {
       return 'El envío a TourKnife se está procesando...';
     }
     if (!this.currentReservation) {
@@ -211,7 +226,7 @@ export class BookingDocumentActionsV2Component implements OnInit {
   }
 
   /**
-   * Ejecuta la llamada para encolar la sincronización con TK.
+   * Ejecuta la llamada para encolar la sincronización con TK y luego hace polling del estado.
    */
   onEnqueueSync(): void {
     const reservationId = parseInt(this.bookingId, 10);
@@ -228,28 +243,156 @@ export class BookingDocumentActionsV2Component implements OnInit {
       return;
     }
 
-    this.isProcessing = true;
+    this.isProcessingEnqueueSync = true;
     this.reservationsSyncsService.enqueueByReservationId(reservationId).subscribe({
-      next: (success: boolean) => {
-        this.isProcessing = false;
-        if (success) {
+      next: (response: EnqueueSyncResponse) => {
+        const jobId = response.jobId;
+        
+        if (!jobId) {
+          this.isProcessingEnqueueSync = false;
           this.messageService.add({
-            severity: 'success',
-            summary: 'Sincronización encolada',
-            detail: 'La sincronización con TourKnife se ha encolado correctamente.',
-            life: 3000,
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No se recibió un jobId válido de la sincronización.',
+            life: 4000,
           });
-        } else {
-          this.messageService.add({
-            severity: 'warn',
-            summary: 'Aviso',
-            detail: 'No se pudo encolar la sincronización.',
-            life: 3000,
-          });
+          return;
         }
+
+        // Resetear el contador de reintentos
+        this.previousRetryCount = 0;
+
+        // Mostrar notificación informativa de que se está procesando
+        this.messageService.add({
+          severity: 'info',
+          summary: 'Procesando',
+          detail: 'La sincronización se está procesando...',
+          life: 3000,
+        });
+
+        // Hacer polling cada 5 segundos hasta que el estado sea "Succeeded"
+        // timer(0, 5000) hace la primera llamada inmediatamente y luego cada 5 segundos
+        timer(0, 5000)
+          .pipe(
+            switchMap(() => this.reservationsSyncsService.getSyncJobStatus(jobId)),
+            takeWhile((statusResponse: SyncJobStatusResponse) => {
+              const state = statusResponse.state?.toLowerCase();
+              const retryCount = this.getRetryCount(statusResponse);
+              
+              // Detener si el estado es final o si llegamos a 3 intentos sin éxito
+              if (state === 'succeeded' || state === 'failed' || state === 'deleted') {
+                return false;
+              }
+              
+              // Si llegamos a 3 intentos y no es succeeded, detener el polling
+              if (retryCount >= 3 && state !== 'succeeded') {
+                return false;
+              }
+              
+              return true;
+            }, true), // Incluir el último valor que rompió la condición
+            takeUntil(this.enqueueSyncDestroy$),
+            catchError((error) => {
+              this.isProcessingEnqueueSync = false;
+              this.previousRetryCount = 0;
+              const errorMessage =
+                error?.error?.message ||
+                'Error al verificar el estado de la sincronización.';
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: errorMessage,
+                life: 4000,
+              });
+              return of(null);
+            }),
+            finalize(() => {
+              // Este bloque se ejecuta cuando el polling termina
+              this.previousRetryCount = 0;
+            })
+          )
+          .subscribe({
+            next: (statusResponse: SyncJobStatusResponse | null) => {
+              if (!statusResponse) {
+                return;
+              }
+
+              const state = statusResponse.state?.toLowerCase();
+              const retryCount = this.getRetryCount(statusResponse);
+
+              // Detectar cambios en el retryCount
+              if (retryCount > this.previousRetryCount) {
+                // Si el retryCount aumentó de 1 a 2 o de 2 a 3, mostrar mensaje de reintento
+                if (retryCount === 2) {
+                  this.messageService.add({
+                    severity: 'warn',
+                    summary: 'Reintentando',
+                    detail: 'Ha ocurrido un error y se está volviendo a intentar la sincronización...',
+                    life: 4000,
+                  });
+                } else if (retryCount === 3) {
+                  this.messageService.add({
+                    severity: 'warn',
+                    summary: 'Reintentando',
+                    detail: 'Ha ocurrido un error y se está volviendo a intentar la sincronización por última vez...',
+                    life: 4000,
+                  });
+                }
+                this.previousRetryCount = retryCount;
+              }
+
+              // Si llegamos a 3 intentos y el estado no es "Succeeded", mostrar error
+              if (retryCount >= 3 && state !== 'succeeded') {
+                this.isProcessingEnqueueSync = false;
+                this.previousRetryCount = 0;
+                this.messageService.add({
+                  severity: 'error',
+                  summary: 'Error de sincronización',
+                  detail: 'La sincronización con TourKnife ha fallado después de 3 intentos.',
+                  life: 5000,
+                });
+                return;
+              }
+
+              if (state === 'succeeded') {
+                this.isProcessingEnqueueSync = false;
+                this.previousRetryCount = 0;
+                this.messageService.add({
+                  severity: 'success',
+                  summary: 'Sincronización completada',
+                  detail: 'La sincronización con TourKnife se ha completado correctamente.',
+                  life: 3000,
+                });
+              } else if (state === 'failed' || state === 'deleted') {
+                this.isProcessingEnqueueSync = false;
+                this.previousRetryCount = 0;
+                this.messageService.add({
+                  severity: 'error',
+                  summary: 'Error en la sincronización',
+                  detail: 'La sincronización con TourKnife ha fallado.',
+                  life: 4000,
+                });
+              }
+              // Si el estado es 'enqueued', 'processing', 'scheduled', etc., continuamos el polling
+            },
+            error: (error) => {
+              this.isProcessingEnqueueSync = false;
+              this.previousRetryCount = 0;
+              const errorMessage =
+                error?.error?.message ||
+                'Error al verificar el estado de la sincronización.';
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: errorMessage,
+                life: 4000,
+              });
+            },
+          });
       },
       error: (error) => {
-        this.isProcessing = false;
+        this.isProcessingEnqueueSync = false;
+        this.previousRetryCount = 0;
         const errorMessage =
           error?.error?.message ||
           'Error al encolar la sincronización. Inténtalo más tarde.';
@@ -261,6 +404,19 @@ export class BookingDocumentActionsV2Component implements OnInit {
         });
       },
     });
+  }
+
+  /**
+   * Obtiene el retryCount de la respuesta del job status.
+   * El retryCount viene como string en properties.RetryCount
+   */
+  private getRetryCount(statusResponse: SyncJobStatusResponse): number {
+    const retryCountStr = statusResponse.properties?.RetryCount;
+    if (!retryCountStr) {
+      return 0;
+    }
+    const retryCount = parseInt(retryCountStr, 10);
+    return isNaN(retryCount) ? 0 : retryCount;
   }
 
   /**
@@ -387,7 +543,16 @@ export class BookingDocumentActionsV2Component implements OnInit {
    * Obtiene las acciones visibles
    */
   getVisibleActions(): DocumentActionConfig[] {
-    return this.documentList.filter((action) => action.visible);
+    return this.documentList.filter((action) => {
+      if (!action.visible) return false;
+      
+      // Ocultar PROFORMA si el retailerId es 7
+      if (action.id === 'PROFORMA' && this.currentReservation?.retailerId === 8) {
+        return false;
+      }
+      
+      return true;
+    });
   }
 
   /**

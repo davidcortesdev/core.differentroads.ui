@@ -9,6 +9,7 @@
         (onClick)="onEnqueueSync()"
         [pTooltip]="!canEnqueueSync ? getEnqueueSyncTooltip() : ''"
         tooltipPosition="top"
+        [loading]="isProcessingEnqueueSync"
       >
       </p-button>
       <p-button

@@ -6,14 +6,14 @@
     <!-- ✅ NUEVA SECCIÓN: Mostrar país debajo del nombre con evento de clic -->
     <div class="tour-location" *ngIf="country">
       <span class="country" (click)="onCountryClick($event, country)" style="cursor: pointer;">{{ country }}</span>
-      <span 
-      *ngFor="let tripType of tourTripTypes" 
-      class="trip-type-tag"
-      [style.background]="tripType.color"
-      [style.color]="'white'"
-      [title]="tripType.name">
-      {{ tripType.name }} <!-- ✅ Mostrar nombre completo directamente -->
-    </span>
+      <p-tag
+        *ngFor="let tripType of (tourTripTypesLocal.length > 0 ? tourTripTypesLocal : (tourTripTypes || []))"
+        [value]="tripType.name"
+        [style.background-color]="tripType.color || '#D3D3D3'"
+        [style.color]="'white'"
+        [style.border]="'none'"
+        class="trip-type-tag">
+      </p-tag>
     </div>
   </div>
           

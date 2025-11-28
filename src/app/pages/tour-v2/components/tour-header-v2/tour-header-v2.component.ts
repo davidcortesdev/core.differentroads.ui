@@ -44,8 +44,8 @@ import {
   ReservationTravelerActivityPackService,
   ReservationTravelerActivityPackCreate,
 } from '../../../../core/services/reservation/reservation-traveler-activity-pack.service';
-import { Subscription, forkJoin, of, Observable } from 'rxjs';
-import { catchError, map, switchMap, concatMap } from 'rxjs/operators';
+import { Subscription, forkJoin, of, Observable, Subject } from 'rxjs';
+import { catchError, map, switchMap, concatMap, takeUntil, finalize } from 'rxjs/operators';
 import { TourTagService } from '../../../../core/services/tag/tour-tag.service';
 import { TagService } from '../../../../core/services/tag/tag.service';
 import { ItineraryService, ItineraryFilters } from '../../../../core/services/itinerary/itinerary.service';
@@ -60,6 +60,7 @@ import { UsersNetService } from '../../../../core/services/users/usersNet.servic
 import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
 import { ReservationStatusService } from '../../../../core/services/reservation/reservation-status.service';
 import { ReviewsService } from '../../../../core/services/reviews/reviews.service';
+import { TripTypeService, ITripTypeResponse } from '../../../../core/services/trip-type/trip-type.service';
 
 // ✅ INTERFACES para tipado fuerte
 interface PassengersData {
@@ -137,6 +138,14 @@ export class TourHeaderV2Component
     color: string;
     abbreviation: string;
   }[];
+  // Trip types obtenidos directamente en el componente
+  tourTripTypesLocal: {
+    name: string;
+    code: string;
+    color: string;
+    abbreviation: string;
+  }[] = [];
+  isLoadingTripTypes = false;
   // Tour data
   tour: Partial<Tour> = {};
 
@@ -148,6 +157,8 @@ export class TourHeaderV2Component
   private isScrolled = false;
   private headerHeight = 0;
   private subscriptions = new Subscription();
+  // Cancellation token independiente para la petición de trip types
+  private tripTypesDestroy$ = new Subject<void>();
 
   // Estado para controlar el proceso de reservación
   isCreatingReservation = false;
@@ -174,7 +185,8 @@ export class TourHeaderV2Component
     private usersNetService: UsersNetService,
     private analyticsService: AnalyticsService,
     private reservationStatusService: ReservationStatusService,
-    private reviewsService: ReviewsService
+    private reviewsService: ReviewsService,
+    private tripTypeService: TripTypeService
   ) {}
 
   ngOnInit() {
@@ -182,12 +194,16 @@ export class TourHeaderV2Component
     this.isCreatingReservation = false;
     if (this.tourId) {
       this.loadTourData(this.tourId);
+      // Cargar trip types usando el nuevo endpoint
+      this.loadTripTypes(this.tourId);
     }
   }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['tourId'] && changes['tourId'].currentValue) {
       this.loadTourData(changes['tourId'].currentValue);
+      // Cargar trip types usando el nuevo endpoint
+      this.loadTripTypes(changes['tourId'].currentValue);
     }
   }
 
@@ -196,6 +212,9 @@ export class TourHeaderV2Component
   }
 
   ngOnDestroy() {
+    // Cancelar petición de trip types
+    this.tripTypesDestroy$.next();
+    this.tripTypesDestroy$.complete();
     this.subscriptions.unsubscribe();
   }
 
@@ -388,6 +407,74 @@ export class TourHeaderV2Component
       return 'Esta salida no tiene disponibilidad';
     }
     return '';
+  }
+
+  /**
+   * Carga los tipos de viaje usando el nuevo endpoint /api/Tour/{id}/triptype-ids
+   * Esta petición es independiente y tiene su propio cancellation token
+   * @param tourId ID del tour
+   */
+  private loadTripTypes(tourId: number): void {
+    if (!tourId) return;
+
+    this.isLoadingTripTypes = true;
+
+    // Petición independiente con su propio cancellation token
+    this.tourService
+      .getTripTypeIds(tourId, !this.preview)
+      .pipe(
+        takeUntil(this.tripTypesDestroy$),
+        catchError((error) => {
+          console.error('Error al obtener tripTypeIds del tour:', error);
+          return of([]);
+        })
+      )
+      .subscribe((tripTypeIds: number[]) => {
+        if (tripTypeIds.length === 0) {
+          this.isLoadingTripTypes = false;
+          return;
+        }
+
+        // Obtener todos los trip types usando la lista de IDs directamente
+        // Crear peticiones para cada ID y combinarlas
+        const tripTypeRequests = tripTypeIds.map((id) =>
+          this.tripTypeService.getById(id).pipe(
+            takeUntil(this.tripTypesDestroy$),
+            catchError((error) => {
+              console.error(`Error al obtener trip type con ID ${id}:`, error);
+              return of(null);
+            })
+          )
+        );
+
+        forkJoin(tripTypeRequests)
+          .pipe(
+            takeUntil(this.tripTypesDestroy$),
+            catchError((error) => {
+              console.error('Error al obtener detalles de trip types:', error);
+              return of([]);
+            }),
+            finalize(() => {
+              this.isLoadingTripTypes = false;
+            })
+          )
+          .subscribe((tripTypes: (ITripTypeResponse | null)[]) => {
+            // Filtrar nulls y mapear a el formato esperado
+            const validTripTypes = tripTypes.filter(
+              (tt): tt is ITripTypeResponse => tt !== null
+            );
+
+            const mappedTripTypes = validTripTypes.map((tripType) => ({
+              name: tripType.name,
+              code: tripType.code,
+              color: tripType.color || '#D3D3D3', // Gris clarito si el color es null
+              abbreviation: tripType.abbreviation || tripType.name.charAt(0).toUpperCase(),
+            }));
+
+            // Actualizar trip types locales
+            this.tourTripTypesLocal = mappedTripTypes;
+          });
+      });
   }
 
   private loadTourData(tourId: number) {

@@ -34,14 +34,10 @@
       <!-- ✅ NUEVO: Botones de TripTypes -->
       <span 
   *ngFor="let tripType of tourData.tripTypes" 
-  class="tag expandable-tag trip-type-tag"
-  [style.background]="tripType.color">
-  <span class="short-text">
-    <span class="abbreviation-text">{{ tripType.abbreviation }}</span>
-  </span>
-  <span class="expanded-content">
-    <span class="full-text">{{ tripType.name }}</span>
-  </span>
+  class="tag trip-type-tag"
+  [style.background]="tripType.color"
+  [style.color]="'white'">
+  {{ tripType.name }}
 </span>
     </div>
     

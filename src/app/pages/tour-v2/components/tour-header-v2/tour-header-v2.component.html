@@ -7,7 +7,7 @@
     <div class="tour-location" *ngIf="country">
       <span class="country" (click)="onCountryClick($event, country)" style="cursor: pointer;">{{ country }}</span>
       <span 
-      *ngFor="let tripType of tourTripTypes" 
+      *ngFor="let tripType of (tourTripTypesLocal.length > 0 ? tourTripTypesLocal : (tourTripTypes || []))" 
       class="trip-type-tag"
       [style.background]="tripType.color"
       [style.color]="'white'"

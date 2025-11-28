@@ -126,7 +126,7 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
             const mappedTripTypes = validTripTypes.map((tripType) => ({
               name: tripType.name,
               code: tripType.code,
-              color: tripType.color,
+              color: tripType.color || '#D3D3D3', // Gris clarito si el color es null
               abbreviation: tripType.abbreviation || tripType.name.charAt(0).toUpperCase(),
             }));
 

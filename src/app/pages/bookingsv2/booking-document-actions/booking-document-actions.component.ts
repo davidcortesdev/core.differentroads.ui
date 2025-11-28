@@ -547,7 +547,7 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
       if (!action.visible) return false;
       
       // Ocultar PROFORMA si el retailerId es 7
-      if (action.id === 'PROFORMA' && this.currentReservation?.retailerId === 8) {
+      if (action.id === 'PROFORMA' && this.currentReservation?.retailerId === 7) {
         return false;
       }
       

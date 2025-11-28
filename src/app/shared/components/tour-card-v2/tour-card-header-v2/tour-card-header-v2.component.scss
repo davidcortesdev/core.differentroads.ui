@@ -150,11 +150,9 @@ $spacing-md: 1rem;
     }
 
     .trip-type-tag {
-      @extend .by-dr-tag; // Si tu preprocessor lo soporta
-      max-height: 25px;
-      align-self: flex-end !important;
-
+      margin-top: $spacing-xs;
     }
+    
     // Indicador general
     .indicator {
       font-weight: 500;

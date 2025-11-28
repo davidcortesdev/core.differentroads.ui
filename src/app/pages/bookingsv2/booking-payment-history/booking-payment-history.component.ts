@@ -56,6 +56,7 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
   @Input() departureDate: string = ''; // NUEVO: Para payment-management
   @Input() isATC: boolean = false; // NUEVO: Para mostrar selector de estados
   @Input() tourId: number = 0; // NUEVO: Para analytics
+  @Input() statusCode: string = '';
 
   @Output() registerPayment = new EventEmitter<number>();
   @Output() couponApplied = new EventEmitter<void>();
@@ -221,6 +222,10 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
       this.paymentHistory,
       this.bookingTotal
     );
+  }
+  
+  get isCancelled(): boolean {
+    return ['CANCELLED','SUSPENDED','EXPIRED','DELETED'].includes(this.statusCode);
   }
 
   private loadPayments(): void {

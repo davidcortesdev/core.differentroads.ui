@@ -49,6 +49,8 @@ export class PassengerCardV2Component implements OnInit, OnChanges, OnDestroy {
   @Input() departureReservationFields: IDepartureReservationFieldResponse[] = []; // NUEVO: Campos configurados para este departure
   @Input() mandatoryFields: IDepartureReservationFieldResponse[] = [];
   @Input() isLeadTraveler: boolean = false;
+  @Input() isEditingBlocked: boolean = false;
+  @Input() Days!: number;
 
   @Output() passengerUpdated = new EventEmitter<any>();
 
@@ -456,7 +458,17 @@ export class PassengerCardV2Component implements OnInit, OnChanges, OnDestroy {
   }
 
   onEdit(): void {
-    this.startEditing();
+    if (this.isEditingBlocked) {
+      this.messageService.add({
+        key: 'center',
+        severity: 'warn',
+        summary: 'Edición bloqueada',
+        detail: `No se pueden modificar los datos personales ${this.Days} días antes del viaje`,
+        life: 5000,
+      });
+      return;
+    }
+    this.isEditing = true;
   }
 
   onCancel(): void {

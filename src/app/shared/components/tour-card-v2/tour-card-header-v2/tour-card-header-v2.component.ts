@@ -94,7 +94,8 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
           return;
         }
 
-        // Obtener los detalles de cada trip type
+        // Obtener todos los trip types usando la lista de IDs directamente
+        // Crear peticiones para cada ID y combinarlas
         const tripTypeRequests = tripTypeIds.map((id) =>
           this.tripTypeService.getById(id).pipe(
             takeUntil(this.tripTypesDestroy$),

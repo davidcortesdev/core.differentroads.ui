@@ -468,6 +468,27 @@ export class TourService {
   }
 
   /**
+   * Obtiene la lista de números de mes (1-12) únicos en los que hay salidas para un tour.
+   * @param id ID del tour.
+   * @param tourVisibility Si es true, solo devuelve meses de tours visibles.
+   * @returns Observable de array de números de mes (1-12).
+   */
+  getDepartureMonths(id: number, tourVisibility?: boolean): Observable<number[]> {
+    let params = new HttpParams();
+    
+    if (tourVisibility !== undefined) {
+      params = params.set('tourVisibility', tourVisibility.toString());
+    }
+
+    return this.http.get<number[]>(`${this.API_URL}/${id}/departure-months`, { params }).pipe(
+      catchError((error) => {
+        console.error(`Error al obtener departure-months del tour con ID ${id}:`, error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
    * Obtiene los precios finales de un tour para una actividad específica.
    * @param activityId ID de la actividad.
    * @returns Observable de array de precios finales.

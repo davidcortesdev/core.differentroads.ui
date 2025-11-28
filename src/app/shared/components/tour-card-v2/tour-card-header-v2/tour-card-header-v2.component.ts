@@ -12,6 +12,7 @@ import { ReviewsService } from '../../../../core/services/reviews/reviews.servic
 import { TourService } from '../../../../core/services/tour/tour.service';
 import { TripTypeService, ITripTypeResponse } from '../../../../core/services/trip-type/trip-type.service';
 import { TourDataV2 } from '../tour-card-v2.model';
+import { es } from 'primelocale/es.json';
 
 @Component({
   selector: 'app-tour-card-header-v2',
@@ -26,10 +27,13 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
   averageRating?: number = undefined;
   isLoadingRating = false;
   isLoadingTripTypes = false;
+  isLoadingMonths = false;
 
   private subscriptions = new Subscription();
   // Cancellation token independiente para la petición de trip types
   private tripTypesDestroy$ = new Subject<void>();
+  // Cancellation token independiente para la petición de meses
+  private monthsDestroy$ = new Subject<void>();
 
   constructor(
     private reviewsService: ReviewsService,
@@ -45,6 +49,7 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
     // Cargar trip types usando el nuevo endpoint
     if (this.tourData.id) {
       this.loadTripTypes(this.tourData.id);
+      this.loadDepartureMonths(this.tourData.id);
     }
   }
 
@@ -52,6 +57,9 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
     // Cancelar petición de trip types
     this.tripTypesDestroy$.next();
     this.tripTypesDestroy$.complete();
+    // Cancelar petición de meses
+    this.monthsDestroy$.next();
+    this.monthsDestroy$.complete();
     // Cancelar otras peticiones (rating)
     this.subscriptions.unsubscribe();
   }
@@ -124,6 +132,52 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
             // Actualizar tourData con los trip types obtenidos
             this.tourData.tripTypes = mappedTripTypes;
           });
+      });
+  }
+
+  /**
+   * Carga los meses de salida usando el nuevo endpoint /api/Tour/{id}/departure-months
+   * Esta petición es independiente y tiene su propio cancellation token
+   * @param tourId ID del tour
+   */
+  private loadDepartureMonths(tourId: number): void {
+    if (!tourId) return;
+
+    this.isLoadingMonths = true;
+
+    // Petición independiente con su propio cancellation token
+    this.tourService
+      .getDepartureMonths(tourId, true)
+      .pipe(
+        takeUntil(this.monthsDestroy$),
+        catchError((error) => {
+          console.error('Error al obtener departure-months del tour:', error);
+          return of([]);
+        }),
+        finalize(() => {
+          this.isLoadingMonths = false;
+        })
+      )
+      .subscribe((monthNumbers: number[]) => {
+        if (monthNumbers.length === 0) {
+          return;
+        }
+
+        // Mapear números de mes (1-12) a strings formateados usando traducciones de PrimeNG
+        const monthNamesShort = es.monthNamesShort;
+        const availableMonths = monthNumbers
+          .map((monthNumber) => {
+            // El endpoint devuelve 1-12, pero los arrays son 0-indexed
+            const monthIndex = monthNumber - 1;
+            if (monthIndex >= 0 && monthIndex < monthNamesShort.length) {
+              return monthNamesShort[monthIndex].toUpperCase();
+            }
+            return null;
+          })
+          .filter((month): month is string => month !== null);
+
+        // Actualizar tourData con los meses obtenidos
+        this.tourData.availableMonths = availableMonths;
       });
   }
 

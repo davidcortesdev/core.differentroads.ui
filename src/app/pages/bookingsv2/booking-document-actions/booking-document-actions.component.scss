@@ -92,11 +92,11 @@
 
         p-button:nth-child(2) {
             .p-button {
-                border-color: #4ecdc4 !important;
-                color: #4ecdc4 !important;
+                border-color: #26a55b !important;
+                color: #26a55b !important;
 
                 .p-button-icon {
-                    color: #4ecdc4 !important;
+                    color: #26a55b !important;
                 }
 
                 &:hover {
@@ -146,6 +146,36 @@
 
                 &:hover {
                     background-color: #f0f8fc !important;
+                }
+            }
+        }
+
+        p-button:nth-child(6) {
+            .p-button {
+                border-color: #95a5a6 !important;
+                color: #95a5a6 !important;
+
+                .p-button-icon {
+                    color: #95a5a6 !important;
+                }
+
+                &:hover {
+                    background-color: #ecf0f1 !important;
+                }
+            }
+        }
+
+        p-button:nth-child(7) {
+            .p-button {
+                border-color: #e67e22 !important;
+                color: #e67e22 !important;
+
+                .p-button-icon {
+                    color: #e67e22 !important;
+                }
+
+                &:hover {
+                    background-color: #fdf2e9 !important;
                 }
             }
         }

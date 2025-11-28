@@ -797,15 +797,11 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
       error: (error) => {
         console.error('❌ Error al cancelar la reserva:', error);
         
-        const errorMessage = error?.error?.message || 
-                            error?.message || 
-                            'Ocurrió un error al cancelar la reserva';
-        
         this.messageService.add({
           key: 'center',
           severity: 'error',
           summary: 'Error',
-          detail: errorMessage,
+          detail: 'Error al cancelar la reserva',
           life: 5000,
         });
       }

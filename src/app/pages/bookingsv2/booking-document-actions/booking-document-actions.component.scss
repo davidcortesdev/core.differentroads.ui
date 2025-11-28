@@ -46,8 +46,8 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 1.5rem;
-    flex-wrap: nowrap;
+    gap: 1rem;
+    flex-wrap: wrap;
     width: 100%;
 }
 
@@ -182,107 +182,32 @@
     }
 }
 
-/* Para dispositivos móviles */
+/* Responsive: pantallas pequeñas */
+@media (max-width: 768px) {
+    .buttons-container {
+        gap: 0.75rem;
+    }
+
+    ::ng-deep .buttons-container .p-button {
+        font-size: 0.85rem;
+        padding: 0.5rem 0.9rem !important;
+    }
+}
+
+/* Responsive: móviles */
 @media (max-width: 480px) {
     .buttons-container {
-        flex-direction: column;
-        width: 100%;
-        gap: 1rem;
+        gap: 0.5rem;
     }
 
-    ::ng-deep p-button {
-        width: 100%;
-
-        .p-button {
-            width: 100%;
-        }
-    }
-}
-
-/* VERSIÓN CORREGIDA PARA TABLETS - solución radical con texto centrado */
-@media (min-width: 481px) and (max-width: 991px) {
-    /* Eliminamos cualquier display previo y usamos texto centrado */
-    .buttons-container {
-        display: block !important;
-        text-align: center !important;
-        width: 100% !important;
-        padding: 0 !important;
-        margin: 0 !important;
+    ::ng-deep .buttons-container .p-button {
+        font-size: 0.8rem;
+        padding: 0.5rem 0.75rem !important;
     }
 
-    /* Hacemos un grupo visual para la primera fila */
-    .first-row {
-        display: block !important;
-        text-align: center !important;
-        margin-bottom: 1.5rem !important; /* Aumentado de 1.5rem a 2.5rem */
-    }
-
-    /* Hacemos un grupo visual para la segunda fila */
-    .second-row {
-        display: block !important;
-        text-align: center !important;
-    }
-
-    /* Estilo para cada botón individual - primera fila */
-    .buttons-container p-button:nth-child(1),
-    .buttons-container p-button:nth-child(2),
-    .buttons-container p-button:nth-child(3) {
-        display: inline-block !important;
-        width: auto !important;
-        margin: 0 0.5rem 0 0.5rem !important;
-        float: none !important;
-        margin-bottom: 1.5rem !important; /* Espacio adicional después de la primera fila */
-    }
-
-    /* Estilo para cada botón individual - segunda fila */
-    .buttons-container p-button:nth-child(4),
-    .buttons-container p-button:nth-child(5) {
-        display: inline-block !important;
-        width: auto !important;
-        margin: 0 1.5rem !important;
-        float: none !important;
-    }
-
-    /* Aseguramos que los botones sean del tamaño correcto */
-    .buttons-container p-button .p-button {
-        width: auto !important;
-    }
-}
-
-/* Aseguramos que en pantallas de PC los botones estén en una sola fila */
-@media (min-width: 992px) {
-    .buttons-container {
-        flex-wrap: nowrap;
-        justify-content: space-around;
-
-        p-button {
-            /* Mantener botones de tamaño consistente */
-            flex: 0 1 auto;
-            min-width: auto;
-
-            .p-button {
-                white-space: nowrap;
-                font-size: 0.85rem; /* Ajustamos el tamaño del texto si es necesario */
-                padding: 0.6rem 1rem !important; /* Reduzco un poco el padding */
-            }
-        }
-    }
-}
-
-/* Para pantallas pequeñas de PC */
-@media (min-width: 992px) and (max-width: 1280px) {
-    .buttons-container {
-        gap: 0.8rem; /* Espacio reducido entre botones */
-
-        .p-button {
-            font-size: 0.8rem !important; /* Texto más pequeño */
-            padding: 0.5rem 0.9rem !important; /* Padding más pequeño */
-
-            .p-button-icon {
-                margin-right: 4px; /* Icono más cerca del texto */
-                font-size: 0.9rem; /* Icono más pequeño */
-            }
-        }
+    ::ng-deep .buttons-container .p-button-icon {
+        margin-right: 4px;
+        font-size: 0.9rem;
     }
 }
 

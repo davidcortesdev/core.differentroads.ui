@@ -14,6 +14,7 @@ export interface SyncJobStatusResponse {
   properties: {
     CurrentCulture?: string;
     CurrentUICulture?: string;
+    RetryCount?: string;
     [key: string]: any;
   };
 }

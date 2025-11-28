@@ -169,6 +169,7 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
   isProcessingSyncFromTk: boolean = false;
   isProcessingEnqueueSync: boolean = false;
   private enqueueSyncDestroy$ = new Subject<void>();
+  private previousRetryCount: number = 0;
 
   /**
    * Carga el ID del estado PREBOOKED para comparaciones.
@@ -258,6 +259,9 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
           return;
         }
 
+        // Resetear el contador de reintentos
+        this.previousRetryCount = 0;
+
         // Mostrar notificación informativa de que se está procesando
         this.messageService.add({
           severity: 'info',
@@ -273,11 +277,24 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
             switchMap(() => this.reservationsSyncsService.getSyncJobStatus(jobId)),
             takeWhile((statusResponse: SyncJobStatusResponse) => {
               const state = statusResponse.state?.toLowerCase();
-              return state !== 'succeeded' && state !== 'failed' && state !== 'deleted';
+              const retryCount = this.getRetryCount(statusResponse);
+              
+              // Detener si el estado es final o si llegamos a 3 intentos sin éxito
+              if (state === 'succeeded' || state === 'failed' || state === 'deleted') {
+                return false;
+              }
+              
+              // Si llegamos a 3 intentos y no es succeeded, detener el polling
+              if (retryCount >= 3 && state !== 'succeeded') {
+                return false;
+              }
+              
+              return true;
             }, true), // Incluir el último valor que rompió la condición
             takeUntil(this.enqueueSyncDestroy$),
             catchError((error) => {
               this.isProcessingEnqueueSync = false;
+              this.previousRetryCount = 0;
               const errorMessage =
                 error?.error?.message ||
                 'Error al verificar el estado de la sincronización.';
@@ -291,6 +308,7 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
             }),
             finalize(() => {
               // Este bloque se ejecuta cuando el polling termina
+              this.previousRetryCount = 0;
             })
           )
           .subscribe({
@@ -300,9 +318,45 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
               }
 
               const state = statusResponse.state?.toLowerCase();
+              const retryCount = this.getRetryCount(statusResponse);
+
+              // Detectar cambios en el retryCount
+              if (retryCount > this.previousRetryCount) {
+                // Si el retryCount aumentó de 1 a 2 o de 2 a 3, mostrar mensaje de reintento
+                if (retryCount === 2) {
+                  this.messageService.add({
+                    severity: 'warn',
+                    summary: 'Reintentando',
+                    detail: 'Ha ocurrido un error y se está volviendo a intentar la sincronización...',
+                    life: 4000,
+                  });
+                } else if (retryCount === 3) {
+                  this.messageService.add({
+                    severity: 'warn',
+                    summary: 'Reintentando',
+                    detail: 'Ha ocurrido un error y se está volviendo a intentar la sincronización por última vez...',
+                    life: 4000,
+                  });
+                }
+                this.previousRetryCount = retryCount;
+              }
+
+              // Si llegamos a 3 intentos y el estado no es "Succeeded", mostrar error
+              if (retryCount >= 3 && state !== 'succeeded') {
+                this.isProcessingEnqueueSync = false;
+                this.previousRetryCount = 0;
+                this.messageService.add({
+                  severity: 'error',
+                  summary: 'Error de sincronización',
+                  detail: 'La sincronización con TourKnife ha fallado después de 3 intentos.',
+                  life: 5000,
+                });
+                return;
+              }
 
               if (state === 'succeeded') {
                 this.isProcessingEnqueueSync = false;
+                this.previousRetryCount = 0;
                 this.messageService.add({
                   severity: 'success',
                   summary: 'Sincronización completada',
@@ -311,6 +365,7 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
                 });
               } else if (state === 'failed' || state === 'deleted') {
                 this.isProcessingEnqueueSync = false;
+                this.previousRetryCount = 0;
                 this.messageService.add({
                   severity: 'error',
                   summary: 'Error en la sincronización',
@@ -318,10 +373,11 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
                   life: 4000,
                 });
               }
-              // Si el estado es 'enqueued', 'processing', etc., continuamos el polling
+              // Si el estado es 'enqueued', 'processing', 'scheduled', etc., continuamos el polling
             },
             error: (error) => {
               this.isProcessingEnqueueSync = false;
+              this.previousRetryCount = 0;
               const errorMessage =
                 error?.error?.message ||
                 'Error al verificar el estado de la sincronización.';
@@ -336,6 +392,7 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
       },
       error: (error) => {
         this.isProcessingEnqueueSync = false;
+        this.previousRetryCount = 0;
         const errorMessage =
           error?.error?.message ||
           'Error al encolar la sincronización. Inténtalo más tarde.';
@@ -347,6 +404,19 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
         });
       },
     });
+  }
+
+  /**
+   * Obtiene el retryCount de la respuesta del job status.
+   * El retryCount viene como string en properties.RetryCount
+   */
+  private getRetryCount(statusResponse: SyncJobStatusResponse): number {
+    const retryCountStr = statusResponse.properties?.RetryCount;
+    if (!retryCountStr) {
+      return 0;
+    }
+    const retryCount = parseInt(retryCountStr, 10);
+    return isNaN(retryCount) ? 0 : retryCount;
   }
 
   /**

@@ -64,6 +64,13 @@ export class BookingDocumentActionsV2Component implements OnInit {
       visible: true,
     },
     {
+      id: 'PROFORMA',
+      test: 'Enviar proforma',
+      icon: 'pi pi-file-pdf',
+      emailCode: 'PROFORMA',
+      visible: true,
+    },
+    {
       id: 'PRACTICAL_INFO',
       test: 'Enviar información práctica',
       icon: 'pi pi-print',
@@ -387,7 +394,16 @@ export class BookingDocumentActionsV2Component implements OnInit {
    * Obtiene las acciones visibles
    */
   getVisibleActions(): DocumentActionConfig[] {
-    return this.documentList.filter((action) => action.visible);
+    return this.documentList.filter((action) => {
+      if (!action.visible) return false;
+      
+      // Ocultar PROFORMA si el retailerId es 7
+      if (action.id === 'PROFORMA' && this.currentReservation?.retailerId === 8) {
+        return false;
+      }
+      
+      return true;
+    });
   }
 
   /**

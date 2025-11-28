@@ -32,6 +32,8 @@ export class BookingCodeSectionV2Component implements OnInit {
     this.cancelBooking.emit();
   }
 
+  
+
   get isCancelled(): boolean {
     return this.statusId === 8;
   }

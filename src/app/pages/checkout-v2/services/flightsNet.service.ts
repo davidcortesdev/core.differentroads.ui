@@ -110,7 +110,7 @@ export class FlightsNetService {
     const params = new HttpParams().set('flightId', flightId.toString());
     return this.http.get<IFlightSegmentResponse[]>(`${this.API_URL_SEGMENT}`, { params }).pipe(
       map((segments: IFlightSegmentResponse[]) => {
-        const numScales = segments.length;
+        const numScales = segments.length - 1;
         const duration = 0; // Aquí puedes calcular la duración si tienes los datos necesarios
         const airlines: string[] = [];
         segments.forEach(segment => {

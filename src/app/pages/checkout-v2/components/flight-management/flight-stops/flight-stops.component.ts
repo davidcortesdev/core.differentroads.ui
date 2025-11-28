@@ -159,7 +159,7 @@ export class FlightStopsComponent implements OnInit {
         : newDetail.numScales + ' escalas';
     } else {
       const currentDetail = this.flightDetail as IFlightsNetFlightDetailDTO;
-      return currentDetail.numScales === 1
+      return currentDetail.numScales === 0
         ? 'Directo'
         : currentDetail.numScales + ' escalas';
     }

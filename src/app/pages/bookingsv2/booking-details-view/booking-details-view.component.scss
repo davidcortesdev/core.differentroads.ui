@@ -74,18 +74,10 @@ $p: var(--p-primary-color);
                     }
 
                     .booking-value {
-                        &.ret {
-                            margin-left: 5rem;
-                        }
-                        &.dat {
-                            margin-left: 3.5rem;
-                        }
                         width: auto;
-                        margin-left: 0;
                         font-size: 0.9rem;
                         display: inline-block;
                         vertical-align: middle;
-                        margin-top: -8px;
                     }
                 }
             }
@@ -127,54 +119,51 @@ $p: var(--p-primary-color);
         justify-content: space-between;
         height: 100px;
 
-        .booking-row {
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-
-            &.top-row {
-                padding-top: 5px;
-                margin-bottom: 10px;
-            }
-
-            &.bottom-row {
-                padding-bottom: 5px;
-            }
-
-            .booking-label {
-                /*color: #666;*/
-                font-size: 0.9rem;
-                width: auto;
-
-                &.tourname {
-                    font-size: 1.3rem;
-                    font-weight: 700;
-                    /*color: #333;*/
-                    width: 100%;
-                }
-            }
-
-            .booking-value {
-                font-weight: 500;
-                font-size: 0.9rem;
-                /*color: #333;*/
-                text-align: right;
-            }
-        }
-
-        @media (min-width: 769px) {
             .booking-row {
-                justify-content: flex-start;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                gap: 0.5rem;
+
+                &.top-row {
+                    padding-top: 5px;
+                    margin-bottom: 10px;
+                }
+
+                &.bottom-row {
+                    padding-bottom: 5px;
+                }
 
                 .booking-label {
-                    width: 20%;
+                    /*color: #666;*/
+                    font-size: 0.9rem;
+                    width: auto;
+
+                    &.tourname {
+                        font-size: 1.3rem;
+                        font-weight: 700;
+                        /*color: #333;*/
+                        width: 100%;
+                    }
                 }
 
                 .booking-value {
-                    width: 20%;
-                    text-align: right;
-                    padding-left: 1rem;
-                    margin-left: 0;
+                    font-weight: 500;
+                    font-size: 0.9rem;
+                    /*color: #333;*/
+                }
+            }
+
+        @media (min-width: 769px) {
+            .booking-row {
+                gap: 0.5rem;
+
+                .booking-label {
+                    width: auto;
+                }
+
+                .booking-value {
+                    width: auto;
                 }
             }
         }
@@ -279,10 +268,9 @@ $p: var(--p-primary-color);
 
     .booking-details {
         .booking-row {
-            justify-content: space-between;
+            gap: 0.5rem;
 
             .booking-value {
-                text-align: right;
                 margin-left: auto;
             }
         }

@@ -22,47 +22,16 @@
     <!-- Información de pagos (columna derecha) -->
     <div class="payment-column-right">
       <p-panel header="Pagos">
-        <div class="payment-info">
-          <!-- Fila unificada de información de pagos y botones (para desktop) -->
-          <div class="payment-unified-row">
-            <div class="payment-info-columns">
-              <div class="payment-column">
-                <span class="label">Precio total</span>
-                <span class="amount total">{{
-                  formatCurrency(paymentInfo.totalPrice)
-                }}</span>
-              </div>
-              <div class="payment-column">
-                <span class="label">Pendiente</span>
-                <span class="amount pending">{{
-                  formatCurrency(paymentInfo.pendingAmount)
-                }}</span>
-              </div>
-              <div class="payment-column">
-                <span class="label">Pagado</span>
-                <span class="amount paid">{{
-                  formatCurrency(paymentInfo.paidAmount)
-                }}</span>
-              </div>
-            </div>
-            <div class="payment-buttons" *ngIf="paymentInfo.totalPrice > 0">
-              <p-button
-                label="Añadir pago"
-                icon="pi pi-plus-circle"
-                styleClass="p-button-rounded p-button-lg"
-                [disabled]="paymentInfo.pendingAmount === 0"
-                (onClick)="navigateToPayment()"
-              ></p-button>
-              <p-button
-               label="Canjear cupón"
-               icon="pi pi-ticket"
-               styleClass="p-button-rounded p-button-lg"
-               [disabled]="paymentInfo.pendingAmount === 0 || isCancelled"
-               (onClick)="openCouponModal()"
-              ></p-button>
-            </div>
-          </div>
-        </div>
+        <app-booking-payments-header
+          [paymentInfo]="paymentInfo"
+          [isAgency]="isAgency"
+          [grossPaymentInfo]="grossPaymentInfo"
+          [netPaymentInfo]="netPaymentInfo"
+          [loadingProforma]="loadingProforma"
+          [isCancelled]="isCancelled"
+          (addPayment)="navigateToPayment()"
+          (couponClick)="openCouponModal()"
+        ></app-booking-payments-header>
 
         <p-divider></p-divider>
 

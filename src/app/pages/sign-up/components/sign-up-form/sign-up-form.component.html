@@ -90,6 +90,7 @@
               [showClear]="true"
               [filter]="true"
               [styleClass]="'prefix-select'"
+              [errorClass]="signUpForm.get('phonePrefix')?.errors && signUpForm.get('phonePrefix')?.touched ? 'p-invalid' : ''"
               (prefixChange)="onPhonePrefixChange($event)"
             ></app-phone-prefix-select>
             <input
@@ -102,6 +103,9 @@
               [ngClass]="{ 'p-invalid': signUpForm.get('phone')?.errors }"
             />
           </div>
+          <small *ngIf="signUpForm.get('phonePrefix')?.errors && signUpForm.get('phonePrefix')?.touched" class="p-error">
+            {{ getErrorMessage('phonePrefix', signUpForm.get('phonePrefix')?.errors) }}
+          </small>
           <small *ngIf="signUpForm.get('phone')?.errors" class="p-error">
             {{ getErrorMessage('phone', signUpForm.get('phone')?.errors) }}
           </small>
@@ -132,9 +136,9 @@
             [feedback]="false"
             placeholder="Confirmar Contraseña"
             class="input-field"
-            [ngClass]="{ 'p-invalid': signUpForm.get('confirmPassword')?.errors }"
+            [ngClass]="{ 'p-invalid': signUpForm.get('confirmPassword')?.errors && (signUpForm.get('confirmPassword')?.touched || signUpForm.get('password')?.touched) }"
           ></p-password>
-          <small *ngIf="signUpForm.get('confirmPassword')?.errors" class="p-error">
+          <small *ngIf="signUpForm.get('confirmPassword')?.errors && (signUpForm.get('confirmPassword')?.touched || signUpForm.get('password')?.touched)" class="p-error">
             {{ getErrorMessage('confirmPassword', signUpForm.get('confirmPassword')?.errors) }}
           </small>
         </div>

@@ -51,6 +51,7 @@ export class PassengerCardV2Component implements OnInit, OnChanges, OnDestroy {
   @Input() isLeadTraveler: boolean = false;
   @Input() isEditingBlocked: boolean = false;
   @Input() Days!: number;
+  @Input() isATC: boolean = false;
 
   @Output() passengerUpdated = new EventEmitter<any>();
 
@@ -458,7 +459,8 @@ export class PassengerCardV2Component implements OnInit, OnChanges, OnDestroy {
   }
 
   onEdit(): void {
-    if (this.isEditingBlocked) {
+    // Si es ATC, permitir edición siempre. Si no es ATC y está bloqueado, mostrar mensaje
+    if (this.isEditingBlocked && !this.isATC) {
       this.messageService.add({
         key: 'center',
         severity: 'warn',

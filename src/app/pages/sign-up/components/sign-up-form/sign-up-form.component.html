@@ -136,9 +136,9 @@
             [feedback]="false"
             placeholder="Confirmar Contraseña"
             class="input-field"
-            [ngClass]="{ 'p-invalid': signUpForm.get('confirmPassword')?.errors }"
+            [ngClass]="{ 'p-invalid': signUpForm.get('confirmPassword')?.errors && (signUpForm.get('confirmPassword')?.touched || signUpForm.get('password')?.touched) }"
           ></p-password>
-          <small *ngIf="signUpForm.get('confirmPassword')?.errors" class="p-error">
+          <small *ngIf="signUpForm.get('confirmPassword')?.errors && (signUpForm.get('confirmPassword')?.touched || signUpForm.get('password')?.touched)" class="p-error">
             {{ getErrorMessage('confirmPassword', signUpForm.get('confirmPassword')?.errors) }}
           </small>
         </div>

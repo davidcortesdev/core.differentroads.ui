@@ -5,6 +5,8 @@ import {
   FormGroup,
   Validators,
   ReactiveFormsModule,
+  AbstractControl,
+  ValidationErrors,
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -91,9 +93,6 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
       required: 'Confirma tu contraseña.',
       mismatch: 'Las contraseñas no coinciden.',
     },
-    acceptPrivacyPolicy: {
-      required: 'Debes aceptar la política de privacidad para continuar',
-    },
   };
 
   constructor(
@@ -113,10 +112,9 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
         phonePrefix: ['+34', [Validators.required]],
         phone: ['', [Validators.required, Validators.pattern(/^\d{6,14}$/)]],
         password: ['', [Validators.required, Validators.minLength(8)]],
-        confirmPassword: ['', [Validators.required]],
-        acceptPrivacyPolicy: [false, [Validators.requiredTrue]],
-      },
-      { validators: this.passwordMatchValidator }
+        confirmPassword: ['', [Validators.required, this.passwordMatchValidator.bind(this)]],
+        acceptPrivacyPolicy: [false],
+      }
     );
   }
 
@@ -141,6 +139,13 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
           console.error('Error loading phone prefixes:', error);
         }
       });
+
+    // Validar confirmPassword cuando cambie el campo password
+    this.signUpForm.get('password')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.signUpForm.get('confirmPassword')?.updateValueAndValidity();
+      });
   }
 
   ngOnDestroy(): void {
@@ -162,6 +167,46 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
     this.messageService.add({ severity: 'error', summary: 'Error', detail: msg });
   }
 
+  private translateError(error: any): string {
+    if (!error) {
+      return 'Error desconocido';
+    }
+
+    const errorMessage = error.message || error.toString() || '';
+    const errorCode = error.code || error.name || '';
+
+    // Traducir errores comunes de Cognito
+    if (
+      errorCode === 'UsernameExistsException' ||
+      errorMessage.toLowerCase().includes('already exists') ||
+      errorMessage.toLowerCase().includes('an account with') ||
+      errorMessage.toLowerCase().includes('usuario ya existe') ||
+      errorMessage.toLowerCase().includes('email already exists')
+    ) {
+      return 'Ya existe una cuenta con este correo electrónico. Por favor, inicia sesión o utiliza otro correo.';
+    }
+
+    if (errorCode === 'InvalidPasswordException' || errorMessage.toLowerCase().includes('password')) {
+      return 'La contraseña no cumple con los requisitos.';
+    }
+
+    if (errorCode === 'InvalidParameterException') {
+      return 'Los datos proporcionados no son válidos.';
+    }
+
+    if (errorCode === 'TooManyRequestsException') {
+      return 'Demasiados intentos. Por favor, intenta de nuevo más tarde.';
+    }
+
+    // Si el mensaje ya está en español, devolverlo tal cual
+    if (errorMessage && !errorMessage.match(/[a-zA-Z]/)) {
+      return errorMessage;
+    }
+
+    // Devolver el mensaje original si no se puede traducir
+    return errorMessage || 'Error al procesar la solicitud';
+  }
+
   signInWithGoogle(): void {
     this.isLoading = true;
     this.authService.handleGoogleSignIn().then(() => {
@@ -173,9 +218,14 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
     });
   }
 
-  passwordMatchValidator(form: FormGroup) {
-    const password = form.get('password')?.value;
-    const confirmPassword = form.get('confirmPassword')?.value;
+  passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
+    const password = control.parent?.get('password')?.value;
+    const confirmPassword = control.value;
+    
+    if (!password || !confirmPassword) {
+      return null; // Dejar que otros validadores manejen los campos vacíos
+    }
+    
     return password === confirmPassword ? null : { mismatch: true };
   }
 
@@ -316,7 +366,8 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
             })
             .catch((error) => {
               this.isLoading = false;
-              this.showToastError(error instanceof Error ? error.message : 'Registro fallido');
+              const translatedError = this.translateError(error);
+              this.showToastError(translatedError);
             });
   }
 

@@ -42,12 +42,23 @@ $info-color: #3b82f6;
     display: flex;
     flex-direction: column;
     gap: $spacing-xs;
+    align-self: stretch; // Ocupa toda la altura disponible
   }
 
   .payment-info-columns {
     display: flex;
     gap: $spacing-md;
     min-width: 0;
+    padding: $spacing-sm $spacing-md;
+    border-radius: $border-radius-md;
+    background: $surface-ground;
+    transition: background-color 0.2s ease;
+    flex: 1; // Ocupa todo el espacio disponible en el contenedor padre
+    align-items: center; // Centrar verticalmente el contenido
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.015);
+    }
 
     .payment-column {
       display: flex;

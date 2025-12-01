@@ -506,7 +506,7 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
           if (typeof reservation.retailerId === 'number') {
             this.retailerId = reservation.retailerId;
             // retailerId === 7 => cliente final; cualquier otro => agencia
-            this.isAgency = this.retailerId !== 8;
+            this.isAgency = this.retailerId !== 7;
             // Si es agencia y tenemos reservationId, intentar cargar proforma
             if (this.isAgency && this.reservationId && this.reservationId > 0) {
               this.loadProformaSummary();

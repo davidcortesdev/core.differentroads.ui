@@ -171,10 +171,8 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
     // Cargar pagos (loadPayments tiene guard interno para reservationId)
     this.loadPayments();
 
-    // Cargar proforma si aplica
-    this.loadProformaSummary();
-
     // Inicializar datos si reservationId está disponible desde el inicio
+    // loadReservationData() se encargará de cargar la proforma si es agencia
     // (ngOnChanges manejará los cambios posteriores)
     if (this.reservationId && this.reservationId > 0) {
       this.loadReservationData();
@@ -507,10 +505,19 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
             this.retailerId = reservation.retailerId;
             // retailerId === 7 => cliente final; cualquier otro => agencia
             this.isAgency = this.retailerId !== 7;
-            // Si es agencia y tenemos reservationId, intentar cargar proforma
-            if (this.isAgency && this.reservationId && this.reservationId > 0) {
-              this.loadProformaSummary();
-            }
+          } else {
+            // Si no hay retailerId, asumir que no es agencia
+            this.isAgency = false;
+          }
+          
+          // Cargar proforma solo si es agencia (después de establecer isAgency)
+          if (this.isAgency && this.reservationId && this.reservationId > 0) {
+            this.loadProformaSummary();
+          } else {
+            // Limpiar datos de agencia si no aplica
+            this.proformaData = null;
+            this.grossPaymentInfo = null;
+            this.netPaymentInfo = null;
           }
 
           // Intentar obtener departureDate desde reservationData.departure si está disponible

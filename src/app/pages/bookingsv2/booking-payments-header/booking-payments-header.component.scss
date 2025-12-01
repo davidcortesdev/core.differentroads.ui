@@ -94,11 +94,11 @@ $info-color: #3b82f6;
         letter-spacing: -0.01em;
 
         &.total {
-          color: $primary-color;
+          color: $text-color; // Negro
         }
 
         &.pending {
-          color: $warning-color;
+          color: $primary-color; // Color que tenía el precio total (azul)
         }
 
         &.paid {

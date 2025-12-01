@@ -186,6 +186,7 @@ import { BookingDocumentationV2Component } from './pages/bookingsv2/booking-docu
 import { BookingFlightsV2Component } from './pages/bookingsv2/booking-flights/booking-flights.component';
 import { BookingHeaderSectionV2Component } from './pages/bookingsv2/booking-header-section/booking-header-section.component';
 import { BookingPaymentHistoryV2Component } from './pages/bookingsv2/booking-payment-history/booking-payment-history.component';
+import { BookingPaymentsHeaderComponent } from './pages/bookingsv2/booking-payments-header/booking-payments-header.component';
 import { BookingPersonalDataV2Component } from './pages/bookingsv2/booking-personal-data/booking-personal-data.component';
 import { BookingUpdateTravelV2Component } from './pages/bookingsv2/booking-update-travel/booking-update-travel.component';
 import { PassengerCardV2Component } from './pages/bookingsv2/passenger-card/passenger-card.component';
@@ -370,6 +371,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     BookingFlightsV2Component,
     BookingHeaderSectionV2Component,
     BookingPaymentHistoryV2Component,
+    BookingPaymentsHeaderComponent,
     BookingPersonalDataV2Component,
     BookingUpdateTravelV2Component,
     PassengerCardV2Component,

@@ -63,6 +63,31 @@ export interface IPaymentSummaryResponse {
   paymentPercentage: number;
 }
 
+export interface IProformaSummaryItem {
+  itemId: number;
+  description: string;
+  amount: number;
+  quantity: number;
+  total: number;
+  itemType: string;
+  included: boolean;
+  ageGroupId: number;
+  margin: number;
+  taxes: number;
+  commissionPercentage: number | null;
+}
+
+export interface IProformaSummaryResponse {
+  id: number;
+  tkId: string;
+  totalPassengers: number;
+  totalAmount: number;
+  totalMargin: number;
+  netAmount: number;
+  items: IProformaSummaryItem[];
+  createdAt?: string;
+}
+
 export class PaymentStatusFilter {
   id?: number = 0;
   code?: string = '';
@@ -144,6 +169,14 @@ export class PaymentsNetService {
   ): Observable<IPaymentSummaryResponse> {
     return this.http.get<IPaymentSummaryResponse>(
       `${this.API_URL}/ReservationPayment/summary/${reservationId}`
+    );
+  }
+
+  getProformaSummary(
+    reservationId: number
+  ): Observable<IProformaSummaryResponse> {
+    return this.http.get<IProformaSummaryResponse>(
+      `${this.API_URL}/Reservation/${reservationId}/proforma-summary`
     );
   }
 }

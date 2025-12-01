@@ -22,113 +22,16 @@
     <!-- Información de pagos (columna derecha) -->
     <div class="payment-column-right">
       <p-panel header="Pagos">
-        <div class="payment-info">
-          <!-- Fila unificada de información de pagos y botones -->
-          <div class="payment-unified-row">
-            <!-- BLOQUE IMPORTES -->
-            <ng-container *ngIf="!isAgency; else agencyAmounts">
-              <!-- Vista estándar (no agencia) -->
-              <div class="payment-info-columns">
-                <div class="payment-column">
-                  <span class="label">Precio total</span>
-                  <span class="amount total">{{
-                    formatCurrency(paymentInfo.totalPrice)
-                  }}</span>
-                </div>
-                <div class="payment-column">
-                  <span class="label">Pendiente</span>
-                  <span class="amount pending">{{
-                    formatCurrency(paymentInfo.pendingAmount)
-                  }}</span>
-                </div>
-                <div class="payment-column">
-                  <span class="label">Pagado</span>
-                  <span class="amount paid">{{
-                    formatCurrency(paymentInfo.paidAmount)
-                  }}</span>
-                </div>
-              </div>
-            </ng-container>
-
-            <!-- Vista agencia: fila BRUTO + fila NETO, usando PrimeNG -->
-            <ng-template #agencyAmounts>
-              <div class="payment-amounts-agency" *ngIf="grossPaymentInfo && netPaymentInfo">
-                <!-- Fila BRUTO -->
-                <div class="payment-info-columns agency-row">
-                  <div class="payment-column">
-                    <span class="label">
-                      Precio total
-                      <p-tag value="BRUTO" severity="info" styleClass="ml-2"></p-tag>
-                    </span>
-                    <span class="amount total">
-                      {{ formatCurrency(grossPaymentInfo.totalPrice) }}
-                    </span>
-                  </div>
-                  <div class="payment-column">
-                    <span class="label">Pendiente</span>
-                    <span class="amount pending">
-                      {{ formatCurrency(grossPaymentInfo.pendingAmount) }}
-                    </span>
-                  </div>
-                  <div class="payment-column">
-                    <span class="label">Pagado</span>
-                    <span class="amount paid">
-                      {{ formatCurrency(grossPaymentInfo.paidAmount) }}
-                    </span>
-                  </div>
-                </div>
-
-                <p-divider></p-divider>
-
-                <!-- Fila NETO -->
-                <div class="payment-info-columns agency-row">
-                  <div class="payment-column">
-                    <span class="label">
-                      Total neto
-                      <p-tag value="NETO" severity="success" styleClass="ml-2"></p-tag>
-                    </span>
-                    <span class="amount total">
-                      {{ formatCurrency(netPaymentInfo.totalPrice) }}
-                    </span>
-                  </div>
-                  <div class="payment-column">
-                    <span class="label">Pendiente neto</span>
-                    <span class="amount pending">
-                      {{ formatCurrency(netPaymentInfo.pendingAmount) }}
-                    </span>
-                  </div>
-                  <div class="payment-column">
-                    <span class="label">Pagado neto</span>
-                    <span class="amount paid">
-                      {{ formatCurrency(netPaymentInfo.paidAmount) }}
-                    </span>
-                  </div>
-                </div>
-
-                <div *ngIf="loadingProforma" class="agency-loading">
-                  <i class="pi pi-spin pi-spinner"></i>
-                  <span>Cargando precios netos...</span>
-                </div>
-              </div>
-            </ng-template>
-            <div class="payment-buttons" *ngIf="paymentInfo.totalPrice > 0">
-              <p-button
-                label="Añadir pago"
-                icon="pi pi-plus-circle"
-                styleClass="p-button-rounded p-button-lg"
-                [disabled]="paymentInfo.pendingAmount === 0"
-                (onClick)="navigateToPayment()"
-              ></p-button>
-              <p-button
-               label="Canjear cupón"
-               icon="pi pi-ticket"
-               styleClass="p-button-rounded p-button-lg"
-               [disabled]="paymentInfo.pendingAmount === 0 || isCancelled"
-               (onClick)="openCouponModal()"
-              ></p-button>
-            </div>
-          </div>
-        </div>
+        <app-booking-payments-header
+          [paymentInfo]="paymentInfo"
+          [isAgency]="isAgency"
+          [grossPaymentInfo]="grossPaymentInfo"
+          [netPaymentInfo]="netPaymentInfo"
+          [loadingProforma]="loadingProforma"
+          [isCancelled]="isCancelled"
+          (addPayment)="navigateToPayment()"
+          (couponClick)="openCouponModal()"
+        ></app-booking-payments-header>
 
         <p-divider></p-divider>
 

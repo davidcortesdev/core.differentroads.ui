@@ -1,0 +1,103 @@
+.payment-info {
+  font-size: 14px;
+
+  .payment-unified-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+    padding: 1rem 0;
+    flex-wrap: wrap;
+  }
+
+  .payment-info-columns {
+    display: flex;
+    flex: 1;
+    justify-content: space-between;
+    gap: 1rem;
+    min-width: 0;
+
+    .payment-column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      flex: 1;
+      min-width: 0;
+
+      .label {
+        font-size: 0.875rem;
+        color: var(--background-azul);
+        margin-bottom: 0.25rem;
+        white-space: nowrap;
+      }
+
+      .amount {
+        font-size: 1.5rem;
+        font-weight: 600;
+        white-space: nowrap;
+
+        &.paid {
+          color: #28a745;
+        }
+
+        &.pending {
+          color: #ff9800;
+        }
+
+        &.total {
+          color: var(--background-azul);
+        }
+      }
+    }
+  }
+
+  .payment-buttons {
+    display: flex;
+    gap: 0.75rem;
+    flex-shrink: 0;
+  }
+
+  .payment-amounts-agency {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .payment-info-columns.agency-row {
+    margin-bottom: 0.1rem;
+  }
+
+  .agency-loading {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    color: #666;
+  }
+
+  @media (max-width: 992px) {
+    .payment-unified-row {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 1.5rem;
+    }
+
+    .payment-info-columns {
+      text-align: center;
+      gap: 0.5rem;
+    }
+
+    .payment-buttons {
+      justify-content: center;
+      flex-wrap: wrap;
+
+      .p-button {
+        flex: 0 1 auto;
+        min-width: 140px;
+      }
+    }
+  }
+}
+
+

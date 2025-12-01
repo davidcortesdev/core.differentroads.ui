@@ -74,6 +74,25 @@
       }
     }
   }
+
+  /* Ajustes ligeros para la vista de agencia (bruto + neto) */
+  .payment-amounts-agency {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .payment-info-columns.agency-row {
+    margin-bottom: 0.25rem;
+  }
+
+  .agency-loading {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    color: #666;
+  }
   
   @media (max-width: 1200px) {
     .payment-unified-row {

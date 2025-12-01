@@ -10,7 +10,7 @@ import { PaymentData } from '../add-payment-modal/add-payment-modal.component';
 import { BookingsServiceV2 } from '../../../core/services/v2/bookings-v2.service';
 import { PaymentService, PaymentInfo } from '../../../core/services/payments/payment.service';
 import { IPaymentStatusResponse } from '../../checkout-v2/services/paymentStatusNet.service';
-import { PaymentsNetService } from '../../checkout-v2/services/paymentsNet.service';
+import { PaymentsNetService, IProformaSummaryResponse } from '../../checkout-v2/services/paymentsNet.service';
 import { PaymentMethodNetService, IPaymentMethodResponse } from '../../checkout-v2/services/paymentMethodNet.service';
 import { AnalyticsService, TourDataForEcommerce } from '../../../core/services/analytics/analytics.service';
 import { ReservationService, IReservationResponse } from '../../../core/services/reservation/reservation.service';
@@ -98,6 +98,16 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
   // Fecha de salida para mostrar en el historial
   displayDepartureDate: string = '';
 
+  // Datos del retailer y lógica de agencia
+  retailerId: number | null = null;
+  isAgency: boolean = false; // retailerId !== 7 => agencia
+
+  // Datos de proforma (bruto / neto)
+  proformaData: IProformaSummaryResponse | null = null;
+  loadingProforma: boolean = false;
+  grossPaymentInfo: PaymentInfo | null = null;
+  netPaymentInfo: PaymentInfo | null = null;
+
   // Subject para manejar la limpieza de suscripciones
   private destroy$ = new Subject<void>();
 
@@ -161,6 +171,9 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
     // Cargar pagos (loadPayments tiene guard interno para reservationId)
     this.loadPayments();
 
+    // Cargar proforma si aplica
+    this.loadProformaSummary();
+
     // Inicializar datos si reservationId está disponible desde el inicio
     // (ngOnChanges manejará los cambios posteriores)
     if (this.reservationId && this.reservationId > 0) {
@@ -183,6 +196,7 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
       if (!changes['reservationId'].firstChange) {
         this.loadPayments();
         this.loadReservationData();
+        this.loadProformaSummary();
       }
     }
     
@@ -222,6 +236,102 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
       this.paymentHistory,
       this.bookingTotal
     );
+
+    // Recalcular información bruta / neta si tenemos proforma
+    if (this.proformaData && this.isAgency) {
+      this.updateGrossAndNetPaymentInfo();
+    }
+  }
+
+  /**
+   * Carga el resumen de proforma para reservas de agencia
+   */
+  private loadProformaSummary(): void {
+    if (!this.reservationId || this.reservationId <= 0) {
+      return;
+    }
+
+    if (!this.isAgency) {
+      // Limpiar datos de agencia si ya no aplica
+      this.proformaData = null;
+      this.grossPaymentInfo = null;
+      this.netPaymentInfo = null;
+      return;
+    }
+
+    this.loadingProforma = true;
+
+    this.paymentsNetService
+      .getProformaSummary(this.reservationId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (summary: IProformaSummaryResponse) => {
+          this.proformaData = summary;
+          this.updateGrossAndNetPaymentInfo();
+          this.loadingProforma = false;
+        },
+        error: (error) => {
+          console.error('Error cargando proforma summary:', error);
+          this.proformaData = null;
+          this.grossPaymentInfo = null;
+          this.netPaymentInfo = null;
+          this.loadingProforma = false;
+        },
+      });
+  }
+
+  /**
+   * Calcula los totales brutos y netos a partir de la proforma y el historial de pagos
+   * - Total bruto: viene del summary normal (paymentInfo.totalPrice)
+   * - Total neto: viene de proforma-summary (netAmount)
+   */
+  private updateGrossAndNetPaymentInfo(): void {
+    if (!this.proformaData || !this.isAgency) {
+      return;
+    }
+
+    // Total bruto: usar el del summary normal (paymentInfo.totalPrice)
+    const grossTotal = this.paymentInfo?.totalPrice || 0;
+
+    // Total neto: usar netAmount de la proforma
+    let rawNetTotal: any = (this.proformaData as any).netAmount;
+    
+    // Si no viene netAmount, calcular como bruto - margen
+    if (rawNetTotal === undefined || rawNetTotal === null) {
+      const rawMargin: any = (this.proformaData as any).totalMargin;
+      const margin = typeof rawMargin === 'string' ? parseFloat(rawMargin) : rawMargin || 0;
+      rawNetTotal = grossTotal - margin;
+    }
+
+    const netTotal =
+      typeof rawNetTotal === 'string'
+        ? parseFloat(rawNetTotal)
+        : rawNetTotal || 0;
+
+    // Importe pagado bruto ya calculado del summary
+    const grossPaid = this.paymentInfo?.paidAmount || 0;
+    const grossPending = Math.max(grossTotal - grossPaid, 0);
+
+    this.grossPaymentInfo = {
+      totalPrice: grossTotal,
+      paidAmount: grossPaid,
+      pendingAmount: grossPending,
+    };
+
+    // Calcular pagado neto de forma proporcional al porcentaje pagado sobre el bruto
+    let netPaid = 0;
+    if (grossTotal > 0 && netTotal > 0) {
+      const paidRatio = Math.min(grossPaid / grossTotal, 1);
+      netPaid = netTotal * paidRatio;
+    }
+
+    const netPending = Math.max(netTotal - netPaid, 0);
+
+    this.netPaymentInfo = {
+      totalPrice: netTotal,
+      paidAmount: netPaid,
+      pendingAmount: netPending,
+    };
   }
   
   get isCancelled(): boolean {
@@ -394,6 +504,17 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
           // Obtener userId
           if (reservationData.userId) {
             this.userId = reservationData.userId;
+          }
+
+          // Obtener retailerId y determinar si es agencia
+          if (typeof reservation.retailerId === 'number') {
+            this.retailerId = reservation.retailerId;
+            // retailerId === 7 => cliente final; cualquier otro => agencia
+            this.isAgency = this.retailerId !== 8;
+            // Si es agencia y tenemos reservationId, intentar cargar proforma
+            if (this.isAgency && this.reservationId && this.reservationId > 0) {
+              this.loadProformaSummary();
+            }
           }
 
           // Intentar obtener departureDate desde reservationData.departure si está disponible

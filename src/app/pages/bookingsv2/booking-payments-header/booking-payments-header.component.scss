@@ -28,7 +28,7 @@ $info-color: #3b82f6;
 .payment-info {
   .payment-unified-row {
     display: flex;
-    align-items: flex-start;
+    align-items: stretch; // Hace que ambos hijos tengan la misma altura
     gap: $spacing-lg;
     padding: $spacing-sm 0;
   }
@@ -113,14 +113,6 @@ $info-color: #3b82f6;
     &:hover {
       background: rgba(0, 0, 0, 0.015);
     }
-
-    &.agency-row-gross {
-      border-left: 3px solid $info-color;
-    }
-
-    &.agency-row-net {
-      border-left: 3px solid $success-color;
-    }
   }
 
   .agency-loading {
@@ -145,11 +137,12 @@ $info-color: #3b82f6;
     padding: $spacing-md;
     background: $surface-ground;
     border-radius: $border-radius-md;
-    border: 1px solid $surface-border;
+    border: none;
     display: flex;
     align-items: center;
     justify-content: center;
     min-width: 200px;
+    align-self: stretch; // Ocupa toda la altura disponible (igual que las filas de precios)
   }
 
   .payment-buttons {
@@ -228,16 +221,6 @@ $info-color: #3b82f6;
 
     .payment-info-columns.agency-row {
       padding: $spacing-sm;
-
-      &.agency-row-gross {
-        border-left: none;
-        border-top: 3px solid $info-color;
-      }
-
-      &.agency-row-net {
-        border-left: none;
-        border-top: 3px solid $success-color;
-      }
     }
 
     .payment-buttons-container {

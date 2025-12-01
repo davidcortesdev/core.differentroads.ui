@@ -5,6 +5,8 @@ import {
   FormGroup,
   Validators,
   ReactiveFormsModule,
+  AbstractControl,
+  ValidationErrors,
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -76,6 +78,9 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
       required: 'El correo electrónico es requerido.',
       email: 'Ingresa un correo electrónico válido.',
     },
+    phonePrefix: {
+      required: 'El prefijo telefónico es requerido.',
+    },
     phone: {
       required: 'El teléfono es requerido.',
       pattern: 'Ingresa un número de teléfono válido.',
@@ -87,9 +92,6 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
     confirmPassword: {
       required: 'Confirma tu contraseña.',
       mismatch: 'Las contraseñas no coinciden.',
-    },
-    acceptPrivacyPolicy: {
-      required: 'Debes aceptar la política de privacidad para continuar',
     },
   };
 
@@ -107,13 +109,12 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
         firstName: ['', [Validators.required]],
         lastName: ['', [Validators.required]],
         email: ['', [Validators.required, Validators.email]],
-        phonePrefix: ['+34'],
+        phonePrefix: ['+34', [Validators.required]],
         phone: ['', [Validators.required, Validators.pattern(/^\d{6,14}$/)]],
         password: ['', [Validators.required, Validators.minLength(8)]],
-        confirmPassword: ['', [Validators.required]],
-        acceptPrivacyPolicy: [false, [Validators.requiredTrue]],
-      },
-      { validators: this.passwordMatchValidator }
+        confirmPassword: ['', [Validators.required, this.passwordMatchValidator.bind(this)]],
+        acceptPrivacyPolicy: [false],
+      }
     );
   }
 
@@ -138,6 +139,13 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
           console.error('Error loading phone prefixes:', error);
         }
       });
+
+    // Validar confirmPassword cuando cambie el campo password
+    this.signUpForm.get('password')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.signUpForm.get('confirmPassword')?.updateValueAndValidity();
+      });
   }
 
   ngOnDestroy(): void {
@@ -147,12 +155,56 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
 
   onPhonePrefixChange(event: any): void {
     const value = event?.value || event || null;
-    this.selectedPhonePrefix = value;
-    this.signUpForm.patchValue({ phonePrefix: value || '+34' });
+    // Normalizar: convertir cadenas vacías a null
+    const normalizedValue = (value && value.trim() !== '') ? value : null;
+    this.selectedPhonePrefix = normalizedValue;
+    this.signUpForm.patchValue({ phonePrefix: normalizedValue });
+    // Marcar el campo como tocado para mostrar el error si está vacío
+    this.signUpForm.get('phonePrefix')?.markAsTouched();
   }
 
   showToastError(msg: string) {
     this.messageService.add({ severity: 'error', summary: 'Error', detail: msg });
+  }
+
+  private translateError(error: any): string {
+    if (!error) {
+      return 'Error desconocido';
+    }
+
+    const errorMessage = error.message || error.toString() || '';
+    const errorCode = error.code || error.name || '';
+
+    // Traducir errores comunes de Cognito
+    if (
+      errorCode === 'UsernameExistsException' ||
+      errorMessage.toLowerCase().includes('already exists') ||
+      errorMessage.toLowerCase().includes('an account with') ||
+      errorMessage.toLowerCase().includes('usuario ya existe') ||
+      errorMessage.toLowerCase().includes('email already exists')
+    ) {
+      return 'Ya existe una cuenta con este correo electrónico. Por favor, inicia sesión o utiliza otro correo.';
+    }
+
+    if (errorCode === 'InvalidPasswordException' || errorMessage.toLowerCase().includes('password')) {
+      return 'La contraseña no cumple con los requisitos.';
+    }
+
+    if (errorCode === 'InvalidParameterException') {
+      return 'Los datos proporcionados no son válidos.';
+    }
+
+    if (errorCode === 'TooManyRequestsException') {
+      return 'Demasiados intentos. Por favor, intenta de nuevo más tarde.';
+    }
+
+    // Si el mensaje ya está en español, devolverlo tal cual
+    if (errorMessage && !errorMessage.match(/[a-zA-Z]/)) {
+      return errorMessage;
+    }
+
+    // Devolver el mensaje original si no se puede traducir
+    return errorMessage || 'Error al procesar la solicitud';
   }
 
   signInWithGoogle(): void {
@@ -166,13 +218,33 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
     });
   }
 
-  passwordMatchValidator(form: FormGroup) {
-    const password = form.get('password')?.value;
-    const confirmPassword = form.get('confirmPassword')?.value;
+  passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
+    const password = control.parent?.get('password')?.value;
+    const confirmPassword = control.value;
+    
+    if (!password || !confirmPassword) {
+      return null; // Dejar que otros validadores manejen los campos vacíos
+    }
+    
     return password === confirmPassword ? null : { mismatch: true };
   }
 
   onSubmit() {
+    // Validar que el prefijo esté seleccionado
+    const prefixValue = this.selectedPhonePrefix?.trim() || null;
+    if (!prefixValue || prefixValue === '') {
+      this.selectedPhonePrefix = null;
+      this.signUpForm.patchValue({ phonePrefix: null });
+      this.signUpForm.get('phonePrefix')?.markAsTouched();
+      this.signUpForm.get('phonePrefix')?.updateValueAndValidity();
+      this.showToastError('Por favor, selecciona un prefijo telefónico.');
+      return;
+    }
+
+    // Actualizar el valor del prefijo en el formulario antes de validar
+    this.signUpForm.patchValue({ phonePrefix: prefixValue });
+    this.signUpForm.get('phonePrefix')?.updateValueAndValidity();
+
     if (this.signUpForm.invalid) {
       this.showToastError('Por favor, corrige los errores en el formulario.');
       return;
@@ -226,7 +298,7 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
                           switchMap(() => {
                             return this.phonePrefixService.saveUserPhonePrefix(
                               existingUser.id.toString(), 
-                              this.selectedPhonePrefix || '+34'
+                              this.signUpForm.value.phonePrefix || prefixValue
                             );
                           })
                         )
@@ -260,7 +332,7 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
                             console.log('Usuario creado exitosamente:', user);
                             return this.phonePrefixService.saveUserPhonePrefix(
                               user.id.toString(), 
-                              this.selectedPhonePrefix || '+34'
+                              this.signUpForm.value.phonePrefix || prefixValue
                             ).pipe(
                               switchMap(() => of(user))
                             );
@@ -294,7 +366,8 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
             })
             .catch((error) => {
               this.isLoading = false;
-              this.showToastError(error instanceof Error ? error.message : 'Registro fallido');
+              const translatedError = this.translateError(error);
+              this.showToastError(translatedError);
             });
   }
 

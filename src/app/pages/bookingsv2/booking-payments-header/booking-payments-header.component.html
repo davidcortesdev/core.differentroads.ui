@@ -1,109 +1,110 @@
 <div class="payment-info">
-  <!-- Fila unificada de información de pagos y botones -->
   <div class="payment-unified-row">
-    <!-- BLOQUE IMPORTES -->
-    <ng-container *ngIf="!isAgency; else agencyAmounts">
-      <!-- Vista estándar (no agencia) -->
-      <div class="payment-info-columns">
-        <div class="payment-column">
-          <span class="label">Precio total</span>
-          <span class="amount total">{{
-            paymentInfo.totalPrice | number : '1.0-2'
-          }} €</span>
-        </div>
-        <div class="payment-column">
-          <span class="label">Pendiente</span>
-          <span class="amount pending">{{
-            paymentInfo.pendingAmount | number : '1.0-2'
-          }} €</span>
-        </div>
-        <div class="payment-column">
-          <span class="label">Pagado</span>
-          <span class="amount paid">{{
-            paymentInfo.paidAmount | number : '1.0-2'
-          }} €</span>
-        </div>
-      </div>
-    </ng-container>
-
-    <!-- Vista agencia: fila BRUTO + fila NETO, usando PrimeNG -->
-    <ng-template #agencyAmounts>
-      <div class="payment-amounts-agency" *ngIf="grossPaymentInfo && netPaymentInfo">
-        <!-- Fila BRUTO -->
-        <div class="payment-info-columns agency-row">
+    <!-- IZQUIERDA: Importes (bruto arriba, neto abajo si es agencia) -->
+    <div class="payment-amounts-section">
+      <ng-container *ngIf="!isAgency; else agencyAmounts">
+        <!-- Vista estándar (no agencia) -->
+        <div class="payment-info-columns">
           <div class="payment-column">
-            <span class="label">
-              Precio total
-              <p-tag value="BRUTO" severity="info" styleClass="ml-2"></p-tag>
-            </span>
-            <span class="amount total">
-              {{ grossPaymentInfo.totalPrice | number : '1.0-2' }} €
-            </span>
+            <span class="label">Precio total</span>
+            <span class="amount total">{{
+              paymentInfo.totalPrice | number : '1.0-2'
+            }} €</span>
           </div>
           <div class="payment-column">
             <span class="label">Pendiente</span>
-            <span class="amount pending">
-              {{ grossPaymentInfo.pendingAmount | number : '1.0-2' }} €
-            </span>
+            <span class="amount pending">{{
+              paymentInfo.pendingAmount | number : '1.0-2'
+            }} €</span>
           </div>
           <div class="payment-column">
             <span class="label">Pagado</span>
-            <span class="amount paid">
-              {{ grossPaymentInfo.paidAmount | number : '1.0-2' }} €
-            </span>
+            <span class="amount paid">{{
+              paymentInfo.paidAmount | number : '1.0-2'
+            }} €</span>
           </div>
         </div>
+      </ng-container>
 
-        <p-divider></p-divider>
+      <!-- Vista agencia: BRUTO arriba, NETO abajo -->
+      <ng-template #agencyAmounts>
+        <div class="payment-amounts-agency" *ngIf="grossPaymentInfo && netPaymentInfo">
+          <!-- Fila BRUTO (arriba) -->
+          <div class="payment-info-columns agency-row agency-row-gross">
+            <div class="payment-column">
+              <span class="label">
+                Precio total
+                <p-tag value="BRUTO" severity="info" styleClass="ml-2"></p-tag>
+              </span>
+              <span class="amount total">
+                {{ grossPaymentInfo.totalPrice | number : '1.0-2' }} €
+              </span>
+            </div>
+            <div class="payment-column">
+              <span class="label">Pendiente</span>
+              <span class="amount pending">
+                {{ grossPaymentInfo.pendingAmount | number : '1.0-2' }} €
+              </span>
+            </div>
+            <div class="payment-column">
+              <span class="label">Pagado</span>
+              <span class="amount paid">
+                {{ grossPaymentInfo.paidAmount | number : '1.0-2' }} €
+              </span>
+            </div>
+          </div>
 
-        <!-- Fila NETO -->
-        <div class="payment-info-columns agency-row">
-          <div class="payment-column">
-            <span class="label">
-              Total neto
-              <p-tag value="NETO" severity="success" styleClass="ml-2"></p-tag>
-            </span>
-            <span class="amount total">
-              {{ netPaymentInfo.totalPrice | number : '1.0-2' }} €
-            </span>
+          <!-- Fila NETO (abajo) -->
+          <div class="payment-info-columns agency-row agency-row-net">
+            <div class="payment-column">
+              <span class="label">
+                Total neto
+                <p-tag value="NETO" severity="success" styleClass="ml-2"></p-tag>
+              </span>
+              <span class="amount total">
+                {{ netPaymentInfo.totalPrice | number : '1.0-2' }} €
+              </span>
+            </div>
+            <div class="payment-column">
+              <span class="label">Pendiente neto</span>
+              <span class="amount pending">
+                {{ netPaymentInfo.pendingAmount | number : '1.0-2' }} €
+              </span>
+            </div>
+            <div class="payment-column">
+              <span class="label">Pagado neto</span>
+              <span class="amount paid">
+                {{ netPaymentInfo.paidAmount | number : '1.0-2' }} €
+              </span>
+            </div>
           </div>
-          <div class="payment-column">
-            <span class="label">Pendiente neto</span>
-            <span class="amount pending">
-              {{ netPaymentInfo.pendingAmount | number : '1.0-2' }} €
-            </span>
-          </div>
-          <div class="payment-column">
-            <span class="label">Pagado neto</span>
-            <span class="amount paid">
-              {{ netPaymentInfo.paidAmount | number : '1.0-2' }} €
-            </span>
+
+          <div *ngIf="loadingProforma" class="agency-loading">
+            <i class="pi pi-spin pi-spinner"></i>
+            <span>Cargando precios netos...</span>
           </div>
         </div>
+      </ng-template>
+    </div>
 
-        <div *ngIf="loadingProforma" class="agency-loading">
-          <i class="pi pi-spin pi-spinner"></i>
-          <span>Cargando precios netos...</span>
-        </div>
+    <!-- DERECHA: Botones en contenedor rectangular -->
+    <div class="payment-buttons-container" *ngIf="paymentInfo.totalPrice > 0">
+      <div class="payment-buttons">
+        <p-button
+          label="Añadir pago"
+          icon="pi pi-plus-circle"
+          styleClass="p-button-rounded"
+          [disabled]="paymentInfo.pendingAmount === 0"
+          (onClick)="onAddPayment()"
+        ></p-button>
+        <p-button
+          label="Canjear cupón"
+          icon="pi pi-ticket"
+          styleClass="p-button-rounded"
+          [disabled]="paymentInfo.pendingAmount === 0 || isCancelled"
+          (onClick)="onCouponClick()"
+        ></p-button>
       </div>
-    </ng-template>
-
-    <!-- BLOQUE BOTONES -->
-    <div class="payment-buttons" *ngIf="paymentInfo.totalPrice > 0">
-      <p-button
-        label="Añadir pago"
-        icon="pi pi-plus-circle"
-        styleClass="p-button-rounded p-button-lg"
-        [disabled]="paymentInfo.pendingAmount === 0"
-        (onClick)="onAddPayment()"
-      ></p-button>
-      <p-button
-        label="Canjear cupón"
-        icon="pi pi-ticket"
-        styleClass="p-button-rounded p-button-lg"
-        [disabled]="paymentInfo.pendingAmount === 0 || isCancelled"
-        (onClick)="onCouponClick()"
-      ></p-button>
     </div>
   </div>
 </div>

@@ -318,12 +318,8 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
       pendingAmount: grossPending,
     };
 
-    // Calcular pagado neto de forma proporcional al porcentaje pagado sobre el bruto
-    let netPaid = 0;
-    if (grossTotal > 0 && netTotal > 0) {
-      const paidRatio = Math.min(grossPaid / grossTotal, 1);
-      netPaid = netTotal * paidRatio;
-    }
+    // Pagado neto: usar el mismo valor que el pagado bruto
+    const netPaid = grossPaid;
 
     const netPending = Math.max(netTotal - netPaid, 0);
 

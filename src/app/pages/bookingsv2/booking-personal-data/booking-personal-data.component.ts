@@ -36,6 +36,7 @@ export class BookingPersonalDataV2Component implements OnInit {
   @Input() bookingId!: string;
   @Input() periodId!: string;
   @Input() Days!: number;
+  @Input() isATC: boolean = false;
   departureDate: string = '';
   isEditingBlocked: boolean = false;
 
@@ -95,7 +96,8 @@ private loadDepartureData(departureId: number): void {
         
         const diffTime = departureDate.getTime() - today.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        this.isEditingBlocked = diffDays <= this.Days;
+        // Si es ATC, permitir edición siempre. Si no es ATC, bloquear cuando faltan 40 días o menos
+        this.isEditingBlocked = !this.isATC && diffDays <= this.Days;
         
       }
     },

@@ -90,6 +90,7 @@
               [showClear]="true"
               [filter]="true"
               [styleClass]="'prefix-select'"
+              [errorClass]="signUpForm.get('phonePrefix')?.errors && signUpForm.get('phonePrefix')?.touched ? 'p-invalid' : ''"
               (prefixChange)="onPhonePrefixChange($event)"
             ></app-phone-prefix-select>
             <input
@@ -102,6 +103,9 @@
               [ngClass]="{ 'p-invalid': signUpForm.get('phone')?.errors }"
             />
           </div>
+          <small *ngIf="signUpForm.get('phonePrefix')?.errors && signUpForm.get('phonePrefix')?.touched" class="p-error">
+            {{ getErrorMessage('phonePrefix', signUpForm.get('phonePrefix')?.errors) }}
+          </small>
           <small *ngIf="signUpForm.get('phone')?.errors" class="p-error">
             {{ getErrorMessage('phone', signUpForm.get('phone')?.errors) }}
           </small>

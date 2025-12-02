@@ -151,24 +151,43 @@
 
 .password-container {
     padding: 1.5rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.messages-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    
+    ::ng-deep .p-message {
+        margin: 0;
+    }
 }
 
 .send-code-step {
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: center;
     
     .info-text {
         display: flex;
         align-items: flex-start;
         gap: 0.75rem;
-        margin-bottom: 1.5rem;
-        padding: 1rem;
+        padding: 1rem 1.25rem;
         background: var(--surface-50);
         border-radius: 0.5rem;
         border-left: 3px solid var(--primary-color);
+        width: 100%;
+        max-width: 600px;
         
         i {
             color: var(--primary-color);
             margin-top: 0.125rem;
+            flex-shrink: 0;
+            font-size: 1.125rem;
         }
         
         p {
@@ -178,14 +197,25 @@
             font-size: 0.9rem;
         }
     }
+    
+    .button-wrapper {
+        width: 100%;
+        max-width: 600px;
+        display: flex;
+        justify-content: center;
+    }
 }
 
 .password-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    
     .info-text {
         display: flex;
         align-items: flex-start;
         gap: 0.75rem;
-        padding: 1rem;
+        padding: 1rem 1.25rem;
         background: var(--green-50);
         border-radius: 0.5rem;
         border-left: 3px solid var(--green-500);
@@ -193,6 +223,8 @@
         i {
             color: var(--green-500);
             margin-top: 0.125rem;
+            flex-shrink: 0;
+            font-size: 1.125rem;
         }
         
         p {
@@ -203,13 +235,57 @@
         }
     }
     
+    .form-fields {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+    
     .field {
-        label {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        
+        .field-label {
             font-weight: 500;
             color: var(--text-color);
+            font-size: 0.9rem;
+        }
+        
+        .field-input {
+            width: 100%;
+        }
+        
+        .field-password {
+            width: 100%;
+            
+            ::ng-deep .p-password {
+                width: 100%;
+                
+                .p-password-input {
+                    width: 100%;
+                }
+            }
+        }
+        
+        .field-error {
+            display: block;
+            margin-top: 0.25rem;
+            font-size: 0.875rem;
         }
     }
     
+    .form-actions {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: flex-end;
+        align-items: center;
+        margin-top: 0.5rem;
+        
+        ::ng-deep .p-button {
+            min-width: auto;
+        }
+    }
 }
 
 @media (max-width: 768px) {
@@ -291,19 +367,67 @@
         
     .password-container {
         padding: 1rem 0;
+        gap: 1rem;
     }
     
-    .send-code-step,
-    .password-form {
+    .messages-container {
+        gap: 0.5rem;
+    }
+    
+    .send-code-step {
+        gap: 1rem;
+        
         .info-text {
-            padding: 0.75rem;
+            padding: 0.875rem 1rem;
             font-size: 0.85rem;
+            
+            i {
+                font-size: 1rem;
+            }
+        }
+        
+        .button-wrapper {
+            width: 100%;
+            
+            ::ng-deep .p-button {
+                width: 100%;
+            }
         }
     }
     
     .password-form {
+        gap: 1rem;
+        
+        .info-text {
+            padding: 0.875rem 1rem;
+            font-size: 0.85rem;
+            
+            i {
+                font-size: 1rem;
+            }
+        }
+        
+        .form-fields {
+            gap: 1rem;
+        }
+        
         .field {
-            margin-bottom: 1rem;
+            .field-label {
+                font-size: 0.875rem;
+            }
+            
+            .field-error {
+                font-size: 0.8125rem;
+            }
+        }
+        
+        .form-actions {
+            flex-direction: column;
+            gap: 0.5rem;
+            
+            ::ng-deep .p-button {
+                width: 100%;
+            }
         }
     }
     }

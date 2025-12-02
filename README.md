@@ -11,7 +11,7 @@ Este proyecto fue generado con [Angular CLI](https://github.com/angular/angular-
 [![Azure Static Web Apps CI/CD - pre](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/azure-static-web-apps-lemon-flower-089308810.yml/badge.svg)](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/azure-static-web-apps-lemon-flower-089308810.yml)
 
 ### Main
-[![Azure Static Web Apps CI/CD - main](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/azure-static-web-apps-zealous-plant-0f9892a10.yml/badge.svg)](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/azure-static-web-apps-zealous-plant-0f9892a10.yml)
+[![Azure Static Web Apps CI/CD - main](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/azure-static-web-apps-yellow-ocean-0a4252903.yml/badge.svg)](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/azure-static-web-apps-yellow-ocean-0a4252903.yml)
 
 ## Estructura del Proyecto
 

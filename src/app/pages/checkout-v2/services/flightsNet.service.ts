@@ -110,10 +110,12 @@ export class FlightsNetService {
     const params = new HttpParams().set('flightId', flightId.toString());
     return this.http.get<IFlightSegmentResponse[]>(`${this.API_URL_SEGMENT}`, { params }).pipe(
       map((segments: IFlightSegmentResponse[]) => {
-        const numScales = segments.length - 1;
+        // Ordenar segmentos por segmentRank
+        const sortedSegments = segments.sort((a, b) => a.segmentRank - b.segmentRank);
+        const numScales = sortedSegments.length - 1;
         const duration = 0; // Aquí puedes calcular la duración si tienes los datos necesarios
         const airlines: string[] = [];
-        segments.forEach(segment => {
+        sortedSegments.forEach(segment => {
           this.getAirline(segment.flightNumber.substring(0, 2)).subscribe((airline: string) => {
             if (airline && !airlines.includes(airline)) {
               airlines.push(airline);
@@ -124,7 +126,7 @@ export class FlightsNetService {
           numScales: numScales,
           duration: duration,
           airlines: airlines,
-          segments: segments
+          segments: sortedSegments
         };   
         return detail;
       })

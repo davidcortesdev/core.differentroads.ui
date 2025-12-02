@@ -151,34 +151,39 @@ export class FlightItemComponent implements OnInit, OnDestroy {
         .subscribe({
           next: (detail) => {
             // Mapear los datos del nuevo servicio al formato esperado por FlightsNetService
+            const mappedSegments = detail.segments?.map(segment => ({
+              id: segment.id,
+              tkId: segment.tkId || '',
+              flightId: segment.flightId,
+              tkServiceId: segment.tkServiceId || '',
+              tkJourneyId: segment.tkJourneyId || '',
+              segmentRank: segment.segmentRank,
+              departureCity: segment.departureCity || '',
+              departureTime: segment.departureTime || '',
+              departureIata: segment.departureIata || '',
+              arrivalCity: segment.arrivalCity || '',
+              arrivalTime: segment.arrivalTime || '',
+              arrivalIata: segment.arrivalIata || '',
+              flightNumber: segment.flightNumber || '',
+              goSegment: segment.goSegment,
+              returnSegment: segment.returnSegment,
+              duringSegment: segment.duringSegment,
+              type: segment.type || '',
+              numNights: segment.numNights,
+              differential: segment.differential,
+              tkProviderId: segment.tkProviderId,
+              departureDate: segment.departureDate || '',
+              arrivalDate: segment.arrivalDate || ''
+            })) || [];
+            
+            // Ordenar segmentos por segmentRank
+            const sortedSegments = mappedSegments.sort((a, b) => a.segmentRank - b.segmentRank);
+            
             const mappedDetail: IFlightDetailDTO = {
               numScales: detail.numScales,
               duration: detail.duration,
               airlines: detail.airlines || [],
-              segments: detail.segments?.map(segment => ({
-                id: segment.id,
-                tkId: segment.tkId || '',
-                flightId: segment.flightId,
-                tkServiceId: segment.tkServiceId || '',
-                tkJourneyId: segment.tkJourneyId || '',
-                segmentRank: segment.segmentRank,
-                departureCity: segment.departureCity || '',
-                departureTime: segment.departureTime || '',
-                departureIata: segment.departureIata || '',
-                arrivalCity: segment.arrivalCity || '',
-                arrivalTime: segment.arrivalTime || '',
-                arrivalIata: segment.arrivalIata || '',
-                flightNumber: segment.flightNumber || '',
-                goSegment: segment.goSegment,
-                returnSegment: segment.returnSegment,
-                duringSegment: segment.duringSegment,
-                type: segment.type || '',
-                numNights: segment.numNights,
-                differential: segment.differential,
-                tkProviderId: segment.tkProviderId,
-                departureDate: segment.departureDate || '',
-                arrivalDate: segment.arrivalDate || ''
-              })) || []
+              segments: sortedSegments
             };
             
             this.internalFlightDetails.set(flight.id, mappedDetail);

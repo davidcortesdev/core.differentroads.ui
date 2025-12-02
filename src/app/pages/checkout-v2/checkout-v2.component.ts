@@ -2135,17 +2135,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
                 if (isSuccess) {
                   this.reservationData.totalPassengers = this.totalPassengers;
 
-                  this.messageService.add({
-                    severity: 'success',
-                    summary: 'Guardado exitoso',
-                    detail: `Datos guardados correctamente para ${
-                      this.totalPassengers
-                    } viajeros con ${
-                      this.selectedActivities?.length || 0
-                    } actividades.`,
-                    life: 3000,
-                  });
-
                   resolve(response);
                 } else {
                   console.error(
@@ -2681,17 +2670,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     // Actualizar el resumen
     this.triggerSummaryRefresh();
-
-    // ✅ NUEVO: Mostrar mensaje de éxito
-    this.messageService.add({
-      severity: 'success',
-      summary: 'Sin vuelos seleccionado',
-      detail:
-        'La opción sin vuelos ha sido seleccionada y guardada correctamente. Ahora puedes continuar al siguiente paso.',
-      life: 5000,
-    });
-
-    // ✅ NUEVO: NO cambiar automáticamente de paso - el usuario debe hacer clic en "Continuar"
   }
 
   closeLoginModal(): void {

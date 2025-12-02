@@ -1171,11 +1171,21 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           next: (results) => {
             this.hasAvailableFlights = results.some((hasAvailability) => hasAvailability);
             
-            // Filtrar "Pack sin vuelos" de la lista de vuelos disponibles
+            // Filtrar "sin vuelos" o "pack sin vuelos" de la lista de vuelos disponibles
             this.availableFlights = this.availableFlights.filter((pack) => {
               const name = pack.name?.toLowerCase() || '';
               const description = pack.description?.toLowerCase() || '';
-              return !name.includes('pack sin vuelos') && !description.includes('pack sin vuelos');
+              const code = pack.code?.toLowerCase() || '';
+              
+              // Excluir si contiene cualquier variante de "sin vuelos"
+              const hasSinVuelos = 
+                name.includes('sin vuelos') || 
+                description.includes('sin vuelos') ||
+                name.includes('pack sin vuelos') || 
+                description.includes('pack sin vuelos') ||
+                code.includes('sin vuelos');
+              
+              return !hasSinVuelos;
             });
           },
           error: () => {

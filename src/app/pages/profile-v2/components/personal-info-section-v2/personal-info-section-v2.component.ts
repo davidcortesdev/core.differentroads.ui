@@ -1,6 +1,12 @@
 import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import {
+  FormBuilder,
+  FormGroup,
+  Validators,
+} from '@angular/forms';
 import { PersonalInfo } from '../../../../core/models/v2/profile-v2.model';
 import { PersonalInfoV2Service } from '../../../../core/services/v2/personal-info-v2.service';
+import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 
 
 
@@ -23,18 +29,47 @@ export class PersonalInfoSectionV2Component implements OnInit, OnChanges {
   errorMessage: string = '';
   successMessage: string = '';
 
-  // Datos para cambio de contraseña con código de verificación
-  verificationData = {
-    code: '',
-    newPassword: '',
-    confirmPassword: ''
-  };
-  passwordErrors: { [key: string]: string } = {};
-  isCodeSent: boolean = false;
-  isSendingCode: boolean = false;
+  // Estados para cambio de contraseña
+  passwordStep: 'send' | 'reset' = 'send';
   isPasswordLoading: boolean = false;
+  passwordErrorMessage: string = '';
+  passwordSuccessMessage: string = '';
+  userEmail: string = '';
 
-  constructor(private personalInfoService: PersonalInfoV2Service) {}
+  // Formulario de cambio de contraseña
+  resetPasswordForm: FormGroup;
+
+  constructor(
+    private personalInfoService: PersonalInfoV2Service,
+    private authService: AuthenticateService,
+    private fb: FormBuilder
+  ) {
+    this.resetPasswordForm = this.fb.group(
+      {
+        confirmationCode: [
+          '',
+          [
+            Validators.required,
+            Validators.pattern(/^[0-9]+$/),
+            Validators.maxLength(10),
+          ],
+        ],
+        password: [
+          '',
+          [
+            Validators.required,
+            Validators.minLength(7),
+            Validators.maxLength(14),
+            Validators.pattern(
+              /^(?=.*[A-Z])(?=.*[!@#$%^&*.-])(?=.*[0-9])(?=.*[a-z]).{7,14}$/
+            ),
+          ],
+        ],
+        confirmPassword: ['', [Validators.required]],
+      },
+      { validators: this.passwordMatchValidator }
+    );
+  }
 
   ngOnInit() {
     if (this.userId) {
@@ -100,114 +135,141 @@ export class PersonalInfoSectionV2Component implements OnInit, OnChanges {
 
   // ===== MÉTODOS PARA CAMBIO DE CONTRASEÑA CON CÓDIGO =====
 
-  sendVerificationCode(): void {
-    this.isSendingCode = true;
-    
-    // Enviar código de verificación al usuario
-    // this.authService.sendPasswordResetCode(this.personalInfo.email).subscribe({
-    //   next: (response) => {
-    //     this.isCodeSent = true;
-    //     this.isSendingCode = false;
-    //   },
-    //   error: (error) => {
-    //     this.isSendingCode = false;
-    //     // Mostrar mensaje de error
-    //   }
-    // });
-    
-    // Simular envío de código
-    setTimeout(() => {
-      this.isCodeSent = true;
-      this.isSendingCode = false;
-    }, 2000);
+  passwordMatchValidator(form: FormGroup) {
+    const password = form.get('password')?.value;
+    const confirmPassword = form.get('confirmPassword')?.value;
+    return password === confirmPassword ? null : { mismatch: true };
   }
 
-  onVerificationCodeInput(event: any): void {
-    const input = event.target as HTMLInputElement;
-    input.value = this.personalInfoService.filterVerificationCodeInput(input.value);
-    this.verificationData.code = input.value;
-    this.clearPasswordError('code');
-  }
-
-  onNewPasswordChange(value: string): void {
-    this.verificationData.newPassword = value;
-    this.clearPasswordError('newPassword');
-    // Si hay confirmación, validar que coincidan
-    if (this.verificationData.confirmPassword) {
-      this.clearPasswordError('confirmPassword');
+  async sendVerificationCode(): Promise<void> {
+    if (!this.personalInfo?.email) {
+      this.passwordErrorMessage = 'No se ha encontrado un correo electrónico asociado a tu cuenta.';
+      return;
     }
-  }
 
-  onConfirmPasswordChange(value: string): void {
-    this.verificationData.confirmPassword = value;
-    this.clearPasswordError('confirmPassword');
-  }
-
-  onPasswordSubmit(): void {
     this.isPasswordLoading = true;
-    
-    if (this.validatePasswordForm()) {
-      // Cambiar contraseña con código de verificación
-      // this.authService.changePasswordWithCode(
-      //   this.verificationData.code, 
-      //   this.verificationData.newPassword
-      // ).subscribe({
-      //   next: (response) => {
-      //     this.cancelPasswordChange();
-      //     // Mostrar mensaje de éxito
-      //   },
-      //   error: (error) => {
-      //     this.isPasswordLoading = false;
-      //     // Mostrar mensaje de error
-      //   }
-      // });
-      
-      // Simular cambio de contraseña
-      setTimeout(() => {
-        this.isPasswordLoading = false;
-        this.cancelPasswordChange();
-      }, 2000);
-      
-    } else {
+    this.passwordErrorMessage = '';
+    this.passwordSuccessMessage = '';
+
+    try {
+      const email = this.personalInfo.email;
+      await this.authService.forgotPassword(email);
+      this.userEmail = email;
+      this.passwordSuccessMessage = 'Código de verificación enviado a su correo.';
+      this.passwordStep = 'reset';
+    } catch (error: any) {
+      this.passwordErrorMessage = this.translatePasswordError(error) || 'Error al enviar el código de verificación. Por favor, inténtalo de nuevo.';
+    } finally {
       this.isPasswordLoading = false;
     }
   }
 
-  private validatePasswordForm(): boolean {
-    const validation = this.personalInfoService.validatePasswordForm(
-      this.verificationData.code,
-      this.verificationData.newPassword,
-      this.verificationData.confirmPassword
-    );
+  async onPasswordSubmit(event: Event): Promise<void> {
+    event.preventDefault();
+
+    this.resetPasswordForm.markAllAsTouched();
     
-    this.passwordErrors = validation.errors;
-    return validation.isValid;
-  }
+    if (this.resetPasswordForm.invalid) {
+      return;
+    }
 
-  getPasswordError(fieldName: string): string {
-    return this.passwordErrors[fieldName] || '';
-  }
+    this.isPasswordLoading = true;
+    this.passwordErrorMessage = '';
+    this.passwordSuccessMessage = '';
 
-  hasPasswordError(fieldName: string): boolean {
-    return !!this.passwordErrors[fieldName];
-  }
+    try {
+      const result = await this.authService.confirmForgotPassword(
+        this.userEmail,
+        this.resetPasswordForm.value.confirmationCode,
+        this.resetPasswordForm.value.password
+      );
 
-  clearPasswordError(fieldName: string): void {
-    if (this.passwordErrors[fieldName]) {
-      delete this.passwordErrors[fieldName];
+      if (result) {
+        this.passwordSuccessMessage = 'Contraseña actualizada exitosamente.';
+        setTimeout(() => {
+          this.cancelPasswordChange();
+        }, 2000);
+      } else {
+        this.passwordErrorMessage = 'Código inválido o contraseña débil.';
+      }
+    } catch (error: any) {
+      console.error('Error al actualizar la contraseña:', error);
+      this.passwordErrorMessage = this.translatePasswordError(error) || 'Error al actualizar la contraseña.';
+    } finally {
+      this.isPasswordLoading = false;
     }
   }
 
+  private translatePasswordError(error: any): string {
+    if (!error) {
+      return 'Error desconocido';
+    }
+
+    const errorMessage = error.message || error.toString() || '';
+    const errorCode = error.code || error.name || '';
+
+    if (
+      errorCode === 'TooManyRequestsException' ||
+      errorMessage.toLowerCase().includes('attempt limit exceeded') ||
+      errorMessage.toLowerCase().includes('too many requests')
+    ) {
+      return 'Límite de intentos excedido. Por favor, intenta de nuevo más tarde.';
+    }
+
+    if (
+      errorCode === 'LimitExceededException' ||
+      errorMessage.toLowerCase().includes('limit exceeded')
+    ) {
+      return 'Límite de intentos excedido. Por favor, intenta de nuevo más tarde.';
+    }
+
+    if (
+      errorCode === 'InvalidPasswordException' ||
+      errorMessage.toLowerCase().includes('password')
+    ) {
+      return 'La contraseña no cumple con los requisitos.';
+    }
+
+    if (
+      errorCode === 'CodeMismatchException' ||
+      errorMessage.toLowerCase().includes('code mismatch') ||
+      errorMessage.toLowerCase().includes('invalid verification code')
+    ) {
+      return 'Código de verificación incorrecto. Por favor, verifica el código e inténtalo de nuevo.';
+    }
+
+    if (
+      errorCode === 'ExpiredCodeException' ||
+      errorMessage.toLowerCase().includes('expired code')
+    ) {
+      return 'El código de verificación ha expirado. Por favor, solicita un nuevo código.';
+    }
+
+    if (errorCode === 'InvalidParameterException') {
+      return 'Los datos proporcionados no son válidos.';
+    }
+
+    if (
+      errorCode === 'UserNotFoundException' ||
+      errorMessage.toLowerCase().includes('user not found')
+    ) {
+      return 'No se encontró una cuenta con este correo electrónico.';
+    }
+
+    if (errorMessage && !errorMessage.match(/[a-zA-Z]/)) {
+      return errorMessage;
+    }
+
+    return errorMessage || 'Error al procesar la solicitud';
+  }
+
   cancelPasswordChange(): void {
-    this.verificationData = {
-      code: '',
-      newPassword: '',
-      confirmPassword: ''
-    };
-    this.passwordErrors = {};
-    this.isCodeSent = false;
+    this.resetPasswordForm.reset();
+    this.passwordStep = 'send';
     this.isPasswordLoading = false;
-    this.isSendingCode = false;
+    this.userEmail = '';
+    this.passwordErrorMessage = '';
+    this.passwordSuccessMessage = '';
   }
 
   /**

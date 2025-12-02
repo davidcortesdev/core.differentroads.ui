@@ -150,140 +150,66 @@
 }
 
 .password-container {
-    padding: 1.5rem;
+    padding: 1.5rem 0;
 }
 
-.verification-step {
+.send-code-step {
     text-align: center;
     
-    .step-description {
-        margin-bottom: 2rem;
-        color: var(--text-color-secondary);
-        line-height: 1.625;
-    }
-    
-    .button-container {
+    .info-text {
         display: flex;
-        justify-content: center;
+        align-items: flex-start;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        background: var(--surface-50);
+        border-radius: 0.5rem;
+        border-left: 3px solid var(--primary-color);
         
-        ::ng-deep .p-button {
-            min-width: 10rem;
-            padding: 0.5rem 1.5rem;
-            font-size: 0.875rem;
-            border-radius: 0.5rem;
-            transition: all 0.2s ease;
-            
-            &:hover {
-                transform: translateY(-0.125rem);
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            }
-            
-            .p-button-icon {
-                margin-right: 0.5rem;
-            }
+        i {
+            color: var(--primary-color);
+            margin-top: 0.125rem;
+        }
+        
+        p {
+            margin: 0;
+            color: var(--text-color-secondary);
+            line-height: 1.6;
+            font-size: 0.9rem;
         }
     }
 }
 
 .password-form {
-    .step-description {
-        margin-bottom: 1.5rem;
-        color: var(--text-color-secondary);
-        line-height: 1.625;
-        font-size: 0.9rem;
+    .info-text {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 1rem;
+        background: var(--green-50);
+        border-radius: 0.5rem;
+        border-left: 3px solid var(--green-500);
+        
+        i {
+            color: var(--green-500);
+            margin-top: 0.125rem;
+        }
+        
+        p {
+            margin: 0;
+            color: var(--text-color-secondary);
+            line-height: 1.6;
+            font-size: 0.9rem;
+        }
     }
     
-    .form-field {
-        margin-bottom: 1.5rem;
-        
+    .field {
         label {
-            display: block;
-            margin-bottom: 0.5rem;
             font-weight: 500;
             color: var(--text-color);
         }
-        
-        input[pInputText],
-        p-password ::ng-deep .p-password .p-password-input {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid var(--surface-border);
-            border-radius: 0.375rem;
-            font-size: 0.875rem;
-            transition: all 0.2s;
-            
-            &:focus {
-                outline: none;
-                border-color: var(--primary-color);
-                box-shadow: 0 0 0 1px var(--primary-color);
-            }
-            
-            &.error {
-                border-color: var(--red-500);
-                box-shadow: 0 0 0 1px var(--red-500);
-            }
-        }
-        
-        p-password {
-            width: 100%;
-            
-            ::ng-deep .p-password {
-                width: 100%;
-                
-                .p-password-toggle {
-                    color: var(--text-color-secondary);
-                    
-                    &:hover {
-                        color: var(--primary-color);
-                    }
-                }
-            }
-        }
-        
-        .error-message {
-            display: block;
-            margin-top: 0.25rem;
-            font-size: 0.75rem;
-            color: var(--red-500);
-        }
     }
     
-    .button-container {
-        margin-top: 2rem;
-        margin-bottom: 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: stretch;
-        gap: 1rem;
-        
-        .btn-save,
-        .btn-cancel {
-            flex: 1;
-            display: flex;
-            align-items: stretch;
-            
-            ::ng-deep .p-button {
-                width: 100%;
-                height: 100%;
-                padding: 0.5rem 1.5rem;
-                font-size: 0.875rem;
-                border-radius: 0.5rem;
-                transition: all 0.2s ease;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                
-                &:hover {
-                    transform: translateY(-0.125rem);
-                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-                }
-                
-                .p-button-icon {
-                    margin-right: 0.5rem;
-                }
-            }
-        }
-    }
 }
 
 @media (max-width: 768px) {
@@ -363,81 +289,22 @@
             }
         }
         
-        .password-container {
-            padding: 1rem;
+    .password-container {
+        padding: 1rem 0;
+    }
+    
+    .send-code-step,
+    .password-form {
+        .info-text {
+            padding: 0.75rem;
+            font-size: 0.85rem;
         }
-        
-        .verification-step {
-            .step-description {
-                margin-bottom: 1.25rem;
-                font-size: 0.8125rem;
-                line-height: 1.375;
-            }
-            
-            .button-container {
-                ::ng-deep .p-button {
-                    min-width: 7.5rem;
-                    padding: 0.5rem 1rem;
-                    font-size: 0.75rem;
-                }
-            }
+    }
+    
+    .password-form {
+        .field {
+            margin-bottom: 1rem;
         }
-        
-        .password-form {
-            .step-description {
-                font-size: 0.75rem;
-                margin-bottom: 1rem;
-                line-height: 1.375;
-            }
-            
-            .form-field {
-                margin-bottom: 1rem;
-                
-                label {
-                    font-size: 0.8125rem;
-                    margin-bottom: 0.375rem;
-                }
-                
-                input[pInputText],
-                p-password ::ng-deep .p-password .p-password-input {
-                    padding: 0.625rem;
-                    font-size: 0.75rem;
-                    border-radius: 0.25rem;
-                }
-                
-                p-password ::ng-deep .p-password .p-password-toggle {
-                    font-size: 0.75rem;
-                }
-                
-                .error-message {
-                    font-size: 0.6875rem;
-                    margin-top: 0.125rem;
-                }
-            }
-            
-            .button-container {
-                margin-top: 1.25rem;
-                flex-direction: column;
-                gap: 0.5rem;
-                align-items: stretch;
-                
-                .btn-save,
-                .btn-cancel {
-                    width: 100%;
-                    display: flex;
-                    align-items: stretch;
-                    
-                    ::ng-deep .p-button {
-                        width: 100%;
-                        height: 100%;
-                        padding: 0.5rem 1rem;
-                        font-size: 0.75rem;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                    }
-                }
-            }
-        }
+    }
     }
 }

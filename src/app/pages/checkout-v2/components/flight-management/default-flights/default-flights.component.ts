@@ -61,6 +61,7 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
 
   selectedFlight: IFlightPackDTO | null = null;
   flightPacks: FlightPackWithAvailability[] = [];
+  private allFlightPacks: IFlightPackDTO[] = [];
   loginDialogVisible: boolean = false;
   flightDetails: Map<number, IFlightDetailDTO> = new Map();
   travelers: IReservationTravelerResponse[] = [];
@@ -169,19 +170,39 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
 
   getFlights(): void {
     if (!this.departureId) {
-      // Resetear estado si no hay departureId
       this.flightPacks = [];
+      this.allFlightPacks = [];
       this.selectedFlight = null;
       return;
     }
     
-    // Resetear estado antes de cargar nuevos vuelos
     this.flightPacks = [];
+    this.allFlightPacks = [];
     this.selectedFlight = null;
     this.flightDetails.clear();
     
     this.flightsNetService.getFlights(this.departureId).subscribe((flights) => {
-      this.flightPacks = flights.map((pack) => ({
+      this.allFlightPacks = flights.map((pack) => ({
+        ...pack,
+        availablePlaces: undefined,
+      }));
+
+      const filteredFlights = flights.filter((pack) => {
+        const name = pack.name?.toLowerCase() || '';
+        const description = pack.description?.toLowerCase() || '';
+        const code = pack.code?.toLowerCase() || '';
+        
+        const hasSinVuelos = 
+          name.includes('sin vuelos') || 
+          description.includes('sin vuelos') ||
+          name.includes('pack sin vuelos') || 
+          description.includes('pack sin vuelos') ||
+          code.includes('sin vuelos');
+        
+        return !hasSinVuelos;
+      });
+
+      this.flightPacks = filteredFlights.map((pack) => ({
         ...pack,
         availablePlaces: undefined,
       }));
@@ -255,6 +276,21 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       });
   }
 
+  // ✅ MÉTODO HELPER: Verificar si un vuelo es "sin vuelos"
+  private isSinVuelosFlight(flightPack: IFlightPackDTO): boolean {
+    const name = flightPack.name?.toLowerCase() || '';
+    const description = flightPack.description?.toLowerCase() || '';
+    const code = flightPack.code?.toLowerCase() || '';
+    
+    return (
+      name.includes('sin vuelos') || 
+      description.includes('sin vuelos') ||
+      name.includes('pack sin vuelos') || 
+      description.includes('pack sin vuelos') ||
+      code.includes('sin vuelos')
+    );
+  }
+
   // ✅ MÉTODO NUEVO: Cargar y mostrar como seleccionado el vuelo que ya existe en la BD
   private async loadAndSelectExistingFlight(): Promise<void> {
 
@@ -312,9 +348,9 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
         // Buscar si este vuelo está disponible en la lista actual
         const matchingFlight = this.flightPacks.find((f) => f.id === flightId);
 
-        if (matchingFlight) {
+        if (matchingFlight && !this.isSinVuelosFlight(matchingFlight)) {
 
-          // Seleccionar el vuelo existente
+          // Seleccionar el vuelo existente (solo si no es "sin vuelos")
           this.isInternalSelection = true;
           this.selectedFlight = matchingFlight;
 
@@ -350,9 +386,9 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       (flightPack) => flightPack.id === departureActivityPackId
     );
 
-    if (matchingFlight) {
+    if (matchingFlight && !this.isSinVuelosFlight(matchingFlight)) {
 
-      // Seleccionar el vuelo sin emitir cambios (es interno)
+      // Seleccionar el vuelo sin emitir cambios (es interno) (solo si no es "sin vuelos")
       this.isInternalSelection = true;
       this.selectedFlight = matchingFlight;
 
@@ -573,6 +609,9 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
   }
 
   async selectFlight(flightPack: IFlightPackDTO): Promise<void> {
+    if (this.isSinVuelosFlight(flightPack) && !this.isInternalSelection) {
+      return;
+    }
 
     if (this.selectedFlight === flightPack) {
       // Deseleccionar vuelo
@@ -616,7 +655,39 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
     }
   }
 
-  // ✅ MÉTODO NUEVO: Obtener texto del vuelo seleccionado para el summary
+  async selectSinVuelos(): Promise<void> {
+    const sinVuelosPack = this.allFlightPacks.find((pack) => {
+      return this.isSinVuelosFlight(pack);
+    });
+
+    if (sinVuelosPack) {
+      this.isInternalSelection = true;
+      this.selectedFlight = sinVuelosPack;
+
+      const basePrice = 0;
+
+      try {
+        await this.saveFlightAssignmentsForAllTravelers(sinVuelosPack.id, true);
+      } catch (error) {
+        console.error('Error al guardar la selección de "sin vuelos":', error);
+      }
+
+      this.flightSelectionChange.emit({
+        selectedFlight: sinVuelosPack,
+        totalPrice: basePrice,
+      });
+
+      this.defaultFlightSelected.emit({
+        selectedFlight: sinVuelosPack,
+        totalPrice: basePrice,
+      });
+
+      this.isInternalSelection = false;
+    } else {
+      console.error('No se encontró el vuelo "sin vuelos" en la lista completa');
+    }
+  }
+
   getSelectedFlightText(): string {
     if (!this.selectedFlight) {
       return 'Sin Vuelos';
@@ -711,18 +782,10 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       return false;
     }
 
-    // ✅ CORRECCIÓN: Si targetFlightPackId es 0, buscar automáticamente el flightPack "sin vuelos"
     let finalFlightPackId = targetFlightPackId;
     if (targetFlightPackId === 0) {
-      const noFlightPack = this.flightPacks?.find((pack) => {
-        const name = pack.name?.toLowerCase() || '';
-        const description = pack.description?.toLowerCase() || '';
-        return (
-          name.includes('sin vuelos') ||
-          description.includes('sin vuelos') ||
-          name.includes('pack sin vuelos') ||
-          description.includes('pack sin vuelos')
-        );
+      const noFlightPack = this.allFlightPacks?.find((pack) => {
+        return this.isSinVuelosFlight(pack);
       });
 
       if (noFlightPack) {

@@ -123,6 +123,27 @@ export class FlightItemComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Verifica si el vuelo tiene disponibilidad
+   */
+  hasAvailability(): boolean {
+    // Si availablePlaces es undefined, asumir que hay disponibilidad (aún no se ha cargado)
+    if (this.availablePlaces === undefined) {
+      return true;
+    }
+    // Si availablePlaces es 0, no hay disponibilidad
+    return this.availablePlaces > 0;
+  }
+
+  /**
+   * Verifica si el botón debe estar deshabilitado
+   */
+  isButtonDisabled(): boolean {
+    // Solo deshabilitar si no hay disponibilidad Y el vuelo NO está seleccionado
+    // Si el vuelo está seleccionado, siempre debe poder deseleccionarse
+    return !this.hasAvailability() && !this.isFlightSelected();
+  }
+
+  /**
    * Obtiene información del estado de selección para debugging
    */
   getSelectionDebugInfo(): string {
@@ -286,6 +307,10 @@ export class FlightItemComponent implements OnInit, OnDestroy {
   }
 
   selectFlight(flightPack: IFlightPackDTO): void {
+    // Prevenir selección si no hay disponibilidad
+    if (!this.hasAvailability()) {
+      return;
+    }
     this.flightSelected.emit(flightPack);
   }
 }

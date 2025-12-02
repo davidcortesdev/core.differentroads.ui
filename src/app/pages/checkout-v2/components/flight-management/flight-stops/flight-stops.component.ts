@@ -181,6 +181,9 @@ export class FlightStopsComponent implements OnInit {
       segments = currentDetail.segments || [];
     }
     
+    // Ordenar segmentos por segmentRank
+    segments = segments.sort((a, b) => a.segmentRank - b.segmentRank);
+    
     // Transformar segmentos para incluir nombres de ciudades
     return this.transformSegmentsWithCityNames(segments);
   }

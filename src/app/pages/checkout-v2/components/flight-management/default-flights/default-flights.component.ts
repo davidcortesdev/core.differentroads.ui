@@ -181,7 +181,14 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
     this.flightDetails.clear();
     
     this.flightsNetService.getFlights(this.departureId).subscribe((flights) => {
-      this.flightPacks = flights.map((pack) => ({
+      // Filtrar vuelos que contengan "Pack sin vuelos" en el nombre
+      const filteredFlights = flights.filter((pack) => {
+        const name = pack.name?.toLowerCase() || '';
+        const description = pack.description?.toLowerCase() || '';
+        return !name.includes('pack sin vuelos') && !description.includes('pack sin vuelos');
+      });
+
+      this.flightPacks = filteredFlights.map((pack) => ({
         ...pack,
         availablePlaces: undefined,
       }));

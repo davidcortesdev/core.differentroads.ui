@@ -1170,6 +1170,13 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         forkJoin(availabilityChecks).subscribe({
           next: (results) => {
             this.hasAvailableFlights = results.some((hasAvailability) => hasAvailability);
+            
+            // Filtrar "Pack sin vuelos" de la lista de vuelos disponibles
+            this.availableFlights = this.availableFlights.filter((pack) => {
+              const name = pack.name?.toLowerCase() || '';
+              const description = pack.description?.toLowerCase() || '';
+              return !name.includes('pack sin vuelos') && !description.includes('pack sin vuelos');
+            });
           },
           error: () => {
             this.hasAvailableFlights = false;

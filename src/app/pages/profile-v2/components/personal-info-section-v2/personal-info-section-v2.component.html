@@ -142,10 +142,11 @@
   (profileUpdated)="onProfileUpdated()">
 </app-update-profile-section-v2>
 
-<!-- Sección de Cambio de Contraseña (siempre visible) -->
+<!-- Sección de Cambio de Contraseña -->
 <p-panel class="password-panel">
   <ng-template #header>
     <div class="panel-header">
+      <i class="pi pi-lock"></i>
       <span>Cambiar contraseña</span>
     </div>
   </ng-template>
@@ -153,107 +154,162 @@
   <p-divider></p-divider>
   
   <div class="password-container">
+    <!-- Mensajes -->
+    <div class="messages-container">
+      <p-message 
+        *ngIf="passwordErrorMessage" 
+        severity="error" 
+        [text]="passwordErrorMessage"
+        [closable]="true"
+        (onClose)="passwordErrorMessage = ''">
+      </p-message>
+      
+      <p-message 
+        *ngIf="passwordSuccessMessage" 
+        severity="success" 
+        [text]="passwordSuccessMessage"
+        [closable]="true"
+        (onClose)="passwordSuccessMessage = ''">
+      </p-message>
+    </div>
+
     <!-- Paso 1: Enviar código de verificación -->
-    <div *ngIf="!isCodeSent" class="verification-step">
-      <div class="button-container">
+    <div *ngIf="passwordStep === 'send'" class="send-code-step">
+      <div class="info-text">
+        <i class="pi pi-info-circle"></i>
+        <p>Se enviará un código de verificación a tu correo electrónico para cambiar tu contraseña.</p>
+      </div>
+      <div class="button-wrapper">
         <p-button
           label="Enviar código de verificación"
-          styleClass="p-button-outlined p-button-sm"
-          (onClick)="sendVerificationCode()"
-          [loading]="isSendingCode"
-          [disabled]="isSendingCode"
           icon="pi pi-send"
-        >
+          (onClick)="sendVerificationCode()"
+          [loading]="isPasswordLoading"
+          [disabled]="isPasswordLoading"
+          styleClass="p-button-outlined">
         </p-button>
       </div>
     </div>
 
     <!-- Paso 2: Ingresar código y nueva contraseña -->
-    <div *ngIf="isCodeSent" class="password-form">
-      <p class="step-description">
-        Hemos enviado un código de verificación a tu email. 
-        Ingresa el código y tu nueva contraseña.
-      </p>
+    <form
+      *ngIf="passwordStep === 'reset'"
+      [formGroup]="resetPasswordForm"
+      (ngSubmit)="onPasswordSubmit($event)"
+      class="password-form">
       
-      <form (ngSubmit)="onPasswordSubmit()">
-        <div class="form-field">
-          <label for="verificationCode">Código de verificación:</label>
+      <div class="info-text">
+        <i class="pi pi-check-circle"></i>
+        <p>Código de verificación enviado a su correo. Ingresa el código y tu nueva contraseña.</p>
+      </div>
+
+      <div class="form-fields">
+        <div class="field">
+          <label for="confirmationCode" class="field-label">
+            Código de verificación
+          </label>
           <input
-            id="verificationCode"
+            id="confirmationCode"
+            type="text"
             pInputText
-            [(ngModel)]="verificationData.code"
-            name="verificationCode"
-            placeholder="Ingrese el código de 6 dígitos"
-            maxlength="6"
-            (input)="onVerificationCodeInput($event)"
-            [class.error]="hasPasswordError('code')"
+            formControlName="confirmationCode"
+            placeholder="Ingresa el código de verificación"
+            [class.ng-invalid]="resetPasswordForm.get('confirmationCode')?.invalid && resetPasswordForm.get('confirmationCode')?.touched"
             autocomplete="one-time-code"
             inputmode="numeric"
-          />
-          <small class="error-message" *ngIf="hasPasswordError('code')">
-            {{ getPasswordError('code') }}
+            maxlength="10"
+            class="field-input">
+          <small 
+            class="p-error field-error"
+            *ngIf="resetPasswordForm.get('confirmationCode')?.invalid && resetPasswordForm.get('confirmationCode')?.touched">
+            <span *ngIf="resetPasswordForm.get('confirmationCode')?.errors?.['required']">
+              El código de confirmación es obligatorio.
+            </span>
+            <span *ngIf="resetPasswordForm.get('confirmationCode')?.errors?.['pattern']">
+              El código debe contener solo números.
+            </span>
+            <span *ngIf="resetPasswordForm.get('confirmationCode')?.errors?.['maxlength']">
+              El código no puede tener más de 10 números.
+            </span>
           </small>
         </div>
 
-        <div class="form-field">
-          <label for="newPassword">Nueva contraseña:</label>
+        <div class="field">
+          <label for="password" class="field-label">
+            Nueva contraseña
+          </label>
           <p-password
-            id="newPassword"
-            [(ngModel)]="verificationData.newPassword"
-            name="newPassword"
-            placeholder="Ingrese su nueva contraseña"
+            id="password"
+            formControlName="password"
+            placeholder="Ingresa tu nueva contraseña"
             [toggleMask]="true"
             [feedback]="false"
-            [class.error]="hasPasswordError('newPassword')"
-            (ngModelChange)="onNewPasswordChange($event)"
-            autocomplete="new-password"
-            ngDefaultControl
-          ></p-password>
-          <small class="error-message" *ngIf="hasPasswordError('newPassword')">
-            {{ getPasswordError('newPassword') }}
+            [class.ng-invalid]="resetPasswordForm.get('password')?.invalid && resetPasswordForm.get('password')?.touched"
+            styleClass="field-password"
+            inputStyleClass="field-input"
+            autocomplete="new-password">
+          </p-password>
+          <small 
+            class="p-error field-error"
+            *ngIf="resetPasswordForm.get('password')?.invalid && resetPasswordForm.get('password')?.touched">
+            <span *ngIf="resetPasswordForm.get('password')?.errors?.['required']">
+              La contraseña es obligatoria.
+            </span>
+            <span *ngIf="resetPasswordForm.get('password')?.errors?.['minlength']">
+              La contraseña debe tener al menos 7 caracteres.
+            </span>
+            <span *ngIf="resetPasswordForm.get('password')?.errors?.['maxlength']">
+              La contraseña debe tener máximo 14 caracteres.
+            </span>
+            <span *ngIf="resetPasswordForm.get('password')?.errors?.['pattern']">
+              La contraseña debe contener al menos una mayúscula, un número y un carácter especial.
+            </span>
           </small>
         </div>
 
-        <div class="form-field">
-          <label for="confirmPassword">Confirmar nueva contraseña:</label>
+        <div class="field">
+          <label for="confirmPassword" class="field-label">
+            Confirmar nueva contraseña
+          </label>
           <p-password
             id="confirmPassword"
-            [(ngModel)]="verificationData.confirmPassword"
-            name="confirmPassword"
-            placeholder="Confirme su nueva contraseña"
+            formControlName="confirmPassword"
+            placeholder="Confirma tu nueva contraseña"
             [toggleMask]="true"
             [feedback]="false"
-            [class.error]="hasPasswordError('confirmPassword')"
-            (ngModelChange)="onConfirmPasswordChange($event)"
-            autocomplete="new-password"
-            ngDefaultControl
-          ></p-password>
-          <small class="error-message" *ngIf="hasPasswordError('confirmPassword')">
-            {{ getPasswordError('confirmPassword') }}
+            [class.ng-invalid]="resetPasswordForm.get('confirmPassword')?.invalid && resetPasswordForm.get('confirmPassword')?.touched"
+            styleClass="field-password"
+            inputStyleClass="field-input"
+            autocomplete="new-password">
+          </p-password>
+          <small 
+            class="p-error field-error"
+            *ngIf="resetPasswordForm.get('confirmPassword')?.invalid && resetPasswordForm.get('confirmPassword')?.touched">
+            <span *ngIf="resetPasswordForm.get('confirmPassword')?.errors?.['required']">
+              Debe confirmar la contraseña.
+            </span>
+            <span *ngIf="resetPasswordForm.get('confirmPassword')?.errors?.['mismatch']">
+              Las contraseñas no coinciden.
+            </span>
           </small>
         </div>
+      </div>
 
-        <div class="button-container">
-          <div class="btn-save">
-            <p-button
-              label="Cambiar Contraseña"
-              styleClass="p-button-outlined p-button-sm"
-              type="submit"
-              [loading]="isPasswordLoading"
-              [disabled]="isPasswordLoading"
-            >
-            </p-button>
-          </div>
-          <div class="btn-cancel">
-            <p-button
-              label="Cancelar"
-              (onClick)="cancelPasswordChange()"
-              icon="pi pi-times"
-            >
-            </p-button>
-          </div>
-        </div>
-      </form>
-    </div>
+      <div class="form-actions">
+        <p-button
+          label="Cancelar"
+          icon="pi pi-times"
+          (onClick)="cancelPasswordChange()"
+          styleClass="p-button-text">
+        </p-button>
+        <p-button
+          type="submit"
+          label="Actualizar contraseña"
+          icon="pi pi-check"
+          [loading]="isPasswordLoading"
+          [disabled]="isPasswordLoading">
+        </p-button>
+      </div>
+    </form>
   </div>
 </p-panel>

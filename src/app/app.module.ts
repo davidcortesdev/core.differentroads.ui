@@ -87,6 +87,7 @@ import { ToolbarModule } from 'primeng/toolbar';
 import { TooltipModule } from 'primeng/tooltip';
 import { TextareaModule } from 'primeng/textarea';
 import { SelectButtonModule } from 'primeng/selectbutton';
+import { PasswordModule } from 'primeng/password';  
 
 
 // ========================================
@@ -521,7 +522,8 @@ export function HttpLoaderFactory(http: HttpClient) {
     TooltipModule,
     TextareaModule,
     SelectButtonModule,
-
+    PasswordModule,
+    
     // ========================================
     // STANDALONE COMPONENTS
     // ========================================

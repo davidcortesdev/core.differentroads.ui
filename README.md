@@ -41,6 +41,18 @@ src/
 - [Flujo de trabajo con Git](https://github.com/Different-Roads/core.differentroads.help/blob/main/git/flujo_ramas.md)
 - [Inicio de sesion con google](./readme/login_google.md)
 
+## Requisitos Previos
+
+Antes de comenzar, asegúrate de tener instaladas las siguientes versiones:
+
+- **Node.js**: Versión 22 LTS
+  - Descarga desde: [nodejs.org](https://nodejs.org/)
+  - Verifica la instalación: `node --version`
+
+- **Angular CLI**: Versión 19
+  - Instalación global: `npm install -g @angular/cli@19`
+  - Verifica la instalación: `ng version`
+
 ## Configuración del Entorno de Desarrollo
 
 1. **Instalación de Dependencias**:

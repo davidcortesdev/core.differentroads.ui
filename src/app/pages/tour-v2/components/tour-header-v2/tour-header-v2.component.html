@@ -11,7 +11,7 @@
         </i>
       </div>
       <span class="rating-number" *ngIf="averageRating !== null">{{ averageRating }}</span>
-      <span class="reviews-count" *ngIf="reviewCount > 0">{{ getFormattedReviewCount() }}</span>
+      <span class="reviews-count" *ngIf="reviewCount > 0" (click)="scrollToReviews()">{{ getFormattedReviewCount() }}</span>
     </div>
     
     <h1>Detalles del Tour: {{ tour.name || '' }}</h1>

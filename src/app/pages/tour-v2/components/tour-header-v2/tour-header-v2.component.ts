@@ -480,6 +480,25 @@ export class TourHeaderV2Component
     return `${this.reviewCount} ${this.reviewCount === 1 ? 'Review' : 'Reviews'}`;
   }
 
+  // Hacer scroll a la sección de reviews usando el ID, teniendo en cuenta el header flotante
+  scrollToReviews(): void {
+    const reviewsSection = document.getElementById('tour-reviews');
+    if (reviewsSection) {
+      // Obtener la altura del header flotante (si está fijo)
+      const headerElement = this.el.nativeElement.querySelector('.tour-header');
+      const headerHeight = headerElement ? headerElement.offsetHeight : 0;
+      
+      // Calcular la posición del elemento menos la altura del header
+      const elementPosition = reviewsSection.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerHeight - 150; // 100px de margen adicional para mejor visibilidad
+      
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  }
+
   // Obtener tooltip para el botón de reservar
   getBookingTooltip(): string {
     if (this.preview) {

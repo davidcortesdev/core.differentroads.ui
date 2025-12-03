@@ -1,4 +1,5 @@
 import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-booking-code-section-v2',
@@ -48,5 +49,16 @@ export class BookingCodeSectionV2Component implements OnInit {
 
   get hasTkId(): boolean {
     return !!(this.bookingReference && this.bookingReference !== '000000' && this.bookingReference !== '');
+  }
+
+  generateTkLink(): string {
+    if (!this.hasTkId) {
+      return '#';
+    }
+    return `${environment.tkwebUrl}admin/reservation/view/${this.bookingReference}`;
+  }
+
+  get isTkLinkEnabled(): boolean {
+    return this.isATC && this.hasTkId;
   }
 }

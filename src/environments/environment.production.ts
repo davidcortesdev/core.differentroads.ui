@@ -50,4 +50,5 @@ export const environment = {
 
   // URLs externas
   tourOperationUrl: 'https://touroperacion.differentroads.es',
+  tkwebUrl:'https://tws.tourknife.com/',
 };

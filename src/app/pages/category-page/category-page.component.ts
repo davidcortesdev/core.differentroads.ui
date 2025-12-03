@@ -374,8 +374,9 @@ if (this.tagData?.description && this.tagData.description.trim()) {
     if (this.tagData?.description && this.tagData.description.trim()) {
       return this.tagData.description;
     }
-  
-    return `Explora todos los tours disponibles para ${this.getTagName()}.`;
+    
+    const tagName = this.getTagName() || this.getCategoryName();
+    return `Explora todos los tours disponibles para ${tagName}.`;
   }
   
 

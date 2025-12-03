@@ -6,6 +6,7 @@ import { Order } from '../../../core/models/orders/order.model';
 import { AdditionalInfoService } from '../../../core/services/v2/additional-info.service';
 import { ReservationService } from '../../../core/services/reservation/reservation.service';
 import { ReservationStatusService } from '../../../core/services/reservation/reservation-status.service';
+import { UsersNetService } from '../../../core/services/users/usersNet.service';
 import { switchMap } from 'rxjs/operators';
 
 @Component({
@@ -111,7 +112,8 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
     private router: Router,
     private formBuilder: FormBuilder,
     private reservationService: ReservationService,
-    private reservationStatusService: ReservationStatusService
+    private reservationStatusService: ReservationStatusService,
+    private usersNetService: UsersNetService
   ) {
     // Inicializar formulario
     this.initializeForm();
@@ -738,25 +740,52 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
     const formData = this.emailForm.value;
     this.loadingEmailModal = true;
 
-    // TODO: Aquí se debe:
-    // 1. Verificar si el usuario existe por email
-    // 2. Si no existe, crear usuario con el email y nombre
-    // 3. Asociar el presupuesto al usuario
-    // 4. Proceder con la descarga
+    // 1. Crear o obtener usuario lead con el email
+    this.usersNetService.createLeadUser(formData.email, formData.fullName).pipe(
+      switchMap((user) => {
+        // 2. Usuario creado/obtenido, ahora crear presupuesto asociado a este usuario
+        // Actualizar datos del contexto antes de crear la reserva
+        this.setContextData();
+        
+        // 3. Crear presupuesto con el userId del usuario lead
+        return this.additionalInfoService.createBudgetWithUserId(user.id);
+      }),
+      switchMap((createdReservation) => {
+        // 4. Presupuesto creado, guardar el ID y proceder con la descarga
+        const reservationId = createdReservation.id || createdReservation.ID;
+        
+        if (!reservationId) {
+          throw new Error('No se pudo obtener el ID de la reserva creada');
+        }
 
-    // Por ahora, solo mostramos un mensaje y cerramos el modal
-    // Esto se implementará cuando se defina cómo crear usuarios sin Cognito
-    console.log('Email y nombre recibidos:', formData);
-    
-    // Disparar evento de analytics: file_download
-    this.trackFileDownload();
-    
-    // Cerrar modal y proceder con descarga
-    this.loadingEmailModal = false;
-    this.handleCloseEmailModal();
-    
-    // Continuar con la descarga (esto se ajustará cuando se implemente la lógica de registro)
-    this.downloadBudget();
+        // Guardar el ID de la reserva generada
+        this.generatedReservationId = reservationId;
+        
+        // Disparar evento de analytics: file_download
+        this.trackFileDownload();
+        
+        // 5. Descargar el presupuesto
+        return this.additionalInfoService.downloadBudgetPDF(reservationId);
+      })
+    ).subscribe({
+      next: (response) => {
+        this.loadingEmailModal = false;
+        
+        if (response.success) {
+          this.additionalInfoService.showSuccess(response.message || 'Presupuesto descargado correctamente');
+        } else {
+          this.additionalInfoService.showError(response.message || 'Error al descargar el presupuesto');
+        }
+        
+        // Cerrar modal
+        this.handleCloseEmailModal();
+      },
+      error: (error) => {
+        this.loadingEmailModal = false;
+        console.error('Error al procesar descarga de presupuesto:', error);
+        this.additionalInfoService.showError('Error al procesar la descarga. Inténtalo de nuevo.');
+      }
+    });
   }
 
   // ============================================

@@ -295,6 +295,22 @@ export class AdditionalInfoService {
   }
 
   /**
+   * ✅ MÉTODO NUEVO: Crea un presupuesto con un userId específico
+   * Útil para crear presupuestos asociados a usuarios lead (sin Cognito)
+   * @param userId ID del usuario al que se asociará el presupuesto
+   * @returns Observable con la reserva creada
+   */
+  createBudgetWithUserId(userId: number): Observable<any> {
+    if (!userId) {
+      return new Observable(observer => {
+        observer.error(new Error('El userId es requerido'));
+      });
+    }
+    
+    return this.createCompleteBudget(userId);
+  }
+
+  /**
    * ✅ MÉTODO NUEVO: Crear presupuesto completo usando createComplete
    */
   private createCompleteBudget(userId: number | null): Observable<any> {

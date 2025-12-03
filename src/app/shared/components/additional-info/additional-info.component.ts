@@ -292,9 +292,6 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
       const currentUrl = window.location.pathname;
       sessionStorage.setItem('redirectUrl', currentUrl);
       this.loginDialogVisible = true;
-      this.additionalInfoService.showInfo(
-        'Debes iniciar sesión para guardar el presupuesto.'
-      );
       return;
     }
 

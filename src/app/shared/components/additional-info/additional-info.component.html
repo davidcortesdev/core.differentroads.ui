@@ -64,6 +64,16 @@
 <!-- Toast para notificaciones -->
 <p-toast position="top-right"></p-toast>
 
+<!-- Modal de login -->
+<app-login-modal
+  [visible]="loginDialogVisible"
+  [modalType]="'budget'"
+  (close)="closeLoginModal()"
+  (login)="navigateToLogin()"
+  (register)="navigateToRegister()"
+>
+</app-login-modal>
+
 <!-- Modal de compartir/descargar presupuesto -->
 <p-dialog
   [(visible)]="visible"

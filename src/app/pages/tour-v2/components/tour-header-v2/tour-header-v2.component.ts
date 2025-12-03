@@ -163,6 +163,9 @@ export class TourHeaderV2Component
   // Estado para controlar el proceso de reservación
   isCreatingReservation = false;
 
+  // Propiedad para detectar modo standalone
+  isStandaloneMode: boolean = false;
+
   constructor(
     private tourService: TourService,
     private tourLocationService: TourLocationService,
@@ -192,6 +195,8 @@ export class TourHeaderV2Component
   ngOnInit() {
     // Resetear el flag al inicializar para evitar estados bloqueados
     this.isCreatingReservation = false;
+    // Detectar si estamos en modo standalone
+    this.detectStandaloneMode();
     if (this.tourId) {
       this.loadTourData(this.tourId);
       // Cargar trip types usando el nuevo endpoint
@@ -395,10 +400,20 @@ export class TourHeaderV2Component
     }
   }
 
-  // ✅ MÉTODO: Obtener tooltip para el botón de reservar
+  // Detectar si estamos en modo standalone
+  private detectStandaloneMode(): void {
+    // Verificar si la URL contiene 'standalone'
+    const currentPath = window.location.pathname;
+    this.isStandaloneMode = currentPath.includes('/standalone/');
+  }
+
+  // Obtener tooltip para el botón de reservar
   getBookingTooltip(): string {
     if (this.preview) {
       return 'No es posible reservar un tour en modo preview';
+    }
+    if (this.isStandaloneMode) {
+      return 'Botón deshabilitado, reserva desde la lista de tours.';
     }
     if (!this.hasSelectedDate) {
       return 'Debes seleccionar una fecha de salida para poder reservar';
@@ -1030,6 +1045,11 @@ export class TourHeaderV2Component
   }
 
   onBookingClick(): void {
+    // Bloquear desde modo standalone
+    if (this.isStandaloneMode) {
+      return;
+    }
+
     // Bloquear desde checkout: este botón solo debe funcionar en la página del tour
     const currentUrl = this.router.url || window.location.pathname || '';
     if (currentUrl.startsWith('/checkout')) {

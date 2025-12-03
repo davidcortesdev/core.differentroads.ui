@@ -81,6 +81,11 @@ const routes: Routes = [
         component: NewReservationComponent,
       },
       { path: 'forget-password', component: ForgetPasswordComponent },
+      // ========================================
+      // TOUR ROUTES (standalone)
+      // ========================================
+      { path: 'tour/:slug', component: TourV2Component },
+      { path: 'tour/:slug/preview', component: TourV2Component },
     ],
   },
 

@@ -21,7 +21,22 @@
             <span class="tk-id-separator"> - </span>
             <span class="tk-id-container">
               <span class="tk-id-label">TK ID: </span>
-              <span class="tk-id-value">{{ bookingReference }}</span>
+              <!-- TK ID como enlace si es ATC -->
+              <ng-container *ngIf="isTkLinkEnabled; else plainTkId">
+                <a 
+                  [href]="generateTkLink()" 
+                  target="_blank"
+                  class="tk-id-link"
+                  rel="noopener noreferrer"
+                  title="Abrir en TourKnow">
+                  <span class="tk-id-value">{{ bookingReference }}</span>
+                  <i class="pi pi-external-link tk-external-icon"></i>
+                </a>
+              </ng-container>
+              <!-- TK ID sin enlace -->
+              <ng-template #plainTkId>
+                <span class="tk-id-value">{{ bookingReference }}</span>
+              </ng-template>
             </span>
           </ng-container>
           <ng-template #simpleBookingCode>

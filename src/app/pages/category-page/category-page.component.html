@@ -29,9 +29,9 @@
           <div class="info-title">
             <h2>Tours y Viajes en {{ subItemSlug ? getTagName() : getCategoryName() }}</h2>
             <p class="info-description">
-              Encuentra la experiencia perfecta para tu próximo viaje. 
-              {{ subItemSlug ? 'Explora todos los tours disponibles para ' + getTagName() : 'Descubre los mejores destinos y actividades en ' + getCategoryName() }}.
+              {{ getTagPageDescription() }}
             </p>
+            
           </div>
           
           <div class="info-stats" *ngIf="!isLoadingTours">

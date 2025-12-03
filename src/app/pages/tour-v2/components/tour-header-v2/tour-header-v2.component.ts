@@ -413,7 +413,7 @@ export class TourHeaderV2Component
       return 'No es posible reservar un tour en modo preview';
     }
     if (this.isStandaloneMode) {
-      return 'Las reservas no están disponibles desde este sitio';
+      return 'Botón deshabilitado, reserva desde la lista de tours.';
     }
     if (!this.hasSelectedDate) {
       return 'Debes seleccionar una fecha de salida para poder reservar';

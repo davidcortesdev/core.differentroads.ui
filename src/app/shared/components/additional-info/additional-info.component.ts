@@ -55,6 +55,10 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
   isDownloadMode: boolean = false;
   isShareMode: boolean = false;
 
+  // Modal de email para descarga sin autenticación
+  visibleEmailModal: boolean = false;
+  loadingEmailModal: boolean = false;
+
   // ID de la reserva generada para evitar crear múltiples reservas
   private generatedReservationId: number | null = null;
   
@@ -67,6 +71,9 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
 
   // Formulario para compartir/descargar
   shareForm!: FormGroup;
+
+  // Formulario para email y nombre completo (descarga sin autenticación)
+  emailForm!: FormGroup;
 
   // Suscripciones
   private subscription: Subscription = new Subscription();
@@ -222,6 +229,12 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
       message: [''],
       includeDetails: [true]
     });
+
+    // Formulario para email y nombre completo (descarga sin autenticación)
+    this.emailForm = this.formBuilder.group({
+      email: ['', [Validators.required, Validators.email]],
+      fullName: ['', [Validators.required]]
+    });
   }
 
   ngOnDestroy(): void {
@@ -312,12 +325,12 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
 
     // Si es standalone (TourOperator), no pedir autenticación
     if (!this.isStandaloneMode && !this.isAuthenticated) {
-      const currentUrl = window.location.pathname;
-      sessionStorage.setItem('redirectUrl', currentUrl);
-      this.loginDialogVisible = true;
-      this.additionalInfoService.showInfo(
-        'Debes iniciar sesión para descargar el presupuesto.'
-      );
+      // Abrir modal de email y nombre completo
+      this.emailForm.reset({
+        email: '',
+        fullName: ''
+      });
+      this.visibleEmailModal = true;
       return;
     }
 
@@ -697,6 +710,53 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
   navigateToRegister(): void {
     this.closeLoginModal();
     this.router.navigate(['/sign-up']);
+  }
+
+  /**
+   * Cierra el modal de email
+   */
+  handleCloseEmailModal(): void {
+    this.visibleEmailModal = false;
+    this.emailForm.reset({
+      email: '',
+      fullName: ''
+    });
+  }
+
+  /**
+   * Maneja el envío del formulario de email y nombre completo
+   */
+  onSubmitEmail(): void {
+    // Validar formulario
+    if (this.emailForm.invalid) {
+      Object.keys(this.emailForm.controls).forEach(key => {
+        this.emailForm.get(key)?.markAsTouched();
+      });
+      return;
+    }
+
+    const formData = this.emailForm.value;
+    this.loadingEmailModal = true;
+
+    // TODO: Aquí se debe:
+    // 1. Verificar si el usuario existe por email
+    // 2. Si no existe, crear usuario con el email y nombre
+    // 3. Asociar el presupuesto al usuario
+    // 4. Proceder con la descarga
+
+    // Por ahora, solo mostramos un mensaje y cerramos el modal
+    // Esto se implementará cuando se defina cómo crear usuarios sin Cognito
+    console.log('Email y nombre recibidos:', formData);
+    
+    // Disparar evento de analytics: file_download
+    this.trackFileDownload();
+    
+    // Cerrar modal y proceder con descarga
+    this.loadingEmailModal = false;
+    this.handleCloseEmailModal();
+    
+    // Continuar con la descarga (esto se ajustará cuando se implemente la lógica de registro)
+    this.downloadBudget();
   }
 
   // ============================================

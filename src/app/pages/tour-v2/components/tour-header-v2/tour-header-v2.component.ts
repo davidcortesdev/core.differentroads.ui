@@ -166,6 +166,11 @@ export class TourHeaderV2Component
   // Propiedad para detectar modo standalone
   isStandaloneMode: boolean = false;
 
+  // Propiedades para rating y reviews
+  averageRating: number | null = null;
+  reviewCount: number = 0;
+  isLoadingRating: boolean = false;
+
   constructor(
     private tourService: TourService,
     private tourLocationService: TourLocationService,
@@ -201,6 +206,8 @@ export class TourHeaderV2Component
       this.loadTourData(this.tourId);
       // Cargar trip types usando el nuevo endpoint
       this.loadTripTypes(this.tourId);
+      // Cargar rating y reviews
+      this.loadRatingAndReviewCount(this.tourId);
     }
   }
 
@@ -209,6 +216,8 @@ export class TourHeaderV2Component
       this.loadTourData(changes['tourId'].currentValue);
       // Cargar trip types usando el nuevo endpoint
       this.loadTripTypes(changes['tourId'].currentValue);
+      // Cargar rating y reviews
+      this.loadRatingAndReviewCount(changes['tourId'].currentValue);
     }
   }
 
@@ -405,6 +414,70 @@ export class TourHeaderV2Component
     // Verificar si la URL contiene 'standalone'
     const currentPath = window.location.pathname;
     this.isStandaloneMode = currentPath.includes('/standalone/');
+  }
+
+  // Cargar rating promedio y conteo de reviews
+  private loadRatingAndReviewCount(tourId: number): void {
+    if (!tourId) return;
+
+    this.isLoadingRating = true;
+
+    // Usar showOnTourPage: true para obtener solo las reviews aprobadas para mostrar en la página del tour
+    const filters = {
+      tourId: tourId,
+      showOnTourPage: true
+    };
+
+    this.subscriptions.add(
+      forkJoin({
+        averageRating: this.reviewsService.getAverageRating(filters).pipe(
+          catchError((error) => {
+            console.error('Error al cargar rating promedio:', error);
+            return of({ averageRating: 0, totalReviews: 0 });
+          })
+        ),
+        count: this.reviewsService.getCount(filters).pipe(
+          catchError((error) => {
+            console.error('Error al cargar conteo de reviews:', error);
+            return of(0);
+          })
+        )
+      }).subscribe({
+        next: (results) => {
+          const ratingResponse = results.averageRating;
+          // La API ya devuelve el valor correcto, lo redondeamos a un decimal
+          if (ratingResponse && typeof ratingResponse === 'object' && 'averageRating' in ratingResponse) {
+            this.averageRating = Math.round(ratingResponse.averageRating * 10) / 10;
+          } else if (typeof ratingResponse === 'number') {
+            this.averageRating = Math.round(ratingResponse * 10) / 10;
+          } else {
+            this.averageRating = null;
+          }
+          this.reviewCount = results.count || 0;
+          this.isLoadingRating = false;
+        },
+        error: (error) => {
+          console.error('Error cargando rating y reviews:', error);
+          this.averageRating = null;
+          this.reviewCount = 0;
+          this.isLoadingRating = false;
+        }
+      })
+    );
+  }
+
+  // Verificar si una estrella específica debe estar llena
+  // La API ya devuelve el rating promedio calculado, solo comparamos directamente
+  isStarFilled(starIndex: number): boolean {
+    if (!this.averageRating) return false;
+    // Si el rating es 4.7, las estrellas 1-4 están llenas, la 5 está vacía
+    return starIndex <= Math.round(this.averageRating);
+  }
+
+  // Formatear el número de reviews
+  getFormattedReviewCount(): string {
+    if (this.reviewCount === 0) return '';
+    return `${this.reviewCount} ${this.reviewCount === 1 ? 'Review' : 'Reviews'}`;
   }
 
   // Obtener tooltip para el botón de reservar

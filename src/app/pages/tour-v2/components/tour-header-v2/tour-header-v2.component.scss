@@ -60,12 +60,13 @@ $tablet-breakpoint: 1024px;
                 gap: 0.1rem;
 
                 .pi-star {
-                    color: $primary-button-color;
+                    color: #ddd;
                     font-size: 1rem;
-                    font-weight: bold;
+                    font-weight: normal;
 
                     &.filled {
                         color: $primary-button-color;
+                        font-weight: bold;
                     }
                 }
             }

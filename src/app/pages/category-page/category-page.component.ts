@@ -376,7 +376,7 @@ if (this.tagData?.description && this.tagData.description.trim()) {
     }
     
     const tagName = this.getTagName() || this.getCategoryName();
-    return `Explora todos los tours disponibles para ${tagName}.`;
+    return ` Encuentra la experiencia perfecta para tu próximo viaje. Explora todos los tours disponibles para ${tagName}.`;
   }
   
 

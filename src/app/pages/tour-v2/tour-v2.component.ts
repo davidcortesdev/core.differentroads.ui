@@ -248,7 +248,7 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
           });
         });
         
-        console.log('✅ TripTypes cargados para tour detail:', this.tripTypesMap.size);
+        // console.log('✅ TripTypes cargados para tour detail:', this.tripTypesMap.size);
       }),
       catchError((error) => {
         console.error('❌ Error loading trip types:', error);
@@ -278,7 +278,7 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
   
     this.tourTripTypes = tripTypes;
     
-    console.log('🎯 TripTypes del tour:', this.tourTripTypes);
+    // console.log('🎯 TripTypes del tour:', this.tourTripTypes);
   }
 
   private loadTourTripTypes(tourId: number): void {

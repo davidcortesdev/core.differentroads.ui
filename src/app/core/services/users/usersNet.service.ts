@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+import { catchError, tap, switchMap } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import { UserFilter, IUserResponse, UserCreate, UserUpdate } from '../../models/users/user.model';
 
@@ -212,5 +212,99 @@ export class UsersNetService {
    */
   getAllUsers(): Observable<IUserResponse[]> {
     return this.getUsers();
+  }
+
+  /**
+   * Crea un usuario lead solo con email (para personas que dejan email pero no se registran)
+   * Usa el email como cognitoId y establece hasWebAccess: true
+   * Si el usuario ya existe, lo retorna. Si no existe, lo crea.
+   * IMPORTANTE: Si el usuario ya tiene un cognitoId real (registrado), no lo modifica.
+   * @param email Email del usuario
+   * @param fullName Nombre completo del usuario (opcional)
+   * @returns Usuario creado o existente
+   */
+  createLeadUser(email: string, fullName?: string): Observable<IUserResponse> {
+    // Validar que el email no esté vacío
+    if (!email || !email.trim()) {
+      return new Observable(observer => {
+        observer.error(new Error('El email es requerido'));
+      });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // Primero verificar si el usuario ya existe
+    return this.getUsersByEmail(normalizedEmail).pipe(
+      switchMap((existingUsers) => {
+        if (existingUsers && existingUsers.length > 0) {
+          // Si ya existe, verificar si tiene un cognitoId real (no es un email)
+          const existingUser = existingUsers[0];
+          const hasRealCognitoId = existingUser.cognitoId && 
+                                   existingUser.cognitoId !== normalizedEmail &&
+                                   !existingUser.cognitoId.includes('@');
+          
+          // Si el usuario ya tiene un cognitoId real (usuario registrado), solo retornarlo
+          // No actualizar nada para no interferir con el login normal
+          if (hasRealCognitoId) {
+            return of(existingUser);
+          }
+          
+          // Si el usuario existe pero no tiene cognitoId real (es un lead previo),
+          // actualizar el nombre si se proporcionó uno nuevo
+          if (fullName && fullName.trim()) {
+            const nameParts = fullName.trim().split(' ');
+            const firstName = nameParts[0] || existingUser.name || '';
+            const lastName = nameParts.slice(1).join(' ') || existingUser.lastName || undefined;
+            
+            // ✅ IMPORTANTE: Preservar TODOS los campos existentes para no perder datos
+            const updateData: UserUpdate = {
+              cognitoId: existingUser.cognitoId || normalizedEmail, // Mantener el email como cognitoId si no tiene uno real
+              name: firstName,
+              email: normalizedEmail,
+              lastName: lastName,
+              phone: existingUser.phone, // Preservar teléfono
+              // ✅ Preservar todos los valores de acceso existentes
+              hasWebAccess: existingUser.hasWebAccess ?? true,
+              hasMiddleAccess: existingUser.hasMiddleAccess ?? false,
+              hasMiddleAtcAccess: existingUser.hasMiddleAtcAccess ?? false,
+              hasTourOperationAccess: existingUser.hasTourOperationAccess ?? false,
+              retailerId: existingUser.retailerId, // Preservar retailerId
+            };
+            
+            return this.updateUser(existingUser.id, updateData).pipe(
+              switchMap(() => this.getUserById(existingUser.id))
+            );
+          }
+          
+          return of(existingUser);
+        }
+
+        // Si no existe, crear nuevo usuario lead
+        const nameParts = fullName && fullName.trim() 
+          ? fullName.trim().split(' ')
+          : normalizedEmail.split('@');
+        
+        const firstName = nameParts[0] || 'Usuario';
+        const lastName = nameParts.slice(1).join(' ') || undefined;
+
+        const leadUser: UserCreate = {
+          cognitoId: normalizedEmail, // Usar el email como cognitoId
+          name: firstName,
+          email: normalizedEmail,
+          lastName: lastName,
+          hasWebAccess: true, // Acceso web habilitado
+          hasMiddleAccess: false,
+          politicasAceptadas: false,
+          detalleDeLaFuenteDeRegistro1: 'WEB_LEAD',
+          retailerId: environment.retaileriddefault,
+        };
+
+        return this.createUser(leadUser);
+      }),
+      catchError((error) => {
+        console.error('❌ Error creando usuario lead:', error);
+        throw error;
+      })
+    );
   }
 }

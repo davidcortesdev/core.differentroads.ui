@@ -141,7 +141,7 @@ export class TourOverviewV2Component implements OnInit {
             
       // Aplicar datos básicos inmediatamente
       this.applyBasicTourData(tourData, cmsTourData);
-      console.log('tour', tourData);
+      // console.log('tour', tourData);
       
       // Cargar datos adicionales en segundo plano
       this.loadAdditionalDataOptimized(id, cmsTourData);

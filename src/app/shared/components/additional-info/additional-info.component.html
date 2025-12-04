@@ -64,6 +64,108 @@
 <!-- Toast para notificaciones -->
 <p-toast position="top-right"></p-toast>
 
+<!-- Modal de login -->
+<app-login-modal
+  [visible]="loginDialogVisible"
+  [modalType]="'budget'"
+  (close)="closeLoginModal()"
+  (login)="navigateToLogin()"
+  (register)="navigateToRegister()"
+>
+</app-login-modal>
+
+<!-- Modal de email y nombre completo para descarga sin autenticación -->
+<p-dialog
+  [(visible)]="visibleEmailModal"
+  [modal]="true"
+  [breakpoints]="dialogBreakpoints"
+  [style]="dialogStyle"
+  [draggable]="false"
+  [resizable]="false"
+  [closeOnEscape]="true"
+  [dismissableMask]="true"
+  (onHide)="handleCloseEmailModal()"
+  header="Descargar Presupuesto"
+>
+  <div class="modal-content">
+    <!-- Información del tour -->
+    <div class="info-section">
+      <h4>{{ tourName }}</h4>
+      <p *ngIf="periodDates">{{ periodDates }}</p>
+      <p *ngIf="selectedFlight">Vuelo: {{ selectedFlight.name || 'Sin especificar' }}</p>
+      <p *ngIf="travelersSelected">
+        Viajeros: {{ travelersSelected.adults }} adulto(s)
+        <span *ngIf="travelersSelected.childs > 0">, {{ travelersSelected.childs }} niño(s)</span>
+        <span *ngIf="travelersSelected.babies > 0">, {{ travelersSelected.babies }} bebé(s)</span>
+      </p>
+    </div>
+    
+    <!-- Formulario -->
+    <form class="form-section" [formGroup]="emailForm">
+      <!-- Email -->
+      <div class="form-field">
+        <label for="email">
+          Email *
+        </label>
+        <input
+          id="email"
+          type="email"
+          pInputText
+          formControlName="email"
+          placeholder="ejemplo@email.com"
+          class="w-full"
+        />
+        <small class="error" *ngIf="emailForm.get('email')?.invalid && emailForm.get('email')?.touched">
+          Por favor, introduce un email válido
+        </small>
+      </div>
+
+      <!-- Nombre completo -->
+      <div class="form-field">
+        <label for="fullName">Nombre completo *</label>
+        <input
+          id="fullName"
+          type="text"
+          pInputText
+          formControlName="fullName"
+          placeholder="Nombre y apellidos"
+          class="w-full"
+        />
+        <small class="error" *ngIf="emailForm.get('fullName')?.invalid && emailForm.get('fullName')?.touched">
+          Por favor, introduce tu nombre completo
+        </small>
+      </div>
+
+      <!-- Indicador de carga -->
+      <div class="loading-indicator" *ngIf="loadingEmailModal">
+        <p-progressSpinner 
+          styleClass="w-4rem h-4rem" 
+          strokeWidth="4"
+          animationDuration=".5s"
+        ></p-progressSpinner>
+        <p>Procesando...</p>
+      </div>
+    </form>
+  </div>
+  
+  <ng-template pTemplate="footer">
+    <p-button 
+      label="Cerrar" 
+      icon="pi pi-times" 
+      (onClick)="handleCloseEmailModal()"
+      styleClass="p-button-text"
+      [disabled]="loadingEmailModal"
+    ></p-button>
+    <p-button 
+      label="Descargar" 
+      icon="pi pi-download"
+      (onClick)="onSubmitEmail()"
+      [disabled]="!emailForm.valid || loadingEmailModal"
+      [loading]="loadingEmailModal"
+    ></p-button>
+  </ng-template>
+</p-dialog>
+
 <!-- Modal de compartir/descargar presupuesto -->
 <p-dialog
   [(visible)]="visible"

@@ -120,7 +120,14 @@ export class CategoryPageComponent implements OnInit, OnDestroy {
       
       // Generar keywords según el tipo de categoría
       keywords = this.generateKeywordsForTag(categoryName, tagName);
-      description = this.generateDescriptionForTag(categoryName, tagName);
+      // Si el tag tiene descripción propia → usarla
+      if (this.tagData?.description && this.tagData.description.trim()) {
+          description = this.tagData.description;
+      } else {
+          // Si no → usar la descripción generada
+          description = this.generateDescriptionForTag(categoryName, tagName);
+      }
+
       
     } else if (this.subItemSlug) {
       // Si buscamos tag pero no lo encontramos
@@ -129,7 +136,14 @@ export class CategoryPageComponent implements OnInit, OnDestroy {
       title = `${tagName} - Different Roads`;
       
       keywords = this.generateKeywordsForTag(categoryName, tagName);
-      description = this.generateDescriptionForTag(categoryName, tagName);
+      // Si el tag tiene descripción propia → usarla
+      if (this.tagData?.description && this.tagData.description.trim()) {
+          description = this.tagData.description;
+      } else {
+          // Si no → usar la descripción generada
+          description = this.generateDescriptionForTag(categoryName, tagName);
+      }
+
       
     } else if (this.categoryData) {
       // Si buscamos categoría y la encontramos
@@ -156,6 +170,8 @@ export class CategoryPageComponent implements OnInit, OnDestroy {
     
     // Actualizar keywords SEO
     this.meta.updateTag({ name: 'keywords', content: keywords });
+    console.log("tagData REAL:", this.tagData);
+
 
     // Log para debug
     console.log('Datos de categoría/tag cargados:', {
@@ -163,7 +179,9 @@ export class CategoryPageComponent implements OnInit, OnDestroy {
       tagName: this.tagData?.name,
       categoryId: this.categoryId,
       categoryName: this.categoryData?.name,
-      seoKeywords: keywords
+      seoKeywords: keywords,
+      description: description
+      
     });
 
     this.isLoading = false;
@@ -351,6 +369,16 @@ export class CategoryPageComponent implements OnInit, OnDestroy {
       return `Descubre ${tagName} con Different Roads. Encuentra los mejores tours y experiencias de ${normalizedTag} para tu próximo viaje.`;
     }
   }
+
+  getTagPageDescription(): string {
+    if (this.tagData?.description && this.tagData.description.trim()) {
+      return this.tagData.description;
+    }
+    
+    const tagName = this.getTagName() || this.getCategoryName();
+    return ` Encuentra la experiencia perfecta para tu próximo viaje. Explora todos los tours disponibles para ${tagName}.`;
+  }
+  
 
   formatSlug(slug: string): string {
     return slug

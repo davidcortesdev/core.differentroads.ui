@@ -1,0 +1,41 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [breakpoints]="{ '1199px': '80vw', '575px': '90vw' }"
+  [style]="{ width: '60vw' }"
+  [draggable]="false"
+  [resizable]="false"
+  (onHide)="onClose()"
+  styleClass="activity-description-modal"
+  [showHeader]="true"
+>
+  <ng-template #header>
+    <h2>{{ activity?.name || 'Descripción de la actividad' }}</h2>
+  </ng-template>
+  
+  <div class="activity-description-content" *ngIf="activity">
+    <div class="activity-description-image" *ngIf="activity.imageUrl">
+      <img
+        [src]="activity.imageUrl"
+        [alt]="activity.name"
+        loading="lazy"
+      />
+    </div>
+    <div
+      class="activity-description-text"
+      [innerHTML]="activity.description"
+    ></div>
+  </div>
+  
+  <ng-template #footer>
+    <div class="activity-description-footer">
+      <p-button
+        label="Cerrar"
+        icon="pi pi-times"
+        styleClass="p-button-outline"
+        (click)="onClose()"
+      ></p-button>
+    </div>
+  </ng-template>
+</p-dialog>
+

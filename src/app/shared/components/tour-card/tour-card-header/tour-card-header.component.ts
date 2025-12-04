@@ -7,9 +7,11 @@ import {
   OnDestroy,
   ChangeDetectionStrategy,
 } from '@angular/core';
-import { Subscription, catchError, finalize, of, tap } from 'rxjs';
+import { Subscription, catchError, finalize, of, tap, switchMap } from 'rxjs';
 import { ReviewsService } from '../../../../core/services/reviews/reviews.service';
 import { TourService } from '../../../../core/services/tour/tour.service';
+import { TourReviewService } from '../../../../core/services/reviews/tour-review.service';
+import { ReviewTypeService } from '../../../../core/services/reviews/review-type.service';
 
 interface TourHeaderData {
   imageUrl: string;
@@ -39,13 +41,16 @@ export class TourCardHeaderComponent implements OnInit, OnDestroy {
 
   constructor(
     private reviewsService: ReviewsService,
-    private tourService: TourService
+    private tourService: TourService,
+    private tourReviewService: TourReviewService,
+    private reviewTypeService: ReviewTypeService
   ) {}
 
   ngOnInit() {
-    if (this.tourData.externalID) {
-      this.loadRatingAndReviewCount(this.tourData.externalID);
-    }
+    // Deshabilitado temporalmente: el rating se carga desde TourReview pero el endpoint está fallando
+    // if (this.tourData.externalID) {
+    //   this.loadRatingAndReviewCount(this.tourData.externalID);
+    // }
   }
 
   ngOnDestroy() {
@@ -63,39 +68,61 @@ export class TourCardHeaderComponent implements OnInit, OnDestroy {
     
     this.subscriptions.add(
       this.tourService.getTourIdByTKId(tkId).pipe(
-        tap(id => {
+        switchMap((id) => {
           if (!id) {
-            //console.warn('No se encontró ID para el tour con tkId:', tkId);
+            this.isLoadingRating = false;
+            return of(null);
           }
+
+          // Primero obtener el ReviewType con code "GENERAL"
+          return this.reviewTypeService.getByCode('GENERAL').pipe(
+            switchMap((reviewType) => {
+              if (!reviewType) {
+                console.warn('ReviewType con code "GENERAL" no encontrado');
+                this.averageRating = undefined;
+                this.isLoadingRating = false;
+                return of(null);
+              }
+
+              // Usar TourReviewService con filtro ReviewTypeId
+              const filters = {
+                tourId: id,
+                reviewTypeId: reviewType.id,
+                isActive: true
+              };
+
+              return this.tourReviewService.getAverageRating(filters).pipe(
+                tap((rating) => {
+                  if (rating) {
+                    this.averageRating = Math.round(rating.averageRating * 10) / 10;
+                  } else {
+                    this.averageRating = undefined;
+                  }
+                }),
+                catchError((error) => {
+                  console.error('Error al cargar el rating promedio desde TourReview:', error);
+                  this.averageRating = undefined;
+                  return of(null);
+                }),
+                finalize(() => {
+                  this.isLoadingRating = false;
+                })
+              );
+            }),
+            catchError((error) => {
+              console.error('Error obteniendo ReviewType GENERAL:', error);
+              this.averageRating = undefined;
+              this.isLoadingRating = false;
+              return of(null);
+            })
+          );
         }),
-        catchError(error => {
+        catchError((error) => {
           console.error('Error al obtener el ID del tour:', error);
+          this.isLoadingRating = false;
           return of(null);
         })
-      ).subscribe(id => {
-        if (id) {
-          const filter = { tourId: id };
-          
-          this.subscriptions.add(
-            this.reviewsService.getAverageRating(filter).pipe(
-              tap(rating => {
-                if (rating) {
-                  this.averageRating = Math.ceil(rating.averageRating * 10) / 10;
-                }
-              }),
-              catchError(error => {
-                console.error('Error al cargar el rating promedio:', error);
-                return of(null);
-              }),
-              finalize(() => {
-                this.isLoadingRating = false;
-              })
-            ).subscribe()
-          );
-        } else {
-          this.isLoadingRating = false;
-        }
-      })
+      ).subscribe()
     );
   }
 }

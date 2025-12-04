@@ -61,6 +61,8 @@ import { AnalyticsService } from '../../../../core/services/analytics/analytics.
 import { ReservationStatusService } from '../../../../core/services/reservation/reservation-status.service';
 import { ReviewsService } from '../../../../core/services/reviews/reviews.service';
 import { TripTypeService, ITripTypeResponse } from '../../../../core/services/trip-type/trip-type.service';
+import { TourReviewService } from '../../../../core/services/reviews/tour-review.service';
+import { ReviewTypeService } from '../../../../core/services/reviews/review-type.service';
 
 // ✅ INTERFACES para tipado fuerte
 interface PassengersData {
@@ -194,7 +196,9 @@ export class TourHeaderV2Component
     private analyticsService: AnalyticsService,
     private reservationStatusService: ReservationStatusService,
     private reviewsService: ReviewsService,
-    private tripTypeService: TripTypeService
+    private tripTypeService: TripTypeService,
+    private tourReviewService: TourReviewService,
+    private reviewTypeService: ReviewTypeService
   ) {}
 
   ngOnInit() {
@@ -416,34 +420,57 @@ export class TourHeaderV2Component
     this.isStandaloneMode = currentPath.includes('/standalone/');
   }
 
-  // Cargar rating promedio y conteo de reviews
+  // Cargar rating promedio y conteo de reviews desde TourReview con filtro ReviewType "GENERAL"
   private loadRatingAndReviewCount(tourId: number): void {
     if (!tourId) return;
 
     this.isLoadingRating = true;
 
-    // Usar showOnTourPage: true para obtener solo las reviews aprobadas para mostrar en la página del tour
-    const filters = {
-      tourId: tourId,
-      showOnTourPage: true
-    };
-
+    // Primero obtener el ReviewType con code "GENERAL"
     this.subscriptions.add(
-      forkJoin({
-        averageRating: this.reviewsService.getAverageRating(filters).pipe(
-          catchError((error) => {
-            console.error('Error al cargar rating promedio:', error);
-            return of({ averageRating: 0, totalReviews: 0 });
-          })
-        ),
-        count: this.reviewsService.getCount(filters).pipe(
-          catchError((error) => {
-            console.error('Error al cargar conteo de reviews:', error);
-            return of(0);
-          })
-        )
-      }).subscribe({
+      this.reviewTypeService.getByCode('GENERAL').pipe(
+        switchMap((reviewType) => {
+          if (!reviewType) {
+            console.warn('ReviewType con code "GENERAL" no encontrado');
+            this.averageRating = null;
+            this.reviewCount = 0;
+            this.isLoadingRating = false;
+            return of(null);
+          }
+
+          // Usar TourReviewService con filtro ReviewTypeId
+          const filters = {
+            tourId: tourId,
+            reviewTypeId: reviewType.id,
+            isActive: true
+          };
+
+          return this.tourReviewService.getAverageRating(filters).pipe(
+            map((ratingResponse) => {
+              return {
+                averageRating: ratingResponse,
+                count: 0 // Hardcodeado temporalmente hasta que se implemente el endpoint
+              };
+            }),
+            catchError((error) => {
+              console.error('Error al cargar rating promedio desde TourReview:', error);
+              return of({ averageRating: { averageRating: 0, totalReviews: 0 }, count: 0 });
+            })
+          );
+        }),
+        catchError((error) => {
+          console.error('Error obteniendo ReviewType GENERAL:', error);
+          this.averageRating = null;
+          this.reviewCount = 0;
+          this.isLoadingRating = false;
+          return of(null);
+        })
+      ).subscribe({
         next: (results) => {
+          if (!results) {
+            return;
+          }
+
           const ratingResponse = results.averageRating;
           // La API ya devuelve el valor correcto, lo redondeamos a un decimal
           if (ratingResponse && typeof ratingResponse === 'object' && 'averageRating' in ratingResponse) {
@@ -453,11 +480,12 @@ export class TourHeaderV2Component
           } else {
             this.averageRating = null;
           }
+          // Hardcodeado temporalmente hasta que se implemente el endpoint de count
           this.reviewCount = results.count || 0;
           this.isLoadingRating = false;
         },
         error: (error) => {
-          console.error('Error cargando rating y reviews:', error);
+          console.error('Error cargando rating y reviews desde TourReview:', error);
           this.averageRating = null;
           this.reviewCount = 0;
           this.isLoadingRating = false;
@@ -1315,24 +1343,15 @@ export class TourHeaderV2Component
     return this.itineraryService.getAll(itineraryFilters, false).pipe(
       concatMap((itineraries) => {
         if (itineraries.length === 0) {
-          return forkJoin({
-            tour: this.tourService.getById(tourId, false),
-            rating: this.reviewsService.getAverageRating({ tourId: tourId }).pipe(
-              map((ratingResponse) => {
-                const avgRating = ratingResponse?.averageRating;
-                return avgRating && avgRating > 0 ? avgRating : null;
-              }),
-              catchError(() => of(null))
-            )
-          }).pipe(
-            map(({ tour, rating }) => ({
+          return this.tourService.getById(tourId, false).pipe(
+            map((tour) => ({
               id: tourId,
               tkId: tour.tkId ?? undefined,
               name: tour.name ?? undefined,
               destination: { continent: undefined, country: undefined },
               days: undefined,
               nights: undefined,
-              rating: rating !== null ? rating : undefined,
+              rating: undefined, // Ya no se obtiene de reviewsService, se obtiene de TourReview
               monthTags: undefined,
               tourType: tour.tripTypeId === 1 ? 'FIT' : 'Grupos',
               price: tour.minPrice ?? undefined
@@ -1427,16 +1446,9 @@ export class TourHeaderV2Component
           itineraryDays: itineraryDaysRequest,
           locationData: locationRequest,
           monthTags: monthTagsRequest,
-          tour: this.tourService.getById(tourId, false),
-          rating: this.reviewsService.getAverageRating({ tourId: tourId }).pipe(
-            map((ratingResponse) => {
-              const avgRating = ratingResponse?.averageRating;
-              return avgRating && avgRating > 0 ? avgRating : null;
-            }),
-            catchError(() => of(null))
-          )
+          tour: this.tourService.getById(tourId, false)
         }).pipe(
-          map(({ itineraryDays, locationData, monthTags, tour, rating }) => {
+          map(({ itineraryDays, locationData, monthTags, tour }) => {
             const days = itineraryDays.length;
             const nights = days > 0 ? days - 1 : 0;
             const tourType = tour.tripTypeId === 1 ? 'FIT' : 'Grupos';
@@ -1451,7 +1463,7 @@ export class TourHeaderV2Component
               },
               days: days > 0 ? days : undefined,
               nights: nights > 0 ? nights : undefined,
-              rating: rating !== null ? rating : undefined,
+              rating: undefined, // Ya no se obtiene de reviewsService, se obtiene de TourReview
               monthTags: monthTags.length > 0 ? monthTags : undefined,
               tourType: tourType,
               flightCity: 'Sin vuelo',

@@ -121,12 +121,12 @@ export class CategoryPageComponent implements OnInit, OnDestroy {
       // Generar keywords según el tipo de categoría
       keywords = this.generateKeywordsForTag(categoryName, tagName);
       // Si el tag tiene descripción propia → usarla
-if (this.tagData?.description && this.tagData.description.trim()) {
-    description = this.tagData.description;
-} else {
-    // Si no → usar la descripción generada
-    description = this.generateDescriptionForTag(categoryName, tagName);
-}
+      if (this.tagData?.description && this.tagData.description.trim()) {
+          description = this.tagData.description;
+      } else {
+          // Si no → usar la descripción generada
+          description = this.generateDescriptionForTag(categoryName, tagName);
+      }
 
       
     } else if (this.subItemSlug) {
@@ -137,12 +137,12 @@ if (this.tagData?.description && this.tagData.description.trim()) {
       
       keywords = this.generateKeywordsForTag(categoryName, tagName);
       // Si el tag tiene descripción propia → usarla
-if (this.tagData?.description && this.tagData.description.trim()) {
-    description = this.tagData.description;
-} else {
-    // Si no → usar la descripción generada
-    description = this.generateDescriptionForTag(categoryName, tagName);
-}
+      if (this.tagData?.description && this.tagData.description.trim()) {
+          description = this.tagData.description;
+      } else {
+          // Si no → usar la descripción generada
+          description = this.generateDescriptionForTag(categoryName, tagName);
+      }
 
       
     } else if (this.categoryData) {

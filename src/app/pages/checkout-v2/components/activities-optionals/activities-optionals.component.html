@@ -111,44 +111,9 @@
   </p-dataview>
 
   <!-- Modal de descripción completa -->
-  <p-dialog
-    [(visible)]="descriptionModalVisible"
-    [modal]="true"
-    [breakpoints]="{ '1199px': '80vw', '575px': '90vw' }"
-    [style]="{ width: '60vw' }"
-    [draggable]="false"
-    [resizable]="false"
-    (onHide)="closeDescriptionModal()"
-    styleClass="activity-description-modal"
-    [showHeader]="true"
-  >
-    <ng-template #header>
-      <h2>{{ selectedActivityForModal?.name || 'Descripción de la actividad' }}</h2>
-    </ng-template>
-    
-    <div class="activity-description-content" *ngIf="selectedActivityForModal">
-      <div class="activity-description-image" *ngIf="selectedActivityForModal.imageUrl">
-        <img
-          [src]="selectedActivityForModal.imageUrl"
-          [alt]="selectedActivityForModal.name"
-          loading="lazy"
-        />
-      </div>
-      <div
-        class="activity-description-text"
-        [innerHTML]="selectedActivityForModal.description"
-      ></div>
-    </div>
-    
-    <ng-template #footer>
-      <div class="activity-description-footer">
-        <p-button
-          label="Cerrar"
-          icon="pi pi-times"
-          styleClass="p-button-outline"
-          (click)="closeDescriptionModal()"
-        ></p-button>
-      </div>
-    </ng-template>
-  </p-dialog>
+  <app-activity-description-modal
+    [visible]="descriptionModalVisible"
+    [activity]="getActivityForModal()"
+    (close)="closeDescriptionModal()"
+  ></app-activity-description-modal>
 </div>

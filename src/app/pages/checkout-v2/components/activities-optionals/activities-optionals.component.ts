@@ -748,4 +748,17 @@ export class ActivitiesOptionalsComponent
     this.descriptionModalVisible = false;
     this.selectedActivityForModal = null;
   }
+
+  /**
+   * Convierte ActivityWithPrice a formato para el modal
+   */
+  getActivityForModal(): { id: number; name: string; description: string; imageUrl?: string } | null {
+    if (!this.selectedActivityForModal) return null;
+    return {
+      id: this.selectedActivityForModal.id,
+      name: this.selectedActivityForModal.name || '',
+      description: this.selectedActivityForModal.description || '',
+      imageUrl: this.selectedActivityForModal.imageUrl || undefined
+    };
+  }
 }

@@ -161,6 +161,7 @@ import { FlightStopsComponent } from './pages/checkout-v2/components/flight-mana
 import { FlightItemComponent } from './pages/checkout-v2/components/flight-management/flight-item/flight-item.component';
 import { FlightSectionV2Component } from './pages/checkout-v2/components/flight-section/flight-section.component';
 import { ActivitiesOptionalsComponent } from './pages/checkout-v2/components/activities-optionals/activities-optionals.component';
+import { ActivityDescriptionModalComponent } from './pages/checkout-v2/components/activities-optionals/activity-description-modal/activity-description-modal.component';
 import { InfoTravelersComponent } from './pages/checkout-v2/components/info-travelers/info-travelers.component';
 import { InfoTravelerFormComponent } from './pages/checkout-v2/components/info-travelers/components/info-traveler-form/info-traveler-form.component';
 import { TravelerFieldComponent } from './pages/checkout-v2/components/info-travelers/components/traveler-field/traveler-field.component';
@@ -346,6 +347,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     FlightItemComponent,
     FlightSectionV2Component,
     ActivitiesOptionalsComponent,
+    ActivityDescriptionModalComponent,
     InfoTravelersComponent,
     InfoTravelerFormComponent,
     TravelerFieldComponent,

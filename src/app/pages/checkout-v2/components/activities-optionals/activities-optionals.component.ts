@@ -79,6 +79,10 @@ export class ActivitiesOptionalsComponent
   addedActivities: Set<number> = new Set();
   public errorMessage: string | null = null;
 
+  // Modal de descripción completa
+  descriptionModalVisible: boolean = false;
+  selectedActivityForModal: ActivityWithPrice | null = null;
+
   // Individual loading states per activity
   private activityLoadingStates: Map<number, boolean> = new Map();
 
@@ -705,5 +709,43 @@ export class ActivitiesOptionalsComponent
 
   get hasSelectedActivities(): boolean {
     return this.addedActivities.size > 0;
+  }
+
+  /**
+   * Verifica si la descripción de la actividad está cortada y necesita mostrar "Ver más"
+   * Considera el contenido HTML y estima si excede aproximadamente 4 líneas
+   */
+  shouldShowReadMore(activity: ActivityWithPrice): boolean {
+    if (!activity.description) {
+      return false;
+    }
+
+    // Crear un elemento temporal para extraer el texto sin HTML
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = activity.description;
+    const textContent = tempDiv.textContent || tempDiv.innerText || '';
+
+    // Estimar si el texto es largo (más de ~200 caracteres o más de ~30 palabras)
+    // Esto corresponde aproximadamente a 4 líneas de texto
+    const wordCount = textContent.trim().split(/\s+/).length;
+    const charCount = textContent.trim().length;
+
+    return charCount > 200 || wordCount > 30;
+  }
+
+  /**
+   * Abre la modal con la descripción completa de la actividad
+   */
+  openDescriptionModal(activity: ActivityWithPrice): void {
+    this.selectedActivityForModal = activity;
+    this.descriptionModalVisible = true;
+  }
+
+  /**
+   * Cierra la modal de descripción
+   */
+  closeDescriptionModal(): void {
+    this.descriptionModalVisible = false;
+    this.selectedActivityForModal = null;
   }
 }

@@ -54,18 +54,32 @@ $tablet-breakpoint: 1024px;
             gap: 0.5rem;
             margin-bottom: 0.5rem;
 
-            // Estilos para las estrellas rellenas (igual que en reviews)
+            // Estilos para las estrellas rellenas con color personalizado #e85d4c
             ::ng-deep .p-rating {
                 .p-rating-item {
                     .p-rating-icon {
-                        font-size: 1rem;
-                        
-                        &.pi-star-fill {
-                            color: $primary-button-color; // Color para estrellas activas (rellenas)
+                        font-size: 1rem !important;
+                    }
+                    
+                    i {
+                        color: #e85d4c !important; // Color personalizado para todos los iconos
+                    }
+                    
+                    .p-rating-icon {
+                        color: #e85d4c !important; // Color personalizado
+                    }
+                    
+                    &.p-rating-item-active {
+                        .p-rating-icon,
+                        i {
+                            color: #e85d4c !important; // Color personalizado
                         }
-                        
-                        &.pi-star {
-                            color: $primary-button-color; // Mismo color para estrellas inactivas (outline)
+                    }
+                    
+                    &:not(.p-rating-item-active) {
+                        .p-rating-icon,
+                        i {
+                            color: #e85d4c !important; // Color personalizado
                         }
                     }
                 }
@@ -193,6 +207,12 @@ $tablet-breakpoint: 1024px;
 
                 ::ng-deep .p-rating .p-rating-item .p-rating-icon {
                     font-size: 0.85rem;
+                    color: #e85d4c !important; // Color personalizado
+                    
+                    &.pi-star-fill,
+                    &.pi-star {
+                        color: #e85d4c !important; // Color personalizado
+                    }
                 }
 
                 .rating-number {
@@ -254,6 +274,12 @@ $tablet-breakpoint: 1024px;
 
                 ::ng-deep .p-rating .p-rating-item .p-rating-icon {
                     font-size: 0.95rem;
+                    color: #e85d4c !important; // Color personalizado
+                    
+                    &.pi-star-fill,
+                    &.pi-star {
+                        color: #e85d4c !important; // Color personalizado
+                    }
                 }
 
                 .rating-number {

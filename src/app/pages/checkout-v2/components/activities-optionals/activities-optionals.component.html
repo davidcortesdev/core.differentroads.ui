@@ -53,10 +53,21 @@
                   <div class="dataview-name">
                     {{ item.name }}
                   </div>
-                  <div
-                    class="dataview-description"
-                    [innerHTML]="item.description"
-                  ></div>
+                  <div class="dataview-description-container">
+                    <div
+                      class="dataview-description"
+                      [innerHTML]="item.description"
+                    ></div>
+                    <button
+                      *ngIf="shouldShowReadMore(item)"
+                      class="read-more-button"
+                      (click)="openDescriptionModal(item)"
+                      type="button"
+                    >
+                      Ver descripción completa
+                      <i class="pi pi-arrow-right"></i>
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -98,4 +109,11 @@
       </div>
     </ng-template>
   </p-dataview>
+
+  <!-- Modal de descripción completa -->
+  <app-activity-description-modal
+    [visible]="descriptionModalVisible"
+    [activity]="getActivityForModal()"
+    (close)="closeDescriptionModal()"
+  ></app-activity-description-modal>
 </div>

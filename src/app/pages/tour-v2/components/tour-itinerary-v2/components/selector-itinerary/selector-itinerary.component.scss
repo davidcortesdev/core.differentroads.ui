@@ -137,8 +137,68 @@ $spaces: (
     }
 }
 
+// Contenedor para dropdown y botón
+.dropdown-with-button {
+    @include flex(row, center, center);
+    margin: 0 auto;
+    margin-top: -10px;
+    width: fit-content;
+    gap: 0.5rem;
+
+    @include resp(md) {
+        margin-top: -5px;
+    }
+
+    .date-selector {
+        margin: 0;
+    }
+}
+
 :host ::ng-deep {
     .itinerary-section {
+        .dropdown-with-button {
+            .download-button.p-button {
+                background-color: var(--background-azul);
+                color: #fff;
+                border: 1px solid var(--background-azul);
+                border-radius: 50%;
+                height: 56px;
+                width: 56px;
+                min-width: 56px;
+                padding: 0;
+                transition: all 0.2s ease;
+                @include flex(row, center, center);
+
+                @include resp(md) {
+                    height: 52px;
+                    width: 52px;
+                    min-width: 52px;
+                }
+
+                @include resp(sm) {
+                    height: 48px;
+                    width: 48px;
+                    min-width: 48px;
+                }
+
+                &:hover:not(:disabled) {
+                    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+                    background-color: var(--background-azul);
+                    opacity: 0.9;
+                }
+
+                &:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
+
+                .p-button-icon {
+                    color: #fff;
+                    font-size: 1.2rem;
+                }
+            }
+        }
+
         .p-dropdown {
             background-color: var(--background-azul);
             color: #fff;
@@ -320,66 +380,3 @@ $spaces: (
     }
 }
 
-.date-option-item {
-    @include flex(row, space-between, center, 0.5em);
-    width: 100%;
-
-    &-text {
-        flex-grow: 1;
-        text-align: start;
-    }
-
-    .date-price {
-        font-weight: bold;
-        color: var(--background-azul);
-        width: 3rem;
-        text-align: right;
-    }
-}
-
-:host ::ng-deep {
-    .itinerary-section {
-        .p-dropdown {
-            background-color: var(--background-azul);
-            color: #fff;
-            width: 280px;
-            margin: 0 auto;
-            margin-top: -10px;
-            border: 1px solid var(--background-azul);
-            border-radius: 50px;
-            transition: all 0.2s ease;
-
-            &:hover {
-                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            }
-
-            .p-dropdown-label {
-                @include flex(row, center, center);
-            }
-
-            .p-dropdown-item {
-                padding: 0.75rem 1rem;
-
-                &.p-highlight {
-                    background-color: rgba(var(--background-azul-rgb), 0.1);
-                }
-            }
-        }
-
-        .p-select-label {
-            color: #fff;
-            margin-left: 10px;
-        }
-
-        .p-icon {
-            color: #fff;
-            margin-right: 10px;
-        }
-
-        .p-dropdown-panel {
-            .p-dropdown-items {
-                padding: 0.5rem 0;
-            }
-        }
-    }
-}

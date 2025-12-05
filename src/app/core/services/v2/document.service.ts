@@ -246,4 +246,66 @@ export class DocumentServicev2 {
       }))
     );
   }
+
+  /**
+   * Obtiene información de un documento de itinerario
+   * @param itineraryId ID del itinerario
+   * @returns Observable con la información del documento
+   */
+  getItineraryDocumentInfo(itineraryId: number): Observable<DocumentInfo> {
+    const documentTypeCode = 'ITINERARY';
+    const url = `${this.baseUrl}/DocumentProcess/GetDocument/Itinerary/${itineraryId}/DocumentType/${documentTypeCode}`;
+
+    const headers = new HttpHeaders({
+      accept: 'application/json',
+    });
+
+    return this.http.get<DocumentInfo>(url, { headers });
+  }
+
+  /**
+   * Descarga un itinerario por ID
+   * Primero obtiene la ruta del documento y luego lo descarga
+   * @param itineraryId ID del itinerario
+   * @returns Observable con el blob y el nombre del archivo
+   */
+  downloadItinerary(itineraryId: number): Observable<DocumentDownloadResult> {
+    return new Observable((observer) => {
+      // Primero obtener la información del documento (incluye la ruta)
+      this.getItineraryDocumentInfo(itineraryId).subscribe({
+        next: (documentInfo) => {
+          if (!documentInfo || !documentInfo.filePath) {
+            observer.error(new Error('No se pudo obtener la ruta del documento'));
+            return;
+          }
+
+          // Descargar el archivo usando la ruta obtenida
+          const url = `${this.baseUrl}/File/Get`;
+          const headers = new HttpHeaders({
+            accept: 'application/octet-stream',
+          });
+
+          const params = new URLSearchParams();
+          params.set('filepath', documentInfo.filePath);
+
+          this.http
+            .get(`${url}?${params.toString()}`, {
+              headers,
+              responseType: 'blob',
+            })
+            .subscribe({
+              next: (blob) => {
+                observer.next({
+                  blob: blob,
+                  fileName: documentInfo.fileName || `itinerary_${itineraryId}.pdf`,
+                });
+                observer.complete();
+              },
+              error: (error) => observer.error(error),
+            });
+        },
+        error: (error) => observer.error(error),
+      });
+    });
+  }
 }

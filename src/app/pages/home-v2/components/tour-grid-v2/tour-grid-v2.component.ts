@@ -15,6 +15,7 @@ import {
   takeUntil,
   map,
   concatMap,
+  mergeMap,
   scan,
   forkJoin,
   switchMap,
@@ -496,10 +497,10 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
       console.log('🔄 Cargando tours con IDs:', tourIdsToLoad);
     }
 
-    // Cargar tours secuencialmente y mostrarlos a medida que llegan
+    // Cargar tours en paralelo para máxima velocidad
     of(...tourIdsToLoad)
       .pipe(
-        concatMap((id: number) => {
+        mergeMap((id: number) => {
           if (this.DEBUG_MODE) {
             console.log(`🔄 Procesando tour ID: ${id}`);
           }

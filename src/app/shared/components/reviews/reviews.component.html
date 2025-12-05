@@ -76,7 +76,14 @@
             <p-rating
               [ngModel]="review.score"
               [readonly]="true"
-              [stars]="5">
+              [stars]="5"
+              [cancel]="false">
+              <ng-template #onicon>
+                <i class="pi pi-star-fill" style="color: #e85d4c !important;"></i>
+              </ng-template>
+              <ng-template #officon>
+                <i class="pi pi-star" style="color: #e85d4c !important;"></i>
+              </ng-template>
             </p-rating>
           </ng-template>
         </p-card>
@@ -107,7 +114,14 @@
       <p-rating
         [ngModel]="selectedReview?.score"
         [readonly]="true"
-        [stars]="5">
+        [stars]="5"
+        [cancel]="false">
+        <ng-template #onicon>
+          <i class="pi pi-star-fill" style="color: #e85d4c !important;"></i>
+        </ng-template>
+        <ng-template #officon>
+          <i class="pi pi-star" style="color: #e85d4c !important;"></i>
+        </ng-template>
       </p-rating>
     </div>
   </div>

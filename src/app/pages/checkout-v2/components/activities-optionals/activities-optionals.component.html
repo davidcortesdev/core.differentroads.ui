@@ -50,23 +50,20 @@
             <div class="dataview-content">
               <div class="dataview-info">
                 <div>
-                  <div class="dataview-name">
+                  <div
+                    class="dataview-name"
+                    [class.clickable]="shouldShowReadMore(item)"
+                    (click)="shouldShowReadMore(item) && openDescriptionModal(item)"
+                  >
                     {{ item.name }}
                   </div>
                   <div class="dataview-description-container">
                     <div
                       class="dataview-description"
+                      [class.clickable]="shouldShowReadMore(item)"
                       [innerHTML]="item.description"
+                      (click)="shouldShowReadMore(item) && openDescriptionModal(item)"
                     ></div>
-                    <button
-                      *ngIf="shouldShowReadMore(item)"
-                      class="read-more-button"
-                      (click)="openDescriptionModal(item)"
-                      type="button"
-                    >
-                      Ver descripción completa
-                      <i class="pi pi-arrow-right"></i>
-                    </button>
                   </div>
                 </div>
               </div>

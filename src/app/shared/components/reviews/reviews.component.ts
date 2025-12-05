@@ -295,7 +295,7 @@ export class ReviewsComponent implements OnInit {
   navigateToTour(tourSlug: string, event: MouseEvent): void {
     event.stopPropagation();
     if (tourSlug) {
-      this.router.navigate(['/tour-v2', tourSlug]);
+      this.router.navigate(['/tour', tourSlug]);
     }
   }
 

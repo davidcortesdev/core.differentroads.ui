@@ -799,10 +799,16 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
             )
           );
         }),
-        // Accumulate tours as they arrive
+        // Accumulate tours as they arrive, evitando duplicados por ID
         scan((acc: TourDataV2[], tour: TourDataV2 | null) => {
           if (tour) {
-            return [...acc, tour];
+            // Verificar si ya existe un tour con el mismo ID
+            const existingTour = acc.find(t => t.id === tour.id);
+            if (!existingTour) {
+              return [...acc, tour];
+            }
+            // Si ya existe, no agregarlo (evitar duplicados)
+            return acc;
           }
           return acc;
         }, [] as TourDataV2[]),

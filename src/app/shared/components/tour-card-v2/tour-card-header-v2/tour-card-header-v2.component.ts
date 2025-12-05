@@ -191,7 +191,8 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
   private loadRatingAndReviewCount(tourId: number) {
     if (!tourId) return;
 
-    // Evitar llamadas duplicadas para el mismo tourId
+    // Evitar llamadas duplicadas para el mismo tourId (a nivel de componente)
+    // El servicio también tiene cache compartido para evitar llamadas HTTP duplicadas
     if (this.lastLoadedTourId === tourId) {
       return;
     }

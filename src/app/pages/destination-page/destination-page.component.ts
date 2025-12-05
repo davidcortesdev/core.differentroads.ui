@@ -217,6 +217,28 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
     return this.destinationLocation?.name || this.formatSlug(this.destinationSlug);
   }
 
+  /**
+   * Obtiene la descripción de la location o el texto por defecto
+   */
+  getLocationDescription(): string {
+    // Si hay destino, usar la descripción del destino
+    if (this.destinationSlug && this.destinationLocation?.description) {
+      return this.destinationLocation.description;
+    }
+    
+    // Si no hay destino pero hay continente, usar la descripción del continente
+    if (!this.destinationSlug && this.continentLocation?.description) {
+      return this.continentLocation.description;
+    }
+    
+    // Si no hay descripción, retornar el texto por defecto
+    const defaultText = this.destinationSlug 
+      ? `Encuentra la experiencia perfecta para tu próximo viaje. Explora todos los tours disponibles para ${this.getDestinationName()}.`
+      : `Encuentra la experiencia perfecta para tu próximo viaje. Descubre los mejores destinos y actividades en ${this.getContinentName()}.`;
+    
+    return defaultText;
+  }
+
   formatSlug(slug: string): string {
     return slug
       .split('-')

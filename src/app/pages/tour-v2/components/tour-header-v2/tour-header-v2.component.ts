@@ -61,6 +61,7 @@ import { AnalyticsService } from '../../../../core/services/analytics/analytics.
 import { ReservationStatusService } from '../../../../core/services/reservation/reservation-status.service';
 import { ReviewsService } from '../../../../core/services/reviews/reviews.service';
 import { TripTypeService, ITripTypeResponse } from '../../../../core/services/trip-type/trip-type.service';
+import { TourReviewService } from '../../../../core/services/reviews/tour-review.service';
 
 // ✅ INTERFACES para tipado fuerte
 interface PassengersData {
@@ -166,6 +167,13 @@ export class TourHeaderV2Component
   // Propiedad para detectar modo standalone
   isStandaloneMode: boolean = false;
 
+  // Propiedades para rating y reviews
+  averageRating: number | null = null;
+  reviewCount: number = 0;
+  isLoadingRating: boolean = false;
+
+  private lastLoadedTourId: number | undefined = undefined;
+
   constructor(
     private tourService: TourService,
     private tourLocationService: TourLocationService,
@@ -189,7 +197,8 @@ export class TourHeaderV2Component
     private analyticsService: AnalyticsService,
     private reservationStatusService: ReservationStatusService,
     private reviewsService: ReviewsService,
-    private tripTypeService: TripTypeService
+    private tripTypeService: TripTypeService,
+    private tourReviewService: TourReviewService
   ) {}
 
   ngOnInit() {
@@ -201,6 +210,8 @@ export class TourHeaderV2Component
       this.loadTourData(this.tourId);
       // Cargar trip types usando el nuevo endpoint
       this.loadTripTypes(this.tourId);
+      // NO cargar rating aquí - se carga en ngOnChanges para evitar duplicados
+      // this.loadRatingAndReviewCount(this.tourId);
     }
   }
 
@@ -209,6 +220,8 @@ export class TourHeaderV2Component
       this.loadTourData(changes['tourId'].currentValue);
       // Cargar trip types usando el nuevo endpoint
       this.loadTripTypes(changes['tourId'].currentValue);
+      // Cargar rating y reviews
+      this.loadRatingAndReviewCount(changes['tourId'].currentValue);
     }
   }
 
@@ -407,6 +420,90 @@ export class TourHeaderV2Component
     this.isStandaloneMode = currentPath.includes('/standalone/');
   }
 
+  // Cargar rating promedio y conteo de reviews desde TourReview con ReviewTypeId = 1 (GENERAL)
+  private loadRatingAndReviewCount(tourId: number): void {
+    if (!tourId) return;
+    
+    // Evitar llamadas duplicadas para el mismo tourId
+    if (this.lastLoadedTourId === tourId) {
+      return;
+    }
+    this.lastLoadedTourId = tourId;
+
+    this.isLoadingRating = true;
+
+    // Usar TourReviewService con ReviewTypeId = 1 (GENERAL) directamente
+    const filters = {
+      tourId: [tourId],
+      reviewTypeId: [1], // ID 1 para tipo GENERAL
+      isActive: true
+    };
+
+    this.subscriptions.add(
+      this.tourReviewService.getAverageRating(filters).pipe(
+        catchError((error) => {
+          console.error('Error al cargar rating promedio desde TourReview:', error);
+          this.averageRating = null;
+          this.reviewCount = 0;
+          this.isLoadingRating = false;
+          return of({ averageRating: 0, totalReviews: 0 });
+        })
+      ).subscribe({
+        next: (ratingResponse) => {
+          if (ratingResponse) {
+            this.averageRating = ratingResponse.averageRating > 0 
+              ? Math.round(ratingResponse.averageRating * 10) / 10 
+              : null;
+            this.reviewCount = ratingResponse.totalReviews || 0;
+          } else {
+            this.averageRating = null;
+            this.reviewCount = 0;
+          }
+          this.isLoadingRating = false;
+        },
+        error: (error) => {
+          console.error('Error cargando rating y reviews desde TourReview:', error);
+          this.averageRating = null;
+          this.reviewCount = 0;
+          this.isLoadingRating = false;
+        }
+      })
+    );
+  }
+
+  // Verificar si una estrella específica debe estar llena
+  // La API ya devuelve el rating promedio calculado, solo comparamos directamente
+  isStarFilled(starIndex: number): boolean {
+    if (!this.averageRating) return false;
+    // Si el rating es 4.7, las estrellas 1-4 están llenas, la 5 está vacía
+    return starIndex <= Math.round(this.averageRating);
+  }
+
+  // Formatear el número de reviews
+  getFormattedReviewCount(): string {
+    if (this.reviewCount === 0) return '';
+    return `${this.reviewCount} ${this.reviewCount === 1 ? 'Review' : 'Reviews'}`;
+  }
+
+  // Hacer scroll a la sección de reviews usando el ID, teniendo en cuenta el header flotante
+  scrollToReviews(): void {
+    const reviewsSection = document.getElementById('tour-reviews');
+    if (reviewsSection) {
+      // Obtener la altura del header flotante (si está fijo)
+      const headerElement = this.el.nativeElement.querySelector('.tour-header');
+      const headerHeight = headerElement ? headerElement.offsetHeight : 0;
+      
+      // Calcular la posición del elemento menos la altura del header
+      const elementPosition = reviewsSection.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerHeight - 150; // 100px de margen adicional para mejor visibilidad
+      
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  }
+
   // Obtener tooltip para el botón de reservar
   getBookingTooltip(): string {
     if (this.preview) {
@@ -493,7 +590,7 @@ export class TourHeaderV2Component
   }
 
   private loadTourData(tourId: number) {
-    console.log('🔍 Cargando tour, preview mode:', this.preview);
+    // console.log('🔍 Cargando tour, preview mode:', this.preview);
     
     // ✅ LÓGICA: Si es preview, buscar tours no visibles también
     const filterByVisible = !this.preview;
@@ -501,7 +598,7 @@ export class TourHeaderV2Component
     this.subscriptions.add(
       this.tourService.getById(tourId, filterByVisible).pipe(
         switchMap((tourData) => {
-          console.log('✅ Tour cargado exitosamente:', tourData.name);
+          // console.log('✅ Tour cargado exitosamente:', tourData.name);
           this.tour = { ...tourData };
           this.loadCountryAndContinent(tourId);
           
@@ -1223,24 +1320,15 @@ export class TourHeaderV2Component
     return this.itineraryService.getAll(itineraryFilters, false).pipe(
       concatMap((itineraries) => {
         if (itineraries.length === 0) {
-          return forkJoin({
-            tour: this.tourService.getById(tourId, false),
-            rating: this.reviewsService.getAverageRating({ tourId: tourId }).pipe(
-              map((ratingResponse) => {
-                const avgRating = ratingResponse?.averageRating;
-                return avgRating && avgRating > 0 ? avgRating : null;
-              }),
-              catchError(() => of(null))
-            )
-          }).pipe(
-            map(({ tour, rating }) => ({
+          return this.tourService.getById(tourId, false).pipe(
+            map((tour) => ({
               id: tourId,
               tkId: tour.tkId ?? undefined,
               name: tour.name ?? undefined,
               destination: { continent: undefined, country: undefined },
               days: undefined,
               nights: undefined,
-              rating: rating !== null ? rating : undefined,
+              rating: undefined, // Ya no se obtiene de reviewsService, se obtiene de TourReview
               monthTags: undefined,
               tourType: tour.tripTypeId === 1 ? 'FIT' : 'Grupos',
               price: tour.minPrice ?? undefined
@@ -1335,16 +1423,9 @@ export class TourHeaderV2Component
           itineraryDays: itineraryDaysRequest,
           locationData: locationRequest,
           monthTags: monthTagsRequest,
-          tour: this.tourService.getById(tourId, false),
-          rating: this.reviewsService.getAverageRating({ tourId: tourId }).pipe(
-            map((ratingResponse) => {
-              const avgRating = ratingResponse?.averageRating;
-              return avgRating && avgRating > 0 ? avgRating : null;
-            }),
-            catchError(() => of(null))
-          )
+          tour: this.tourService.getById(tourId, false)
         }).pipe(
-          map(({ itineraryDays, locationData, monthTags, tour, rating }) => {
+          map(({ itineraryDays, locationData, monthTags, tour }) => {
             const days = itineraryDays.length;
             const nights = days > 0 ? days - 1 : 0;
             const tourType = tour.tripTypeId === 1 ? 'FIT' : 'Grupos';
@@ -1359,7 +1440,7 @@ export class TourHeaderV2Component
               },
               days: days > 0 ? days : undefined,
               nights: nights > 0 ? nights : undefined,
-              rating: rating !== null ? rating : undefined,
+              rating: undefined, // Ya no se obtiene de reviewsService, se obtiene de TourReview
               monthTags: monthTags.length > 0 ? monthTags : undefined,
               tourType: tourType,
               flightCity: 'Sin vuelo',

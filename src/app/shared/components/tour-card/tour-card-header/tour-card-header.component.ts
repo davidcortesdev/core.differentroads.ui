@@ -7,9 +7,10 @@ import {
   OnDestroy,
   ChangeDetectionStrategy,
 } from '@angular/core';
-import { Subscription, catchError, finalize, of, tap } from 'rxjs';
+import { Subscription, catchError, finalize, of, tap, switchMap, Subject, takeUntil } from 'rxjs';
 import { ReviewsService } from '../../../../core/services/reviews/reviews.service';
 import { TourService } from '../../../../core/services/tour/tour.service';
+import { TourReviewService } from '../../../../core/services/reviews/tour-review.service';
 
 interface TourHeaderData {
   imageUrl: string;
@@ -36,10 +37,15 @@ export class TourCardHeaderComponent implements OnInit, OnDestroy {
   isLoadingRating = false;
 
   private subscriptions = new Subscription();
+  // Cancellation token para la petición de rating/reviews
+  private ratingDestroy$ = new Subject<void>();
+  // Variable para evitar llamadas duplicadas de rating
+  private lastLoadedTKId: string | undefined = undefined;
 
   constructor(
     private reviewsService: ReviewsService,
-    private tourService: TourService
+    private tourService: TourService,
+    private tourReviewService: TourReviewService
   ) {}
 
   ngOnInit() {
@@ -49,6 +55,10 @@ export class TourCardHeaderComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    // Cancelar petición de rating/reviews
+    this.ratingDestroy$.next();
+    this.ratingDestroy$.complete();
+    // Cancelar otras peticiones
     this.subscriptions.unsubscribe();
   }
 
@@ -59,43 +69,54 @@ export class TourCardHeaderComponent implements OnInit, OnDestroy {
   private loadRatingAndReviewCount(tkId: string) {
     if (!tkId) return;
 
+    // Evitar llamadas duplicadas para el mismo tkId (a nivel de componente)
+    // El servicio también tiene cache compartido para evitar llamadas HTTP duplicadas
+    if (this.lastLoadedTKId === tkId) {
+      return;
+    }
+    this.lastLoadedTKId = tkId;
+
     this.isLoadingRating = true;
     
-    this.subscriptions.add(
-      this.tourService.getTourIdByTKId(tkId).pipe(
-        tap(id => {
-          if (!id) {
-            //console.warn('No se encontró ID para el tour con tkId:', tkId);
-          }
-        }),
-        catchError(error => {
-          console.error('Error al obtener el ID del tour:', error);
-          return of(null);
-        })
-      ).subscribe(id => {
-        if (id) {
-          const filter = { tourId: id };
-          
-          this.subscriptions.add(
-            this.reviewsService.getAverageRating(filter).pipe(
-              tap(rating => {
-                if (rating) {
-                  this.averageRating = Math.ceil(rating.averageRating * 10) / 10;
-                }
-              }),
-              catchError(error => {
-                console.error('Error al cargar el rating promedio:', error);
-                return of(null);
-              }),
-              finalize(() => {
-                this.isLoadingRating = false;
-              })
-            ).subscribe()
-          );
-        } else {
+    this.tourService.getTourIdByTKId(tkId).pipe(
+      takeUntil(this.ratingDestroy$),
+      switchMap((id) => {
+        if (!id) {
           this.isLoadingRating = false;
+          return of(null);
         }
+
+        // Usar TourReviewService con ReviewTypeId = 1 (GENERAL) directamente
+        const filters = {
+          tourId: [id],
+          reviewTypeId: [1], // ID 1 para tipo GENERAL
+          isActive: true
+        };
+
+        return this.tourReviewService.getAverageRating(filters).pipe(
+          takeUntil(this.ratingDestroy$),
+          tap((rating) => {
+            if (rating && rating.averageRating > 0) {
+              this.averageRating = Math.round(rating.averageRating * 10) / 10;
+            } else {
+              this.averageRating = undefined;
+            }
+          }),
+          catchError((error) => {
+            console.error('Error al cargar el rating promedio desde TourReview:', error);
+            this.averageRating = undefined;
+            return of(null);
+          }),
+          finalize(() => {
+            this.isLoadingRating = false;
+          })
+        );
+      }),
+      catchError((error) => {
+        console.error('Error al obtener el ID del tour:', error);
+        this.isLoadingRating = false;
+        return of(null);
       })
-    );
+    ).subscribe();
   }
 }

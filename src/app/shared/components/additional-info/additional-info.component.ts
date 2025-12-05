@@ -6,6 +6,7 @@ import { Order } from '../../../core/models/orders/order.model';
 import { AdditionalInfoService } from '../../../core/services/v2/additional-info.service';
 import { ReservationService } from '../../../core/services/reservation/reservation.service';
 import { ReservationStatusService } from '../../../core/services/reservation/reservation-status.service';
+import { UsersNetService } from '../../../core/services/users/usersNet.service';
 import { switchMap } from 'rxjs/operators';
 
 @Component({
@@ -55,6 +56,10 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
   isDownloadMode: boolean = false;
   isShareMode: boolean = false;
 
+  // Modal de email para descarga sin autenticación
+  visibleEmailModal: boolean = false;
+  loadingEmailModal: boolean = false;
+
   // ID de la reserva generada para evitar crear múltiples reservas
   private generatedReservationId: number | null = null;
   
@@ -67,6 +72,9 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
 
   // Formulario para compartir/descargar
   shareForm!: FormGroup;
+
+  // Formulario para email y nombre completo (descarga sin autenticación)
+  emailForm!: FormGroup;
 
   // Suscripciones
   private subscription: Subscription = new Subscription();
@@ -104,7 +112,8 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
     private router: Router,
     private formBuilder: FormBuilder,
     private reservationService: ReservationService,
-    private reservationStatusService: ReservationStatusService
+    private reservationStatusService: ReservationStatusService,
+    private usersNetService: UsersNetService
   ) {
     // Inicializar formulario
     this.initializeForm();
@@ -222,6 +231,12 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
       message: [''],
       includeDetails: [true]
     });
+
+    // Formulario para email y nombre completo (descarga sin autenticación)
+    this.emailForm = this.formBuilder.group({
+      email: ['', [Validators.required, Validators.email]],
+      fullName: ['', [Validators.required]]
+    });
   }
 
   ngOnDestroy(): void {
@@ -292,9 +307,6 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
       const currentUrl = window.location.pathname;
       sessionStorage.setItem('redirectUrl', currentUrl);
       this.loginDialogVisible = true;
-      this.additionalInfoService.showInfo(
-        'Debes iniciar sesión para guardar el presupuesto.'
-      );
       return;
     }
 
@@ -315,12 +327,12 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
 
     // Si es standalone (TourOperator), no pedir autenticación
     if (!this.isStandaloneMode && !this.isAuthenticated) {
-      const currentUrl = window.location.pathname;
-      sessionStorage.setItem('redirectUrl', currentUrl);
-      this.loginDialogVisible = true;
-      this.additionalInfoService.showInfo(
-        'Debes iniciar sesión para descargar el presupuesto.'
-      );
+      // Abrir modal de email y nombre completo
+      this.emailForm.reset({
+        email: '',
+        fullName: ''
+      });
+      this.visibleEmailModal = true;
       return;
     }
 
@@ -700,6 +712,80 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
   navigateToRegister(): void {
     this.closeLoginModal();
     this.router.navigate(['/sign-up']);
+  }
+
+  /**
+   * Cierra el modal de email
+   */
+  handleCloseEmailModal(): void {
+    this.visibleEmailModal = false;
+    this.emailForm.reset({
+      email: '',
+      fullName: ''
+    });
+  }
+
+  /**
+   * Maneja el envío del formulario de email y nombre completo
+   */
+  onSubmitEmail(): void {
+    // Validar formulario
+    if (this.emailForm.invalid) {
+      Object.keys(this.emailForm.controls).forEach(key => {
+        this.emailForm.get(key)?.markAsTouched();
+      });
+      return;
+    }
+
+    const formData = this.emailForm.value;
+    this.loadingEmailModal = true;
+
+    // 1. Crear o obtener usuario lead con el email
+    this.usersNetService.createLeadUser(formData.email, formData.fullName).pipe(
+      switchMap((user) => {
+        // 2. Usuario creado/obtenido, ahora crear presupuesto asociado a este usuario
+        // Actualizar datos del contexto antes de crear la reserva
+        this.setContextData();
+        
+        // 3. Crear presupuesto con el userId del usuario lead
+        return this.additionalInfoService.createBudgetWithUserId(user.id);
+      }),
+      switchMap((createdReservation) => {
+        // 4. Presupuesto creado, guardar el ID y proceder con la descarga
+        const reservationId = createdReservation.id || createdReservation.ID;
+        
+        if (!reservationId) {
+          throw new Error('No se pudo obtener el ID de la reserva creada');
+        }
+
+        // Guardar el ID de la reserva generada
+        this.generatedReservationId = reservationId;
+        
+        // Disparar evento de analytics: file_download
+        this.trackFileDownload();
+        
+        // 5. Descargar el presupuesto
+        return this.additionalInfoService.downloadBudgetPDF(reservationId);
+      })
+    ).subscribe({
+      next: (response) => {
+        this.loadingEmailModal = false;
+        
+        if (response.success) {
+          this.additionalInfoService.showSuccess(response.message || 'Presupuesto descargado correctamente');
+        } else {
+          this.additionalInfoService.showError(response.message || 'Error al descargar el presupuesto');
+        }
+        
+        // Cerrar modal
+        this.handleCloseEmailModal();
+      },
+      error: (error) => {
+        this.loadingEmailModal = false;
+        console.error('Error al procesar descarga de presupuesto:', error);
+        this.additionalInfoService.showError('Error al procesar la descarga. Inténtalo de nuevo.');
+      }
+    });
   }
 
   // ============================================

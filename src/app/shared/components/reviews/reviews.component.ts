@@ -90,12 +90,11 @@ export class ReviewsComponent implements OnInit {
     // Si recibe reviews desde el padre, las usa directamente pero las enriquece
     if (this.reviews && this.reviews.length > 0) {
       this.enrichReviewsWithTourData(this.reviews);
-      // Cargar estadísticas adicionales si es posible
-      this.loadReviewStats();
+      // Ya no se cargan estadísticas desde reviewsService, se obtienen de TourReview
     } else {
       // Si no, carga las reviews desde el servicio
       this.loadReviews();
-      // Las estadísticas se cargarán junto con las reviews
+      // Ya no se cargan estadísticas desde reviewsService, se obtienen de TourReview
     }
   }
 
@@ -164,8 +163,7 @@ export class ReviewsComponent implements OnInit {
     ).subscribe({
       next: (reviewsWithTravelers) => {
         this.enrichReviewsWithTourData(reviewsWithTravelers);
-        // Cargar estadísticas después de las reviews
-        this.loadReviewStats();
+        // Ya no se cargan estadísticas desde reviewsService, se obtienen de TourReview
       },
       error: (error) => {
         console.error('Error in loadReviews:', error);
@@ -178,47 +176,11 @@ export class ReviewsComponent implements OnInit {
 
   /**
    * Carga estadísticas de reviews (conteo y rating promedio)
+   * DESHABILITADO: Ya no se usa reviewsService, las estadísticas se obtienen de TourReview
    */
   loadReviewStats(): void {
-    // Construir filtros para las estadísticas
-    const statsFilters: any = {};
-    
-    if (this.tourId) {
-      statsFilters.tourId = this.tourId;
-    }
-    
-    if (this.showOnHomePage !== undefined) {
-      statsFilters.showOnHomePage = this.showOnHomePage;
-    }
-    
-    if (this.showOnTourPage !== undefined) {
-      statsFilters.showOnTourPage = this.showOnTourPage;
-    }
-
-    // Cargar conteo y rating promedio en paralelo
-    forkJoin({
-      count: this.reviewsService.getCount(statsFilters).pipe(
-        catchError(error => {
-          console.error('Error al cargar conteo de reviews:', error);
-          return of(0);
-        })
-      ),
-      averageRating: this.reviewsService.getAverageRating(statsFilters).pipe(
-        catchError(error => {
-          console.error('Error al cargar rating promedio:', error);
-          return of({ averageRating: 0, totalReviews: 0 });
-        })
-      )
-    }).subscribe({
-      next: (stats) => {
-        this.totalReviews = stats.count;
-        this.averageRating = Math.ceil(stats.averageRating.averageRating * 10) / 10;
-        this.cdr.markForCheck();
-      },
-      error: (error) => {
-        console.error('Error cargando estadísticas de reviews:', error);
-      }
-    });
+    // Ya no se cargan estadísticas desde reviewsService, se obtienen de TourReview
+    // Este método se mantiene por compatibilidad pero no hace nada
   }
 
   private enrichWithTravelerNames(reviews: IEnrichedReviewResponse[]) {

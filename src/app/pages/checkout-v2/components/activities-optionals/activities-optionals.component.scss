@@ -215,6 +215,12 @@
       }
     }
 
+    .dataview-description-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
     .dataview-description {
       color: var(--background-azul);
       font-size: 0.875rem;
@@ -222,6 +228,7 @@
       text-align: justify;
       display: -webkit-box;
       -webkit-line-clamp: 4;
+      line-clamp: 4;
       -webkit-box-orient: vertical;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -229,6 +236,47 @@
       @media (max-width: 480px) {
         font-size: 0.75rem;
         -webkit-line-clamp: 3;
+        line-clamp: 3;
+      }
+    }
+
+    .read-more-button {
+      background: transparent;
+      border: none;
+      color: var(--p-primary-color);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 0.25rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      transition: all 0.2s ease;
+      text-align: left;
+      width: fit-content;
+
+      i {
+        font-size: 0.75rem;
+        transition: transform 0.2s ease;
+      }
+
+      &:hover {
+        color: var(--background-azul);
+        text-decoration: underline;
+
+        i {
+          transform: translateX(2px);
+        }
+      }
+
+      &:focus {
+        outline: 2px solid var(--p-primary-color);
+        outline-offset: 2px;
+        border-radius: 4px;
+      }
+
+      @media (max-width: 480px) {
+        font-size: 0.75rem;
       }
     }
 

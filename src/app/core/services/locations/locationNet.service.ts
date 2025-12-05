@@ -51,6 +51,8 @@ export class LocationNetService {
   private locationCache = new Map<number, Location>();
   // Cache para observables en curso para evitar múltiples llamadas simultáneas
   private locationObservableCache = new Map<number, Observable<Location>>();
+  // Cache para llamadas batch de locations por IDs (usando string de IDs ordenados como clave)
+  private locationsBatchCache = new Map<string, Observable<Location[]>>();
 
   constructor(private http: HttpClient) { }
 
@@ -79,18 +81,43 @@ export class LocationNetService {
       return of([]);
     }
 
+    // Crear una clave de cache basada en los IDs ordenados
+    const sortedIds = [...ids].sort((a, b) => a - b);
+    const cacheKey = sortedIds.join(',');
+
+    // Verificar si ya existe una llamada en curso para estos IDs
+    if (this.locationsBatchCache.has(cacheKey)) {
+      return this.locationsBatchCache.get(cacheKey)!;
+    }
+
     let params = new HttpParams();
     ids.forEach(id => {
       params = params.append('Id', id.toString());
     });
 
-    return this.http.get<Location[]>(`${this.apiUrl}/location`, { params })
+    const locationsObservable = this.http.get<Location[]>(`${this.apiUrl}/location`, { params })
       .pipe(
+        tap((locations) => {
+          // Guardar ubicaciones individuales en el cache
+          locations.forEach(location => {
+            if (location && location.id) {
+              this.locationCache.set(location.id, location);
+            }
+          });
+        }),
         catchError(error => {
           console.error('Error obteniendo ubicaciones por IDs:', error);
+          // Limpiar el observable cache en caso de error para permitir reintentos
+          this.locationsBatchCache.delete(cacheKey);
           return of([]);
-        })
+        }),
+        shareReplay(1) // Compartir el resultado entre múltiples suscriptores y mantener en cache
       );
+
+    // Guardar el observable en cache para evitar múltiples llamadas simultáneas
+    this.locationsBatchCache.set(cacheKey, locationsObservable);
+    
+    return locationsObservable;
   }
 
   getLocationById(id: number): Observable<Location> {

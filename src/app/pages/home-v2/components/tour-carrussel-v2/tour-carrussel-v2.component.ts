@@ -16,6 +16,7 @@ import {
   takeUntil,
   map,
   concatMap,
+  mergeMap,
   scan,
   forkJoin,
   switchMap,
@@ -56,6 +57,8 @@ import {
 } from '../../../../core/services/itinerary/itinerary-day/itinerary-day.service';
 import { ReviewsService } from '../../../../core/services/reviews/reviews.service';
 import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
+import { TourReviewService } from '../../../../core/services/reviews/tour-review.service';
+import { ReviewTypeService } from '../../../../core/services/reviews/review-type.service';
 
 @Component({
   selector: 'app-tour-carrussel-v2',
@@ -78,6 +81,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
   };
 
   private tripTypesMap: Map<number, ITripTypeResponse> = new Map();
+  private generalReviewTypeId: number | null = null;
 
   // Debug: IDs de tours para mostrar en pantalla
   debugTourIds: number[] = [];
@@ -129,15 +133,39 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
     private readonly itineraryDayService: ItineraryDayService,
     private readonly reviewsService: ReviewsService,
     private readonly tripTypeService: TripTypeService,
-    private readonly analyticsService: AnalyticsService
+    private readonly analyticsService: AnalyticsService,
+    private readonly tourReviewService: TourReviewService,
+    private readonly reviewTypeService: ReviewTypeService
   ) { }
 
   ngOnInit(): void {
-    this.loadTripTypes().pipe(
+    // Cargar trip types y review type GENERAL en paralelo
+    forkJoin({
+      tripTypes: this.loadTripTypes(),
+      reviewType: this.loadGeneralReviewType()
+    }).pipe(
       takeUntil(this.destroy$)
     ).subscribe(() => {
       this.loadTourCarousel();
     });
+  }
+
+  private loadGeneralReviewType(): Observable<void> {
+    return this.reviewTypeService.getByCode('GENERAL').pipe(
+      map((reviewType) => {
+        if (reviewType) {
+          this.generalReviewTypeId = reviewType.id;
+        } else {
+          console.warn('ReviewType con code "GENERAL" no encontrado');
+          this.generalReviewTypeId = null;
+        }
+      }),
+      catchError((error) => {
+        console.error('Error loading GENERAL review type:', error);
+        this.generalReviewTypeId = null;
+        return of(undefined);
+      })
+    );
   }
 
   ngAfterViewInit(): void {
@@ -230,6 +258,33 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
       catchError((error) => {
         console.error('❌ Error loading trip types:', error);
         return of(undefined);
+      })
+    );
+  }
+
+  /**
+   * Obtiene el rating promedio de un tour usando TourReview con filtro ReviewType "GENERAL"
+   * @param tourId ID del tour
+   * @returns Observable con el rating promedio o null
+   */
+  private getTourRating(tourId: number): Observable<number | null> {
+    // Si no tenemos el ReviewType GENERAL, devolver null
+    if (!this.generalReviewTypeId) {
+      return of(null);
+    }
+
+    const filters = {
+      tourId: tourId,
+      reviewTypeId: this.generalReviewTypeId,
+      isActive: true
+    };
+
+    return this.tourReviewService.getAverageRating(filters).pipe(
+      map((ratingResponse) => {
+        // Si hay rating, devolverlo tal cual (sin redondeos)
+        // Si no hay rating o es 0, devolver null para que formatRating devuelva ''
+        const avgRating = ratingResponse?.averageRating;
+        return avgRating && avgRating > 0 ? avgRating : null;
       })
     );
   }
@@ -595,24 +650,16 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
     // Reset tours array
     this.tours = [];
 
-    // Use concatMap to load tours sequentially and display them as they arrive
+    // Use mergeMap to load tours in parallel (unlimited concurrency for faster loading)
+    // This significantly improves loading speed compared to sequential loading
     of(...limitedTourIds)
       .pipe(
-        concatMap((id: string) => {
+        mergeMap((id: string) => {
           // Combinar datos del TourNetService, CMSTourService y datos adicionales
           return forkJoin({
             tourData: this.tourService.getTourById(Number(id)),
             cmsData: this.cmsTourService.getAllTours({ tourId: Number(id) }),
-            additionalData: this.getAdditionalTourData(Number(id)),
-            rating: this.reviewsService.getAverageRating({ tourId: Number(id) }).pipe(
-              map((ratingResponse) => {
-                // Si hay rating, devolverlo tal cual (sin redondeos)
-                // Si no hay rating o es 0, devolver null para que formatRating devuelva ''
-                const avgRating = ratingResponse?.averageRating;
-                return avgRating && avgRating > 0 ? avgRating : null;
-              }),
-              catchError(() => of(null))
-            ),
+            additionalData: this.getAdditionalTourData(Number(id))
           }).pipe(
             catchError((error: Error) => {
               // Error loading tour
@@ -628,7 +675,6 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
                     tags: string[];
                     itineraryDays: IItineraryDayResponse[];
                   };
-                  rating: number | null;
                 } | null
               ): TourDataV2 | null => {
                 if (combinedData) {
@@ -724,16 +770,15 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
                 // ✅ APLICAR IMAGEN COMO EN TOUR-OVERVIEW-V2
                 const imageUrl = cms?.imageUrl || '';
 
-                // Usar el rating tal cual, sin redondeos
-                // Si es null, usar undefined para que formatRating devuelva ''
-                const ratingValue = combinedData.rating !== null ? combinedData.rating : undefined;
+                // El rating ahora se obtiene desde TourReview en los componentes de tarjetas (tour-card-header-v2)
+                // No se carga aquí para evitar llamadas innecesarias a average-rating
 
                 return {
                   id: tour.id,
                   imageUrl: imageUrl,
                   title: tour.name || '',
                   description: '',
-                  rating: ratingValue,
+                  rating: undefined,
                   tag: tourTag,
                   price: tourPrice,
                   availableMonths: availableMonths,
@@ -755,11 +800,17 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
               }
             )
           );
-        }),
-        // Accumulate tours as they arrive
+        }), // Cargar todos los tours en paralelo para máxima velocidad
+        // Accumulate tours as they arrive, evitando duplicados por ID
         scan((acc: TourDataV2[], tour: TourDataV2 | null) => {
           if (tour) {
-            return [...acc, tour];
+            // Verificar si ya existe un tour con el mismo ID
+            const existingTour = acc.find(t => t.id === tour.id);
+            if (!existingTour) {
+              return [...acc, tour];
+            }
+            // Si ya existe, no agregarlo (evitar duplicados)
+            return acc;
           }
           return acc;
         }, [] as TourDataV2[]),

@@ -31,8 +31,7 @@
           <div class="info-title">
             <h2>Tours y Viajes en {{ destinationSlug ? getDestinationName() : getContinentName() }}</h2>
             <p class="info-description">
-              Encuentra la experiencia perfecta para tu próximo viaje. 
-              {{ destinationSlug ? 'Explora todos los tours disponibles para ' + getDestinationName() : 'Descubre los mejores destinos y actividades en ' + getContinentName() }}.
+              {{ getLocationDescription() }}
             </p>
           </div>
           

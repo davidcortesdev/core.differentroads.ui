@@ -15,7 +15,6 @@ import { TourLocationService, ITourLocationResponse } from '../../core/services/
 import { LocationNetService, Location } from '../../core/services/locations/locationNet.service';
 import { DepartureService, IDepartureResponse } from '../../core/services/departure/departure.service';
 import { TourDataForEcommerce } from '../../core/services/analytics/analytics.service';
-import { ReviewsService } from '../../core/services/reviews/reviews.service';
 import { forkJoin, Observable, of } from 'rxjs';
 import { TripTypeService, ITripTypeResponse } from '../../core/services/trip-type/trip-type.service';
 
@@ -157,7 +156,6 @@ export class TourV2Component implements OnInit {
     private tourLocationService: TourLocationService,
     private locationService: LocationNetService,
     private departureService: DepartureService,
-    private reviewsService: ReviewsService,
     private tripTypeService: TripTypeService
   ) {}
 
@@ -248,7 +246,7 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
           });
         });
         
-        console.log('✅ TripTypes cargados para tour detail:', this.tripTypesMap.size);
+        // console.log('✅ TripTypes cargados para tour detail:', this.tripTypesMap.size);
       }),
       catchError((error) => {
         console.error('❌ Error loading trip types:', error);
@@ -278,7 +276,7 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
   
     this.tourTripTypes = tripTypes;
     
-    console.log('🎯 TripTypes del tour:', this.tourTripTypes);
+    // console.log('🎯 TripTypes del tour:', this.tourTripTypes);
   }
 
   private loadTourTripTypes(tourId: number): void {
@@ -630,16 +628,9 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
           locationData: locationRequest,
           monthTags: monthTagsRequest,
           tour: this.tourService.getById(tourId, false),
-          rating: this.reviewsService.getAverageRating({ tourId: tourId }).pipe(
-            map((ratingResponse) => {
-              const avgRating = ratingResponse?.averageRating;
-              return avgRating && avgRating > 0 ? avgRating : null;
-            }),
-            catchError(() => of(null))
-          ),
           tripTypes: this.getTourTripTypesForAnalytics(tourId) // ✅ NUEVO
         }).pipe(
-          map(({ itineraryDays, locationData, monthTags, tour, rating, tripTypes }) => {
+          map(({ itineraryDays, locationData, monthTags, tour, tripTypes }) => {
             const days = itineraryDays.length;
             const nights = days > 0 ? days - 1 : 0;
             
@@ -660,7 +651,7 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
               },
               days: days > 0 ? days : undefined,
               nights: nights > 0 ? nights : undefined,
-              rating: rating !== null ? rating : undefined,
+              rating: undefined, // Ya no se obtiene de reviewsService, se obtiene de TourReview
               monthTags: monthTags.length > 0 ? monthTags : undefined,
               tourType: tourType,
               flightCity: 'Sin vuelo',

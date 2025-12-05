@@ -35,6 +35,10 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
   private tripTypesDestroy$ = new Subject<void>();
   // Cancellation token independiente para la petición de meses
   private monthsDestroy$ = new Subject<void>();
+  // Cancellation token independiente para la petición de rating/reviews
+  private ratingDestroy$ = new Subject<void>();
+  // Variable para evitar llamadas duplicadas de rating
+  private lastLoadedTourId: number | undefined = undefined;
 
   constructor(
     private reviewsService: ReviewsService,
@@ -59,7 +63,10 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
     // Cancelar petición de meses
     this.monthsDestroy$.next();
     this.monthsDestroy$.complete();
-    // Cancelar otras peticiones (rating)
+    // Cancelar petición de rating/reviews
+    this.ratingDestroy$.next();
+    this.ratingDestroy$.complete();
+    // Cancelar otras peticiones
     this.subscriptions.unsubscribe();
   }
 
@@ -184,6 +191,12 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
   private loadRatingAndReviewCount(tourId: number) {
     if (!tourId) return;
 
+    // Evitar llamadas duplicadas para el mismo tourId
+    if (this.lastLoadedTourId === tourId) {
+      return;
+    }
+    this.lastLoadedTourId = tourId;
+
     this.isLoadingRating = true;
     
     // Usar TourReviewService con ReviewTypeId = 1 (GENERAL) directamente
@@ -193,24 +206,23 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
       isActive: true
     };
 
-    this.subscriptions.add(
-      this.tourReviewService.getAverageRating(filters).pipe(
-        tap((rating) => {
-          if (rating && rating.averageRating > 0) {
-            this.averageRating = Math.round(rating.averageRating * 10) / 10;
-          } else {
-            this.averageRating = undefined;
-          }
-        }),
-        catchError((error) => {
-          console.error('Error al cargar el rating promedio desde TourReview:', error);
+    this.tourReviewService.getAverageRating(filters).pipe(
+      takeUntil(this.ratingDestroy$),
+      tap((rating) => {
+        if (rating && rating.averageRating > 0) {
+          this.averageRating = Math.round(rating.averageRating * 10) / 10;
+        } else {
           this.averageRating = undefined;
-          return of(null);
-        }),
-        finalize(() => {
-          this.isLoadingRating = false;
-        })
-      ).subscribe()
-    );
+        }
+      }),
+      catchError((error) => {
+        console.error('Error al cargar el rating promedio desde TourReview:', error);
+        this.averageRating = undefined;
+        return of(null);
+      }),
+      finalize(() => {
+        this.isLoadingRating = false;
+      })
+    ).subscribe();
   }
 }

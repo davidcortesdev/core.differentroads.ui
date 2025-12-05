@@ -7,10 +7,11 @@ import {
   OnDestroy,
   ChangeDetectionStrategy,
 } from '@angular/core';
-import { Subscription, catchError, finalize, of, tap, forkJoin, Subject, takeUntil } from 'rxjs';
+import { Subscription, catchError, finalize, of, tap, forkJoin, Subject, takeUntil, switchMap } from 'rxjs';
 import { ReviewsService } from '../../../../core/services/reviews/reviews.service';
 import { TourService } from '../../../../core/services/tour/tour.service';
 import { TripTypeService, ITripTypeResponse } from '../../../../core/services/trip-type/trip-type.service';
+import { TourReviewService } from '../../../../core/services/reviews/tour-review.service';
 import { TourDataV2 } from '../tour-card-v2.model';
 import { es } from 'primelocale/es.json';
 
@@ -34,20 +35,22 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
   private tripTypesDestroy$ = new Subject<void>();
   // Cancellation token independiente para la petición de meses
   private monthsDestroy$ = new Subject<void>();
+  // Cancellation token independiente para la petición de rating/reviews
+  private ratingDestroy$ = new Subject<void>();
+  // Variable para evitar llamadas duplicadas de rating
+  private lastLoadedTourId: number | undefined = undefined;
 
   constructor(
     private reviewsService: ReviewsService,
     private tourService: TourService,
-    private tripTypeService: TripTypeService
+    private tripTypeService: TripTypeService,
+    private tourReviewService: TourReviewService
   ) {}
 
   ngOnInit() {
-    if (this.tourData.externalID) {
-      this.loadRatingAndReviewCount(this.tourData.externalID);
-    }
-    
-    // Cargar trip types usando el nuevo endpoint
+    // Cargar rating y reviews desde TourReview
     if (this.tourData.id) {
+      this.loadRatingAndReviewCount(this.tourData.id);
       this.loadTripTypes(this.tourData.id);
       this.loadDepartureMonths(this.tourData.id);
     }
@@ -60,7 +63,10 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
     // Cancelar petición de meses
     this.monthsDestroy$.next();
     this.monthsDestroy$.complete();
-    // Cancelar otras peticiones (rating)
+    // Cancelar petición de rating/reviews
+    this.ratingDestroy$.next();
+    this.ratingDestroy$.complete();
+    // Cancelar otras peticiones
     this.subscriptions.unsubscribe();
   }
 
@@ -182,51 +188,42 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
       });
   }
 
-  private loadRatingAndReviewCount(tkId: string) {
-    if (!tkId) return;
+  private loadRatingAndReviewCount(tourId: number) {
+    if (!tourId) return;
+
+    // Evitar llamadas duplicadas para el mismo tourId (a nivel de componente)
+    // El servicio también tiene cache compartido para evitar llamadas HTTP duplicadas
+    if (this.lastLoadedTourId === tourId) {
+      return;
+    }
+    this.lastLoadedTourId = tourId;
 
     this.isLoadingRating = true;
-    this.subscriptions.add(
-      this.tourService
-        .getTourIdByTKId(tkId)
-        .pipe(
-          tap((id) => {
-            if (!id) {
-              //console.warn('No se encontró ID para el tour con tkId:', tkId);
-            }
-          }),
-          catchError((error) => {
-            console.error('Error al obtener el ID del tour:', error);
-            return of(null);
-          })
-        )
-        .subscribe((id) => {
-          if (id) {
-            const filter = { tourId: id };
+    
+    // Usar TourReviewService con ReviewTypeId = 1 (GENERAL) directamente
+    const filters = {
+      tourId: [tourId],
+      reviewTypeId: [1], // ID 1 para tipo GENERAL
+      isActive: true
+    };
 
-            this.subscriptions.add(
-              this.reviewsService
-                .getAverageRating(filter)
-                .pipe(
-                  tap((rating) => {
-                    if (rating) {
-                      this.averageRating = Math.ceil(rating.averageRating * 10) / 10;
-                    }
-                  }),
-                  catchError((error) => {
-                    console.error('Error al cargar el rating promedio:', error);
-                    return of(null);
-                  }),
-                  finalize(() => {
-                    this.isLoadingRating = false;
-                  })
-                )
-                .subscribe()
-            );
-          } else {
-            this.isLoadingRating = false;
-          }
-        })
-    );
+    this.tourReviewService.getAverageRating(filters).pipe(
+      takeUntil(this.ratingDestroy$),
+      tap((rating) => {
+        if (rating && rating.averageRating > 0) {
+          this.averageRating = Math.round(rating.averageRating * 10) / 10;
+        } else {
+          this.averageRating = undefined;
+        }
+      }),
+      catchError((error) => {
+        console.error('Error al cargar el rating promedio desde TourReview:', error);
+        this.averageRating = undefined;
+        return of(null);
+      }),
+      finalize(() => {
+        this.isLoadingRating = false;
+      })
+    ).subscribe();
   }
 }

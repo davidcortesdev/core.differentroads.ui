@@ -471,13 +471,6 @@ export class TourHeaderV2Component
     );
   }
 
-  // Verificar si una estrella específica debe estar llena
-  // La API ya devuelve el rating promedio calculado, solo comparamos directamente
-  isStarFilled(starIndex: number): boolean {
-    if (!this.averageRating) return false;
-    // Si el rating es 4.7, las estrellas 1-4 están llenas, la 5 está vacía
-    return starIndex <= Math.round(this.averageRating);
-  }
 
   // Formatear el número de reviews
   getFormattedReviewCount(): string {

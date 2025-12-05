@@ -54,19 +54,19 @@ $tablet-breakpoint: 1024px;
             gap: 0.5rem;
             margin-bottom: 0.5rem;
 
-            .stars {
-                display: flex;
-                align-items: center;
-                gap: 0.1rem;
-
-                .pi-star {
-                    color: #ddd;
-                    font-size: 1rem;
-                    font-weight: normal;
-
-                    &.filled {
-                        color: $primary-button-color;
-                        font-weight: bold;
+            // Estilos para las estrellas rellenas (igual que en reviews)
+            ::ng-deep .p-rating {
+                .p-rating-item {
+                    .p-rating-icon {
+                        font-size: 1rem;
+                        
+                        &.pi-star-fill {
+                            color: $primary-button-color; // Color para estrellas activas (rellenas)
+                        }
+                        
+                        &.pi-star {
+                            color: $primary-button-color; // Mismo color para estrellas inactivas (outline)
+                        }
                     }
                 }
             }
@@ -191,12 +191,8 @@ $tablet-breakpoint: 1024px;
                 gap: 0.4rem;
                 margin-bottom: 0.4rem;
 
-                .stars {
-                    gap: 0.05rem;
-
-                    .pi-star {
-                        font-size: 0.85rem;
-                    }
+                ::ng-deep .p-rating .p-rating-item .p-rating-icon {
+                    font-size: 0.85rem;
                 }
 
                 .rating-number {
@@ -256,10 +252,8 @@ $tablet-breakpoint: 1024px;
                 gap: 0.45rem;
                 margin-bottom: 0.45rem;
 
-                .stars {
-                    .pi-star {
-                        font-size: 0.95rem;
-                    }
+                ::ng-deep .p-rating .p-rating-item .p-rating-icon {
+                    font-size: 0.95rem;
                 }
 
                 .rating-number {

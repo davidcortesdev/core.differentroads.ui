@@ -596,7 +596,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
     // Reset tours array
     this.tours = [];
 
-    // Use mergeMap to load tours in parallel (with concurrency limit of 3)
+    // Use mergeMap to load tours in parallel (unlimited concurrency for faster loading)
     // This significantly improves loading speed compared to sequential loading
     of(...limitedTourIds)
       .pipe(
@@ -757,7 +757,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
               }
             )
           );
-        }, 3), // Limitar concurrencia a 3 tours simultáneos para evitar sobrecargar el servidor
+        }), // Cargar todos los tours en paralelo para máxima velocidad
         // Accumulate tours as they arrive, evitando duplicados por ID
         scan((acc: TourDataV2[], tour: TourDataV2 | null) => {
           if (tour) {

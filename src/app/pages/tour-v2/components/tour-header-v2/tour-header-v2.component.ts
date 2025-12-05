@@ -172,6 +172,8 @@ export class TourHeaderV2Component
   reviewCount: number = 0;
   isLoadingRating: boolean = false;
 
+  private lastLoadedTourId: number | undefined = undefined;
+
   constructor(
     private tourService: TourService,
     private tourLocationService: TourLocationService,
@@ -208,8 +210,8 @@ export class TourHeaderV2Component
       this.loadTourData(this.tourId);
       // Cargar trip types usando el nuevo endpoint
       this.loadTripTypes(this.tourId);
-      // Cargar rating y reviews
-      this.loadRatingAndReviewCount(this.tourId);
+      // NO cargar rating aquí - se carga en ngOnChanges para evitar duplicados
+      // this.loadRatingAndReviewCount(this.tourId);
     }
   }
 
@@ -421,6 +423,12 @@ export class TourHeaderV2Component
   // Cargar rating promedio y conteo de reviews desde TourReview con ReviewTypeId = 1 (GENERAL)
   private loadRatingAndReviewCount(tourId: number): void {
     if (!tourId) return;
+    
+    // Evitar llamadas duplicadas para el mismo tourId
+    if (this.lastLoadedTourId === tourId) {
+      return;
+    }
+    this.lastLoadedTourId = tourId;
 
     this.isLoadingRating = true;
 

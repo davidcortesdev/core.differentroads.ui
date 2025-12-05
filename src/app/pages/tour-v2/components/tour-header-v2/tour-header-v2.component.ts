@@ -62,7 +62,6 @@ import { ReservationStatusService } from '../../../../core/services/reservation/
 import { ReviewsService } from '../../../../core/services/reviews/reviews.service';
 import { TripTypeService, ITripTypeResponse } from '../../../../core/services/trip-type/trip-type.service';
 import { TourReviewService } from '../../../../core/services/reviews/tour-review.service';
-import { ReviewTypeService } from '../../../../core/services/reviews/review-type.service';
 
 // ✅ INTERFACES para tipado fuerte
 interface PassengersData {
@@ -197,8 +196,7 @@ export class TourHeaderV2Component
     private reservationStatusService: ReservationStatusService,
     private reviewsService: ReviewsService,
     private tripTypeService: TripTypeService,
-    private tourReviewService: TourReviewService,
-    private reviewTypeService: ReviewTypeService
+    private tourReviewService: TourReviewService
   ) {}
 
   ngOnInit() {
@@ -420,68 +418,39 @@ export class TourHeaderV2Component
     this.isStandaloneMode = currentPath.includes('/standalone/');
   }
 
-  // Cargar rating promedio y conteo de reviews desde TourReview con filtro ReviewType "GENERAL"
+  // Cargar rating promedio y conteo de reviews desde TourReview con ReviewTypeId = 1 (GENERAL)
   private loadRatingAndReviewCount(tourId: number): void {
     if (!tourId) return;
 
     this.isLoadingRating = true;
 
-    // Primero obtener el ReviewType con code "GENERAL"
+    // Usar TourReviewService con ReviewTypeId = 1 (GENERAL) directamente
+    const filters = {
+      tourId: [tourId],
+      reviewTypeId: [1], // ID 1 para tipo GENERAL
+      isActive: true
+    };
+
     this.subscriptions.add(
-      this.reviewTypeService.getByCode('GENERAL').pipe(
-        switchMap((reviewType) => {
-          if (!reviewType) {
-            console.warn('ReviewType con code "GENERAL" no encontrado');
-            this.averageRating = null;
-            this.reviewCount = 0;
-            this.isLoadingRating = false;
-            return of(null);
-          }
-
-          // Usar TourReviewService con filtro ReviewTypeId
-          const filters = {
-            tourId: tourId,
-            reviewTypeId: reviewType.id,
-            isActive: true
-          };
-
-          return this.tourReviewService.getAverageRating(filters).pipe(
-            map((ratingResponse) => {
-              return {
-                averageRating: ratingResponse,
-                count: 0 // Hardcodeado temporalmente hasta que se implemente el endpoint
-              };
-            }),
-            catchError((error) => {
-              console.error('Error al cargar rating promedio desde TourReview:', error);
-              return of({ averageRating: { averageRating: 0, totalReviews: 0 }, count: 0 });
-            })
-          );
-        }),
+      this.tourReviewService.getAverageRating(filters).pipe(
         catchError((error) => {
-          console.error('Error obteniendo ReviewType GENERAL:', error);
+          console.error('Error al cargar rating promedio desde TourReview:', error);
           this.averageRating = null;
           this.reviewCount = 0;
           this.isLoadingRating = false;
-          return of(null);
+          return of({ averageRating: 0, totalReviews: 0 });
         })
       ).subscribe({
-        next: (results) => {
-          if (!results) {
-            return;
-          }
-
-          const ratingResponse = results.averageRating;
-          // La API ya devuelve el valor correcto, lo redondeamos a un decimal
-          if (ratingResponse && typeof ratingResponse === 'object' && 'averageRating' in ratingResponse) {
-            this.averageRating = Math.round(ratingResponse.averageRating * 10) / 10;
-          } else if (typeof ratingResponse === 'number') {
-            this.averageRating = Math.round(ratingResponse * 10) / 10;
+        next: (ratingResponse) => {
+          if (ratingResponse) {
+            this.averageRating = ratingResponse.averageRating > 0 
+              ? Math.round(ratingResponse.averageRating * 10) / 10 
+              : null;
+            this.reviewCount = ratingResponse.totalReviews || 0;
           } else {
             this.averageRating = null;
+            this.reviewCount = 0;
           }
-          // Hardcodeado temporalmente hasta que se implemente el endpoint de count
-          this.reviewCount = results.count || 0;
           this.isLoadingRating = false;
         },
         error: (error) => {

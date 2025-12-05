@@ -8,11 +8,12 @@ import { environment } from '../../../../environments/environment';
  * Interfaz para los filtros disponibles en el método getAll.
  */
 export interface TourReviewFilters {
-  id?: number;
-  tourId?: number;
-  reviewTypeId?: number;
+  id?: number | number[];
+  tourId?: number | number[];
+  reviewTypeId?: number | number[];
   minRating?: number;
   maxRating?: number;
+  reviewCount?: number | number[];
   isActive?: boolean;
   createdAfter?: string;
   createdBefore?: string;
@@ -21,12 +22,14 @@ export interface TourReviewFilters {
 
 /**
  * Respuesta del backend para un tour review.
+ * Contiene la media ya calculada de las reviews y el contador.
  */
 export interface ITourReviewResponse {
   id: number;
   tourId: number;
   reviewTypeId: number;
   rating: number;
+  reviewCount: number;
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -60,10 +63,16 @@ export class TourReviewService {
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
-          params = params.set(
-            key.charAt(0).toUpperCase() + key.slice(1),
-            value.toString()
-          );
+          const paramName = key.charAt(0).toUpperCase() + key.slice(1);
+          
+          // Handle array parameters (TourId, ReviewTypeId, ReviewCount, Id)
+          if (Array.isArray(value)) {
+            value.forEach((item) => {
+              params = params.append(paramName, item.toString());
+            });
+          } else {
+            params = params.set(paramName, value.toString());
+          }
         }
       });
     }
@@ -91,10 +100,16 @@ export class TourReviewService {
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
-          params = params.set(
-            key.charAt(0).toUpperCase() + key.slice(1),
-            value.toString()
-          );
+          const paramName = key.charAt(0).toUpperCase() + key.slice(1);
+          
+          // Handle array parameters
+          if (Array.isArray(value)) {
+            value.forEach((item) => {
+              params = params.append(paramName, item.toString());
+            });
+          } else {
+            params = params.set(paramName, value.toString());
+          }
         }
       });
     }
@@ -103,13 +118,13 @@ export class TourReviewService {
   }
 
   /**
-   * Obtiene el rating promedio de tour reviews basado en criterios de filtro.
-   * Calcula el promedio desde los resultados de getAll usando el campo rating.
-   * @param filters Filtros para aplicar en el cálculo.
-   * @returns Rating promedio.
+   * Obtiene el rating promedio y el conteo de reviews desde TourReview.
+   * TourReview ya contiene la media calculada, solo necesitamos obtenerla.
+   * @param filters Filtros para aplicar (debe incluir tourId y reviewTypeId).
+   * @returns Rating promedio y conteo de reviews.
    */
   getAverageRating(filters?: TourReviewFilters): Observable<TourReviewAverageRatingResponse> {
-    // Obtener todas las tour reviews que cumplen los filtros
+    // Obtener las tour reviews que cumplen los filtros
     return this.getAll(filters).pipe(
       map((reviews) => {
         if (reviews.length === 0) {
@@ -119,13 +134,12 @@ export class TourReviewService {
           };
         }
 
-        // Calcular el promedio desde el campo rating de cada review
-        const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
-        const averageRating = totalRating / reviews.length;
-
+        // TourReview ya contiene la media calculada en el campo rating
+        // y el conteo en reviewCount. Tomamos el primer resultado.
+        const review = reviews[0];
         return {
-          averageRating: Math.round(averageRating * 10) / 10, // Redondear a 1 decimal
-          totalReviews: reviews.length
+          averageRating: review.rating || 0,
+          totalReviews: review.reviewCount || 0
         };
       })
     );

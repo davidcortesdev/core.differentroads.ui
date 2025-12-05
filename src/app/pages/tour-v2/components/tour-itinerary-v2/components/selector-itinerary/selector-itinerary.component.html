@@ -74,6 +74,7 @@
       </p-dropdown>
       
       <p-button
+        *ngIf="isAtc && isTo"
         class="download-button"
         icon="pi pi-download"
         [rounded]="true"

@@ -1,4 +1,5 @@
 import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { catchError, map, finalize, switchMap } from 'rxjs/operators';
 import { ActivityHighlight } from '../../../../shared/components/activity-card/activity-card.component';
@@ -75,6 +76,10 @@ export class TourItineraryV2Component implements OnInit {
   // Estados del componente
   loading: boolean = true;
   showDebug: boolean = false;
+  
+  // Flags para mostrar el botón de descarga
+  isAtc: boolean = false;
+  isTo: boolean = false;
 
   // Propiedades para manejar las ubicaciones del mapa
   tourLocations: ITourLocationResponse[] = [];
@@ -96,10 +101,17 @@ export class TourItineraryV2Component implements OnInit {
   constructor(
     private tourLocationService: TourLocationService,
     private tourLocationTypeService: TourLocationTypeService,
-    private locationNetService: LocationNetService
+    private locationNetService: LocationNetService,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
+    // Detectar flags desde query params
+    this.route.queryParams.subscribe((params) => {
+      this.isAtc = params['isATC'] === 'true' || params['isAtc'] === 'true';
+      this.isTo = params['isTourOperator'] === 'true' || params['isTO'] === 'true' || params['isTo'] === 'true';
+    });
+
     if (this.tourId) {
       this.loadMapData(this.tourId);
     } else {

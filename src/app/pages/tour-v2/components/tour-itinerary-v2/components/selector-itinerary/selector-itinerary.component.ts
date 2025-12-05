@@ -94,6 +94,9 @@ export class SelectorItineraryComponent
   @Input() preview: boolean = false;
   // ✅ NUEVO INPUT: Para recibir el departure seleccionado desde el componente departures
   @Input() selectedDepartureFromParent: DepartureFromParent | null = null;
+  // ✅ Flags para mostrar el botón de descarga
+  @Input() isAtc: boolean = false;
+  @Input() isTo: boolean = false;
 
   // ✅ NUEVO OUTPUT: Emite cuando cambia la selección
   @Output() departureSelected = new EventEmitter<SelectedDepartureEvent>();

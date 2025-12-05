@@ -167,6 +167,7 @@ $spaces: (
                 min-width: 56px;
                 padding: 0;
                 transition: all 0.2s ease;
+                position: relative;
                 @include flex(row, center, center);
 
                 @include resp(md) {
@@ -192,9 +193,24 @@ $spaces: (
                     cursor: not-allowed;
                 }
 
-                .p-button-icon {
-                    color: #fff;
-                    font-size: 1.2rem;
+                ::ng-deep {
+                    .p-button-icon {
+                        color: #fff;
+                        font-size: 1.2rem;
+                        margin: 0;
+                    }
+
+                    .p-button-icon.pi-spinner {
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        margin: 0;
+                    }
+
+                    .p-button-label {
+                        display: none;
+                    }
                 }
             }
         }

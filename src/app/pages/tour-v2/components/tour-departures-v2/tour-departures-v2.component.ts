@@ -1835,7 +1835,18 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
                 const arrTime = this.formatTime(outboundFlight.arrivalTime || '');
                 const arrIata = outboundFlight.arrivalIATACode || '';
                 
-                let flightTimes = `${depTime} (${depIata}) → ${arrTime} (${arrIata})`;
+                // Verificar si la llegada es al día siguiente
+                let arrivalSuffix = '';
+                if (outboundFlight.departureDate && outboundFlight.arrivalDate) {
+                  const outboundDepDate = new Date(outboundFlight.departureDate);
+                  const outboundArrDate = new Date(outboundFlight.arrivalDate);
+                  // Comparar solo las fechas (sin hora)
+                  if (outboundArrDate.toDateString() !== outboundDepDate.toDateString()) {
+                    arrivalSuffix = ' +1';
+                  }
+                }
+                
+                let flightTimes = `${depTime} (${depIata}) → ${arrTime}${arrivalSuffix} (${arrIata})`;
                 
                 if (returnFlight) {
                   const retDepTime = this.formatTime(returnFlight.departureTime || '');
@@ -1843,7 +1854,18 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
                   const retArrTime = this.formatTime(returnFlight.arrivalTime || '');
                   const retArrIata = returnFlight.arrivalIATACode || '';
                   
-                  flightTimes += `\n${retDepTime} (${retDepIata}) → ${retArrTime} (${retArrIata})`;
+                  // Verificar si la llegada del vuelo de regreso es al día siguiente
+                  let returnArrivalSuffix = '';
+                  if (returnFlight.departureDate && returnFlight.arrivalDate) {
+                    const returnDepDate = new Date(returnFlight.departureDate);
+                    const returnArrDate = new Date(returnFlight.arrivalDate);
+                    // Comparar solo las fechas (sin hora)
+                    if (returnArrDate.toDateString() !== returnDepDate.toDateString()) {
+                      returnArrivalSuffix = ' +1';
+                    }
+                  }
+                  
+                  flightTimes += `\n${retDepTime} (${retDepIata}) → ${retArrTime}${returnArrivalSuffix} (${retArrIata})`;
                 }
                 
                 this.flightTimesByDepartureId[departureId] = flightTimes;

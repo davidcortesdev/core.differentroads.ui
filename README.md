@@ -2,6 +2,7 @@
 
 Este proyecto fue generado con [Angular CLI](https://github.com/angular/angular-cli) versión 19.0.6.
 
+
 ## Estado de las Pipelines
 
 ### Develop

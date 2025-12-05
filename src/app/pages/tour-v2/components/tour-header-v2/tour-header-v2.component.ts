@@ -613,7 +613,7 @@ export class TourHeaderV2Component
   }
 
   private loadTourData(tourId: number) {
-    console.log('🔍 Cargando tour, preview mode:', this.preview);
+    // console.log('🔍 Cargando tour, preview mode:', this.preview);
     
     // ✅ LÓGICA: Si es preview, buscar tours no visibles también
     const filterByVisible = !this.preview;
@@ -621,7 +621,7 @@ export class TourHeaderV2Component
     this.subscriptions.add(
       this.tourService.getById(tourId, filterByVisible).pipe(
         switchMap((tourData) => {
-          console.log('✅ Tour cargado exitosamente:', tourData.name);
+          // console.log('✅ Tour cargado exitosamente:', tourData.name);
           this.tour = { ...tourData };
           this.loadCountryAndContinent(tourId);
           

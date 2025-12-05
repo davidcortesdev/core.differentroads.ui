@@ -48,6 +48,48 @@ $tablet-breakpoint: 1024px;
             margin: 0px 5px 0px 5px;
         }
 
+        .tour-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+
+            .stars {
+                display: flex;
+                align-items: center;
+                gap: 0.1rem;
+
+                .pi-star {
+                    color: #ddd;
+                    font-size: 1rem;
+                    font-weight: normal;
+
+                    &.filled {
+                        color: $primary-button-color;
+                        font-weight: bold;
+                    }
+                }
+            }
+
+            .rating-number {
+                color: $primary-button-color;
+                font-size: 1rem;
+                font-weight: 600;
+            }
+
+            .reviews-count {
+                color: var(--text-color-secondary);
+                font-size: 0.9rem;
+                text-decoration: underline;
+                cursor: pointer;
+                transition: color 0.2s ease;
+
+                &:hover {
+                    color: var(--text-color);
+                }
+            }
+        }
+
         h1 {
             margin: 0 0 0.5rem 0;
             font-size: 1.75rem;
@@ -145,6 +187,27 @@ $tablet-breakpoint: 1024px;
         .tour-info {
             width: 100%;
 
+            .tour-rating {
+                gap: 0.4rem;
+                margin-bottom: 0.4rem;
+
+                .stars {
+                    gap: 0.05rem;
+
+                    .pi-star {
+                        font-size: 0.85rem;
+                    }
+                }
+
+                .rating-number {
+                    font-size: 0.9rem;
+                }
+
+                .reviews-count {
+                    font-size: 0.8rem;
+                }
+            }
+
             h1 {
                 font-size: 1.25rem;
                 margin-bottom: 0.25rem;
@@ -189,6 +252,25 @@ $tablet-breakpoint: 1024px;
         gap: 2rem;
 
         .tour-info {
+            .tour-rating {
+                gap: 0.45rem;
+                margin-bottom: 0.45rem;
+
+                .stars {
+                    .pi-star {
+                        font-size: 0.95rem;
+                    }
+                }
+
+                .rating-number {
+                    font-size: 0.95rem;
+                }
+
+                .reviews-count {
+                    font-size: 0.85rem;
+                }
+            }
+
             h1 {
                 font-size: 1.5rem;
                 margin-bottom: 0.4rem;

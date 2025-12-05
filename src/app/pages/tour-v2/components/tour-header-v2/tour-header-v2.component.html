@@ -3,13 +3,18 @@
   <div class="tour-info">
     <!-- Rating y Reviews Section -->
     <div class="tour-rating" *ngIf="averageRating !== null || reviewCount > 0">
-      <div class="stars">
-        <i 
-          *ngFor="let i of [1,2,3,4,5]" 
-          class="pi pi-star"
-          [class.filled]="isStarFilled(i)">
-        </i>
-      </div>
+      <p-rating
+        [ngModel]="averageRating || 0"
+        [readonly]="true"
+        [stars]="5"
+        [cancel]="false">
+        <ng-template #onicon>
+          <i class="pi pi-star-fill" style="color: #e85d4c !important;"></i>
+        </ng-template>
+        <ng-template #officon>
+          <i class="pi pi-star" style="color: #e85d4c !important;"></i>
+        </ng-template>
+      </p-rating>
       <span class="rating-number" *ngIf="averageRating !== null">{{ averageRating }}</span>
       <span class="reviews-count" *ngIf="reviewCount > 0" (click)="scrollToReviews()">{{ getFormattedReviewCount() }}</span>
     </div>

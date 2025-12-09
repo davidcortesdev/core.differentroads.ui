@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { map, catchError, switchMap } from 'rxjs/operators';
+import { map, catchError, switchMap, shareReplay } from 'rxjs/operators';
 import { Payment, PaymentStatus } from '../../models/bookings/payment.model';
 import { PaymentStatusNetService, IPaymentStatusResponse } from '../../../pages/checkout-v2/services/paymentStatusNet.service';
+import { PaymentMethodNetService, IPaymentMethodResponse } from '../../../pages/checkout-v2/services/paymentMethodNet.service';
 import { PaymentsNetService, IPaymentResponse } from '../../../pages/checkout-v2/services/paymentsNet.service';
 
 export interface PaymentInfo {
@@ -15,33 +16,53 @@ export interface PaymentInfo {
   providedIn: 'root'
 })
 export class PaymentService {
-  private paymentStatusesCache: IPaymentStatusResponse[] | null = null;
-  private loadingStatuses: boolean = false;
+  // Usar shareReplay para compartir el Observable entre múltiples suscriptores
+  // shareReplay(1) cachea el último valor emitido
+  private paymentStatusesCache$: Observable<IPaymentStatusResponse[]> | null = null;
+  private paymentMethodsCache$: Observable<IPaymentMethodResponse[]> | null = null;
 
   constructor(
     private paymentStatusService: PaymentStatusNetService,
+    private paymentMethodService: PaymentMethodNetService,
     private paymentsNetService: PaymentsNetService
   ) {}
 
   /**
    * Obtiene todos los estados de pago disponibles
+   * Usa shareReplay para compartir el resultado entre múltiples suscriptores
+   * Solo hace una llamada HTTP aunque haya múltiples suscriptores
    */
   getAllPaymentStatuses(): Observable<IPaymentStatusResponse[]> {
-    // Si ya tenemos los estados en caché, devolverlos
-    if (this.paymentStatusesCache) {
-      return new Observable(observer => {
-        observer.next(this.paymentStatusesCache!);
-        observer.complete();
-      });
+    if (!this.paymentStatusesCache$) {
+      this.paymentStatusesCache$ = this.paymentStatusService.getAllPaymentStatuses().pipe(
+        shareReplay(1),
+        catchError(error => {
+          // En caso de error, limpiar el caché para permitir reintentos
+          this.paymentStatusesCache$ = null;
+          return of([]);
+        })
+      );
     }
+    return this.paymentStatusesCache$;
+  }
 
-    // Cargar desde la API
-    return this.paymentStatusService.getAllPaymentStatuses().pipe(
-      map(statuses => {
-        this.paymentStatusesCache = statuses;
-        return statuses;
-      })
-    );
+  /**
+   * Obtiene todos los métodos de pago disponibles
+   * Usa shareReplay para compartir el resultado entre múltiples suscriptores
+   * Solo hace una llamada HTTP aunque haya múltiples suscriptores
+   */
+  getAllPaymentMethods(): Observable<IPaymentMethodResponse[]> {
+    if (!this.paymentMethodsCache$) {
+      this.paymentMethodsCache$ = this.paymentMethodService.getAllPaymentMethods().pipe(
+        shareReplay(1),
+        catchError(error => {
+          // En caso de error, limpiar el caché para permitir reintentos
+          this.paymentMethodsCache$ = null;
+          return of([]);
+        })
+      );
+    }
+    return this.paymentMethodsCache$;
   }
 
   /**

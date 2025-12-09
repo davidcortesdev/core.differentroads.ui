@@ -145,7 +145,7 @@ $primary: var(--p-primary-color);
             .hdr-cols {
                 display: grid;
                 align-items: center;
-                grid-template-columns: repeat(5, 1fr);
+                grid-template-columns: 1.2fr 1.5fr 1fr 1fr 1fr;
                 padding: 0;
                 width: 100%;
                 gap: 0.5rem;
@@ -167,7 +167,7 @@ $primary: var(--p-primary-color);
         }
         .dep-item {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: 1.2fr 1.5fr 1fr 1fr 1fr;
             align-items: center;
             border-radius: 17.732px;
             border: 0.985px solid #d9d9d9;

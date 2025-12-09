@@ -4,6 +4,20 @@
 
   @media (max-width: 576px) {
     margin: 0px 20px 0px 20px;
+    
+    // En móvil, reordenar para que la imagen aparezca primero visualmente
+    display: flex;
+    flex-direction: column;
+    
+    // Breadcrumb aparece después de la imagen en el orden visual
+    .destinations-breadcrumb,
+    .breadcrumb-skeleton {
+      order: 2; // Aparece después de tour-content (order: 1)
+    }
+    
+    .tour-content {
+      order: 1; // Aparece primero
+    }
   }
 
   // Layout principal
@@ -313,6 +327,10 @@
   }
   .breadcrumb-skeleton {
     margin-bottom: 1.5rem;
+    
+    @media (max-width: 576px) {
+      margin-bottom: 0.25rem;
+    }
   }
 
   .tour-image-skeleton {
@@ -344,8 +362,9 @@
   background: transparent;
 
   @media (max-width: 576px) {
-    margin-bottom: 0.5rem;
-    padding: 0.5rem 0;
+    margin-bottom: 0.25rem;
+    padding: 0.25rem 0;
+    opacity: 0.7; /* Hacer más discreto */
 
     .p-breadcrumb-list {
       display: flex;
@@ -380,16 +399,19 @@
     }
 
     .p-menuitem-text {
-      font-size: 0.75rem; /* Texto más pequeño en móvil */
+      font-size: 0.65rem; /* Texto aún más pequeño en móvil */
+      color: #64748b; /* Color más discreto */
     }
 
     .p-breadcrumb-chevron {
-      font-size: 0.75rem;
-      margin: 0 0.25rem;
+      font-size: 0.65rem;
+      margin: 0 0.2rem;
+      color: #94a3b8; /* Color más discreto */
     }
 
     .p-breadcrumb-home {
-      font-size: 0.75rem;
+      font-size: 0.65rem;
+      color: #64748b; /* Color más discreto */
     }
   }
 

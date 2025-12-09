@@ -38,14 +38,12 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
   @Input() isVisible: boolean = true;
   @Input() bookingId: string = '';
 
-  // Modal properties
   showEmailModal: boolean = false;
   userEmail: string = '';
   currentAction: DocumentActionConfig | null = null;
   isLoadingEmail: boolean = false;
   isProcessing: boolean = false;
 
-  // Lista de acciones de documentos
   documentList: DocumentActionConfig[] = [
     {
       id: 'PAYMENT_REMINDER',
@@ -115,9 +113,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
     this.enqueueSyncDestroy$.complete();
   }
 
-  /**
-   * Carga el email del usuario asociado a la reserva
-   */
   loadUserEmail(): void {
     if (!this.bookingId) {
       return;
@@ -130,7 +125,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
 
     this.isLoadingEmail = true;
 
-    // Obtener la reserva para obtener el userId y datos para el botón de sincronización
     this.reservationService
       .getById(reservationId)
       .pipe(
@@ -140,7 +134,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
             return of('');
           }
 
-          // Obtener el usuario por su ID
           return this.usersNetService.getUserById(reservation.userId).pipe(
             switchMap((user) => {
               return of(user?.email || '');
@@ -162,7 +155,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
       });
   }
 
-  // Estado de la reserva actual y soporte para botón de sincronización
   private currentReservation: IReservationResponse | null = null;
   private prebookedStatusId: number | null = null;
   isProcessingSyncFromTk: boolean = false;
@@ -170,11 +162,7 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
   private enqueueSyncDestroy$ = new Subject<void>();
   private previousRetryCount: number = 0;
   private jobNotFoundRetryCount: number = 0;
-  private readonly MAX_JOB_NOT_FOUND_RETRIES = 2; // Máximo 2 reintentos automáticos
-
-  /**
-   * Carga el ID del estado PREBOOKED para comparaciones.
-   */
+  private readonly MAX_JOB_NOT_FOUND_RETRIES = 2; 
   private loadPrebookedStatusId(): void {
     this.reservationStatusService.getByCode('PREBOOKED').subscribe({
       next: (statuses: IReservationStatusResponse[]) => {
@@ -186,11 +174,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Indica si se puede habilitar el botón de sincronización:
-   * - Reserva en estado PREBOOKED
-   * - Reserva sin tkId
-   */
   get canEnqueueSync(): boolean {
     if (!this.currentReservation || this.prebookedStatusId == null) {
       return false;
@@ -200,10 +183,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
     return isPrebooked && hasNoTkId && !this.isProcessingEnqueueSync;
   }
 
-  /**
-   * Obtiene el mensaje del tooltip para el botón de sincronización
-   * según las condiciones que impiden su uso
-   */
   getEnqueueSyncTooltip(): string {
     if (this.isProcessingEnqueueSync) {
       return 'El envío a TourKnife se está procesando...';
@@ -226,9 +205,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
     return '';
   }
 
-  /**
-   * Ejecuta la llamada para encolar la sincronización con TK y luego hace polling del estado.
-   */
   onEnqueueSync(): void {
     const reservationId = parseInt(this.bookingId, 10);
     if (isNaN(reservationId)) {
@@ -240,7 +216,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
       });
       return;
     }
-    
     if (!this.canEnqueueSync) {
       return;
     }
@@ -249,7 +224,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
     this.reservationsSyncsService.enqueueByReservationId(reservationId).subscribe({
       next: (response: EnqueueSyncResponse) => {
         const jobId = response.jobId;
-        
         if (!jobId || jobId.trim() === '') {
           this.isProcessingEnqueueSync = false;
           this.messageService.add({
@@ -261,34 +235,25 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
           console.error('[EnqueueSync] JobId inválido o vacío:', { response, reservationId });
           return;
         }
-
-        // Resetear los contadores de reintentos
         this.previousRetryCount = 0;
         this.jobNotFoundRetryCount = 0;
-
-        // Mostrar notificación informativa de que se está procesando
         this.messageService.add({
           severity: 'info',
           summary: 'Procesando',
           detail: 'Sincronizando con TourKnife. Esto puede tardar unos momentos...',
           life: 5000,
         });
-
-        // Iniciar el polling del job
         this.startJobPolling(jobId, reservationId);
       },
       error: (error) => {
         this.isProcessingEnqueueSync = false;
         this.previousRetryCount = 0;
-        
         console.error('[EnqueueSync] Error al encolar sincronización:', { 
           reservationId, 
           error: error.error,
           status: error.status 
         });
-        
         const errorInfo = this.getEnqueueSyncInitialErrorMessage(error, reservationId);
-        
         this.messageService.add({
           severity: 'error',
           summary: errorInfo.summary,
@@ -299,20 +264,15 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Maneja el error de job no encontrado intentando soluciones automáticas
-   */
   private handleJobNotFoundError(
     reservationId: number,
     jobId: string,
     pollingAttempt: number
   ): void {
-    // Si es el primer intento de polling, verificar si la reserva ya tiene tkId
     if (pollingAttempt === 1) {
       this.reservationService.getById(reservationId).subscribe({
         next: (reservation) => {
           if (reservation.tkId) {
-            // El proceso fue exitoso, solo fue muy rápido
             this.isProcessingEnqueueSync = false;
             this.jobNotFoundRetryCount = 0;
             this.messageService.add({
@@ -321,16 +281,12 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
               detail: 'La reserva se sincronizó correctamente con TourKnife. El proceso fue muy rápido.',
               life: 5000,
             });
-            // Recargar la reserva para actualizar el estado
             this.loadUserEmail();
             return;
           }
-          
-          // Si no tiene tkId y aún podemos reintentar, hacerlo automáticamente
           if (this.jobNotFoundRetryCount < this.MAX_JOB_NOT_FOUND_RETRIES) {
             this.retryEnqueueSync(reservationId);
           } else {
-            // Ya se agotaron los reintentos automáticos
             this.isProcessingEnqueueSync = false;
             this.jobNotFoundRetryCount = 0;
             this.messageService.add({
@@ -342,7 +298,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
           }
         },
         error: () => {
-          // Si no se puede verificar la reserva, intentar reintentar si es posible
           if (this.jobNotFoundRetryCount < this.MAX_JOB_NOT_FOUND_RETRIES) {
             this.retryEnqueueSync(reservationId);
           } else {
@@ -358,7 +313,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
         }
       });
     } else {
-      // Si no es el primer intento, solo mostrar el error
       this.isProcessingEnqueueSync = false;
       this.jobNotFoundRetryCount = 0;
       this.messageService.add({
@@ -370,13 +324,8 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Reintenta encolar la sincronización automáticamente
-   */
   private retryEnqueueSync(reservationId: number): void {
     this.jobNotFoundRetryCount++;
-    console.log(`[EnqueueSync] Reintentando encolar job automáticamente (intento ${this.jobNotFoundRetryCount}/${this.MAX_JOB_NOT_FOUND_RETRIES})`);
-    
     this.messageService.add({
       severity: 'info',
       summary: 'Reintentando automáticamente',
@@ -384,7 +333,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
       life: 4000,
     });
     
-    // Esperar 3 segundos antes de reintentar
     timer(3000).pipe(
       switchMap(() => this.reservationsSyncsService.enqueueByReservationId(reservationId)),
       takeUntil(this.enqueueSyncDestroy$)
@@ -392,7 +340,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
       next: (response: EnqueueSyncResponse) => {
         const newJobId = response.jobId;
         if (!newJobId || newJobId.trim() === '') {
-          // Si el nuevo jobId también es inválido
           if (this.jobNotFoundRetryCount >= this.MAX_JOB_NOT_FOUND_RETRIES) {
             this.isProcessingEnqueueSync = false;
             this.jobNotFoundRetryCount = 0;
@@ -403,13 +350,11 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
               life: 6000,
             });
           } else {
-            // Reintentar nuevamente
             this.retryEnqueueSync(reservationId);
           }
           return;
         }
         
-        // Reiniciar el proceso de polling con el nuevo jobId
         this.startJobPolling(newJobId, reservationId);
       },
       error: () => {
@@ -423,28 +368,22 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
             life: 6000,
           });
         } else {
-          // Reintentar nuevamente
           this.retryEnqueueSync(reservationId);
         }
       }
     });
   }
 
-  /**
-   * Inicia el polling del estado del job
-   */
   private startJobPolling(jobId: string, reservationId: number): void {
     this.previousRetryCount = 0;
     let pollingAttempts = 0;
     const maxPollingAttempts = 60;
-
     timer(2000, 5000)
       .pipe(
         switchMap(() => {
           pollingAttempts++;
           return this.reservationsSyncsService.getSyncJobStatus(jobId).pipe(
             catchError((error) => {
-              // Manejar específicamente el error 404 (job no encontrado)
               if (error.status === 404) {
                 console.error('[EnqueueSync] Job no encontrado:', { 
                   jobId, 
@@ -460,8 +399,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
                   pollingAttempt: pollingAttempts
                 };
               }
-              
-              // Otros errores HTTP
               if (error.status === 500) {
                 console.error('[EnqueueSync] Error interno del servidor:', { 
                   jobId, 
@@ -475,8 +412,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
                   message: error?.error?.message || 'Error interno del servidor'
                 };
               }
-              
-              // Error de conexión o timeout
               if (error.status === 0 || error.name === 'TimeoutError') {
                 console.error('[EnqueueSync] Error de conexión o timeout:', { 
                   jobId, 
@@ -491,7 +426,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
                 };
               }
               
-              // Error genérico
               throw { 
                 type: 'UNKNOWN_ERROR',
                 jobId,
@@ -503,34 +437,25 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
         }),
         takeWhile((statusResponse: SyncJobStatusResponse) => {
           const state = statusResponse.state?.toLowerCase();
-          const retryCount = this.getRetryCount(statusResponse);
-          
-          // Detener si el estado es final
+          const retryCount = this.getRetryCount(statusResponse);         
           if (state === 'succeeded' || state === 'failed' || state === 'deleted') {
             return false;
-          }
-          
-          // Detener si llegamos al máximo de intentos de polling
+          }          
           if (pollingAttempts >= maxPollingAttempts) {
             return false;
-          }
-          
-          // Si llegamos a 3 intentos y no es succeeded, detener el polling
+          }          
           if (retryCount >= 3 && state !== 'succeeded') {
             return false;
           }
-          
           return true;
         }, true),
         takeUntil(this.enqueueSyncDestroy$),
         catchError((error) => {
-          // Si es error de job no encontrado, usar el manejo especial
           if (error.type === 'JOB_NOT_FOUND') {
             this.handleJobNotFoundError(reservationId, error.jobId, error.pollingAttempt || 1);
             return of(null);
           }
           
-          // Manejo normal de otros errores
           this.isProcessingEnqueueSync = false;
           this.previousRetryCount = 0;
           this.jobNotFoundRetryCount = 0;
@@ -559,7 +484,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
           const state = statusResponse.state?.toLowerCase();
           const retryCount = this.getRetryCount(statusResponse);
 
-          // Detectar cambios en el retryCount
           if (retryCount > this.previousRetryCount) {
             if (retryCount === 2) {
               this.messageService.add({
@@ -579,7 +503,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
             this.previousRetryCount = retryCount;
           }
 
-          // Si llegamos a 3 intentos y el estado no es "Succeeded", mostrar error
           if (retryCount >= 3 && state !== 'succeeded') {
             this.isProcessingEnqueueSync = false;
             this.previousRetryCount = 0;
@@ -592,7 +515,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
             return;
           }
 
-          // Si llegamos al máximo de intentos de polling sin éxito
           if (pollingAttempts >= maxPollingAttempts && state !== 'succeeded') {
             this.isProcessingEnqueueSync = false;
             this.previousRetryCount = 0;
@@ -653,7 +575,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
     jobId: string,
     reservationId: number
   ): { summary: string; detail: string; life: number } {
-    // Error específico: Job no encontrado (404) - Este caso ya se maneja en handleJobNotFoundError
     if (error.type === 'JOB_NOT_FOUND' || error.status === 404) {
       return {
         summary: 'Proceso no encontrado',
@@ -662,7 +583,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
       };
     }
 
-    // Error de servidor (500)
     if (error.type === 'SERVER_ERROR' || error.status === 500) {
       return {
         summary: 'Error en el servidor',
@@ -671,7 +591,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
       };
     }
 
-    // Error de conexión o timeout
     if (error.type === 'CONNECTION_ERROR' || error.status === 0 || error.name === 'TimeoutError') {
       return {
         summary: 'Error de conexión',
@@ -680,7 +599,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
       };
     }
 
-    // Error genérico
     return {
       summary: 'Error al verificar sincronización',
       detail: error.message || 'Error al verificar el estado. Intenta nuevamente.',
@@ -688,15 +606,10 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
     };
   }
 
-  /**
-   * Obtiene un mensaje de error específico y claro para atención al cliente
-   * cuando ocurre un error al intentar encolar la sincronización inicial
-   */
   private getEnqueueSyncInitialErrorMessage(
     error: any,
     reservationId: number
   ): { summary: string; detail: string; life: number } {
-    // Error 404: Reserva no encontrada
     if (error.status === 404) {
       return {
         summary: 'Reserva no encontrada',
@@ -705,7 +618,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
       };
     }
 
-    // Error 400: Datos inválidos
     if (error.status === 400) {
       const errorMessage = error?.error?.message || '';
       if (errorMessage.toLowerCase().includes('tour') && errorMessage.toLowerCase().includes('not bookable')) {
@@ -722,7 +634,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
       };
     }
 
-    // Error 500: Error interno del servidor
     if (error.status === 500) {
       return {
         summary: 'Error en el servidor',
@@ -731,7 +642,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
       };
     }
 
-    // Error de conexión
     if (error.status === 0 || error.name === 'TimeoutError') {
       return {
         summary: 'Error de conexión',
@@ -740,7 +650,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
       };
     }
 
-    // Error genérico
     const errorMessage = error?.error?.message || 'Error al iniciar la sincronización';
     return {
       summary: 'Error al enviar a TourKnife',
@@ -749,10 +658,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
     };
   }
 
-  /**
-   * Obtiene el retryCount de la respuesta del job status.
-   * El retryCount viene como string en properties.RetryCount
-   */
   private getRetryCount(statusResponse: SyncJobStatusResponse): number {
     const retryCountStr = statusResponse.properties?.RetryCount;
     if (!retryCountStr) {
@@ -762,10 +667,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
     return isNaN(retryCount) ? 0 : retryCount;
   }
 
-  /**
-   * Indica si se puede habilitar el botón de traer información desde TK:
-   * - Reserva con tkId
-   */
   get canSyncFromTk(): boolean {
     if (!this.currentReservation) {
       return false;
@@ -774,10 +675,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
     return hasTkId && !this.isProcessingSyncFromTk;
   }
 
-  /**
-   * Obtiene el mensaje del tooltip para el botón de traer información desde TK
-   * según las condiciones que impiden su uso
-   */
   getSyncFromTkTooltip(): string {
     if (this.isProcessingSyncFromTk) {
       return 'La sincronización desde TourKnife se está procesando...';
@@ -793,9 +690,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
     return '';
   }
 
-  /**
-   * Ejecuta la llamada para traer la información de la reserva desde TK.
-   */
   onSyncFromTk(): void {
     if (!this.currentReservation || !this.currentReservation.tkId) {
       this.messageService.add({
@@ -845,51 +739,32 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Abre el modal con el email para la acción especificada
-   */
   openEmailModal(action: DocumentActionConfig): void {
     this.currentAction = action;
     this.showEmailModal = true;
   }
 
-  /**
-   * Cierra el modal
-   */
   closeEmailModal(): void {
     this.showEmailModal = false;
     this.currentAction = null;
   }
 
-  /**
-   * Obtiene el título del modal según la acción
-   */
   getModalTitle(): string {
     return this.currentAction?.test || '';
   }
 
-  /**
-   * Verifica si la acción actual tiene código de email
-   */
   hasEmailCode(): boolean {
     return !!this.currentAction?.emailCode;
   }
 
-  /**
-   * Verifica si la acción actual tiene código de documento
-   */
   hasDocumentCode(): boolean {
     return !!this.currentAction?.documentCode;
   }
 
-  /**
-   * Obtiene las acciones visibles
-   */
   getVisibleActions(): DocumentActionConfig[] {
     return this.documentList.filter((action) => {
       if (!action.visible) return false;
       
-      // Ocultar PROFORMA si el retailerId es 7
       if (action.id === 'PROFORMA' && this.currentReservation?.retailerId === 7) {
         return false;
       }
@@ -898,9 +773,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Envía el documento por email
-   */
   onSend(): void {
     if (!this.userEmail || !this.currentAction) {
       this.messageService.add({
@@ -968,9 +840,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Descarga el documento
-   */
   onDownload(): void {
     if (!this.currentAction) {
       return;
@@ -1015,9 +884,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
       });
   }
 
-  /**
-   * Obtiene el mensaje de éxito según el código del documento
-   */
   private getDocumentSuccessMessage(documentCode: string): string {
     const messageMap: Record<string, string> = {
       RESERVATION_VOUCHER: 'Voucher de reserva descargado exitosamente',
@@ -1028,9 +894,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
     return messageMap[documentCode] || 'Documento descargado exitosamente';
   }
 
-  /**
-   * Maneja el éxito de la descarga
-   */
   private handleDownloadSuccess(
     blob: Blob,
     fileName: string,
@@ -1055,9 +918,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
     this.closeEmailModal();
   }
 
-  /**
-   * Maneja errores de descarga
-   */
   private handleDownloadError(error: any): void {
     this.isProcessing = false;
     console.error('Error downloading document:', error);
@@ -1081,9 +941,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Maneja errores de envío
-   */
   private handleSendError(error: any): void {
     console.error('Error sending notification:', error);
     let errorMessage = 'Error al enviar el documento';
@@ -1102,9 +959,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Maneja el click en un botón de acción
-   */
   onActionClick(action: DocumentActionConfig): void {
     this.openEmailModal(action);
   }

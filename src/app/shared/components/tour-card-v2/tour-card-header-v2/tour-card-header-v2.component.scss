@@ -354,3 +354,123 @@ $spacing-md: 1rem;
     opacity: 0.5;
   }
 }
+
+// Contenedor de etiquetas - SIMPLIFICAR EN MOBILE
+.tags-container {
+    position: absolute;
+    top: $spacing-md;
+    right: $spacing-md;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    align-items: flex-end;
+    // Evitar que los tags interfieran con el scroll
+    pointer-events: none;
+    
+    .tag {
+        pointer-events: auto; // Permitir clicks
+    }
+
+    @include tablet {
+        top: $spacing-sm;
+        right: $spacing-sm;
+        
+        .tag {
+            font-size: 0.7rem;
+            padding: 0.15rem 0.4rem;
+        }
+    }
+
+    @include mobile {
+        top: 0.4rem;
+        right: 0.4rem;
+        
+        // Ocultar TripTypes en mobile para reducir ruido visual
+        .trip-type-tag {
+            display: none;
+        }
+        
+        // Solo mostrar el primer tag
+        .tag:not(:first-child):not(.trip-type-tag) {
+            display: none;
+        }
+        
+        .tag {
+            font-size: 0.6rem;
+            padding: 0.1rem 0.3rem;
+        }
+    }
+}
+
+// Tag By DR - Ocultar en mobile para dar protagonismo a la imagen
+.by-dr-tag {
+    @include tablet {
+        font-size: 0.55rem !important;
+        padding: 0.15rem 0.3rem !important;
+    }
+
+    @include mobile {
+        display: none;
+    }
+}
+
+// Altura de imagen optimizada para mobile
+.img {
+    @include tablet {
+        height: 200px;
+    }
+
+    @include mobile {
+        height: 180px; // Reducir altura para tarjetas más compactas y mejor scroll
+    }
+}
+
+// Rating - Más compacto en mobile
+.rating {
+    @include tablet {
+        font-size: 0.7rem !important;
+        padding: 0.15rem 0.35rem !important;
+    }
+
+    @include mobile {
+        font-size: 0.65rem !important;
+        padding: 0.1rem 0.3rem !important;
+    }
+}
+
+// Título overlay - Más compacto para mejor scroll
+.title-overlay {
+    @include tablet {
+        .itinerary-days-text {
+            font-size: 0.7rem; 
+            margin-bottom: 0.2rem;
+        }
+        
+        h3 {
+            font-size: 1rem;
+            line-height: 1.2;
+            margin-bottom: 0.3rem;
+        }
+    }
+
+    @include mobile {
+        padding-bottom: 0.3rem;
+        
+        .itinerary-days-text {
+            font-size: 0.6rem; 
+            margin-bottom: 0.1rem;
+        }
+        
+        h3 {
+            font-size: 0.8rem; 
+            line-height: 1.15;
+            margin-bottom: 0.15rem;
+            // Limitar a 2 líneas para evitar desbordamiento
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    }
+}
+

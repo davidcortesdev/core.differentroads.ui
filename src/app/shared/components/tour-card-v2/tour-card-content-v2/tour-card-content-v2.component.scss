@@ -53,11 +53,20 @@ $color-primary: var(--background-azul);
   flex-direction: column;
   gap: $spacing-md;
 
+  @include mobile {
+    margin: 0 -#{$spacing-sm};
+    gap: $spacing-sm;
+  }
+
   // Contenido de precio
   .price-content {
     display: flex;
     flex-direction: column;
     gap: $spacing-sm;
+
+    @include mobile {
+      gap: 0.25rem;
+    }
   }
 
   // Sección de precio
@@ -66,6 +75,10 @@ $color-primary: var(--background-azul);
     justify-content: space-between;
     align-items: flex-start;
     width: 100%;
+
+    @include mobile {
+      align-items: center;
+    }
 
     // Información de precio
     .price-info {
@@ -77,12 +90,21 @@ $color-primary: var(--background-azul);
         font-size: 0.9rem;
         color: $color-primary;
         margin-bottom: $spacing-xs;
+
+        @include mobile {
+          font-size: 0.75rem;
+          margin-bottom: 0;
+        }
       }
 
       .price {
         font-size: 1.5rem;
         font-weight: bold;
         color: $color-primary;
+
+        @include mobile {
+          font-size: 1.25rem;
+        }
       }
     }
 
@@ -91,6 +113,10 @@ $color-primary: var(--background-azul);
       display: flex;
       align-items: center;
       gap: $spacing-sm;
+
+      @include mobile {
+        gap: 0.25rem;
+      }
     }
   }
 
@@ -159,13 +185,17 @@ $color-primary: var(--background-azul);
     }
 
     @include tablet {
-      min-width: 6rem;
+      min-width: 5.5rem;
+      font-size: 0.85rem;
+      margin-top: 8px;
     }
 
     @include mobile {
-      min-width: 6rem;
-      height: 2.5rem;
-      font-size: 0.9rem;
+      min-width: 5rem;
+      height: 2rem;
+      font-size: 0.8rem;
+      padding: 0.4rem 0.8rem;
+      margin-top: 5px;
     }
   }
 
@@ -175,34 +205,58 @@ $color-primary: var(--background-azul);
     gap: 0.3rem;
     margin-right: 8px;
     margin-top: 13px;
-  }
-
-  // Meses
-  .months {
-    display: flex;
-    gap: $spacing-sm;
-    width: 15rem;
-    align-items: center;
-    justify-content: flex-start;
 
     @include tablet {
-      width: 100%;
-      height: auto;
-      max-height: 3rem;
+      gap: 0.2rem;
+      margin-right: 5px;
+      margin-top: 8px;
     }
 
     @include mobile {
-      width: 100%;
-      height: auto;
-      max-height: 3.5rem;
-      overflow-y: auto;
+      gap: 0.15rem;
+      margin-right: 3px;
+      margin-top: 5px;
     }
+  }
 
+  // Meses - OPTIMIZADO PARA MEJOR SCROLL EN MOBILE
+  .months {
+    display: flex;
+    gap: $spacing-sm;
+    flex-wrap: wrap;
+    // Evitar que los meses capturen eventos de scroll/touch
+    pointer-events: none;
+    
     .month {
-      font-size: 0.7rem;
-
-      @include tablet {
-        font-size: 0.68rem;
+      pointer-events: auto; // Permitir clicks en los meses individuales
+    }
+    
+    @include tablet {
+      gap: 0.3rem;
+      
+      .month {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.5rem;
+      }
+    }
+    
+    @include mobile {
+      width: 100%;
+      max-height: 1.5rem; // Reducir altura máxima para evitar bloqueo de scroll
+      overflow: hidden; // Ocultar exceso
+      gap: 0.2rem;
+      margin-top: 0.25rem;
+      
+      .month {
+        font-size: 0.6rem;
+        padding: 0.1rem 0.3rem;
+        // Reducir tamaño de touch target en mobile
+        min-height: unset;
+        line-height: 1.2;
+      }
+      
+      .more-months {
+        font-size: 0.55rem;
       }
     }
   }
@@ -292,4 +346,30 @@ $color-primary: var(--background-azul);
       }
     }
   }
+}
+
+// Widget Scalapay - Corregir márgenes negativos y mejorar responsive
+.priceScalapay {
+    @include tablet {
+        margin-top: 0;
+        margin-bottom: 0.8rem;
+        
+        .widget {
+            margin-bottom: 0;
+            min-height: 35px;
+            width: 100%;
+        }
+    }
+
+    @include mobile {
+        margin-top: 0;
+        margin-bottom: 0.3rem;
+        font-size: 0.75rem;
+        
+        .widget {
+            margin-bottom: 0;
+            min-height: 25px;
+            width: 100%;
+        }
+    }
 }

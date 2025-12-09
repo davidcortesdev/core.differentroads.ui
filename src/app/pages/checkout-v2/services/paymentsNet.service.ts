@@ -53,6 +53,7 @@ export interface IPaymentStatusResponse {
   code: string;
   name: string;
   description: string;
+  color?: string;
 }
 
 export interface IPaymentSummaryResponse {

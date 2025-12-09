@@ -1083,6 +1083,17 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
   }
 
   /**
+   * Obtiene el color del estado de pago desde la API
+   */
+  getPaymentStatusColor(payment: Payment): string | null {
+    if (!payment.paymentStatusId || this.paymentStatuses.length === 0) {
+      return null;
+    }
+    const status = this.paymentService.getPaymentStatusById(payment.paymentStatusId, this.paymentStatuses);
+    return status?.color || null;
+  }
+
+  /**
    * Cambia el estado del pago usando el valor seleccionado en el selector
    */
   onChangeStatusClick(payment: Payment): void {

@@ -94,9 +94,6 @@ export class SelectorItineraryComponent
   @Input() preview: boolean = false;
   // ✅ NUEVO INPUT: Para recibir el departure seleccionado desde el componente departures
   @Input() selectedDepartureFromParent: DepartureFromParent | null = null;
-  // ✅ Flags para mostrar el botón de descarga
-  @Input() isAtc: boolean = false;
-  @Input() isTo: boolean = false;
 
   // ✅ NUEVO OUTPUT: Emite cuando cambia la selección
   @Output() departureSelected = new EventEmitter<SelectedDepartureEvent>();
@@ -108,6 +105,8 @@ export class SelectorItineraryComponent
   loading: boolean = true;
   error: string | undefined;
   downloading: boolean = false;
+  // Propiedad para detectar modo standalone
+  isStandaloneMode: boolean = false;
 
   // Datos principales con tipado fuerte
   itinerariesWithDepartures: ItineraryWithDepartures[] = [];
@@ -127,6 +126,9 @@ export class SelectorItineraryComponent
   ) {}
 
   ngOnInit(): void {
+    // Detectar si estamos en modo standalone
+    this.detectStandaloneMode();
+    
     if (this.tourId) {
       this.loadSelectorData(this.tourId);
     } else {
@@ -544,6 +546,15 @@ export class SelectorItineraryComponent
       detail: 'No se pudo descargar el itinerario. Por favor, inténtalo de nuevo.',
       life: 3000,
     });
+  }
+
+  /**
+   * Detectar si estamos en modo standalone
+   */
+  private detectStandaloneMode(): void {
+    // Verificar si la URL contiene 'standalone'
+    const currentPath = window.location.pathname;
+    this.isStandaloneMode = currentPath.includes('/standalone/');
   }
 
   /**

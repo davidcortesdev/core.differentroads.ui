@@ -203,6 +203,21 @@
         max-width: 600px;
         display: flex;
         justify-content: center;
+        
+        ::ng-deep .p-button {
+            // Botón outlined (Enviar código de verificación)
+            &.p-button-outlined {
+                background-color: #ea685c !important;
+                border-color: #ea685c !important;
+                color: white !important;
+                
+                &:hover {
+                    background-color: #d15e53 !important;
+                    border-color: #d15e53 !important;
+                    color: white !important;
+                }
+            }
+        }
     }
 }
 
@@ -284,6 +299,22 @@
         
         ::ng-deep .p-button {
             min-width: auto;
+            
+            // Botones primarios (Actualizar contraseña)
+            &.p-button-success {
+                background-color: #093642 !important;
+                border-color: #093642 !important;
+                color: white !important;
+            }
+            
+            // Botones de texto (Cancelar)
+            &.p-button-text {
+                color: #093642 !important;
+                
+                &:hover {
+                    background-color: rgba(9, 54, 66, 0.1) !important;
+                }
+            }
         }
     }
 }

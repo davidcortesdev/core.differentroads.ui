@@ -161,20 +161,18 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
 
   ngOnInit(): void {
     this.calculatePaymentInfo();
-    
-    // Cargar estados de pago desde la API (siempre, para todos)
-    this.loadPaymentStatuses();
 
-    // Cargar métodos de pago desde la API
-    this.loadPaymentMethods();
-
-    // Cargar pagos (loadPayments tiene guard interno para reservationId)
-    this.loadPayments();
-
-    // Inicializar datos si reservationId está disponible desde el inicio
-    // loadReservationData() se encargará de cargar la proforma si es agencia
-    // (ngOnChanges manejará los cambios posteriores)
+    // Solo cargar estados y métodos de pago si tenemos un reservationId válido
+    // (solo en el detalle de reserva, no en otros contextos)
     if (this.reservationId && this.reservationId > 0) {
+      // Cargar estados y métodos de pago desde el servicio con caché compartido
+      this.loadPaymentStatuses();
+      this.loadPaymentMethods();
+      
+      // Cargar pagos
+      this.loadPayments();
+      
+      // Cargar datos de la reserva
       this.loadReservationData();
     } else if (this.departureDate) {
       // Si ya tenemos departureDate como input, usarlo directamente
@@ -1012,9 +1010,14 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
   }
 
   /**
-   * Carga todos los estados de pago disponibles desde la API
+   * Carga todos los estados de pago disponibles desde el servicio con caché compartido
    */
   private loadPaymentStatuses(): void {
+    // Solo cargar si aún no están cargados localmente
+    if (this.paymentStatuses.length > 0) {
+      return;
+    }
+
     this.loadingStatuses = true;
     this.paymentService.getAllPaymentStatuses()
       .pipe(takeUntil(this.destroy$))
@@ -1031,11 +1034,16 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
   }
 
   /**
-   * Carga todos los métodos de pago disponibles desde la API
+   * Carga todos los métodos de pago disponibles desde el servicio con caché compartido
    */
   private loadPaymentMethods(): void {
+    // Solo cargar si aún no están cargados localmente
+    if (this.paymentMethods.length > 0) {
+      return;
+    }
+
     this.loadingMethods = true;
-    this.paymentMethodService.getAllPaymentMethods()
+    this.paymentService.getAllPaymentMethods()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (methods) => {

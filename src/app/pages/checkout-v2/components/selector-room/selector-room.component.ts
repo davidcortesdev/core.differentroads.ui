@@ -1741,7 +1741,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
     });
   }
 
-
   // Métodos auxiliares para manejo de cambios de viajeros
   private getPreviousTotalTravelers(): number {
     return this.previousTotalTravelers;

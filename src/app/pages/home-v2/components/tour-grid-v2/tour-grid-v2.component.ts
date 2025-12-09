@@ -331,10 +331,6 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
             abbreviation: abbreviation
           });
         });
-        
-        if (this.DEBUG_MODE) {
-          console.log('✅ TripTypes cargados:', this.tripTypesMap);
-        }
       }),
       catchError((error) => {
         console.error('❌ Error loading trip types:', error);
@@ -473,7 +469,7 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
     
     if (!this.tripTypesLoaded) {
       if (this.DEBUG_MODE) {
-        console.log('⏳ Esperando a que se carguen los TripTypes...');
+
       }
       // Reintentar después de un breve delay
       setTimeout(() => {
@@ -494,7 +490,7 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
     this.allTours = [];
 
     if (this.DEBUG_MODE) {
-      console.log('🔄 Cargando tours con IDs:', tourIdsToLoad);
+
     }
 
     // Cargar tours en paralelo para máxima velocidad
@@ -502,7 +498,7 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
       .pipe(
         mergeMap((id: number) => {
           if (this.DEBUG_MODE) {
-            console.log(`🔄 Procesando tour ID: ${id}`);
+
           }
           // Combinar datos del TourNetService, CMSTourService y datos adicionales
           return forkJoin({
@@ -540,7 +536,7 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
 
                 const mappedTour = this.mapToTourDataV2(combinedData);
                 if (this.DEBUG_MODE) {
-                  console.log(`✅ Tour mapeado - ID: ${mappedTour.id}, productStyleId: ${mappedTour.productStyleId}, isByDr: ${mappedTour.isByDr}`);
+
                 }
                 return mappedTour;
               }
@@ -559,7 +555,7 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
       .subscribe({
         next: (accumulatedTours: TourDataV2[]) => {
           if (this.DEBUG_MODE) {
-            console.log(`📊 Tours cargados: ${accumulatedTours.length}`);
+
           }
           // Guardar todos los tours sin filtrar
           this.allTours = accumulatedTours;
@@ -568,7 +564,7 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
         },
         complete: () => {
           if (this.DEBUG_MODE) {
-            console.log('✅ Carga de tours completada');
+
           }
           this.isLoading = false;
           // El evento view_item_list se disparará cuando la lista aparezca en pantalla
@@ -815,7 +811,7 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
 
     // ✅ DEBUG: Log de datos del tour
     if (this.DEBUG_MODE) {
-      console.log(`🔍 Mapeando tour - ID: ${tour.id}, productStyleId: ${tour.productStyleId}, name: ${tour.name}`);
+
     }
 
     // Obtener precio: Usar minPrice del TourNetService
@@ -904,7 +900,7 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
     
     // ✅ DEBUG: Log de la lógica de isByDr (remover en producción)
     if (this.DEBUG_MODE) {
-      console.log(`🎯 Tour ${tour.id} - productStyleId: ${tour.productStyleId}, isByDr: ${isByDr} (${isByDr ? 'GROUP' : 'NO GROUP'})`);
+
     }
 
     const mappedTour: TourDataV2 = {

@@ -128,7 +128,6 @@ export class CategoryPageComponent implements OnInit, OnDestroy {
           description = this.generateDescriptionForTag(categoryName, tagName);
       }
 
-      
     } else if (this.subItemSlug) {
       // Si buscamos tag pero no lo encontramos
       const tagName = this.formatSlug(this.subItemSlug);
@@ -144,7 +143,6 @@ export class CategoryPageComponent implements OnInit, OnDestroy {
           description = this.generateDescriptionForTag(categoryName, tagName);
       }
 
-      
     } else if (this.categoryData) {
       // Si buscamos categoría y la encontramos
       const categoryName = this.categoryData.name;
@@ -170,19 +168,8 @@ export class CategoryPageComponent implements OnInit, OnDestroy {
     
     // Actualizar keywords SEO
     this.meta.updateTag({ name: 'keywords', content: keywords });
-    console.log("tagData REAL:", this.tagData);
-
 
     // Log para debug
-    console.log('Datos de categoría/tag cargados:', {
-      tagId: this.tagId,
-      tagName: this.tagData?.name,
-      categoryId: this.categoryId,
-      categoryName: this.categoryData?.name,
-      seoKeywords: keywords,
-      description: description
-      
-    });
 
     this.isLoading = false;
     
@@ -246,7 +233,7 @@ export class CategoryPageComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (tourIds) => {
           this.tourIds = tourIds;
-          console.log(`Tours encontrados para los tags [${tagIds.join(', ')}]:`, tourIds);
+
           this.isLoadingTours = false;
         },
         error: (error) => {
@@ -378,7 +365,6 @@ export class CategoryPageComponent implements OnInit, OnDestroy {
     const tagName = this.getTagName() || this.getCategoryName();
     return ` Encuentra la experiencia perfecta para tu próximo viaje. Explora todos los tours disponibles para ${tagName}.`;
   }
-  
 
   formatSlug(slug: string): string {
     return slug

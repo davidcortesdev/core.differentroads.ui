@@ -73,7 +73,6 @@ export class ConfirmationCodeComponent implements OnInit {
     this.setLoading(true);
     this.setErrorMessage('');
     const confirmationCode = this.confirmForm.value.confirmationCode.toString().trim();
-    console.log('Enviando código de confirmación:', confirmationCode);
 
     this.authService
       .confirmSignUp(
@@ -83,7 +82,7 @@ export class ConfirmationCodeComponent implements OnInit {
       .then(() => {
         this.setLoading(false);
         this.setSuccessMessage('Verificación exitosa. Iniciando sesión...');
-        console.log('Código de confirmación verificado.');
+
         // Emitir evento de éxito
         this.confirmSuccess.emit();
       })

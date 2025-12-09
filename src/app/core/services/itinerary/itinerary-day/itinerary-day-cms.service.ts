@@ -41,7 +41,6 @@ export interface IItineraryDayCMSResponse {
   updatedAt?: string | null;
 }
 
-
 /**
  * Filtros disponibles para consultar entradas CMS.
  */
@@ -60,7 +59,6 @@ export class ItineraryDayCMSService {
 
   constructor(private http: HttpClient) {}
 
-  
 /**
    * Obtiene todas las entradas CMS de días de itinerario, con opción de aplicar filtros.
    * @param filters Filtros opcionales para la búsqueda.

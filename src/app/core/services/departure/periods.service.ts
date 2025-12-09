@@ -3,7 +3,6 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
-
 @Injectable({
   providedIn: 'root',
 })
@@ -22,6 +21,5 @@ getRawDepartureByTkId(externalId: string): Observable<any> {
   // Llama a la misma URL pero devuelve el JSON tal cual lo recibe, sin map ni transformación
   return this.http.get<any>(`${environment.toursApiUrl}/salidas?TKId=${externalId}`);
 }
-
 
 }

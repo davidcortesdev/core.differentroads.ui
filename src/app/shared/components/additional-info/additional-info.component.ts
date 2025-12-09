@@ -931,7 +931,7 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
           this.reservationService.updateStatus(reservationId, budgetStatusId).subscribe({
             next: (success) => {
               if (success) {
-                console.log('✅ Estado de reserva actualizado a BUDGET:', reservationId);
+
               } else {
                 console.warn('⚠️ No se pudo actualizar el estado de la reserva:', reservationId);
               }

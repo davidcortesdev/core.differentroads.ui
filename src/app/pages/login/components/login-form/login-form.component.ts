@@ -126,10 +126,6 @@ export class LoginFormComponent implements OnInit {
           return;
         }
 
-        console.log('🔍 Iniciando verificación de usuario...');
-        console.log('📧 Email:', email);
-        console.log('🆔 Cognito ID:', cognitoId);
-
         this.verifyAndCreateUser(cognitoId, email, method);
       },
       error: (error) => {
@@ -151,19 +147,13 @@ export class LoginFormComponent implements OnInit {
     // Primero buscar por Cognito ID
     this.usersNetService.getUsersByCognitoId(cognitoId).subscribe({
       next: (users) => {
-        console.log(
-          '✅ Búsqueda por Cognito ID completada. Usuarios encontrados:',
-          users?.length || 0
-        );
+
         if (users && users.length > 0) {
           // Usuario encontrado por Cognito ID
-          console.log('🎉 Usuario encontrado por Cognito ID:', users[0]);
 
           // Verificar si debe redirigir a Tour Operation
           if (this.shouldRedirectToTourOperation(users[0])) {
-            console.log(
-              '🔀 Usuario sin acceso web pero con acceso a Tour Operation'
-            );
+
             // Disparar evento login antes de redirigir
             this.trackLogin(method, users[0]);
             this.redirectToTourOperation();
@@ -189,21 +179,12 @@ export class LoginFormComponent implements OnInit {
           this.authService.navigateAfterUserVerification();
         } else {
           // No encontrado por Cognito ID, buscar por email
-          console.log(
-            '🔍 Usuario no encontrado por Cognito ID, buscando por email...'
-          );
+
           this.usersNetService.getUsersByEmail(email).subscribe({
             next: (usersByEmail) => {
-              console.log(
-                '✅ Búsqueda por email completada. Usuarios encontrados:',
-                usersByEmail?.length || 0
-              );
+
               if (usersByEmail && usersByEmail.length > 0) {
                 // Usuario encontrado por email, actualizar con Cognito ID
-                console.log(
-                  '🔄 Usuario encontrado por email, actualizando Cognito ID:',
-                  usersByEmail[0]
-                );
 
                 // Disparar evento login
                 this.trackLogin(method, usersByEmail[0]);
@@ -215,7 +196,7 @@ export class LoginFormComponent implements OnInit {
                 );
               } else {
                 // Usuario no existe, crearlo
-                console.log('🆕 Usuario no encontrado, creando nuevo usuario');
+
                 this.createNewUser(cognitoId, email, method);
               }
             },
@@ -230,25 +211,18 @@ export class LoginFormComponent implements OnInit {
       error: (error) => {
         console.error('❌ Error buscando usuario por Cognito ID:', error);
         // En caso de error, buscar por email
-        console.log('🔍 Intentando búsqueda por email debido a error...');
+
         this.usersNetService.getUsersByEmail(email).subscribe({
           next: (usersByEmail) => {
-            console.log(
-              '✅ Búsqueda por email completada. Usuarios encontrados:',
-              usersByEmail?.length || 0
-            );
+
             if (usersByEmail && usersByEmail.length > 0) {
-              console.log(
-                '🔄 Usuario encontrado por email, actualizando Cognito ID:',
-                usersByEmail[0]
-              );
 
               // Disparar evento login
               this.trackLogin(method, usersByEmail[0]);
 
               this.updateUserWithCognitoId(usersByEmail[0], cognitoId, method);
             } else {
-              console.log('🆕 Usuario no encontrado, creando nuevo usuario');
+
               this.createNewUser(cognitoId, email, method);
             }
           },
@@ -269,14 +243,6 @@ export class LoginFormComponent implements OnInit {
     cognitoId: string,
     method: string = 'manual'
   ): void {
-    console.log('🔄 Actualizando usuario con Cognito ID...');
-    console.log('📝 Datos de actualización:', {
-      userId: currentUser.id,
-      cognitoId,
-      email: currentUser.email,
-      name: currentUser.name,
-      hasWebAccess: currentUser.hasWebAccess,
-    });
 
     // Preparar datos de actualización preservando todos los campos importantes
     const updateData = {
@@ -296,7 +262,7 @@ export class LoginFormComponent implements OnInit {
     this.usersNetService.updateUser(currentUser.id, updateData).subscribe({
       next: (success) => {
         if (success) {
-          console.log('✅ Usuario actualizado con Cognito ID exitosamente');
+
         }
 
         // Obtener el usuario actualizado para verificar permisos
@@ -304,9 +270,7 @@ export class LoginFormComponent implements OnInit {
           next: (user) => {
             // Verificar si debe redirigir a Tour Operation
             if (this.shouldRedirectToTourOperation(user)) {
-              console.log(
-                '🔀 Usuario sin acceso web pero con acceso a Tour Operation'
-              );
+
               this.redirectToTourOperation();
               return;
             }
@@ -321,19 +285,11 @@ export class LoginFormComponent implements OnInit {
               return;
             }
 
-            console.log(
-              '🔄 Estado antes de navegar - isLoading:',
-              this.isLoading
-            );
             this.isLoading = false;
-            console.log(
-              '🔄 Estado después de setear isLoading = false:',
-              this.isLoading
-            );
-            console.log('🧭 Iniciando navegación...');
+
             // Navegar después de actualizar el usuario
             this.authService.navigateAfterUserVerification();
-            console.log('🧭 Navegación iniciada');
+
           },
           error: (error) => {
             console.error('❌ Error obteniendo usuario actualizado:', error);
@@ -344,19 +300,12 @@ export class LoginFormComponent implements OnInit {
       },
       error: (error) => {
         console.error('❌ Error actualizando usuario con Cognito ID:', error);
-        console.log(
-          '🔄 Estado antes de navegar (error) - isLoading:',
-          this.isLoading
-        );
+
         this.isLoading = false;
-        console.log(
-          '🔄 Estado después de setear isLoading = false (error):',
-          this.isLoading
-        );
-        console.log('🧭 Iniciando navegación (error)...');
+
         // Navegar incluso si hay error en la actualización
         this.authService.navigateAfterUserVerification();
-        console.log('🧭 Navegación iniciada (error)');
+
       },
     });
   }
@@ -369,8 +318,6 @@ export class LoginFormComponent implements OnInit {
     email: string,
     method: string = 'manual'
   ): void {
-    console.log('🆕 Creando nuevo usuario...');
-    console.log('📝 Datos del usuario a crear:', { cognitoId, email });
 
     const newUser: UserCreate = {
       cognitoId: cognitoId,
@@ -384,16 +331,12 @@ export class LoginFormComponent implements OnInit {
       detalleDeLaFuenteDeRegistro1: 'INTEGRATION',
     };
 
-    console.log('🚀 Enviando petición de creación...');
     this.usersNetService.createUser(newUser).subscribe({
       next: (user) => {
-        console.log('✅ Nuevo usuario creado exitosamente:', user);
 
         // Verificar si debe redirigir a Tour Operation
         if (this.shouldRedirectToTourOperation(user)) {
-          console.log(
-            '🔀 Usuario sin acceso web pero con acceso a Tour Operation'
-          );
+
           // Disparar evento login antes de redirigir
           this.trackLogin(method, user);
           this.redirectToTourOperation();
@@ -413,32 +356,20 @@ export class LoginFormComponent implements OnInit {
         // Disparar evento login
         this.trackLogin(method, user);
 
-        console.log('🔄 Estado antes de navegar - isLoading:', this.isLoading);
         this.isLoading = false;
-        console.log(
-          '🔄 Estado después de setear isLoading = false:',
-          this.isLoading
-        );
-        console.log('🧭 Iniciando navegación...');
+
         // Navegar después de crear el usuario
         this.authService.navigateAfterUserVerification();
-        console.log('🧭 Navegación iniciada');
+
       },
       error: (error) => {
         console.error('❌ Error creando nuevo usuario:', error);
-        console.log(
-          '🔄 Estado antes de navegar (error) - isLoading:',
-          this.isLoading
-        );
+
         this.isLoading = false;
-        console.log(
-          '🔄 Estado después de setear isLoading = false (error):',
-          this.isLoading
-        );
-        console.log('🧭 Iniciando navegación (error)...');
+
         // Navegar incluso si hay error en la creación
         this.authService.navigateAfterUserVerification();
-        console.log('🧭 Navegación iniciada (error)');
+
       },
     });
   }
@@ -457,8 +388,6 @@ export class LoginFormComponent implements OnInit {
 
     const username = this.loginForm.value.username;
     const password = this.userPassword;
-
-    console.log('🔄 Iniciando sesión después de confirmación...');
 
     this.authService.login(username, password).subscribe({
       next: (cognitoUser) => {
@@ -488,7 +417,7 @@ export class LoginFormComponent implements OnInit {
 
   signInWithGoogle(): void {
     this.isLoading = true;
-    console.log('🔄 Iniciando sesión con Google...');
+
     this.authService
       .handleGoogleSignIn()
       .then((cognitoUser) => {})
@@ -536,7 +465,7 @@ export class LoginFormComponent implements OnInit {
    */
   private redirectToTourOperation(): void {
     this.isLoading = false;
-    console.log('🔀 Redirigiendo a Tour Operation...');
+
     window.location.href = environment.tourOperationUrl;
   }
 }

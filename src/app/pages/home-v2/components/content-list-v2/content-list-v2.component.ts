@@ -46,35 +46,23 @@ export class ContentListV2Component implements OnInit {
   ) {}
 
   ngOnInit() {
-    console.log(
-      'ContentListV2Component ngOnInit - content:',
-      this.content,
-      'type:',
-      this.type
-    );
+
     this.loadContent();
   }
 
   loadContent() {
-    console.log(
-      'loadContent called - type:',
-      this.type,
-      'BlockType.BlogList:',
-      BlockType.BlogList,
-      'BlockType.PressList:',
-      BlockType.PressList
-    );
+
     this.loading = true;
     this.error = false;
 
     if (this.type === BlockType.BlogList) {
-      console.log('Loading blogs...');
+
       this.loadBlogs();
     } else if (this.type === BlockType.PressList) {
-      console.log('Loading press...');
+
       this.loadPress();
     } else {
-      console.log('Unknown block type:', this.type);
+
     }
   }
 

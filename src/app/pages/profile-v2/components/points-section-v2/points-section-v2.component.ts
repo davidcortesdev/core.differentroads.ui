@@ -3,7 +3,6 @@ import { MembershipCard, PointsRecord, TravelerCategory, TravelerPointsSummary }
 import { PointsV2Service } from '../../../../core/services/v2/points-v2.service';
 import { BookingsServiceV2 } from '../../../../core/services/v2/bookings-v2.service';
 
-
 @Component({
   selector: 'app-points-section-v2',
   standalone: false,
@@ -162,7 +161,6 @@ export class PointsSectionV2Component implements OnInit, OnChanges {
     });
   }
 
-
   private updateCurrentCategoryInCards(): void {
     this.membershipCards = this.membershipCards.map(card => {
       // Verificar si la categoría está desbloqueada basándose en viajes completados
@@ -177,7 +175,6 @@ export class PointsSectionV2Component implements OnInit, OnChanges {
       };
     });
   }
-
 
   getNextCategory(): TravelerCategory | undefined {
     switch (this.currentCategory) {
@@ -204,7 +201,6 @@ export class PointsSectionV2Component implements OnInit, OnChanges {
         return undefined;
     }
   }  
-
 
   getCardClass(card: MembershipCard): string {
     return this.pointsService.getCardClass(card);
@@ -260,7 +256,6 @@ export class PointsSectionV2Component implements OnInit, OnChanges {
   getActionClass(type: string): string {
     return type === 'acumular' ? 'action-income' : 'action-redemption';
   }
-
 
   // ===== MÉTODOS PARA TARJETAS DE CATEGORÍA =====
   getCardCategoryName(card: MembershipCard): string {

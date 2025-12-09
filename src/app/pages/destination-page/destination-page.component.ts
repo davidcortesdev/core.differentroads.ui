@@ -144,13 +144,6 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
     this.meta.updateTag({ name: 'keywords', content: keywords });
 
     // Log para debug
-    console.log('Datos de ubicación cargados:', {
-      destinationId: this.destinationId,
-      destinationName: this.destinationLocation?.name,
-      continentId: this.continentId,
-      continentName: this.continentLocation?.name,
-      seoKeywords: keywords
-    });
 
     this.isLoading = false;
     
@@ -187,7 +180,7 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (tourIds) => {
           this.tourIds = tourIds;
-          console.log(`Tours encontrados para las ubicaciones [${locationIds.join(', ')}]:`, tourIds);
+
           this.isLoadingTours = false;
         },
         error: (error) => {

@@ -68,7 +68,13 @@
                   <!-- Columna 3: Estado -->
                   <div class="history-column status-column">
                     <span class="status-text">
-                      <p-tag [value]="getPaymentStatusDisplayName(item)" severity="info"></p-tag>
+                      <p-tag 
+                        [value]="getPaymentStatusDisplayName(item)" 
+                        [severity]="getPaymentStatusColor(item) ? undefined : 'info'"
+                        [style.background-color]="getPaymentStatusColor(item) || undefined"
+                        [style.color]="getPaymentStatusColor(item) ? '#fff' : undefined"
+                        [style.border]="getPaymentStatusColor(item) ? 'none' : undefined"
+                      ></p-tag>
                     </span>
                   </div>
 

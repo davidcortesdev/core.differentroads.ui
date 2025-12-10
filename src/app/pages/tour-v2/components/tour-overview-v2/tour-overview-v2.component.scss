@@ -324,12 +324,40 @@
   .destinations-breadcrumb {
     border: none;
     background: transparent;
+    
+    @media (max-width: 576px) {
+      .p-menuitem-text {
+        font-size: 0.5rem !important;
+        color: #94a3b8 !important;
+        line-height: 1.2 !important;
+      }
+
+      .p-breadcrumb-chevron {
+        font-size: 0.5rem !important;
+        margin: 0 0.15rem !important;
+        color: #cbd5e1 !important;
+      }
+
+      .p-breadcrumb-home {
+        font-size: 0.5rem !important;
+        color: #94a3b8 !important;
+        padding: 0.1rem !important;
+        
+        i {
+          font-size: 0.5rem !important;
+        }
+      }
+    }
   }
   .breadcrumb-skeleton {
     margin-bottom: 1.5rem;
     
     @media (max-width: 576px) {
-      margin-bottom: 0.25rem;
+      margin-bottom: 0.15rem;
+      
+      ::ng-deep .p-skeleton {
+        height: 18px !important;
+      }
     }
   }
 
@@ -362,30 +390,33 @@
   background: transparent;
 
   @media (max-width: 576px) {
-    margin-bottom: 0.25rem;
-    padding: 0.25rem 0;
-    opacity: 0.7; /* Hacer más discreto */
+    margin-bottom: 0.15rem;
+    padding: 0.1rem 0;
+    opacity: 0.6; /* Hacer más discreto */
+    line-height: 1.2;
 
     .p-breadcrumb-list {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
+      gap: 0.1rem;
     }
 
     /* Selecciona el último elemento del breadcrumb */
     .p-menuitem:last-child {
       flex-basis: 100%;
-      margin-top: 0.25rem;
+      margin-top: 0.15rem;
 
       /* Añade un pequeño margen izquierdo para alinear con el nivel anterior */
-      margin-left: 1rem;
+      margin-left: 0.8rem;
 
       /* Agrega un indicador visual que muestre que es una continuación */
       &::before {
         content: "→";
         display: inline-block;
-        margin-right: 0.3rem;
-        color: #64748b;
+        margin-right: 0.2rem;
+        color: #94a3b8;
+        font-size: 0.5rem;
       }
     }
 
@@ -396,22 +427,30 @@
 
     .p-menuitem {
       white-space: nowrap; /* Mantiene el texto en una línea */
+      padding: 0.1rem 0;
+      line-height: 1.2;
     }
 
     .p-menuitem-text {
-      font-size: 0.65rem; /* Texto aún más pequeño en móvil */
-      color: #64748b; /* Color más discreto */
+      font-size: 0.5rem !important; /* Texto más pequeño en móvil */
+      color: #94a3b8 !important; /* Color más discreto */
+      line-height: 1.2 !important;
     }
 
     .p-breadcrumb-chevron {
-      font-size: 0.65rem;
-      margin: 0 0.2rem;
-      color: #94a3b8; /* Color más discreto */
+      font-size: 0.5rem !important;
+      margin: 0 0.15rem !important;
+      color: #cbd5e1 !important; /* Color más discreto */
     }
 
     .p-breadcrumb-home {
-      font-size: 0.65rem;
-      color: #64748b; /* Color más discreto */
+      font-size: 0.5rem !important;
+      color: #94a3b8 !important;
+      padding: 0.1rem !important;
+      
+      i {
+        font-size: 0.5rem !important;
+      }
     }
   }
 

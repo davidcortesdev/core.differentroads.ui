@@ -1,7 +1,7 @@
 <div class="tour-header">
   <!-- Tour Information Section -->
   <div class="tour-info">
-    <!-- Rating y Reviews Section -->
+    <!-- Rating y Reviews Section - Solo visible cuando NO está scrolled -->
     <div class="tour-rating" *ngIf="averageRating !== null || reviewCount > 0">
       <p-rating
         [ngModel]="averageRating || 0"
@@ -20,8 +20,8 @@
     </div>
     
     <h1 class="tour-title">
-      <span class="title-prefix">Detalles del Tour: </span>
-      <span class="title-text">{{ tour.name || '' }}</span>
+      <span class="title-prefix">{{ getTitlePrefix() }}</span>
+      <span class="title-text">{{ getTitleWithoutPrefix() }}</span>
     </h1>
             
     <!-- ✅ NUEVA SECCIÓN: Mostrar país debajo del nombre con evento de clic -->

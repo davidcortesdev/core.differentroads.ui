@@ -3,8 +3,6 @@ import {
   IFlightPackDTO,
   IFlightResponse,
   FlightsNetService,
-  IFlightDetailDTO,
-  IFlightSegmentResponse,
 } from '../../services/flightsNet.service';
 import { AirportCityCacheService } from '../../../../core/services/locations/airport-city-cache.service';
 import { of } from 'rxjs';
@@ -29,18 +27,10 @@ export class FlightSectionV2Component implements OnChanges {
   // Escalas para cada vuelo
   departureFlightLayovers: string[] = [];
   returnFlightLayovers: string[] = [];
-  
-  // Detalles completos de los vuelos para el popover
-  departureFlightDetails: IFlightDetailDTO | null = null;
-  returnFlightDetails: IFlightDetailDTO | null = null;
-  
-  // Control de carga de ciudades
-  departureCitiesLoaded: boolean = false;
-  returnCitiesLoaded: boolean = false;
 
   constructor(
-    private airportCityCacheService: AirportCityCacheService,
     private flightsNetService: FlightsNetService,
+    private airportCityCacheService: AirportCityCacheService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -279,8 +269,6 @@ export class FlightSectionV2Component implements OnChanges {
         
         if (details && details.segments) {
           console.log(`📊 FlightSection: Vuelo de ida tiene ${details.segments.length} segmentos`);
-          // Guardar detalles completos para el popover
-          this.departureFlightDetails = details;
           
           if (details.segments.length > 1) {
             this.departureFlightLayovers = [];
@@ -292,17 +280,13 @@ export class FlightSectionV2Component implements OnChanges {
               }
             }
             console.log('✅ Escalas de ida cargadas:', this.departureFlightLayovers);
-            // Precargar ciudades para el popover
-            this.preloadCitiesForDepartureFlight();
           } else {
             this.departureFlightLayovers = [];
-            this.departureFlightDetails = null;
             console.log('⚠️ Vuelo de ida tiene solo 1 segmento (vuelo directo)');
           }
           this.cdr.detectChanges(); // Forzar actualización de la vista
         } else {
           this.departureFlightLayovers = [];
-          this.departureFlightDetails = null;
           console.log('⚠️ Vuelo de ida sin escalas o sin segmentos. Detalles:', details);
           if (details) {
             console.log('   - Segments:', details.segments);
@@ -334,8 +318,6 @@ export class FlightSectionV2Component implements OnChanges {
         
         if (details && details.segments) {
           console.log(`📊 FlightSection: Vuelo de vuelta tiene ${details.segments.length} segmentos`);
-          // Guardar detalles completos para el popover
-          this.returnFlightDetails = details;
           
           if (details.segments.length > 1) {
             this.returnFlightLayovers = [];
@@ -347,17 +329,13 @@ export class FlightSectionV2Component implements OnChanges {
               }
             }
             console.log('✅ Escalas de vuelta cargadas:', this.returnFlightLayovers);
-            // Precargar ciudades para el popover
-            this.preloadCitiesForReturnFlight();
           } else {
             this.returnFlightLayovers = [];
-            this.returnFlightDetails = null;
             console.log('⚠️ Vuelo de vuelta tiene solo 1 segmento (vuelo directo)');
           }
           this.cdr.detectChanges(); // Forzar actualización de la vista
         } else {
           this.returnFlightLayovers = [];
-          this.returnFlightDetails = null;
           console.log('⚠️ Vuelo de vuelta sin escalas o sin segmentos. Detalles:', details);
           if (details) {
             console.log('   - Segments:', details.segments);
@@ -374,110 +352,14 @@ export class FlightSectionV2Component implements OnChanges {
   }
 
   /**
-   * Obtiene el texto de escalas para mostrar (ej: "1 escala", "2 escalas")
+   * Obtiene el código IATA de la primera escala para mostrar (ej: "AMS")
    */
   getLayoversText(layovers: string[]): string {
     if (!layovers || layovers.length === 0) {
       return '';
     }
-    return layovers.length === 1 ? '1 escala' : `${layovers.length} escalas`;
+    // Mostrar solo el primer código IATA
+    return layovers[0];
   }
 
-  /**
-   * Precarga ciudades para el vuelo de ida
-   */
-  private async preloadCitiesForDepartureFlight(): Promise<void> {
-    if (!this.departureFlightDetails || !this.departureFlightDetails.segments) {
-      return;
-    }
-
-    const airportCodes: string[] = [];
-    this.departureFlightDetails.segments.forEach(segment => {
-      if (segment.departureIata && !airportCodes.includes(segment.departureIata)) {
-        airportCodes.push(segment.departureIata);
-      }
-      if (segment.arrivalIata && !airportCodes.includes(segment.arrivalIata)) {
-        airportCodes.push(segment.arrivalIata);
-      }
-    });
-
-    if (airportCodes.length > 0) {
-      try {
-        await this.airportCityCacheService.preloadAllAirportCities(airportCodes);
-        this.departureCitiesLoaded = true;
-        this.cdr.detectChanges();
-      } catch (error: any) {
-        console.warn('⚠️ Error al precargar ciudades para vuelo de ida:', error);
-        this.departureCitiesLoaded = true; // Mostrar de todas formas
-        this.cdr.detectChanges();
-      }
-    } else {
-      this.departureCitiesLoaded = true;
-    }
-  }
-
-  /**
-   * Precarga ciudades para el vuelo de vuelta
-   */
-  private async preloadCitiesForReturnFlight(): Promise<void> {
-    if (!this.returnFlightDetails || !this.returnFlightDetails.segments) {
-      return;
-    }
-
-    const airportCodes: string[] = [];
-    this.returnFlightDetails.segments.forEach(segment => {
-      if (segment.departureIata && !airportCodes.includes(segment.departureIata)) {
-        airportCodes.push(segment.departureIata);
-      }
-      if (segment.arrivalIata && !airportCodes.includes(segment.arrivalIata)) {
-        airportCodes.push(segment.arrivalIata);
-      }
-    });
-
-    if (airportCodes.length > 0) {
-      try {
-        await this.airportCityCacheService.preloadAllAirportCities(airportCodes);
-        this.returnCitiesLoaded = true;
-        this.cdr.detectChanges();
-      } catch (error: any) {
-        console.warn('⚠️ Error al precargar ciudades para vuelo de vuelta:', error);
-        this.returnCitiesLoaded = true; // Mostrar de todas formas
-        this.cdr.detectChanges();
-      }
-    } else {
-      this.returnCitiesLoaded = true;
-    }
-  }
-
-  /**
-   * Obtiene los segmentos formateados para el popover del vuelo de ida
-   */
-  getDepartureFlightSegments(): IFlightSegmentResponse[] {
-    if (!this.departureFlightDetails || !this.departureFlightDetails.segments) {
-      return [];
-    }
-    return this.departureFlightDetails.segments
-      .sort((a, b) => a.segmentRank - b.segmentRank)
-      .map(segment => ({
-        ...segment,
-        departureCity: segment.departureCity || this.airportCityCacheService.getCityNameFromCache(segment.departureIata || '') || segment.departureIata || '',
-        arrivalCity: segment.arrivalCity || this.airportCityCacheService.getCityNameFromCache(segment.arrivalIata || '') || segment.arrivalIata || ''
-      }));
-  }
-
-  /**
-   * Obtiene los segmentos formateados para el popover del vuelo de vuelta
-   */
-  getReturnFlightSegments(): IFlightSegmentResponse[] {
-    if (!this.returnFlightDetails || !this.returnFlightDetails.segments) {
-      return [];
-    }
-    return this.returnFlightDetails.segments
-      .sort((a, b) => a.segmentRank - b.segmentRank)
-      .map(segment => ({
-        ...segment,
-        departureCity: segment.departureCity || this.airportCityCacheService.getCityNameFromCache(segment.departureIata || '') || segment.departureIata || '',
-        arrivalCity: segment.arrivalCity || this.airportCityCacheService.getCityNameFromCache(segment.arrivalIata || '') || segment.arrivalIata || ''
-      }));
-  }
 }

@@ -63,35 +63,7 @@
   <app-root></app-root>
   
   <!-- Scalapay Widget -->
-  <script>
-    (function() {
-      var script = document.createElement('script');
-      script.type = 'module';
-      script.src = 'https://cdn.scalapay.com/widget/scalapay-widget-loader.js?version=V5';
-      script.crossOrigin = 'anonymous';
-      
-      script.onerror = function() {
-        // Fallback sin type="module"
-        var scriptNoModule = document.createElement('script');
-        scriptNoModule.src = 'https://cdn.scalapay.com/widget/scalapay-widget-loader.js?version=V5';
-        scriptNoModule.crossOrigin = 'anonymous';
-        document.body.appendChild(scriptNoModule);
-      };
-      
-      document.body.appendChild(script);
-      
-      // Notificar cuando el widget esté listo
-      var checkInterval = setInterval(function() {
-        if (customElements.get('scalapay-widget')) {
-          window.dispatchEvent(new CustomEvent('scalapay-ready'));
-          clearInterval(checkInterval);
-        }
-      }, 100);
-      
-      // Limpiar después de 10 segundos
-      setTimeout(function() { clearInterval(checkInterval); }, 10000);
-    })();
-  </script>
+  <script src="assets/js/scalapay-loader.js"></script>
 </body>
 
 <script>

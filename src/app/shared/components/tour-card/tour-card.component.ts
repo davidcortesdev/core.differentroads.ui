@@ -49,7 +49,6 @@ export class TourCardComponent implements OnInit, AfterViewInit {
 
   monthlyPrice = 0;
   scalapayWidgetId = '';
-  private originalConsoleWarn: any = null;
   constructor(
     private router: Router,
     @Inject(DOCUMENT) private document: Document,
@@ -77,19 +76,13 @@ export class TourCardComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     if (this.showScalapayPrice) {
-      // Suprimir warnings específicos de Scalapay en la consola
-      this.suppressScalapayWarnings();
-     
       // Cargar el script de Scalapay
       this.loadScalapayScript();
     }
   }
 
   ngOnDestroy(): void {
-    // Restaurar la función original de console.warn
-    if (this.originalConsoleWarn) {
-      console.warn = this.originalConsoleWarn;
-    }
+    // Cleanup si es necesario
   }
 
   handleTourClick(): void {
@@ -143,24 +136,6 @@ export class TourCardComponent implements OnInit, AfterViewInit {
     return this.tourData.price / 4;
   }
 
-  private suppressScalapayWarnings(): void {
-    // Guardar la función original para restaurarla más tarde
-    this.originalConsoleWarn = console.warn;
-   
-    // Reemplazar console.warn con una versión filtrada
-    console.warn = (...args: any[]) => {
-      // Verificar si el mensaje contiene el texto específico que queremos suprimir
-      if (args[0] && typeof args[0] === 'string' &&
-         (args[0].includes('scalapay widget: travel date not found') ||
-          args[0].includes('scalapay-widget'))) {
-        return; // Suprimir este warning específico
-      }
-     
-      // Para cualquier otro warning, usar la función original
-      this.originalConsoleWarn.apply(console, args);
-    };
-  }
- 
   private loadScalapayScript(): void {
     // // Verificar si el script ya está cargado
     // const scriptExists = !!this.document.querySelector('script[src*="scalapay-widget-loader.js"]');

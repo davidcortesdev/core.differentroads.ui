@@ -68,7 +68,6 @@ export class CloudinaryService {
     return base64Regex.test(str);
   }
 
-
   /**
    * Converts a data URL to a Blob object
    * @param dataURL The data URL string

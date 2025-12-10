@@ -64,7 +64,6 @@ export class PersonalInfoV2Service {
     return `${day}/${month}/${year}`;
   }
 
-
   /**
    * Obtiene usuarios basados en criterios de filtro
    * @param filters - Criterios de filtro opcionales
@@ -191,7 +190,6 @@ export class PersonalInfoV2Service {
     );
   }
 
-
   /**
    * Guarda los datos de un usuario (crear o actualizar según si existe ID)
    * @param userData - Datos del usuario
@@ -237,7 +235,6 @@ export class PersonalInfoV2Service {
       })
     );
   }
-
 
   /**
    * Guarda un valor de campo de usuario individual

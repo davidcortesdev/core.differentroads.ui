@@ -488,7 +488,6 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
     return true;
   }
 
-
   /**
    * TrackBy function para optimizar el ngFor
    */

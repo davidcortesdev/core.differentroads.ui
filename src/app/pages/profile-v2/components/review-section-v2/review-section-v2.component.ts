@@ -1,7 +1,6 @@
 import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { ReviewV2 } from '../../../../core/models/v2/profile-v2.model';
 
-
 @Component({
   selector: 'app-review-section-v2',
   standalone: false,

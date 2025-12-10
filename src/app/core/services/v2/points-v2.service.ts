@@ -361,8 +361,6 @@ export class PointsV2Service {
     return this.sanitizer.bypassSecurityTrustHtml(content);
   }
 
-
-
   /**
    * Obtiene el saldo de puntos desde la API
    * @param travelerId ID del viajero
@@ -553,7 +551,6 @@ export class PointsV2Service {
     };
     return colors[category] || '#4A90E2';
   }
-
 
   /**
    * Verifica si una categoría está desbloqueada
@@ -841,7 +838,6 @@ export class PointsV2Service {
         transactions.push(mainTravelerTransaction);
       }
 
-
       const totalPoints = transactions.reduce((sum, t) => sum + t.points, 0);
       const message = `Se generaron ${totalPoints} puntos para ${travelers.length} viajeros en reserva ${bookingId}`;
 
@@ -859,7 +855,6 @@ export class PointsV2Service {
       };
     }
   }
-
 
   // ===== MÉTODOS DE VALIDACIÓN PARA CANJE DE PUNTOS =====
 
@@ -1257,7 +1252,6 @@ export class PointsV2Service {
     
     return true;
   }
-
 
   // ===== MÉTODOS DE UTILIDAD =====
 

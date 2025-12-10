@@ -947,7 +947,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-
   private loadDepartureDetails(departureId: number): void {
     this.loading = true;
     this.error = undefined;
@@ -1028,7 +1027,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
         this.updatePassengerText();
       }
     }
-
 
     // Auto-selección del departure desde el selector
     // Si allDepartures ya está cargado, proceder inmediatamente
@@ -1223,7 +1221,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       this.addToCart(nearestBookable);
     }
   }
-
 
   get tripDuration(): number {
     if (!this.departureDetails) return 0;
@@ -1959,7 +1956,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       }
     }
   }
-
 
   // Obtener el estado de plazas para mostrar en la UI
   getAvailabilityStatus(departureId: number): {

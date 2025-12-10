@@ -410,17 +410,13 @@ export class BookingDocumentationV2Component implements OnInit {
    * Método de prueba para verificar que los servicios funcionan
    */
   testServices(): void {
-    console.log('🧪 TEST: Testing services for booking:', this.bookingId);
-    console.log('📊 Loaded notification statuses:', this.notificationStatuses);
-    console.log('📋 Loaded notification types:', this.notificationTypes);
-    console.log('📄 Loaded document types:', this.documentTypes);
 
     // Probar servicio de notificaciones
     this.notificationService
       .getNotificationsByReservationId(parseInt(this.bookingId, 10))
       .subscribe({
         next: (notifications) => {
-          console.log('✅ TEST: Notifications service working:', notifications);
+
         },
         error: (error) => {
           console.error('❌ TEST: Notifications service error:', error);
@@ -432,7 +428,7 @@ export class BookingDocumentationV2Component implements OnInit {
       .getCompleteDocumentsByReservationId(56) // Usar reserva 56 que tiene documentos
       .subscribe({
         next: (documents) => {
-          console.log('✅ TEST: Documentation service working:', documents);
+
         },
         error: (error) => {
           console.error('❌ TEST: Documentation service error:', error);

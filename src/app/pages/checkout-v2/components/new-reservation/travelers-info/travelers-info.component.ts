@@ -111,13 +111,12 @@ export class TravelersInfoComponent implements OnInit, OnChanges {
   }
 
   private loadTravelers(): void {
-    console.log('Cargando travelers para reservation ID:', this.reservationId);
 
     this.reservationTravelerService
       .getByReservation(this.reservationId)
       .subscribe({
         next: (travelers) => {
-          console.log('Travelers obtenidos:', travelers);
+
           this.loadTravelersFields(travelers);
         },
         error: (error) => {
@@ -150,11 +149,6 @@ export class TravelersInfoComponent implements OnInit, OnChanges {
       accommodations: forkJoin(travelerAccommodationRequests),
     }).subscribe({
       next: (results) => {
-        console.log('Campos de todos los travelers:', results.fields);
-        console.log(
-          'Acomodaciones de todos los travelers:',
-          results.accommodations
-        );
 
         // Combinar travelers con sus campos y acomodaciones
         const travelersWithFields: TravelerWithFields[] = travelers.map(
@@ -167,7 +161,6 @@ export class TravelersInfoComponent implements OnInit, OnChanges {
 
         // Procesar datos para el template
         this.travelers = this.processTravelersData(travelersWithFields);
-        console.log('Travelers procesados:', this.travelers);
 
         this.loading = false;
 

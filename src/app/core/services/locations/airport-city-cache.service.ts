@@ -4,7 +4,6 @@ import { takeUntil } from 'rxjs/operators';
 import { LocationAirportNetService } from './locationAirportNet.service';
 import { LocationNetService } from './locationNet.service';
 
-
 export interface AirportCityInfo {
   cityName: string;
   airportName?: string;
@@ -144,7 +143,6 @@ export class AirportCityCacheService {
     const uncachedAirports = airportCodes.filter(code => !this.isCityCached(code));
 
     if (uncachedAirports.length === 0) {
-      //console.log('✅ Todas las ciudades ya están en cache');
       return Promise.resolve();
     }
 
@@ -155,7 +153,6 @@ export class AirportCityCacheService {
 
     // Esperar a que todas las promesas se completen
     return Promise.all(airportPromises).then(() => {
-      //console.log('✅ Todas las ciudades de aeropuertos han sido cargadas');
     }).catch((error) => {
       console.warn('⚠️ Algunas ciudades no se pudieron cargar:', error);
     });
@@ -213,7 +210,7 @@ export class AirportCityCacheService {
    * Limpia el cache de ciudades
    */
   clearCache(): void {
-    console.log('🧹 Limpiando cache de ciudades de aeropuertos');
+
     this.airportCityCache.clear();
     this.loadingPromises.clear();
   }
@@ -302,7 +299,6 @@ export class AirportCityCacheService {
                           airportName: airport.name,
                           isLoaded: true
                         });
-                        //console.log(`✅ Ciudad encontrada para aeropuerto ${airportIATA}: ${cityName}`);
                       } else {
                         this.setFallbackCityName(airportIATA, cacheKey, airport.name || airportIATA);
                       }
@@ -318,7 +314,7 @@ export class AirportCityCacheService {
                 // Si no hay locationId, usar el nombre del aeropuerto o el código IATA
                 const airportName = airport.name || airportIATA;
                 this.setFallbackCityName(airportIATA, cacheKey, airportName);
-                console.log(`ℹ️ Aeropuerto ${airportIATA} sin ciudad asociada, usando: ${airportName}`);
+
                 resolve();
               }
             } else {

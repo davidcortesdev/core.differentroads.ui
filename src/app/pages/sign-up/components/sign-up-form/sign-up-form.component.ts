@@ -251,14 +251,12 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
     }
 
     this.isLoading = true;
-    console.log('Formulario enviado:', this.signUpForm.value);
 
     // Proceder con el registro del usuario
     this.authService
       .signUp(this.signUpForm.value.email, this.signUpForm.value.password)
       .then((cognitoUserId) => {
-              console.log('Usuario creado en Cognito con ID:', cognitoUserId);
-              
+
               // Primero buscar si el usuario ya existe en UsersNet por email
               this.usersNetService
                 .getUsersByEmail(this.signUpForm.value.email)
@@ -281,8 +279,7 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
                     if (existingUsers && existingUsers.length > 0) {
                       // Usuario existe, actualizar solo name, lastName, phone y cognitoId
                       const existingUser = existingUsers[0];
-                      console.log('Usuario ya existe en UsersNet, actualizando datos:', existingUser);
-                      
+
                       // Datos de actualización (campos requeridos + los que queremos actualizar)
                       const updateData = {
                         cognitoId: cognitoUserId,
@@ -304,7 +301,7 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
                         )
                         .subscribe({
                           next: () => {
-                            console.log('Usuario actualizado exitosamente con prefijo telefónico');
+
                             // Guardar el usuario para verificar después de la confirmación
                             this.registeredUser = existingUser;
                             
@@ -314,7 +311,7 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
                             this.isConfirming = true;
                             this.registeredUsername = this.signUpForm.value.email;
                             this.userPassword = this.signUpForm.value.password;
-                            console.log('Registro completado. Esperando confirmación.');
+
                           },
                           error: (error: unknown) => {
                             this.isLoading = false;
@@ -323,13 +320,12 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
                         });
                     } else {
                       // Usuario no existe, crear nuevo
-                      console.log('Usuario no existe en UsersNet, creando nuevo usuario');
-                      
+
                       this.usersNetService
                         .createUser(userData)
                         .pipe(
                           switchMap((user) => {
-                            console.log('Usuario creado exitosamente:', user);
+
                             return this.phonePrefixService.saveUserPhonePrefix(
                               user.id.toString(), 
                               this.signUpForm.value.phonePrefix || prefixValue
@@ -349,7 +345,7 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
                             this.isConfirming = true;
                             this.registeredUsername = this.signUpForm.value.email;
                             this.userPassword = this.signUpForm.value.password;
-                            console.log('Registro completado con prefijo telefónico. Esperando confirmación.');
+
                           },
                           error: (error: unknown) => {
                             this.isLoading = false;
@@ -497,7 +493,7 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
    */
   private redirectToTourOperation(): void {
     this.isLoading = false;
-    console.log('🔀 Redirigiendo a Tour Operation...');
+
     window.location.href = environment.tourOperationUrl;
   }
 }

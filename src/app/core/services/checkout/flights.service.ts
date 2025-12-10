@@ -55,17 +55,12 @@ export class FlightsService {
     const flightlessOption = this.flightlessOptionSubject.getValue();
     const orderFlights: Flight[] = [];
 
-    console.log('Updating order flights with selected flight:', selectedFlight);
-    console.log('Current flightless option:', flightlessOption);
-
     if (selectedFlight) {
       // If it's an Amadeus flight and we have a flightless option, include both
       if (selectedFlight.source === 'amadeus' && flightlessOption) {
         orderFlights.push(selectedFlight);
         orderFlights.push(flightlessOption);
-        console.log(
-          'Adding both Amadeus flight and flightless option to order'
-        );
+
       } else {
         // Otherwise just include the selected flight
         orderFlights.push(selectedFlight);
@@ -73,7 +68,7 @@ export class FlightsService {
     }
 
     this.orderFlightsSubject.next(orderFlights);
-    console.log('Updated order flights:', orderFlights);
+
   }
 
   getSelectedFlight(): Flight | null {

@@ -2,15 +2,11 @@
 <html lang="es">
 
 <head>
-  <!-- Termly CMP - Solo en producción (no en localhost) -->
-  <script>
-    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-      var termlyScript = document.createElement('script');
-      termlyScript.type = 'text/javascript';
-      termlyScript.src = 'https://app.termly.io/resource-blocker/c5045a2e-2021-47b5-a00f-e2cce0427476?autoBlock=on';
-      document.head.appendChild(termlyScript);
-    }
-  </script>
+  <meta charset="utf-8" />
+  
+  <!-- Termly CMP - DEBE SER EL PRIMER SCRIPT, SIN ASYNC/DEFER, SOLO EN PRODUCCIÓN -->
+  <!-- Carga síncrona directa: Termly debe ejecutarse antes que cualquier otro script -->
+  <script type="text/javascript" src="https://app.termly.io/resource-blocker/c5045a2e-2021-47b5-a00f-e2cce0427476?autoBlock=on"></script>
 
   <!-- Google Tag Manager -->
   <script>(function (w, d, s, l, i) {
@@ -42,8 +38,6 @@
 
   <!-- Scalapay Widget Loader - Carga temprana y optimizada -->
   <script src="assets/js/scalapay-loader.js" defer></script>
-
-  <meta charset="utf-8" />
   <title>Different Roads - Viajes y Experiencias Únicas</title>
   <base href="/" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />

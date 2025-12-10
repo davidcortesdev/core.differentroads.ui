@@ -30,7 +30,49 @@
         </div>
         
         <div class="journey-line">
-          <div class="line"></div>
+          <div class="line-container">
+            <div class="line"></div>
+            <span class="layovers-text" *ngIf="departureFlightLayovers && departureFlightLayovers.length > 0" (mouseenter)="opDeparture.show($event)" (mouseleave)="opDeparture.hide()">
+              {{ getLayoversText(departureFlightLayovers) }}
+            </span>
+            <p-popover #opDeparture [showDelay]="300" [hideDelay]="100">
+              <div class="flight-details-content">
+                <div class="popover-header">
+                  <h4>Detalle del vuelo</h4>
+                </div>
+                <ul *ngIf="departureCitiesLoaded" class="flight-segments-list">
+                  <li *ngFor="let seg of getDepartureFlightSegments()" class="flight-segment-item">
+                    <div class="segment-info">
+                      <div class="segment-route">
+                        <div class="departure-info">
+                          <div class="time-city-row">
+                            <span class="time">{{ formatTime(seg.departureTime) }}</span>
+                            <span class="city-name">{{ seg.departureCity }}</span>
+                          </div>
+                          <span class="airport-code">({{ seg.departureIata }})</span>
+                        </div>
+                        <span class="route-arrow">→</span>
+                        <div class="arrival-info">
+                          <div class="time-city-row">
+                            <span class="time">{{ formatTime(seg.arrivalTime) }}</span>
+                            <span class="city-name">{{ seg.arrivalCity }}</span>
+                          </div>
+                          <span class="airport-code">({{ seg.arrivalIata }})</span>
+                        </div>
+                      </div>
+                      <div class="flight-number" *ngIf="seg.flightNumber">
+                        Vuelo: {{ seg.flightNumber }}
+                      </div>
+                    </div>
+                  </li>
+                </ul>
+                <div *ngIf="!departureCitiesLoaded" class="loading-cities">
+                  <i class="pi pi-spin pi-spinner"></i>
+                  <span>Cargando nombres de ciudades...</span>
+                </div>
+              </div>
+            </p-popover>
+          </div>
           <div class="plane-icon">
             <i class="fas fa-plane"></i>
           </div>
@@ -68,7 +110,49 @@
         </div>
         
         <div class="journey-line">
-          <div class="line"></div>
+          <div class="line-container">
+            <div class="line"></div>
+            <span class="layovers-text" *ngIf="returnFlightLayovers && returnFlightLayovers.length > 0" (mouseenter)="opReturn.show($event)" (mouseleave)="opReturn.hide()">
+              {{ getLayoversText(returnFlightLayovers) }}
+            </span>
+            <p-popover #opReturn [showDelay]="300" [hideDelay]="100">
+              <div class="flight-details-content">
+                <div class="popover-header">
+                  <h4>Detalle del vuelo</h4>
+                </div>
+                <ul *ngIf="returnCitiesLoaded" class="flight-segments-list">
+                  <li *ngFor="let seg of getReturnFlightSegments()" class="flight-segment-item">
+                    <div class="segment-info">
+                      <div class="segment-route">
+                        <div class="departure-info">
+                          <div class="time-city-row">
+                            <span class="time">{{ formatTime(seg.departureTime) }}</span>
+                            <span class="city-name">{{ seg.departureCity }}</span>
+                          </div>
+                          <span class="airport-code">({{ seg.departureIata }})</span>
+                        </div>
+                        <span class="route-arrow">→</span>
+                        <div class="arrival-info">
+                          <div class="time-city-row">
+                            <span class="time">{{ formatTime(seg.arrivalTime) }}</span>
+                            <span class="city-name">{{ seg.arrivalCity }}</span>
+                          </div>
+                          <span class="airport-code">({{ seg.arrivalIata }})</span>
+                        </div>
+                      </div>
+                      <div class="flight-number" *ngIf="seg.flightNumber">
+                        Vuelo: {{ seg.flightNumber }}
+                      </div>
+                    </div>
+                  </li>
+                </ul>
+                <div *ngIf="!returnCitiesLoaded" class="loading-cities">
+                  <i class="pi pi-spin pi-spinner"></i>
+                  <span>Cargando nombres de ciudades...</span>
+                </div>
+              </div>
+            </p-popover>
+          </div>
           <div class="plane-icon">
             <i class="fas fa-plane"></i>
           </div>

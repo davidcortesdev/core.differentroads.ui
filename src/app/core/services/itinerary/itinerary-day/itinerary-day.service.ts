@@ -34,7 +34,6 @@ export interface IItineraryDayResponse {
   dayNumber: number;
 }
 
-
 /**
  * Filtros disponibles para consultar días de itinerario.
  */
@@ -44,7 +43,6 @@ export interface ItineraryDayFilters {
     itineraryId?: number;
     dayNumber?: number;
   }
-  
 
 @Injectable({
   providedIn: 'root',
@@ -54,7 +52,6 @@ export class ItineraryDayService {
 
   constructor(private http: HttpClient) {}
 
- 
 /**
    * Obtiene todos los días de itinerario, con opción de aplicar filtros.
    * @param filters Filtros opcionales para la búsqueda.
@@ -76,7 +73,6 @@ export class ItineraryDayService {
   
       return this.http.get<IItineraryDayResponse[]>(this.API_URL, { params });
     }
-  
 
   /**
    * Obtiene un día de itinerario por su ID.

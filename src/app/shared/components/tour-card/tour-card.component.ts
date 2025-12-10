@@ -141,7 +141,6 @@ export class TourCardComponent implements OnInit, AfterViewInit {
     // const scriptExists = !!this.document.querySelector('script[src*="scalapay-widget-loader.js"]');
    
     // if (!scriptExists) {
-    //   console.log('Cargando script de Scalapay...');
      
     //   // Crear el script
     //   const script = this.document.createElement('script');

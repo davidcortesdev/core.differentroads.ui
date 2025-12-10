@@ -121,7 +121,6 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
     }
   }
 
-
   private loadBannerContent(): void {
     // Assuming banner content has a specific configuration ID
     // You may need to adjust this based on your actual configuration
@@ -246,7 +245,6 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
     );
   }
 
-
   filterTripTypes(event: { query: string }): void {
     const query = event.query.toLowerCase().trim();
     this.filteredTripTypes = this.tripTypes.filter(
@@ -363,7 +361,6 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
     return maxDate;
   }
 
-
   private setInitialValues(): void {
     if (this.initialDestination) {
       this.selectedDestination = this.initialDestination.trim();
@@ -440,7 +437,6 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
       }
     });
   }
-
 
   /**
    * Validar que el rango de fechas sea válido

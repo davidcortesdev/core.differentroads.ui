@@ -90,7 +90,6 @@ export class PasswordRecoveryFormComponent implements OnInit {
   }
 
   async onEmailSubmit(event: Event) {
-    console.log('onEmailSubmit called'); // Depuración
     event.preventDefault(); // Prevenir el comportamiento predeterminado del formulario
 
     if (this.emailForm.invalid) {
@@ -116,7 +115,6 @@ export class PasswordRecoveryFormComponent implements OnInit {
   }
 
   async onResetSubmit(event: Event) {
-    console.log('onResetSubmit called'); // Depuración
     event.preventDefault(); // Prevenir el comportamiento predeterminado del formulario
 
     if (this.resetForm.invalid) {

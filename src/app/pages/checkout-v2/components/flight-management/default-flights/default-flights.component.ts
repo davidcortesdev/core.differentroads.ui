@@ -138,7 +138,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       changes['selectedFlightFromParent'].currentValue !==
         changes['selectedFlightFromParent'].previousValue
     ) {
-     
 
       this.selectedFlight = changes['selectedFlightFromParent'].currentValue;
 
@@ -148,7 +147,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
         this.selectedFlight &&
         this.reservationId
       ) {
-      
 
         this.saveFlightAssignments()
           .then((success) => {
@@ -344,7 +342,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
         )[0];
         const flightId = mostRecentFlight.activityPackId;
 
-
         // Buscar si este vuelo está disponible en la lista actual
         const matchingFlight = this.flightPacks.find((f) => f.id === flightId);
 
@@ -522,7 +519,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
   // ✅ MÉTODO NUEVO: Deseleccionar vuelo del departure sin guardar en BD (para sincronización con specific-search)
   async deselectDepartureFlightWithoutSaving(): Promise<void> {
 
-    
     if (this.selectedFlight && this.selectedFlight.id === this.departureActivityPackId) {
       
       // Marcar como selección interna para evitar guardar automáticamente
@@ -983,7 +979,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                   );
                   const mostRecentAssignment = sortedAssignments[0];
 
-
                   const updateData = {
                     id: mostRecentAssignment.id,
                     reservationTravelerId: traveler.id,
@@ -1028,7 +1023,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       }
 
       const activityPackId = this.selectedFlight.id;
-
 
       // ✅ MODIFICADO: SOLO actualizar registros existentes del departure, NUNCA crear nuevos
       const existingAssignmentsPromises = travelers.map((traveler) => {
@@ -1196,7 +1190,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       if (!activityPackId || activityPackId <= 0) {
         return;
       }
-
 
       const updatePromises = travelers.map((traveler) => {
         return new Promise<boolean>((resolve, reject) => {

@@ -440,4 +440,3 @@ export class InfoTravelerActivitiesComponent implements OnInit, OnDestroy {
   }
 }
 
-

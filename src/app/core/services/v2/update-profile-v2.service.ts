@@ -23,7 +23,6 @@ export class UpdateProfileV2Service {
     private usersNetService: UsersNetService
   ) { }
 
-
   /**
    * Actualiza el perfil completo del usuario
    * @param userId - ID del usuario
@@ -261,7 +260,6 @@ export class UpdateProfileV2Service {
     };
   }
 
-
   /**
    * Formatea una fecha a formato YYYY-MM-DD
    * @param dateInput - Fecha en cualquier formato
@@ -389,7 +387,6 @@ export class UpdateProfileV2Service {
       }
     }
 
-
     // Validación de código postal
     if (personalInfo.codigoPostal?.trim()) {
       const postalCodeRegex = /^[0-9]{5}$/;
@@ -461,7 +458,6 @@ export class UpdateProfileV2Service {
     return filtered.slice(0, 20);
   }
 
-
   /**
    * Valida y filtra el input de ciudad
    * @param value - Valor del input
@@ -479,7 +475,6 @@ export class UpdateProfileV2Service {
   validateCodigoPostalInput(value: string): string {
     return value.replace(/\D/g, '').slice(0, 5);
   }
-
 
   /**
    * Valida y filtra el input de nombre

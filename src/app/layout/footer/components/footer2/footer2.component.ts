@@ -12,4 +12,3 @@ export class Footer2Component implements OnInit {
   ngOnInit(): void {}
 }
 
-

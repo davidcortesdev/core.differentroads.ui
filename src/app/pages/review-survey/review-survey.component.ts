@@ -66,7 +66,6 @@ interface Period {
   tourExternalID?: string;
 }
 
-
 @Component({
   selector: 'app-review-survey',
   standalone: false,
@@ -123,7 +122,7 @@ export class ReviewSurveyComponent implements OnInit {
 
   ngOnInit(): void {
     this.route.params.subscribe((params) => {
-      console.log('params', params);
+
       if (params['periodTkId']) {
         this.periodExternalId = params['periodTkId'];
 

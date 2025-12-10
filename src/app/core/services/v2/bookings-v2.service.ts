@@ -10,7 +10,6 @@ import { PaymentStatusNetService, IPaymentStatusResponse } from '../../../pages/
 import { PaymentMethodNetService, IPaymentMethodResponse } from '../../../pages/checkout-v2/services/paymentMethodNet.service';
 import { PaymentService, PaymentInfo } from '../payments/payment.service';
 
-
 @Injectable({
   providedIn: 'root',
 })
@@ -102,7 +101,6 @@ export class BookingsServiceV2 {
       // Filtrar solo historial (status 7 = PAID, 8 = CANCELLED)
       map((reservations: ReservationResponse[]) => {
 
-        
         const filtered = reservations.filter(reservation => 
           reservation.reservationStatusId === 7 || reservation.reservationStatusId === 8
         );

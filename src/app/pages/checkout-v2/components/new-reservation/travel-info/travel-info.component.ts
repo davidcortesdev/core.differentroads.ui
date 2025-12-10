@@ -94,14 +94,12 @@ export class TravelInfoComponent implements OnInit, OnChanges {
   }
 
   private loadTravelers(): void {
-    console.log('Cargando travelers para reservation ID:', this.reservationId);
 
     this.reservationTravelerService
       .getByReservation(this.reservationId)
       .subscribe({
         next: (travelers) => {
           this.totalTravelers = travelers.length;
-          console.log('Travelers obtenidos:', travelers);
 
           // Cargar campos de todos los travelers
           this.loadTravelersFields(travelers);
@@ -125,7 +123,6 @@ export class TravelInfoComponent implements OnInit, OnChanges {
 
     forkJoin(travelerFieldRequests).subscribe({
       next: (allTravelerFields) => {
-        console.log('Campos de todos los travelers:', allTravelerFields);
 
         // Combinar travelers con sus campos
         this.travelersWithFields = travelers.map((traveler, index) => ({
@@ -133,10 +130,6 @@ export class TravelInfoComponent implements OnInit, OnChanges {
           fields: allTravelerFields[index],
         }));
 
-        console.log(
-          'Travelers con campos combinados:',
-          this.travelersWithFields
-        );
         this.loading = false;
       },
       error: (error) => {
@@ -149,12 +142,10 @@ export class TravelInfoComponent implements OnInit, OnChanges {
   private loadTourInfo(): void {
     if (!this.tourId) return;
 
-    console.log('Cargando información del tour con ID:', this.tourId);
-
     this.tourService.getTourById(this.tourId).subscribe({
       next: (tour) => {
         this.tourInfo = tour;
-        console.log('Información del tour cargada:', tour);
+
       },
       error: (error) => {
         console.error('Error loading tour info:', error);
@@ -165,12 +156,10 @@ export class TravelInfoComponent implements OnInit, OnChanges {
   private loadDepartureInfo(): void {
     if (!this.departureId) return;
 
-    console.log('Cargando información del departure con ID:', this.departureId);
-
     this.departureService.getById(this.departureId).subscribe({
       next: (departure) => {
         this.departureInfo = departure;
-        console.log('Información del departure cargada:', departure);
+
       },
       error: (error) => {
         console.error('Error loading departure info:', error);

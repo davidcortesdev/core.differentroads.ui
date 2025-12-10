@@ -130,11 +130,9 @@ export class TourInformationContentService {
       tourId: tourId,
     };
 
-    console.log('Buscando contenido de información para tour ID:', tourId);
-
     return this.getTourInformationContent(filter).pipe(
       map((content) => {
-        console.log('Respuesta de contenido de información:', content);
+
         return content;
       }),
       catchError((error) => {
@@ -156,17 +154,9 @@ export class TourInformationContentService {
       tourInformationSectionId: sectionId,
     };
 
-    console.log(
-      'Buscando contenido de información para sección ID:',
-      sectionId
-    );
-
     return this.getTourInformationContent(filter).pipe(
       map((content) => {
-        console.log(
-          'Respuesta de contenido de información por sección:',
-          content
-        );
+
         return content;
       }),
       catchError((error) => {

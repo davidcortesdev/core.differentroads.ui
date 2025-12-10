@@ -260,7 +260,6 @@ export class DataMappingV2Service {
     };
   }
 
-
   private extractBookingTitle(apiResponse: any): string {
     if (apiResponse.tour?.name) return apiResponse.tour.name;
     if (apiResponse.title) return apiResponse.title;

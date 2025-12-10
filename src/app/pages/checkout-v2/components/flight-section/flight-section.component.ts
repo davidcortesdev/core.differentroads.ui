@@ -55,13 +55,13 @@ export class FlightSectionV2Component implements OnChanges {
       description.includes('pack sin vuelos');
 
     if (isFlightlessOption) {
-      console.log('🚫 FlightSection: Opción "sin vuelos" detectada, ocultando componente');
+
       return false;
     }
 
     // Verificar si hay vuelos válidos
     if (!this.flightPack.flights || this.flightPack.flights.length === 0) {
-      console.log('🚫 FlightSection: No hay vuelos disponibles, ocultando componente');
+
       return false;
     }
 
@@ -74,11 +74,10 @@ export class FlightSectionV2Component implements OnChanges {
     );
 
     if (!hasValidFlights) {
-      console.log('🚫 FlightSection: No hay vuelos con información válida, ocultando componente');
+
       return false;
     }
 
-    console.log('✅ FlightSection: Vuelos válidos detectados, mostrando componente');
     return true;
   }
 
@@ -138,7 +137,6 @@ export class FlightSectionV2Component implements OnChanges {
     });
 
     if (airportCodes.length > 0) {
-      //console.log(`🔄 FlightSection: Precargando ciudades para ${airportCodes.length} aeropuertos`);
       this.airportCityCacheService.preloadAllAirportCities(airportCodes);
     }
   }

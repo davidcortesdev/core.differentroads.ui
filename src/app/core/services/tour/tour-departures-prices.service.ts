@@ -49,7 +49,6 @@ export class TourDeparturesPricesService {
 
     let params = new HttpParams();
 
-
       // Si hay múltiples IDs, usar el endpoint con query params
       // Agregar cada activityId como parámetro de query
       activityIdsArray.forEach(id => {

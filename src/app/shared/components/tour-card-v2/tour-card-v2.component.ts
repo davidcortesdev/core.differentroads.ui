@@ -26,7 +26,6 @@ export class TourCardV2Component implements OnInit, AfterViewInit {
   @Input() index?: number; // Índice del item en la lista
 
   monthlyPrice = 0;
-  private originalConsoleWarn: any = null;
   private scalapayInitAttempts = 0;
   private maxScalapayInitAttempts = 3;
   private scalapayReloadAttempts = 0;
@@ -60,8 +59,6 @@ export class TourCardV2Component implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     if (this.showScalapayPrice) {
-      this.suppressScalapayWarnings();
-
       this.scalapayReadyListener = () => {
         this.initializeScalapayWidget();
       };
@@ -72,11 +69,6 @@ export class TourCardV2Component implements OnInit, AfterViewInit {
   }
 
   ngOnDestroy(): void {
-    // Restaurar la función original de console.warn
-    if (this.originalConsoleWarn) {
-      console.warn = this.originalConsoleWarn;
-    }
-    
     // Remover el listener de scalapay-ready
     if (this.scalapayReadyListener) {
       window.removeEventListener('scalapay-ready', this.scalapayReadyListener);
@@ -137,27 +129,6 @@ export class TourCardV2Component implements OnInit, AfterViewInit {
       );
     }
     return undefined;
-  }
-
-  private suppressScalapayWarnings(): void {
-    // Guardar la función original para restaurarla más tarde
-    this.originalConsoleWarn = console.warn;
-
-    // Reemplazar console.warn con una versión filtrada
-    console.warn = (...args: any[]) => {
-      // Verificar si el mensaje contiene el texto específico que queremos suprimir
-      if (
-        args[0] &&
-        typeof args[0] === 'string' &&
-        (args[0].includes('scalapay widget: travel date not found') ||
-          args[0].includes('scalapay-widget'))
-      ) {
-        return; // Suprimir este warning específico
-      }
-
-      // Para cualquier otro warning, usar la función original
-      this.originalConsoleWarn.apply(console, args);
-    };
   }
 
   /**

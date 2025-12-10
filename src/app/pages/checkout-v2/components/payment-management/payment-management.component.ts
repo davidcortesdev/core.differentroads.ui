@@ -504,13 +504,11 @@ export class PaymentManagementComponent
         life: 5000,
       });
 
-
     }
   }
 
   private async updateReservationStatusToPrebooked(): Promise<boolean> {
     try {
-      console.log('🔄 Verificando estado actual de la reserva...');
 
       // 1. Obtener la reserva actual
       const currentReservation = await firstValueFrom(
@@ -536,10 +534,7 @@ export class PaymentManagementComponent
 
       // 3. Verificar si el estado actual es CART o BUDGET
       if (!allowedStatusIds.includes(currentReservation.reservationStatusId)) {
-        console.log(
-          '⚠️ La reserva no está en estado CART o BUDGET. Estado actual ID:',
-          currentReservation.reservationStatusId
-        );
+
         this.messageService.add({
           severity: 'warn',
           summary: 'Estado de reserva',
@@ -549,10 +544,6 @@ export class PaymentManagementComponent
         });
         return false;
       }
-
-      console.log(
-        '✅ Estado actual válido, procediendo a actualizar a PREBOOKED'
-      );
 
       // 4. Obtener el estado PREBOOKED
       const prebookedStatus = await firstValueFrom(
@@ -572,9 +563,7 @@ export class PaymentManagementComponent
       );
 
       if (success) {
-        console.log(
-          '✅ Estado de reservación actualizado correctamente a PREBOOKED'
-        );
+
         return true;
       } else {
         throw new Error('La actualización del estado falló');
@@ -988,7 +977,6 @@ export class PaymentManagementComponent
         }
       });
   }
-
 
   validateDiscountCode(event: Event): void {
     const input = event.target as HTMLInputElement;

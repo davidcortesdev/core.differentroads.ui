@@ -160,3 +160,33 @@
     }
 }
 
+// Estilos para los botones del modal
+::ng-deep {
+    .p-dialog {
+        .p-dialog-footer {
+            .p-button {
+                // Botón de aplicar puntos (success)
+                &.p-button-success {
+                    background-color: #093642 !important;
+                    border-color: #093642 !important;
+                    color: white !important;
+                    
+                    &:hover {
+                        background-color: #072c34 !important;
+                        border-color: #072c34 !important;
+                    }
+                }
+                
+                // Botón de cancelar (text)
+                &.p-button-text {
+                    color: #093642 !important;
+                    
+                    &:hover {
+                        background-color: rgba(9, 54, 66, 0.1) !important;
+                    }
+                }
+            }
+        }
+    }
+}
+

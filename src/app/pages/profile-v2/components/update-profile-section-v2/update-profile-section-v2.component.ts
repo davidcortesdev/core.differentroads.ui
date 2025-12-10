@@ -77,11 +77,9 @@ export class UpdateProfileSectionV2Component implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-
   formatDate(dateInput: string | Date | undefined): string {
     return this.updateProfileService.formatDate(dateInput);
   }
-
 
   onUpload(event: any) {
     for (let file of event.files) {
@@ -150,7 +148,6 @@ export class UpdateProfileSectionV2Component implements OnInit, OnDestroy {
     input.value = this.updateProfileService.validateDniInput(input.value);
     this.clearFieldError('dni');
   }
-
 
   onCiudadInput(event: any) {
     const input = event.target as HTMLInputElement;
@@ -242,7 +239,6 @@ export class UpdateProfileSectionV2Component implements OnInit, OnDestroy {
     }
   }
 
-
   // Método para obtener el mensaje de error de un campo
   getFieldError(fieldName: string): string {
     return this.formErrors[fieldName] || '';
@@ -278,6 +274,5 @@ export class UpdateProfileSectionV2Component implements OnInit, OnDestroy {
     // Emitir evento para volver al modo de visualización
     this.cancelEdit.emit();
   }
-
 
 }

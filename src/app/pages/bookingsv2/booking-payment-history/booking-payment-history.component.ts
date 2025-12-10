@@ -39,7 +39,6 @@ interface TripItemData {
 
 // Actualizamos la interfaz para incluir identificadores de pago y voucher
 
-
 @Component({
   selector: 'app-booking-payment-history-v2',
   templateUrl: './booking-payment-history.component.html',
@@ -161,20 +160,18 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
 
   ngOnInit(): void {
     this.calculatePaymentInfo();
-    
-    // Cargar estados de pago desde la API (siempre, para todos)
-    this.loadPaymentStatuses();
 
-    // Cargar métodos de pago desde la API
-    this.loadPaymentMethods();
-
-    // Cargar pagos (loadPayments tiene guard interno para reservationId)
-    this.loadPayments();
-
-    // Inicializar datos si reservationId está disponible desde el inicio
-    // loadReservationData() se encargará de cargar la proforma si es agencia
-    // (ngOnChanges manejará los cambios posteriores)
+    // Solo cargar estados y métodos de pago si tenemos un reservationId válido
+    // (solo en el detalle de reserva, no en otros contextos)
     if (this.reservationId && this.reservationId > 0) {
+      // Cargar estados y métodos de pago desde el servicio con caché compartido
+      this.loadPaymentStatuses();
+      this.loadPaymentMethods();
+      
+      // Cargar pagos
+      this.loadPayments();
+      
+      // Cargar datos de la reserva
       this.loadReservationData();
     } else if (this.departureDate) {
       // Si ya tenemos departureDate como input, usarlo directamente
@@ -360,7 +357,6 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
         }
       });
   }
-
 
   public refreshPayments(): void {
     if (this.reservationId) {
@@ -579,8 +575,7 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
   }
 
   onPaymentProcessed(paymentData: PaymentData): void {
-    console.log('Pago procesado:', paymentData);
-    
+
     // Emitir evento para que el padre actualice los datos
     this.registerPayment.emit(paymentData.amount);
     
@@ -1012,9 +1007,14 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
   }
 
   /**
-   * Carga todos los estados de pago disponibles desde la API
+   * Carga todos los estados de pago disponibles desde el servicio con caché compartido
    */
   private loadPaymentStatuses(): void {
+    // Solo cargar si aún no están cargados localmente
+    if (this.paymentStatuses.length > 0) {
+      return;
+    }
+
     this.loadingStatuses = true;
     this.paymentService.getAllPaymentStatuses()
       .pipe(takeUntil(this.destroy$))
@@ -1031,11 +1031,16 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
   }
 
   /**
-   * Carga todos los métodos de pago disponibles desde la API
+   * Carga todos los métodos de pago disponibles desde el servicio con caché compartido
    */
   private loadPaymentMethods(): void {
+    // Solo cargar si aún no están cargados localmente
+    if (this.paymentMethods.length > 0) {
+      return;
+    }
+
     this.loadingMethods = true;
-    this.paymentMethodService.getAllPaymentMethods()
+    this.paymentService.getAllPaymentMethods()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (methods) => {
@@ -1072,6 +1077,17 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
     }
     // Obtener el nombre directo desde la API
     return this.paymentService.getPaymentStatusName(payment.paymentStatusId, this.paymentStatuses);
+  }
+
+  /**
+   * Obtiene el color del estado de pago desde la API
+   */
+  getPaymentStatusColor(payment: Payment): string | null {
+    if (!payment.paymentStatusId || this.paymentStatuses.length === 0) {
+      return null;
+    }
+    const status = this.paymentService.getPaymentStatusById(payment.paymentStatusId, this.paymentStatuses);
+    return status?.color || null;
   }
 
   /**
@@ -1356,7 +1372,6 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
     // Limpiar el input para permitir seleccionar el mismo archivo nuevamente si es necesario
     fileInput.value = '';
   }
-
 
   /**
    * Sube un justificante de pago directamente sin redirigir

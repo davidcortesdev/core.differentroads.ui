@@ -707,7 +707,6 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
                 if (additional.departures && additional.departures.length > 0) {
                   // Ordenar departures por fecha
 
-
                   const sortedDepartures = additional.departures
                     .filter((departure) => departure.departureDate)
                     .sort(
@@ -740,7 +739,6 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
                           });
                         }
                       }
-
 
                     }
                   });

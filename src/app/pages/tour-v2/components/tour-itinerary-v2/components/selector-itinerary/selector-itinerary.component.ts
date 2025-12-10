@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { Subject, forkJoin, of } from 'rxjs';
 import { takeUntil, catchError, map, switchMap } from 'rxjs/operators';
+import { MessageService } from 'primeng/api';
 
 // Importar servicios necesarios
 import {
@@ -25,6 +26,9 @@ import {
   TripTypeService,
   ITripTypeResponse,
 } from '../../../../../../core/services/trip-type/trip-type.service';
+import {
+  DocumentServicev2,
+} from '../../../../../../core/services/v2/document.service';
 
 // Interface simplificada para departure con name
 interface IDepartureResponseExtended extends IDepartureResponse {
@@ -100,6 +104,9 @@ export class SelectorItineraryComponent
   // Estados del componente
   loading: boolean = true;
   error: string | undefined;
+  downloading: boolean = false;
+  // Propiedad para detectar modo standalone
+  isStandaloneMode: boolean = false;
 
   // Datos principales con tipado fuerte
   itinerariesWithDepartures: ItineraryWithDepartures[] = [];
@@ -113,10 +120,15 @@ export class SelectorItineraryComponent
   constructor(
     private itineraryService: ItineraryService,
     private departureService: DepartureService,
-    private tripTypeService: TripTypeService
+    private tripTypeService: TripTypeService,
+    private documentService: DocumentServicev2,
+    private messageService: MessageService
   ) {}
 
   ngOnInit(): void {
+    // Detectar si estamos en modo standalone
+    this.detectStandaloneMode();
+    
     if (this.tourId) {
       this.loadSelectorData(this.tourId);
     } else {
@@ -202,10 +214,7 @@ export class SelectorItineraryComponent
           setTimeout(() => {
             if (this.selectedDeparture && !this.selectedValue) {
               this.selectedValue = this.selectedDeparture.value;
-              console.log(
-                '🔧 Corrección aplicada - selectedValue:',
-                this.selectedValue
-              );
+
             }
           }, 100);
         },
@@ -458,6 +467,91 @@ export class SelectorItineraryComponent
       this.selectedValue = null;
       this.loadSelectorData(this.tourId);
     }
+  }
+
+  /**
+   * Descargar itinerario
+   */
+  onDownloadItinerary(): void {
+    if (!this.selectedDeparture) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Advertencia',
+        detail: 'Por favor selecciona una fecha de salida',
+        life: 3000,
+      });
+      return;
+    }
+
+    const itineraryId = this.selectedDeparture.itinerary.id;
+    if (!itineraryId) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudo obtener el ID del itinerario',
+        life: 3000,
+      });
+      return;
+    }
+
+    this.downloading = true;
+
+    this.documentService
+      .downloadItinerary(itineraryId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (result) => {
+          this.downloading = false;
+          this.handleDownloadSuccess(result.blob, result.fileName);
+        },
+        error: (error) => {
+          this.downloading = false;
+          this.handleDownloadError(error);
+        },
+      });
+  }
+
+  /**
+   * Maneja el éxito de la descarga
+   */
+  private handleDownloadSuccess(blob: Blob, fileName: string): void {
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Éxito',
+      detail: 'Itinerario descargado exitosamente',
+      life: 3000,
+    });
+  }
+
+  /**
+   * Maneja errores de descarga
+   */
+  private handleDownloadError(error: unknown): void {
+    console.error('Error al descargar itinerario:', error);
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'No se pudo descargar el itinerario. Por favor, inténtalo de nuevo.',
+      life: 3000,
+    });
+  }
+
+  /**
+   * Detectar si estamos en modo standalone
+   */
+  private detectStandaloneMode(): void {
+    // Verificar si la URL contiene 'standalone'
+    const currentPath = window.location.pathname;
+    this.isStandaloneMode = currentPath.includes('/standalone/');
   }
 
   /**

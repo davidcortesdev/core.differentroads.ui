@@ -141,7 +141,6 @@ export class TourOverviewV2Component implements OnInit {
             
       // Aplicar datos básicos inmediatamente
       this.applyBasicTourData(tourData, cmsTourData);
-      // console.log('tour', tourData);
       
       // Cargar datos adicionales en segundo plano
       this.loadAdditionalDataOptimized(id, cmsTourData);
@@ -436,7 +435,6 @@ export class TourOverviewV2Component implements OnInit {
       label: city,
     })) || [];
   }
-
 
   /**
    * Convierte un texto a formato slug (minúsculas, espacios a guiones, sin acentos)

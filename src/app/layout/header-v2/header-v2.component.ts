@@ -378,7 +378,6 @@ export class HeaderV2Component implements OnInit, OnDestroy {
       });
   }
 
-
   /**
    * Actualiza los menús con la información de países cargada
    */
@@ -505,7 +504,6 @@ export class HeaderV2Component implements OnInit, OnDestroy {
 
     this.combinedMenuItems = this.leftMenuItems;
   }
-
 
   /**
    * Convierte los elementos del menú de la API al formato de PrimeNG
@@ -682,7 +680,6 @@ export class HeaderV2Component implements OnInit, OnDestroy {
   private navigateToUserProfile(): void {
     this.router.navigate(['/profile']);
   }
-
 
   /**
    * Registra la interacción del usuario con elementos del menú para analytics

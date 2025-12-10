@@ -33,7 +33,6 @@ export class HomeV2Component implements OnInit, OnDestroy {
   isLoading = true;
   hasError = false;
 
-
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -64,7 +63,6 @@ export class HomeV2Component implements OnInit, OnDestroy {
     const state = urlParams.get('state');
     
     if (code && state) {
-      console.log('✅ Detectado callback de OAuth en App Component');
       await this.handleOAuthCallback();
     }
   }
@@ -79,13 +77,9 @@ export class HomeV2Component implements OnInit, OnDestroy {
       // Procesar la autenticación
       await this.authService.handleAuthRedirect();
       
-      console.log('✅ handleAuthRedirect completado');
-      
       // Obtener atributos del usuario
       this.authService.getUserAttributes().subscribe({
         next: async (attributes) => {
-          console.log('✅ Atributos obtenidos:', attributes);
-          
           const username = this.authService.getCurrentUsername();
           const cognitoId = attributes.sub;
           const email = attributes.email;
@@ -95,13 +89,10 @@ export class HomeV2Component implements OnInit, OnDestroy {
             return;
           }
           
-          console.log('🔍 Verificando usuario en API...');
-          
           // Buscar por Cognito ID
           this.usersNetService.getUsersByCognitoId(cognitoId).subscribe({
             next: (users) => {
               if (users && users.length > 0) {
-                console.log('✅ Usuario encontrado');
                 // Limpiar URL y navegar
                 this.cleanUrlAndNavigate();
               } else {
@@ -109,7 +100,6 @@ export class HomeV2Component implements OnInit, OnDestroy {
                 this.usersNetService.getUsersByEmail(email).subscribe({
                   next: (usersByEmail) => {
                     if (usersByEmail && usersByEmail.length > 0) {
-                      console.log('✅ Usuario encontrado por email, actualizando...');
                       // Actualizar con Cognito ID
                       this.usersNetService.updateUser(usersByEmail[0].id, {
                         cognitoId: cognitoId,
@@ -119,7 +109,6 @@ export class HomeV2Component implements OnInit, OnDestroy {
                         this.cleanUrlAndNavigate();
                       });
                     } else {
-                      console.log('🆕 Creando nuevo usuario...');
                       // Crear usuario
                       this.usersNetService.createUser({
                         cognitoId: cognitoId,
@@ -149,9 +138,6 @@ export class HomeV2Component implements OnInit, OnDestroy {
   private cleanUrlAndNavigate(): void {
     // Limpiar URL (quitar code y state)
     window.history.replaceState({}, document.title, window.location.pathname);
-    
-    // Ya estás en la página correcta, solo limpia la URL
-    console.log('✅ Proceso completado');
   }
   private loadAllHomeSections(): void {
     this.isLoading = true;
@@ -239,7 +225,6 @@ export class HomeV2Component implements OnInit, OnDestroy {
     };
     return sectionNames[sectionId] || 'Sección desconocida';
   }
-
 
   /**
    * Carga los tours de una sección específica

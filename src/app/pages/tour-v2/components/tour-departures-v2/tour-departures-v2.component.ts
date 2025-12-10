@@ -947,7 +947,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-
   private loadDepartureDetails(departureId: number): void {
     this.loading = true;
     this.error = undefined;
@@ -1028,7 +1027,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
         this.updatePassengerText();
       }
     }
-
 
     // Auto-selección del departure desde el selector
     // Si allDepartures ya está cargado, proceder inmediatamente
@@ -1223,7 +1221,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       this.addToCart(nearestBookable);
     }
   }
-
 
   get tripDuration(): number {
     if (!this.departureDetails) return 0;
@@ -1811,7 +1808,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   // Cargar horarios de vuelos para un departure específico
   private loadFlightTimes(departureId: number): void {
     if (!this.selectedCity?.activityPackId) return;
-
+  
     this.flightsNetService.getFlights(departureId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -1831,41 +1828,37 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
               
               if (outboundFlight) {
                 const depTime = this.formatTime(outboundFlight.departureTime || '');
-                const depIata = outboundFlight.departureIATACode || '';
+                const depCity = outboundFlight.departureCity || outboundFlight.departureIATACode || '';
                 const arrTime = this.formatTime(outboundFlight.arrivalTime || '');
-                const arrIata = outboundFlight.arrivalIATACode || '';
+                const arrCity = outboundFlight.arrivalCity || outboundFlight.arrivalIATACode || '';
                 
-                // Verificar si la llegada es al día siguiente
                 let arrivalSuffix = '';
                 if (outboundFlight.departureDate && outboundFlight.arrivalDate) {
                   const outboundDepDate = new Date(outboundFlight.departureDate);
                   const outboundArrDate = new Date(outboundFlight.arrivalDate);
-                  // Comparar solo las fechas (sin hora)
                   if (outboundArrDate.toDateString() !== outboundDepDate.toDateString()) {
                     arrivalSuffix = ' +1';
                   }
                 }
                 
-                let flightTimes = `${depTime} (${depIata}) → ${arrTime}${arrivalSuffix} (${arrIata})`;
+                let flightTimes = `${depTime} (${depCity}) → ${arrTime}${arrivalSuffix} (${arrCity})`;
                 
                 if (returnFlight) {
                   const retDepTime = this.formatTime(returnFlight.departureTime || '');
-                  const retDepIata = returnFlight.departureIATACode || '';
+                  const retDepCity = returnFlight.departureCity || returnFlight.departureIATACode || '';
                   const retArrTime = this.formatTime(returnFlight.arrivalTime || '');
-                  const retArrIata = returnFlight.arrivalIATACode || '';
+                  const retArrCity = returnFlight.arrivalCity || returnFlight.arrivalIATACode || '';
                   
-                  // Verificar si la llegada del vuelo de regreso es al día siguiente
                   let returnArrivalSuffix = '';
                   if (returnFlight.departureDate && returnFlight.arrivalDate) {
                     const returnDepDate = new Date(returnFlight.departureDate);
                     const returnArrDate = new Date(returnFlight.arrivalDate);
-                    // Comparar solo las fechas (sin hora)
                     if (returnArrDate.toDateString() !== returnDepDate.toDateString()) {
                       returnArrivalSuffix = ' +1';
                     }
                   }
                   
-                  flightTimes += `\n${retDepTime} (${retDepIata}) → ${retArrTime}${returnArrivalSuffix} (${retArrIata})`;
+                  flightTimes += `\n${retDepTime} (${retDepCity}) → ${retArrTime}${returnArrivalSuffix} (${retArrCity})`;
                 }
                 
                 this.flightTimesByDepartureId[departureId] = flightTimes;
@@ -1963,7 +1956,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       }
     }
   }
-
 
   // Obtener el estado de plazas para mostrar en la UI
   getAvailabilityStatus(departureId: number): {

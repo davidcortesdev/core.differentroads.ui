@@ -10,7 +10,6 @@ import { PaymentStatusNetService, IPaymentStatusResponse } from '../../../pages/
 import { PaymentMethodNetService, IPaymentMethodResponse } from '../../../pages/checkout-v2/services/paymentMethodNet.service';
 import { PaymentService, PaymentInfo } from '../payments/payment.service';
 
-
 @Injectable({
   providedIn: 'root',
 })
@@ -29,7 +28,8 @@ export class BookingsServiceV2 {
     private paymentMethodService: PaymentMethodNetService,
     private paymentService: PaymentService
   ) {
-    this.loadPaymentStatusAndMethods();
+    // No cargar estados y métodos en el constructor
+    // Se cargarán de forma lazy cuando realmente se necesiten (en getPaymentsByReservationId)
   }
 
   /**
@@ -101,7 +101,6 @@ export class BookingsServiceV2 {
       // Filtrar solo historial (status 7 = PAID, 8 = CANCELLED)
       map((reservations: ReservationResponse[]) => {
 
-        
         const filtered = reservations.filter(reservation => 
           reservation.reservationStatusId === 7 || reservation.reservationStatusId === 8
         );
@@ -283,28 +282,32 @@ export class BookingsServiceV2 {
 
   /**
    * Carga los estados y métodos de pago una sola vez
+   * Usa PaymentService que tiene caché compartido para evitar múltiples llamadas
+   * Retorna un Observable para poder esperar a que termine la carga
    */
-  private loadPaymentStatusAndMethods(): void {
+  private loadPaymentStatusAndMethods(): Observable<void> {
     if (this.statusAndMethodsLoaded) {
-      return;
+      return of(void 0);
     }
 
-    forkJoin({
-      statuses: this.paymentStatusService.getAllPaymentStatuses().pipe(
+    return forkJoin({
+      statuses: this.paymentService.getAllPaymentStatuses().pipe(
         catchError(() => of([]))
       ),
-      methods: this.paymentMethodService.getAllPaymentMethods().pipe(
+      methods: this.paymentService.getAllPaymentMethods().pipe(
         catchError(() => of([]))
       )
-    }).subscribe(({ statuses, methods }) => {
-      statuses.forEach((status: IPaymentStatusResponse) => {
-        this.paymentStatusMap[status.id] = status.name;
-      });
-      methods.forEach((method: IPaymentMethodResponse) => {
-        this.paymentMethodMap[method.id] = method.name;
-      });
-      this.statusAndMethodsLoaded = true;
-    });
+    }).pipe(
+      map(({ statuses, methods }) => {
+        statuses.forEach((status: IPaymentStatusResponse) => {
+          this.paymentStatusMap[status.id] = status.name;
+        });
+        methods.forEach((method: IPaymentMethodResponse) => {
+          this.paymentMethodMap[method.id] = method.name;
+        });
+        this.statusAndMethodsLoaded = true;
+      })
+    );
   }
 
   /**
@@ -315,14 +318,20 @@ export class BookingsServiceV2 {
       return of([]);
     }
 
-    return this.paymentsNetService.getAll({ reservationId })
-      .pipe(
-        map((payments: IPaymentResponse[]) => this.mapPaymentsToPaymentModel(payments, bookingID)),
-        catchError((error) => {
-          console.error('Error cargando pagos:', error);
-          return of([]);
-        })
-      );
+    // Cargar estados y métodos de forma lazy solo cuando realmente se necesiten
+    // Esperar a que termine la carga antes de obtener los pagos
+    const loadStatusAndMethods$ = this.statusAndMethodsLoaded 
+      ? of(void 0)
+      : this.loadPaymentStatusAndMethods();
+
+    return loadStatusAndMethods$.pipe(
+      switchMap(() => this.paymentsNetService.getAll({ reservationId })),
+      map((payments: IPaymentResponse[]) => this.mapPaymentsToPaymentModel(payments, bookingID)),
+      catchError((error) => {
+        console.error('Error cargando pagos:', error);
+        return of([]);
+      })
+    );
   }
 
   /**

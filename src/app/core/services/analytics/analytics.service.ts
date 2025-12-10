@@ -1431,7 +1431,6 @@ export class AnalyticsService {
     }
   }
 
-
   /**
    * Método centralizado para disparar evento purchase desde una reservación
    * Obtiene todos los datos dinámicamente y construye el evento completo
@@ -2433,7 +2432,6 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
     );
   }
 
-
   /**
    * Convierte un array de TourDataV2 a EcommerceItem[] para analytics
    */
@@ -2720,6 +2718,4 @@ s   * Si no hay datos y defaultValue es string vacío, devuelve string vacío
     );
   }
 }
-
-
 

@@ -36,7 +36,6 @@ export interface DepartureData {
     isDiscount?: boolean;
   }
 
-
 // Interfaces for points redemption
 export interface TravelerData {
   id: string;

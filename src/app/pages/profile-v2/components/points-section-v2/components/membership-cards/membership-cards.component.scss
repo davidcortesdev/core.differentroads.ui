@@ -95,7 +95,7 @@
 
         &.current-card {
             background: var(--background-azul-color-letra);
-            border: 3px solid #EA685C;
+            border: 3px solid var(--primary-color-500);
         }
     }
 }

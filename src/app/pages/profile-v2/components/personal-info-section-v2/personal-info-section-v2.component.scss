@@ -207,13 +207,13 @@
         ::ng-deep .p-button {
             // Botón outlined (Enviar código de verificación)
             &.p-button-outlined {
-                background-color: #ea685c !important;
-                border-color: #ea685c !important;
+                background-color: var(--primary-color-500) !important;
+                border-color: var(--primary-color-500) !important;
                 color: white !important;
                 
                 &:hover {
-                    background-color: #d15e53 !important;
-                    border-color: #d15e53 !important;
+                    background-color: var(--primary-color-600) !important;
+                    border-color: var(--primary-color-600) !important;
                     color: white !important;
                 }
             }
@@ -302,14 +302,14 @@
             
             // Botones primarios (Actualizar contraseña)
             &.p-button-success {
-                background-color: #093642 !important;
-                border-color: #093642 !important;
+                background-color: var(--secondary-color-500) !important;
+                border-color: var(--secondary-color-500) !important;
                 color: white !important;
             }
             
             // Botones de texto (Cancelar)
             &.p-button-text {
-                color: #093642 !important;
+                color: var(--secondary-color-500) !important;
                 
                 &:hover {
                     background-color: rgba(9, 54, 66, 0.1) !important;

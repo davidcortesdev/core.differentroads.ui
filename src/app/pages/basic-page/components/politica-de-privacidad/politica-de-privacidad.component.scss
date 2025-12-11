@@ -10,12 +10,12 @@
   }
 
   .primary-color {
-    color: rgb(9, 54, 66);
+    color: var(--secondary-color-500);
     font-weight: 600;
   }
 
   .text-color {
-    color: rgb(9, 54, 66);
+    color: var(--secondary-color-500);
   }
 
   .secondary-text {
@@ -28,8 +28,8 @@
   }
 
   .highlight-bg {
-    color: rgb(9, 54, 67);
-    background-color: rgb(252, 234, 221);
+    color: var(--secondary-color-500);
+    background-color: var(--rose-nude-500);
   }
 
   p {

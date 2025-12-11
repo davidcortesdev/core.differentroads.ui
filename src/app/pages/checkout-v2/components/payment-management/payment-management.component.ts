@@ -33,6 +33,7 @@ import { environment } from '../../../../../environments/environment';
 import { ReservationCouponService } from '../../../../core/services/checkout/reservation-coupon.service';
 import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 import { UsersNetService } from '../../../../core/services/users/usersNet.service';
+import { ReservationTravelerService } from '../../../../core/services/reservation/reservation-traveler.service';
 import { catchError, switchMap, take } from 'rxjs/operators';
 import { of } from 'rxjs';
 
@@ -91,6 +92,9 @@ export class PaymentManagementComponent
   hasSpecificSearchFlights: boolean = false;
   specificSearchFlightsCost: number = 0;
 
+  // Travelers count
+  travelersCount: number = 1;
+
   // Discount code
   discountCode: string = '';
   discountMessage: string = '';
@@ -123,13 +127,15 @@ export class PaymentManagementComponent
     private readonly flightSearchService: FlightSearchService,
     private readonly reservationCouponService: ReservationCouponService,
     private readonly authService: AuthenticateService,
-    private readonly usersNetService: UsersNetService
+    private readonly usersNetService: UsersNetService,
+    private readonly reservationTravelerService: ReservationTravelerService
   ) { }
 
   ngOnInit(): void {
     this.loadReservationTotalAmount();
     this.loadPaymentIds();
     this.checkAmadeusFlightStatus();
+    this.loadTravelersCount();
   }
 
   ngOnChanges(): void {
@@ -342,10 +348,11 @@ export class PaymentManagementComponent
   }
 
   get depositTotalAmount(): number {
+    const depositPerTraveler = this.depositAmount * this.travelersCount;
     if (this.hasAmadeusFlight && this.hasSpecificSearchFlights) {
-      return this.depositAmount + this.specificSearchFlightsCost;
+      return depositPerTraveler + this.specificSearchFlightsCost;
     }
-    return this.depositAmount;
+    return depositPerTraveler;
   }
 
   get shouldShowTransferOption(): boolean {
@@ -849,6 +856,25 @@ export class PaymentManagementComponent
         setTimeout(() => {
           this.forceScalapayReload();
         }, 300);
+      });
+  }
+
+  loadTravelersCount(): void {
+    if (!this.reservationId) {
+      return;
+    }
+
+    this.reservationTravelerService
+      .getTravelerCount(this.reservationId)
+      .subscribe({
+        next: (count) => {
+          this.travelersCount = count > 0 ? count : 1;
+        },
+        error: (error) => {
+          console.error('Error al cargar cantidad de viajeros:', error);
+          // En caso de error, usar 1 como valor por defecto
+          this.travelersCount = 1;
+        },
       });
   }
 

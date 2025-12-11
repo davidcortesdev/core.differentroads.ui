@@ -1839,7 +1839,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (flightPacks: any[]) => {
-          // NO marcar como false aquí, solo cuando tengamos datos válidos
           let hasValidData = false;
           
           if (flightPacks && flightPacks.length > 0) {
@@ -1896,7 +1895,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
                     // Si el vuelo de retorno es inválido pero el de ida es válido, ya tenemos flightTimes con solo ida
                   }
                   
-                  // Solo guardar y marcar como no cargando si tenemos datos válidos
+                  // Solo guardar si tenemos datos válidos
                   this.flightTimesByDepartureId[departureId] = flightTimes;
                   hasValidData = true;
                 }
@@ -1904,11 +1903,9 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
             }
           }
           
-          // Solo marcar como no cargando si tenemos datos válidos
-          // Si no hay datos válidos, mantener loading = true para mostrar skeleton
-          if (hasValidData) {
-            this.flightTimesLoading[departureId] = false;
-          }
+          // SIEMPRE marcar como no cargando al finalizar el procesamiento
+          // Independientemente de si hay datos válidos o no, el procesamiento ha completado
+          this.flightTimesLoading[departureId] = false;
         },
         error: () => {
           // Marcar como no cargando en caso de error

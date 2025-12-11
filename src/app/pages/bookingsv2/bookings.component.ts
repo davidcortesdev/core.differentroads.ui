@@ -169,7 +169,7 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
 
   // El resto de datos se mantendrán quemados
 
-  isTO: boolean = true;
+  isTO: boolean = false;
   isAdmin: boolean = true;
 
   bookingImages: BookingImage[] = [
@@ -268,9 +268,10 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
     // Detectar si estamos en modo standalone
     this.detectStandaloneMode();
 
-    // Detectar si viene desde ATC
+    // Detectar si viene desde ATC o Tour Operation
     this.route.queryParams.subscribe((queryParams) => {
       this.isATC = queryParams['isATC'] === 'true';
+      this.isTO = queryParams['isTO'] === 'true' || queryParams['isTourOperator'] === 'true';
 
       // Actualizar validaciones del formulario según si es ATC
       const cancelationFeeControl = this.cancelForm.get('cancelationFee');

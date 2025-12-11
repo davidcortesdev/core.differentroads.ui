@@ -271,18 +271,7 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
     // Detectar si viene desde ATC o Tour Operation
     this.route.queryParams.subscribe((queryParams) => {
       this.isATC = queryParams['isATC'] === 'true';
-      
-      // Detectar isTO desde query params enviado por touroperación
-      // Acepta: ?isTO=true o ?isTO=false
-      // También mantiene compatibilidad con isTourOperator
-      if (queryParams['isTO'] !== undefined) {
-        this.isTO = queryParams['isTO'] === 'true';
-      } else if (queryParams['isTourOperator'] !== undefined) {
-        this.isTO = queryParams['isTourOperator'] === 'true';
-      } else {
-        // Si no viene el parámetro, mantener el valor por defecto (false)
-        this.isTO = false;
-      }
+      this.isTO = queryParams['isTO'] === 'true';
 
       // Actualizar validaciones del formulario según si es ATC
       const cancelationFeeControl = this.cancelForm.get('cancelationFee');

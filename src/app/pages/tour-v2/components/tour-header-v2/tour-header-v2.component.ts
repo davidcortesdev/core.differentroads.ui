@@ -477,6 +477,30 @@ export class TourHeaderV2Component
     return `${this.reviewCount} ${this.reviewCount === 1 ? 'Review' : 'Reviews'}`;
   }
 
+  // Extraer el prefijo del título (todo antes del último ":")
+  getTitlePrefix(): string {
+    const tourName = this.tour.name || '';
+    const lastColonIndex = tourName.lastIndexOf(':');
+    
+    if (lastColonIndex === -1) {
+      return 'Detalles del Tour: ';
+    }
+    
+    return tourName.substring(0, lastColonIndex + 1) + ' ';
+  }
+
+  // Extraer el título sin prefijo (todo después del último ":")
+  getTitleWithoutPrefix(): string {
+    const tourName = this.tour.name || '';
+    const lastColonIndex = tourName.lastIndexOf(':');
+    
+    if (lastColonIndex === -1) {
+      return tourName;
+    }
+    
+    return tourName.substring(lastColonIndex + 1).trim();
+  }
+
   // Hacer scroll a la sección de reviews usando el ID, teniendo en cuenta el header flotante
   scrollToReviews(): void {
     const reviewsSection = document.getElementById('tour-reviews');

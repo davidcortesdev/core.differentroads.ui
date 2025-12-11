@@ -141,6 +141,10 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
                 this.bannerContent = images[0];
                 this.isVideo = false;
                 this.isImage = true;
+                console.log("images");
+                
+                console.log(images);
+                
               }
             },
             error: (error) => {

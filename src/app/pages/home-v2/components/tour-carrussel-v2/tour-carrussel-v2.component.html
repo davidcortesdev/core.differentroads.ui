@@ -1,23 +1,26 @@
 <section class="tours-section" #tourCarouselContainer>
   <h2 class="title">{{ title }}</h2>
-  <p-carousel
-    [value]="tours"
-    [numVisible]="5"
-    [numScroll]="1"
-    [circular]="true"
-    [responsiveOptions]="responsiveOptions"
-    [showNavigators]="false"
-    [autoplayInterval]="carouselConfig.DEFAULT_AUTOPLAY_INTERVAL"
-  >
-            <ng-template let-tour #item>
-              <app-tour-card-v2
-                [tourData]="tour"
-                [showScalapayPrice]="true"
-                [isLargeCard]="true"
-                [itemListId]="configurationId?.toString() || 'home_carousel'"
-                [itemListName]="title || 'Carrusel de tours'"
-                [index]="tours.indexOf(tour)"
-              ></app-tour-card-v2>
-            </ng-template>
-  </p-carousel>
+  <div class="carousel-wrapper" #carouselWrapper>
+    <p-carousel
+      #carousel
+      [value]="tours"
+      [numVisible]="5"
+      [numScroll]="1"
+      [circular]="true"
+      [responsiveOptions]="responsiveOptions"
+      [showNavigators]="false"
+      [autoplayInterval]="carouselConfig.DEFAULT_AUTOPLAY_INTERVAL"
+    >
+              <ng-template let-tour #item>
+                <app-tour-card-v2
+                  [tourData]="tour"
+                  [showScalapayPrice]="true"
+                  [isLargeCard]="true"
+                  [itemListId]="configurationId?.toString() || 'home_carousel'"
+                  [itemListName]="title || 'Carrusel de tours'"
+                  [index]="tours.indexOf(tour)"
+                ></app-tour-card-v2>
+              </ng-template>
+    </p-carousel>
+  </div>
 </section>

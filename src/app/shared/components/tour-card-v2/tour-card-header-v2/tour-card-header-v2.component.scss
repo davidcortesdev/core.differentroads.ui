@@ -75,6 +75,10 @@ $spacing-md: 1rem;
     display: flex;
     flex-direction: column;
     border-radius: $border-radius-md; // Cambiado de $border-radius-lg a $border-radius-md para igualar con la imagen
+    
+    @include mobile {
+      padding: 0.5rem; // Reducir padding en móvil para que la imagen se vea mejor
+    }
 
     // Indicador de rating
     .rating {
@@ -354,3 +358,134 @@ $spacing-md: 1rem;
     opacity: 0.5;
   }
 }
+
+// Contenedor de etiquetas - SIMPLIFICAR EN MOBILE
+.tags-container {
+    position: absolute;
+    top: $spacing-md;
+    right: $spacing-md;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    align-items: flex-end;
+    // Evitar que los tags interfieran con el scroll
+    pointer-events: none;
+    
+    .tag {
+        pointer-events: auto; // Permitir clicks
+    }
+
+    @include tablet {
+        top: $spacing-sm;
+        right: $spacing-sm;
+        
+        .tag {
+            font-size: 0.7rem;
+            padding: 0.15rem 0.4rem;
+        }
+    }
+
+    @include mobile {
+        top: 0.4rem;
+        right: 0.4rem;
+        gap: 0.05rem; // Reducir gap entre tags en móvil
+        
+        // Mostrar todos los tags pero con tamaño reducido
+        .tag {
+            font-size: 0.5rem; // Reducido de 0.6rem a 0.5rem
+            padding: 0.08rem 0.25rem; // Reducido padding
+            line-height: 1.2;
+        }
+        
+        // TripTypes con tamaño aún más reducido
+        .trip-type-tag {
+            font-size: 0.48rem;
+            padding: 0.06rem 0.2rem;
+        }
+    }
+}
+
+// Tag By DR - Reducir tamaño en mobile pero mantener visible
+.by-dr-tag {
+    @include tablet {
+        font-size: 0.55rem !important;
+        padding: 0.15rem 0.3rem !important;
+    }
+
+    @include mobile {
+        font-size: 0.48rem !important; // Tamaño reducido
+        padding: 0.06rem 0.2rem !important; // Padding reducido
+        max-height: 18px !important; // Reducir altura máxima
+        
+        .short-text,
+        .expanded-content {
+            img {
+                width: 0.5rem !important; // Icono más pequeño
+                margin-right: 2px !important;
+            }
+        }
+    }
+}
+
+// Altura de imagen optimizada para mobile
+.img {
+    @include tablet {
+        height: 200px;
+    }
+
+    @include mobile {
+        height: 180px; // Reducir altura para tarjetas más compactas y mejor scroll
+    }
+}
+
+// Rating - Más compacto en mobile
+.rating {
+    @include tablet {
+        font-size: 0.7rem !important;
+        padding: 0.15rem 0.35rem !important;
+    }
+
+    @include mobile {
+        font-size: 0.65rem !important;
+        padding: 0.1rem 0.3rem !important;
+    }
+}
+
+// Título overlay - Más compacto para mejor scroll
+.title-overlay {
+    @include tablet {
+        .itinerary-days-text {
+            font-size: 0.7rem; 
+            margin-bottom: 0.2rem;
+        }
+        
+        h3 {
+            font-size: 1rem;
+            line-height: 1.2;
+            margin-bottom: 0.3rem;
+        }
+    }
+
+    @include mobile {
+        padding-bottom: 0.2rem; // Reducir padding inferior
+        
+        .itinerary-days-text {
+            font-size: 0.55rem; // Reducido de 0.6rem a 0.55rem
+            margin-bottom: 0.08rem; // Reducir margen
+            line-height: 1.1;
+        }
+        
+        h3 {
+            font-size: 0.75rem; // Reducido de 0.8rem a 0.75rem para dar más protagonismo a la imagen
+            line-height: 1.1; // Reducir line-height
+            margin-bottom: 0.1rem; // Reducir margen
+            font-weight: 600; // Ligeramente menos bold para reducir saturación visual
+            // Limitar a 2 líneas para evitar desbordamiento
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    }
+}
+

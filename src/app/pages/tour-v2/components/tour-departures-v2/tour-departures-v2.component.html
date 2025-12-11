@@ -224,9 +224,18 @@
                 </span>
 
                 <!-- Horarios de vuelos -->
-                <div class="flight-times" *ngIf="flightTimesByDepartureId[item.id] && !isSinVuelosSelected()">
-                  <div *ngFor="let line of getFlightTimesLines(item.id)" class="flight-line">
-                    {{ line }}
+                <div class="flight-times" *ngIf="!isSinVuelosSelected()">
+                  <!-- Mostrar skeleton cuando está cargando o cuando los datos son inválidos -->
+                  <div class="flight-times-loading" *ngIf="isFlightTimesLoading(item.id) || (flightTimesByDepartureId[item.id] && !hasValidFlightTimes(item.id))">
+                    <p-skeleton width="80%" height="12px" styleClass="mb-1"></p-skeleton>
+                    <p-skeleton width="70%" height="12px"></p-skeleton>
+                  </div>
+                  
+                  <!-- Mostrar horarios válidos cuando están disponibles -->
+                  <div *ngIf="!isFlightTimesLoading(item.id) && hasValidFlightTimes(item.id)">
+                    <div *ngFor="let line of getFlightTimesLines(item.id)" class="flight-line">
+                      {{ line }}
+                    </div>
                   </div>
                 </div>
                 

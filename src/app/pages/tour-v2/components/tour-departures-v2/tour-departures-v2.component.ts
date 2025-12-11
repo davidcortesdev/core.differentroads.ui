@@ -212,6 +212,9 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   // Mapa de horarios de vuelos por departureId
   flightTimesByDepartureId: { [departureId: number]: string } = {};
 
+  //  Mapa para rastrear qué departures están cargando horarios
+  flightTimesLoading: { [departureId: number]: boolean } = {};
+
   // Mapa de disponibilidad de plazas por departureId (ActivityPack)
   activityPackAvailabilityByDepartureId: {
     [departureId: number]: ActivityPackAvailabilityData | null;
@@ -1805,14 +1808,40 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     return flightTimes.split('\n');
   }
 
+  // Método para verificar si los horarios están cargando
+  isFlightTimesLoading(departureId: number): boolean {
+    return this.flightTimesLoading[departureId] === true;
+  }
+
+  // Método para verificar si los horarios son válidos (no son 00:00:00)
+  hasValidFlightTimes(departureId: number): boolean {
+    const flightTimes = this.flightTimesByDepartureId[departureId];
+    if (!flightTimes) return false;
+    
+    // Verificar si contiene "00:00" o "00:00:00" que indican datos inválidos
+    const lines = flightTimes.split('\n');
+    return !lines.some(line => 
+      line.includes('00:00 (') || 
+      line.includes('00:00:00 (') ||
+      line.trim() === '00:00' ||
+      line.trim() === '00:00:00'
+    );
+  }
+
   // Cargar horarios de vuelos para un departure específico
   private loadFlightTimes(departureId: number): void {
     if (!this.selectedCity?.activityPackId) return;
+  
+    // Marcar como cargando
+    this.flightTimesLoading[departureId] = true;
   
     this.flightsNetService.getFlights(departureId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (flightPacks: any[]) => {
+          // Marcar como no cargando
+          this.flightTimesLoading[departureId] = false;
+          
           if (flightPacks && flightPacks.length > 0) {
             let selectedFlightPack = flightPacks.find(
               (pack) => pack.id === this.selectedCity?.activityPackId
@@ -1832,6 +1861,12 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
                 const arrTime = this.formatTime(outboundFlight.arrivalTime || '');
                 const arrCity = outboundFlight.arrivalCity || outboundFlight.arrivalIATACode || '';
                 
+                //  Validar que los tiempos no sean 00:00
+                if (depTime === '00:00' || arrTime === '00:00') {
+                  // No guardar horarios inválidos, dejar que se muestre "Cargando horarios..."
+                  return;
+                }
+                
                 let arrivalSuffix = '';
                 if (outboundFlight.departureDate && outboundFlight.arrivalDate) {
                   const outboundDepDate = new Date(outboundFlight.departureDate);
@@ -1848,6 +1883,15 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
                   const retDepCity = returnFlight.departureCity || returnFlight.departureIATACode || '';
                   const retArrTime = this.formatTime(returnFlight.arrivalTime || '');
                   const retArrCity = returnFlight.arrivalCity || returnFlight.arrivalIATACode || '';
+                  
+                  //  Validar que los tiempos de retorno no sean 00:00
+                  if (retDepTime === '00:00' || retArrTime === '00:00') {
+                    // Si el vuelo de ida es válido pero el de vuelta no, mostrar solo el de ida
+                    if (depTime !== '00:00' && arrTime !== '00:00') {
+                      this.flightTimesByDepartureId[departureId] = flightTimes;
+                    }
+                    return;
+                  }
                   
                   let returnArrivalSuffix = '';
                   if (returnFlight.departureDate && returnFlight.arrivalDate) {
@@ -1867,6 +1911,8 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           }
         },
         error: () => {
+          //  Marcar como no cargando en caso de error
+          this.flightTimesLoading[departureId] = false;
         }
       });
   }
@@ -1982,6 +2028,11 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   private formatTime(timeString: string): string {
     if (!timeString) return '';
     
+    //  Detectar si es 00:00:00 y retornar '00:00' para que se detecte como inválido
+    if (timeString.trim() === '00:00:00' || timeString.trim() === '00:00') {
+      return '00:00';
+    }
+    
     // Si ya es un formato de hora (HH:MM:SS), devolverlo directamente
     if (timeString.match(/^\d{1,2}:\d{2}:\d{2}$/)) {
       return timeString.substring(0, 5); // Tomar solo HH:MM
@@ -1993,11 +2044,18 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       return timeString; // Si no es una fecha válida, devolver el string original
     }
     
-    return date.toLocaleTimeString('es-ES', { 
+    const formatted = date.toLocaleTimeString('es-ES', { 
       hour: '2-digit',
       minute: '2-digit',
       hour12: false 
     });
+    
+    //  Si después de formatear es 00:00, retornarlo para que se detecte como inválido
+    if (formatted === '00:00') {
+      return '00:00';
+    }
+    
+    return formatted;
   }
 
   private formatDate(dateString: string): string {

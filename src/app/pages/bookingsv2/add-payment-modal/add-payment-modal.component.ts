@@ -193,8 +193,7 @@ export class AddPaymentModalComponent implements OnInit {
           response.transactionReference = response.id + "F" + this.reservationId + "R";
           this.paymentsService.update(response).subscribe({
             next: (updatedResponse: any) => {
-              console.log('🔵 Respuesta de actualización de pago:', updatedResponse);
-              
+
               // Emitir evento de pago procesado para analytics
               this.paymentProcessed.emit({
                 amount: this.customPaymentAmount,
@@ -309,8 +308,7 @@ export class AddPaymentModalComponent implements OnInit {
           response.transactionReference = response.id + "F" + this.reservationId + "R";
           this.paymentsService.update(response).subscribe({
             next: (updatedResponse: any) => {
-              console.log('🔵 Respuesta de actualización de pago:', updatedResponse);
-              
+
               // Emitir evento de pago procesado para analytics
               this.paymentProcessed.emit({
                 amount: this.customPaymentAmount,
@@ -357,16 +355,8 @@ export class AddPaymentModalComponent implements OnInit {
       // Obtener URL base
       const baseUrl = (window.location.href).replace(this.router.url, '');
 
-      console.log('🔵 Scalapay - Iniciando proceso de pago:', {
-        reservationId: this.reservationId,
-        amount: this.customPaymentAmount,
-        baseUrl: baseUrl
-      });
-
       // Crear orden en Scalapay
       const response = await this.scalapayService.createOrder(this.reservationId, baseUrl, this.customPaymentAmount).toPromise();
-
-      console.log('✅ Scalapay - Respuesta recibida:', response);
 
       if (response?.checkoutUrl) {
         // Emitir evento de pago procesado para analytics (antes de redirigir)
@@ -375,7 +365,6 @@ export class AddPaymentModalComponent implements OnInit {
           method: 'scalapay'
         });
 
-        console.log('🔗 Scalapay - Redirigiendo a:', response.checkoutUrl);
         // Redirigir a Scalapay para completar el pago
         window.location.href = response.checkoutUrl;
       } else {

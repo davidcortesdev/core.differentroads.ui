@@ -167,11 +167,15 @@ $font-size: (
                     font-size: font-size("md");
                 }
 
+                .line-container {
+                    position: relative;
+                    margin: spacing("sm") 0;
+                }
+
                 .line {
                     height: 2px;
                     background-color: $border;
                     position: relative;
-                    margin: spacing("sm") 0;
 
                     &:before,
                     &:after {
@@ -189,6 +193,31 @@ $font-size: (
                     }
                     &:after {
                         right: 0;
+                    }
+                }
+
+                .layovers-text {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    white-space: nowrap;
+                    background-color: white;
+                    padding: 0 spacing("xs");
+                    font-size: font-size("xs");
+                    color: $azul;
+                    font-weight: 500;
+                    z-index: 1;
+
+                    .layover-dots {
+                        color: $border;
+                        letter-spacing: 2px;
+                    }
+
+                    .layover-code {
+                        color: $azul;
+                        font-weight: 600;
+                        margin: 0 2px;
                     }
                 }
             }

@@ -214,10 +214,7 @@ export class SelectorItineraryComponent
           setTimeout(() => {
             if (this.selectedDeparture && !this.selectedValue) {
               this.selectedValue = this.selectedDeparture.value;
-              console.log(
-                '🔧 Corrección aplicada - selectedValue:',
-                this.selectedValue
-              );
+
             }
           }, 100);
         },

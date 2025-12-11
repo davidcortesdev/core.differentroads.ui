@@ -321,7 +321,7 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
    * Manejar actualización de datos de un viajero
    */
   onTravelerDataUpdated(travelerId: number): void {
-    console.log(`Datos del viajero ${travelerId} actualizados`);
+
     this.dataUpdated.emit();
   }
 
@@ -342,29 +342,26 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
    * 2. ✅ No hay cambios pendientes (todo guardado en BD)
    */
   async canContinueToNextStep(): Promise<boolean> {
-    console.log('=== canContinueToNextStep() INICIADO ===');
 
     // Verificar que haya formularios cargados
     if (!this.travelerForms || this.travelerForms.length === 0) {
-      console.log('[canContinueToNextStep] ❌ No hay formularios de viajeros cargados');
+
       return false;
     }
 
     const forms = this.travelerForms.toArray();
-    console.log(`[canContinueToNextStep] Verificando ${forms.length} viajero(s)...`);
 
     // Función auxiliar para verificar el estado de todos los viajeros
     const checkAllTravelers = (attemptNumber: number): boolean => {
-      console.log(`[canContinueToNextStep] 🔍 Intento ${attemptNumber}/4 - Verificando estado de viajeros...`);
-      
+
       return forms.every((form, index) => {
         const isReady = form.isReadyToContinue();
         const travelerNumber = index + 1;
         
         if (isReady) {
-          console.log(`[canContinueToNextStep] ✅ Viajero ${travelerNumber} (ID: ${form.travelerId}): LISTO`);
+
         } else {
-          console.log(`[canContinueToNextStep] ❌ Viajero ${travelerNumber} (ID: ${form.travelerId}): NO LISTO`);
+
         }
         
         return isReady;
@@ -380,24 +377,24 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
 
       if (allReady) {
         if (attempt === 1) {
-          console.log('[canContinueToNextStep] ✅ Todos los viajeros listos en el primer intento');
+
         } else {
-          console.log(`[canContinueToNextStep] ✅ Todos los viajeros listos después de ${attempt} intento(s)`);
+
         }
         break;
       }
 
       // Si no es el último intento, esperar 1 segundo antes del siguiente
       if (attempt < maxAttempts) {
-        console.log(`[canContinueToNextStep] ⏳ Intento ${attempt} falló. Esperando 1 segundo antes del siguiente intento...`);
+
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
 
     if (allReady) {
-      console.log('[canContinueToNextStep] ✅ TODOS los viajeros están listos para continuar');
+
     } else {
-      console.log('[canContinueToNextStep] ❌ ALGUNOS viajeros aún no están listos después de todos los reintentos');
+
     }
 
     return allReady;

@@ -28,7 +28,6 @@ export interface BookingItem {
     code?: string; // For bookings compatibility
   }
 
-
 export interface PersonalInfo {
     id?: string;
     cognitoId?:number;
@@ -48,7 +47,6 @@ export interface PersonalInfo {
     sexo?: string;
     notas?: string;
   }
-
 
 // Interfaces para la respuesta de la API
 export interface ReservationResponse {

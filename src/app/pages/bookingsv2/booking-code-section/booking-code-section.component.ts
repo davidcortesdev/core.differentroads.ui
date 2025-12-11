@@ -19,7 +19,6 @@ export class BookingCodeSectionV2Component implements OnInit {
   @Output() backEvent = new EventEmitter<void>();
   @Output() cancelBooking = new EventEmitter<void>();
 
-
   constructor() {}
 
   ngOnInit(): void {}
@@ -32,8 +31,6 @@ export class BookingCodeSectionV2Component implements OnInit {
   onCancelBooking(): void {
     this.cancelBooking.emit();
   }
-
-  
 
   get isCancelled(): boolean {
     return this.statusId === 8;

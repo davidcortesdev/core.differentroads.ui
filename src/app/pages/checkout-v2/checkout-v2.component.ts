@@ -466,17 +466,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Recarga todos los datos del componente
    */
   private reloadComponentData(): void {
-    console.log('🔄 [reloadComponentData] Recargando todos los datos del componente:', {
-      reservationId: this.reservationId,
-      timestamp: new Date().toISOString()
-    });
     
     if (this.reservationId) {
       // Resetear el estado de verificación de precios para permitir nueva verificación
       this.resetPriceCheckState();
 
       // Recargar datos de la reservación
-      console.log('🔄 [reloadComponentData] Llamando a loadReservationData() desde recarga...');
       this.loadReservationData(this.reservationId);
 
       // Forzar actualización de todos los componentes hijos
@@ -556,7 +551,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       // Si viene el parámetro showTransfer25Option=true, activar la opción
       if (params['showTransfer25Option'] === 'true') {
         this.showTransfer25Option = true;
-        console.log('✅ showTransfer25Option activado desde URL');
       }
       
       // Si viene el parámetro isTourOperator=true, activar modo TO
@@ -564,21 +558,13 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         this.isTourOperator = true;
         // Si es TO, también activar showTransfer25Option automáticamente
         this.showTransfer25Option = true;
-        console.log('✅ isTourOperator activado desde URL');
       }
     });
 
-    console.log('🔍 Modo standalone:', this.isStandaloneMode);
-    console.log('🔍 showTransfer25Option:', this.showTransfer25Option);
-    console.log('🔍 isTourOperator:', this.isTourOperator);
   }
 
   // Método para cargar datos de la reservación
   private loadReservationData(reservationId: number): void {
-    console.log('🔄 [loadReservationData] Iniciando carga de datos de reserva:', {
-      reservationId,
-      timestamp: new Date().toISOString()
-    });
     
     this.loading = true;
     this.error = null;
@@ -603,18 +589,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     this.reservationService.getById(reservationId).subscribe({
       next: (reservation) => {
-        console.log('✅ [loadReservationData] Reserva cargada desde backend:', {
-          reservationId: reservation.id,
-          userId: reservation.userId,
-          userIdType: typeof reservation.userId,
-          userIdIsEmpty: !reservation.userId,
-          userIdIsNull: reservation.userId === null,
-          userIdIsUndefined: reservation.userId === undefined,
-          totalPassengers: reservation.totalPassengers,
-          departureId: reservation.departureId,
-          tourId: reservation.tourId,
-          reservationStatusId: reservation.reservationStatusId
-        });
         
         // Extraer datos de la reservación
         this.departureId = reservation.departureId;
@@ -627,7 +601,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         this.userIdForCoupon = reservation.userId ?? null;
 
         // Verificar si el userId está vacío y el usuario está logueado
-        console.log('🔍 [loadReservationData] Llamando a checkAndUpdateUserId()...');
         this.checkAndUpdateUserId(reservation);
 
         // Cargar datos del tour usando reservation.tourId
@@ -671,7 +644,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Método llamado cuando se actualizan las actividades
    */
   onActivitiesUpdated(): void {
-    console.log('🎯 Las actividades se han actualizado');
     // Disparar actualización del summary inmediatamente
     this.triggerSummaryRefresh();
   }
@@ -680,10 +652,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Maneja el evento de actualización de travelers desde selector-traveler
    */
   async onTravelersUpdated(): Promise<void> {
-    console.log('🔔 Checkout recibió evento: travelers actualizados', {
-      timestamp: new Date().toISOString(),
-      component: 'selector-traveler'
-    });
     
     // Recargar viajeros en el selector de habitaciones
     if (this.roomSelector) {
@@ -715,7 +683,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Maneja las actualizaciones de datos de viajeros (formularios y actividades)
    */
   onTravelerDataUpdated(): void {
-    console.log('📝 Datos de viajeros actualizados');
     
     // ✅ Disparar actualización del summary inmediatamente
     this.triggerSummaryRefresh();
@@ -965,7 +932,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Método llamado cuando se actualizan las habitaciones
    */
   onRoomsUpdated(): void {
-    console.log('🏠 Las habitaciones se han actualizado');
 
         // Disparar actualización del summary inmediatamente
         this.triggerSummaryRefresh();
@@ -2285,12 +2251,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       }
 
       // ✅ NUEVO: Validar que todos los viajeros estén listos para continuar
-      console.log('=== Validando viajeros antes de continuar al pago ===');
       const allTravelersReady = await this.infoTravelers.canContinueToNextStep();
 
       if (!allTravelersReady) {
         // ❌ Algunos viajeros no están listos
-        console.log('❌ Validación de viajeros fallida: no se puede continuar');
         
         // Mostrar error específico indicando qué viajeros faltan
         this.infoTravelers.showValidationError();
@@ -2299,7 +2263,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       }
 
       // ✅ Todos los viajeros están listos
-      console.log('✅ Validación de viajeros exitosa: todos los viajeros están listos');
     }
 
     // Navegar al siguiente paso
@@ -2339,53 +2302,23 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Verifica si el userId está vacío y el usuario está logueado, y actualiza la reservación si es necesario
    */
   private checkAndUpdateUserId(reservation: any): void {
-    console.log('🔍 [checkAndUpdateUserId] Iniciando verificación de userId:', {
-      reservationId: reservation?.id,
-      currentUserId: reservation?.userId,
-      userIdIsEmpty: !reservation?.userId,
-      isUpdatingUserId: this.isUpdatingUserId,
-      isAuthenticated: this.isAuthenticated,
-      timestamp: new Date().toISOString()
-    });
     
     // Verificar si el userId está vacío
     if (!reservation.userId && !this.isUpdatingUserId) {
-      console.log('✅ [checkAndUpdateUserId] Condiciones cumplidas - userId está vacío y no hay actualización en curso');
-      console.log('🔐 [checkAndUpdateUserId] Obteniendo Cognito ID del usuario autenticado...');
       this.isUpdatingUserId = true;
       
       this.authService.getCognitoId().subscribe({
         next: (cognitoId) => {
-          console.log('🔐 [checkAndUpdateUserId] Cognito ID obtenido:', {
-            cognitoId: cognitoId || 'null/undefined',
-            cognitoIdType: typeof cognitoId,
-            cognitoIdExists: !!cognitoId,
-            timestamp: new Date().toISOString()
-          });
           
           if (cognitoId) {
-            console.log('✅ [checkAndUpdateUserId] Cognito ID válido, buscando usuario en BD...');
             // Buscar el usuario por Cognito ID para obtener su ID en la base de datos
             this.usersNetService.getUsersByCognitoId(cognitoId).subscribe({
               next: (users) => {
-                console.log('👤 [checkAndUpdateUserId] Usuarios encontrados por Cognito ID:', {
-                  usersFound: users?.length || 0,
-                  users: users,
-                  timestamp: new Date().toISOString()
-                });
                 
                 if (users && users.length > 0) {
                   const userId = users[0].id;
-                  console.log('✅ [checkAndUpdateUserId] Usuario encontrado en BD:', {
-                    userId: userId,
-                    userEmail: users[0].email,
-                    userCognitoId: users[0].cognitoId,
-                    userName: users[0].name,
-                    timestamp: new Date().toISOString()
-                  });
                   
                   this.isAuthenticated = true;
-                  console.log('🔄 [checkAndUpdateUserId] Llamando a updateReservationUserId()...');
                   // Actualizar la reservación con el userId correcto
                   this.updateReservationUserId(userId);
                 } else {
@@ -2411,10 +2344,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
               },
             });
           } else {
-            console.log('ℹ️ [checkAndUpdateUserId] No hay Cognito ID - usuario no autenticado:', {
-              cognitoId,
-              timestamp: new Date().toISOString()
-            });
             this.isUpdatingUserId = false;
           }
         },
@@ -2430,13 +2359,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       });
     } else {
       if (reservation.userId) {
-        console.log('ℹ️ [checkAndUpdateUserId] Reserva ya tiene userId, no se requiere actualización:', {
-          userId: reservation.userId,
-          timestamp: new Date().toISOString()
-        });
       }
       if (this.isUpdatingUserId) {
-        console.log('ℹ️ [checkAndUpdateUserId] Ya hay una actualización de userId en curso, omitiendo...');
       }
     }
   }
@@ -2445,13 +2369,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Actualiza el userId de la reservación
    */
   private updateReservationUserId(userId: number): void {
-    console.log('🔄 [updateReservationUserId] Iniciando actualización de userId:', {
-      reservationId: this.reservationId,
-      newUserId: userId,
-      currentReservationUserId: this.reservationData?.userId,
-      reservationDataExists: !!this.reservationData,
-      timestamp: new Date().toISOString()
-    });
     
     if (!this.reservationId || !this.reservationData) {
       console.error(
@@ -2471,27 +2388,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       updatedAt: new Date().toISOString(),
     };
 
-    console.log('📤 [updateReservationUserId] Enviando actualización a backend:', {
-      reservationId: this.reservationId,
-      updateData: {
-        ...updateData,
-        // No logear datos sensibles completos, solo lo relevante
-        userId: updateData.userId,
-        updatedAt: updateData.updatedAt,
-        totalPassengers: updateData.totalPassengers,
-        departureId: updateData.departureId,
-        tourId: updateData.tourId
-      },
-      timestamp: new Date().toISOString()
-    });
 
     this.reservationService.update(this.reservationId, updateData).subscribe({
       next: (success) => {
-        console.log('📥 [updateReservationUserId] Respuesta del backend:', {
-          success,
-          successType: typeof success,
-          timestamp: new Date().toISOString()
-        });
         
         if (success) {
           // Actualizar los datos locales
@@ -2499,13 +2398,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           this.reservationData.userId = userId;
           this.userIdForCoupon = userId;
           
-          console.log('✅ [updateReservationUserId] userId actualizado exitosamente:', {
-            reservationId: this.reservationId,
-            previousUserId: previousUserId,
-            newUserId: userId,
-            reservationDataUpdated: this.reservationData.userId,
-            timestamp: new Date().toISOString()
-          });
 
           this.messageService.add({
             severity: 'success',
@@ -2522,7 +2414,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           });
         }
         this.isUpdatingUserId = false;
-        console.log('🏁 [updateReservationUserId] Finalizado, isUpdatingUserId = false');
       },
       error: (error) => {
         console.error(
@@ -2544,7 +2435,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           life: 5000,
         });
         this.isUpdatingUserId = false;
-        console.log('🏁 [updateReservationUserId] Finalizado con error, isUpdatingUserId = false');
       },
     });
   }
@@ -2733,7 +2623,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
                   );
                 },
                 complete: () => {
-                  console.log('🔄 [handleSaveBudget] Llamando a loadReservationData() después de guardar presupuesto...');
                   this.loadReservationData(this.reservationId!);
                 },
               });

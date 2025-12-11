@@ -21,5 +21,3 @@ describe('HeaderV2Component', () => {
   });
 });
 
-
-

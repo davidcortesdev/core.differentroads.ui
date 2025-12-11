@@ -112,7 +112,7 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
                     return throwError(() => err);
                   }
                   this.isRetrying = true;
-                  console.log(`Reintentando cargar resumen del pedido (intento ${this.retryAttempts}/${this.MAX_RETRY_ATTEMPTS})...`);
+
                   return timer(this.RETRY_DELAY);
                 })
               )
@@ -241,9 +241,7 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
   // NUEVO: Actualizar descuento por puntos
   private updatePointsDiscount(): void {
     if (!this.reservationSummary) return;
-    
-    console.log('💰 Actualizando descuento por puntos:', this.pointsDiscount);
-    
+
     // Filtrar descuentos de puntos existentes
     this.summary = this.summary.filter(item => 
       !item.description?.toLowerCase().includes('descuento por puntos')

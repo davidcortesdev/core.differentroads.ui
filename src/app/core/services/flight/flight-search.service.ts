@@ -565,7 +565,7 @@ export class FlightSearchService {
   unselectAllFlightsSafe(reservationId: number): Observable<boolean> {
     return this.unselectAllFlights(reservationId).pipe(
       map((result: FlightUnselectAllResponse) => {
-        console.log('✅ unselectAllFlights exitoso:', result);
+
         return result; // Retornar el resultado real del API
       }),
       catchError((error: unknown) => {
@@ -584,7 +584,7 @@ export class FlightSearchService {
   selectFlightSafe(reservationId: number, consolidatorSearchId: number): Observable<boolean> {
     return this.selectFlight(reservationId, consolidatorSearchId).pipe(
       map((result: FlightSelectionResponse) => {
-        console.log('✅ selectFlight exitoso para consolidatorSearchId:', consolidatorSearchId, 'resultado:', result);
+
         return result; // Retornar el resultado real del API
       }),
       catchError((error: unknown) => {
@@ -603,7 +603,7 @@ export class FlightSearchService {
   unselectFlightSafe(reservationId: number, consolidatorSearchId: number): Observable<boolean> {
     return this.unselectFlight(reservationId, consolidatorSearchId).pipe(
       map((result: FlightUnselectionResponse) => {
-        console.log('✅ unselectFlight exitoso para consolidatorSearchId:', consolidatorSearchId, 'resultado:', result);
+
         return result; // Retornar el resultado real del API
       }),
       catchError((error: unknown) => {

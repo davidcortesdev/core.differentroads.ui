@@ -42,20 +42,8 @@ export class DatepickerRangeV2Component implements OnInit {
     { label: '±30 días', value: 30 }
   ];
 
-  // Número de meses dinámico basado en el tamaño de pantalla
+  // Número de meses dinámico - SOLO ESTO, sin responsiveOptions
   numberOfMonths: number = 2;
-
-  // Opciones responsive para el datepicker
-  responsiveOptions = [
-    {
-      breakpoint: '1024px',
-      numberOfMonths: 2
-    },
-    {
-      breakpoint: '768px',
-      numberOfMonths: 1
-    }
-  ];
 
   // ControlValueAccessor
   private onChange: (value: Date[]) => void = () => {};
@@ -76,11 +64,8 @@ export class DatepickerRangeV2Component implements OnInit {
   updateNumberOfMonths(): void {
     if (typeof window !== 'undefined') {
       const width = window.innerWidth;
-      if (width <= 768) {
-        this.numberOfMonths = 1;
-      } else {
-        this.numberOfMonths = 2;
-      }
+      // En móviles (≤768px) mostrar solo 1 mes
+      this.numberOfMonths = width <= 768 ? 1 : 2;
     }
   }
 

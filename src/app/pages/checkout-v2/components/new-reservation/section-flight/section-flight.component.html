@@ -32,7 +32,16 @@
   
               <div class="flight-details">
                 <!-- <div class="duration">{{ flight.duration }}</div> -->
+                <div class="line-container">
                 <div class="line"></div>
+                  <span class="layovers-text" *ngIf="flight.layovers && flight.layovers.length > 0">
+                    <span class="layover-dots">....</span>
+                    <span class="layover-code" *ngFor="let layover of flight.layovers; let i = index">
+                      {{ layover }}<span class="layover-dots" *ngIf="i < flight.layovers.length - 1">....</span>
+                    </span>
+                    <span class="layover-dots">....</span>
+                  </span>
+                </div>
                 <div class="flight-info-compact">
                   <span *ngIf="!flight.hasStops">Directo</span>
                   <span *ngIf="flight.hasStops">{{ flight.stops }} escala{{ flight.stops > 1 ? 's' : '' }}</span>

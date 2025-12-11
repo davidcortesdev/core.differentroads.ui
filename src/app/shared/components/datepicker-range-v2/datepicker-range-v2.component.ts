@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, forwardRef, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, Input, Output, EventEmitter, forwardRef, OnInit, ViewEncapsulation, HostListener } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
@@ -42,14 +42,46 @@ export class DatepickerRangeV2Component implements OnInit {
     { label: '±30 días', value: 30 }
   ];
 
+  // Número de meses dinámico basado en el tamaño de pantalla
+  numberOfMonths: number = 2;
+
+  // Opciones responsive para el datepicker
+  responsiveOptions = [
+    {
+      breakpoint: '1024px',
+      numberOfMonths: 2
+    },
+    {
+      breakpoint: '768px',
+      numberOfMonths: 1
+    }
+  ];
+
   // ControlValueAccessor
   private onChange: (value: Date[]) => void = () => {};
   private onTouched: () => void = () => {};
 
-  constructor() {}
+  constructor() {
+    this.updateNumberOfMonths();
+  }
 
   ngOnInit(): void {
-    // Inicialización del componente
+    this.updateNumberOfMonths();
+  }
+
+  /**
+   * Actualizar número de meses según el tamaño de pantalla
+   */
+  @HostListener('window:resize', ['$event'])
+  updateNumberOfMonths(): void {
+    if (typeof window !== 'undefined') {
+      const width = window.innerWidth;
+      if (width <= 768) {
+        this.numberOfMonths = 1;
+      } else {
+        this.numberOfMonths = 2;
+      }
+    }
   }
 
   /**

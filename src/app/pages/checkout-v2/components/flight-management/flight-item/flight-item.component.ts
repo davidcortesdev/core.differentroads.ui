@@ -32,6 +32,9 @@ export class FlightItemComponent implements OnInit, OnDestroy {
   // Propiedades privadas para manejo interno
   private internalFlightDetails: Map<number, IFlightDetailDTO | IFlightSearchFlightDetailDTO> = new Map();
   private readonly destroy$ = new Subject<void>();
+  
+  // Escalas por vuelo (flightId -> layovers[])
+  flightLayovers: Map<number, string[]> = new Map();
 
   constructor(
     private flightSearchService: FlightSearchService,
@@ -52,6 +55,8 @@ export class FlightItemComponent implements OnInit, OnDestroy {
       if (this.useNewService) {
         this.loadFlightDetailsInternally();
       } else {
+        // Cargar escalas usando el servicio actual
+        this.loadFlightLayoversFromCurrentService();
       }
     } else {
 
@@ -182,6 +187,20 @@ export class FlightItemComponent implements OnInit, OnDestroy {
             
             this.internalFlightDetails.set(flight.id, mappedDetail);
 
+            // Extraer escalas intermedias
+            if (detail.segments && detail.segments.length > 1) {
+              const layovers: string[] = [];
+              for (let i = 0; i < detail.segments.length - 1; i++) {
+                const segment = detail.segments[i];
+                if (segment.arrivalIata) {
+                  layovers.push(segment.arrivalIata);
+                }
+              }
+              this.flightLayovers.set(flight.id, layovers);
+            } else {
+              this.flightLayovers.set(flight.id, []);
+            }
+
             // Precargar nombres de aerolíneas en el servicio (la cache se maneja automáticamente)
             if (detail.airlines && detail.airlines.length > 0) {
               this.preloadAirlineNames(detail.airlines);
@@ -189,6 +208,43 @@ export class FlightItemComponent implements OnInit, OnDestroy {
           },
           error: (error) => {
             console.warn(`⚠️ FlightItem: Error al cargar detalles para vuelo ${flight.id}:`, error);
+          }
+        });
+    });
+  }
+
+  /**
+   * Carga las escalas usando el servicio actual (FlightsNetService)
+   */
+  private loadFlightLayoversFromCurrentService(): void {
+    if (!this.flightPack || !this.flightPack.flights) return;
+
+    this.flightPack.flights.forEach(flight => {
+      this.flightsNetService.getFlightDetail(flight.id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (detail) => {
+            if (detail.segments && detail.segments.length > 1) {
+              const layovers: string[] = [];
+              // Ordenar segmentos por segmentRank
+              const sortedSegments = [...detail.segments].sort((a, b) => a.segmentRank - b.segmentRank);
+              
+              for (let i = 0; i < sortedSegments.length - 1; i++) {
+                const segment = sortedSegments[i];
+                if (segment.arrivalIata) {
+                  layovers.push(segment.arrivalIata);
+                }
+              }
+              this.flightLayovers.set(flight.id, layovers);
+              console.log(`✅ Escalas cargadas (servicio actual) para vuelo ${flight.id}:`, layovers);
+            } else {
+              this.flightLayovers.set(flight.id, []);
+              console.log(`⚠️ Vuelo ${flight.id} sin escalas o sin segmentos (servicio actual)`);
+            }
+          },
+          error: (error) => {
+            console.warn(`⚠️ FlightItem: Error al cargar escalas para vuelo ${flight.id}:`, error);
+            this.flightLayovers.set(flight.id, []);
           }
         });
     });
@@ -275,6 +331,13 @@ export class FlightItemComponent implements OnInit, OnDestroy {
       maximumFractionDigits: 2,
       useGrouping: true,
     }).format(price);
+  }
+
+  /**
+   * Obtiene las escalas de un vuelo específico
+   */
+  getFlightLayovers(flightId: number): string[] {
+    return this.flightLayovers.get(flightId) || [];
   }
 
   selectFlight(flightPack: IFlightPackDTO): void {

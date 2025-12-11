@@ -44,14 +44,13 @@
         </div>
       </div>
     </ng-container>
-    <div class="months" *ngIf="tourData.availableMonths?.length">
-      <p-tag
-        *ngFor="let month of tourData.availableMonths"
-        class="month"
-        severity="info"
-      >
+    <div class="months" *ngIf="limitedMonths?.length">
+      <p-tag *ngFor="let month of limitedMonths" class="month" severity="info">
         {{ month }}
       </p-tag>
+      <span *ngIf="tourData.availableMonths?.length > 4" class="more-months">
+        +{{ tourData.availableMonths.length - 4 }}
+      </span>
     </div>
   </div>
 </div>

@@ -1839,8 +1839,8 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (flightPacks: any[]) => {
-          // Marcar como no cargando
-          this.flightTimesLoading[departureId] = false;
+          // NO marcar como false aquí, solo cuando tengamos datos válidos
+          let hasValidData = false;
           
           if (flightPacks && flightPacks.length > 0) {
             let selectedFlightPack = flightPacks.find(
@@ -1861,57 +1861,57 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
                 const arrTime = this.formatTime(outboundFlight.arrivalTime || '');
                 const arrCity = outboundFlight.arrivalCity || outboundFlight.arrivalIATACode || '';
                 
-                //  Validar que los tiempos no sean 00:00
-                if (depTime === '00:00' || arrTime === '00:00') {
-                  // No guardar horarios inválidos, dejar que se muestre "Cargando horarios..."
-                  return;
-                }
-                
-                let arrivalSuffix = '';
-                if (outboundFlight.departureDate && outboundFlight.arrivalDate) {
-                  const outboundDepDate = new Date(outboundFlight.departureDate);
-                  const outboundArrDate = new Date(outboundFlight.arrivalDate);
-                  if (outboundArrDate.toDateString() !== outboundDepDate.toDateString()) {
-                    arrivalSuffix = ' +1';
-                  }
-                }
-                
-                let flightTimes = `${depTime} (${depCity}) → ${arrTime}${arrivalSuffix} (${arrCity})`;
-                
-                if (returnFlight) {
-                  const retDepTime = this.formatTime(returnFlight.departureTime || '');
-                  const retDepCity = returnFlight.departureCity || returnFlight.departureIATACode || '';
-                  const retArrTime = this.formatTime(returnFlight.arrivalTime || '');
-                  const retArrCity = returnFlight.arrivalCity || returnFlight.arrivalIATACode || '';
-                  
-                  //  Validar que los tiempos de retorno no sean 00:00
-                  if (retDepTime === '00:00' || retArrTime === '00:00') {
-                    // Si el vuelo de ida es válido pero el de vuelta no, mostrar solo el de ida
-                    if (depTime !== '00:00' && arrTime !== '00:00') {
-                      this.flightTimesByDepartureId[departureId] = flightTimes;
-                    }
-                    return;
-                  }
-                  
-                  let returnArrivalSuffix = '';
-                  if (returnFlight.departureDate && returnFlight.arrivalDate) {
-                    const returnDepDate = new Date(returnFlight.departureDate);
-                    const returnArrDate = new Date(returnFlight.arrivalDate);
-                    if (returnArrDate.toDateString() !== returnDepDate.toDateString()) {
-                      returnArrivalSuffix = ' +1';
+                // Validar que los tiempos no sean 00:00 o vacíos
+                if (depTime !== '00:00' && arrTime !== '00:00' && depTime && arrTime && depCity && arrCity) {
+                  let arrivalSuffix = '';
+                  if (outboundFlight.departureDate && outboundFlight.arrivalDate) {
+                    const outboundDepDate = new Date(outboundFlight.departureDate);
+                    const outboundArrDate = new Date(outboundFlight.arrivalDate);
+                    if (outboundArrDate.toDateString() !== outboundDepDate.toDateString()) {
+                      arrivalSuffix = ' +1';
                     }
                   }
                   
-                  flightTimes += `\n${retDepTime} (${retDepCity}) → ${retArrTime}${returnArrivalSuffix} (${retArrCity})`;
+                  let flightTimes = `${depTime} (${depCity}) → ${arrTime}${arrivalSuffix} (${arrCity})`;
+                  
+                  if (returnFlight) {
+                    const retDepTime = this.formatTime(returnFlight.departureTime || '');
+                    const retDepCity = returnFlight.departureCity || returnFlight.departureIATACode || '';
+                    const retArrTime = this.formatTime(returnFlight.arrivalTime || '');
+                    const retArrCity = returnFlight.arrivalCity || returnFlight.arrivalIATACode || '';
+                    
+                    // Validar que los tiempos de retorno no sean 00:00 o vacíos
+                    if (retDepTime !== '00:00' && retArrTime !== '00:00' && retDepTime && retArrTime && retDepCity && retArrCity) {
+                      let returnArrivalSuffix = '';
+                      if (returnFlight.departureDate && returnFlight.arrivalDate) {
+                        const returnDepDate = new Date(returnFlight.departureDate);
+                        const returnArrDate = new Date(returnFlight.arrivalDate);
+                        if (returnArrDate.toDateString() !== returnDepDate.toDateString()) {
+                          returnArrivalSuffix = ' +1';
+                        }
+                      }
+                      
+                      flightTimes += `\n${retDepTime} (${retDepCity}) → ${retArrTime}${returnArrivalSuffix} (${retArrCity})`;
+                    }
+                    // Si el vuelo de retorno es inválido pero el de ida es válido, ya tenemos flightTimes con solo ida
+                  }
+                  
+                  // Solo guardar y marcar como no cargando si tenemos datos válidos
+                  this.flightTimesByDepartureId[departureId] = flightTimes;
+                  hasValidData = true;
                 }
-                
-                this.flightTimesByDepartureId[departureId] = flightTimes;
               }
             }
           }
+          
+          // Solo marcar como no cargando si tenemos datos válidos
+          // Si no hay datos válidos, mantener loading = true para mostrar skeleton
+          if (hasValidData) {
+            this.flightTimesLoading[departureId] = false;
+          }
         },
         error: () => {
-          //  Marcar como no cargando en caso de error
+          // Marcar como no cargando en caso de error
           this.flightTimesLoading[departureId] = false;
         }
       });

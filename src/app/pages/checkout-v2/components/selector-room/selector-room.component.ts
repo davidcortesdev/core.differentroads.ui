@@ -1171,8 +1171,9 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
 
     selectedRooms.forEach((room) => {
       const roomQty = room.qty || 0;
+      const effectiveRoomQty = room.isShared ? Math.ceil(roomQty) : roomQty;
 
-      for (let roomInstance = 1; roomInstance <= roomQty; roomInstance++) {
+      for (let roomInstance = 1; roomInstance <= effectiveRoomQty; roomInstance++) {
         const roomCapacity = room.isShared ? 1 : room.capacity || 1;
 
         availableRooms.push({
@@ -1230,7 +1231,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
       bedNumber: number
     ) => {
       const roomKey = getRoomKey(room);
-
       if (!roomOccupancy[roomKey]) {
         roomOccupancy[roomKey] = [];
       }
@@ -1498,8 +1498,7 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
       }
 
       // Hacer eliminación y creación en paralelo por grupos
-
-      // Eliminar asignaciones existentes en paralelo (máximo 5 a la vez)
+        // Eliminar asignaciones existentes en paralelo (máximo 5 a la vez)
       const deletePromises = currentTravelers.map((traveler) =>
         firstValueFrom(
           this.reservationTravelerAccommodationService.deleteByReservationTraveler(

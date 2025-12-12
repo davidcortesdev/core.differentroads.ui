@@ -45,6 +45,20 @@ export class BookingCodeSectionV2Component implements OnInit {
     return this.isCancelled ? 'Cancelada' : 'Cancelar reserva';
   }
 
+  get cancelButtonDisabled(): boolean {
+    return this.isCancelled || this.isTO;
+  }
+
+  get cancelButtonTooltip(): string {
+    if (this.isTO) {
+      return 'Contacte con atención al cliente para cancelar la reserva';
+    }
+    if (this.isCancelled) {
+      return 'La reserva ya está cancelada';
+    }
+    return '';
+  }
+
   get showCancelButton(): boolean {
     return true; // Siempre mostrar el botón
   }

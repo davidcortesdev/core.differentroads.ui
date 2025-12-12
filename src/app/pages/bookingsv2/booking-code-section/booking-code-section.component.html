@@ -52,7 +52,9 @@
             [label]="cancelButtonLabel" 
             [icon]="isCancelled ? 'pi pi-ban' : 'pi pi-times-circle'"
             class="p-button-outlined p-button-rounded cancel-button"
-            [disabled]="isCancelled"
+            [disabled]="cancelButtonDisabled"
+            [pTooltip]="cancelButtonTooltip"
+            tooltipPosition="top"
             (click)="onCancelBooking()"></button>
   </div>
 </p-panel>

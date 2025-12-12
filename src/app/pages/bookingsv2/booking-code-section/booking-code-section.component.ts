@@ -14,6 +14,7 @@ export class BookingCodeSectionV2Component implements OnInit {
   @Input() statusId: number = 0;
   @Input() isATC: boolean = false;
   @Input() isStandaloneMode: boolean = false;
+  @Input() isTO: boolean = false;
   
   // Add the new event emitter for back button
   @Output() backEvent = new EventEmitter<void>();
@@ -38,6 +39,20 @@ export class BookingCodeSectionV2Component implements OnInit {
 
   get cancelButtonLabel(): string {
     return this.isCancelled ? 'Cancelada' : 'Cancelar reserva';
+  }
+
+  get cancelButtonDisabled(): boolean {
+    return this.isCancelled || this.isTO;
+  }
+
+  get cancelButtonTooltip(): string {
+    if (this.isTO) {
+      return 'Contacte con atención al cliente para cancelar la reserva';
+    }
+    if (this.isCancelled) {
+      return 'La reserva ya está cancelada';
+    }
+    return '';
   }
 
   get showCancelButton(): boolean {

@@ -13,6 +13,7 @@ export class BookingCodeSectionV2Component implements OnInit {
   @Input() status: string = '';
   @Input() statusId: number = 0;
   @Input() isATC: boolean = false;
+  @Input() isTO: boolean = false;
   @Input() isStandaloneMode: boolean = false;
   
   // Add the new event emitter for back button
@@ -34,6 +35,10 @@ export class BookingCodeSectionV2Component implements OnInit {
 
   get isCancelled(): boolean {
     return this.statusId === 8;
+  }
+
+  get isCancelButtonDisabled(): boolean {
+    return this.isCancelled || this.isTO;
   }
 
   get cancelButtonLabel(): string {

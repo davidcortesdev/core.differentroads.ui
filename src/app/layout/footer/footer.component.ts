@@ -169,4 +169,16 @@ export class FooterComponent implements OnInit, AfterViewInit, OnDestroy {
     return undefined;
   }
 
+  /**
+   * Abrir el modal de preferencias de cookies de Termly
+   */
+  abrirPreferencias(): void {
+    // Intentar con la función global de Termly
+    if ((window as any).displayPreferenceModal) {
+      (window as any).displayPreferenceModal();
+    } else {
+      console.warn("El modal de Termly no está disponible aún.");
+    }
+  }
+
 }

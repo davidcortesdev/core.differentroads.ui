@@ -15,7 +15,6 @@ export class BookingCodeSectionV2Component implements OnInit {
   @Input() isATC: boolean = false;
   @Input() isTO: boolean = false;
   @Input() isStandaloneMode: boolean = false;
-  @Input() isTO: boolean = false;
   
   // Add the new event emitter for back button
   @Output() backEvent = new EventEmitter<void>();

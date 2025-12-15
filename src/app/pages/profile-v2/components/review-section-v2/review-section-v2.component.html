@@ -11,7 +11,21 @@
           <app-reviews [reviews]="reviewsCards"></app-reviews>
         </div>
         <ng-template #noReviews>
-          <div class="no-reviews">No tienes reseñas disponibles</div>
+          <div class="no-reviews">
+            <p>No tienes reseñas disponibles</p>
+            <p class="no-reviews-subtitle" *ngIf="hasCompletedBookings">
+              ¿Tienes un viaje completado? ¡Comparte tu experiencia!
+            </p>
+            <p class="no-reviews-subtitle" *ngIf="!hasCompletedBookings">
+              Explora nuestros tours y reserva tu próximo viaje
+            </p>
+            <p class="no-reviews-action" *ngIf="hasCompletedBookings">
+              Haz clic en una de tus reservas para dejar una reseña.
+            </p>
+            <p class="no-reviews-action" *ngIf="!hasCompletedBookings">
+              Encuentra el destino perfecto para tu próxima aventura.
+            </p>
+          </div>
         </ng-template>
       </ng-container>
       

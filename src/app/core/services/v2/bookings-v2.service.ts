@@ -281,6 +281,33 @@ export class BookingsServiceV2 {
   }
 
   /**
+   * Obtiene reservas usando el nuevo endpoint con bucket parameter
+   * @param bucket - El bucket a filtrar: "Active", "Pending", "Budget", "History"
+   * @param userId - ID del usuario (opcional)
+   * @param email - Email del viajero (opcional)
+   * @returns Observable de array de ReservationResponse
+   */
+  getReservationsByBucket(bucket: string, userId?: number, email?: string): Observable<ReservationResponse[]> {
+    let params = new HttpParams()
+      .set('bucket', bucket);
+
+    if (userId) {
+      params = params.set('userId', userId.toString());
+    }
+
+    if (email) {
+      params = params.set('email', email);
+    }
+
+    return this.http.get<ReservationResponse[]>(this.API_URL, { params }).pipe(
+      catchError((error) => {
+        console.error(`Error obteniendo reservas con bucket ${bucket}:`, error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
    * Carga los estados y métodos de pago una sola vez
    * Usa PaymentService que tiene caché compartido para evitar múltiples llamadas
    * Retorna un Observable para poder esperar a que termine la carga

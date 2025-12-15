@@ -52,6 +52,9 @@ export class BookingListSectionV2Component
   // Suscripción para poder cancelarla si se inicia una nueva carga
   private activeBookingsSubscription: Subscription | null = null;
 
+  // Suscripción para el timer de espera de email
+  private emailWaitSubscription: Subscription | null = null;
+
   // Subject para manejar la destrucción del componente y cancelar suscripciones
   private destroy$ = new Subject<void>();
 
@@ -109,6 +112,12 @@ export class BookingListSectionV2Component
     if (this.activeBookingsSubscription) {
       this.activeBookingsSubscription.unsubscribe();
       this.activeBookingsSubscription = null;
+    }
+
+    // ✅ AGREGADO: Cancelar suscripción del timer de espera de email
+    if (this.emailWaitSubscription) {
+      this.emailWaitSubscription.unsubscribe();
+      this.emailWaitSubscription = null;
     }
   }
 
@@ -175,12 +184,19 @@ export class BookingListSectionV2Component
     const maxAttempts = 10;
     const delayMs = 300;
 
+    // ✅ AGREGADO: Cancelar cualquier suscripción previa del timer antes de crear una nueva
+    if (this.emailWaitSubscription) {
+      console.log('Cancelando timer previo de espera de email para iniciar uno nuevo');
+      this.emailWaitSubscription.unsubscribe();
+      this.emailWaitSubscription = null;
+    }
+
     // Asegurar que loading esté en true mientras esperamos
     this.loading = true;
     this.bookingItems = [];
 
     // Crear un observable que intenta obtener el email con reintentos
-    timer(0, delayMs) // Empezar inmediatamente y repetir cada delayMs
+    const timerSubscription = timer(0, delayMs) // Empezar inmediatamente y repetir cada delayMs
       .pipe(
         takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
         take(maxAttempts), // Limitar a maxAttempts intentos
@@ -218,7 +234,15 @@ export class BookingListSectionV2Component
           return EMPTY;
         })
       )
-      .subscribe();
+      .subscribe({
+        complete: () => {
+          // ✅ AGREGADO: Limpiar la referencia cuando el observable se complete
+          this.emailWaitSubscription = null;
+        }
+      });
+
+    // ✅ AGREGADO: Guardar la suscripción para poder cancelarla si es necesario
+    this.emailWaitSubscription = timerSubscription;
   }
 
   /**

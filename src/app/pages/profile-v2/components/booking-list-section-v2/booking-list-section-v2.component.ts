@@ -204,7 +204,7 @@ export class BookingListSectionV2Component
     const subscription = this.bookingsService.getActiveBookingsByBucket(userId, userEmail)
       .pipe(
         // Agregar operador para evitar que se ejecute si la suscripción fue cancelada
-        takeUntil(this.destroy$), // Necesitarás agregar destroy$ si no existe
+        takeUntil(this.destroy$),
         switchMap((reservations: ReservationResponse[]) => {
           if (!reservations || reservations.length === 0) {
             console.log('No se encontraron reservas activas');
@@ -304,19 +304,28 @@ export class BookingListSectionV2Component
       )
       .subscribe({
         next: (bookingItems: BookingItem[]) => {
-          // Solo actualizar si la suscripción sigue activa
-          if (!this.activeBookingsSubscription || this.activeBookingsSubscription === subscription) {
+          // ✅ CORREGIDO: Solo actualizar y limpiar si esta es la suscripción activa actual
+          if (this.activeBookingsSubscription === subscription) {
             this.bookingItems = bookingItems || [];
             this.loading = false;
             console.log(`Reservas activas cargadas: ${bookingItems.length} items`);
+            this.activeBookingsSubscription = null;
+          } else {
+            // Esta es una suscripción obsoleta, ignorar el resultado
+            console.log('Ignorando resultado de suscripción obsoleta');
           }
-          this.activeBookingsSubscription = null;
         },
         error: (error) => {
-          console.error('Error en la suscripción de reservas activas:', error);
-          this.bookingItems = [];
-          this.loading = false;
-          this.activeBookingsSubscription = null;
+          // ✅ CORREGIDO: Solo manejar el error si esta es la suscripción activa actual
+          if (this.activeBookingsSubscription === subscription) {
+            console.error('Error en la suscripción de reservas activas:', error);
+            this.bookingItems = [];
+            this.loading = false;
+            this.activeBookingsSubscription = null;
+          } else {
+            // Esta es una suscripción obsoleta, ignorar el error
+            console.log('Ignorando error de suscripción obsoleta');
+          }
         },
       });
 
@@ -333,6 +342,7 @@ export class BookingListSectionV2Component
 
     this.bookingsService.getReservationsByBucket('Active', userId)
       .pipe(
+        takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
         switchMap((reservations: ReservationResponse[]) => {
           if (!reservations || reservations.length === 0) {
             return of([]);
@@ -342,6 +352,7 @@ export class BookingListSectionV2Component
           const tourPromises = reservations.map((reservation) =>
             forkJoin({
               tour: this.toursService.getTourById(reservation.tourId).pipe(
+                takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
                 catchError((error) => {
                   console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
                   return of(null);
@@ -350,6 +361,7 @@ export class BookingListSectionV2Component
               cmsTour: this.cmsTourService
                 .getAllTours({ tourId: reservation.tourId })
                 .pipe(
+                  takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
                   map((cmsTours: ICMSTourResponse[]) =>
                     cmsTours.length > 0 ? cmsTours[0] : null
                   ),
@@ -360,6 +372,7 @@ export class BookingListSectionV2Component
                 ),
               departure: reservation.departureId
                 ? this.departureService.getById(reservation.departureId).pipe(
+                    takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
                     catchError((error) => {
                       console.warn(`Error obteniendo departure ${reservation.departureId}:`, error);
                       return of(null);
@@ -376,7 +389,20 @@ export class BookingListSectionV2Component
             )
           );
 
-          return forkJoin(tourPromises);
+          return forkJoin(tourPromises).pipe(
+            takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
+            catchError((error) => {
+              console.error('Error obteniendo información de tours:', error);
+              return of(
+                reservations.map((reservation) => ({
+                  reservation,
+                  tour: null,
+                  cmsTour: null,
+                  departureDate: null,
+                }))
+              );
+            })
+          );
         }),
         map((reservationTourPairs: any[]) => {
           if (!reservationTourPairs || reservationTourPairs.length === 0) {

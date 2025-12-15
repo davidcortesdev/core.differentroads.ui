@@ -59,9 +59,10 @@
       <label class="section-label">Método de pago <span class="required">*</span></label>
       
       <div class="payment-methods-grid">
-        <!-- Tarjeta bancaria -->
+        <!-- Tarjeta bancaria (solo cuando no es Touroperación) -->
         <div 
           class="payment-method-option"
+          *ngIf="!isTO"
           [ngClass]="{ 'selected': selectedPaymentMethod === 'card' }"
           (click)="selectPaymentMethodType('card')">
           <p-radioButton 
@@ -91,9 +92,10 @@
           </div>
         </div>
 
-        <!-- Scalapay -->
+        <!-- Scalapay (solo cuando no es Touroperación) -->
         <div 
           class="payment-method-option"
+          *ngIf="!isTO"
           [ngClass]="{ 'selected': selectedPaymentMethod === 'scalapay' }"
           (click)="selectPaymentMethodType('scalapay')">
           <p-radioButton 
@@ -112,8 +114,7 @@
     <!-- Información adicional según método seleccionado -->
     <div class="method-additional-info mt-3" *ngIf="selectedPaymentMethod">
       <p-message 
-        *ngIf="selectedPaymentMethod === 'card'" 
-        severity="contrast" 
+        *ngIf="!isTO && selectedPaymentMethod === 'card'" 
         styleClass="w-full">
         <ng-template pTemplate="messageicon">
           <i class="pi pi-info-circle"></i>
@@ -123,7 +124,6 @@
 
       <p-message 
         *ngIf="selectedPaymentMethod === 'transfer'" 
-        severity="contrast" 
         styleClass="w-full">
         <ng-template pTemplate="messageicon">
           <i class="pi pi-info-circle"></i>
@@ -132,8 +132,7 @@
       </p-message>
 
       <p-message 
-        *ngIf="selectedPaymentMethod === 'scalapay'" 
-        severity="contrast" 
+        *ngIf="!isTO && selectedPaymentMethod === 'scalapay'" 
         styleClass="w-full">
         <ng-template pTemplate="messageicon">
           <i class="pi pi-info-circle"></i>
@@ -148,13 +147,12 @@
       <p-button 
         label="Cancelar" 
         icon="pi pi-times" 
-        styleClass="p-button-text" 
+        severity="secondary"
         (onClick)="closeDialog()">
       </p-button>
       <p-button 
         label="Proceder al pago" 
         icon="pi pi-check" 
-        styleClass="p-button-success" 
         [disabled]="!isPaymentFormValid()"
         [loading]="processingPayment"
         (onClick)="processCustomPayment()">

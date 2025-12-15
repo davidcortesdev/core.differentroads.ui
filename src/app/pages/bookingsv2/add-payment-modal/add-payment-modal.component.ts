@@ -25,6 +25,7 @@ export class AddPaymentModalComponent implements OnInit {
   @Input() visible: boolean = false;
   @Input() paymentInfo: PaymentInfo = { totalPrice: 0, pendingAmount: 0, paidAmount: 0 };
   @Input() reservationId: number = 0;
+  @Input() isTO: boolean = false;
 
   @Output() visibleChange = new EventEmitter<boolean>();
   @Output() paymentProcessed = new EventEmitter<PaymentData>();

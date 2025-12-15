@@ -1828,6 +1828,16 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     return !!flightTimes && flightTimes.trim() !== '';
   }
 
+  // Método para verificar si hay algún estado activo para los horarios de vuelo
+  // (loading, datos válidos, o error) para evitar renderizar el div vacío
+  hasFlightTimesState(departureId: number): boolean {
+    return (
+      this.isFlightTimesLoading(departureId) ||
+      this.hasValidFlightTimes(departureId) ||
+      this.hasFlightTimesError(departureId)
+    );
+  }
+
   // Cargar horarios de vuelos para un departure específico
   private loadFlightTimes(departureId: number): void {
     if (!this.selectedCity?.activityPackId) return;

@@ -224,7 +224,7 @@
                 </span>
 
                 <!-- Horarios de vuelos -->
-                <div class="flight-times" *ngIf="!isSinVuelosSelected()">
+                <div class="flight-times" *ngIf="!isSinVuelosSelected() && hasFlightTimesState(item.id)">
                   <!-- Mostrar skeleton cuando está cargando -->
                   <div class="flight-times-loading" *ngIf="isFlightTimesLoading(item.id)">
                     <p-skeleton width="80%" height="12px" styleClass="mb-1"></p-skeleton>

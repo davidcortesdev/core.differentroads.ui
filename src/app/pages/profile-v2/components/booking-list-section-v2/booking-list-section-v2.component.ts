@@ -26,7 +26,7 @@ import {
 import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 import { PointsV2Service } from '../../../../core/services/v2/points-v2.service';
 import { DepartureService } from '../../../../core/services/departure/departure.service';
-import { switchMap, map, catchError, of, forkJoin, Subscription, takeUntil } from 'rxjs';
+import { switchMap, map, catchError, of, forkJoin, Subscription, takeUntil, delay, retryWhen, take, timer, EMPTY } from 'rxjs';
 import { Subject } from 'rxjs';
 
 @Component({
@@ -151,15 +151,27 @@ export class BookingListSectionV2Component
    * Incluye reservas donde el usuario es titular + reservas donde aparece como viajero
    */
   private loadActiveBookings(userId: number): void {
-    // Esperar hasta obtener el email del usuario con reintentos
-    this.waitForUserEmail(userId);
+    // Esperar hasta obtener el email del usuario con reintentos usando RxJS
+    this.waitForUserEmail(
+      userId,
+      (userId, email) => this.loadActiveBookingsWithEmail(userId, email),
+      (userId) => this.loadActiveBookingsWithUserIdOnly(userId)
+    );
   }
 
   /**
    * Espera hasta que el email del usuario esté disponible y luego carga las reservas
+   * Usa RxJS para hacer el proceso cancelable cuando el componente se destruye
    * Intenta hasta 10 veces con un delay de 300ms entre intentos
+   * @param userId - ID del usuario
+   * @param onEmailFound - Callback a ejecutar cuando se encuentra el email (userId, email)
+   * @param onEmailNotFound - Callback a ejecutar cuando no se encuentra el email después de max intentos (userId)
    */
-  private waitForUserEmail(userId: number, attempt: number = 0): void {
+  private waitForUserEmail(
+    userId: number,
+    onEmailFound: (userId: number, email: string) => void,
+    onEmailNotFound: (userId: number) => void
+  ): void {
     const maxAttempts = 10;
     const delayMs = 300;
 
@@ -167,21 +179,39 @@ export class BookingListSectionV2Component
     this.loading = true;
     this.bookingItems = [];
 
-    const userEmail = this.authService.getUserEmailValue();
-
-    if (userEmail) {
-      // Email encontrado, proceder a cargar las reservas usando el nuevo endpoint
-      this.loadActiveBookingsWithEmail(userId, userEmail);
-    } else if (attempt < maxAttempts) {
-      // No se encontró el email, reintentar después del delay
-      setTimeout(() => {
-        this.waitForUserEmail(userId, attempt + 1);
-      }, delayMs);
-    } else {
-      // Se alcanzó el máximo de intentos, intentar solo con userId
-      console.warn('No se pudo obtener el email del usuario después de', maxAttempts, 'intentos. Cargando solo con userId.');
-      this.loadActiveBookingsWithUserIdOnly(userId);
-    }
+    // Crear un observable que intenta obtener el email con reintentos
+    timer(0, delayMs) // Empezar inmediatamente y repetir cada delayMs
+      .pipe(
+        takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
+        take(maxAttempts), // Limitar a maxAttempts intentos
+        map((attempt) => {
+          // En cada intento, verificar si el email está disponible
+          const userEmail = this.authService.getUserEmailValue();
+          return { attempt, userEmail };
+        }),
+        switchMap(({ attempt, userEmail }) => {
+          if (userEmail) {
+            // Email encontrado, ejecutar callback y completar
+            onEmailFound(userId, userEmail);
+            return EMPTY; // Completar el observable inmediatamente
+          } else if (attempt === maxAttempts - 1) {
+            // Último intento sin email, ejecutar fallback
+            console.warn('No se pudo obtener el email del usuario después de', maxAttempts, 'intentos. Cargando solo con userId.');
+            onEmailNotFound(userId);
+            return EMPTY;
+          } else {
+            // Continuar intentando
+            return EMPTY; // Continuar con el siguiente intento del timer
+          }
+        }),
+        catchError((error) => {
+          // En caso de error, ejecutar fallback
+          console.error('Error esperando email del usuario:', error);
+          onEmailNotFound(userId);
+          return EMPTY;
+        })
+      )
+      .subscribe();
   }
 
   /**
@@ -559,15 +589,25 @@ export class BookingListSectionV2Component
    * Incluye reservas donde el usuario es titular + reservas donde aparece como viajero
    */
   private loadTravelHistory(userId: number): void {
+    // Esperar hasta obtener el email del usuario con reintentos usando RxJS
+    this.waitForUserEmail(
+      userId,
+      (userId, email) => this.loadTravelHistoryWithEmail(userId, email),
+      (userId) => this.loadTravelHistoryWithUserIdOnly(userId)
+    );
+  }
+
+  /**
+   * Carga el historial de viajes usando el nuevo endpoint by-bucket con userId y email
+   */
+  private loadTravelHistoryWithEmail(userId: number, userEmail: string): void {
     this.loading = true;
     this.bookingItems = [];
-
-    const userEmail = this.authService.getUserEmailValue();
 
     // Usar el nuevo método que combina userId y email
     this.bookingsService.getTravelHistoryByBucket(userId, userEmail)
       .pipe(
-        takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
+        takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
         switchMap((reservations: ReservationResponse[]) => {
           if (!reservations || reservations.length === 0) {
             return of([]);
@@ -577,7 +617,7 @@ export class BookingListSectionV2Component
           const tourPromises = reservations.map((reservation) =>
             forkJoin({
               tour: this.toursService.getTourById(reservation.tourId).pipe(
-                takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
+                takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
                 catchError((error) => {
                   console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
                   return of(null);
@@ -586,7 +626,7 @@ export class BookingListSectionV2Component
               cmsTour: this.cmsTourService
                 .getAllTours({ tourId: reservation.tourId })
                 .pipe(
-                  takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
+                  takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
                   map((cmsTours: ICMSTourResponse[]) =>
                     cmsTours.length > 0 ? cmsTours[0] : null
                   ),
@@ -597,7 +637,7 @@ export class BookingListSectionV2Component
                 ),
               departure: reservation.departureId
                 ? this.departureService.getById(reservation.departureId).pipe(
-                    takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
+                    takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
                     catchError((error) => {
                       console.warn(`Error obteniendo departure ${reservation.departureId}:`, error);
                       return of(null);
@@ -615,7 +655,110 @@ export class BookingListSectionV2Component
           );
 
           return forkJoin(tourPromises).pipe(
-            takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
+            takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
+            catchError((error) => {
+              console.error('Error obteniendo información de tours:', error);
+              return of(
+                reservations.map((reservation) => ({
+                  reservation,
+                  tour: null,
+                  cmsTour: null,
+                  departureDate: null,
+                }))
+              );
+            })
+          );
+        }),
+        map((reservationTourPairs: any[]) => {
+          return this.dataMappingService.mapReservationsToBookingItems(
+            reservationTourPairs.map((pair) => pair.reservation),
+            reservationTourPairs.map((pair) => pair.tour),
+            'travel-history',
+            reservationTourPairs.map((pair) => pair.cmsTour),
+            reservationTourPairs.map((pair) => pair.departureDate)
+          );
+        }),
+        catchError((error) => {
+          console.error('Error obteniendo historial de viajes:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al cargar el historial de viajes',
+          });
+          return of([]);
+        })
+      )
+      .subscribe({
+        next: (bookingItems: BookingItem[]) => {
+          this.bookingItems = bookingItems;
+          this.loading = false;
+        },
+        error: (error) => {
+          console.error('Error en la suscripción:', error);
+          this.bookingItems = [];
+          this.loading = false;
+        },
+      });
+  }
+
+  /**
+   * Carga el historial de viajes usando solo userId (fallback cuando no hay email)
+   */
+  private loadTravelHistoryWithUserIdOnly(userId: number): void {
+    this.loading = true;
+    this.bookingItems = [];
+
+    this.bookingsService.getReservationsByBucket('History', userId)
+      .pipe(
+        takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
+        switchMap((reservations: ReservationResponse[]) => {
+          if (!reservations || reservations.length === 0) {
+            return of([]);
+          }
+
+          // Obtener información de tours, imágenes CMS y departures para cada reserva
+          const tourPromises = reservations.map((reservation) =>
+            forkJoin({
+              tour: this.toursService.getTourById(reservation.tourId).pipe(
+                takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
+                catchError((error) => {
+                  console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
+                  return of(null);
+                })
+              ),
+              cmsTour: this.cmsTourService
+                .getAllTours({ tourId: reservation.tourId })
+                .pipe(
+                  takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
+                  map((cmsTours: ICMSTourResponse[]) =>
+                    cmsTours.length > 0 ? cmsTours[0] : null
+                  ),
+                  catchError((error) => {
+                    console.warn(`Error obteniendo CMS tour ${reservation.tourId}:`, error);
+                    return of(null);
+                  })
+                ),
+              departure: reservation.departureId
+                ? this.departureService.getById(reservation.departureId).pipe(
+                    takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
+                    catchError((error) => {
+                      console.warn(`Error obteniendo departure ${reservation.departureId}:`, error);
+                      return of(null);
+                    })
+                  )
+                : of(null),
+            }).pipe(
+              map(({ tour, cmsTour, departure }) => ({
+                reservation,
+                tour,
+                cmsTour,
+                departureDate: departure?.departureDate || null,
+              }))
+            )
+          );
+
+          return forkJoin(tourPromises).pipe(
+            takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
             catchError((error) => {
               console.error('Error obteniendo información de tours:', error);
               return of(

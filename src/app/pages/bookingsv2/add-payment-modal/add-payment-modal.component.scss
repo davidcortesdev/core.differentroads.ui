@@ -77,6 +77,13 @@
           grid-template-columns: repeat(3, 1fr);
           gap: 1rem;
 
+          /* Cuando solo hay un método (TO), que no quede “perdido” en un grid de 3 */
+          &:has(.payment-method-option:nth-child(1):last-child) {
+            max-width: 260px;
+            margin-inline: auto;
+            grid-template-columns: 1fr;
+          }
+
           @media (max-width: 768px) {
             grid-template-columns: 1fr;
           }

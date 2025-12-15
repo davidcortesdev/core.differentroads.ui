@@ -26,7 +26,7 @@ import {
 import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 import { PointsV2Service } from '../../../../core/services/v2/points-v2.service';
 import { DepartureService } from '../../../../core/services/departure/departure.service';
-import { switchMap, map, catchError, of, forkJoin, Subscription, takeUntil, delay, retryWhen, take, timer, EMPTY, takeWhile } from 'rxjs';
+import { switchMap, map, catchError, of, forkJoin, Subscription, takeUntil, delay, retryWhen, take, timer, EMPTY, takeWhile, filter, first } from 'rxjs';
 import { Subject } from 'rxjs';
 
 @Component({
@@ -187,7 +187,7 @@ export class BookingListSectionV2Component
     const maxAttempts = 10;
     const delayMs = 300;
 
-    // ✅ AGREGADO: Cancelar cualquier suscripción previa del timer antes de crear una nueva
+    // ✅ Cancelar cualquier suscripción previa del timer antes de crear una nueva
     if (this.emailWaitSubscription) {
       console.log('Cancelando timer previo de espera de email para iniciar uno nuevo');
       this.emailWaitSubscription.unsubscribe();
@@ -199,6 +199,8 @@ export class BookingListSectionV2Component
     this.bookingItems = [];
 
     // Crear un observable que intenta obtener el email con reintentos
+    // El timer emite valores cada delayMs, y verificamos el email en cada emisión
+    // Usamos first() con un predicado para encontrar el primer valor donde hay email O es el último intento
     const timerSubscription = timer(0, delayMs) // Empezar inmediatamente y repetir cada delayMs
       .pipe(
         takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
@@ -208,13 +210,17 @@ export class BookingListSectionV2Component
           const userEmail: string | undefined = this.authService.getUserEmailValue();
           return { attempt, userEmail };
         }),
-        // ✅ CORREGIDO: Usar takeWhile para continuar hasta encontrar el email o alcanzar el último intento
-        // takeWhile continúa mientras la condición sea verdadera, y se completa cuando es falsa
-        takeWhile(({ attempt, userEmail }: { attempt: number; userEmail: string | undefined }) => {
-          // Continuar si NO hay email Y no es el último intento
-          return !userEmail && attempt < maxAttempts - 1;
-        }, true), // El segundo parámetro 'true' incluye el último valor que hace falsa la condición
-        // ✅ CORREGIDO: Usar map para ejecutar los callbacks y luego completar el stream
+        // ✅ CORREGIDO: Usar first() con predicado en lugar de filter + take(1)
+        // first() con predicado encuentra el primer valor que cumple la condición
+        // y completa el observable, permitiendo que el timer continúe emitiendo hasta encontrar el valor
+        first(
+          ({ attempt, userEmail }: { attempt: number; userEmail: string | undefined }) => {
+            // Procesar cuando encontramos email O cuando es el último intento sin email
+            return !!userEmail || attempt === maxAttempts - 1;
+          },
+          { attempt: maxAttempts - 1, userEmail: undefined } // Valor por defecto si no se encuentra ninguno
+        ),
+        // ✅ CORREGIDO: Ejecutar los callbacks una sola vez
         map(({ attempt, userEmail }: { attempt: number; userEmail: string | undefined }) => {
           if (userEmail) {
             // Email encontrado, ejecutar callback
@@ -227,9 +233,6 @@ export class BookingListSectionV2Component
           // Retornar un valor para que el stream continúe y se complete
           return null;
         }),
-        // ✅ CORREGIDO: Tomar solo el primer valor para completar el stream inmediatamente
-        // Esto asegura que los callbacks solo se ejecuten una vez
-        take(1),
         catchError((error) => {
           // En caso de error, ejecutar fallback
           console.error('Error esperando email del usuario:', error);
@@ -238,13 +241,20 @@ export class BookingListSectionV2Component
         })
       )
       .subscribe({
+        next: () => {
+          // El callback ya se ejecutó en el map, solo necesitamos completar
+        },
+        error: (error) => {
+          console.error('Error en el observable de espera de email:', error);
+          onEmailNotFound(userId);
+        },
         complete: () => {
-          // ✅ AGREGADO: Limpiar la referencia cuando el observable se complete
+          // Limpiar la suscripción cuando se complete
           this.emailWaitSubscription = null;
         }
       });
 
-    // ✅ AGREGADO: Guardar la suscripción para poder cancelarla si es necesario
+    // Guardar la suscripción para poder cancelarla si es necesario
     this.emailWaitSubscription = timerSubscription;
   }
 

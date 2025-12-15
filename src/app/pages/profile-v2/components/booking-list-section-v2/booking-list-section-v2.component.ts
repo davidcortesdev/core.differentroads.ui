@@ -201,7 +201,7 @@ export class BookingListSectionV2Component
     this.bookingItems = [];
 
     // Usar el nuevo método que combina userId y email
-    const subscription = this.bookingsService.getActiveBookingsByBucket(userId, userEmail)
+    const observable = this.bookingsService.getActiveBookingsByBucket(userId, userEmail)
       .pipe(
         // Agregar operador para evitar que se ejecute si la suscripción fue cancelada
         takeUntil(this.destroy$),
@@ -301,35 +301,39 @@ export class BookingListSectionV2Component
           });
           return of([]);
         })
-      )
-      .subscribe({
-        next: (bookingItems: BookingItem[]) => {
-          // ✅ CORREGIDO: Solo actualizar y limpiar si esta es la suscripción activa actual
-          if (this.activeBookingsSubscription === subscription) {
-            this.bookingItems = bookingItems || [];
-            this.loading = false;
-            console.log(`Reservas activas cargadas: ${bookingItems.length} items`);
-            this.activeBookingsSubscription = null;
-          } else {
-            // Esta es una suscripción obsoleta, ignorar el resultado
-            console.log('Ignorando resultado de suscripción obsoleta');
-          }
-        },
-        error: (error) => {
-          // ✅ CORREGIDO: Solo manejar el error si esta es la suscripción activa actual
-          if (this.activeBookingsSubscription === subscription) {
-            console.error('Error en la suscripción de reservas activas:', error);
-            this.bookingItems = [];
-            this.loading = false;
-            this.activeBookingsSubscription = null;
-          } else {
-            // Esta es una suscripción obsoleta, ignorar el error
-            console.log('Ignorando error de suscripción obsoleta');
-          }
-        },
-      });
+      );
 
-    // Guardar la suscripción para poder cancelarla si es necesario
+    // ✅ CORREGIDO: Suscribirse y guardar la Subscription retornada ANTES de que se ejecuten los callbacks
+    // Esto evita race conditions si el observable completa sincrónicamente
+    const subscription = observable.subscribe({
+      next: (bookingItems: BookingItem[]) => {
+        // ✅ CORREGIDO: Solo actualizar y limpiar si esta es la suscripción activa actual
+        if (this.activeBookingsSubscription === subscription) {
+          this.bookingItems = bookingItems || [];
+          this.loading = false;
+          console.log(`Reservas activas cargadas: ${bookingItems.length} items`);
+          this.activeBookingsSubscription = null;
+        } else {
+          // Esta es una suscripción obsoleta, ignorar el resultado
+          console.log('Ignorando resultado de suscripción obsoleta');
+        }
+      },
+      error: (error) => {
+        // ✅ CORREGIDO: Solo manejar el error si esta es la suscripción activa actual
+        if (this.activeBookingsSubscription === subscription) {
+          console.error('Error en la suscripción de reservas activas:', error);
+          this.bookingItems = [];
+          this.loading = false;
+          this.activeBookingsSubscription = null;
+        } else {
+          // Esta es una suscripción obsoleta, ignorar el error
+          console.log('Ignorando error de suscripción obsoleta');
+        }
+      },
+    });
+
+    // ✅ CORREGIDO: Asignar la Subscription (no el Observable) después de suscribirse
+    // Esto asegura que la referencia esté disponible para los callbacks
     this.activeBookingsSubscription = subscription;
   }
 

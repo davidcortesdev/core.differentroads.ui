@@ -56,28 +56,69 @@ export class ReviewSectionV2Component implements OnInit, OnChanges {
 
     this.loading = true;
     
-    this.reviewsService.getByUserId(userIdNumber).pipe(
-      switchMap(reviews => {
-        if (reviews.length === 0) {
-          return of([]);
+    // Primero obtener el nombre del usuario del perfil
+    this.usersNetService.getUserById(userIdNumber).pipe(
+      switchMap(user => {
+        // Obtener el nombre completo del usuario
+        let userName = 'Usuario desconocido';
+        if (user) {
+          userName = user.name || 'Usuario desconocido';
+          if (user.lastName) {
+            userName += ` ${user.lastName}`;
+          }
         }
 
-        // Mapear reviews al formato esperado
-        const mappedReviews: IEnrichedReviewResponse[] = reviews.map((review) => ({
-          ...review,
-          traveler: 'Usuario desconocido', // Se enriquecerá después
-          tour: 'Tour', // Se enriquecerá después con tourService
-          review: review.text,
-          score: review.rating,
-          date: review.reviewDate
-        }));
+        // Ahora obtener las reviews del usuario
+        return this.reviewsService.getByUserId(userIdNumber).pipe(
+          switchMap(reviews => {
+            if (reviews.length === 0) {
+              return of([]);
+            }
 
-        // Obtener nombres de travelers
-        return this.enrichWithTravelerNames(mappedReviews);
+            // Mapear reviews al formato esperado con el nombre del usuario ya conocido
+            const mappedReviews: IEnrichedReviewResponse[] = reviews.map((review) => ({
+              ...review,
+              traveler: userName, // Usar el nombre del usuario del perfil
+              tour: 'Tour', // Se enriquecerá después con tourService
+              review: review.text,
+              score: review.rating,
+              date: review.reviewDate
+            }));
+
+            return of(mappedReviews);
+          }),
+          catchError(error => {
+            console.error('Error loading reviews:', error);
+            return of([]);
+          })
+        );
       }),
       catchError(error => {
-        console.error('Error loading reviews:', error);
-        return of([]);
+        console.error('Error loading user data:', error);
+        // Si falla obtener el usuario, intentar cargar las reviews de todas formas
+        return this.reviewsService.getByUserId(userIdNumber).pipe(
+          switchMap(reviews => {
+            if (reviews.length === 0) {
+              return of([]);
+            }
+
+            // Mapear reviews sin nombre de usuario (fallback)
+            const mappedReviews: IEnrichedReviewResponse[] = reviews.map((review) => ({
+              ...review,
+              traveler: 'Usuario desconocido',
+              tour: 'Tour',
+              review: review.text,
+              score: review.rating,
+              date: review.reviewDate
+            }));
+
+            return of(mappedReviews);
+          }),
+          catchError(reviewError => {
+            console.error('Error loading reviews:', reviewError);
+            return of([]);
+          })
+        );
       })
     ).subscribe({
       next: (reviewsWithTravelers) => {
@@ -90,61 +131,6 @@ export class ReviewSectionV2Component implements OnInit, OnChanges {
         this.cdr.markForCheck();
       }
     });
-  }
-
-  private enrichWithTravelerNames(reviews: IEnrichedReviewResponse[]) {
-    // Extraer todos los user IDs únicos para reviews que no tienen travelerName
-    const userIds = [...new Set(reviews
-      .filter(review => !review.traveler || review.traveler === 'Usuario desconocido')
-      .map(review => review.userId)
-      .filter(id => id)
-    )];
-
-    if (userIds.length === 0) {
-      return of(reviews);
-    }
-
-    // Obtener todos los users en llamadas individuales
-    const userObservables = userIds.map(id => 
-      this.usersNetService.getUserById(id).pipe(
-        catchError(error => {
-          console.error(`Error fetching user ${id}:`, error);
-          return of(null); // Retorna null en caso de error para no romper el forkJoin
-        })
-      )
-    );
-
-    return forkJoin(userObservables).pipe(
-      map(users => {
-        // Filtrar usuarios nulos y crear un mapa para acceso rápido a los users por ID
-        const usersMap = new Map(users.filter(user => user !== null).map(t => [t!.id, t]));
-
-        // Mapear reviews con nombres de users
-        return reviews.map((review: IEnrichedReviewResponse) => {
-          const user = usersMap.get(review.userId);
-          let travelerName = 'Usuario desconocido';
-
-          if (user) {
-            travelerName = user.name || 'Usuario desconocido';
-            if (user.lastName) {
-              travelerName += ` ${user.lastName}`;
-            }
-          }
-          return {
-            ...review,
-            traveler: review.traveler || travelerName
-          };
-        });
-      }),
-      catchError(error => {
-        console.error('Error processing users with individual calls:', error);
-        // Fallback: mantener nombres existentes o asignar por defecto
-        return of(reviews.map((review: IEnrichedReviewResponse) => ({
-          ...review,
-          traveler: review.traveler || 'Usuario desconocido'
-        })));
-      })
-    );
   }
 
   private enrichReviewsWithTourData(reviews: IEnrichedReviewResponse[]): void {

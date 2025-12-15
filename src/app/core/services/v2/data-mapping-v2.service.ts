@@ -27,7 +27,7 @@ export class DataMappingV2Service {
   mapReservationToBookingItem(
     reservation: ReservationResponse, 
     tour: TourV2 | null = null,
-    listType: 'active-bookings' | 'travel-history' | 'recent-budgets' = 'active-bookings',
+    listType: 'active-bookings' | 'pending-bookings' | 'travel-history' | 'recent-budgets' = 'active-bookings',
     cmsTour: ICMSTourResponse | null = null,
     departureDate?: string | null
   ): BookingItem {
@@ -89,7 +89,7 @@ export class DataMappingV2Service {
   mapReservationsToBookingItems(
     reservations: ReservationResponse[],
     tours: (TourV2 | null)[],
-    listType: 'active-bookings' | 'travel-history' | 'recent-budgets' = 'active-bookings',
+    listType: 'active-bookings' | 'pending-bookings' | 'travel-history' | 'recent-budgets' = 'active-bookings',
     cmsTours: (ICMSTourResponse | null)[] = [],
     departureDates?: (string | null | undefined)[]
   ): BookingItem[] {

@@ -1,11 +1,11 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { IEnrichedReviewResponse } from '../../../../core/models/reviews/review.model';
 import { ReviewsService } from '../../../../core/services/reviews/reviews.service';
 import { BookingsServiceV2 } from '../../../../core/services/v2/bookings-v2.service';
 import { TourService } from '../../../../core/services/tour/tour.service';
 import { UsersNetService } from '../../../../core/services/users/usersNet.service';
-import { forkJoin, of } from 'rxjs';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { forkJoin, of, Subject } from 'rxjs';
+import { catchError, map, switchMap, takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-review-section-v2',
@@ -14,12 +14,15 @@ import { catchError, map, switchMap } from 'rxjs/operators';
   styleUrls: ['./review-section-v2.component.scss'],
 })
 
-export class ReviewSectionV2Component implements OnInit, OnChanges {
+export class ReviewSectionV2Component implements OnInit, OnChanges, OnDestroy {
   @Input() userId: string = '';
   reviewsCards: IEnrichedReviewResponse[] = [];
   loading = false;
   isExpanded = true;
   hasCompletedBookings = false;
+  
+  // Subject para manejar la destrucción del componente y cancelar suscripciones
+  private destroy$ = new Subject<void>();
   
   constructor(
     private reviewsService: ReviewsService,
@@ -43,6 +46,12 @@ export class ReviewSectionV2Component implements OnInit, OnChanges {
     }
   }
 
+  ngOnDestroy(): void {
+    // Emitir señal de destrucción para cancelar todas las suscripciones con takeUntil
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   private loadReviews(): void {
     if (!this.userId) {
       return;
@@ -58,6 +67,7 @@ export class ReviewSectionV2Component implements OnInit, OnChanges {
     
     // Primero obtener el nombre del usuario del perfil
     this.usersNetService.getUserById(userIdNumber).pipe(
+      takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
       switchMap(user => {
         // Obtener el nombre completo del usuario
         let userName = 'Usuario desconocido';
@@ -70,6 +80,7 @@ export class ReviewSectionV2Component implements OnInit, OnChanges {
 
         // Ahora obtener las reviews del usuario
         return this.reviewsService.getByUserId(userIdNumber).pipe(
+          takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
           switchMap(reviews => {
             if (reviews.length === 0) {
               return of([]);
@@ -97,6 +108,7 @@ export class ReviewSectionV2Component implements OnInit, OnChanges {
         console.error('Error loading user data:', error);
         // Si falla obtener el usuario, intentar cargar las reviews de todas formas
         return this.reviewsService.getByUserId(userIdNumber).pipe(
+          takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
           switchMap(reviews => {
             if (reviews.length === 0) {
               return of([]);
@@ -147,6 +159,7 @@ export class ReviewSectionV2Component implements OnInit, OnChanges {
     // Crear observables para obtener información de cada tour
     const tourObservables = uniqueTourIds.map(tourId => 
       this.tourService.getTourById(tourId).pipe(
+        takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
         catchError(error => {
           console.error(`Error fetching tour ${tourId}:`, error);
           return of(null);
@@ -154,7 +167,9 @@ export class ReviewSectionV2Component implements OnInit, OnChanges {
       )
     );
 
-    forkJoin(tourObservables).subscribe({
+    forkJoin(tourObservables).pipe(
+      takeUntil(this.destroy$) // ✅ Cancelar si el componente se destruye
+    ).subscribe({
       next: (tours) => {
         // Crear un mapa de tourId -> tour info
         const tourMap = new Map();
@@ -199,6 +214,7 @@ export class ReviewSectionV2Component implements OnInit, OnChanges {
 
     // Usar el nuevo endpoint con bucket "History" para verificar reservas completadas
     this.bookingsService.getReservationsByBucket('History', userIdNumber).pipe(
+      takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
       map((reservations) => reservations.length > 0),
       catchError(error => {
         console.error('Error checking completed bookings:', error);

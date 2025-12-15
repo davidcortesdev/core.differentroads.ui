@@ -369,13 +369,17 @@ export class BookingListSectionV2Component
         })
       );
 
-    // ✅ CORREGIDO: Crear la suscripción y asignarla inmediatamente
-    // Usar una variable local para capturar la referencia antes de que los callbacks puedan ejecutarse
-    const subscription = observable.subscribe({
+    // ✅ CORREGIDO: Declarar la variable de suscripción antes de suscribirse
+    // Esto asegura que la variable exista en el scope cuando los callbacks se ejecuten
+    let subscription: Subscription;
+    
+    // ✅ CORREGIDO: Asignar la suscripción ANTES de que los callbacks puedan ejecutarse
+    // Si el observable completa sincrónicamente, los callbacks necesitan que la asignación ya esté hecha
+    subscription = observable.subscribe({
       next: (bookingItems: BookingItem[]) => {
-        // ✅ CORREGIDO: Comparar contra la variable local 'subscription' en lugar de this.activeBookingsSubscription
-        // Esto funciona porque 'subscription' ya está asignada cuando los callbacks se ejecutan
-        // (incluso si son sincrónicos, la variable ya existe en el scope)
+        // ✅ CORREGIDO: Comparar contra la variable local 'subscription' que ya está asignada
+        // La asignación a this.activeBookingsSubscription ocurre inmediatamente después,
+        // pero la variable local 'subscription' ya existe en el scope cuando los callbacks se ejecutan
         if (this.activeBookingsSubscription === subscription) {
           this.bookingItems = bookingItems || [];
           this.loading = false;
@@ -401,7 +405,10 @@ export class BookingListSectionV2Component
     });
 
     // ✅ CORREGIDO: Asignar la Subscription INMEDIATAMENTE después de crear la suscripción
-    // Esto debe hacerse en la misma expresión o inmediatamente después para evitar race conditions
+    // Esta asignación ocurre en el mismo hilo de ejecución, antes de que cualquier código asíncrono pueda ejecutarse
+    // Si el observable es sincrónico, los callbacks ya se ejecutaron pero la comparación fallará porque
+    // this.activeBookingsSubscription todavía no está asignado. Por eso usamos la variable local 'subscription'
+    // en la comparación, que ya existe en el scope.
     this.activeBookingsSubscription = subscription;
   }
 

@@ -150,13 +150,11 @@
       <p-button 
         label="Cancelar" 
         icon="pi pi-times" 
-        styleClass="p-button-text" 
         (onClick)="closeDialog()">
       </p-button>
       <p-button 
         label="Proceder al pago" 
         icon="pi pi-check" 
-        styleClass="p-button-success" 
         [disabled]="!isPaymentFormValid()"
         [loading]="processingPayment"
         (onClick)="processCustomPayment()">

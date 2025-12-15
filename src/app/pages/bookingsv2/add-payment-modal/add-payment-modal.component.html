@@ -59,9 +59,10 @@
       <label class="section-label">Método de pago <span class="required">*</span></label>
       
       <div class="payment-methods-grid">
-        <!-- Tarjeta bancaria -->
+        <!-- Tarjeta bancaria (solo cuando no es Touroperación) -->
         <div 
           class="payment-method-option"
+          *ngIf="!isTO"
           [ngClass]="{ 'selected': selectedPaymentMethod === 'card' }"
           (click)="selectPaymentMethodType('card')">
           <p-radioButton 
@@ -91,9 +92,10 @@
           </div>
         </div>
 
-        <!-- Scalapay -->
+        <!-- Scalapay (solo cuando no es Touroperación) -->
         <div 
           class="payment-method-option"
+          *ngIf="!isTO"
           [ngClass]="{ 'selected': selectedPaymentMethod === 'scalapay' }"
           (click)="selectPaymentMethodType('scalapay')">
           <p-radioButton 
@@ -112,7 +114,7 @@
     <!-- Información adicional según método seleccionado -->
     <div class="method-additional-info mt-3" *ngIf="selectedPaymentMethod">
       <p-message 
-        *ngIf="selectedPaymentMethod === 'card'" 
+        *ngIf="!isTO && selectedPaymentMethod === 'card'" 
         severity="contrast" 
         styleClass="w-full">
         <ng-template pTemplate="messageicon">
@@ -132,7 +134,7 @@
       </p-message>
 
       <p-message 
-        *ngIf="selectedPaymentMethod === 'scalapay'" 
+        *ngIf="!isTO && selectedPaymentMethod === 'scalapay'" 
         severity="contrast" 
         styleClass="w-full">
         <ng-template pTemplate="messageicon">

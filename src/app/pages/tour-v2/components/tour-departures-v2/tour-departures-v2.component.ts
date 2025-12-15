@@ -215,6 +215,9 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   //  Mapa para rastrear qué departures están cargando horarios
   flightTimesLoading: { [departureId: number]: boolean } = {};
 
+  // Mapa para indicar si hubo error o datos no válidos al cargar horarios
+  flightTimesError: { [departureId: number]: boolean } = {};
+
   // Mapa de disponibilidad de plazas por departureId (ActivityPack)
   activityPackAvailabilityByDepartureId: {
     [departureId: number]: ActivityPackAvailabilityData | null;
@@ -1813,6 +1816,11 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     return this.flightTimesLoading[departureId] === true;
   }
 
+  // Método para verificar si hubo error o datos no válidos al cargar los horarios
+  hasFlightTimesError(departureId: number): boolean {
+    return this.flightTimesError[departureId] === true;
+  }
+
   // Método para verificar si los horarios están disponibles
   hasValidFlightTimes(departureId: number): boolean {
     const flightTimes = this.flightTimesByDepartureId[departureId];
@@ -1824,9 +1832,10 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   private loadFlightTimes(departureId: number): void {
     if (!this.selectedCity?.activityPackId) return;
   
-    // Limpiar información anterior y marcar como cargando
+    // Limpiar información anterior y estados, y marcar como cargando
     delete this.flightTimesByDepartureId[departureId];
     this.flightTimesLoading[departureId] = true;
+    this.flightTimesError[departureId] = false;
   
     this.flightsNetService.getFlights(departureId)
       .pipe(takeUntil(this.destroy$))
@@ -1891,13 +1900,20 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
               }
             }
           }
-          
+
+          // Si tras procesar la respuesta no se ha podido construir información válida,
+          // marcar error para poder mostrar un mensaje en la UI
+          if (!this.flightTimesByDepartureId[departureId]) {
+            this.flightTimesError[departureId] = true;
+          }
+
           // Marcar como no cargando cuando tengamos la respuesta
           this.flightTimesLoading[departureId] = false;
         },
         error: () => {
           // Marcar como no cargando en caso de error
           this.flightTimesLoading[departureId] = false;
+          this.flightTimesError[departureId] = true;
         }
       });
   }

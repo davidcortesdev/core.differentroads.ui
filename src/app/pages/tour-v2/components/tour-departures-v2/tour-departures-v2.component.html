@@ -237,6 +237,15 @@
                       {{ line }}
                     </div>
                   </div>
+
+                  <!-- Fallback cuando la API respondió pero no hay datos válidos -->
+                  <div
+                    *ngIf="!isFlightTimesLoading(item.id) && !hasValidFlightTimes(item.id) && hasFlightTimesError(item.id)"
+                  >
+                    <div class="flight-line loading-text">
+                      Horarios de vuelo no disponibles en este momento
+                    </div>
+                  </div>
                 </div>
                 
                 <!-- Mostrar "sin vuelos" cuando se selecciona esa opción -->

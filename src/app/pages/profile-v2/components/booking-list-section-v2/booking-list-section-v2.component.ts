@@ -303,9 +303,12 @@ export class BookingListSectionV2Component
         })
       );
 
-    // ✅ CORREGIDO: Suscribirse y guardar la Subscription retornada ANTES de que se ejecuten los callbacks
-    // Esto evita race conditions si el observable completa sincrónicamente
-    const subscription = observable.subscribe({
+    // ✅ CORREGIDO: Asignar la suscripción ANTES de suscribirse para evitar race conditions
+    // Si el observable completa sincrónicamente, el callback necesita que la suscripción ya esté asignada
+    // Creamos una variable temporal para almacenar la referencia antes de suscribirnos
+    let subscription: Subscription;
+    
+    subscription = observable.subscribe({
       next: (bookingItems: BookingItem[]) => {
         // ✅ CORREGIDO: Solo actualizar y limpiar si esta es la suscripción activa actual
         if (this.activeBookingsSubscription === subscription) {
@@ -332,8 +335,8 @@ export class BookingListSectionV2Component
       },
     });
 
-    // ✅ CORREGIDO: Asignar la Subscription (no el Observable) después de suscribirse
-    // Esto asegura que la referencia esté disponible para los callbacks
+    // ✅ CORREGIDO: Asignar la Subscription inmediatamente después de suscribirse
+    // Esto asegura que la referencia esté disponible incluso si los callbacks se ejecutan sincrónicamente
     this.activeBookingsSubscription = subscription;
   }
 
@@ -454,6 +457,7 @@ export class BookingListSectionV2Component
     this.bookingsService
       .getPendingBookingsByBucket(userId)
       .pipe(
+        takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
         switchMap((reservations: ReservationResponse[]) => {
           if (!reservations || reservations.length === 0) {
             return of([]);
@@ -463,6 +467,7 @@ export class BookingListSectionV2Component
           const tourPromises = reservations.map((reservation) =>
             forkJoin({
               tour: this.toursService.getTourById(reservation.tourId).pipe(
+                takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
                 catchError((error) => {
                   console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
                   return of(null);
@@ -471,6 +476,7 @@ export class BookingListSectionV2Component
               cmsTour: this.cmsTourService
                 .getAllTours({ tourId: reservation.tourId })
                 .pipe(
+                  takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
                   map((cmsTours: ICMSTourResponse[]) =>
                     cmsTours.length > 0 ? cmsTours[0] : null
                   ),
@@ -481,6 +487,7 @@ export class BookingListSectionV2Component
                 ),
               departure: reservation.departureId
                 ? this.departureService.getById(reservation.departureId).pipe(
+                    takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
                     catchError((error) => {
                       console.warn(`Error obteniendo departure ${reservation.departureId}:`, error);
                       return of(null);
@@ -498,6 +505,7 @@ export class BookingListSectionV2Component
           );
 
           return forkJoin(tourPromises).pipe(
+            takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
             catchError((error) => {
               console.error('Error obteniendo información de tours:', error);
               return of(
@@ -559,6 +567,7 @@ export class BookingListSectionV2Component
     // Usar el nuevo método que combina userId y email
     this.bookingsService.getTravelHistoryByBucket(userId, userEmail)
       .pipe(
+        takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
         switchMap((reservations: ReservationResponse[]) => {
           if (!reservations || reservations.length === 0) {
             return of([]);
@@ -568,6 +577,7 @@ export class BookingListSectionV2Component
           const tourPromises = reservations.map((reservation) =>
             forkJoin({
               tour: this.toursService.getTourById(reservation.tourId).pipe(
+                takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
                 catchError((error) => {
                   console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
                   return of(null);
@@ -576,6 +586,7 @@ export class BookingListSectionV2Component
               cmsTour: this.cmsTourService
                 .getAllTours({ tourId: reservation.tourId })
                 .pipe(
+                  takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
                   map((cmsTours: ICMSTourResponse[]) =>
                     cmsTours.length > 0 ? cmsTours[0] : null
                   ),
@@ -586,6 +597,7 @@ export class BookingListSectionV2Component
                 ),
               departure: reservation.departureId
                 ? this.departureService.getById(reservation.departureId).pipe(
+                    takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
                     catchError((error) => {
                       console.warn(`Error obteniendo departure ${reservation.departureId}:`, error);
                       return of(null);
@@ -602,7 +614,20 @@ export class BookingListSectionV2Component
             )
           );
 
-          return forkJoin(tourPromises);
+          return forkJoin(tourPromises).pipe(
+            takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
+            catchError((error) => {
+              console.error('Error obteniendo información de tours:', error);
+              return of(
+                reservations.map((reservation) => ({
+                  reservation,
+                  tour: null,
+                  cmsTour: null,
+                  departureDate: null,
+                }))
+              );
+            })
+          );
         }),
         map((reservationTourPairs: any[]) => {
           return this.dataMappingService.mapReservationsToBookingItems(
@@ -646,6 +671,7 @@ export class BookingListSectionV2Component
     this.bookingsService
       .getRecentBudgetsByBucket(userId)
       .pipe(
+        takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
         switchMap((reservations: ReservationResponse[]) => {
           if (!reservations || reservations.length === 0) {
             return of([]);
@@ -655,6 +681,7 @@ export class BookingListSectionV2Component
           const tourPromises = reservations.map((reservation) =>
             forkJoin({
               tour: this.toursService.getTourById(reservation.tourId).pipe(
+                takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
                 catchError((error) => {
                   console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
                   return of(null);
@@ -663,6 +690,7 @@ export class BookingListSectionV2Component
               cmsTour: this.cmsTourService
                 .getAllTours({ tourId: reservation.tourId })
                 .pipe(
+                  takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
                   map((cmsTours: ICMSTourResponse[]) =>
                     cmsTours.length > 0 ? cmsTours[0] : null
                   ),
@@ -673,6 +701,7 @@ export class BookingListSectionV2Component
                 ),
               departure: reservation.departureId
                 ? this.departureService.getById(reservation.departureId).pipe(
+                    takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
                     catchError((error) => {
                       console.warn(`Error obteniendo departure ${reservation.departureId}:`, error);
                       return of(null);
@@ -689,7 +718,20 @@ export class BookingListSectionV2Component
             )
           );
 
-          return forkJoin(tourPromises);
+          return forkJoin(tourPromises).pipe(
+            takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
+            catchError((error) => {
+              console.error('Error obteniendo información de tours:', error);
+              return of(
+                reservations.map((reservation) => ({
+                  reservation,
+                  tour: null,
+                  cmsTour: null,
+                  departureDate: null,
+                }))
+              );
+            })
+          );
         }),
         map((reservationTourPairs: any[]) => {
           return this.dataMappingService.mapReservationsToBookingItems(

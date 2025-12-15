@@ -115,7 +115,6 @@
     <div class="method-additional-info mt-3" *ngIf="selectedPaymentMethod">
       <p-message 
         *ngIf="!isTO && selectedPaymentMethod === 'card'" 
-        severity="contrast" 
         styleClass="w-full">
         <ng-template pTemplate="messageicon">
           <i class="pi pi-info-circle"></i>
@@ -125,7 +124,6 @@
 
       <p-message 
         *ngIf="selectedPaymentMethod === 'transfer'" 
-        severity="contrast" 
         styleClass="w-full">
         <ng-template pTemplate="messageicon">
           <i class="pi pi-info-circle"></i>
@@ -135,7 +133,6 @@
 
       <p-message 
         *ngIf="!isTO && selectedPaymentMethod === 'scalapay'" 
-        severity="contrast" 
         styleClass="w-full">
         <ng-template pTemplate="messageicon">
           <i class="pi pi-info-circle"></i>
@@ -150,6 +147,7 @@
       <p-button 
         label="Cancelar" 
         icon="pi pi-times" 
+        severity="secondary"
         (onClick)="closeDialog()">
       </p-button>
       <p-button 

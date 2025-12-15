@@ -26,7 +26,8 @@ import {
 import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 import { PointsV2Service } from '../../../../core/services/v2/points-v2.service';
 import { DepartureService } from '../../../../core/services/departure/departure.service';
-import { switchMap, map, catchError, of, forkJoin, Subscription } from 'rxjs';
+import { switchMap, map, catchError, of, forkJoin, Subscription, takeUntil } from 'rxjs';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'app-booking-list-section-v2',
@@ -50,6 +51,9 @@ export class BookingListSectionV2Component
 
   // Suscripción para poder cancelarla si se inicia una nueva carga
   private activeBookingsSubscription: Subscription | null = null;
+
+  // Subject para manejar la destrucción del componente y cancelar suscripciones
+  private destroy$ = new Subject<void>();
 
   bookingItems: BookingItem[] = [];
   isExpanded: boolean = true;
@@ -97,6 +101,10 @@ export class BookingListSectionV2Component
   }
 
   ngOnDestroy(): void {
+    // Emitir señal de destrucción para cancelar todas las suscripciones con takeUntil
+    this.destroy$.next();
+    this.destroy$.complete();
+    
     // Cancelar suscripciones activas al destruir el componente
     if (this.activeBookingsSubscription) {
       this.activeBookingsSubscription.unsubscribe();
@@ -139,7 +147,7 @@ export class BookingListSectionV2Component
   }
 
   /**
-   * Carga reservas activas usando servicios v2
+   * Carga reservas activas usando el nuevo endpoint by-bucket
    * Incluye reservas donde el usuario es titular + reservas donde aparece como viajero
    */
   private loadActiveBookings(userId: number): void {
@@ -148,29 +156,69 @@ export class BookingListSectionV2Component
   }
 
   /**
-   * Carga reservas pendientes (DRAFT/CART) solo por userId (no aplica por viajero)
+   * Espera hasta que el email del usuario esté disponible y luego carga las reservas
+   * Intenta hasta 10 veces con un delay de 300ms entre intentos
    */
-  private loadPendingBookings(userId: number): void {
+  private waitForUserEmail(userId: number, attempt: number = 0): void {
+    const maxAttempts = 10;
+    const delayMs = 300;
+
+    // Asegurar que loading esté en true mientras esperamos
     this.loading = true;
     this.bookingItems = [];
 
-    this.bookingsService
-      .getPendingBookings(userId)
+    const userEmail = this.authService.getUserEmailValue();
+
+    if (userEmail) {
+      // Email encontrado, proceder a cargar las reservas usando el nuevo endpoint
+      this.loadActiveBookingsWithEmail(userId, userEmail);
+    } else if (attempt < maxAttempts) {
+      // No se encontró el email, reintentar después del delay
+      setTimeout(() => {
+        this.waitForUserEmail(userId, attempt + 1);
+      }, delayMs);
+    } else {
+      // Se alcanzó el máximo de intentos, intentar solo con userId
+      console.warn('No se pudo obtener el email del usuario después de', maxAttempts, 'intentos. Cargando solo con userId.');
+      this.loadActiveBookingsWithUserIdOnly(userId);
+    }
+  }
+
+  /**
+   * Carga las reservas activas usando el nuevo endpoint by-bucket con userId y email
+   */
+  private loadActiveBookingsWithEmail(userId: number, userEmail: string): void {
+    // Solo cancelar si hay una suscripción activa Y está cargando
+    if (this.activeBookingsSubscription && this.loading) {
+      console.log('Cancelando carga previa de reservas activas para iniciar una nueva');
+      this.activeBookingsSubscription.unsubscribe();
+    }
+    
+    this.activeBookingsSubscription = null;
+
+    // Asegurar que loading esté en true y bookingItems esté vacío al inicio
+    this.loading = true;
+    this.bookingItems = [];
+
+    // Usar el nuevo método que combina userId y email
+    const subscription = this.bookingsService.getActiveBookingsByBucket(userId, userEmail)
       .pipe(
+        // Agregar operador para evitar que se ejecute si la suscripción fue cancelada
+        takeUntil(this.destroy$), // Necesitarás agregar destroy$ si no existe
         switchMap((reservations: ReservationResponse[]) => {
           if (!reservations || reservations.length === 0) {
+            console.log('No se encontraron reservas activas');
             return of([]);
           }
+
+          console.log(`Cargando ${reservations.length} reservas activas`);
 
           // Obtener información de tours, imágenes CMS y departures para cada reserva
           const tourPromises = reservations.map((reservation) =>
             forkJoin({
               tour: this.toursService.getTourById(reservation.tourId).pipe(
                 catchError((error) => {
-                  console.warn(
-                    `Error obteniendo tour ${reservation.tourId}:`,
-                    error
-                  );
+                  console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
                   return of(null);
                 })
               ),
@@ -181,20 +229,14 @@ export class BookingListSectionV2Component
                     cmsTours.length > 0 ? cmsTours[0] : null
                   ),
                   catchError((error) => {
-                    console.warn(
-                      `Error obteniendo CMS tour ${reservation.tourId}:`,
-                      error
-                    );
+                    console.warn(`Error obteniendo CMS tour ${reservation.tourId}:`, error);
                     return of(null);
                   })
                 ),
               departure: reservation.departureId
                 ? this.departureService.getById(reservation.departureId).pipe(
                     catchError((error) => {
-                      console.warn(
-                        `Error obteniendo departure ${reservation.departureId}:`,
-                        error
-                      );
+                      console.warn(`Error obteniendo departure ${reservation.departureId}:`, error);
                       return of(null);
                     })
                   )
@@ -240,6 +282,219 @@ export class BookingListSectionV2Component
           );
         }),
         catchError((error) => {
+          console.error('Error obteniendo reservas activas:', error);
+          
+          // Log detallado del error
+          if (error.status) {
+            console.error('Detalles del error HTTP:', {
+              status: error.status,
+              statusText: error.statusText,
+              message: error.error?.message || error.message,
+              url: error.url
+            });
+          }
+          
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al cargar las reservas activas. Por favor, recarga la página.',
+          });
+          return of([]);
+        })
+      )
+      .subscribe({
+        next: (bookingItems: BookingItem[]) => {
+          // Solo actualizar si la suscripción sigue activa
+          if (!this.activeBookingsSubscription || this.activeBookingsSubscription === subscription) {
+            this.bookingItems = bookingItems || [];
+            this.loading = false;
+            console.log(`Reservas activas cargadas: ${bookingItems.length} items`);
+          }
+          this.activeBookingsSubscription = null;
+        },
+        error: (error) => {
+          console.error('Error en la suscripción de reservas activas:', error);
+          this.bookingItems = [];
+          this.loading = false;
+          this.activeBookingsSubscription = null;
+        },
+      });
+
+    // Guardar la suscripción para poder cancelarla si es necesario
+    this.activeBookingsSubscription = subscription;
+  }
+
+  /**
+   * Carga las reservas activas usando solo userId (fallback cuando no hay email)
+   */
+  private loadActiveBookingsWithUserIdOnly(userId: number): void {
+    this.loading = true;
+    this.bookingItems = [];
+
+    this.bookingsService.getReservationsByBucket('Active', userId)
+      .pipe(
+        switchMap((reservations: ReservationResponse[]) => {
+          if (!reservations || reservations.length === 0) {
+            return of([]);
+          }
+
+          // Obtener información de tours, imágenes CMS y departures para cada reserva
+          const tourPromises = reservations.map((reservation) =>
+            forkJoin({
+              tour: this.toursService.getTourById(reservation.tourId).pipe(
+                catchError((error) => {
+                  console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
+                  return of(null);
+                })
+              ),
+              cmsTour: this.cmsTourService
+                .getAllTours({ tourId: reservation.tourId })
+                .pipe(
+                  map((cmsTours: ICMSTourResponse[]) =>
+                    cmsTours.length > 0 ? cmsTours[0] : null
+                  ),
+                  catchError((error) => {
+                    console.warn(`Error obteniendo CMS tour ${reservation.tourId}:`, error);
+                    return of(null);
+                  })
+                ),
+              departure: reservation.departureId
+                ? this.departureService.getById(reservation.departureId).pipe(
+                    catchError((error) => {
+                      console.warn(`Error obteniendo departure ${reservation.departureId}:`, error);
+                      return of(null);
+                    })
+                  )
+                : of(null),
+            }).pipe(
+              map(({ tour, cmsTour, departure }) => ({
+                reservation,
+                tour,
+                cmsTour,
+                departureDate: departure?.departureDate || null,
+              }))
+            )
+          );
+
+          return forkJoin(tourPromises);
+        }),
+        map((reservationTourPairs: any[]) => {
+          if (!reservationTourPairs || reservationTourPairs.length === 0) {
+            return [];
+          }
+
+          return this.dataMappingService.mapReservationsToBookingItems(
+            reservationTourPairs.map((pair) => pair.reservation),
+            reservationTourPairs.map((pair) => pair.tour),
+            'active-bookings',
+            reservationTourPairs.map((pair) => pair.cmsTour),
+            reservationTourPairs.map((pair) => pair.departureDate)
+          );
+        }),
+        catchError((error) => {
+          console.error('Error obteniendo reservas activas:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Error al cargar las reservas activas',
+          });
+          return of([]);
+        })
+      )
+      .subscribe({
+        next: (bookingItems: BookingItem[]) => {
+          this.bookingItems = bookingItems || [];
+          this.loading = false;
+        },
+        error: (error) => {
+          console.error('Error en la suscripción:', error);
+          this.bookingItems = [];
+          this.loading = false;
+        },
+      });
+  }
+
+  /**
+   * Carga reservas pendientes usando el nuevo endpoint by-bucket
+   */
+  private loadPendingBookings(userId: number): void {
+    this.loading = true;
+    this.bookingItems = [];
+
+    this.bookingsService
+      .getPendingBookingsByBucket(userId)
+      .pipe(
+        switchMap((reservations: ReservationResponse[]) => {
+          if (!reservations || reservations.length === 0) {
+            return of([]);
+          }
+
+          // Obtener información de tours, imágenes CMS y departures para cada reserva
+          const tourPromises = reservations.map((reservation) =>
+            forkJoin({
+              tour: this.toursService.getTourById(reservation.tourId).pipe(
+                catchError((error) => {
+                  console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
+                  return of(null);
+                })
+              ),
+              cmsTour: this.cmsTourService
+                .getAllTours({ tourId: reservation.tourId })
+                .pipe(
+                  map((cmsTours: ICMSTourResponse[]) =>
+                    cmsTours.length > 0 ? cmsTours[0] : null
+                  ),
+                  catchError((error) => {
+                    console.warn(`Error obteniendo CMS tour ${reservation.tourId}:`, error);
+                    return of(null);
+                  })
+                ),
+              departure: reservation.departureId
+                ? this.departureService.getById(reservation.departureId).pipe(
+                    catchError((error) => {
+                      console.warn(`Error obteniendo departure ${reservation.departureId}:`, error);
+                      return of(null);
+                    })
+                  )
+                : of(null),
+            }).pipe(
+              map(({ tour, cmsTour, departure }) => ({
+                reservation,
+                tour,
+                cmsTour,
+                departureDate: departure?.departureDate || null,
+              }))
+            )
+          );
+
+          return forkJoin(tourPromises).pipe(
+            catchError((error) => {
+              console.error('Error obteniendo información de tours:', error);
+              return of(
+                reservations.map((reservation) => ({
+                  reservation,
+                  tour: null,
+                  cmsTour: null,
+                  departureDate: null,
+                }))
+              );
+            })
+          );
+        }),
+        map((reservationTourPairs: any[]) => {
+          if (!reservationTourPairs || reservationTourPairs.length === 0) {
+            return [];
+          }
+
+          return this.dataMappingService.mapReservationsToBookingItems(
+            reservationTourPairs.map((pair) => pair.reservation),
+            reservationTourPairs.map((pair) => pair.tour),
+            'active-bookings',
+            reservationTourPairs.map((pair) => pair.cmsTour),
+            reservationTourPairs.map((pair) => pair.departureDate)
+          );
+        }),
+        catchError((error) => {
           console.error('Error obteniendo reservas pendientes:', error);
           this.messageService.add({
             severity: 'error',
@@ -262,218 +517,7 @@ export class BookingListSectionV2Component
   }
 
   /**
-   * Espera hasta que el email del usuario esté disponible y luego carga las reservas
-   * Intenta hasta 10 veces con un delay de 300ms entre intentos
-   */
-  private waitForUserEmail(userId: number, attempt: number = 0): void {
-    const maxAttempts = 10;
-    const delayMs = 300;
-
-    // Asegurar que loading esté en true mientras esperamos
-    this.loading = true;
-    this.bookingItems = [];
-
-    const userEmail = this.authService.getUserEmailValue();
-
-    if (userEmail) {
-      // Email encontrado, proceder a cargar las reservas
-      this.loadActiveBookingsWithEmail(userId, userEmail);
-    } else if (attempt < maxAttempts) {
-      // No se encontró el email, reintentar después del delay
-      setTimeout(() => {
-        this.waitForUserEmail(userId, attempt + 1);
-      }, delayMs);
-    } else {
-      // Se alcanzó el máximo de intentos, mostrar error
-      console.error(
-        'No se pudo obtener el email del usuario después de',
-        maxAttempts,
-        'intentos'
-      );
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'No se pudo cargar las reservas. Por favor, recarga la página.',
-      });
-      this.bookingItems = [];
-      this.loading = false;
-    }
-  }
-
-  /**
-   * Carga las reservas activas una vez que el email está disponible
-   */
-  private loadActiveBookingsWithEmail(userId: number, userEmail: string): void {
-    // Cancelar cualquier suscripción previa para evitar múltiples cargas simultáneas
-    if (this.activeBookingsSubscription) {
-      this.activeBookingsSubscription.unsubscribe();
-      this.activeBookingsSubscription = null;
-    }
-
-    // Asegurar que loading esté en true y bookingItems esté vacío al inicio
-    this.loading = true;
-    this.bookingItems = [];
-
-    // Cargar reservas Y transacciones de puntos EN PARALELO
-    // Agregar catchError a cada llamada para evitar que un error haga fallar todo el observable
-    const subscription = forkJoin({
-      reservationsData: forkJoin({
-        userReservations: this.bookingsService.getActiveBookings(userId).pipe(
-          catchError((error) => {
-            console.error(
-              'Error obteniendo reservas activas del usuario:',
-              error
-            );
-            // Retornar array vacío en caso de error para que no falle todo el forkJoin
-            return of([]);
-          })
-        ),
-        travelerReservations: this.bookingsService
-          .getActiveBookingsByTravelerEmail(userEmail)
-          .pipe(
-            catchError((error) => {
-              console.error(
-                'Error obteniendo reservas activas del viajero:',
-                error
-              );
-              // Retornar array vacío en caso de error para que no falle todo el forkJoin
-              return of([]);
-            })
-          ),
-      }),
-      pointsTransactions: this.loadPointsTransactions(),
-    })
-      .pipe(
-        switchMap(({ reservationsData }) => {
-          const { userReservations, travelerReservations } = reservationsData;
-
-          // Combinar y eliminar duplicados basándose en el ID de reserva
-          const allReservations = [
-            ...(userReservations || []),
-            ...(travelerReservations || []),
-          ];
-
-          const uniqueReservations = allReservations.filter(
-            (reservation, index, self) =>
-              index === self.findIndex((r) => r.id === reservation.id)
-          );
-
-          if (uniqueReservations.length === 0) {
-            // Retornar un observable que se complete después de un pequeño delay
-            // para asegurar que el loading se muestre por un tiempo mínimo
-            return of([]);
-          }
-
-          // Obtener información de tours, imágenes CMS y departures para cada reserva
-          const tourPromises = uniqueReservations.map((reservation) =>
-            forkJoin({
-              tour: this.toursService.getTourById(reservation.tourId).pipe(
-                catchError((error) => {
-                  console.warn(
-                    `Error obteniendo tour ${reservation.tourId}:`,
-                    error
-                  );
-                  return of(null);
-                })
-              ),
-              cmsTour: this.cmsTourService
-                .getAllTours({ tourId: reservation.tourId })
-                .pipe(
-                  map((cmsTours: ICMSTourResponse[]) =>
-                    cmsTours.length > 0 ? cmsTours[0] : null
-                  ),
-                  catchError((error) => {
-                    console.warn(
-                      `Error obteniendo CMS tour ${reservation.tourId}:`,
-                      error
-                    );
-                    return of(null);
-                  })
-                ),
-              departure: reservation.departureId
-                ? this.departureService.getById(reservation.departureId).pipe(
-                    catchError((error) => {
-                      console.warn(
-                        `Error obteniendo departure ${reservation.departureId}:`,
-                        error
-                      );
-                      return of(null);
-                    })
-                  )
-                : of(null),
-            }).pipe(
-              map(({ tour, cmsTour, departure }) => ({
-                reservation,
-                tour,
-                cmsTour,
-                departureDate: departure?.departureDate || null,
-              }))
-            )
-          );
-
-          return forkJoin(tourPromises).pipe(
-            catchError((error) => {
-              console.error('Error obteniendo información de tours:', error);
-              // Si falla la obtención de tours, retornar las reservas sin información de tour
-              return of(
-                uniqueReservations.map((reservation) => ({
-                  reservation,
-                  tour: null,
-                  cmsTour: null,
-                  departureDate: null,
-                }))
-              );
-            })
-          );
-        }),
-        map((reservationTourPairs: any[]) => {
-          // Verificar que reservationTourPairs tenga datos
-          if (!reservationTourPairs || reservationTourPairs.length === 0) {
-            return [];
-          }
-
-          // Mapear usando el servicio de mapeo con imágenes CMS y fechas de salida
-          return this.dataMappingService.mapReservationsToBookingItems(
-            reservationTourPairs.map((pair) => pair.reservation),
-            reservationTourPairs.map((pair) => pair.tour),
-            'active-bookings',
-            reservationTourPairs.map((pair) => pair.cmsTour),
-            reservationTourPairs.map((pair) => pair.departureDate)
-          );
-        }),
-        catchError((error) => {
-          console.error('Error obteniendo reservas activas:', error);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Error al cargar las reservas activas',
-          });
-          return of([]);
-        })
-      )
-      .subscribe({
-        next: (bookingItems: BookingItem[]) => {
-          // Solo actualizar después de que toda la carga esté completa
-          this.bookingItems = bookingItems || [];
-          this.loading = false;
-          // Limpiar la suscripción activa
-          this.activeBookingsSubscription = null;
-        },
-        error: (error) => {
-          console.error('Error en la suscripción:', error);
-          this.bookingItems = [];
-          this.loading = false;
-          // Limpiar la suscripción activa
-          this.activeBookingsSubscription = null;
-        },
-      });
-
-    // Guardar la suscripción para poder cancelarla si es necesario
-    this.activeBookingsSubscription = subscription;
-  }
-
-  /**
-   * Carga historial de viajes usando servicios v2
+   * Carga historial de viajes usando el nuevo endpoint by-bucket
    * Incluye reservas donde el usuario es titular + reservas donde aparece como viajero
    */
   private loadTravelHistory(userId: number): void {
@@ -482,48 +526,20 @@ export class BookingListSectionV2Component
 
     const userEmail = this.authService.getUserEmailValue();
 
-    if (!userEmail) {
-      this.bookingItems = [];
-      this.loading = false;
-      return;
-    }
-
-    // Cargar reservas Y transacciones de puntos EN PARALELO
-    forkJoin({
-      reservationsData: forkJoin({
-        userReservations: this.bookingsService.getTravelHistory(userId),
-        travelerReservations:
-          this.bookingsService.getTravelHistoryByTravelerEmail(userEmail),
-      }),
-      pointsTransactions: this.loadPointsTransactions(),
-    })
+    // Usar el nuevo método que combina userId y email
+    this.bookingsService.getTravelHistoryByBucket(userId, userEmail)
       .pipe(
-        switchMap(({ reservationsData }) => {
-          const { userReservations, travelerReservations } = reservationsData;
-
-          const allReservations = [
-            ...userReservations,
-            ...travelerReservations,
-          ];
-
-          const uniqueReservations = allReservations.filter(
-            (reservation, index, self) =>
-              index === self.findIndex((r) => r.id === reservation.id)
-          );
-
-          if (uniqueReservations.length === 0) {
+        switchMap((reservations: ReservationResponse[]) => {
+          if (!reservations || reservations.length === 0) {
             return of([]);
           }
 
           // Obtener información de tours, imágenes CMS y departures para cada reserva
-          const tourPromises = uniqueReservations.map((reservation) =>
+          const tourPromises = reservations.map((reservation) =>
             forkJoin({
               tour: this.toursService.getTourById(reservation.tourId).pipe(
                 catchError((error) => {
-                  console.warn(
-                    `Error obteniendo tour ${reservation.tourId}:`,
-                    error
-                  );
+                  console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
                   return of(null);
                 })
               ),
@@ -534,20 +550,14 @@ export class BookingListSectionV2Component
                     cmsTours.length > 0 ? cmsTours[0] : null
                   ),
                   catchError((error) => {
-                    console.warn(
-                      `Error obteniendo CMS tour ${reservation.tourId}:`,
-                      error
-                    );
+                    console.warn(`Error obteniendo CMS tour ${reservation.tourId}:`, error);
                     return of(null);
                   })
                 ),
               departure: reservation.departureId
                 ? this.departureService.getById(reservation.departureId).pipe(
                     catchError((error) => {
-                      console.warn(
-                        `Error obteniendo departure ${reservation.departureId}:`,
-                        error
-                      );
+                      console.warn(`Error obteniendo departure ${reservation.departureId}:`, error);
                       return of(null);
                     })
                   )
@@ -565,7 +575,6 @@ export class BookingListSectionV2Component
           return forkJoin(tourPromises);
         }),
         map((reservationTourPairs: any[]) => {
-          // Mapear usando el servicio de mapeo con imágenes CMS y fechas de salida
           return this.dataMappingService.mapReservationsToBookingItems(
             reservationTourPairs.map((pair) => pair.reservation),
             reservationTourPairs.map((pair) => pair.tour),
@@ -598,15 +607,14 @@ export class BookingListSectionV2Component
   }
 
   /**
-   * Carga presupuestos recientes usando servicios v2
-   * Incluye presupuestos donde el usuario es titular + presupuestos donde aparece como viajero
+   * Carga presupuestos recientes usando el nuevo endpoint by-bucket
    */
   private loadRecentBudgets(userId: number): void {
     this.loading = true;
     this.bookingItems = [];
 
     this.bookingsService
-      .getRecentBudgets(userId)
+      .getRecentBudgetsByBucket(userId)
       .pipe(
         switchMap((reservations: ReservationResponse[]) => {
           if (!reservations || reservations.length === 0) {
@@ -618,10 +626,7 @@ export class BookingListSectionV2Component
             forkJoin({
               tour: this.toursService.getTourById(reservation.tourId).pipe(
                 catchError((error) => {
-                  console.warn(
-                    `Error obteniendo tour ${reservation.tourId}:`,
-                    error
-                  );
+                  console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
                   return of(null);
                 })
               ),
@@ -632,20 +637,14 @@ export class BookingListSectionV2Component
                     cmsTours.length > 0 ? cmsTours[0] : null
                   ),
                   catchError((error) => {
-                    console.warn(
-                      `Error obteniendo CMS tour ${reservation.tourId}:`,
-                      error
-                    );
+                    console.warn(`Error obteniendo CMS tour ${reservation.tourId}:`, error);
                     return of(null);
                   })
                 ),
               departure: reservation.departureId
                 ? this.departureService.getById(reservation.departureId).pipe(
                     catchError((error) => {
-                      console.warn(
-                        `Error obteniendo departure ${reservation.departureId}:`,
-                        error
-                      );
+                      console.warn(`Error obteniendo departure ${reservation.departureId}:`, error);
                       return of(null);
                     })
                   )
@@ -663,7 +662,6 @@ export class BookingListSectionV2Component
           return forkJoin(tourPromises);
         }),
         map((reservationTourPairs: any[]) => {
-          // Mapear usando el servicio de mapeo con imágenes CMS y fechas de salida
           return this.dataMappingService.mapReservationsToBookingItems(
             reservationTourPairs.map((pair) => pair.reservation),
             reservationTourPairs.map((pair) => pair.tour),

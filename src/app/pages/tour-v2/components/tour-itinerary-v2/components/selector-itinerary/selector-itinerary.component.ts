@@ -105,8 +105,6 @@ export class SelectorItineraryComponent
   loading: boolean = true;
   error: string | undefined;
   downloading: boolean = false;
-  // Propiedad para detectar modo standalone
-  isStandaloneMode: boolean = false;
 
   // Datos principales con tipado fuerte
   itinerariesWithDepartures: ItineraryWithDepartures[] = [];
@@ -126,9 +124,6 @@ export class SelectorItineraryComponent
   ) {}
 
   ngOnInit(): void {
-    // Detectar si estamos en modo standalone
-    this.detectStandaloneMode();
-    
     if (this.tourId) {
       this.loadSelectorData(this.tourId);
     } else {
@@ -163,6 +158,10 @@ export class SelectorItineraryComponent
   ): void {
     if (!this.dateOptions || this.dateOptions.length === 0) return;
 
+    // Guardar el ID anterior para detectar cambios reales
+    const previousSelectedId =
+      this.selectedDeparture?.departure?.id ?? null;
+
     // Buscar la opción que corresponde al departure seleccionado en el padre
     const matchingOption = this.dateOptions.find(
       (option) => option.value === departureFromParent.id
@@ -171,7 +170,21 @@ export class SelectorItineraryComponent
     if (matchingOption) {
       this.selectedDeparture = matchingOption;
       this.selectedValue = matchingOption.value; // ✅ CRÍTICO: Actualizar selectedValue
-      // No emitir evento aquí para evitar bucle infinito
+
+      /**
+       * Importante:
+       * - Si el cambio viene del propio selector (usuario cambia el dropdown),
+       *   ya se ha emitido el evento en onDepartureChange y posteriormente el
+       *   padre nos reenviará el mismo departure → previousSelectedId === matchingOption.value
+       *   ⇒ NO volvemos a emitir para evitar bucles.
+       * - Si el cambio viene de la tabla de departures (Componente de abajo),
+       *   el padre actualiza selectedDepartureFromParent con un ID distinto al actual
+       *   ⇒ previousSelectedId !== matchingOption.value
+       *   ⇒ emitimos el evento para que el itinerario (días) se refresque.
+       */
+      if (previousSelectedId !== matchingOption.value) {
+        this.emitDepartureSelected();
+      }
     } else if (!this.selectedDeparture && this.dateOptions.length > 0) {
       // ✅ FALLBACK: Si no encuentra coincidencia, seleccionar el primero
       this.selectedDeparture = this.dateOptions[0];
@@ -214,10 +227,7 @@ export class SelectorItineraryComponent
           setTimeout(() => {
             if (this.selectedDeparture && !this.selectedValue) {
               this.selectedValue = this.selectedDeparture.value;
-              console.log(
-                '🔧 Corrección aplicada - selectedValue:',
-                this.selectedValue
-              );
+
             }
           }, 100);
         },
@@ -546,15 +556,6 @@ export class SelectorItineraryComponent
       detail: 'No se pudo descargar el itinerario. Por favor, inténtalo de nuevo.',
       life: 3000,
     });
-  }
-
-  /**
-   * Detectar si estamos en modo standalone
-   */
-  private detectStandaloneMode(): void {
-    // Verificar si la URL contiene 'standalone'
-    const currentPath = window.location.pathname;
-    this.isStandaloneMode = currentPath.includes('/standalone/');
   }
 
   /**

@@ -489,7 +489,7 @@ export class BookingListSectionV2Component
           return this.dataMappingService.mapReservationsToBookingItems(
             reservationTourPairs.map((pair) => pair.reservation),
             reservationTourPairs.map((pair) => pair.tour),
-            'active-bookings',
+            'pending-bookings', // ✅ CORREGIDO: Cambiado de 'active-bookings' a 'pending-bookings'
             reservationTourPairs.map((pair) => pair.cmsTour),
             reservationTourPairs.map((pair) => pair.departureDate)
           );

@@ -29,11 +29,9 @@
   height: 0 !important;
 }
 
-* {
-  font-family: "Montserrat";
-}
-
 :root {
+  --font-family: "Montserrat", sans-serif;
+  
   --primary-color-20: #fdeadd;
   --primary-color-50: #fce5d9;
   --primary-color-100: #f9cbb3;
@@ -199,6 +197,20 @@ body.with-test-banner {
 .p-toast-top-right {
   top: 20px !important;
   right: 20px !important;
+}
+
+/* Configuración de fuente Montserrat global */
+* {
+  font-family: var(--font-family, "Montserrat", sans-serif);
+}
+
+/* Asegurar que componentes PrimeNG y widgets externos usen Montserrat */
+/* Usar mayor especificidad para sobrescribir estilos inline o de widgets externos */
+body .p-component,
+body .p-component *,
+.p-component,
+.p-component * {
+  font-family: var(--font-family, "Montserrat", sans-serif) !important;
 }
 
 /* Estilos temporales que formatean los textos que llegan desde el quill js */

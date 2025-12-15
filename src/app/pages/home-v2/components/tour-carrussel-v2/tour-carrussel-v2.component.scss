@@ -3,6 +3,12 @@ $desktop-padding: 4rem;
 $tablet-padding: 3rem 1.5rem;
 $mobile-padding: 2rem 1rem;
 
+// Wrapper del carrusel para manejar scroll vertical
+.carousel-wrapper {
+    width: 100%;
+    overflow: visible;
+}
+
 $title-desktop-size: 2rem;
 $title-tablet-size: 1.75rem;
 $title-mobile-size: 1.25rem;
@@ -49,12 +55,19 @@ $breakpoint-small: 768px;
     }
 
     @media screen and (max-width: $breakpoint-small) {
-        padding: $mobile-padding;
-        margin-top: 20px;
+        padding: 1.5rem 0.75rem; // Reducir padding lateral
+        margin-top: 10px;
 
         h2 {
-            font-size: $title-mobile-size;
-            margin-bottom: 1.5rem;
+            font-size: 1rem; // Reducir tamaño
+            margin-bottom: 1rem;
+            line-height: 1.4;
+            // Truncar títulos largos
+            //display: -webkit-box;
+            //-webkit-line-clamp: 2;
+            //-webkit-box-orient: vertical;
+            //overflow: hidden;
+            //text-overflow: ellipsis;
         }
 
         .buttonVertour {
@@ -63,6 +76,154 @@ $breakpoint-small: 768px;
             height: 2.5rem;
             margin-top: 35px;
             font-size: 0.9rem;
+        }
+    }
+}
+
+// ===============================================
+// ESTILOS PARA PAGINADORES DEL CARRUSEL
+// ===============================================
+::ng-deep {
+    .p-carousel {
+        // En móvil, permitir ambos gestos - el JavaScript detectará la dirección
+        @media screen and (max-width: $breakpoint-small) {
+            // Permitir ambos gestos - pan-x para swipe horizontal, pan-y para scroll vertical
+            touch-action: pan-x pan-y;
+            // Asegurar que no haya overflow que interfiera
+            overflow: visible !important;
+        }
+        
+        // En desktop/tablet, permitir ambos gestos
+        @media screen and (min-width: $breakpoint-small + 1px) {
+            touch-action: pan-x pan-y pinch-zoom;
+        }
+        
+        // Contenedor de indicadores
+        .p-carousel-indicator-list {
+            padding: 0.5rem 0;
+            gap: 0.25rem;
+            // Evitar que los indicadores interfieran con el scroll vertical
+            pointer-events: none;
+            
+            @media screen and (max-width: $breakpoint-medium) {
+                padding: 0.5rem 0 0.4rem;
+                gap: 4px;
+            }
+            
+            @media screen and (max-width: $breakpoint-small) {
+                gap: 3px;
+                padding: 0.4rem 0 0.3rem;
+                margin: 0 auto;
+                flex-wrap: nowrap;
+                justify-content: center;
+                align-items: center;
+            }
+        }
+        
+        // Indicadores individuales (dots)
+        .p-carousel-indicator {
+            // Permitir clicks en los dots
+            pointer-events: auto;
+            
+            @media screen and (max-width: $breakpoint-medium) {
+                button {
+                    width: 8px !important;
+                    height: 8px !important;
+                    min-width: 8px !important;
+                    border-radius: 50% !important;
+                    background-color: rgba(0, 0, 0, 0.2) !important;
+                    border: none !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    transition: all 0.3s ease;
+                }
+                
+                &.p-carousel-indicator-active button {
+                    background-color: var(--p-primary-color, #e57373) !important;
+                    width: 20px !important;
+                    min-width: 20px !important;
+                    border-radius: 4px !important;
+                }
+            }
+            
+            @media screen and (max-width: $breakpoint-small) {
+                // Dots base - pequeños para no interferir con scroll
+                button {
+                    width: 5px !important;
+                    height: 5px !important;
+                    min-width: 5px !important;
+                    border-radius: 50% !important;
+                    background-color: rgba(0, 0, 0, 0.15) !important;
+                    border: none !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    transition: all 0.3s ease;
+                    // Reducir área táctil para evitar capturas accidentales
+                    touch-action: manipulation;
+                    
+                    &:hover {
+                        background-color: rgba(0, 0, 0, 0.3) !important;
+                    }
+                }
+                
+                // Dot activo - siempre visible y destacado
+                &.p-carousel-indicator-active button {
+                    background-color: var(--p-primary-color, #e57373) !important;
+                    width: 14px !important;
+                    min-width: 14px !important;
+                    border-radius: 3px !important;
+                    transform: none;
+                }
+            }
+        }
+        
+        // Contenedor de items - permitir ambos gestos
+        .p-carousel-items-container {
+            @media screen and (max-width: $breakpoint-small) {
+                // Permitir ambos gestos - el JavaScript manejará la detección
+                touch-action: pan-x pan-y;
+                // Prevenir que el contenedor capture todos los eventos
+                overscroll-behavior: contain !important;
+                // Asegurar que no bloquee el scroll
+                overflow: visible !important;
+            }
+        }
+        
+        // Contenedor de contenido del carrusel
+        .p-carousel-content {
+            @media screen and (max-width: $breakpoint-small) {
+                // Permitir ambos gestos
+                touch-action: pan-x pan-y;
+                pointer-events: auto !important;
+                overflow: visible !important;
+            }
+        }
+        
+        // Items del carrusel - permitir ambos gestos
+        .p-carousel-item {
+            @media screen and (max-width: $breakpoint-small) {
+                // Permitir ambos gestos
+                touch-action: pan-x pan-y;
+            }
+        }
+        
+        // Contenido interno del carrusel - CRÍTICO: este es donde PrimeNG aplica el swipe
+        .p-carousel-items-content {
+            @media screen and (max-width: $breakpoint-small) {
+                // Permitir ambos gestos - el JavaScript determinará cuál usar
+                touch-action: pan-x pan-y;
+                // Permitir transformaciones para el swipe horizontal
+                will-change: transform;
+            }
+        }
+        
+        // Elementos hijos del carrusel - permitir ambos gestos
+        .p-carousel-items-content *,
+        .p-carousel-item * {
+            @media screen and (max-width: $breakpoint-small) {
+                // Permitir ambos gestos para todos los elementos
+                touch-action: pan-x pan-y;
+            }
         }
     }
 }

@@ -86,14 +86,7 @@ export class AuthenticateService {
             // ✅ CORREGIDO: Obtener el Cognito ID (sub) - priorizar sub de atributos, luego user.userId
             // El sub es el Cognito User ID real (UUID), mientras que user.userId puede ser el username
             const cognitoUserId = attributes.sub || user.userId;
-            
-            console.log('🔐 [checkAuthStatus] Cognito ID obtenido:', {
-              subFromAttributes: attributes.sub,
-              userIdFromUser: user.userId,
-              finalCognitoUserId: cognitoUserId,
-              email: attributes.email
-            });
-            
+
             this.currentUserCognitoId.next(cognitoUserId);
           }
         } catch (error) {
@@ -318,13 +311,6 @@ export class AuthenticateService {
             const idTokenString = response.AuthenticationResult.IdToken;
             const cognitoUserId = this.extractSubFromIdToken(idTokenString) || this.cognitoUser.getUsername();
 
-            console.log('🔐 [login] Cognito ID obtenido:', {
-              extractedFromToken: this.extractSubFromIdToken(idTokenString),
-              usernameFallback: this.cognitoUser.getUsername(),
-              finalCognitoUserId: cognitoUserId,
-              email: emailaddress
-            });
-
             this.isAuthenticated.next(true);
             this.currentUserEmail.next(emailaddress);
             this.currentUserCognitoId.next(cognitoUserId);
@@ -337,10 +323,6 @@ export class AuthenticateService {
 
             this.hubspotService.createContact(contactData).subscribe({
               next: (hubspotResponse) => {
-                console.log(
-                  'Contacto creado en Hubspot exitosamente:',
-                  hubspotResponse
-                );
 
                 // Retornar el usuario de Cognito para que el componente maneje la navegación
                 observer.next(this.cognitoUser);
@@ -424,14 +406,13 @@ export class AuthenticateService {
         [],
         (err, result: any) => {
           if (err) {
-            console.log(err);
+
             reject(err);
             return;
           }
           this.cognitoUser = result.user;
           const cognitoUserId = result.userSub; // ID único de Cognito
-          console.log('user name is ' + this.cognitoUser.getUsername());
-          console.log('cognito user id is ' + cognitoUserId);
+
           resolve(cognitoUserId);
         }
       );
@@ -447,7 +428,7 @@ export class AuthenticateService {
           reject(err);
           return;
         }
-        console.log('Código reenviado con éxito:', result);
+
         resolve();
       });
     });
@@ -462,11 +443,11 @@ export class AuthenticateService {
         true,
         (err: any, result: string) => {
           if (err) {
-            console.log(err);
+
             reject(err);
             return;
           }
-          console.log('call result: ' + result);
+
           resolve();
         }
       );
@@ -479,11 +460,11 @@ export class AuthenticateService {
       this.cognitoUser = this.getUserData(username);
       this.cognitoUser.forgotPassword({
         onSuccess: (result: any) => {
-          console.log('call result: ' + result);
+
           resolve(result);
         },
         onFailure: (err: any) => {
-          console.log(err);
+
           reject(err);
         },
       });
@@ -500,11 +481,11 @@ export class AuthenticateService {
       this.cognitoUser = this.getUserData(username);
       this.cognitoUser.confirmPassword(code, newPassword, {
         onSuccess: () => {
-          console.log('Password confirmed');
+
           resolve(true);
         },
         onFailure: (err: any) => {
-          console.log(err);
+
           reject(err);
         },
       });
@@ -518,7 +499,7 @@ export class AuthenticateService {
       this.cognitoUser = currentUser;
       this.cognitoUser.getSession((err: any, session: any) => {
         if (err) {
-          console.log(err);
+
           return false;
         }
         return true;
@@ -539,14 +520,14 @@ export class AuthenticateService {
 
       currentUser.getSession((err: any, session: any) => {
         if (err) {
-          console.log(err);
+
           observer.error(err);
           return;
         }
 
         currentUser.getUserAttributes((err: any, result: any) => {
           if (err) {
-            console.log(err);
+
             observer.error(err);
             return;
           }
@@ -593,13 +574,6 @@ export class AuthenticateService {
             }
           }
 
-          console.log('🔐 [getUserAttributes] Cognito ID obtenido:', {
-            subFromAttributes: formattedResult.sub,
-            extractedFromToken: finalCognitoUserId !== formattedResult.sub ? finalCognitoUserId : null,
-            finalCognitoUserId: finalCognitoUserId,
-            email: formattedResult.email
-          });
-
           this.userAttributesChanged.next();
           observer.next(formattedResult);
           observer.complete();
@@ -610,7 +584,6 @@ export class AuthenticateService {
 
   getCurrentUsername(): string {
     const currentUser = this.userPool.getCurrentUser();
-    console.log('______Current user: ', currentUser);
 
     return currentUser ? currentUser.getUsername() : '';
   }
@@ -689,14 +662,7 @@ export class AuthenticateService {
         if (attributes && attributes.email) {
           // ✅ CORREGIDO: Obtener el Cognito ID (sub) - priorizar sub de atributos, luego user.userId
           const cognitoUserId = attributes.sub || user.userId;
-          
-          console.log('🔐 [handleAuthRedirect] Cognito ID obtenido:', {
-            subFromAttributes: attributes.sub,
-            userIdFromUser: user.userId,
-            finalCognitoUserId: cognitoUserId,
-            email: attributes.email
-          });
-          
+
           this.isAuthenticated.next(true);
           this.currentUserEmail.next(attributes.email);
           this.currentUserCognitoId.next(cognitoUserId);

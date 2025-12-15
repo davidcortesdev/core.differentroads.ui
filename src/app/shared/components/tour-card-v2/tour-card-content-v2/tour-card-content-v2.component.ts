@@ -79,4 +79,12 @@ export class TourCardContentV2Component implements OnInit {
   handleTourClick(): void {
     this.tourClick.emit();
   }
+  get limitedMonths(): string[] {
+    // En mobile, mostrar máximo 4 meses
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile && this.tourData.availableMonths?.length > 4) {
+        return this.tourData.availableMonths.slice(0, 4);
+    }
+    return this.tourData.availableMonths || [];
+  }
 }

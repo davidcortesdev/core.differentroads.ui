@@ -41,7 +41,7 @@ export class FlightStopsComponent implements OnInit {
       // ya que 0 es un ID válido en la base de datos
       if (this.flightId !== null && this.flightId !== undefined && 
           this.packId !== null && this.packId !== undefined) {
-        console.log(`🔄 FlightStops: Iniciando con nuevo servicio - flightId=${this.flightId}, packId=${this.packId}`);
+
         await this.getFlightDetail();
       } else {
         console.warn(`⚠️ FlightStops: Valores inválidos para nuevo servicio - flightId=${this.flightId}, packId=${this.packId}`);
@@ -49,7 +49,7 @@ export class FlightStopsComponent implements OnInit {
     } else {
       // Para el servicio actual: mantener la comprobación original
       if (this.flightId) {
-        console.log(`🔄 FlightStops: Iniciando con servicio actual - flightId=${this.flightId}`);
+
         await this.getFlightDetail();
       } else {
         console.warn(`⚠️ FlightStops: flightId inválido para servicio actual - flightId=${this.flightId}`);
@@ -68,10 +68,10 @@ export class FlightStopsComponent implements OnInit {
   }
 
   private async getFlightDetailFromNewService(): Promise<void> {
-    console.log(`🔄 FlightStops: Obteniendo detalles del nuevo servicio - packId=${this.packId}, flightId=${this.flightId}`);
+
     this.flightSearchService.getFlightDetails(this.packId, this.flightId.toString()).subscribe({
       next: async (detail) => {
-        console.log(`✅ FlightStops: Detalles obtenidos del nuevo servicio:`, detail);
+
         this.flightDetail = detail;
         
         // Precargar ciudades de los segmentos del vuelo y esperar a que se completen
@@ -87,10 +87,10 @@ export class FlightStopsComponent implements OnInit {
   }
 
   private async getFlightDetailFromCurrentService(): Promise<void> {
-    console.log(`🔄 FlightStops: Obteniendo detalles del servicio actual - flightId=${this.flightId}`);
+
     this.flightsNetService.getFlightDetail(this.flightId).subscribe({
       next: async (detail) => {
-        console.log(`✅ FlightStops: Detalles obtenidos del servicio actual:`, detail);
+
         this.flightDetail = detail;
         
         // Precargar ciudades de los segmentos del vuelo y esperar a que se completen
@@ -129,10 +129,8 @@ export class FlightStopsComponent implements OnInit {
     });
 
     if (airportCodes.length > 0) {
-      //console.log(`🔄 FlightStops: Precargando ciudades para ${airportCodes.length} aeropuertos`);
       try {
         await this.airportCityCacheService.preloadAllAirportCities(airportCodes);
-        //console.log('✅ FlightStops: Ciudades precargadas exitosamente');
       } catch (error) {
         console.warn('⚠️ FlightStops: Error al precargar ciudades:', error);
       }
@@ -193,15 +191,11 @@ export class FlightStopsComponent implements OnInit {
    */
   private transformSegmentsWithCityNames(segments: any[]): any[] {
     if (!segments || segments.length === 0) return [];
-    
-    //console.log('🔄 FlightStops: Transformando segmentos con nombres de ciudades');
-    
+
     const transformedSegments = segments.map(segment => {
       const departureCity = this.airportCityCacheService.getCityNameFromCache(segment.departureIata) || segment.departureIata;
       const arrivalCity = this.airportCityCacheService.getCityNameFromCache(segment.arrivalIata) || segment.arrivalIata;
-      
-      //console.log(`📍 Segmento: ${segment.departureIata} (${departureCity}) → ${segment.arrivalIata} (${arrivalCity})`);
-      
+
       return {
         ...segment,
         departureCity,
@@ -209,7 +203,6 @@ export class FlightStopsComponent implements OnInit {
       };
     });
     
-    //console.log('✅ FlightStops: Segmentos transformados:', transformedSegments);
         return transformedSegments;
   }
 

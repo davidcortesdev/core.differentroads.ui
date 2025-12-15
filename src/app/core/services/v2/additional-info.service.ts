@@ -351,8 +351,6 @@ export class AdditionalInfoService {
             activityPackIds: activityPackIds.length > 0 ? activityPackIds : null,
           };
 
-          console.log('📋 Creando PRESUPUESTO COMPLETO (BUDGET):', completeData);
-
           return this.reservationService.createComplete(completeData);
         }),
         catchError((error) => {
@@ -924,7 +922,6 @@ export class AdditionalInfoService {
       life: 4000
     });
   }
-
 
   // ============================================
   // MÉTODOS PARA OBTENER DATOS DEL TOUR

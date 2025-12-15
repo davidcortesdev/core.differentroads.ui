@@ -18,7 +18,6 @@ import { TourDataForEcommerce } from '../../core/services/analytics/analytics.se
 import { forkJoin, Observable, of } from 'rxjs';
 import { TripTypeService, ITripTypeResponse } from '../../core/services/trip-type/trip-type.service';
 
-// ✅ INTERFACES para tipado fuerte
 interface PassengersData {
   adults: number;
   children: number;
@@ -37,7 +36,6 @@ interface AgeGroupCategories {
   babies: AgeGroupCategory;
 }
 
-// ✅ NUEVA INTERFACE: Para el departure seleccionado
 interface SelectedDepartureData {
   id: number;
   departureDate?: string;
@@ -48,7 +46,6 @@ interface SelectedDepartureData {
   group?: string;
 }
 
-// ✅ NUEVA INTERFACE: Para los datos de actualización de pasajeros
 interface PassengersUpdateData {
   adults: number;
   children: number;
@@ -56,7 +53,6 @@ interface PassengersUpdateData {
   total: number;
 }
 
-// ✅ NUEVA INTERFACE: Para análisis de tipos de actividades
 interface ActivityTypesAnalysis {
   hasAct: boolean;
   hasPack: boolean;
@@ -84,36 +80,27 @@ export class TourV2Component implements OnInit {
   error: string | null = null;
   selectedDepartureEvent: SelectedDepartureEvent | null = null;
   preview: boolean = false;
-  // Total del carrito
   totalPrice: number = 0;
   
-  // Flag para evitar disparos duplicados del evento view_item
   private viewItemTracked: boolean = false;
 
-  // Ciudad seleccionada - no debe tener valor inicial
   selectedCity: string = '';
 
-  // Estado de carga de ciudades
   citiesLoading: boolean = false;
 
-  // ✅ TIPADO FUERTE: Departure seleccionado
   selectedDepartureData: SelectedDepartureData | null = null;
 
-  // Total de pasajeros
   totalPassengers: number = 1;
 
-  // Array para almacenar actividades seleccionadas
   selectedActivities: ActivityHighlight[] = [];
 
-  // Flag para controlar cuándo mostrar el estado de actividades
   showActivitiesStatus: boolean = false;
 
-  selectedActivityPackId: number | null = null; // ✅ AGREGAR
+  selectedActivityPackId: number | null = null;
   onActivityPackIdUpdate(activityPackId: number | null): void {
     this.selectedActivityPackId = activityPackId;
   }
 
-  // ✅ NUEVA PROPIEDAD: Análisis de tipos de actividades
   activityTypesAnalysis: ActivityTypesAnalysis = {
     hasAct: false,
     hasPack: false,
@@ -121,7 +108,6 @@ export class TourV2Component implements OnInit {
     packCount: 0,
   };
 
-  // Propiedades para age groups y datos detallados de pasajeros con tipado fuerte
   passengersData: PassengersData = { adults: 1, children: 0, babies: 0 };
   ageGroupCategories: AgeGroupCategories = {
     adults: { id: null, lowerAge: null, upperAge: null },
@@ -129,7 +115,6 @@ export class TourV2Component implements OnInit {
     babies: { id: null, lowerAge: null, upperAge: null },
   };
 
-  // Propiedades para datos del tour (analytics)
   tourCountry: string = '';
   tourContinent: string = '';
   tourRating: number | null = null;
@@ -139,7 +124,6 @@ export class TourV2Component implements OnInit {
 
   private tripTypesMap: Map<number, ITripTypeResponse> = new Map();
   
-  // ✅ NUEVO: Array para TripTypes del tour actual
   tourTripTypes: TourTripType[] = [];
 
   constructor(
@@ -164,12 +148,10 @@ export class TourV2Component implements OnInit {
     this.route.paramMap.subscribe((params) => {
       const slug: string | null = params.get('slug');
       
-      // Detectar si estamos en modo preview basándonos en la URL
       const currentUrl = this.router.url;
       const isPreview = currentUrl.includes('/preview');
       
       if (slug) {
-        // Resetear el flag cuando se navega a un tour diferente
         if (this.tourSlug !== slug) {
           this.viewItemTracked = false;
         }
@@ -183,9 +165,6 @@ export class TourV2Component implements OnInit {
       }
     });
   }
-  /**
- * Obtiene los TripTypes del tour para analytics
- */
 private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
   const itineraryFilters: ItineraryFilters = {
     tourId: tourId,
@@ -199,7 +178,6 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
         return of([]);
       }
 
-      // Obtener departures de todos los itinerarios
       const departureRequests = itineraries.map((itinerary) =>
         this.departureService.getByItinerary(itinerary.id, false).pipe(
           catchError(() => of([] as IDepartureResponse[]))
@@ -212,7 +190,6 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
               const allDepartures = departureArrays.flat();
               const tripTypeNames: string[] = [];
               
-              // Procesar TripTypes desde los departures
               allDepartures.forEach((departure: IDepartureResponse) => {
                 if (departure.tripTypeId && this.tripTypesMap.size > 0) {
                   const tripTypeInfo = this.tripTypesMap.get(departure.tripTypeId);
@@ -237,7 +214,6 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
       map((tripTypes: ITripTypeResponse[]) => {
         this.tripTypesMap.clear();
         tripTypes.forEach(tripType => {
-          // Crear abreviación (primera letra del nombre)
           const abbreviation = tripType.name.charAt(0).toUpperCase();
           
           this.tripTypesMap.set(tripType.id, {
@@ -246,10 +222,9 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
           });
         });
         
-        // console.log('✅ TripTypes cargados para tour detail:', this.tripTypesMap.size);
       }),
       catchError((error) => {
-        console.error('❌ Error loading trip types:', error);
+        console.error('Error loading trip types:', error);
         return of(undefined);
       })
     );
@@ -276,7 +251,6 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
   
     this.tourTripTypes = tripTypes;
     
-    // console.log('🎯 TripTypes del tour:', this.tourTripTypes);
   }
 
   private loadTourTripTypes(tourId: number): void {
@@ -292,7 +266,6 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
           return of([] as IDepartureResponse[]);
         }
   
-        // Obtener departures de todos los itinerarios
         const departureRequests = itineraries.map((itinerary) =>
           this.departureService.getByItinerary(itinerary.id, false).pipe(
             catchError(() => of([] as IDepartureResponse[]))
@@ -309,7 +282,6 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
       }),
       catchError(() => of([] as IDepartureResponse[]))
     ).subscribe((departures: IDepartureResponse[]) => {
-      // ✅ NUEVO: Procesar TripTypes desde los departures
       this.processTourTripTypes(departures);
     });
   }
@@ -318,7 +290,6 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
     this.loading = true;
     this.error = null;
   
-    // ✅ NUEVO: Cargar TripTypes primero, luego el tour
     this.loadTripTypes().pipe(
       switchMap(() => {
         return this.tourService.getTours({ slug, filterByVisible: !this.preview });
@@ -332,10 +303,12 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
       if (tours && tours.length > 0) {
         this.tour = tours[0];
         
-        // ✅ NUEVO: Cargar TripTypes específicos del tour
+        if (this.tour.name) {
+          this.titleService.setTitle(`${this.tour.name} - Different Roads`);
+        }
+        
         this.loadTourTripTypes(this.tour.id!);
         
-        // Disparar evento view_item cuando se carga el tour exitosamente
         this.trackViewItem(this.tour);
       } else {
         this.error = 'No se encontró el tour solicitado';
@@ -346,42 +319,32 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
 
   onDepartureSelected(event: SelectedDepartureEvent): void {
     this.selectedDepartureEvent = event;
-    // Reset precio al cambiar departure
     this.totalPrice = 0;
 
-    // Limpiar actividades y activar la visualización del estado
     this.selectedActivities = [];
-    this.showActivitiesStatus = true; // Activar para mostrar "Sin actividades opcionales"
+    this.showActivitiesStatus = true;
 
-    // ✅ NUEVO: Reset del análisis de tipos al cambiar departure
     this.resetActivityTypesAnalysis();
   }
 
-  // Manejar selección de actividad desde el componente hijo - MODIFICADO
   onActivitySelected(activityHighlight: ActivityHighlight): void {
-    // Actualizar el array de actividades seleccionadas
     const existingIndex: number = this.selectedActivities.findIndex(
       (activity: ActivityHighlight) => activity.id === activityHighlight.id
     );
 
     if (existingIndex !== -1) {
-      // Si ya existe, actualizar el estado
       this.selectedActivities[existingIndex] = { ...activityHighlight };
     } else {
-      // Si no existe, agregar nueva actividad
       this.selectedActivities.push({ ...activityHighlight });
     }
 
-    // Remover actividades que ya no están agregadas
     this.selectedActivities = this.selectedActivities.filter(
       (activity: ActivityHighlight) => activity.added
     );
 
-    // ✅ NUEVO: Analizar tipos de actividades después de cada cambio
     this.analyzeActivityTypes();
   }
 
-  // ✅ NUEVO MÉTODO: Analizar tipos de actividades seleccionadas
   private analyzeActivityTypes(): void {
     const addedActivities = this.selectedActivities.filter(
       (activity) => activity.added
@@ -402,7 +365,6 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
     };
   }
 
-  // ✅ NUEVO MÉTODO: Reset del análisis de tipos
   private resetActivityTypesAnalysis(): void {
     this.activityTypesAnalysis = {
       hasAct: false,
@@ -412,12 +374,10 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
     };
   }
 
-  // Recibir actualización de precio
   onPriceUpdate(price: number): void {
     this.totalPrice = price;
   }
 
-  // Recibir actualización de ciudad
   onCityUpdate(city: string): void {
     this.selectedCity = city;
   }
@@ -426,20 +386,16 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
     this.citiesLoading = loading;
   }
 
-  // ✅ TIPADO FUERTE: Recibir actualización de departure
   onDepartureUpdate(departure: SelectedDepartureData | null): void {
     this.selectedDepartureData = departure;
   }
 
-  // ✅ TIPADO FUERTE: Recibir actualización del total de pasajeros con interface
   onPassengersUpdate(passengersUpdateData: PassengersUpdateData): void {
-    // Calcular total de pasajeros (adultos + niños + bebés)
     this.totalPassengers =
       passengersUpdateData.adults +
       passengersUpdateData.children +
       passengersUpdateData.babies;
 
-    // Guardar datos detallados de pasajeros
     this.passengersData = {
       adults: passengersUpdateData.adults,
       children: passengersUpdateData.children,
@@ -447,32 +403,23 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
     };
   }
 
-  // Recibir información de age groups desde el componente TourDeparturesV2Component
   onAgeGroupsUpdate(ageGroupCategories: AgeGroupCategories): void {
     this.ageGroupCategories = ageGroupCategories;
   }
 
-  /**
-   * Disparar evento view_item cuando se visualiza la ficha del tour
-   * Solo se ejecuta una vez por sesión para evitar duplicados
-   */
   private trackViewItem(tour: Tour): void {
-    // Evitar disparos duplicados
     if (this.viewItemTracked) {
       return;
     }
     
-    // Marcar como trackeado INMEDIATAMENTE antes de hacer cualquier cosa
     this.viewItemTracked = true;
     
-    // Obtener contexto de navegación desde el state de la navegación (sin modificar URL)
     const navigation = this.router.getCurrentNavigation();
     const state = navigation?.extras?.state || window.history.state;
     
     const itemListId = state?.['listId'] || '';
     const itemListName = state?.['listName'] || '';
     
-    // Obtener todos los datos completos del tour usando buildEcommerceItemFromTourData
     this.getCompleteTourDataForViewItem(tour.id!).pipe(
       switchMap((tourDataForEcommerce: TourDataForEcommerce) => {
         return this.analyticsService.buildEcommerceItemFromTourData(
@@ -483,12 +430,11 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
         ).pipe(
           switchMap((item) => {
             return this.analyticsService.getCurrentUserData().pipe(
-              first(), // Tomar solo el primer valor
+              first(),
               map((userData) => ({ item, userData }))
             );
           }),
           catchError(() => {
-            // Si falla getCurrentUserData, usar el item sin userData
             return this.analyticsService.buildEcommerceItemFromTourData(
               tourDataForEcommerce,
               itemListId || 'tour_detail',
@@ -515,9 +461,6 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
       }
     });
   }
-  /**
-   * Obtiene todos los datos completos del tour desde los servicios adicionales para view_item
-   */
   private getCompleteTourDataForViewItem(tourId: number): Observable<TourDataForEcommerce> {
     const itineraryFilters: ItineraryFilters = {
       tourId: tourId,
@@ -535,16 +478,14 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
             destination: { continent: undefined, country: undefined },
             monthTags: undefined,
             tourType: undefined,
-            tripTypes: undefined // ✅ NUEVO: Añadir también aquí
+            tripTypes: undefined
           } as TourDataForEcommerce);
         }
   
-        // Obtener días de itinerario del primer itinerario disponible
         const itineraryDaysRequest = this.itineraryDayService
           .getAll({ itineraryId: itineraries[0].id })
           .pipe(catchError(() => of([] as IItineraryDayResponse[])));
-  
-        // Obtener continent y country
+        
         const locationRequest = forkJoin({
           countryLocations: this.tourLocationService.getByTourAndType(tourId, 'COUNTRY').pipe(
             map((response) => Array.isArray(response) ? response : response ? [response] : []),
@@ -587,7 +528,6 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
           })
         );
   
-        // Obtener departures para extraer monthTags desde las fechas
         const departureRequests = itineraries.map((itinerary) =>
           this.departureService.getByItinerary(itinerary.id, false).pipe(
             catchError(() => of([] as IDepartureResponse[]))
@@ -600,11 +540,10 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
                 const allDepartures = departureArrays.flat();
                 const availableMonths: string[] = [];
                 
-                // Extraer meses de las fechas de departure
                 allDepartures.forEach((departure: IDepartureResponse) => {
                   if (departure.departureDate) {
                     const date = new Date(departure.departureDate);
-                    const monthIndex = date.getMonth(); // 0-11
+                    const monthIndex = date.getMonth();
                     const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 
                                       'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
                     if (monthIndex >= 0 && monthIndex < 12) {
@@ -622,19 +561,17 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
             )
           : of([]);
   
-        // ✅ SOLO SE MODIFICA ESTA PARTE: Añadir tripTypes al forkJoin
         return forkJoin({
           itineraryDays: itineraryDaysRequest,
           locationData: locationRequest,
           monthTags: monthTagsRequest,
           tour: this.tourService.getById(tourId, false),
-          tripTypes: this.getTourTripTypesForAnalytics(tourId) // ✅ NUEVO
+          tripTypes: this.getTourTripTypesForAnalytics(tourId)
         }).pipe(
           map(({ itineraryDays, locationData, monthTags, tour, tripTypes }) => {
             const days = itineraryDays.length;
             const nights = days > 0 ? days - 1 : 0;
             
-            // ✅ ACTUALIZADO: Usar TripTypes para determinar tourType si están disponibles
             let tourType = tour.tripTypeId === 1 ? 'FIT' : 'Grupos';
             
             if (tripTypes && tripTypes.length > 0) {
@@ -651,14 +588,14 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
               },
               days: days > 0 ? days : undefined,
               nights: nights > 0 ? nights : undefined,
-              rating: undefined, // Ya no se obtiene de reviewsService, se obtiene de TourReview
+              rating: undefined,
               monthTags: monthTags.length > 0 ? monthTags : undefined,
               tourType: tourType,
               flightCity: 'Sin vuelo',
               price: tour.minPrice ?? undefined,
               totalPassengers: undefined,
               childrenCount: undefined,
-              tripTypes: tripTypes.length > 0 ? tripTypes : undefined // ✅ NUEVO
+              tripTypes: tripTypes.length > 0 ? tripTypes : undefined
             } as TourDataForEcommerce;
           }),
           catchError(() => of({
@@ -668,7 +605,7 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
             destination: { continent: undefined, country: undefined },
             monthTags: undefined,
             tourType: undefined,
-            tripTypes: undefined // ✅ NUEVO
+            tripTypes: undefined
           } as TourDataForEcommerce))
         );
       }),
@@ -677,16 +614,13 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
         days: undefined,
         nights: undefined,
         destination: { continent: undefined, country: undefined },
-        monthTags: undefined,
-        tourType: undefined,
-        tripTypes: undefined // ✅ NUEVO
-      } as TourDataForEcommerce))
+            monthTags: undefined,
+            tourType: undefined,
+            tripTypes: undefined
+          } as TourDataForEcommerce))
     );
   }
 
-  /**
-   * Obtener datos del usuario actual si está logueado
-   */
   private getUserData() {
     if (this.authService.isAuthenticatedValue()) {
       const email = this.authService.getUserEmailValue();

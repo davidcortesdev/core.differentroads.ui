@@ -471,11 +471,34 @@ export class TourHeaderV2Component
     );
   }
 
-
   // Formatear el número de reviews
   getFormattedReviewCount(): string {
     if (this.reviewCount === 0) return '';
     return `${this.reviewCount} ${this.reviewCount === 1 ? 'Review' : 'Reviews'}`;
+  }
+
+  // Extraer el prefijo del título (todo antes del último ":")
+  getTitlePrefix(): string {
+    const tourName = this.tour.name || '';
+    const lastColonIndex = tourName.lastIndexOf(':');
+    
+    if (lastColonIndex === -1) {
+      return 'Detalles del Tour: ';
+    }
+    
+    return tourName.substring(0, lastColonIndex + 1) + ' ';
+  }
+
+  // Extraer el título sin prefijo (todo después del último ":")
+  getTitleWithoutPrefix(): string {
+    const tourName = this.tour.name || '';
+    const lastColonIndex = tourName.lastIndexOf(':');
+    
+    if (lastColonIndex === -1) {
+      return tourName;
+    }
+    
+    return tourName.substring(lastColonIndex + 1).trim();
   }
 
   // Hacer scroll a la sección de reviews usando el ID, teniendo en cuenta el header flotante
@@ -583,7 +606,6 @@ export class TourHeaderV2Component
   }
 
   private loadTourData(tourId: number) {
-    // console.log('🔍 Cargando tour, preview mode:', this.preview);
     
     // ✅ LÓGICA: Si es preview, buscar tours no visibles también
     const filterByVisible = !this.preview;
@@ -591,7 +613,6 @@ export class TourHeaderV2Component
     this.subscriptions.add(
       this.tourService.getById(tourId, filterByVisible).pipe(
         switchMap((tourData) => {
-          // console.log('✅ Tour cargado exitosamente:', tourData.name);
           this.tour = { ...tourData };
           this.loadCountryAndContinent(tourId);
           
@@ -952,7 +973,6 @@ export class TourHeaderV2Component
             }),
             catchError((error) => {
 
-
               return of({
                 success: false,
                 activity: activity,
@@ -1123,7 +1143,6 @@ export class TourHeaderV2Component
       map((results: ActivityCreationResult[]) => {
         const successful = results.filter((r) => r.success).length;
         const failed = results.filter((r) => !r.success).length;
-
 
         return { successful, failed, details: results };
       }),
@@ -1626,16 +1645,9 @@ export class TourHeaderV2Component
             activityPackIds: activityPackIds.length > 0 ? activityPackIds : null,
           };
 
-          console.log('📋 Creando RESERVA COMPLETA (DRAFT):', completeData);
-
           this.subscriptions.add(
             this.reservationService.createComplete(completeData).subscribe({
               next: (createdReservation: IReservationResponse) => {
-                console.log('✅ RESERVA COMPLETA creada exitosamente:', {
-                  id: createdReservation.id,
-                  statusId: createdReservation.reservationStatusId,
-                  cartAt: createdReservation.cartAt
-                });
 
                 // Obtener contexto de la lista desde el state del router y pasarlo al checkout
                 const state = window.history.state;
@@ -1704,7 +1716,6 @@ export class TourHeaderV2Component
       alert(errorMessage);
     }
   }
-
 
   /**
    * Obtener datos del usuario actual si está logueado

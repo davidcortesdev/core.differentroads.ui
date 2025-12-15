@@ -32,7 +32,7 @@ export class NotFoundComponent implements OnInit, OnDestroy {
       )
       .subscribe((event: NavigationEnd) => {
         this.currentPath = event.urlAfterRedirects || event.url;
-        console.log('Requested path:', this.currentPath);
+
       });
   }
 

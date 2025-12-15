@@ -31,12 +31,7 @@ export class FileUploadService {
           'FileUploadService: Missing Cloudinary configuration in environment'
         );
       } else {
-        console.log('FileUploadService: Cloudinary configuration found:', {
-          cloudName: environment.cloudinary.cloudName || 'MISSING',
-          uploadPreset: environment.cloudinary.uploadPreset || 'MISSING',
-          hasApiKey: !!environment.cloudinary.apiKey,
-          hasApiSecret: !!environment.cloudinary.apiSecret,
-        });
+
       }
     } catch (err) {
       console.error(

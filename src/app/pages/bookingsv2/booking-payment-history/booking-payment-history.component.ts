@@ -39,7 +39,6 @@ interface TripItemData {
 
 // Actualizamos la interfaz para incluir identificadores de pago y voucher
 
-
 @Component({
   selector: 'app-booking-payment-history-v2',
   templateUrl: './booking-payment-history.component.html',
@@ -359,7 +358,6 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
       });
   }
 
-
   public refreshPayments(): void {
     if (this.reservationId) {
       this.loadPayments();
@@ -577,8 +575,7 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
   }
 
   onPaymentProcessed(paymentData: PaymentData): void {
-    console.log('Pago procesado:', paymentData);
-    
+
     // Emitir evento para que el padre actualice los datos
     this.registerPayment.emit(paymentData.amount);
     
@@ -1375,7 +1372,6 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
     // Limpiar el input para permitir seleccionar el mismo archivo nuevamente si es necesario
     fileInput.value = '';
   }
-
 
   /**
    * Sube un justificante de pago directamente sin redirigir

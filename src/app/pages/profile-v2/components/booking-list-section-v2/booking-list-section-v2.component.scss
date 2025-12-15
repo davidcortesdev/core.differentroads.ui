@@ -187,6 +187,12 @@ $orange-red: #f66b5b;
                 border: 1.5px solid $a !important;
                 width: 100% !important;
             }
+            // Botón de descontar puntos
+            &.p-button-success {
+                background-color: var(--secondary-color-500) !important;
+                color: white !important;
+                border: none !important;
+            }
         }
     }
 }

@@ -471,10 +471,10 @@ export class NewReservationComponent implements OnInit {
     }
     
     if (this.payment?.transactionReference) {
-      console.log('🔄 Pago pendiente, procediendo con captura...');
+
       this.captureOrder();
     } else {
-      console.log('❌ No hay transaction reference disponible para captura');
+
     }
   }
 
@@ -547,7 +547,7 @@ export class NewReservationComponent implements OnInit {
 
     this.paymentService.update(this.payment).subscribe({
       next: () => {
-        console.log('Estado del pago actualizado correctamente');
+
       },
       error: (error) => {
         console.error('Error updating payment status:', error);
@@ -724,7 +724,7 @@ export class NewReservationComponent implements OnInit {
         if (hasSelection) {
           this.bookAmadeusFlight();
         } else {
-          console.log('No hay vuelos Amadeus seleccionados');
+
         }
       },
       error: (error) => {
@@ -869,10 +869,6 @@ export class NewReservationComponent implements OnInit {
       await this.pointsService.createLoyaltyTransaction(transaction);
       */
 
-      console.log(
-        '⚠️ Acumulación de puntos temporalmente deshabilitada - pendiente de actualizar a nuevo esquema'
-      );
-
       // 5. Mostrar mensaje al usuario
       this.messageService.add({
         severity: 'success',
@@ -901,9 +897,6 @@ export class NewReservationComponent implements OnInit {
         .updateStatus(this.reservation.id, 5)
         .toPromise();
 
-      console.log(
-        `Reserva ${this.reservation.id} actualizada a estado BOOKED (5)`
-      );
     } catch (error) {
       console.error('Error actualizando estado de reserva a BOOKED:', error);
       // No lanzar error para no interrumpir el flujo de pago

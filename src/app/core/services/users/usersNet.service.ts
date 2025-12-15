@@ -5,7 +5,6 @@ import { catchError, tap, switchMap } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import { UserFilter, IUserResponse, UserCreate, UserUpdate } from '../../models/users/user.model';
 
-
 @Injectable({
   providedIn: 'root',
 })

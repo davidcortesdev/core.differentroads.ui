@@ -4,6 +4,20 @@
 
   @media (max-width: 576px) {
     margin: 0px 20px 0px 20px;
+    
+    // En móvil, reordenar para que la imagen aparezca primero visualmente
+    display: flex;
+    flex-direction: column;
+    
+    // Breadcrumb aparece después de la imagen en el orden visual
+    .destinations-breadcrumb,
+    .breadcrumb-skeleton {
+      order: 2; // Aparece después de tour-content (order: 1)
+    }
+    
+    .tour-content {
+      order: 1; // Aparece primero
+    }
   }
 
   // Layout principal
@@ -310,9 +324,41 @@
   .destinations-breadcrumb {
     border: none;
     background: transparent;
+    
+    @media (max-width: 576px) {
+      .p-menuitem-text {
+        font-size: 0.5rem !important;
+        color: #94a3b8 !important;
+        line-height: 1.2 !important;
+      }
+
+      .p-breadcrumb-chevron {
+        font-size: 0.5rem !important;
+        margin: 0 0.15rem !important;
+        color: #cbd5e1 !important;
+      }
+
+      .p-breadcrumb-home {
+        font-size: 0.5rem !important;
+        color: #94a3b8 !important;
+        padding: 0.1rem !important;
+        
+        i {
+          font-size: 0.5rem !important;
+        }
+      }
+    }
   }
   .breadcrumb-skeleton {
     margin-bottom: 1.5rem;
+    
+    @media (max-width: 576px) {
+      margin-bottom: 0.15rem;
+      
+      ::ng-deep .p-skeleton {
+        height: 18px !important;
+      }
+    }
   }
 
   .tour-image-skeleton {
@@ -344,29 +390,33 @@
   background: transparent;
 
   @media (max-width: 576px) {
-    margin-bottom: 0.5rem;
-    padding: 0.5rem 0;
+    margin-bottom: 0.15rem;
+    padding: 0.1rem 0;
+    opacity: 0.6; /* Hacer más discreto */
+    line-height: 1.2;
 
     .p-breadcrumb-list {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
+      gap: 0.1rem;
     }
 
     /* Selecciona el último elemento del breadcrumb */
     .p-menuitem:last-child {
       flex-basis: 100%;
-      margin-top: 0.25rem;
+      margin-top: 0.15rem;
 
       /* Añade un pequeño margen izquierdo para alinear con el nivel anterior */
-      margin-left: 1rem;
+      margin-left: 0.8rem;
 
       /* Agrega un indicador visual que muestre que es una continuación */
       &::before {
         content: "→";
         display: inline-block;
-        margin-right: 0.3rem;
-        color: #64748b;
+        margin-right: 0.2rem;
+        color: #94a3b8;
+        font-size: 0.5rem;
       }
     }
 
@@ -377,19 +427,30 @@
 
     .p-menuitem {
       white-space: nowrap; /* Mantiene el texto en una línea */
+      padding: 0.1rem 0;
+      line-height: 1.2;
     }
 
     .p-menuitem-text {
-      font-size: 0.75rem; /* Texto más pequeño en móvil */
+      font-size: 0.5rem !important; /* Texto más pequeño en móvil */
+      color: #94a3b8 !important; /* Color más discreto */
+      line-height: 1.2 !important;
     }
 
     .p-breadcrumb-chevron {
-      font-size: 0.75rem;
-      margin: 0 0.25rem;
+      font-size: 0.5rem !important;
+      margin: 0 0.15rem !important;
+      color: #cbd5e1 !important; /* Color más discreto */
     }
 
     .p-breadcrumb-home {
-      font-size: 0.75rem;
+      font-size: 0.5rem !important;
+      color: #94a3b8 !important;
+      padding: 0.1rem !important;
+      
+      i {
+        font-size: 0.5rem !important;
+      }
     }
   }
 

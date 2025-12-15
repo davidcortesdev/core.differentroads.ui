@@ -234,13 +234,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       takeUntil(this.destroy$)
     ).subscribe({
       next: (userData) => {
-        console.log('=== DATOS DEL USUARIO CARGADOS ===');
-        console.log('userData:', userData);
-        console.log('userData.sexo:', userData?.sexo);
-        console.log('userData.nombre:', userData?.nombre);
-        console.log('userData.email:', userData?.email);
-        console.log('===================================');
-        
+
         this.currentPersonalInfo = userData;
         
         // Cargar datos del viajero y configuración
@@ -341,13 +335,9 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
    * Inicializa el formulario del viajero
    */
   private initializeTravelerForm(): void {
-    console.log('=== initializeTravelerForm() INICIADO ===');
-    console.log('this.traveler:', this.traveler);
-    console.log('this.traveler.isLeadTraveler:', this.traveler?.isLeadTraveler);
-    console.log('this.currentPersonalInfo:', this.currentPersonalInfo);
-    
+
     if (!this.traveler) {
-      console.log('[ERROR] No hay traveler, saliendo');
+
       return;
     }
 
@@ -369,19 +359,19 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
         if (existingValue) {
           // Si hay datos en BD, usarlos (tienen prioridad)
           controlValue = existingValue;
-          console.log(`[BD] Campo: ${fieldDetails.code} → Valor de BD: "${controlValue}"`);
+
         } else if (this.traveler!.isLeadTraveler && this.currentPersonalInfo) {
           // 2️⃣ SEGUNDO: Si NO hay datos en BD Y es lead traveler, prellenar del perfil
           const userValue = this.getUserDataForField(fieldDetails);
           if (userValue) {
             controlValue = userValue;
-            console.log(`[PERFIL] Campo: ${fieldDetails.code} → Pre-llenado desde perfil: "${controlValue}"`);
+
           } else {
-            console.log(`[VACÍO] Campo: ${fieldDetails.code} → Sin datos en BD ni en perfil`);
+
           }
         } else {
           // 3️⃣ TERCERO: No hay datos en BD y no es lead traveler (o no hay perfil)
-          console.log(`[VACÍO] Campo: ${fieldDetails.code} → Sin datos`);
+
         }
 
         // Para campos de fecha, convertir string a Date si es necesario
@@ -413,12 +403,11 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
         if (this.traveler!.isLeadTraveler && this.currentPersonalInfo && !existingValue && controlValue) {
           control.markAsDirty();
           control.markAsTouched();
-          console.log(`[PRE-LLENADO] ${fieldDetails.code} marcado como dirty desde perfil del usuario`);
+
         }
 
         this.travelerForm.addControl(controlName, control);
-        
-        console.log(`[CONTROL CREADO] ${controlName} con valor: "${controlValue}"`);
+
       }
     });
 
@@ -454,22 +443,22 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
           const existingPrefixValue = this.getExistingFieldValue(this.traveler.id, phonePrefixField.id);
           if (existingPrefixValue) {
             prefixValue = existingPrefixValue;
-            console.log(`[BD] phonePrefix → Valor de BD: "${prefixValue}"`);
+
           } else if (this.traveler.isLeadTraveler && this.currentPersonalInfo) {
             // SEGUNDO: Si NO hay datos en BD Y es lead traveler, prellenar del perfil
             const userPrefixValue = this.currentPersonalInfo.phonePrefix;
             if (userPrefixValue) {
               prefixValue = userPrefixValue;
-              console.log(`[PERFIL] phonePrefix → Pre-llenado desde perfil: "${prefixValue}"`);
+
             } else {
               // TERCERO: Si no hay datos en BD ni en perfil, establecer +34 (España) por defecto
               prefixValue = '+34';
-              console.log(`[DEFAULT] phonePrefix → Valor por defecto: "${prefixValue}"`);
+
             }
           } else {
             // Si no es lead traveler o no hay perfil, establecer +34 (España) por defecto
             prefixValue = '+34';
-            console.log(`[DEFAULT] phonePrefix → Valor por defecto: "${prefixValue}"`);
+
           }
           
           // ⭐ NUEVO: Aplicar las mismas validaciones que el teléfono
@@ -486,34 +475,30 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
           if (this.traveler.isLeadTraveler && this.currentPersonalInfo && !existingPrefixValue && prefixValue) {
             prefixControl.markAsDirty();
             prefixControl.markAsTouched();
-            console.log(`[PRE-LLENADO] phonePrefix marcado como dirty desde perfil del usuario`);
+
           }
           
           this.travelerForm.addControl(prefixControlName, prefixControl);
-          console.log(`[CONTROL CREADO] ${prefixControlName} con valor: "${prefixValue}" y validaciones: ${prefixValidators.length > 0 ? 'SÍ' : 'NO'}`);
+
         } else {
           // Actualizar el valor del control existente con el valor de BD
           const existingPrefixValue = this.getExistingFieldValue(this.traveler.id, phonePrefixField.id);
           if (existingPrefixValue !== null && existingPrefixValue !== undefined) {
             existingControl.setValue(existingPrefixValue, { emitEvent: false });
             existingControl.markAsPristine();
-            console.log(`[CONTROL ACTUALIZADO] ${prefixControlName} con valor: "${existingPrefixValue}"`);
+
           }
         }
       }
     }
 
-    console.log('=== FORMULARIO COMPLETO CREADO ===');
-    console.log('Valores del formulario:', this.travelerForm.value);
-    
     // Log individual de cada control creado
     Object.keys(this.travelerForm.controls).forEach((controlName) => {
       const control = this.travelerForm.get(controlName);
       const value = control?.value;
       const isValid = control?.valid;
-      console.log(`  ${controlName}: "${value}" [válido: ${isValid}]`);
+
     });
-    console.log('===================================');
 
     // Calcular fechas para los campos de fecha
     this.calculateTravelerFieldDates();
@@ -532,12 +517,11 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       
       // ⭐ CORREGIDO: Solo disparar autoguardado si hay datos pre-llenados Y no estamos inicializando
       if (this.traveler!.isLeadTraveler && this.currentPersonalInfo && !this.isInitializing) {
-        console.log('[initializeTravelerForm] Verificando si hay datos pre-llenados del usuario para guardar...');
-        
+
         // Verificar si hay cambios pendientes después de la inicialización
         setTimeout(() => {
           if (this.hasPendingChanges()) {
-            console.log('[initializeTravelerForm] Hay datos pre-llenados del usuario, disparando guardado automático...');
+
             this.autoSave$.next();
           }
         }, 500); // Aumentar delay para asegurar que la inicialización termine
@@ -972,11 +956,10 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
   private getUserDataForField(fieldDetails: IReservationFieldResponse): string | null {
     const userData = this.currentPersonalInfo;
     if (!userData) {
-      console.log(`[getUserDataForField] No hay userData disponible para ${fieldDetails.code}`);
+
       return null;
     }
 
-    console.log(`[getUserDataForField] Buscando datos para campo: ${fieldDetails.code}`, userData);
     const fieldCode = fieldDetails.code;
     
     let returnValue: string | null = null;
@@ -1018,8 +1001,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       default:
         returnValue = null;
     }
-    
-    console.log(`[getUserDataForField] Campo: ${fieldCode} → Valor retornado: "${returnValue}"`);
+
     return returnValue;
   }
 
@@ -1027,34 +1009,32 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
    * Normaliza el valor del sexo a formato corto (M, F)
    */
   private normalizeSexValue(sexValue: string | null | undefined): string | null {
-    console.log(`[normalizeSexValue] Entrada: "${sexValue}"`);
-    
+
     if (!sexValue) {
-      console.log(`[normalizeSexValue] Valor vacío, retornando null`);
+
       return null;
     }
 
     const sexUpper = sexValue.toUpperCase().trim();
-    console.log(`[normalizeSexValue] Valor en mayúsculas: "${sexUpper}"`);
-    
+
     // Si ya está en formato corto, retornar tal cual
     if (sexUpper === 'M' || sexUpper === 'F') {
-      console.log(`[normalizeSexValue] Ya está en formato corto: "${sexUpper}"`);
+
       return sexUpper;
     }
 
     // Convertir valores completos a formato corto
     if (sexUpper === 'MASCULINO' || sexUpper === 'MALE' || sexUpper === 'HOMBRE') {
-      console.log(`[normalizeSexValue] Convertido a M`);
+
       return 'M';
     }
     if (sexUpper === 'FEMENINO' || sexUpper === 'FEMALE' || sexUpper === 'MUJER') {
-      console.log(`[normalizeSexValue] Convertido a F`);
+
       return 'F';
     }
 
     // Si no coincide con ninguno, retornar null
-    console.log(`[normalizeSexValue] No coincide con ningún valor conocido, retornando null`);
+
     return null;
   }
 
@@ -1423,8 +1403,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
    * Inicializa el guardado automático del formulario
    */
   private initializeAutoSave(): void {
-    console.log('=== Guardado automático inicializado ===');
-    
+
     // Subscribirse a cambios del formulario con debounce de 2 segundos
     this.travelerForm.valueChanges
       .pipe(
@@ -1433,7 +1412,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
         takeUntil(this.destroy$)
       )
       .subscribe(() => {
-        console.log('[AutoSave] Cambios detectados, iniciando guardado automático...');
+
         this.performAutoSave();
       });
 
@@ -1454,24 +1433,22 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
   private async performAutoSave(): Promise<void> {
     // No auto-guardar si ya está guardando manualmente, cargando, inicializando o ya hay un autoguardado en progreso
     if (this.savingData || this.loading || this.isInitializing || this.isAutoSavingInProgress) {
-      console.log('[AutoSave] Ya hay un guardado en curso, cargando, inicializando o autoguardado en progreso, saltando...');
+
       return;
     }
 
     // Verificar si hay cambios pendientes
     if (!this.hasPendingChanges()) {
-      console.log('[AutoSave] No hay cambios pendientes');
+
       return;
     }
 
-    console.log('[AutoSave] Ejecutando guardado automático...');
     this.autoSaving = true;
     this.isAutoSavingInProgress = true;
 
     try {
       await this.saveData();
-      console.log('[AutoSave] ✅ Guardado automático completado');
-      
+
       // Toast sutil para no molestar al usuario
       this.messageService.add({
         severity: 'success',
@@ -1539,10 +1516,6 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       return [];
     }
 
-    console.log('=== collectFormData() INICIADO ===');
-    console.log('Total de controles en formulario:', Object.keys(this.travelerForm.controls).length);
-    console.log('Campos existentes en BD:', this.existingTravelerFields.length);
-
     const formData: ReservationTravelerFieldCreate[] = [];
 
     Object.keys(this.travelerForm.controls).forEach((controlName) => {
@@ -1592,8 +1565,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
             const isUserModified = control.dirty || control.touched;
 
             if (isUserModified && hasValue && isDifferent && isValid && !this.isInitializing) {
-              console.log(`[INCLUIR] ${fieldCode}: actual="${currentValue}" vs BD="${existingValue}" (dirty: ${control.dirty}, touched: ${control.touched}, hasValue: ${hasValue}, isDifferent: ${isDifferent}, valid: ${isValid})`);
-              
+
               const fieldData: ReservationTravelerFieldCreate = {
                 id: 0,
                 reservationTravelerId: this.traveler!.id,
@@ -1603,18 +1575,17 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
 
               formData.push(fieldData);
             } else if (!isValid && isUserModified && hasValue && isDifferent) {
-              console.log(`[SKIP-INVALID] ${fieldCode}: actual="${currentValue}" (campo inválido, no se guardará)`);
+
             } else if (this.isInitializing) {
-              console.log(`[SKIP-INITIALIZING] ${fieldCode}: actual="${currentValue}" (inicializando, no se guardará)`);
+
             } else {
-              console.log(`[SKIP] ${fieldCode}: actual="${currentValue}" vs BD="${existingValue}" (sin cambios del usuario)`);
+
             }
           }
         }
       }
     });
 
-    console.log(`=== Total de campos a guardar: ${formData.length} ===`);
     return formData;
   }
 
@@ -1636,12 +1607,9 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
    * Guarda los datos del viajero manualmente (desde el botón)
    */
   async saveDataManually(): Promise<void> {
-    console.log('=== saveDataManually() INICIADO ===');
-    console.log('hasPendingChanges():', this.hasPendingChanges());
-    console.log('travelerForm.dirty:', this.travelerForm.dirty);
-    
+
     if (!this.hasPendingChanges()) {
-      console.log('No hay cambios pendientes, saltando guardado');
+
       this.messageService.add({
         severity: 'info',
         summary: 'Sin cambios',
@@ -1662,8 +1630,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
         detail: 'Los datos del viajero han sido guardados correctamente',
         life: 3000,
       });
-      
-      console.log('=== Datos guardados exitosamente ===');
+
     } catch (error) {
       console.error('Error al guardar datos del viajero:', error);
       
@@ -1684,11 +1651,8 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
   async saveData(): Promise<void> {
     const formData = this.collectFormData();
 
-    console.log('=== saveData() INICIADO ===');
-    console.log('Datos a guardar:', formData);
-
     if (formData.length === 0) {
-      console.log('No hay datos dirty para guardar');
+
       return;
     }
 
@@ -1701,8 +1665,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
         );
 
         if (existingField) {
-          console.log(`[UPDATE] Campo ID ${fieldData.reservationFieldId} con valor: "${fieldData.value}"`);
-          
+
           const updateData: ReservationTravelerFieldUpdate = {
             id: existingField.id,
             reservationTravelerId: fieldData.reservationTravelerId,
@@ -1714,17 +1677,14 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
             .update(existingField.id, updateData)
             .toPromise();
         } else {
-          console.log(`[CREATE] Campo ID ${fieldData.reservationFieldId} con valor: "${fieldData.value}"`);
-          
+
           return this.reservationTravelerFieldService
             .create(fieldData)
             .toPromise();
         }
       });
 
-      console.log(`Total de campos a guardar: ${savePromises.length}`);
       await Promise.all(savePromises);
-      console.log('✅ Todos los campos guardados exitosamente');
 
       // Recargar datos existentes después de guardar
       if (this.travelerId) {
@@ -1734,8 +1694,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
           .subscribe({
             next: (fields) => {
               this.existingTravelerFields = fields;
-              console.log('Campos existentes recargados:', fields.length);
-              
+
               // Actualizar valores de controles existentes con los valores de BD
               // Esto es especialmente importante para phonePrefix que se crea dinámicamente
               const phonePrefixField = this.reservationFields.find(f => f.code === 'phonePrefix');
@@ -1751,7 +1710,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
                     prefixControl.setValue(existingPrefixValue, { emitEvent: false });
                     prefixControl.markAsPristine();
                     prefixControl.markAsUntouched();
-                    console.log(`[ACTUALIZADO DESPUÉS DE GUARDAR] ${prefixControlName} con valor: "${existingPrefixValue}"`);
+
                   } else {
                     // Si no hay valor en BD, limpiar el control
                     prefixControl.setValue(null, { emitEvent: false });
@@ -1768,8 +1727,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
                   control.markAsPristine();
                 }
               });
-              
-              console.log('Formulario marcado como pristine');
+
             },
             error: (error) => {
               console.error('Error al recargar campos del viajero:', error);
@@ -1779,7 +1737,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
 
       // Removed: this.dataUpdated.emit(); 
       // No notificar al padre después de guardar para evitar actualizaciones innecesarias
-      console.log('=== saveData() COMPLETADO ===');
+
     } catch (error) {
       console.error('Error al guardar datos del viajero:', error);
       throw error;
@@ -1877,11 +1835,11 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     });
 
     if (hasDifferences) {
-      console.log('[hasPendingChanges] Diferencias válidas encontradas:', differences);
+
     }
     
     if (invalidFields.length > 0) {
-      console.log('[hasPendingChanges] Campos inválidos (no se guardarán):', invalidFields);
+
     }
 
     return hasDifferences;
@@ -1901,13 +1859,13 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
    */
   isReadyToContinue(): boolean {
     if (!this.traveler) {
-      console.log('[isReadyToContinue] ❌ No hay viajero cargado');
+
       return false;
     }
 
     // 1. Verificar que no haya cambios pendientes (todo está guardado)
     if (this.hasPendingChanges()) {
-      console.log('[isReadyToContinue] ❌ Hay cambios pendientes sin guardar');
+
       return false;
     }
 
@@ -1950,11 +1908,11 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
 
     // Log de campos obligatorios con problemas
     if (mandatoryFieldsInvalid.length > 0) {
-      console.log('[isReadyToContinue] ❌ Campos obligatorios inválidos:', mandatoryFieldsInvalid);
+
     }
     
     if (mandatoryFieldsMissing.length > 0) {
-      console.log('[isReadyToContinue] ❌ Campos obligatorios faltantes:', mandatoryFieldsMissing);
+
     }
 
     // 3. Si hay algún campo obligatorio inválido o faltante, NO está listo
@@ -1963,7 +1921,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     // ✅ Todo está OK: campos obligatorios completos, válidos y guardados
-    console.log('[isReadyToContinue] ✅ Viajero listo para continuar');
+
     return true;
   }
 
@@ -1999,8 +1957,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
    * Carga y rellena los datos del usuario autenticado en el formulario
    */
   loadAndFillUserData(): void {
-    console.log('=== loadAndFillUserData() INICIADO ===');
-    
+
     if (!this.isUserAuthenticated()) {
       this.messageService.add({
         severity: 'warn',
@@ -2017,8 +1974,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       takeUntil(this.destroy$)
     ).subscribe({
       next: (userData) => {
-        console.log('Datos del usuario obtenidos para rellenar:', userData);
-        
+
         if (!userData) {
           this.messageService.add({
             severity: 'warn',
@@ -2060,8 +2016,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
    * Rellena el formulario con los datos del usuario
    */
   private fillFormWithUserData(userData: PersonalInfo): void {
-    console.log('=== fillFormWithUserData() INICIADO ===');
-    
+
     if (!this.traveler) {
       return;
     }
@@ -2096,7 +2051,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
                 control.markAsDirty();
                 control.markAsTouched();
                 fieldsUpdated++;
-                console.log(`[RELLENADO] ${controlName} = ${parsedDate} (fecha)`);
+
               }
             } else {
               // Para otros tipos de campos
@@ -2104,45 +2059,39 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
               control.markAsDirty();
               control.markAsTouched();
               fieldsUpdated++;
-              console.log(`[RELLENADO] ${controlName} = "${userValue}"`);
+
             }
           }
         }
       }
     });
 
-    console.log(`=== Total de campos actualizados: ${fieldsUpdated} ===`);
-    
     // Actualizar validaciones
     this.travelerForm.updateValueAndValidity();
     this.validateFormInRealTime();
     
     // Log del estado final del formulario
-    console.log('=== ESTADO FINAL DEL FORMULARIO DESPUÉS DE CARGAR ===');
-    console.log('Valores del formulario completo:', this.travelerForm.value);
-    
+
     // Log individual de cada input
     Object.keys(this.travelerForm.controls).forEach((controlName) => {
       const control = this.travelerForm.get(controlName);
       const value = control?.value;
       const isValid = control?.valid;
       const isDirty = control?.dirty;
-      console.log(`  ${controlName}: "${value}" [válido: ${isValid}, dirty: ${isDirty}]`);
+
     });
-    console.log('=====================================================');
 
     // ⭐ CORREGIDO: Solo disparar autoguardado si no estamos inicializando y hay cambios
     if (fieldsUpdated > 0 && !this.isInitializing) {
-      console.log('[fillFormWithUserData] Disparando guardado automático después de rellenar datos del usuario...');
-      
+
       // Usar setTimeout para asegurar que el formulario se haya actualizado completamente
       setTimeout(() => {
         // Solo disparar si aún hay cambios pendientes y no estamos inicializando
         if (this.hasPendingChanges() && !this.isInitializing) {
           this.autoSave$.next();
-          console.log('[fillFormWithUserData] Guardado automático disparado correctamente');
+
         } else {
-          console.log('[fillFormWithUserData] No se dispara autoguardado - sin cambios pendientes o inicializando');
+
         }
       }, 200); // Aumentar delay para evitar condiciones de carrera
     }
@@ -2157,9 +2106,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     const fieldCode = fieldDetails.code;
-    
-    console.log(`[getUserDataForFieldFromData] Procesando campo: ${fieldCode}`, userData);
-    
+
     let returnValue: string | null = null;
     
     switch (fieldCode) {
@@ -2199,8 +2146,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       default:
         returnValue = null;
     }
-    
-    console.log(`[getUserDataForFieldFromData] Campo: ${fieldCode} → Valor: "${returnValue}"`);
+
     return returnValue;
   }
 }

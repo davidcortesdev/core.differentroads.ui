@@ -91,8 +91,25 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
 
   // Intersection Observer para detectar cuando el carrusel aparece en pantalla
   @ViewChild('tourCarouselContainer', { static: false }) tourCarouselContainer!: ElementRef;
+  @ViewChild('carousel', { static: false }) carousel!: any;
+  @ViewChild('carouselWrapper', { static: false }) carouselWrapper!: ElementRef;
   private intersectionObserver?: IntersectionObserver;
   private hasTrackedVisibility: boolean = false;
+
+  // Variables para manejar gestos touch y evitar bloqueo de scroll vertical
+  private touchStartX: number = 0;
+  private touchStartY: number = 0;
+  private touchMoveX: number = 0;
+  private touchMoveY: number = 0;
+  private isVerticalScroll: boolean = false;
+  private carouselElement: HTMLElement | null = null;
+  private carouselContent: HTMLElement | null = null;
+  private itemsContainer: HTMLElement | null = null;
+  // Referencias a los handlers para poder removerlos correctamente
+  private touchStartHandler: ((event: Event) => void) | null = null;
+  private touchMoveHandler: ((event: Event) => void) | null = null;
+  private touchEndHandler: ((event: Event) => void) | null = null;
+  private touchCancelHandler: ((event: Event) => void) | null = null;
 
   responsiveOptions = [
     {
@@ -107,6 +124,11 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
     },
     {
       breakpoint: '1024px',
+      numVisible: 2,
+      numScroll: 1,
+    },
+    {
+      breakpoint: '768px', // NUEVO: Añadir breakpoint intermedio
       numVisible: 2,
       numScroll: 1,
     },
@@ -171,6 +193,10 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
   ngAfterViewInit(): void {
     // Configurar Intersection Observer después de que la vista se inicialice
     this.setupIntersectionObserver();
+    // SOLUCIÓN AGRESIVA: Sobrescribir los métodos touch de PrimeNG Carousel
+    this.overridePrimeNGTouchHandlers();
+    // Configurar detección de gestos para permitir scroll vertical en móvil
+    this.setupTouchGestureDetection();
   }
 
   ngOnDestroy(): void {
@@ -179,8 +205,343 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
       this.intersectionObserver.disconnect();
       this.intersectionObserver = undefined;
     }
+    // Limpiar listeners de touch
+    this.cleanupTouchListeners();
     this.destroy$.next();
     this.destroy$.complete();
+    
+    // Resetear métodos del carrusel si fueron sobrescritos
+    if (this.carousel) {
+      // Los métodos se restaurarán automáticamente al destruir el componente
+    }
+  }
+
+  /**
+   * SOLUCIÓN AGRESIVA: Sobrescribe los métodos touch de PrimeNG Carousel
+   * y deshabilita completamente el swipe en móvil removiendo event listeners
+   */
+  private overridePrimeNGTouchHandlers(): void {
+    // Esperar a que el carrusel esté completamente inicializado
+    setTimeout(() => {
+      if (!this.carousel || !this.carousel.el?.nativeElement) {
+        return;
+      }
+
+      // Verificar si estamos en móvil
+      const isMobile = window.innerWidth <= 768;
+
+      if (!isMobile) {
+        return; // Solo aplicar en móvil
+      }
+
+      this.carouselElement = this.carousel.el.nativeElement;
+      if (!this.carouselElement) {
+        return;
+      }
+
+      // SOLUCIÓN 1: Sobrescribir los métodos del carrusel para detectar dirección inteligentemente
+      if (this.carousel) {
+        // Guardar referencias originales
+        const originalOnTouchMove = this.carousel.onTouchMove?.bind(this.carousel);
+        const originalOnTouchStart = this.carousel.onTouchStart?.bind(this.carousel);
+        const originalOnTouchEnd = this.carousel.onTouchEnd?.bind(this.carousel);
+        
+        // Variable para rastrear si el gesto ya se determinó como horizontal o vertical
+        let gestureDetermined = false;
+        let isHorizontalGesture = false;
+
+        // Sobrescribir onTouchStart
+        if (originalOnTouchStart) {
+          this.carousel.onTouchStart = (e: TouchEvent) => {
+            if (e && e.touches && e.touches.length === 1) {
+              this.touchStartX = e.touches[0].clientX;
+              this.touchStartY = e.touches[0].clientY;
+              gestureDetermined = false;
+              isHorizontalGesture = false;
+            }
+            // Llamar al original para que PrimeNG pueda inicializar
+            if (originalOnTouchStart) {
+              originalOnTouchStart(e);
+            }
+          };
+        }
+
+        // Sobrescribir onTouchMove - CLAVE: Detectar dirección temprano y actuar en consecuencia
+        if (originalOnTouchMove) {
+          this.carousel.onTouchMove = (e: TouchEvent) => {
+            if (!e || !e.touches || e.touches.length !== 1) {
+              return;
+            }
+
+            const currentX = e.touches[0].clientX;
+            const currentY = e.touches[0].clientY;
+
+            if (this.touchStartX === 0 && this.touchStartY === 0) {
+              this.touchStartX = currentX;
+              this.touchStartY = currentY;
+              return;
+            }
+
+            const deltaX = Math.abs(currentX - this.touchStartX);
+            const deltaY = Math.abs(currentY - this.touchStartY);
+            
+            // Detectar dirección del gesto con umbral bajo para decisión rápida (5px)
+            // Esto permite determinar la intención del usuario rápidamente
+            if (!gestureDetermined && (deltaX > 5 || deltaY > 5)) {
+              // Determinar si es horizontal o vertical basado en la dirección predominante
+              if (deltaX > deltaY) {
+                // Movimiento horizontal predominante
+                isHorizontalGesture = true;
+                gestureDetermined = true;
+                // Permitir que PrimeNG procese el swipe horizontal
+                if (originalOnTouchMove) {
+                  originalOnTouchMove(e);
+                }
+              } else if (deltaY > deltaX) {
+                // Movimiento vertical predominante
+                isHorizontalGesture = false;
+                gestureDetermined = true;
+                // NO llamar al método original - permitir scroll vertical
+                return;
+              }
+            } else if (gestureDetermined) {
+              // Si ya determinamos la dirección, actuar consistentemente
+              if (isHorizontalGesture) {
+                // Continuar permitiendo swipe horizontal
+                if (originalOnTouchMove) {
+                  originalOnTouchMove(e);
+                }
+              } else {
+                // Continuar permitiendo scroll vertical (no hacer nada)
+                return;
+              }
+            } else {
+              // Movimiento muy pequeño, esperar más
+              return;
+            }
+          };
+        }
+
+        // Sobrescribir onTouchEnd
+        if (originalOnTouchEnd) {
+          this.carousel.onTouchEnd = (e: TouchEvent) => {
+            this.touchStartX = 0;
+            this.touchStartY = 0;
+            gestureDetermined = false;
+            isHorizontalGesture = false;
+            // Llamar al original para limpieza
+            if (originalOnTouchEnd) {
+              originalOnTouchEnd(e);
+            }
+          };
+        }
+      }
+
+      // SOLUCIÓN 2: Aplicar estilos CSS que permitan ambos gestos
+      // NO usar touch-action: pan-y que deshabilita el swipe horizontal
+      // En su lugar, usar pan-x pan-y para permitir ambos
+      const itemsContainer = this.carouselElement.querySelector('.p-carousel-items-container') as HTMLElement;
+      if (itemsContainer) {
+        // Remover cualquier restricción de touch-action anterior
+        const currentStyle = itemsContainer.getAttribute('style') || '';
+        const newStyle = currentStyle
+          .replace(/touch-action[^;]*;?/gi, '')
+          .replace(/pan-y\s*!important/gi, '');
+        itemsContainer.setAttribute('style', newStyle + ' touch-action: pan-x pan-y; -webkit-touch-callout: none;');
+        this.itemsContainer = itemsContainer;
+      }
+
+      const carouselContent = this.carouselElement.querySelector('.p-carousel-content') as HTMLElement;
+      if (carouselContent) {
+        const currentStyle = carouselContent.getAttribute('style') || '';
+        const newStyle = currentStyle.replace(/touch-action[^;]*;?/gi, '').replace(/pan-y\s*!important/gi, '');
+        carouselContent.setAttribute('style', newStyle + ' touch-action: pan-x pan-y;');
+        this.carouselContent = carouselContent;
+      }
+
+      // NO aplicar restricciones a los elementos hijos - permitir ambos gestos
+      // Solo asegurar que los elementos no bloqueen eventos
+      const allCarouselElements = this.carouselElement.querySelectorAll('.p-carousel-items-content, .p-carousel-item');
+      allCarouselElements.forEach((el: Element) => {
+        const htmlEl = el as HTMLElement;
+        const currentStyle = htmlEl.getAttribute('style') || '';
+        // Remover pan-y restrictivo si existe
+        const newStyle = currentStyle.replace(/touch-action[^;]*;?/gi, '').replace(/pan-y\s*!important/gi, '');
+        if (!newStyle.includes('touch-action')) {
+          htmlEl.setAttribute('style', newStyle + ' touch-action: pan-x pan-y;');
+        }
+      });
+
+      // Elemento raíz: permitir ambos gestos
+      const currentRootStyle = this.carouselElement.getAttribute('style') || '';
+      const newRootStyle = currentRootStyle.replace(/touch-action[^;]*;?/gi, '').replace(/pan-y\s*!important/gi, '');
+      this.carouselElement.setAttribute('style', newRootStyle + ' touch-action: pan-x pan-y;');
+    }, 300); // Aumentar delay para asegurar que PrimeNG haya inicializado
+  }
+
+  /**
+   * Configura la detección de gestos touch para permitir scroll vertical
+   * y evitar que el carrusel bloquee el scroll de la página en móvil
+   */
+  private setupTouchGestureDetection(): void {
+    // Esperar a que el DOM esté completamente renderizado
+    setTimeout(() => {
+      if (!this.carousel?.el?.nativeElement || !this.carouselWrapper?.nativeElement) {
+        return;
+      }
+
+      this.carouselElement = this.carousel.el.nativeElement;
+      if (!this.carouselElement) {
+        return;
+      }
+
+      // Obtener todos los elementos relevantes del carrusel
+      this.itemsContainer = this.carouselElement.querySelector('.p-carousel-items-container') as HTMLElement;
+      this.carouselContent = this.carouselElement.querySelector('.p-carousel-content') as HTMLElement;
+
+      if (!this.itemsContainer) {
+        return;
+      }
+
+      // Agregar listener también al wrapper para capturar eventos más temprano
+      const wrapper = this.carouselWrapper.nativeElement as HTMLElement;
+
+      // Crear handlers con el tipo correcto
+      this.touchStartHandler = (event: Event) => {
+        const touchEvent = event as TouchEvent;
+        if (touchEvent.touches.length === 1) {
+          this.touchStartX = touchEvent.touches[0].clientX;
+          this.touchStartY = touchEvent.touches[0].clientY;
+          this.isVerticalScroll = false;
+        }
+      };
+
+      this.touchMoveHandler = (event: Event) => {
+        const touchEvent = event as TouchEvent;
+        if (touchEvent.touches.length !== 1) {
+          return;
+        }
+
+        this.touchMoveX = touchEvent.touches[0].clientX;
+        this.touchMoveY = touchEvent.touches[0].clientY;
+
+        const deltaX = Math.abs(this.touchMoveX - this.touchStartX);
+        const deltaY = Math.abs(this.touchMoveY - this.touchStartY);
+
+        // Detección inteligente de dirección del gesto
+        // Si el movimiento es principalmente vertical (deltaY > deltaX y más de 5px)
+        // Detener la propagación SOLO para este evento, permitiendo scroll vertical
+        if (deltaY > deltaX && deltaY > 5) {
+          this.isVerticalScroll = true;
+          
+          // Detener la propagación sin prevenir el comportamiento predeterminado
+          // Esto permite el scroll vertical pero previene que PrimeNG procese el swipe
+          event.stopPropagation();
+          event.stopImmediatePropagation();
+          return;
+        }
+        
+        // Si el movimiento es principalmente horizontal (deltaX > deltaY y más de 5px)
+        // Permitir que PrimeNG procese el swipe horizontal normalmente
+        if (deltaX > deltaY && deltaX > 5) {
+          this.isVerticalScroll = false;
+          // NO detener la propagación - dejar que PrimeNG procese el gesto horizontal
+          return;
+        }
+        
+        // Para movimientos muy pequeños o ambiguos, no hacer nada
+        // El gesto se determinará en los siguientes eventos touchmove
+      };
+
+      this.touchEndHandler = () => {
+        this.isVerticalScroll = false;
+        this.touchStartX = 0;
+        this.touchStartY = 0;
+        this.touchMoveX = 0;
+        this.touchMoveY = 0;
+      };
+
+      this.touchCancelHandler = () => {
+        this.isVerticalScroll = false;
+        this.touchStartX = 0;
+        this.touchStartY = 0;
+        this.touchMoveX = 0;
+        this.touchMoveY = 0;
+      };
+
+      // Agregar listeners en fase de CAPTURA (capture: true) para interceptar ANTES de PrimeNG
+      // Esto es crítico: debemos capturar los eventos antes de que PrimeNG los procese
+      
+      // PRIMERO: Listener en el wrapper (más externo, captura primero)
+      wrapper.addEventListener('touchstart', this.touchStartHandler, { passive: true, capture: true });
+      wrapper.addEventListener('touchmove', this.touchMoveHandler, { passive: false, capture: true });
+      wrapper.addEventListener('touchend', this.touchEndHandler, { passive: true, capture: true });
+      wrapper.addEventListener('touchcancel', this.touchCancelHandler, { passive: true, capture: true });
+
+      // Listener en el elemento raíz del carrusel
+      this.carouselElement.addEventListener('touchstart', this.touchStartHandler, { passive: true, capture: true });
+      this.carouselElement.addEventListener('touchmove', this.touchMoveHandler, { passive: false, capture: true });
+      this.carouselElement.addEventListener('touchend', this.touchEndHandler, { passive: true, capture: true });
+      this.carouselElement.addEventListener('touchcancel', this.touchCancelHandler, { passive: true, capture: true });
+
+      // También en el contenedor de items
+      this.itemsContainer.addEventListener('touchstart', this.touchStartHandler, { passive: true, capture: true });
+      this.itemsContainer.addEventListener('touchmove', this.touchMoveHandler, { passive: false, capture: true });
+      this.itemsContainer.addEventListener('touchend', this.touchEndHandler, { passive: true, capture: true });
+      this.itemsContainer.addEventListener('touchcancel', this.touchCancelHandler, { passive: true, capture: true });
+
+      // Y en el contenido del carrusel
+      if (this.carouselContent) {
+        this.carouselContent.addEventListener('touchstart', this.touchStartHandler, { passive: true, capture: true });
+        this.carouselContent.addEventListener('touchmove', this.touchMoveHandler, { passive: false, capture: true });
+        this.carouselContent.addEventListener('touchend', this.touchEndHandler, { passive: true, capture: true });
+        this.carouselContent.addEventListener('touchcancel', this.touchCancelHandler, { passive: true, capture: true });
+      }
+    }, 100);
+  }
+
+  /**
+   * Limpia los listeners de touch events
+   */
+  private cleanupTouchListeners(): void {
+    if (this.touchStartHandler && this.touchMoveHandler && this.touchEndHandler && this.touchCancelHandler) {
+      // Remover listeners del wrapper
+      if (this.carouselWrapper?.nativeElement) {
+        const wrapper = this.carouselWrapper.nativeElement as HTMLElement;
+        wrapper.removeEventListener('touchstart', this.touchStartHandler, { capture: true } as any);
+        wrapper.removeEventListener('touchmove', this.touchMoveHandler, { capture: true } as any);
+        wrapper.removeEventListener('touchend', this.touchEndHandler, { capture: true } as any);
+        wrapper.removeEventListener('touchcancel', this.touchCancelHandler, { capture: true } as any);
+      }
+
+      // Remover listeners del elemento raíz
+      if (this.carouselElement) {
+        this.carouselElement.removeEventListener('touchstart', this.touchStartHandler, { capture: true } as any);
+        this.carouselElement.removeEventListener('touchmove', this.touchMoveHandler, { capture: true } as any);
+        this.carouselElement.removeEventListener('touchend', this.touchEndHandler, { capture: true } as any);
+        this.carouselElement.removeEventListener('touchcancel', this.touchCancelHandler, { capture: true } as any);
+      }
+
+      // Remover listeners del contenedor de items
+      if (this.itemsContainer) {
+        this.itemsContainer.removeEventListener('touchstart', this.touchStartHandler, { capture: true } as any);
+        this.itemsContainer.removeEventListener('touchmove', this.touchMoveHandler, { capture: true } as any);
+        this.itemsContainer.removeEventListener('touchend', this.touchEndHandler, { capture: true } as any);
+        this.itemsContainer.removeEventListener('touchcancel', this.touchCancelHandler, { capture: true } as any);
+      }
+
+      // Remover listeners del contenido
+      if (this.carouselContent) {
+        this.carouselContent.removeEventListener('touchstart', this.touchStartHandler, { capture: true } as any);
+        this.carouselContent.removeEventListener('touchmove', this.touchMoveHandler, { capture: true } as any);
+        this.carouselContent.removeEventListener('touchend', this.touchEndHandler, { capture: true } as any);
+        this.carouselContent.removeEventListener('touchcancel', this.touchCancelHandler, { capture: true } as any);
+      }
+    }
+    this.touchStartHandler = null;
+    this.touchMoveHandler = null;
+    this.touchEndHandler = null;
+    this.touchCancelHandler = null;
   }
 
   /**
@@ -707,7 +1068,6 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
                 if (additional.departures && additional.departures.length > 0) {
                   // Ordenar departures por fecha
 
-
                   const sortedDepartures = additional.departures
                     .filter((departure) => departure.departureDate)
                     .sort(
@@ -740,7 +1100,6 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
                           });
                         }
                       }
-
 
                     }
                   });
@@ -824,6 +1183,9 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
           if (!this.intersectionObserver && !this.hasTrackedVisibility) {
             setTimeout(() => this.setupIntersectionObserver(), 100);
           }
+          // Re-aplicar la solución de touch handlers después de que los tours se carguen
+          // El carrusel puede reinicializarse cuando se agregan items
+          setTimeout(() => this.overridePrimeNGTouchHandlers(), 200);
         }
       });
   }

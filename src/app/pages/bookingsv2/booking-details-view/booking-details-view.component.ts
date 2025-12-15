@@ -30,7 +30,7 @@ export class BookingDetailsViewV2Component implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['refreshTrigger'] && changes['refreshTrigger'].currentValue) {
-      console.log('🔄 Refrescando datos de booking details por trigger...');
+
       this.refreshBookingDetails();
     }
   }
@@ -38,6 +38,6 @@ export class BookingDetailsViewV2Component implements OnInit, OnChanges {
   private refreshBookingDetails(): void {
     // Aquí se pueden recargar los datos si es necesario
     // Por ahora solo logueamos que se recibió el trigger
-    console.log('📊 Datos de booking details actualizados');
+
   }
 }

@@ -8,8 +8,6 @@ import { PersonalInfo } from '../../../../core/models/v2/profile-v2.model';
 import { PersonalInfoV2Service } from '../../../../core/services/v2/personal-info-v2.service';
 import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 
-
-
 @Component({
   selector: 'app-personal-info-section-v2',
   standalone: false,

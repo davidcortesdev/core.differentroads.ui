@@ -169,9 +169,8 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
 
   // El resto de datos se mantendrán quemados
 
-  isTO: boolean = true;
+  isTO: boolean = false;
   isAdmin: boolean = true;
-
 
   bookingImages: BookingImage[] = [
     {
@@ -269,9 +268,10 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
     // Detectar si estamos en modo standalone
     this.detectStandaloneMode();
 
-    // Detectar si viene desde ATC
+    // Detectar si viene desde ATC o Tour Operation
     this.route.queryParams.subscribe((queryParams) => {
       this.isATC = queryParams['isATC'] === 'true';
+      this.isTO = queryParams['isTO'] === 'true';
 
       // Actualizar validaciones del formulario según si es ATC
       const cancelationFeeControl = this.cancelForm.get('cancelationFee');
@@ -470,10 +470,7 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
       next: (status) => {
         // Añadir el código como información adicional
         this.bookingData.statusCode = status.code;
-        
-        console.log('Status ID:', statusId);
-        console.log('Status Code:', status.code);
-        console.log('Status Name:', status.name);
+
       },
       error: (error) => {
         console.error('Error loading reservation status code:', error);
@@ -747,11 +744,7 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
   
   // Determinar canceledBy según si viene desde ATC o no
   const canceledBy = this.isATC ? 2 : 1;
-  
-  console.log('🔄 Cancelando reserva...');
-  console.log('   - Reservation ID:', reservationId);
-  console.log('   - CanceledBy:', canceledBy, this.isATC ? '(ATC)' : '(Usuario)');
-  
+
   this.reservationService
     .cancelReservation(reservationId, canceledBy, comentario, cancelationFee)
     .pipe(
@@ -761,8 +754,7 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
     )
     .subscribe({
       next: (response) => {
-        console.log('✅ Cancelación exitosa:', response);
-        
+
         this.messageService.add({
           key: 'center',
           severity: 'success',
@@ -923,7 +915,7 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
    * Maneja el evento de actualización de datos de actividades
    */
   onActivitiesDataUpdated(): void {
-    console.log('🎯 Las actividades se han actualizado');
+
     // Disparar actualización del summary inmediatamente
     this.triggerSummaryRefresh();
   }

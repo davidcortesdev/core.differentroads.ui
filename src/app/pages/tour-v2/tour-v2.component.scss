@@ -1,7 +1,6 @@
 .tour-v2-container {
   margin: 0 auto;
   padding: 20px 0px;
-  font-family: Arial, sans-serif;
 
   .loading,
   .error {
@@ -9,6 +8,7 @@
     padding: 40px;
     font-size: 18px;
   }
+  
 
   .error {
     color: #f44336;

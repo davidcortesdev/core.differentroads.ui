@@ -1,7 +1,6 @@
 .por-que-different {
   max-width: 1200px;
   margin: 0 auto;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   line-height: 1.6;
   color: #333;
 
@@ -10,13 +9,13 @@
   }
 
   .primary-color {
-    color: rgb(234, 104, 92);
+    color: var(--primary-color-500);
     font-weight: 600;
   }
 
   .highlighted-text {
     background-color: rgb(255, 255, 255);
-    color: rgb(9, 54, 66);
+    color: var(--secondary-color-500);
   }
 
   p {

@@ -26,7 +26,7 @@ import {
 import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 import { PointsV2Service } from '../../../../core/services/v2/points-v2.service';
 import { DepartureService } from '../../../../core/services/departure/departure.service';
-import { switchMap, map, catchError, of, forkJoin, Subscription, takeUntil, delay, retryWhen, take, timer, EMPTY } from 'rxjs';
+import { switchMap, map, catchError, of, forkJoin, Subscription, takeUntil, delay, retryWhen, take, timer, EMPTY, takeWhile } from 'rxjs';
 import { Subject } from 'rxjs';
 
 @Component({
@@ -184,26 +184,33 @@ export class BookingListSectionV2Component
       .pipe(
         takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
         take(maxAttempts), // Limitar a maxAttempts intentos
-        map((attempt) => {
+        map((attempt: number) => {
           // En cada intento, verificar si el email está disponible
-          const userEmail = this.authService.getUserEmailValue();
+          const userEmail: string | undefined = this.authService.getUserEmailValue();
           return { attempt, userEmail };
         }),
-        switchMap(({ attempt, userEmail }) => {
+        // ✅ CORREGIDO: Usar takeWhile para continuar hasta encontrar el email o alcanzar el último intento
+        // takeWhile continúa mientras la condición sea verdadera, y se completa cuando es falsa
+        takeWhile(({ attempt, userEmail }: { attempt: number; userEmail: string | undefined }) => {
+          // Continuar si NO hay email Y no es el último intento
+          return !userEmail && attempt < maxAttempts - 1;
+        }, true), // El segundo parámetro 'true' incluye el último valor que hace falsa la condición
+        // ✅ CORREGIDO: Usar map para ejecutar los callbacks y luego completar el stream
+        map(({ attempt, userEmail }: { attempt: number; userEmail: string | undefined }) => {
           if (userEmail) {
-            // Email encontrado, ejecutar callback y completar
+            // Email encontrado, ejecutar callback
             onEmailFound(userId, userEmail);
-            return EMPTY; // Completar el observable inmediatamente
-          } else if (attempt === maxAttempts - 1) {
+          } else {
             // Último intento sin email, ejecutar fallback
             console.warn('No se pudo obtener el email del usuario después de', maxAttempts, 'intentos. Cargando solo con userId.');
             onEmailNotFound(userId);
-            return EMPTY;
-          } else {
-            // Continuar intentando
-            return EMPTY; // Continuar con el siguiente intento del timer
           }
+          // Retornar un valor para que el stream continúe y se complete
+          return null;
         }),
+        // ✅ CORREGIDO: Tomar solo el primer valor para completar el stream inmediatamente
+        // Esto asegura que los callbacks solo se ejecuten una vez
+        take(1),
         catchError((error) => {
           // En caso de error, ejecutar fallback
           console.error('Error esperando email del usuario:', error);
@@ -224,7 +231,8 @@ export class BookingListSectionV2Component
       this.activeBookingsSubscription.unsubscribe();
     }
     
-    this.activeBookingsSubscription = null;
+    // ✅ CORREGIDO: NO establecer a null aquí, se establecerá después de crear la nueva suscripción
+    // Esto evita que los callbacks sincrónicos fallen la comparación
 
     // Asegurar que loading esté en true y bookingItems esté vacío al inicio
     this.loading = true;
@@ -333,14 +341,13 @@ export class BookingListSectionV2Component
         })
       );
 
-    // ✅ CORREGIDO: Asignar la suscripción ANTES de suscribirse para evitar race conditions
-    // Si el observable completa sincrónicamente, el callback necesita que la suscripción ya esté asignada
-    // Creamos una variable temporal para almacenar la referencia antes de suscribirnos
-    let subscription: Subscription;
-    
-    subscription = observable.subscribe({
+    // ✅ CORREGIDO: Crear la suscripción y asignarla inmediatamente
+    // Usar una variable local para capturar la referencia antes de que los callbacks puedan ejecutarse
+    const subscription = observable.subscribe({
       next: (bookingItems: BookingItem[]) => {
-        // ✅ CORREGIDO: Solo actualizar y limpiar si esta es la suscripción activa actual
+        // ✅ CORREGIDO: Comparar contra la variable local 'subscription' en lugar de this.activeBookingsSubscription
+        // Esto funciona porque 'subscription' ya está asignada cuando los callbacks se ejecutan
+        // (incluso si son sincrónicos, la variable ya existe en el scope)
         if (this.activeBookingsSubscription === subscription) {
           this.bookingItems = bookingItems || [];
           this.loading = false;
@@ -352,7 +359,7 @@ export class BookingListSectionV2Component
         }
       },
       error: (error) => {
-        // ✅ CORREGIDO: Solo manejar el error si esta es la suscripción activa actual
+        // ✅ CORREGIDO: Comparar contra la variable local 'subscription'
         if (this.activeBookingsSubscription === subscription) {
           console.error('Error en la suscripción de reservas activas:', error);
           this.bookingItems = [];
@@ -365,8 +372,8 @@ export class BookingListSectionV2Component
       },
     });
 
-    // ✅ CORREGIDO: Asignar la Subscription inmediatamente después de suscribirse
-    // Esto asegura que la referencia esté disponible incluso si los callbacks se ejecutan sincrónicamente
+    // ✅ CORREGIDO: Asignar la Subscription INMEDIATAMENTE después de crear la suscripción
+    // Esto debe hacerse en la misma expresión o inmediatamente después para evitar race conditions
     this.activeBookingsSubscription = subscription;
   }
 

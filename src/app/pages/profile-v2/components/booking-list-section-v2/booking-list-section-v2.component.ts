@@ -52,6 +52,9 @@ export class BookingListSectionV2Component
   // Suscripción para poder cancelarla si se inicia una nueva carga
   private activeBookingsSubscription: Subscription | null = null;
 
+  // Identificador único para la suscripción actual (para evitar race conditions)
+  private currentSubscriptionId: number = 0;
+
   // Suscripción para el timer de espera de email
   private emailWaitSubscription: Subscription | null = null;
 
@@ -255,8 +258,9 @@ export class BookingListSectionV2Component
       this.activeBookingsSubscription.unsubscribe();
     }
     
-    // ✅ CORREGIDO: NO establecer a null aquí, se establecerá después de crear la nueva suscripción
-    // Esto evita que los callbacks sincrónicos fallen la comparación
+    // ✅ CORREGIDO: Generar un ID único para esta suscripción antes de suscribirse
+    // Esto permite identificar la suscripción actual incluso si el observable completa sincrónicamente
+    const subscriptionId = ++this.currentSubscriptionId;
 
     // Asegurar que loading esté en true y bookingItems esté vacío al inicio
     this.loading = true;
@@ -369,34 +373,34 @@ export class BookingListSectionV2Component
         })
       );
 
-    // ✅ CORREGIDO: Declarar la variable de suscripción antes de suscribirse
-    // Esto asegura que la variable exista en el scope cuando los callbacks se ejecuten
-    let subscription: Subscription;
-    
-    // ✅ CORREGIDO: Asignar la suscripción ANTES de que los callbacks puedan ejecutarse
-    // Si el observable completa sincrónicamente, los callbacks necesitan que la asignación ya esté hecha
-    subscription = observable.subscribe({
+    // ✅ CORREGIDO: Crear la suscripción y asignarla inmediatamente
+    const subscription = observable.subscribe({
       next: (bookingItems: BookingItem[]) => {
-        // ✅ CORREGIDO: Comparar contra la variable local 'subscription' que ya está asignada
-        // La asignación a this.activeBookingsSubscription ocurre inmediatamente después,
-        // pero la variable local 'subscription' ya existe en el scope cuando los callbacks se ejecutan
-        if (this.activeBookingsSubscription === subscription) {
+        // ✅ CORREGIDO: Verificar si esta es la suscripción activa actual usando el ID único
+        // El ID se genera antes de suscribirse, así que siempre está disponible cuando los callbacks se ejecutan
+        if (this.currentSubscriptionId === subscriptionId) {
           this.bookingItems = bookingItems || [];
           this.loading = false;
           console.log(`Reservas activas cargadas: ${bookingItems.length} items`);
-          this.activeBookingsSubscription = null;
+          // Limpiar solo si esta sigue siendo la suscripción activa
+          if (this.activeBookingsSubscription === subscription) {
+            this.activeBookingsSubscription = null;
+          }
         } else {
           // Esta es una suscripción obsoleta, ignorar el resultado
           console.log('Ignorando resultado de suscripción obsoleta');
         }
       },
       error: (error) => {
-        // ✅ CORREGIDO: Comparar contra la variable local 'subscription'
-        if (this.activeBookingsSubscription === subscription) {
+        // ✅ CORREGIDO: Verificar si esta es la suscripción activa actual usando el ID único
+        if (this.currentSubscriptionId === subscriptionId) {
           console.error('Error en la suscripción de reservas activas:', error);
           this.bookingItems = [];
           this.loading = false;
-          this.activeBookingsSubscription = null;
+          // Limpiar solo si esta sigue siendo la suscripción activa
+          if (this.activeBookingsSubscription === subscription) {
+            this.activeBookingsSubscription = null;
+          }
         } else {
           // Esta es una suscripción obsoleta, ignorar el error
           console.log('Ignorando error de suscripción obsoleta');
@@ -405,10 +409,8 @@ export class BookingListSectionV2Component
     });
 
     // ✅ CORREGIDO: Asignar la Subscription INMEDIATAMENTE después de crear la suscripción
-    // Esta asignación ocurre en el mismo hilo de ejecución, antes de que cualquier código asíncrono pueda ejecutarse
-    // Si el observable es sincrónico, los callbacks ya se ejecutaron pero la comparación fallará porque
-    // this.activeBookingsSubscription todavía no está asignado. Por eso usamos la variable local 'subscription'
-    // en la comparación, que ya existe en el scope.
+    // El ID único (subscriptionId) ya fue generado antes de suscribirse, así que los callbacks
+    // pueden verificar correctamente incluso si el observable completa sincrónicamente
     this.activeBookingsSubscription = subscription;
   }
 

@@ -147,7 +147,7 @@ export class ReviewSectionV2Component implements OnInit, OnChanges, OnDestroy {
 
   private enrichReviewsWithTourData(reviews: IEnrichedReviewResponse[]): void {
     // Obtener IDs únicos de tours
-    const uniqueTourIds = [...new Set(reviews.map(review => review.tourId).filter(id => id))];
+    const uniqueTourIds = [...new Set(reviews.map(review => review.tourId).filter(id => id != null))];
     
     if (uniqueTourIds.length === 0) {
       this.reviewsCards = reviews;

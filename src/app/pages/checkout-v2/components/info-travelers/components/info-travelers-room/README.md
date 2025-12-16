@@ -84,7 +84,6 @@ El componente incluye estilos personalizados que se integran con el tema de la a
 ```typescript
 // En el componente padre
 onRoomAssignmentsChange(roomAssignments: { [travelerId: number]: number }): void {
-  console.log('Asignaciones de habitaciones:', roomAssignments);
   // Procesar las asignaciones...
 }
 ```

@@ -38,11 +38,11 @@ export class ReservationsSyncsService {
 
   /**
    * Encola una sincronización completa desde TourKnife utilizando el tkId de la reserva.
-   * POST {tourknifeApiUrl}/ReservationsSyncs/{reservationTkId}/enqueue
+   * POST {tourknifeApiUrl}/ReservationsSyncs/sync/full/from-tk/{reservationTkId}/enqueue
    */
   enqueueByTkId(reservationTkId: string): Observable<boolean> {
     return this.http.post<boolean>(
-      `${environment.tourknifeApiUrl}/ReservationsSyncs/${reservationTkId}/enqueue`,
+      `${environment.tourknifeApiUrl}/ReservationsSyncs/sync/full/from-tk/${reservationTkId}/enqueue`,
       {}
     );
   }

@@ -31,22 +31,12 @@ const oldPoolClient = new CognitoIdentityProviderClient({
  * Autentica un usuario en el User Pool antiguo y obtiene sus atributos
  */
 async function authenticateUser(username, password) {
-  console.log("MIGRATION_LOG: authenticateUser - Iniciando autenticación");
-  console.log("MIGRATION_LOG: Username recibido:", username);
-  console.log("MIGRATION_LOG: OLD_USER_POOL_ID:", OLD_USER_POOL_ID);
-  console.log("MIGRATION_LOG: OLD_USER_POOL_REGION:", OLD_USER_POOL_REGION);
-  console.log(
-    "MIGRATION_LOG: OLD_USER_POOL_CLIENT_ID:",
-    OLD_USER_POOL_CLIENT_ID ? "Configurado" : "NO CONFIGURADO"
-  );
-
   if (!OLD_USER_POOL_CLIENT_ID) {
     throw new Error("OLD_USER_POOL_CLIENT_ID no está configurado");
   }
 
   // Intentar autenticación con ADMIN_NO_SRP_AUTH (requiere permisos de admin)
   try {
-    console.log("MIGRATION_LOG: Intentando ADMIN_NO_SRP_AUTH...");
     const authParams = {
       UserPoolId: OLD_USER_POOL_ID,
       ClientId: OLD_USER_POOL_CLIENT_ID,
@@ -62,7 +52,6 @@ async function authenticateUser(username, password) {
     );
 
     if (authResponse.AuthenticationResult || authResponse.ChallengeName) {
-      console.log("MIGRATION_LOG: ADMIN_NO_SRP_AUTH exitoso");
       // Autenticación exitosa, obtener atributos del usuario
       const getUserParams = {
         UserPoolId: OLD_USER_POOL_ID,
@@ -73,16 +62,9 @@ async function authenticateUser(username, password) {
         new AdminGetUserCommand(getUserParams)
       );
 
-      console.log("MIGRATION_LOG: Usuario obtenido exitosamente");
       return userResponse;
     }
   } catch (error) {
-    console.log(
-      "MIGRATION_LOG: Error en ADMIN_NO_SRP_AUTH:",
-      error.name,
-      error.message
-    );
-
     // Si ADMIN_NO_SRP_AUTH no está habilitado, intentar USER_PASSWORD_AUTH
     if (
       error.message.includes("Auth flow not enabled") ||
@@ -90,7 +72,6 @@ async function authenticateUser(username, password) {
       error.name === "InvalidParameterException"
     ) {
       try {
-        console.log("MIGRATION_LOG: Intentando USER_PASSWORD_AUTH...");
         const authParams = {
           ClientId: OLD_USER_POOL_CLIENT_ID,
           AuthFlow: "USER_PASSWORD_AUTH",
@@ -105,7 +86,6 @@ async function authenticateUser(username, password) {
         );
 
         if (authResponse.AuthenticationResult || authResponse.ChallengeName) {
-          console.log("MIGRATION_LOG: USER_PASSWORD_AUTH exitoso");
           // Autenticación exitosa, obtener atributos del usuario
           const getUserParams = {
             UserPoolId: OLD_USER_POOL_ID,
@@ -116,23 +96,15 @@ async function authenticateUser(username, password) {
             new AdminGetUserCommand(getUserParams)
           );
 
-          console.log("MIGRATION_LOG: Usuario obtenido exitosamente");
           return userResponse;
         }
       } catch (passwordAuthError) {
-        console.log(
-          "MIGRATION_LOG: Error en USER_PASSWORD_AUTH:",
-          passwordAuthError.name,
-          passwordAuthError.message
-        );
-
         // Si falla la autenticación, puede ser contraseña incorrecta o usuario no encontrado
         if (
           passwordAuthError.name === "NotAuthorizedException" ||
           passwordAuthError.name === "InvalidPasswordException" ||
           passwordAuthError.name === "UserNotFoundException"
         ) {
-          console.log("MIGRATION_LOG: Usuario no autenticado o no encontrado");
           return null; // Usuario no autenticado
         }
         throw passwordAuthError;
@@ -152,7 +124,6 @@ async function authenticateUser(username, password) {
     throw error;
   }
 
-  console.log("MIGRATION_LOG: authenticateUser - No se pudo autenticar");
   return null;
 }
 
@@ -185,7 +156,6 @@ async function lookupUser(username) {
  */
 async function lookupUserByEmail(email) {
   try {
-    console.log("MIGRATION_LOG: Buscando usuario por email:", email);
 
     // AdminListUsersCommand permite filtrar por atributo usando Filter
     const listUsersParams = {
@@ -200,11 +170,6 @@ async function lookupUserByEmail(email) {
 
     if (listResponse.Users && listResponse.Users.length > 0) {
       const user = listResponse.Users[0];
-      console.log(
-        "MIGRATION_LOG: Usuario encontrado por email:",
-        user.Username
-      );
-
       // Convertir el formato de ListUsers a GetUser
       return {
         Username: user.Username,
@@ -214,14 +179,8 @@ async function lookupUserByEmail(email) {
       };
     }
 
-    console.log("MIGRATION_LOG: Usuario no encontrado por email");
     return null;
   } catch (error) {
-    console.log(
-      "MIGRATION_LOG: Error al buscar usuario por email:",
-      error.name,
-      error.message
-    );
     if (error.name === "UserNotFoundException") {
       return null;
     }
@@ -274,11 +233,6 @@ function formatUserAttributes(cognitoAttributes) {
  * }
  */
 exports.handler = async (event) => {
-  console.log(
-    "MIGRATION_LOG: Evento recibido:",
-    JSON.stringify(event, null, 2)
-  );
-
   try {
     const { triggerSource, userName, request } = event;
 
@@ -289,10 +243,6 @@ exports.handler = async (event) => {
     if (!userName) {
       throw new Error("userName no proporcionado en el evento");
     }
-
-    console.log("MIGRATION_LOG: triggerSource:", triggerSource);
-    console.log("MIGRATION_LOG: userName:", userName);
-    console.log("MIGRATION_LOG: request tiene password:", !!request?.password);
 
     let user;
 
@@ -306,59 +256,29 @@ exports.handler = async (event) => {
         );
       }
 
-      console.log(
-        "MIGRATION_LOG: Migración durante autenticación para:",
-        userName
-      );
-
       // Autenticar el usuario en el sistema existente
       user = await authenticateUser(userName, password);
 
       if (!user) {
-        console.log("MIGRATION_LOG: Usuario no autenticado o no encontrado");
-        console.log(
-          "MIGRATION_LOG: Verificando si es un email y buscando por email..."
-        );
-
         // Si el userName es un email, intentar buscar el usuario por email
         // y luego autenticar con el username real encontrado
         if (userName.includes("@")) {
           try {
-            console.log(
-              "MIGRATION_LOG: Intentando buscar usuario por email:",
-              userName
-            );
             const userByEmail = await lookupUserByEmail(userName);
 
             if (userByEmail && userByEmail.Username) {
-              console.log(
-                "MIGRATION_LOG: Usuario encontrado por email, username real:",
-                userByEmail.Username
-              );
-              console.log(
-                "MIGRATION_LOG: Intentando autenticar con username real..."
-              );
-
               // Intentar autenticar con el username real encontrado
               user = await authenticateUser(userByEmail.Username, password);
 
               if (!user) {
-                console.log(
-                  "MIGRATION_LOG: Autenticación fallida incluso con username real"
-                );
                 throw new Error(
                   "Usuario no encontrado o credenciales inválidas"
                 );
               }
             } else {
-              console.log("MIGRATION_LOG: Usuario no encontrado por email");
               throw new Error("Usuario no encontrado o credenciales inválidas");
             }
           } catch (lookupError) {
-            console.log(
-              "MIGRATION_LOG: Error al buscar usuario por email:",
-              lookupError.message
-            );
             throw lookupError;
           }
         } else {
@@ -381,15 +301,6 @@ exports.handler = async (event) => {
           user.UserStatus === "CONFIRMED" ? "CONFIRMED" : "RESET_REQUIRED",
         messageAction: "SUPPRESS", // No enviar email de bienvenida
       };
-
-      console.log(
-        "MIGRATION_LOG: Migración completada exitosamente para:",
-        userName
-      );
-      console.log(
-        "MIGRATION_LOG: Atributos migrados:",
-        Object.keys(userAttributes).join(", ")
-      );
 
       return event;
     } else if (triggerSource === "UserMigration_ForgotPassword") {
@@ -435,11 +346,6 @@ exports.handler = async (event) => {
         userAttributes: userAttributes,
         messageAction: "SUPPRESS", // No enviar email de bienvenida
       };
-
-      console.log(
-        "MIGRATION_LOG: Migración durante forgot password completada para:",
-        userName
-      );
 
       return event;
     } else {

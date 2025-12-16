@@ -236,10 +236,8 @@ export class FlightItemComponent implements OnInit, OnDestroy {
                 }
               }
               this.flightLayovers.set(flight.id, layovers);
-              console.log(`✅ Escalas cargadas (servicio actual) para vuelo ${flight.id}:`, layovers);
             } else {
               this.flightLayovers.set(flight.id, []);
-              console.log(`⚠️ Vuelo ${flight.id} sin escalas o sin segmentos (servicio actual)`);
             }
           },
           error: (error) => {

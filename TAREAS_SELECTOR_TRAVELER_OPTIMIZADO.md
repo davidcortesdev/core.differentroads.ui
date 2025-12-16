@@ -408,7 +408,6 @@ El componente padre (`checkout-v2`) deberá:
 // En checkout-v2.component.ts
 onSaveCompleted(event: { component: string; success: boolean; data?: any; error?: string }) {
   if (event.success) {
-    console.log(`✅ Guardado exitoso en ${event.component}:`, event.data);
     // Actualizar resumen del pedido si es necesario
     this.updateOrderSummary();
   } else {

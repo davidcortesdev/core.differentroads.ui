@@ -105,8 +105,6 @@ export class SelectorItineraryComponent
   loading: boolean = true;
   error: string | undefined;
   downloading: boolean = false;
-  // Propiedad para detectar modo standalone
-  isStandaloneMode: boolean = false;
 
   // Datos principales con tipado fuerte
   itinerariesWithDepartures: ItineraryWithDepartures[] = [];
@@ -126,9 +124,6 @@ export class SelectorItineraryComponent
   ) {}
 
   ngOnInit(): void {
-    // Detectar si estamos en modo standalone
-    this.detectStandaloneMode();
-    
     if (this.tourId) {
       this.loadSelectorData(this.tourId);
     } else {
@@ -561,15 +556,6 @@ export class SelectorItineraryComponent
       detail: 'No se pudo descargar el itinerario. Por favor, inténtalo de nuevo.',
       life: 3000,
     });
-  }
-
-  /**
-   * Detectar si estamos en modo standalone
-   */
-  private detectStandaloneMode(): void {
-    // Verificar si la URL contiene 'standalone'
-    const currentPath = window.location.pathname;
-    this.isStandaloneMode = currentPath.includes('/standalone/');
   }
 
   /**

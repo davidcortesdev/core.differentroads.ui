@@ -281,6 +281,61 @@ export class BookingsServiceV2 {
   }
 
   /**
+   * Obtiene reservas usando el nuevo endpoint con bucket parameter
+   * @param bucket - El bucket a filtrar: "Active", "Pending", "Budget", "History"
+   * @param userId - ID del usuario (opcional)
+   * @param email - Email del viajero (opcional)
+   * @returns Observable de array de ReservationResponse
+   */
+  getReservationsByBucket(bucket: string, userId?: number, email?: string): Observable<ReservationResponse[]> {
+    // Validar que al menos uno de los parámetros esté presente
+    if (!userId && !email) {
+      console.error('Error: Se requiere al menos userId o email para obtener reservas por bucket');
+      return of([]);
+    }
+
+    // Validar que el bucket sea válido
+    const validBuckets = ['Active', 'Pending', 'Budget', 'History'];
+    if (!validBuckets.includes(bucket)) {
+      console.error(`Error: Bucket inválido "${bucket}". Valores válidos: ${validBuckets.join(', ')}`);
+      return of([]);
+    }
+
+    // Construir la URL correcta para el endpoint by-bucket
+    const url = `${this.API_URL}/by-bucket`;
+    let params = new HttpParams().set('bucket', bucket);
+
+    if (userId) {
+      params = params.set('userId', userId.toString());
+    }
+
+    if (email) {
+      params = params.set('email', email);
+    }
+
+    return this.http.get<ReservationResponse[]>(url, { params }).pipe(
+      catchError((error) => {
+        console.error(`Error obteniendo reservas con bucket "${bucket}":`, error);
+        
+        // Log detallado del error para debugging
+        if (error.error) {
+          console.error('Detalles del error:', {
+            status: error.status,
+            statusText: error.statusText,
+            message: error.error?.message || error.message,
+            bucket,
+            userId,
+            email: email ? '***' : undefined // Ocultar email en logs por seguridad
+          });
+        }
+        
+        // Retornar array vacío en caso de error para no romper el flujo
+        return of([]);
+      })
+    );
+  }
+
+  /**
    * Carga los estados y métodos de pago una sola vez
    * Usa PaymentService que tiene caché compartido para evitar múltiples llamadas
    * Retorna un Observable para poder esperar a que termine la carga
@@ -466,5 +521,127 @@ export class BookingsServiceV2 {
       default:
         return String(status);
     }
+  }
+
+  /**
+   * Obtiene reservas activas combinando userId y email usando el endpoint by-bucket
+   * @param userId - ID del usuario titular
+   * @param email - Email del viajero
+   * @returns Observable de array de ReservationResponse sin duplicados
+   */
+  getActiveBookingsByBucket(userId: number, email?: string): Observable<ReservationResponse[]> {
+    const observables: Observable<ReservationResponse[]>[] = [];
+
+    // Obtener reservas del titular
+    observables.push(
+      this.getReservationsByBucket('Active', userId).pipe(
+        catchError((error) => {
+          console.error('Error obteniendo reservas activas del titular:', error);
+          return of([]);
+        })
+      )
+    );
+
+    // Si hay email, obtener reservas del viajero
+    if (email) {
+      observables.push(
+        this.getReservationsByBucket('Active', undefined, email).pipe(
+          catchError((error) => {
+            console.error('Error obteniendo reservas activas del viajero:', error);
+            return of([]);
+          })
+        )
+      );
+    }
+
+    return forkJoin(observables).pipe(
+      map((results: ReservationResponse[][]) => {
+        // Combinar todos los resultados
+        const allReservations = results.flat();
+        
+        // Eliminar duplicados basándose en el ID de reserva
+        const uniqueReservations = allReservations.filter(
+          (reservation, index, self) =>
+            index === self.findIndex((r) => r.id === reservation.id)
+        );
+        
+        return uniqueReservations;
+      })
+    );
+  }
+
+  /**
+   * Obtiene reservas pendientes usando el endpoint by-bucket
+   * @param userId - ID del usuario titular
+   * @returns Observable de array de ReservationResponse
+   */
+  getPendingBookingsByBucket(userId: number): Observable<ReservationResponse[]> {
+    return this.getReservationsByBucket('Pending', userId).pipe(
+      catchError((error) => {
+        console.error('Error obteniendo reservas pendientes:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Obtiene presupuestos recientes usando el endpoint by-bucket
+   * @param userId - ID del usuario titular
+   * @returns Observable de array de ReservationResponse
+   */
+  getRecentBudgetsByBucket(userId: number): Observable<ReservationResponse[]> {
+    return this.getReservationsByBucket('Budget', userId).pipe(
+      catchError((error) => {
+        console.error('Error obteniendo presupuestos recientes:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Obtiene historial de viajes combinando userId y email usando el endpoint by-bucket
+   * @param userId - ID del usuario titular
+   * @param email - Email del viajero
+   * @returns Observable de array de ReservationResponse sin duplicados
+   */
+  getTravelHistoryByBucket(userId: number, email?: string): Observable<ReservationResponse[]> {
+    const observables: Observable<ReservationResponse[]>[] = [];
+
+    // Obtener reservas del titular
+    observables.push(
+      this.getReservationsByBucket('History', userId).pipe(
+        catchError((error) => {
+          console.error('Error obteniendo historial del titular:', error);
+          return of([]);
+        })
+      )
+    );
+
+    // Si hay email, obtener reservas del viajero
+    if (email) {
+      observables.push(
+        this.getReservationsByBucket('History', undefined, email).pipe(
+          catchError((error) => {
+            console.error('Error obteniendo historial del viajero:', error);
+            return of([]);
+          })
+        )
+      );
+    }
+
+    return forkJoin(observables).pipe(
+      map((results: ReservationResponse[][]) => {
+        // Combinar todos los resultados
+        const allReservations = results.flat();
+        
+        // Eliminar duplicados basándose en el ID de reserva
+        const uniqueReservations = allReservations.filter(
+          (reservation, index, self) =>
+            index === self.findIndex((r) => r.id === reservation.id)
+        );
+        
+        return uniqueReservations;
+      })
+    );
   }
 }

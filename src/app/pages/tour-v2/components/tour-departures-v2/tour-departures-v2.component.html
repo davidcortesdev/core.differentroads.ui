@@ -222,11 +222,30 @@
                 >
                   {{ getTripTypeInfo(item.group)?.title }}
                 </span>
+                
 
                 <!-- Horarios de vuelos -->
-                <div class="flight-times" *ngIf="flightTimesByDepartureId[item.id] && !isSinVuelosSelected()">
-                  <div *ngFor="let line of getFlightTimesLines(item.id)" class="flight-line">
-                    {{ line }}
+                <div class="flight-times" *ngIf="!isSinVuelosSelected() && hasFlightTimesState(item.id)">
+                  <!-- Mostrar skeleton cuando está cargando -->
+                  <div class="flight-times-loading" *ngIf="isFlightTimesLoading(item.id)">
+                    <p-skeleton width="80%" height="12px" styleClass="mb-1"></p-skeleton>
+                    <p-skeleton width="70%" height="12px"></p-skeleton>
+                  </div>
+                  
+                  <!-- Mostrar horarios válidos cuando están disponibles y no está cargando -->
+                  <div *ngIf="!isFlightTimesLoading(item.id) && hasValidFlightTimes(item.id)">
+                    <div *ngFor="let line of getFlightTimesLines(item.id)" class="flight-line">
+                      {{ line }}
+                    </div>
+                  </div>
+
+                  <!-- Fallback cuando la API respondió pero no hay datos válidos -->
+                  <div
+                    *ngIf="!isFlightTimesLoading(item.id) && !hasValidFlightTimes(item.id) && hasFlightTimesError(item.id)"
+                  >
+                    <div class="flight-line loading-text">
+                      Horarios de vuelo no disponibles en este momento
+                    </div>
                   </div>
                 </div>
                 

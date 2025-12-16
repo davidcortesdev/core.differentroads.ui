@@ -201,16 +201,7 @@ body.with-test-banner {
 
 /* Configuración de fuente Montserrat global */
 * {
-  font-family: var(--font-family, "Montserrat", sans-serif);
-}
-
-/* Asegurar que componentes PrimeNG y widgets externos usen Montserrat */
-/* Usar mayor especificidad para sobrescribir estilos inline o de widgets externos */
-body .p-component,
-body .p-component *,
-.p-component,
-.p-component * {
-  font-family: var(--font-family, "Montserrat", sans-serif) !important;
+  font-family: var(--font-family);
 }
 
 /* Estilos temporales que formatean los textos que llegan desde el quill js */

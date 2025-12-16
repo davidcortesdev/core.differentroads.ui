@@ -212,6 +212,12 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   // Mapa de horarios de vuelos por departureId
   flightTimesByDepartureId: { [departureId: number]: string } = {};
 
+  //  Mapa para rastrear qué departures están cargando horarios
+  flightTimesLoading: { [departureId: number]: boolean } = {};
+
+  // Mapa para indicar si hubo error o datos no válidos al cargar horarios
+  flightTimesError: { [departureId: number]: boolean } = {};
+
   // Mapa de disponibilidad de plazas por departureId (ActivityPack)
   activityPackAvailabilityByDepartureId: {
     [departureId: number]: ActivityPackAvailabilityData | null;
@@ -1805,9 +1811,41 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     return flightTimes.split('\n');
   }
 
+  // Método para verificar si los horarios están cargando
+  isFlightTimesLoading(departureId: number): boolean {
+    return this.flightTimesLoading[departureId] === true;
+  }
+
+  // Método para verificar si hubo error o datos no válidos al cargar los horarios
+  hasFlightTimesError(departureId: number): boolean {
+    return this.flightTimesError[departureId] === true;
+  }
+
+  // Método para verificar si los horarios están disponibles
+  hasValidFlightTimes(departureId: number): boolean {
+    const flightTimes = this.flightTimesByDepartureId[departureId];
+    // Si existe información de vuelos, es válida (incluyendo horarios 00:00 que son válidos)
+    return !!flightTimes && flightTimes.trim() !== '';
+  }
+
+  // Método para verificar si hay algún estado activo para los horarios de vuelo
+  // (loading, datos válidos, o error) para evitar renderizar el div vacío
+  hasFlightTimesState(departureId: number): boolean {
+    return (
+      this.isFlightTimesLoading(departureId) ||
+      this.hasValidFlightTimes(departureId) ||
+      this.hasFlightTimesError(departureId)
+    );
+  }
+
   // Cargar horarios de vuelos para un departure específico
   private loadFlightTimes(departureId: number): void {
     if (!this.selectedCity?.activityPackId) return;
+  
+    // Limpiar información anterior y estados, y marcar como cargando
+    delete this.flightTimesByDepartureId[departureId];
+    this.flightTimesLoading[departureId] = true;
+    this.flightTimesError[departureId] = false;
   
     this.flightsNetService.getFlights(departureId)
       .pipe(takeUntil(this.destroy$))
@@ -1832,41 +1870,60 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
                 const arrTime = this.formatTime(outboundFlight.arrivalTime || '');
                 const arrCity = outboundFlight.arrivalCity || outboundFlight.arrivalIATACode || '';
                 
-                let arrivalSuffix = '';
-                if (outboundFlight.departureDate && outboundFlight.arrivalDate) {
-                  const outboundDepDate = new Date(outboundFlight.departureDate);
-                  const outboundArrDate = new Date(outboundFlight.arrivalDate);
-                  if (outboundArrDate.toDateString() !== outboundDepDate.toDateString()) {
-                    arrivalSuffix = ' +1';
-                  }
-                }
-                
-                let flightTimes = `${depTime} (${depCity}) → ${arrTime}${arrivalSuffix} (${arrCity})`;
-                
-                if (returnFlight) {
-                  const retDepTime = this.formatTime(returnFlight.departureTime || '');
-                  const retDepCity = returnFlight.departureCity || returnFlight.departureIATACode || '';
-                  const retArrTime = this.formatTime(returnFlight.arrivalTime || '');
-                  const retArrCity = returnFlight.arrivalCity || returnFlight.arrivalIATACode || '';
-                  
-                  let returnArrivalSuffix = '';
-                  if (returnFlight.departureDate && returnFlight.arrivalDate) {
-                    const returnDepDate = new Date(returnFlight.departureDate);
-                    const returnArrDate = new Date(returnFlight.arrivalDate);
-                    if (returnArrDate.toDateString() !== returnDepDate.toDateString()) {
-                      returnArrivalSuffix = ' +1';
+                // Validar solo que los campos requeridos existan 
+                if (depTime && arrTime && depCity && arrCity) {
+                  let arrivalSuffix = '';
+                  if (outboundFlight.departureDate && outboundFlight.arrivalDate) {
+                    const outboundDepDate = new Date(outboundFlight.departureDate);
+                    const outboundArrDate = new Date(outboundFlight.arrivalDate);
+                    if (outboundArrDate.toDateString() !== outboundDepDate.toDateString()) {
+                      arrivalSuffix = ' +1';
                     }
                   }
                   
-                  flightTimes += `\n${retDepTime} (${retDepCity}) → ${retArrTime}${returnArrivalSuffix} (${retArrCity})`;
+                  let flightTimes = `${depTime} (${depCity}) → ${arrTime}${arrivalSuffix} (${arrCity})`;
+                  
+                  if (returnFlight) {
+                    const retDepTime = this.formatTime(returnFlight.departureTime || '');
+                    const retDepCity = returnFlight.departureCity || returnFlight.departureIATACode || '';
+                    const retArrTime = this.formatTime(returnFlight.arrivalTime || '');
+                    const retArrCity = returnFlight.arrivalCity || returnFlight.arrivalIATACode || '';
+                    
+                    // Validar solo que los campos requeridos existan 
+                    if (retDepTime && retArrTime && retDepCity && retArrCity) {
+                      let returnArrivalSuffix = '';
+                      if (returnFlight.departureDate && returnFlight.arrivalDate) {
+                        const returnDepDate = new Date(returnFlight.departureDate);
+                        const returnArrDate = new Date(returnFlight.arrivalDate);
+                        if (returnArrDate.toDateString() !== returnDepDate.toDateString()) {
+                          returnArrivalSuffix = ' +1';
+                        }
+                      }
+                      
+                      flightTimes += `\n${retDepTime} (${retDepCity}) → ${retArrTime}${returnArrivalSuffix} (${retArrCity})`;
+                    }
+                  }
+                  
+                  // Guardar los datos cuando lleguen
+                  this.flightTimesByDepartureId[departureId] = flightTimes;
                 }
-                
-                this.flightTimesByDepartureId[departureId] = flightTimes;
               }
             }
           }
+
+          // Si tras procesar la respuesta no se ha podido construir información válida,
+          // marcar error para poder mostrar un mensaje en la UI
+          if (!this.flightTimesByDepartureId[departureId]) {
+            this.flightTimesError[departureId] = true;
+          }
+
+          // Marcar como no cargando cuando tengamos la respuesta
+          this.flightTimesLoading[departureId] = false;
         },
         error: () => {
+          // Marcar como no cargando en caso de error
+          this.flightTimesLoading[departureId] = false;
+          this.flightTimesError[departureId] = true;
         }
       });
   }
@@ -1982,9 +2039,14 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   private formatTime(timeString: string): string {
     if (!timeString) return '';
     
-    // Si ya es un formato de hora (HH:MM:SS), devolverlo directamente
+    // Si ya es un formato de hora (HH:MM:SS), devolver solo HH:MM
     if (timeString.match(/^\d{1,2}:\d{2}:\d{2}$/)) {
       return timeString.substring(0, 5); // Tomar solo HH:MM
+    }
+    
+    // Si ya es un formato de hora (HH:MM), devolverlo directamente
+    if (timeString.match(/^\d{1,2}:\d{2}$/)) {
+      return timeString;
     }
     
     // Si es una fecha completa, formatearla
@@ -1993,11 +2055,13 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       return timeString; // Si no es una fecha válida, devolver el string original
     }
     
-    return date.toLocaleTimeString('es-ES', { 
+    const formatted = date.toLocaleTimeString('es-ES', { 
       hour: '2-digit',
       minute: '2-digit',
       hour12: false 
     });
+    
+    return formatted;
   }
 
   private formatDate(dateString: string): string {

@@ -312,7 +312,10 @@ $azul: var(--background-azul);
 
     &.p-button {
       @include button-styles;
-      background-color: var(--p-primary-color);
+      // Explicitly scoped to avoid Sass nested-decls warning
+      & {
+        background-color: var(--p-primary-color);
+      }
 
       &.p-disabled,
       &.payment-button-disabled {

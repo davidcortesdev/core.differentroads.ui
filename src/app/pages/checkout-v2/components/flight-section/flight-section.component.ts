@@ -108,11 +108,6 @@ export class FlightSectionV2Component implements OnChanges {
     this.returnFlight =
       this.flightPack.flights.find((f) => f.flightTypeId !== 4) || null;
     
-    console.log('🔍 FlightSection: Vuelos procesados -', {
-      departureFlight: this.departureFlight ? { id: this.departureFlight.id, flightTypeId: this.departureFlight.flightTypeId } : null,
-      returnFlight: this.returnFlight ? { id: this.returnFlight.id, flightTypeId: this.returnFlight.flightTypeId } : null,
-      packId: this.flightPack.id
-    });
   }
 
   /**
@@ -242,20 +237,12 @@ export class FlightSectionV2Component implements OnChanges {
    */
   private async loadFlightLayovers(): Promise<void> {
     if (!this.flightPack || !this.flightPack.id) {
-      console.log('⚠️ FlightSection: No hay flightPack o ID para cargar escalas');
       return;
     }
-
-    console.log('🔍 FlightSection: Iniciando carga de escalas para packId:', this.flightPack.id);
-    console.log('🔍 FlightSection: Vuelos disponibles:', {
-      departure: this.departureFlight ? { id: this.departureFlight.id, name: this.departureFlight.name } : null,
-      return: this.returnFlight ? { id: this.returnFlight.id, name: this.returnFlight.name } : null
-    });
 
     // Cargar escalas para vuelo de ida
     if (this.departureFlight) {
       try {
-        console.log(`🔍 FlightSection: Cargando detalles para vuelo de ida - flightId: ${this.departureFlight.id}, name: ${this.departureFlight.name}`);
         const details = await firstValueFrom(
           this.flightsNetService.getFlightDetail(this.departureFlight.id).pipe(
             catchError((error) => {
@@ -265,33 +252,21 @@ export class FlightSectionV2Component implements OnChanges {
           )
         );
 
-        console.log('📦 FlightSection: Detalles recibidos para vuelo de ida:', details);
-        
         if (details && details.segments) {
-          console.log(`📊 FlightSection: Vuelo de ida tiene ${details.segments.length} segmentos`);
-          
           if (details.segments.length > 1) {
             this.departureFlightLayovers = [];
             for (let i = 0; i < details.segments.length - 1; i++) {
               const segment = details.segments[i];
-              console.log(`   Segmento ${i}:`, { arrivalIata: segment.arrivalIata, departureIata: segment.departureIata });
               if (segment.arrivalIata) {
                 this.departureFlightLayovers.push(segment.arrivalIata);
               }
             }
-            console.log('✅ Escalas de ida cargadas:', this.departureFlightLayovers);
           } else {
             this.departureFlightLayovers = [];
-            console.log('⚠️ Vuelo de ida tiene solo 1 segmento (vuelo directo)');
           }
           this.cdr.detectChanges(); // Forzar actualización de la vista
         } else {
           this.departureFlightLayovers = [];
-          console.log('⚠️ Vuelo de ida sin escalas o sin segmentos. Detalles:', details);
-          if (details) {
-            console.log('   - Segments:', details.segments);
-            console.log('   - Num segments:', details.segments?.length);
-          }
           this.cdr.detectChanges();
         }
       } catch (error) {
@@ -304,7 +279,6 @@ export class FlightSectionV2Component implements OnChanges {
     // Cargar escalas para vuelo de vuelta
     if (this.returnFlight) {
       try {
-        console.log(`🔍 FlightSection: Cargando detalles para vuelo de vuelta - flightId: ${this.returnFlight.id}`);
         const details = await firstValueFrom(
           this.flightsNetService.getFlightDetail(this.returnFlight.id).pipe(
             catchError((error) => {
@@ -314,33 +288,21 @@ export class FlightSectionV2Component implements OnChanges {
           )
         );
 
-        console.log('📦 FlightSection: Detalles recibidos para vuelo de vuelta:', details);
-        
         if (details && details.segments) {
-          console.log(`📊 FlightSection: Vuelo de vuelta tiene ${details.segments.length} segmentos`);
-          
           if (details.segments.length > 1) {
             this.returnFlightLayovers = [];
             for (let i = 0; i < details.segments.length - 1; i++) {
               const segment = details.segments[i];
-              console.log(`   Segmento ${i}:`, { arrivalIata: segment.arrivalIata, departureIata: segment.departureIata });
               if (segment.arrivalIata) {
                 this.returnFlightLayovers.push(segment.arrivalIata);
               }
             }
-            console.log('✅ Escalas de vuelta cargadas:', this.returnFlightLayovers);
           } else {
             this.returnFlightLayovers = [];
-            console.log('⚠️ Vuelo de vuelta tiene solo 1 segmento (vuelo directo)');
           }
           this.cdr.detectChanges(); // Forzar actualización de la vista
         } else {
           this.returnFlightLayovers = [];
-          console.log('⚠️ Vuelo de vuelta sin escalas o sin segmentos. Detalles:', details);
-          if (details) {
-            console.log('   - Segments:', details.segments);
-            console.log('   - Num segments:', details.segments?.length);
-          }
           this.cdr.detectChanges();
         }
       } catch (error) {

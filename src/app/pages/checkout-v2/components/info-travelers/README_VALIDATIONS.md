@@ -44,17 +44,8 @@ Se han agregado logs detallados para verificar el funcionamiento:
 
 ```typescript
 // En checkout-v2.component.ts
-console.log('=== DEBUG: saveTravelersData iniciado ===');
-console.log('Validando campos obligatorios...');
-console.log('Resultado de saveTravelersData:', saved);
-console.log('Validación falló, NO continuando al siguiente paso');
-console.log('Validación exitosa, continuando al siguiente paso');
 
 // En info-travelers.component.ts
-console.log('=== DEBUG: validateFormAndShowToast iniciado ===');
-console.log('Formulario válido:', isValid);
-console.log('Campos faltantes:', missingFields);
-console.log('Toast agregado al MessageService');
 ```
 
 ## Validaciones Implementadas
@@ -149,7 +140,6 @@ export class CheckoutV2Component {
 
   onFormValidityChange(isValid: boolean): void {
     this.isFormValid = isValid;
-    console.log('Formulario válido:', isValid);
   }
 
   // El método saveTravelersData ya incluye la validación automática
@@ -403,14 +393,11 @@ Se agregó `debugPhoneFieldTypes()` para verificar qué campos son de tipo telé
 
 ```typescript
 debugPhoneFieldTypes(): void {
-  console.log('=== DEBUG: Tipos de campo de teléfono ===');
   this.departureReservationFields.forEach((field) => {
     const fieldDetails = this.getReservationFieldDetails(field.reservationFieldId);
     if (fieldDetails && fieldDetails.code.toLowerCase().includes('phone')) {
-      console.log('Campo:', fieldDetails.name, 'Código:', fieldDetails.code, 'Tipo:', fieldDetails.fieldType);
     }
   });
-  console.log('=== FIN DEBUG ===');
 }
 ```
 

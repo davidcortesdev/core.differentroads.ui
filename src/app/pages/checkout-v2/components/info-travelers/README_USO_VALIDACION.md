@@ -45,7 +45,6 @@ Array con objetos que contienen:
 **Uso:**
 ```typescript
 const notReady = this.infoTravelersComponent.getNotReadyTravelers();
-console.log('Viajeros no listos:', notReady);
 // Resultado: [{ travelerNumber: 1, travelerId: 123 }, { travelerNumber: 3, travelerId: 125 }]
 ```
 
@@ -96,16 +95,13 @@ export class CheckoutV2Component {
    * Click en el botón "Continuar" del checkout
    */
   onContinueClick(): void {
-    console.log('=== Validando viajeros antes de continuar ===');
 
     // Verificar que todos los viajeros estén listos
     if (await this.infoTravelersComponent.canContinueToNextStep()) {
       // ✅ Todos los viajeros están listos, continuar
-      console.log('✅ Validación exitosa, continuando al siguiente paso');
       this.router.navigate(['/checkout/payment']);
     } else {
       // ❌ Algunos viajeros no están listos, mostrar error
-      console.log('❌ Validación fallida, mostrando error');
       this.infoTravelersComponent.showValidationError();
     }
   }
@@ -201,7 +197,6 @@ export class CheckoutV2Component implements AfterViewInit {
         // Esperar un tick para que el autoguardado termine
         setTimeout(() => {
           this.canContinue = await this.infoTravelersComponent.canContinueToNextStep();
-          console.log(`[canContinue] actualizado: ${this.canContinue}`);
         }, 2500); // 2.5s para dar tiempo al debounce (2s) + guardado
       });
   }

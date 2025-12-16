@@ -2966,45 +2966,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           })
         );
 
-        // Obtener departures para extraer monthTags desde las fechas
-        const departureRequests = itineraries.map((itinerary) =>
-          this.departureService.getByItinerary(itinerary.id, false).pipe(
-            catchError(() => of([] as IDepartureResponse[]))
-          )
-        );
-
-        const monthTagsRequest = departureRequests.length > 0 
-          ? forkJoin(departureRequests).pipe(
-              map((departureArrays: IDepartureResponse[][]) => {
-                const allDepartures = departureArrays.flat();
-                const availableMonths: string[] = [];
-                
-                // Extraer meses de las fechas de departure
-                allDepartures.forEach((departure: IDepartureResponse) => {
-                  if (departure.departureDate) {
-                    const date = new Date(departure.departureDate);
-                    const monthIndex = date.getMonth(); // 0-11
-                    const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 
-                                      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-                    if (monthIndex >= 0 && monthIndex < 12) {
-                      const monthName = monthNames[monthIndex];
-                      if (!availableMonths.includes(monthName)) {
-                        availableMonths.push(monthName);
-                      }
-                    }
-                  }
-                });
-                
-                return availableMonths;
-              }),
-              catchError(() => of([]))
-            )
-          : of([]);
-
         return forkJoin({
           itineraryDays: itineraryDaysRequest,
           locationData: locationRequest,
-          monthTags: monthTagsRequest,
+          monthTags: this.tourService
+            .getDepartureMonths(tourId, true)
+            .pipe(catchError(() => of([] as number[]))),
           tour: this.tourService.getById(tourId, false),
           rating: this.reviewsService.getAverageRating({ tourId: tourId }).pipe(
             map((ratingResponse) => {
@@ -3019,6 +2986,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             const nights = days > 0 ? days - 1 : 0;
             const tourType = tour.tripTypeId === 1 ? 'FIT' : 'Grupos';
 
+            const availableMonths: string[] = Array.isArray(monthTags)
+              ? this.tourService.mapDepartureMonthNumbersToNames(
+                  monthTags as number[]
+                )
+              : [];
+
             return {
               id: tourId,
               tkId: tour.tkId ?? undefined,
@@ -3030,7 +3003,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
               days: days > 0 ? days : undefined,
               nights: nights > 0 ? nights : undefined,
               rating: rating !== null ? rating : undefined,
-              monthTags: monthTags.length > 0 ? monthTags : undefined,
+              monthTags: availableMonths.length > 0 ? availableMonths : undefined,
               tourType: tourType,
               flightCity: 'Sin vuelo',
               price: tour.minPrice ?? undefined

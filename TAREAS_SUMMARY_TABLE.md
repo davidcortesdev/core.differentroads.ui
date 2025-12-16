@@ -99,7 +99,6 @@ El componente `summary-table` debe ser independiente y obtener su información d
   // NUEVO: Método para recargar información
   refreshSummary(): void {
     if (this.reservationId) {
-      console.log('🔄 Actualizando resumen del pedido...');
       this.loadReservationSummary();
     }
   }
@@ -216,14 +215,12 @@ summaryRefreshTrigger: any = null;
 
 // NUEVO: Método para actualizar resumen
 updateOrderSummary(): void {
-  console.log('🔄 Actualizando resumen del pedido...');
   this.summaryRefreshTrigger = { timestamp: Date.now() };
 }
 
 // NUEVO: Escuchar eventos de guardado de componentes hijos
 onSaveCompleted(event: { component: string; success: boolean; data?: any; error?: string }) {
   if (event.success) {
-    console.log(`✅ Guardado exitoso en ${event.component}`);
     this.updateOrderSummary();
   } else {
     console.error(`❌ Error en guardado de ${event.component}:`, event.error);

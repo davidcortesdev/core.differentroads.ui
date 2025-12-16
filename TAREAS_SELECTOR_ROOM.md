@@ -244,7 +244,6 @@
   ```typescript
   // NUEVO: Método público para recargar cuando cambien los viajeros
   async reloadOnTravelersChange(): Promise<void> {
-    console.log('🔄 Recargando habitaciones por cambio de viajeros...');
     
     try {
       // Recargar viajeros
@@ -261,7 +260,6 @@
       // Actualizar UI
       this.updateUIFromData();
       
-      console.log('✅ Habitaciones recargadas correctamente');
     } catch (error) {
       console.error('❌ Error recargando habitaciones:', error);
       this.errorMsg = 'Error al recargar las habitaciones.';
@@ -334,7 +332,6 @@
       this.saveRoomAssignments().then(success => {
         this.saving = false;
         if (success) {
-          console.log('✅ Habitaciones guardadas correctamente');
           this.saveStatusChange.emit({ saving: false, success: true });
           this.errorMsg = null; // Limpiar errores
           
@@ -551,7 +548,6 @@ El componente padre (`checkout-v2`) deberá:
 // En checkout-v2.component.ts
 onSaveCompleted(event: { component: string; success: boolean; data?: any; error?: string }) {
   if (event.success) {
-    console.log(`✅ Guardado exitoso en ${event.component}:`, event.data);
     // Actualizar resumen del pedido si es necesario
     this.updateOrderSummary();
   } else {

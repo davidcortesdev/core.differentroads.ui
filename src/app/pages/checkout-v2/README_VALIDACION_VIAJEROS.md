@@ -48,12 +48,10 @@ if (targetStep === 3) {
   }
 
   // ✅ Validar que todos los viajeros estén listos para continuar
-  console.log('=== Validando viajeros antes de continuar al pago ===');
   const allTravelersReady = this.infoTravelers.canContinueToNextStep();
 
   if (!allTravelersReady) {
     // ❌ Algunos viajeros no están listos
-    console.log('❌ Validación de viajeros fallida: no se puede continuar');
     
     // Mostrar error específico indicando qué viajeros faltan
     this.infoTravelers.showValidationError();
@@ -62,7 +60,6 @@ if (targetStep === 3) {
   }
 
   // ✅ Todos los viajeros están listos
-  console.log('✅ Validación de viajeros exitosa: todos los viajeros están listos');
 }
 
 // Navegar al siguiente paso

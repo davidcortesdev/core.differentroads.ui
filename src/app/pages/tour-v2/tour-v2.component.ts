@@ -528,43 +528,12 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
           })
         );
   
-        const departureRequests = itineraries.map((itinerary) =>
-          this.departureService.getByItinerary(itinerary.id, false).pipe(
-            catchError(() => of([] as IDepartureResponse[]))
-          )
-        );
-  
-        const monthTagsRequest = departureRequests.length > 0 
-          ? forkJoin(departureRequests).pipe(
-              map((departureArrays: IDepartureResponse[][]) => {
-                const allDepartures = departureArrays.flat();
-                const availableMonths: string[] = [];
-                
-                allDepartures.forEach((departure: IDepartureResponse) => {
-                  if (departure.departureDate) {
-                    const date = new Date(departure.departureDate);
-                    const monthIndex = date.getMonth();
-                    const monthNames = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 
-                                      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-                    if (monthIndex >= 0 && monthIndex < 12) {
-                      const monthName = monthNames[monthIndex];
-                      if (!availableMonths.includes(monthName)) {
-                        availableMonths.push(monthName);
-                      }
-                    }
-                  }
-                });
-                
-                return availableMonths;
-              }),
-              catchError(() => of([]))
-            )
-          : of([]);
-  
         return forkJoin({
           itineraryDays: itineraryDaysRequest,
           locationData: locationRequest,
-          monthTags: monthTagsRequest,
+          monthTags: this.tourService
+            .getDepartureMonths(tourId, !this.preview)
+            .pipe(catchError(() => of([] as number[]))),
           tour: this.tourService.getById(tourId, false),
           tripTypes: this.getTourTripTypesForAnalytics(tourId)
         }).pipe(
@@ -577,7 +546,13 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
             if (tripTypes && tripTypes.length > 0) {
               tourType = tripTypes.join(', ');
             }
-  
+
+            const availableMonths: string[] = Array.isArray(monthTags)
+              ? this.tourService.mapDepartureMonthNumbersToNames(
+                  monthTags as number[]
+                )
+              : [];
+
             return {
               id: tourId,
               tkId: tour.tkId ?? undefined,
@@ -589,7 +564,7 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
               days: days > 0 ? days : undefined,
               nights: nights > 0 ? nights : undefined,
               rating: undefined,
-              monthTags: monthTags.length > 0 ? monthTags : undefined,
+              monthTags: availableMonths.length > 0 ? availableMonths : undefined,
               tourType: tourType,
               flightCity: 'Sin vuelo',
               price: tour.minPrice ?? undefined,

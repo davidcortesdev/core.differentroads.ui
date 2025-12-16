@@ -489,6 +489,41 @@ export class TourService {
   }
 
   /**
+   * Mapea números de mes (1-12) a nombres de mes en español en minúsculas.
+   * Ignora valores fuera de rango.
+   */
+  mapDepartureMonthNumbersToNames(monthNumbers: number[]): string[] {
+    if (!Array.isArray(monthNumbers) || monthNumbers.length === 0) {
+      return [];
+    }
+
+    const monthNames = [
+      'enero',
+      'febrero',
+      'marzo',
+      'abril',
+      'mayo',
+      'junio',
+      'julio',
+      'agosto',
+      'septiembre',
+      'octubre',
+      'noviembre',
+      'diciembre',
+    ];
+
+    return monthNumbers
+      .map((monthNumber) => {
+        const monthIndex = monthNumber - 1;
+        if (monthIndex >= 0 && monthIndex < monthNames.length) {
+          return monthNames[monthIndex];
+        }
+        return null;
+      })
+      .filter((name): name is string => !!name);
+  }
+
+  /**
    * Obtiene los precios finales de un tour para una actividad específica.
    * @param activityId ID de la actividad.
    * @returns Observable de array de precios finales.

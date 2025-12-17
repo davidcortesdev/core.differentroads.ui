@@ -45,23 +45,27 @@ $spacing-md: 1rem;
             background: var(--secondary-color-500);
         }
     }
-    padding: var(--tour-card-spacing-sm, 0.5rem);
-    height: 100%;
+    width: 300px;
+    height: 400px;
     // Evitar que las tarjetas capturen scroll innecesario
     touch-action: pan-y;
 
     @include tablet {
-        padding: 0.4rem;
+        width: 280px;
+        height: 380px;
     }
 
     @include mobile {
-        padding: 0.25rem;
+        width: 100%;
+        max-width: 300px;
+        height: 400px;
     }
 
     // Estilos para el wrapper
     ::ng-deep .tour-card-wrapper {
         .p-card {
             border-radius: $border-radius-lg;
+            width: 100%;
             height: 100%;
             display: flex;
             flex-direction: column;
@@ -72,28 +76,28 @@ $spacing-md: 1rem;
                 border-radius: $border-radius-md;
             }
         }
+
+        .p-card-body {
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .p-card-content {
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+        }
     }
 
     // Variante grande de la tarjeta
     &.isLarge ::ng-deep .tour-card-wrapper {
         .p-card {
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-
-            .p-card-body {
-                padding: 10px;
-
-                @include tablet {
-                    padding: 8px;
-                }
-
-                @include mobile {
-                    padding: 6px;
-                }
-            }
-
-            .p-card-content {
-                padding: 0;
-            }
         }
     }
 }

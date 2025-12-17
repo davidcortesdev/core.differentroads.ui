@@ -48,17 +48,24 @@ $color-primary: var(--background-azul);
 
 // Pie de la tarjeta
 .card-footer {
-  margin: 0 -#{$spacing-md};
-  padding: $spacing-md $spacing-md $spacing-md;
+  padding: $spacing-md;
   display: flex;
   flex-direction: column;
-  gap: $spacing-md;
+  gap: $spacing-sm;
   background-color: var(--secondary-color-500); // Fondo azul oscuro del footer
   color: white;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 0 0 $border-radius-lg $border-radius-lg;
+
+  @include tablet {
+    padding: $spacing-sm;
+    gap: 0.5rem;
+  }
 
   @include mobile {
-    margin: 0 -#{$spacing-sm};
-    padding: $spacing-sm $spacing-sm $spacing-sm;
+    padding: $spacing-sm;
     gap: $spacing-sm;
   }
 
@@ -66,31 +73,60 @@ $color-primary: var(--background-azul);
   .main-info {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 0.25rem;
+    flex-shrink: 0;
   }
 
   .tour-title {
-    @include responsive-font(1rem, 1.1rem, 1.3rem);
+    font-size: 1.1rem;
     font-weight: 800;
     color: var(--primary-color-500);
     margin: 0;
+    line-height: 1.2;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+
+    @include tablet {
+      font-size: 1rem;
+    }
+
+    @include mobile {
+      font-size: 1rem;
+    }
   }
 
   .tour-description {
-    @include responsive-font(0.8rem, 0.85rem, 0.9rem);
+    font-size: 0.85rem;
     margin: 0;
     color: rgba(255, 255, 255, 0.9);
     line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+
+    @include tablet {
+      font-size: 0.8rem;
+    }
+
+    @include mobile {
+      font-size: 0.8rem;
+    }
   }
 
   // Contenido de precio
   .price-content {
     display: flex;
     flex-direction: column;
-    gap: $spacing-sm;
+    gap: 0.5rem;
+    margin-top: auto;
 
     @include mobile {
-      gap: 0.25rem;
+      gap: 0.4rem;
     }
   }
 
@@ -98,11 +134,13 @@ $color-primary: var(--background-azul);
   .price-section {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: flex-end;
     width: 100%;
+    gap: 0.5rem;
 
     @include mobile {
       align-items: center;
+      gap: 0.4rem;
     }
 
     // Información de precio
@@ -110,25 +148,31 @@ $color-primary: var(--background-azul);
       display: flex;
       flex-direction: column;
       align-items: flex-start;
+      flex: 1;
 
       .desde {
-        font-size: 0.9rem;
+        font-size: 0.75rem;
         color: white;
-        margin-bottom: $spacing-xs;
+        margin-bottom: 0.15rem;
 
         @include mobile {
-          font-size: 0.75rem;
-          margin-bottom: 0;
+          font-size: 0.7rem;
+          margin-bottom: 0.1rem;
         }
       }
 
       .price {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
         font-weight: bold;
         color: white;
+        line-height: 1;
+
+        @include tablet {
+          font-size: 1.3rem;
+        }
 
         @include mobile {
-          font-size: 1.25rem;
+          font-size: 1.2rem;
         }
       }
     }
@@ -200,9 +244,12 @@ $color-primary: var(--background-azul);
   // Botón Ver Tour
   .buttonVertour ::ng-deep .p-button {
     border-radius: 1.5rem;
-    min-width: 7rem;
-    margin-top: 13px;
+    min-width: 6rem;
+    height: 2rem;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
     transition: all 0.3s ease;
+    flex-shrink: 0;
 
     &:hover {
       transform: translateY(-2px);
@@ -211,36 +258,31 @@ $color-primary: var(--background-azul);
 
     @include tablet {
       min-width: 5.5rem;
-      font-size: 0.85rem;
-      margin-top: 8px;
+      height: 1.9rem;
+      font-size: 0.8rem;
+      padding: 0.35rem 0.7rem;
     }
 
     @include mobile {
       min-width: 5rem;
-      height: 2rem;
-      font-size: 0.8rem;
-      padding: 0.4rem 0.8rem;
-      margin-top: 5px;
+      height: 1.8rem;
+      font-size: 0.75rem;
+      padding: 0.3rem 0.6rem;
     }
   }
 
   // Contenedor de tipo de viaje
   .trip-type-container {
     display: flex;
-    gap: 0.3rem;
-    margin-right: 8px;
-    margin-top: 13px;
+    gap: 0.25rem;
+    flex-shrink: 0;
 
     @include tablet {
       gap: 0.2rem;
-      margin-right: 5px;
-      margin-top: 8px;
     }
 
     @include mobile {
       gap: 0.15rem;
-      margin-right: 3px;
-      margin-top: 5px;
     }
   }
 

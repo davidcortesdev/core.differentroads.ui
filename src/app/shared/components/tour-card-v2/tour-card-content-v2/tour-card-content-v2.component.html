@@ -33,32 +33,5 @@
         ></p-button>
       </div>
     </div>
-    <ng-container *ngIf="showScalapayPrice">
-      <div class="priceScalapay">
-        <div class="widget" #widgetContainer>
-          <span class="amount" [id]="widgetId" style="display: none;">{{ tourData.price }}</span>
-          
-          <scalapay-widget
-            [attr.merchant-token]="environment.scalapayMerchantToken"
-            [attr.amount-selectors]="amountSelector"
-            channel="travel"
-            type="product"
-            [attr.environment]="environment.scalapayEnvironment"
-            locale="es"
-            currency-display="symbol"
-            hide-installments="true"
-            alignment="left">
-          </scalapay-widget>
-        </div>
-      </div>
-    </ng-container>
-    <div class="months" *ngIf="limitedMonths?.length">
-      <p-tag *ngFor="let month of limitedMonths" class="month" severity="info">
-        {{ month }}
-      </p-tag>
-      <span *ngIf="tourData.availableMonths?.length > 4" class="more-months">
-        +{{ tourData.availableMonths.length - 4 }}
-      </span>
-    </div>
   </div>
 </div>

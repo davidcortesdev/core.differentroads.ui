@@ -38,16 +38,22 @@ $spacing-md: 1rem;
   cursor: pointer;
   position: relative;
   height: 240px;
+  min-height: 240px;
+  max-height: 240px;
   flex-shrink: 0;
   overflow: hidden; // Mantiene el zoom dentro del contenedor
   border-radius: $border-radius-lg $border-radius-lg 0 0;
 
   @include tablet {
-    height: 220px;
+    height: 240px;
+    min-height: 240px;
+    max-height: 240px;
   }
 
   @include mobile {
     height: 240px;
+    min-height: 240px;
+    max-height: 240px;
   }
 
   img {

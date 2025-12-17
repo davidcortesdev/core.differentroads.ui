@@ -2,25 +2,29 @@
   <div class="tours-section-layout">
     <!-- Bloque de texto a la izquierda -->
     <div class="tours-section-description">
-      <h2 class="title">
+      <div class="header-with-icon">
         <img 
-          src="/assets/images/icon-different.svg "
+          src="/assets/images/icon-different.svg"
           alt="Title Icon"
           class="title-icon"
-        />{{ title }}
-      </h2>
+        />
 
-      <div *ngIf="description" class="description">
-        {{ description }}
-      </div>
+        <div class="header-content">
+          <h2 class="title">{{ title }}</h2>
 
-      <div *ngIf="viewMoreButton" class="tours-sectionMore">
-        <p-button
-          [label]="viewMoreButton.text"
-          styleClass="main-btn-circle"
-          (onClick)="onViewMore()"
-        >
-        </p-button>
+          <div *ngIf="description" class="description">
+            {{ description }}
+          </div>
+
+          <div *ngIf="viewMoreButton" class="tours-sectionMore">
+            <p-button
+              [label]="viewMoreButton.text"
+              styleClass="main-btn-circle"
+              (onClick)="onViewMore()"
+            >
+            </p-button>
+          </div>
+        </div>
       </div>
     </div>
 

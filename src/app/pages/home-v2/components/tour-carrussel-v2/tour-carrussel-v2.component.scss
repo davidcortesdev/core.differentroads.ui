@@ -32,28 +32,36 @@ $breakpoint-small: 768px;
     .tours-section-description {
         flex: 0 0 auto;
         width: 33%;
-        align-items: start;
         max-width: 480px;
         color: var(--background-azul);
-        padding: 2rem;
+        padding: 2rem 2rem 2rem 0;
 
-        .title {
-            position: relative;
-            display: inline-block;
-            font-weight: 800;
-            font-size: $title-desktop-size;
-            margin: 0 0 1rem 0;
-            padding: 0 0 0 2.2rem; // espacio para el icono a la izquierda
-            text-align: left;
-            color: var(--primary-color-500);
+        .header-with-icon {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.9rem;
         }
 
         .title-icon {
-            position: absolute;
-            left: 0;
-            top: 0.15em;
-            width: 20px;
+            width: 22px;
             height: auto;
+            flex-shrink: 0;
+            margin-top: 0.25rem;
+        }
+
+        .header-content {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .title {
+            font-weight: 800;
+            font-size: $title-desktop-size;
+            margin: 0 0 1rem 0;
+            padding: 0;
+            text-align: left;
+            color: var(--primary-color-500);
         }
 
         .description {

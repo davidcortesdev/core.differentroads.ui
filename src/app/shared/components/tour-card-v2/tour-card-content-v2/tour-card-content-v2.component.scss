@@ -54,8 +54,9 @@ $color-primary: var(--background-azul);
   gap: $spacing-sm;
   background-color: var(--secondary-color-500); // Fondo azul oscuro del footer
   color: white;
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
+  max-height: 100%;
   overflow: hidden;
   border-radius: 0 0 $border-radius-lg $border-radius-lg;
 
@@ -78,8 +79,8 @@ $color-primary: var(--background-azul);
   }
 
   .tour-title {
-    font-size: 1.1rem;
-    font-weight: 800;
+    font-size: 0.7rem;
+    font-weight: 600;
     color: var(--primary-color-500);
     margin: 0;
     line-height: 1.2;
@@ -154,6 +155,7 @@ $color-primary: var(--background-azul);
         font-size: 0.75rem;
         color: white;
         margin-bottom: 0.15rem;
+        font-weight: 200;
 
         @include mobile {
           font-size: 0.7rem;
@@ -191,7 +193,7 @@ $color-primary: var(--background-azul);
 
   // Precio Scalapay
   .priceScalapay {
-    color: var(--p-primary-color);
+    color: white;
     font-size: 0.9rem;
     display: flex;
     flex-direction: row;
@@ -285,48 +287,6 @@ $color-primary: var(--background-azul);
       gap: 0.15rem;
     }
   }
-
-  // Meses - OPTIMIZADO PARA MEJOR SCROLL EN MOBILE
-  .months {
-    display: flex;
-    gap: $spacing-sm;
-    flex-wrap: wrap;
-    // Evitar que los meses capturen eventos de scroll/touch
-    pointer-events: none;
-    
-    .month {
-      pointer-events: auto; // Permitir clicks en los meses individuales
-    }
-    
-    @include tablet {
-      gap: 0.3rem;
-      
-      .month {
-        font-size: 0.75rem;
-        padding: 0.2rem 0.5rem;
-      }
-    }
-    
-    @include mobile {
-      width: 100%;
-      max-height: 1.5rem; // Reducir altura máxima para evitar bloqueo de scroll
-      overflow: hidden; // Ocultar exceso
-      gap: 0.2rem;
-      margin-top: 0.25rem;
-      
-      .month {
-        font-size: 0.6rem;
-        padding: 0.1rem 0.3rem;
-        // Reducir tamaño de touch target en mobile
-        min-height: unset;
-        line-height: 1.2;
-      }
-      
-      .more-months {
-        font-size: 0.55rem;
-      }
-    }
-  }
 }
 
 // Estilos para la variante grande
@@ -334,7 +294,7 @@ $color-primary: var(--background-azul);
   .card-footer .price-section .price-info {
     .desde {
       font-size: 0.9rem;
-      color: var(--background-azul);
+      color: white;
 
       @include tablet {
         font-size: 0.85rem;
@@ -350,7 +310,7 @@ $color-primary: var(--background-azul);
     .price {
       font-size: 2rem;
       font-weight: bold;
-      color: var(--background-azul);
+      color: white;
       line-height: 1.2rem;
       margin-bottom: $spacing-sm;
 
@@ -380,38 +340,6 @@ $color-primary: var(--background-azul);
   &-p {
     @include trip-type-badge;
     background-color: var(--color-private) !important;
-  }
-}
-
-// Estilos globales para el widget de Scalapay
-::ng-deep {
-  scalapay-widget {
-    @include tablet {
-      margin-left: -0.2rem;
-    }
-
-    @include mobile {
-      margin-left: -0.3rem;
-    }
-
-    .info-container {
-      p.installment-info {
-        display: none !important;
-      }
-    }
-
-    img.logo {
-      max-width: 120px !important;
-      margin: 0 auto;
-
-      @include tablet {
-        max-width: 110px !important;
-      }
-
-      @include mobile {
-        max-width: 100px !important;
-      }
-    }
   }
 }
 

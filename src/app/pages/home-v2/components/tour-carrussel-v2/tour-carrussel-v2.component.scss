@@ -1,14 +1,4 @@
 // Variables
-$desktop-padding: 4rem;
-$tablet-padding: 3rem 1.5rem;
-$mobile-padding: 2rem 1rem;
-
-// Wrapper del carrusel para manejar scroll vertical
-.carousel-wrapper {
-    width: 100%;
-    overflow: visible;
-}
-
 $title-desktop-size: 2rem;
 $title-tablet-size: 1.75rem;
 $title-mobile-size: 1.25rem;
@@ -18,19 +8,72 @@ $breakpoint-large: 1366px;
 $breakpoint-medium: 1024px;
 $breakpoint-small: 768px;
 
-.tours-section {
-    padding: $desktop-padding;
+// Wrapper del carrusel para manejar scroll vertical
+.carousel-wrapper {
+    width: 100%;
+    overflow: visible;
+}
 
-    .title {
-        color: var(--background-azul);
-        font-weight: 400;
-        margin-top: -10px;
+.tours-section {
+    padding: 0;
+    margin: 0;
+    margin-top: 7rem;
+    width: 100%;
+
+    .tours-section-layout {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 60px;
+        width: 100%;
+        padding: 0 4rem;
     }
 
-    h2 {
-        text-align: center;
-        margin-bottom: 2rem;
-        font-size: $title-desktop-size;
+    .tours-section-description {
+        flex: 0 0 auto;
+        width: 33%;
+        align-items: start;
+        max-width: 480px;
+        color: var(--background-azul);
+        padding: 2rem;
+
+        .title {
+            position: relative;
+            display: inline-block;
+            font-weight: 800;
+            font-size: $title-desktop-size;
+            margin: 0 0 1rem 0;
+            padding: 0 0 0 2.2rem; // espacio para el icono a la izquierda
+            text-align: left;
+            color: var(--primary-color-500);
+        }
+
+        .title-icon {
+            position: absolute;
+            left: 0;
+            top: 0.15em;
+            width: 20px;
+            height: auto;
+        }
+
+        .description {
+            font-size: 0.9rem;
+            line-height: 1.4;
+            margin: 0 0 1.5rem 0;
+            padding: 0;
+        }
+
+        .tours-sectionMore {
+            margin: 0;
+            padding: 0;
+        }
+    }
+
+    .carousel-wrapper {
+        flex: 1;
+        min-width: 0;
+        padding: 0;
+        margin: 0;
     }
 
     .buttonVertour {
@@ -39,14 +82,30 @@ $breakpoint-small: 768px;
 
     // Media queries
     @media screen and (max-width: $breakpoint-large) {
-        padding: $desktop-padding 1.2rem;
+        .tours-section-layout {
+            padding: 0 3rem;
+            gap: 50px;
+        }
     }
 
     @media screen and (max-width: $breakpoint-medium) {
-        padding: $tablet-padding;
+        margin-top: 3rem;
 
-        h2 {
-            font-size: $title-tablet-size;
+        .tours-section-layout {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 30px;
+            padding: 0 2rem;
+        }
+
+        .tours-section-description {
+            width: 100%;
+            max-width: 100%;
+
+            .title {
+                font-size: $title-tablet-size;
+                text-align: left;
+            }
         }
 
         .buttonVertour {
@@ -55,26 +114,28 @@ $breakpoint-small: 768px;
     }
 
     @media screen and (max-width: $breakpoint-small) {
-        padding: 1.5rem 0.75rem; // Reducir padding lateral
-        margin-top: 10px;
+        margin-top: 2rem;
 
-        h2 {
-            font-size: 1rem; // Reducir tamaño
-            margin-bottom: 1rem;
-            line-height: 1.4;
-            // Truncar títulos largos
-            //display: -webkit-box;
-            //-webkit-line-clamp: 2;
-            //-webkit-box-orient: vertical;
-            //overflow: hidden;
-            //text-overflow: ellipsis;
+        .tours-section-layout {
+            gap: 20px;
+            padding: 0 1rem;
+        }
+
+        .tours-section-description {
+            .title {
+                font-size: $title-mobile-size;
+                margin-bottom: 0.75rem;
+            }
+
+            .description {
+                font-size: 0.85rem;
+            }
         }
 
         .buttonVertour {
             width: auto !important;
             min-width: 6rem;
             height: 2.5rem;
-            margin-top: 35px;
             font-size: 0.9rem;
         }
     }
@@ -94,7 +155,7 @@ $breakpoint-small: 768px;
         }
         
         // En desktop/tablet, permitir ambos gestos
-        @media screen and (min-width: $breakpoint-small + 1px) {
+        @media screen and (min-width: 769px) {
             touch-action: pan-x pan-y pinch-zoom;
         }
         

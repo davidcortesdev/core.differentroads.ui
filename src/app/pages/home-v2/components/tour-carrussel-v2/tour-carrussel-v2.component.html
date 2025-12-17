@@ -1,26 +1,52 @@
 <section class="tours-section" #tourCarouselContainer>
-  <h2 class="title">{{ title }}</h2>
-  <div class="carousel-wrapper" #carouselWrapper>
-    <p-carousel
-      #carousel
-      [value]="tours"
-      [numVisible]="5"
-      [numScroll]="1"
-      [circular]="true"
-      [responsiveOptions]="responsiveOptions"
-      [showNavigators]="false"
-      [autoplayInterval]="carouselConfig.DEFAULT_AUTOPLAY_INTERVAL"
-    >
-              <ng-template let-tour #item>
-                <app-tour-card-v2
-                  [tourData]="tour"
-                  [showScalapayPrice]="true"
-                  [isLargeCard]="true"
-                  [itemListId]="configurationId?.toString() || 'home_carousel'"
-                  [itemListName]="title || 'Carrusel de tours'"
-                  [index]="tours.indexOf(tour)"
-                ></app-tour-card-v2>
-              </ng-template>
-    </p-carousel>
+  <div class="tours-section-layout">
+    <!-- Bloque de texto a la izquierda -->
+    <div class="tours-section-description">
+      <h2 class="title">
+        <img 
+          src="/assets/images/icon-different.svg "
+          alt="Title Icon"
+          class="title-icon"
+        />{{ title }}
+      </h2>
+
+      <div *ngIf="description" class="description">
+        {{ description }}
+      </div>
+
+      <div *ngIf="viewMoreButton" class="tours-sectionMore">
+        <p-button
+          [label]="viewMoreButton.text"
+          styleClass="main-btn-circle"
+          (onClick)="onViewMore()"
+        >
+        </p-button>
+      </div>
+    </div>
+
+    <!-- Carrusel de cards a la derecha -->
+    <div class="carousel-wrapper" #carouselWrapper>
+      <p-carousel
+        #carousel
+        [value]="tours"
+        [numVisible]="5"
+        [numScroll]="1"
+        [circular]="true"
+        [responsiveOptions]="responsiveOptions"
+        [showNavigators]="false"
+        [autoplayInterval]="carouselConfig.DEFAULT_AUTOPLAY_INTERVAL"
+      >
+        <ng-template let-tour #item>
+          <app-tour-card-v2
+            [tourData]="tour"
+            [showScalapayPrice]="true"
+            [isLargeCard]="true"
+            [itemListId]="configurationId?.toString() || 'home_carousel'"
+            [itemListName]="title || 'Carrusel de tours'"
+            [index]="tours.indexOf(tour)"
+          ></app-tour-card-v2>
+        </ng-template>
+      </p-carousel>
+    </div>
   </div>
 </section>

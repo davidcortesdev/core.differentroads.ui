@@ -1,4 +1,12 @@
 <div class="card-footer">
+  <!-- Bloque de texto principal (título + descripción) en el footer -->
+  <div class="main-info">
+    <h3 class="tour-title">{{ tourData.title }}</h3>
+    <p class="tour-description" *ngIf="tourData.description">
+      {{ tourData.description }}
+    </p>
+  </div>
+
   <div class="price-content">
     <div class="price-section">
       <div class="price-info">

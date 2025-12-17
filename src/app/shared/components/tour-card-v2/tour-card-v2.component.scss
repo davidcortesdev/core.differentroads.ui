@@ -42,7 +42,7 @@ $spacing-md: 1rem;
 .tour-card {
     ::ng-deep {
         .p-card {
-            background: transparent !important;
+            background: var(--secondary-color-500);
         }
     }
     padding: var(--tour-card-spacing-sm, 0.5rem);

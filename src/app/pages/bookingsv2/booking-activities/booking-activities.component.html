@@ -27,10 +27,10 @@
                 ></div>
                 <div class="activity-actions">
                   <button
-                    *ngIf="!hasAnyTravelerWithActivity(activity.id)"
+                    *ngIf="!hasAnyTravelerWithActivity(activity.id) && activity.type !== 'pack'"
                     pButton
                     type="button"
-                    [label]="isCancelled ? 'No disponible' : 'Añadir'"
+                    [label]="(isCancelled) ? 'No disponible' : 'Añadir'"
                     class="p-button-rounded"
                     [disabled]="isCancelled"
                     (click)="toggleAddActivity(activity.id)"
@@ -43,6 +43,7 @@
                     class="p-button-rounded p-button-outlined"
                     [disabled]="true"
                   ></button>
+                  <h4 *ngIf="activity.type === 'pack' && !hasAnyTravelerWithActivity(activity.id)">Para añadir esta actividad, contacte con atención al cliente</h4>
                 </div>
                 
                 <!-- Sección para seleccionar pasajeros cuando se añade una actividad -->
@@ -53,6 +54,7 @@
                     class="passenger-item"
                   >
                     <p-toggleswitch
+                    *ngIf="traveler.selected"
                       [(ngModel)]="traveler.selected"
                       [disabled]="traveler.price === 0 || isCancelled"
                     ></p-toggleswitch>
@@ -95,12 +97,14 @@
                             </span>
                           </div>
                           <div class="traveler-actions">
+                            <h5 *ngIf="activity.type === 'pack'" style="margin-right: 1rem;">{{hasTravelerActivity(traveler.id, activity.id) ? 'Para eliminar esta actividad, contacte con atención al cliente ' : 'Para añadir esta actividad, contacte con atención al cliente '}}</h5>
                             <p-toggleSwitch 
                               [ngModel]="hasTravelerActivity(traveler.id, activity.id)"
                               (ngModelChange)="onActivityToggleChange(traveler.id, activity.id, $event)"
                               [ngModelOptions]="{standalone: true}"
-                              [disabled]="isCancelled">
+                              [disabled]="isCancelled || (activity.type === 'pack')">
                             </p-toggleSwitch>
+                            
                           </div>
                         </div>
                       </div>

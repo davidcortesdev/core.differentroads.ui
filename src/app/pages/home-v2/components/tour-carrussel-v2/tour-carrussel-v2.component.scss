@@ -15,7 +15,7 @@ $breakpoint-small: 768px;
 }
 
 .tours-section {
-    padding: 0;
+    padding: 3rem 0;
     margin: 0;
     margin-top: 14rem;
     width: 100%;
@@ -29,8 +29,14 @@ $breakpoint-small: 768px;
 
     // Variables tema oscuro (temporalmente en rojo)
     &.theme-dark {
-        --theme-section-bg: #ff0000;
-        --theme-description-text: #ff0000;
+        --theme-section-bg: var(--secondary-color-500);
+        --theme-description-text: white;
+
+        .tours-section-description {
+            .title-icon {
+                filter: brightness(0) invert(1);
+            }
+        }
     }
 
     .tours-section-layout {

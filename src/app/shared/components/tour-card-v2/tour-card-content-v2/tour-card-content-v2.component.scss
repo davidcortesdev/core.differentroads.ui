@@ -71,10 +71,10 @@ $color-primary: var(--background-azul);
 
   // Variables tema oscuro (temporalmente en rojo)
   &.theme-dark {
-    --theme-card-bg: #ff0000;
-    --theme-card-description-text: #ff0000;
-    --theme-card-price-text: #ff0000;
-    --theme-card-desde-text: #ff0000;
+    --theme-card-bg: white;
+    --theme-card-description-text: white;
+    --theme-card-price-text: black;
+    --theme-card-desde-text: black;
   }
 
   @include tablet {

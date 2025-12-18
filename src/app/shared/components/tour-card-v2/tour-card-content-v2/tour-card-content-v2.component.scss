@@ -95,7 +95,7 @@ $color-primary: var(--background-azul);
   }
 
   .tour-title {
-    font-size: 1.25rem;
+    font-size: 1.375rem;
     font-weight: 600;
     color: var(--primary-color-500);
     margin: 0;
@@ -108,12 +108,12 @@ $color-primary: var(--background-azul);
     overflow: hidden;
 
     @include tablet {
-      font-size: 1.1rem;
+      font-size: 1.2rem;
       line-height: 1.25;
     }
 
     @include mobile {
-      font-size: 1rem;
+      font-size: 1.1rem;
       line-height: 1.2;
     }
   }

@@ -1,9 +1,16 @@
 <div class="card-footer">
   <!-- Bloque de texto principal (título + descripción) en el footer -->
   <div class="main-info">
-    <h3 class="tour-title">{{ tourData.title }}</h3>
-    <p class="tour-description" *ngIf="tourData.description">
-      {{ tourData.description }}
+    <h3 class="tour-title">
+      <ng-container *ngIf="isLoadingLocation; else locationContent">
+        {{ tourData.title }}
+      </ng-container>
+      <ng-template #locationContent>
+        {{ locationName || tourData.title }}
+      </ng-template>
+    </h3>
+    <p class="tour-description" *ngIf="tourData.title">
+      {{ tourData.title }}
     </p>
   </div>
 

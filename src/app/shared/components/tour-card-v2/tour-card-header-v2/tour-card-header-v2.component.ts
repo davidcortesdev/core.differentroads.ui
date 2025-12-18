@@ -129,12 +129,14 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
               (tt): tt is ITripTypeResponse => tt !== null
             );
 
-            const mappedTripTypes = validTripTypes.map((tripType) => ({
-              name: tripType.name,
-              code: tripType.code,
-              color: tripType.color || '#D3D3D3', // Gris clarito si el color es null
-              abbreviation: tripType.abbreviation || tripType.name.charAt(0).toUpperCase(),
-            }));
+            const mappedTripTypes = validTripTypes.map((tripType) => {
+              return {
+                name: tripType.name,
+                code: tripType.code,
+                color: tripType.color || '#D3D3D3', // Color directamente desde la base de datos (masterdata TripType)
+                abbreviation: tripType.abbreviation || tripType.name.charAt(0).toUpperCase(),
+              };
+            });
 
             // Actualizar tourData con los trip types obtenidos
             this.tourData.tripTypes = mappedTripTypes;

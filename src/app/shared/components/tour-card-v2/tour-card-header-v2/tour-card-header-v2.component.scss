@@ -42,7 +42,6 @@ $spacing-md: 1rem;
   max-height: 240px;
   flex-shrink: 0;
   overflow: hidden; // Mantiene el zoom dentro del contenedor
-  border-radius: $border-radius-lg $border-radius-lg 0 0;
 
   @include tablet {
     height: 240px;
@@ -64,11 +63,6 @@ $spacing-md: 1rem;
     transition: transform 0.3s ease;
   }
 
-  &:hover {
-    img {
-      transform: scale(1.05);
-    }
-  }
 
   // Overlay sobre la imagen
   .overlay {
@@ -77,7 +71,6 @@ $spacing-md: 1rem;
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.7));
     padding: $spacing-sm;
     display: flex;
     flex-direction: column;
@@ -303,7 +296,8 @@ $spacing-md: 1rem;
     }
 
     img {
-      border-radius: $border-radius-md; // Cambiado de $border-radius-lg a $border-radius-md para mantener consistencia
+      margin-bottom: 0;
+      padding-bottom: 0;
     }
 
     .overlay {

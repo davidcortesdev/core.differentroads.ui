@@ -114,7 +114,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
   responsiveOptions = [
     {
       breakpoint: '2100px',
-      numVisible: 4,
+      numVisible: 3,
       numScroll: 1,
     },
     {

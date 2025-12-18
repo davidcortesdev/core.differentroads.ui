@@ -16,6 +16,7 @@ import { AnalyticsService } from '../../../core/services/analytics/analytics.ser
 export class TourCardV2Component implements OnInit {
   @Input() tourData!: TourDataV2;
   @Input() isLargeCard = false;
+  @Input() theme: string = 'light';
   @Input() itemListId?: string; // ID de la lista para analytics
   @Input() itemListName?: string; // Nombre de la lista para analytics
   @Input() index?: number; // Índice del item en la lista

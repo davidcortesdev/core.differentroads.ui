@@ -53,13 +53,29 @@ $color-primary: var(--background-azul);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  background-color: var(--secondary-color-500);
+  background-color: var(--theme-card-bg);
   color: white;
   height: 160px;
   min-height: 160px;
   max-height: 160px;
   overflow: hidden;
   border-radius: 0 0 $border-radius-lg $border-radius-lg;
+
+  // Variables tema claro (valores actuales)
+  &.theme-light {
+    --theme-card-bg: var(--secondary-color-500);
+    --theme-card-description-text: white;
+    --theme-card-price-text: white;
+    --theme-card-desde-text: white;
+  }
+
+  // Variables tema oscuro (temporalmente en rojo)
+  &.theme-dark {
+    --theme-card-bg: #ff0000;
+    --theme-card-description-text: #ff0000;
+    --theme-card-price-text: #ff0000;
+    --theme-card-desde-text: #ff0000;
+  }
 
   @include tablet {
     padding: 0.875rem;
@@ -122,7 +138,7 @@ $color-primary: var(--background-azul);
     font-size: 0.875rem;
     margin: 0;
     padding: 0;
-    color: white;
+    color: var(--theme-card-description-text);
     line-height: 1.4;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -177,7 +193,7 @@ $color-primary: var(--background-azul);
 
       .desde {
         font-size: 0.875rem;
-        color: white;
+        color: var(--theme-card-desde-text);
         margin: 0 0 0.25rem 0;
         padding: 0;
         font-weight: 400;
@@ -197,7 +213,7 @@ $color-primary: var(--background-azul);
       .price {
         font-size: 1.75rem;
         font-weight: 700;
-        color: white;
+        color: var(--theme-card-price-text);
         line-height: 1;
         margin: 0;
         padding: 0;

@@ -37,6 +37,22 @@ $spacing-md: 1rem;
     flex-shrink: 1;
     flex-grow: 0;
 
+    // Variables tema claro (valores actuales)
+    &.theme-light {
+        --theme-card-bg: var(--secondary-color-500);
+        --theme-card-description-text: white;
+        --theme-card-price-text: white;
+        --theme-card-desde-text: white;
+    }
+
+    // Variables tema oscuro (temporalmente en rojo)
+    &.theme-dark {
+        --theme-card-bg: #ff0000;
+        --theme-card-description-text: #ff0000;
+        --theme-card-price-text: #ff0000;
+        --theme-card-desde-text: #ff0000;
+    }
+
     @include tablet {
         width: auto !important;
         min-width: 0 !important;

@@ -24,6 +24,7 @@ import { switchMap, map, catchError, of, forkJoin } from 'rxjs';
 export class TourCardContentV2Component implements OnInit, OnChanges {
   @Input() tourData!: TourDataV2;
   @Input() isLargeCard = false;
+  @Input() theme: string = 'light';
   @Output() tourClick = new EventEmitter<void>();
 
   filteredTripTypes: string[] = [];

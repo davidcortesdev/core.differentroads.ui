@@ -1,4 +1,6 @@
-<div class="card-footer">
+<div class="card-footer"
+     [class.theme-claro]="theme === 'light'"
+     [class.theme-oscuro]="theme === 'dark'">
   <!-- Bloque de texto principal (título + descripción) en el footer -->
   <div class="main-info">
     <h3 class="tour-title">

@@ -1,4 +1,7 @@
-<section class="tours-section" #tourCarouselContainer>
+<section class="tours-section" 
+         [class.theme-light]="theme === 'light'"
+         [class.theme-dark]="theme === 'dark'"
+         #tourCarouselContainer>
   <div class="tours-section-layout">
     <!-- Bloque de texto a la izquierda -->
     <div class="tours-section-description">
@@ -46,6 +49,7 @@
               [tourData]="tour"
               [showScalapayPrice]="true"
               [isLargeCard]="true"
+              [theme]="theme"
               [itemListId]="configurationId?.toString() || 'home_carousel'"
               [itemListName]="title || 'Carrusel de tours'"
               [index]="tours.indexOf(tour)"

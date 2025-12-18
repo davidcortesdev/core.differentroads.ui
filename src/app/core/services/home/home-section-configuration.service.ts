@@ -38,6 +38,7 @@ export interface IHomeSectionConfigurationResponse {
   homeSectionId: number;
   title?: string;
   content?: string;
+  theme?: string;
   displayOrder: number;
   isActive: boolean;
   showMonthTags?: boolean;
@@ -54,6 +55,7 @@ export interface HomeSectionConfigurationFilters {
   homeSectionId?: number;
   title?: string;
   content?: string;
+  theme?: string;
   displayOrder?: number;
   isActive?: boolean;
   showMonthTags?: boolean;

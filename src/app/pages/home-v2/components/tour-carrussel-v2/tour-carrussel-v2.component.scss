@@ -19,6 +19,19 @@ $breakpoint-small: 768px;
     margin: 0;
     margin-top: 14rem;
     width: 100%;
+    background-color: var(--theme-section-bg);
+
+    // Variables tema claro (valores actuales)
+    &.theme-light {
+        --theme-section-bg: transparent;
+        --theme-description-text: var(--background-azul);
+    }
+
+    // Variables tema oscuro (temporalmente en rojo)
+    &.theme-dark {
+        --theme-section-bg: #ff0000;
+        --theme-description-text: #ff0000;
+    }
 
     .tours-section-layout {
         display: flex;
@@ -36,7 +49,7 @@ $breakpoint-small: 768px;
         flex: 0 0 auto;
         width: 33%;
         max-width: 480px;
-        color: var(--background-azul);
+        color: var(--theme-description-text);
 
         .header-with-icon {
             display: flex;
@@ -72,6 +85,7 @@ $breakpoint-small: 768px;
             line-height: 1.4;
             margin: 0 0 1.5rem 0;
             padding: 0;
+            color: var(--theme-description-text);
         }
 
         .tours-sectionMore {

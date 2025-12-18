@@ -114,12 +114,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
 
   responsiveOptions = [
     {
-      breakpoint: '2100px',
-      numVisible: 3,
-      numScroll: 1,
-    },
-    {
-      breakpoint: '1488px',
+      breakpoint: '1600px',
       numVisible: 2,
       numScroll: 1,
     },
@@ -129,7 +124,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
       numScroll: 1,
     },
     {
-      breakpoint: '768px', // NUEVO: Añadir breakpoint intermedio
+      breakpoint: '768px',
       numVisible: 2,
       numScroll: 1,
     },

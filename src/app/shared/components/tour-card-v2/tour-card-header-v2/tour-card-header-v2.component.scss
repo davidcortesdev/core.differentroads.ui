@@ -42,6 +42,7 @@ $spacing-md: 1rem;
   max-height: 240px;
   flex-shrink: 0;
   overflow: hidden; // Mantiene el zoom dentro del contenedor
+  outline: none !important;
 
   @include tablet {
     height: 240px;
@@ -59,7 +60,6 @@ $spacing-md: 1rem;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: $border-radius-lg $border-radius-lg 0 0;
     transition: transform 0.3s ease;
   }
 
@@ -80,7 +80,6 @@ $spacing-md: 1rem;
     padding: $spacing-sm;
     display: flex;
     flex-direction: column;
-    border-radius: $border-radius-lg $border-radius-lg 0 0;
     
     @include mobile {
       padding: $spacing-sm;
@@ -109,7 +108,7 @@ $spacing-md: 1rem;
       background: var(--p-primary-color); // Rojo como en la imagen
       color: white;
       padding: 0.35rem 0.75rem; // Más alargado horizontalmente
-      border-radius: 1rem; // Más redondeado en los lados (pill shape)
+      border-radius: 1rem;
       @include responsive-font(0.8rem, 0.85rem, 0.7rem);
       font-weight: 600;
       white-space: nowrap;
@@ -221,11 +220,9 @@ $spacing-md: 1rem;
     }
 
     .overlay {
-      border-radius: $border-radius-md; // Añadido para asegurar consistencia
       .rating {
         padding: 0.35rem 0.75rem;
         font-size: 0.8rem;
-        border-radius: 1rem; // Consistente con el estilo principal
       }
 
       .title-overlay {

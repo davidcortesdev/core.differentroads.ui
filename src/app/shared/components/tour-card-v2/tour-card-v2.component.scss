@@ -79,7 +79,6 @@ $spacing-md: 1rem;
         
         .p-card {
             box-sizing: border-box;
-            border-radius: $border-radius-lg;
             width: 100% !important;
             height: 100% !important;
             display: flex;
@@ -88,11 +87,6 @@ $spacing-md: 1rem;
             background: transparent !important;
             padding: 0 !important;
             margin: 0 !important;
-            border: none !important;
-
-            @include mobile {
-                border-radius: $border-radius-md;
-            }
         }
 
         .p-card-body {

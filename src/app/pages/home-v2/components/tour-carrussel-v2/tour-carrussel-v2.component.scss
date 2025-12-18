@@ -26,7 +26,7 @@ $breakpoint-small: 768px;
         justify-content: space-between;
         gap: 60px;
         width: 100%;
-        padding: 0 4rem;
+        padding: 0 8rem;
     }
 
     .tours-section-description {
@@ -37,7 +37,6 @@ $breakpoint-small: 768px;
         width: 33%;
         max-width: 480px;
         color: var(--background-azul);
-        padding: 2rem 2rem 2rem 0;
 
         .header-with-icon {
             display: flex;
@@ -279,30 +278,31 @@ $breakpoint-small: 768px;
             }
         }
         
-        // Items del carrusel - permitir ambos gestos y agregar espaciado
+        // Items del carrusel - permitir ambos gestos
         .p-carousel-item {
             @media screen and (max-width: $breakpoint-small) {
                 // Permitir ambos gestos
                 touch-action: pan-x pan-y;
             }
+        }
+        
+        // Contenedor para cada tarjeta - aplicar padding para crear el gap
+        .tour-carousel-item {
+            padding: 0 2rem;
+            box-sizing: border-box;
             
-            // Agregar margin a las tarjetas dentro del item
-            app-tour-card-v2 {
-                display: block;
+            @media screen and (max-width: $breakpoint-medium) {
+                padding: 0 0.375rem;
+            }
+            
+            @media screen and (max-width: $breakpoint-small) {
+                padding: 0 0.25rem;
             }
         }
         
         // Contenido interno del carrusel - CRÍTICO: este es donde PrimeNG aplica el swipe
         .p-carousel-items-content {
-            display: flex;
-            gap: 1rem;
-            
-            @media screen and (max-width: $breakpoint-medium) {
-                gap: 0.75rem;
-            }
-            
             @media screen and (max-width: $breakpoint-small) {
-                gap: 0.5rem;
                 // Permitir ambos gestos - el JavaScript determinará cuál usar
                 touch-action: pan-x pan-y;
                 // Permitir transformaciones para el swipe horizontal

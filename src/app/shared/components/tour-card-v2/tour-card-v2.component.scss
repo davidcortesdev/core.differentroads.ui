@@ -41,9 +41,9 @@ $spacing-md: 1rem;
 // Componente principal
 .tour-card {
     box-sizing: border-box;
-    width: 300px !important;
-    min-width: 300px !important;
-    max-width: 300px !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
     height: 400px !important;
     min-height: 400px !important;
     max-height: 400px !important;
@@ -51,22 +51,22 @@ $spacing-md: 1rem;
     margin: 0;
     // Evitar que las tarjetas capturen scroll innecesario
     touch-action: pan-y;
-    flex-shrink: 0;
+    flex-shrink: 1;
     flex-grow: 0;
 
     @include tablet {
-        width: 300px !important;
-        min-width: 300px !important;
-        max-width: 300px !important;
+        width: auto !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
         height: 400px !important;
         min-height: 400px !important;
         max-height: 400px !important;
     }
 
     @include mobile {
-        width: 300px !important;
-        min-width: 300px !important;
-        max-width: 300px !important;
+        width: auto !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
         height: 400px !important;
         min-height: 400px !important;
         max-height: 400px !important;

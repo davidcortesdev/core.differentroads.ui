@@ -2,6 +2,7 @@ import {
   Component,
   Input,
   OnInit,
+  ChangeDetectorRef,
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { TourDataV2 } from './tour-card-v2.model';
@@ -21,9 +22,14 @@ export class TourCardV2Component implements OnInit {
   @Input() itemListName?: string; // Nombre de la lista para analytics
   @Input() index?: number; // Índice del item en la lista
   
+  isLoading: boolean = true;
+  private headerLoaded: boolean = false;
+  private contentLoaded: boolean = false;
+  
   constructor(
     private router: Router,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -32,12 +38,35 @@ export class TourCardV2Component implements OnInit {
       console.error(
         'TourData no proporcionado al componente TourCardComponent'
       );
+      this.isLoading = false;
       return;
     }
 
     // Validate that externalID exists and is not undefined or empty
     if (!this.tourData.externalID?.trim()) {
       console.warn('Missing or invalid externalID:', this.tourData);
+    }
+    
+    // Inicializar como cargando - los componentes hijos emitirán 'loaded' cuando terminen
+    this.isLoading = true;
+    this.headerLoaded = false;
+    this.contentLoaded = false;
+  }
+  
+  onHeaderLoaded(): void {
+    this.headerLoaded = true;
+    this.checkIfFullyLoaded();
+  }
+  
+  onContentLoaded(): void {
+    this.contentLoaded = true;
+    this.checkIfFullyLoaded();
+  }
+  
+  private checkIfFullyLoaded(): void {
+    if (this.headerLoaded && this.contentLoaded) {
+      this.isLoading = false;
+      this.cdr.markForCheck();
     }
   }
 

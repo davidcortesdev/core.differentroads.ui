@@ -12,7 +12,7 @@ import {
 import { TourDataV2 } from '../tour-card-v2.model';
 import { TourLocationService } from '../../../../core/services/tour/tour-location.service';
 import { LocationNetService } from '../../../../core/services/locations/locationNet.service';
-import { switchMap, map, catchError, of, forkJoin } from 'rxjs';
+import { switchMap, map, catchError, of, forkJoin, finalize } from 'rxjs';
 
 @Component({
   selector: 'app-tour-card-content-v2',
@@ -26,6 +26,7 @@ export class TourCardContentV2Component implements OnInit, OnChanges {
   @Input() isLargeCard = false;
   @Input() theme: string = 'light';
   @Output() tourClick = new EventEmitter<void>();
+  @Output() loaded = new EventEmitter<void>();
 
   filteredTripTypes: string[] = [];
   locationName: string | null = null;
@@ -92,6 +93,7 @@ export class TourCardContentV2Component implements OnInit, OnChanges {
   private loadLocation(): void {
     if (!this.tourData.id) {
       this.locationName = null;
+      this.loaded.emit();
       return;
     }
 
@@ -151,19 +153,20 @@ export class TourCardContentV2Component implements OnInit, OnChanges {
         catchError((error) => {
           console.error('Error al cargar localización del tour:', error);
           return of(null);
+        }),
+        finalize(() => {
+          this.isLoadingLocation = false;
+          this.cdr.markForCheck();
+          this.loaded.emit();
         })
       )
       .subscribe({
         next: (name) => {
           this.locationName = name;
-          this.isLoadingLocation = false;
-          this.cdr.markForCheck();
         },
         error: (error) => {
           console.error('Error al cargar localización:', error);
           this.locationName = null;
-          this.isLoadingLocation = false;
-          this.cdr.markForCheck();
         },
       });
   }

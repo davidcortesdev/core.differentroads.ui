@@ -2,25 +2,51 @@
      [ngClass]="{ isLarge: isLargeCard }"
      [class.theme-light]="theme === 'light'"
      [class.theme-dark]="theme === 'dark'">
+  
+  <!-- Skeleton loader -->
+  <div *ngIf="isLoading" class="tour-card-skeleton">
+    <div class="skeleton-header">
+      <p-skeleton width="100%" height="100%" borderRadius="1rem 1rem 0 0"></p-skeleton>
+    </div>
+    <div class="skeleton-content">
+      <p-skeleton width="60%" height="24px" styleClass="mb-2"></p-skeleton>
+      <p-skeleton width="80%" height="16px" styleClass="mb-3"></p-skeleton>
+      <div class="skeleton-footer-content">
+        <div class="skeleton-price">
+          <p-skeleton width="50px" height="14px" styleClass="mb-1"></p-skeleton>
+          <p-skeleton width="80px" height="28px"></p-skeleton>
+        </div>
+        <p-skeleton width="100px" height="36px" borderRadius="6px"></p-skeleton>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Tarjeta real - renderizada siempre pero oculta hasta que cargue -->
   <p-card
     [style]="{
       'border-radius': '1rem',
       overflow: 'hidden',
       border: 'none',
-      boxShadow: 'none'
+      boxShadow: 'none',
+      display: isLoading ? 'none' : 'block'
     }"
     [styleClass]="'tour-card-wrapper'"
   >
     <ng-template #header>
-      <app-tour-card-header-v2 [tourData]="tourData" (tourClick)="handleTourClick()"></app-tour-card-header-v2>
+      <app-tour-card-header-v2 
+        [tourData]="tourData" 
+        (tourClick)="handleTourClick()"
+        (loaded)="onHeaderLoaded()">
+      </app-tour-card-header-v2>
     </ng-template>
     
     <ng-template #content>
       <app-tour-card-content-v2 
-        [tourData]="tourData" 
+        [tourData]="tourData"
         [isLargeCard]="isLargeCard"
         [theme]="theme"
-        (tourClick)="handleTourClick()">
+        (tourClick)="handleTourClick()"
+        (loaded)="onContentLoaded()">
       </app-tour-card-content-v2>
     </ng-template>
   </p-card>

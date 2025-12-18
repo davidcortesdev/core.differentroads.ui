@@ -63,6 +63,12 @@ $spacing-md: 1rem;
     transition: transform 0.3s ease;
   }
 
+  &:hover {
+    img {
+      transform: scale(1.05);
+    }
+  }
+
 
   // Overlay sobre la imagen
   .overlay {

@@ -133,7 +133,7 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
               return {
                 name: tripType.name,
                 code: tripType.code,
-                color: tripType.color || '#D3D3D3', // Color directamente desde la base de datos (masterdata TripType)
+                color: tripType.color || '#ffffff', // Color directamente desde la base de datos (masterdata TripType)
                 abbreviation: tripType.abbreviation || tripType.name.charAt(0).toUpperCase(),
               };
             });

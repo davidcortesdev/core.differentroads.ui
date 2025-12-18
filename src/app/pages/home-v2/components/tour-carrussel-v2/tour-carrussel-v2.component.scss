@@ -85,6 +85,13 @@ $breakpoint-small: 768px;
         min-width: 0;
         padding: 0;
         margin: 0;
+        
+        // Agregar padding al carrusel para que las tarjetas no toquen los bordes
+        ::ng-deep .p-carousel {
+            .p-carousel-content {
+                padding: 0;
+            }
+        }
     }
 
     .buttonVertour {
@@ -272,17 +279,39 @@ $breakpoint-small: 768px;
             }
         }
         
-        // Items del carrusel - permitir ambos gestos
+        // Items del carrusel - permitir ambos gestos y agregar espaciado
         .p-carousel-item {
             @media screen and (max-width: $breakpoint-small) {
                 // Permitir ambos gestos
                 touch-action: pan-x pan-y;
             }
+            
+            // Agregar margin a las tarjetas dentro del item
+            app-tour-card-v2 {
+                margin-right: 1rem;
+                display: block;
+                
+                @media screen and (max-width: $breakpoint-medium) {
+                    margin-right: 0.75rem;
+                }
+                
+                @media screen and (max-width: $breakpoint-small) {
+                    margin-right: 0.5rem;
+                }
+            }
         }
         
         // Contenido interno del carrusel - CRÍTICO: este es donde PrimeNG aplica el swipe
         .p-carousel-items-content {
+            display: flex;
+            gap: 1rem;
+            
+            @media screen and (max-width: $breakpoint-medium) {
+                gap: 0.75rem;
+            }
+            
             @media screen and (max-width: $breakpoint-small) {
+                gap: 0.5rem;
                 // Permitir ambos gestos - el JavaScript determinará cuál usar
                 touch-action: pan-x pan-y;
                 // Permitir transformaciones para el swipe horizontal

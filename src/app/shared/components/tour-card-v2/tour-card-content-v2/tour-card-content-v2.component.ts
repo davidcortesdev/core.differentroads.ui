@@ -12,7 +12,7 @@ import {
 import { TourDataV2 } from '../tour-card-v2.model';
 import { TourLocationService } from '../../../../core/services/tour/tour-location.service';
 import { LocationNetService } from '../../../../core/services/locations/locationNet.service';
-import { switchMap, map, catchError, of } from 'rxjs';
+import { switchMap, map, catchError, of, forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-tour-card-content-v2',
@@ -100,22 +100,51 @@ export class TourCardContentV2Component implements OnInit, OnChanges {
     this.tourLocationService
       .getAll({ tourId: this.tourData.id })
       .pipe(
-        map((tourLocations) => {
+        switchMap((tourLocations) => {
           if (!tourLocations || tourLocations.length === 0) {
-            return null;
-          }
-
-          // Ordenar por displayOrder (ascendente) y tomar el primer resultado
-          const sortedLocations = [...tourLocations].sort(
-            (a, b) => (a.displayOrder || 0) - (b.displayOrder || 0)
-          );
-          return sortedLocations[0]?.locationId || null;
-        }),
-        switchMap((locationId) => {
-          if (!locationId) {
             return of(null);
           }
-          return this.locationNetService.getLocationById(locationId);
+
+          // Obtener todas las locations en paralelo
+          const locationObservables = tourLocations.map((tourLoc) =>
+            this.locationNetService.getLocationById(tourLoc.locationId).pipe(
+              map((location) => ({
+                location,
+                tourLocation: tourLoc,
+              })),
+              catchError(() => of(null))
+            )
+          );
+
+          return forkJoin(locationObservables).pipe(
+            map((locationData) => {
+              // Filtrar nulos
+              const validLocations = locationData.filter(
+                (data) => data !== null && data.location !== null
+              ) as Array<{ location: any; tourLocation: any }>;
+
+              if (validLocations.length === 0) {
+                return null;
+              }
+
+              // Buscar la localización con locationTypeId === 2 (COUNTRY)
+              const countryLocationData = validLocations.find(
+                (data) => data.location.locationTypeId === 2
+              );
+
+              if (countryLocationData) {
+                return countryLocationData.location;
+              }
+
+              // Si no hay de tipo COUNTRY, ordenar por displayOrder y tomar el primer resultado como fallback
+              const sortedLocations = [...validLocations].sort(
+                (a, b) =>
+                  (a.tourLocation.displayOrder || 0) -
+                  (b.tourLocation.displayOrder || 0)
+              );
+              return sortedLocations[0]?.location || null;
+            })
+          );
         }),
         map((location) => (location?.name || null)),
         catchError((error) => {

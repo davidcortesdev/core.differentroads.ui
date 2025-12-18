@@ -5,7 +5,7 @@
   <div class="main-info">
     <h3 class="tour-title">
       <ng-container *ngIf="isLoadingLocation; else locationContent">
-        {{ tourData.title }}
+        Destino
       </ng-container>
       <ng-template #locationContent>
         {{ locationName || tourData.title }}

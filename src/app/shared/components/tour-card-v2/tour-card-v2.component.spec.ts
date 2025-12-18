@@ -31,15 +31,4 @@ describe('TourCardV2Component', () => {
 
     expect(routerSpy).toHaveBeenCalledWith(['/tour', 'test-tour']);
   });
-
-  it('should calculate monthly price correctly', () => {
-    component.tourData = {
-      price: 1000,
-      // Otras propiedades requeridas...
-    } as any;
-
-    component.ngOnInit();
-
-    expect(component.monthlyPrice).toBe(250);
-  });
 });

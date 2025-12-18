@@ -9,18 +9,6 @@ $spacing-sm: 0.5rem;
 $spacing-md: 1rem;
 
 // Mixins
-@mixin responsive-font($mobile, $tablet, $desktop) {
-    font-size: $desktop;
-
-    @media screen and (max-width: $breakpoint-tablet) {
-        font-size: $tablet;
-    }
-
-    @media screen and (max-width: $breakpoint-mobile) {
-        font-size: $mobile;
-    }
-}
-
 @mixin tablet {
     @media screen and (max-width: $breakpoint-tablet) {
         @content;
@@ -31,11 +19,6 @@ $spacing-md: 1rem;
     @media screen and (max-width: $breakpoint-mobile) {
         @content;
     }
-}
-
-:root {
-    --tour-card-border-radius-lg: 1rem;
-    --tour-card-spacing-md: 1rem;
 }
 
 // Componente principal

@@ -34,7 +34,6 @@ export class TourCardContentV2Component implements OnInit, OnChanges {
     single: { label: 'S', class: 'trip-type-s' },
     grupo: { label: 'G', class: 'trip-type-g' },
     propios: { label: 'P', class: 'trip-type-p' },
-    fit: { label: 'F', class: 'trip-type-f' },
   };
 
   constructor(

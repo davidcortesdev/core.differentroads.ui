@@ -288,16 +288,7 @@ $breakpoint-small: 768px;
             
             // Agregar margin a las tarjetas dentro del item
             app-tour-card-v2 {
-                margin-right: 1rem;
                 display: block;
-                
-                @media screen and (max-width: $breakpoint-medium) {
-                    margin-right: 0.75rem;
-                }
-                
-                @media screen and (max-width: $breakpoint-small) {
-                    margin-right: 0.5rem;
-                }
             }
         }
         

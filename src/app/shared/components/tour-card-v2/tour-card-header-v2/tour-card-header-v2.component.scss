@@ -108,11 +108,12 @@ $spacing-md: 1rem;
     .rating {
       background: var(--p-primary-color); // Rojo como en la imagen
       color: white;
-      padding: $spacing-xs $spacing-xs * 2;
-      border-radius: 0.5rem; // Más redondeado como en la imagen
+      padding: 0.35rem 0.75rem; // Más alargado horizontalmente
+      border-radius: 1rem; // Más redondeado en los lados (pill shape)
       @include responsive-font(0.8rem, 0.85rem, 0.7rem);
       font-weight: 600;
       white-space: nowrap;
+      line-height: 1.2;
     }
 
     // Contenedor de trip types circulares
@@ -222,9 +223,9 @@ $spacing-md: 1rem;
     .overlay {
       border-radius: $border-radius-md; // Añadido para asegurar consistencia
       .rating {
-        padding: 0.3rem 0.6rem;
+        padding: 0.35rem 0.75rem;
         font-size: 0.8rem;
-        border-radius: 30%;
+        border-radius: 1rem; // Consistente con el estilo principal
       }
 
       .title-overlay {

@@ -73,7 +73,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
   tours: TourDataV2[] = [];
   title: string = '';
   description: string = '';
-  theme: string = 'light';
+  theme: string = 'dark'; // Hardcoded para ver el tema oscuro
   showMonthTags: boolean = false;
   maxToursToShow: number = 6;
   viewMoreButton?: {
@@ -693,7 +693,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
           // Establecer datos de la configuración
           this.title = configuration.title || '';
           this.description = configuration.content || '';
-          this.theme = configuration.theme || 'light';
+          this.theme = 'dark'; // Hardcoded para ver el tema oscuro
           this.showMonthTags = configuration.showMonthTags || false;
           this.maxToursToShow = configuration.maxToursToShow || 6;
 

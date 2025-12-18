@@ -31,7 +31,7 @@
         *ngFor="let tripType of (tourTripTypesLocal.length > 0 ? tourTripTypesLocal : (tourTripTypes || []))"
         [value]="tripType.name"
         [style.background-color]="tripType.color || '#D3D3D3'"
-      [style.color]="'white'"
+        [style.color]="'black'"
         [style.border]="'none'"
         class="trip-type-tag">
       </p-tag>

@@ -86,170 +86,83 @@ $spacing-md: 1rem;
       padding: $spacing-sm;
     }
 
-    // Indicador de rating
-    .rating {
-      align-self: flex-start;
-      background: var(--p-primary-color);
-      color: var(--p-button-primary-color);
-      padding: $spacing-xs $spacing-xs * 2;
-      border-radius: $border-radius-sm;
-      margin-bottom: $spacing-xs;
-      @include responsive-font(0.8rem, 0.85rem, 0.7rem);
+    // Contenedor superior derecho (rating + trip types)
+    .top-right-container {
+      position: absolute;
+      top: $spacing-sm;
+      right: $spacing-sm;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: $spacing-xs;
+      z-index: 10;
+
+      @include mobile {
+        top: $spacing-xs;
+        right: $spacing-xs;
+        gap: 0.25rem;
+      }
     }
 
-    // Etiqueta By DR debajo del rating
-    .by-dr-tag {
-      align-self: flex-start;
-      position: relative;
-      margin-top: $spacing-xs;
-      transition: all 0.5s ease;
-      overflow: hidden;
-      white-space: nowrap;
-      cursor: pointer;
-      border-radius: $border-radius-sm;
-      background: var(--p-primary-color);
-      color: var(--p-button-primary-color);
+    // Indicador de rating
+    .rating {
+      background: var(--p-primary-color); // Rojo como en la imagen
+      color: white;
       padding: $spacing-xs $spacing-xs * 2;
-      opacity: 0;
-      max-height: 25px;
-      animation: fadeIn 0.5s ease-in-out forwards;
-      @include responsive-font(0.6rem, 0.65rem, 0.55rem);
+      border-radius: 0.5rem; // Más redondeado como en la imagen
+      @include responsive-font(0.8rem, 0.85rem, 0.7rem);
+      font-weight: 600;
+      white-space: nowrap;
+    }
 
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(-5px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
+    // Contenedor de trip types circulares
+    .trip-types-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      align-items: flex-end;
+
+      @include mobile {
+        gap: 0.25rem;
+      }
+    }
+
+    // Trip types circulares
+    .trip-type-circle {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+
+      @include tablet {
+        width: 28px;
+        height: 28px;
+        font-size: 0.8rem;
       }
 
-      .short-text,
-      .expanded-content {
-        img {
-          filter: brightness(0) invert(1);
-          width: 0.65rem;
-          height: auto; // Mantiene la proporción original
-          vertical-align: middle;
-          margin-right: 4px;
-          position: relative;
-          top: -1px; // Ajuste fino para centrar perfectamente con el texto
-        }
-
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-      }
-
-      .expanded-content {
-        display: none;
+      @include mobile {
+        width: 24px;
+        height: 24px;
+        font-size: 0.7rem;
       }
 
       &:hover {
-        .short-text {
-          display: none;
-        }
-
-        .expanded-content {
-          display: flex; // Cambiado de inline-block a flex para mantener consistencia
-          align-items: center;
-        }
+        transform: scale(1.1);
       }
     }
 
-    .trip-type-tag {
-      margin-top: $spacing-xs;
-    }
-    
     // Indicador general
     .indicator {
       font-weight: 500;
       text-align: start;
       color: var(--p-primary-color);
       @include responsive-font(0.7rem, 0.8rem, 0.75rem);
-    }
-
-    // Contenedor de etiquetas
-    .tags-container {
-      position: absolute;
-      top: $spacing-md;
-      right: $spacing-md;
-      display: flex;
-      flex-direction: column;
-      gap: 0.1rem;
-      align-items: flex-end;
-
-      // Etiqueta individual
-      .tag {
-        background: var(--p-button-primary-color);
-        color: var(--background-azul);
-        padding: $spacing-xs $spacing-xs * 2;
-        border-radius: $border-radius-sm;
-        @include responsive-font(0.8rem, 0.85rem, 0.7rem);
-
-        // Etiqueta expandible
-        &.expandable-tag {
-          transition: all 0.3s ease;
-          max-width: 40px;
-          overflow: hidden;
-          white-space: nowrap;
-          cursor: pointer;
-          border-radius: 10px;
-          margin-bottom: 0.1rem;
-
-          &:hover {
-            max-width: none;
-            width: auto;
-            padding-right: $spacing-sm;
-
-            .short-text {
-              opacity: 0;
-              width: 0;
-              position: absolute;
-              overflow: hidden;
-            }
-
-            .expanded-content {
-              opacity: 1;
-              max-width: none;
-              width: auto;
-              margin-left: 0;
-            }
-          }
-        }
-      }
-
-      // Texto corto para etiquetas expandibles
-      .short-text {
-        display: flex;
-        align-items: center;
-        transition: all 0.1s ease;
-
-        img {
-          width: 0.65rem; // Unificado con el tamaño anterior
-          height: auto;
-          position: relative;
-          top: -1px;
-        }
-      }
-
-      // Contenido expandido
-      .expanded-content {
-        display: inline-block;
-        opacity: 0;
-        max-width: 0;
-        overflow: hidden;
-        transition: all 0.3s ease;
-
-        img {
-          width: 0.65rem; // Aseguramos que sea igual en todos lados
-          height: auto;
-          position: relative;
-          top: -1px;
-        }
-      }
     }
 
     // Título en el overlay
@@ -308,10 +221,10 @@ $spacing-md: 1rem;
 
     .overlay {
       border-radius: $border-radius-md; // Añadido para asegurar consistencia
-      .rating,
-      .tag {
+      .rating {
         padding: 0.3rem 0.6rem;
         font-size: 0.8rem;
+        border-radius: 30%;
       }
 
       .title-overlay {
@@ -364,74 +277,6 @@ $spacing-md: 1rem;
   100% {
     opacity: 0.5;
   }
-}
-
-// Contenedor de etiquetas - SIMPLIFICAR EN MOBILE
-.tags-container {
-    position: absolute;
-    top: $spacing-md;
-    right: $spacing-md;
-    display: flex;
-    flex-direction: column;
-    gap: 0.1rem;
-    align-items: flex-end;
-    // Evitar que los tags interfieran con el scroll
-    pointer-events: none;
-    
-    .tag {
-        pointer-events: auto; // Permitir clicks
-    }
-
-    @include tablet {
-        top: $spacing-sm;
-        right: $spacing-sm;
-        
-        .tag {
-            font-size: 0.7rem;
-            padding: 0.15rem 0.4rem;
-        }
-    }
-
-    @include mobile {
-        top: 0.4rem;
-        right: 0.4rem;
-        gap: 0.05rem; // Reducir gap entre tags en móvil
-        
-        // Mostrar todos los tags pero con tamaño reducido
-        .tag {
-            font-size: 0.5rem; // Reducido de 0.6rem a 0.5rem
-            padding: 0.08rem 0.25rem; // Reducido padding
-            line-height: 1.2;
-        }
-        
-        // TripTypes con tamaño aún más reducido
-        .trip-type-tag {
-            font-size: 0.48rem;
-            padding: 0.06rem 0.2rem;
-        }
-    }
-}
-
-// Tag By DR - Reducir tamaño en mobile pero mantener visible
-.by-dr-tag {
-    @include tablet {
-        font-size: 0.55rem !important;
-        padding: 0.15rem 0.3rem !important;
-    }
-
-    @include mobile {
-        font-size: 0.48rem !important; // Tamaño reducido
-        padding: 0.06rem 0.2rem !important; // Padding reducido
-        max-height: 18px !important; // Reducir altura máxima
-        
-        .short-text,
-        .expanded-content {
-            img {
-                width: 0.5rem !important; // Icono más pequeño
-                margin-right: 2px !important;
-            }
-        }
-    }
 }
 
 // Altura de imagen optimizada para mobile

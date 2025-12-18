@@ -1,44 +1,26 @@
 <div class="img" (click)="handleTourClick()">
   <img [src]="tourData.imageUrl" [alt]="tourData.title" loading="lazy" data-cookieconsent="ignore" />
   <div class="overlay">
-    <ng-container *ngIf="averageRating !== undefined; else loadingRating">
-      <span class="rating p-button-primary">{{ averageRating }} ★</span>
-    </ng-container>
-    <ng-template #loadingRating>
-      <span *ngIf="isLoadingRating" class="rating p-button-primary loading">...</span>
-    </ng-template>
-    
-    <span *ngIf="tourData.isByDr" class="tag expandable-tag by-dr-tag">
-      <span class="short-text">
-        <img
-          alt="Different Roads logo"
-          src="assets/images/icon-different.svg"
-          loading="lazy"
-        />
-        By DR
-      </span>
-      <span class="expanded-content">
-        <img
-          alt="Different Roads logo"
-          src="assets/images/icon-different.svg"
-          loading="lazy"
-        />
-        Viaje creado por el equipo de Different Roads
-      </span>
-    </span>
-    
-    <div class="tags-container">
-      <!-- Tag principal -->
-      <span class="tag" *ngIf="tourData.tag">{{ tourData.tag }}</span>
+    <div class="top-right-container">
+      <!-- Rating arriba -->
+      <ng-container *ngIf="averageRating !== undefined; else loadingRating">
+        <span class="rating p-button-primary">{{ averageRating }} ★</span>
+      </ng-container>
+      <ng-template #loadingRating>
+        <span *ngIf="isLoadingRating" class="rating p-button-primary loading">...</span>
+      </ng-template>
       
-      <!-- ✅ NUEVO: Botones de TripTypes -->
-      <span 
-  *ngFor="let tripType of tourData.tripTypes" 
-  class="tag trip-type-tag"
-  [style.background]="tripType.color"
-  [style.color]="'white'">
-  {{ tripType.name }}
-</span>
+      <!-- Trip Types circulares debajo del rating -->
+      <div class="trip-types-container">
+        <span 
+          *ngFor="let tripType of tourData.tripTypes" 
+          class="trip-type-circle"
+          [style.background]="tripType.color"
+          [style.color]="'white'"
+          [title]="tripType.name">
+          {{ tripType.abbreviation }}
+        </span>
+      </div>
     </div>
     
   </div>

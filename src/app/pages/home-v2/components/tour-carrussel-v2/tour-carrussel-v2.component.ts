@@ -688,7 +688,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
           // Establecer datos de la configuración
           this.title = configuration.title || '';
           this.description = configuration.content || '';
-          this.theme = configuration.theme || 'dark';
+          this.theme = configuration.theme || 'light';
           this.showMonthTags = configuration.showMonthTags || false;
           this.maxToursToShow = configuration.maxToursToShow || 6;
 

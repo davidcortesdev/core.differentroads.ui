@@ -374,7 +374,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           this.loadDefaultSelection();
         },
         error: (error) => {
-          console.error('Error cargando ciudades:', error);
           this.cities = [];
           this.filteredCities = [];
           this.allCitiesFromService = [];
@@ -464,7 +463,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           }
         }),
         catchError((error) => {
-          console.error('Error cargando precios:', error);
           this.pricesLoading = false;
           this.pricesError = true;
           this.departuresPrices = [];
@@ -518,7 +516,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           this.getAdditionalAgeGroupInfo();
         },
         error: (error) => {
-          console.error('Error cargando grupos de edad:', error);
           this.allowedPassengerTypes = {
             adults: true,
             children: true,
@@ -693,7 +690,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           });
         },
         error: (error) => {
-          console.error('Error cargando tipos de viaje:', error);
         },
       });
   }
@@ -947,7 +943,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
             });
           },
           error: (error) => {
-            console.error('Error cargando tripTypeIds de departures:', error);
           },
         });
     }
@@ -984,7 +979,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           return of({ departure, prices: [] });
         }),
         catchError((error) => {
-          console.error('Error cargando detalles del departure:', error);
           this.error = 'Error al cargar los detalles del departure';
           this.loading = false;
           return of({ departure: null, prices: [] });
@@ -998,7 +992,6 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           this.loading = false;
         },
         error: (error) => {
-          console.error('Error en el flujo de carga:', error);
           this.error = 'Error al cargar los detalles del departure';
           this.loading = false;
         },

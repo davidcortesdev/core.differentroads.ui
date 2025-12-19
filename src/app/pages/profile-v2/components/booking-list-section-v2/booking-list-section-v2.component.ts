@@ -452,7 +452,6 @@ export class BookingListSectionV2Component
           return forkJoin(tourPromises).pipe(
             takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
             catchError((error) => {
-              console.error('Error obteniendo información de tours:', error);
               return of(
                 reservations.map((reservation) => ({
                   reservation,
@@ -478,7 +477,6 @@ export class BookingListSectionV2Component
           );
         }),
         catchError((error) => {
-          console.error('Error obteniendo reservas activas:', error);
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
@@ -556,7 +554,6 @@ export class BookingListSectionV2Component
           return forkJoin(tourPromises).pipe(
             takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
             catchError((error) => {
-              console.error('Error obteniendo información de tours:', error);
               return of(
                 reservations.map((reservation) => ({
                   reservation,
@@ -582,7 +579,6 @@ export class BookingListSectionV2Component
           );
         }),
         catchError((error) => {
-          console.error('Error obteniendo reservas pendientes:', error);
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
@@ -673,7 +669,6 @@ export class BookingListSectionV2Component
           return forkJoin(tourPromises).pipe(
             takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
             catchError((error) => {
-              console.error('Error obteniendo información de tours:', error);
               return of(
                 reservations.map((reservation) => ({
                   reservation,
@@ -695,7 +690,6 @@ export class BookingListSectionV2Component
           );
         }),
         catchError((error) => {
-          console.error('Error obteniendo historial de viajes:', error);
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
@@ -772,7 +766,6 @@ export class BookingListSectionV2Component
           return forkJoin(tourPromises).pipe(
             takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
             catchError((error) => {
-              console.error('Error obteniendo información de tours:', error);
               return of(
                 reservations.map((reservation) => ({
                   reservation,
@@ -794,7 +787,6 @@ export class BookingListSectionV2Component
           );
         }),
         catchError((error) => {
-          console.error('Error obteniendo historial de viajes:', error);
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
@@ -872,7 +864,6 @@ export class BookingListSectionV2Component
           return forkJoin(tourPromises).pipe(
             takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
             catchError((error) => {
-              console.error('Error obteniendo información de tours:', error);
               return of(
                 reservations.map((reservation) => ({
                   reservation,
@@ -894,7 +885,6 @@ export class BookingListSectionV2Component
           );
         }),
         catchError((error) => {
-          console.error('Error obteniendo presupuestos recientes:', error);
           this.messageService.add({
             severity: 'error',
             summary: 'Error',

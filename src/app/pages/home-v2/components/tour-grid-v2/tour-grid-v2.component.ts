@@ -988,9 +988,8 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
           userData
         );
       },
-      error: (error) => {
-        console.error('Error obteniendo datos de usuario para analytics:', error);
-        // Disparar evento sin datos de usuario en caso de error
+        error: (error) => {
+          // Disparar evento sin datos de usuario en caso de error
         this.analyticsService.viewItemList(
           this.itemListId,
           this.itemListName,

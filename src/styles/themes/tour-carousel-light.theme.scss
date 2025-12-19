@@ -1,0 +1,21 @@
+// ===============================================
+// TEMA CLARO - CARRUSEL DE TOURS
+// ===============================================
+// Este archivo contiene las variables CSS para el tema claro
+// del carrusel de tours en la página de inicio.
+
+// Variables para la sección del carrusel
+.tours-section.theme-light {
+    --theme-section-bg: transparent;
+    --theme-description-text: var(--background-azul);
+}
+
+// Variables para las tarjetas de tour
+.tour-card.theme-light,
+.card-footer.theme-light {
+    --theme-card-bg: var(--secondary-color-500);
+    --theme-card-description-text: white;
+    --theme-card-price-text: white;
+    --theme-card-desde-text: white;
+}
+

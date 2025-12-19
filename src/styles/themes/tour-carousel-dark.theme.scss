@@ -1,0 +1,27 @@
+// ===============================================
+// TEMA OSCURO - CARRUSEL DE TOURS
+// ===============================================
+// Este archivo contiene las variables CSS para el tema oscuro
+// del carrusel de tours en la página de inicio.
+
+// Variables para la sección del carrusel
+.tours-section.theme-dark {
+    --theme-section-bg: var(--secondary-color-500);
+    --theme-description-text: white;
+
+    .tours-section-description {
+        .title-icon {
+            filter: brightness(0) invert(1);
+        }
+    }
+}
+
+// Variables para las tarjetas de tour
+.tour-card.theme-dark,
+.card-footer.theme-dark {
+    --theme-card-bg: white;
+    --theme-card-description-text: rgb(0, 0, 0);
+    --theme-card-price-text: black;
+    --theme-card-desde-text: black;
+}
+

@@ -1,3 +1,7 @@
+// Importar temas del carrusel de tours
+@import '../../../../../styles/themes/tour-carousel-light.theme.scss';
+@import '../../../../../styles/themes/tour-carousel-dark.theme.scss';
+
 // Variables
 $title-desktop-size: 2rem;
 $title-tablet-size: 1.75rem;
@@ -19,24 +23,6 @@ $breakpoint-small: 768px;
     margin: 0;
     width: 100%;
     background-color: var(--theme-section-bg);
-
-    // Variables tema claro (valores actuales)
-    &.theme-light {
-        --theme-section-bg: transparent;
-        --theme-description-text: var(--background-azul);
-    }
-
-    // Variables tema oscuro (temporalmente en rojo)
-    &.theme-dark {
-        --theme-section-bg: var(--secondary-color-500);
-        --theme-description-text: white;
-
-        .tours-section-description {
-            .title-icon {
-                filter: brightness(0) invert(1);
-            }
-        }
-    }
 
     .tours-section-layout {
         display: flex;

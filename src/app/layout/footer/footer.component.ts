@@ -70,8 +70,9 @@ export class FooterComponent implements OnInit, AfterViewInit, OnDestroy {
             this.footerColumns = columns.sort((a, b) => a.orden - b.orden);
             this.fetchFooterLinks();
           },
-          error: (error) =>
-            console.error('Error fetching footer columns:', error),
+          error: (error) => {
+            // Error fetching footer columns
+          },
         })
     );
   }
@@ -85,8 +86,9 @@ export class FooterComponent implements OnInit, AfterViewInit, OnDestroy {
           next: (links: IFooterLinkResponse[]) => {
             this.footerLinks = links.sort((a, b) => a.orden - b.orden);
           },
-          error: (error) =>
-            console.error('Error fetching footer links:', error),
+          error: (error) => {
+            // Error fetching footer links
+          },
         })
     );
   }
@@ -176,8 +178,6 @@ export class FooterComponent implements OnInit, AfterViewInit, OnDestroy {
     // Intentar con la función global de Termly
     if ((window as any).displayPreferenceModal) {
       (window as any).displayPreferenceModal();
-    } else {
-      console.warn("El modal de Termly no está disponible aún.");
     }
   }
 

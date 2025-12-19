@@ -99,30 +99,14 @@ export class TourListV2Component implements OnInit, OnDestroy {
             if (foundConfig) {
               targetConfig = foundConfig;
             } else {
-              console.warn(
-                '⚠️ No se encontró configuración con displayOrder:',
-                this.sectionDisplayOrder
-              );
             }
           }
 
           this.loadSpecificConfiguration(targetConfig.id);
         } else {
-          console.warn(
-            '⚠️ TourListV2 - No configurations found for sectionType:',
-            sectionType
-          );
-          console.warn(
-            '⚠️ Esto puede indicar que no hay configuraciones activas para esta sección'
-          );
         }
       },
       error: (error) => {
-        console.error(
-          '❌ Error loading TOUR_GRID configurations (ID: 3):',
-          error
-        );
-        console.error('❌ Error completo:', error);
       },
     });
   }
@@ -152,16 +136,10 @@ export class TourListV2Component implements OnInit, OnDestroy {
           if (filters.length > 0) {
             this.loadTourIdsFromFilters(filters);
           } else {
-            console.warn(
-              '⚠️ No se encontraron filtros para la configuración ID:',
-              configId
-            );
             this.tourIds = [];
           }
         },
         error: (error) => {
-          console.error('❌ Error loading configuration or filters:', error);
-          console.error('❌ Error completo:', error);
           this.tourIds = [];
         },
       });
@@ -171,7 +149,6 @@ export class TourListV2Component implements OnInit, OnDestroy {
     filters: IHomeSectionTourFilterResponse[]
   ): void {
     if (filters.length === 0) {
-      console.warn('⚠️ No hay filtros para procesar');
       this.tourIds = [];
       return;
     }
@@ -218,7 +195,6 @@ export class TourListV2Component implements OnInit, OnDestroy {
           return uniqueTourIds;
         }),
         catchError((error) => {
-          console.error('❌ Error loading tour IDs from filters:', error);
           return of([]);
         })
       )
@@ -242,10 +218,6 @@ export class TourListV2Component implements OnInit, OnDestroy {
             return tourIds;
           }),
           catchError((error) => {
-            console.error(
-              `❌ Error loading tours by tag ${filter.tagId}:`,
-              error
-            );
             return of([]);
           })
         );
@@ -258,10 +230,6 @@ export class TourListV2Component implements OnInit, OnDestroy {
               return tourIds;
             }),
             catchError((error) => {
-              console.error(
-                `❌ Error loading tours by location ${filter.locationId}:`,
-                error
-              );
               return of([]);
             })
           );
@@ -274,12 +242,10 @@ export class TourListV2Component implements OnInit, OnDestroy {
             );
           return of(tourIds);
         } catch (error) {
-          console.error('❌ Error parsing specific tour IDs:', error);
           return of([]);
         }
 
       default:
-        console.warn(`⚠️ Unknown filter type: ${filter.filterType}`);
         return of([]);
     }
   }

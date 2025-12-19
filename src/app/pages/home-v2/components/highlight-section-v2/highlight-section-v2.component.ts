@@ -99,17 +99,9 @@ export class HighlightSectionV2Component implements OnInit, OnDestroy {
             }
             this.loadSpecificConfiguration(targetConfig.id);
           } else {
-            console.warn(
-              '⚠️ HighlightSectionV2 - No configurations found for section type:',
-              this.sectionType
-            );
           }
         },
         error: (error) => {
-          console.error(
-            '❌ HighlightSectionV2 - Error loading highlight configurations:',
-            error
-          );
         },
       });
   }
@@ -131,17 +123,9 @@ export class HighlightSectionV2Component implements OnInit, OnDestroy {
             // Cargar imagen destacada (que incluye título y descripción)
             this.loadSectionImage(configId);
           } else {
-            console.warn(
-              '⚠️ HighlightSectionV2 - Configuration is not active:',
-              configId
-            );
           }
         },
         error: (error) => {
-          console.error(
-            '❌ HighlightSectionV2 - Error loading configuration:',
-            error
-          );
         },
       });
   }
@@ -165,10 +149,6 @@ export class HighlightSectionV2Component implements OnInit, OnDestroy {
           }
         },
         error: (error) => {
-          console.error(
-            '❌ HighlightSectionV2 - Error loading section image:',
-            error
-          );
           this.image = null;
         },
       });

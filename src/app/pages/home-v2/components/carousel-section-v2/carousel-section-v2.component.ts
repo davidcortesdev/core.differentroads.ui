@@ -120,17 +120,9 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
             }
             this.loadSpecificConfiguration(targetConfig.id);
           } else {
-            console.warn(
-              '⚠️ CarouselSectionV2 - No configurations found for section type:',
-              this.sectionType
-            );
           }
         },
         error: (error) => {
-          console.error(
-            '❌ CarouselSectionV2 - Error loading carousel configurations:',
-            error
-          );
         },
       });
   }
@@ -155,17 +147,9 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
             // Cargar cards para el carrusel
             this.loadSectionCards(configId);
           } else {
-            console.warn(
-              '⚠️ CarouselSectionV2 - Configuration is not active:',
-              configId
-            );
           }
         },
         error: (error) => {
-          console.error(
-            '❌ CarouselSectionV2 - Error loading configuration:',
-            error
-          );
         },
       });
   }
@@ -187,10 +171,6 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
           }
         },
         error: (error) => {
-          console.error(
-            '❌ CarouselSectionV2 - Error loading section content:',
-            error
-          );
         },
       });
   }
@@ -206,10 +186,6 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
           this.cdr.markForCheck();
         },
         error: (error) => {
-          console.error(
-            '❌ CarouselSectionV2 - Error loading section cards:',
-            error
-          );
           this.cards = [];
         },
       });

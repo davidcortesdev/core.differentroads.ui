@@ -192,10 +192,9 @@ $breakpoint-small: 768px;
             }
 
             .tours-sectionMore {
-                display: flex;
-                justify-content: center;
-                width: 100%;
-                margin-top: 1rem;
+                &.desktop-button {
+                    display: none; // Ocultar botón dentro de la descripción en mobile
+                }
             }
         }
 
@@ -204,6 +203,19 @@ $breakpoint-small: 768px;
             min-width: 6rem;
             height: 2.5rem;
             font-size: 0.9rem;
+        }
+    }
+
+    // Botón para mobile - debajo del carrusel
+    .tours-sectionMore-mobile {
+        display: none; // Oculto por defecto
+
+        @media screen and (max-width: $breakpoint-small) {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            padding: 1.5rem 1rem 0 1rem;
         }
     }
 }

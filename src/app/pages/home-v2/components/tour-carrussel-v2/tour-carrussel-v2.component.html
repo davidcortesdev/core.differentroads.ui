@@ -19,7 +19,7 @@
             {{ description }}
           </div>
 
-          <div *ngIf="viewMoreButton" class="tours-sectionMore">
+          <div *ngIf="viewMoreButton" class="tours-sectionMore desktop-button">
             <p-button
               [label]="viewMoreButton.text"
               styleClass="main-btn-circle"
@@ -58,5 +58,15 @@
         </ng-template>
       </p-carousel>
     </div>
+  </div>
+  
+  <!-- Botón para mobile - debajo del carrusel -->
+  <div *ngIf="viewMoreButton" class="tours-sectionMore-mobile">
+    <p-button
+      [label]="viewMoreButton.text"
+      styleClass="main-btn-circle"
+      (onClick)="onViewMore()"
+    >
+    </p-button>
   </div>
 </section>

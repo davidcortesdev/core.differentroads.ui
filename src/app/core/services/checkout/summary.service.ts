@@ -35,7 +35,6 @@ export class SummaryService {
 
   getOrderValue(): Order | null {
     const order = this.orderSource?.getValue();
-    // No hacemos console.log aquí para evitar spam, ya que se llama con frecuencia
     return order;
   }
 }

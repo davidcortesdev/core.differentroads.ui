@@ -32,7 +32,6 @@ export class HubspotService {
 
     return this.http.post(this.DATA_API_URL, data, { headers }).pipe(
       catchError((error) => {
-        console.error('Error creating contact:', error);
         throw error;
       })
     );

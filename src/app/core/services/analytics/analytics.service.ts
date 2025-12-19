@@ -1108,7 +1108,6 @@ export class AnalyticsService {
       // 2. Taboola Pixel - evento add_payment_info (tal cual Pay.tsx)
       this.sendTaboolaEvent('add_payment_info');
     } catch (error) {
-      console.error('Error enviando eventos view_payment_info a plataformas legacy:', error);
     }
   }
 
@@ -1128,7 +1127,6 @@ export class AnalyticsService {
         });
       }
     } catch (error) {
-      console.error('Error enviando evento Booked_Blocked a Google Analytics Universal:', error);
     }
   }
 
@@ -1336,7 +1334,6 @@ export class AnalyticsService {
         ga('ecommerce:send');
       }
     } catch (error) {
-      console.error('Error enviando purchase a Google Analytics Universal:', error);
     }
   }
 
@@ -1385,7 +1382,6 @@ export class AnalyticsService {
         });
       }
     } catch (error) {
-      console.error('Error enviando purchase a Google Tag (gtag):', error);
     }
   }
 
@@ -1427,7 +1423,6 @@ export class AnalyticsService {
         _tfa.push(eventData);
       }
     } catch (error) {
-      console.error(`Error enviando evento ${eventName} a Taboola:`, error);
     }
   }
 
@@ -1530,7 +1525,6 @@ export class AnalyticsService {
         );
       }),
       catchError((error) => {
-        console.error('Error obteniendo datos completos del tour para purchase:', error);
         // Fallback: obtener datos básicos de la reserva
         return forkJoin({
           reservation: this.reservationService.getById(reservationId),
@@ -1626,7 +1620,6 @@ export class AnalyticsService {
         );
       },
       error: (error) => {
-        console.error('Error final obteniendo datos para purchase:', error);
       }
     });
   }

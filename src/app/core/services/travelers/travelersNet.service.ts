@@ -61,7 +61,6 @@ export class TravelersNetService {
 
     return this.http.get<Traveler[]>(`${this.apiUrl}/travelers`, { params }).pipe(
       catchError(error => {
-        console.error('❌ Error fetching travelers:', error);
         
         // Si hay múltiples IDs y falla, intentar método fallback
         if (filters?.id && Array.isArray(filters.id)) {
@@ -87,7 +86,6 @@ export class TravelersNetService {
     const requests = limitedIds.map(id => 
       this.getTravelerById(id).pipe(
         catchError(error => {
-          console.error(`❌ Error getting traveler ${id}:`, error);
           return of({ id, name: 'Usuario desconocido', email: '' } as Traveler);
         })
       )

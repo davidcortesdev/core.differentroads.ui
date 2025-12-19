@@ -98,7 +98,6 @@ export class TripTypeService {
           }
         }),
         catchError(error => {
-          console.error('Error creando tipo de viaje:', error);
           return of({} as ITripTypeResponse);
         })
       );
@@ -132,7 +131,6 @@ export class TripTypeService {
           this.tripTypeObservableCache.delete(id);
         }),
         catchError(error => {
-          console.error(`Error obteniendo tipo de viaje con ID ${id}:`, error);
           // Limpiar el observable cache en caso de error
           this.tripTypeObservableCache.delete(id);
           return of({} as ITripTypeResponse);
@@ -164,7 +162,6 @@ export class TripTypeService {
           }
         }),
         catchError(error => {
-          console.error(`Error actualizando tipo de viaje con ID ${id}:`, error);
           return of(false);
         })
       );
@@ -185,7 +182,6 @@ export class TripTypeService {
           }
         }),
         catchError(error => {
-          console.error(`Error eliminando tipo de viaje con ID ${id}:`, error);
           return of(false);
         })
       );

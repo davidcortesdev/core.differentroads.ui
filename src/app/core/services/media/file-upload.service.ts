@@ -27,17 +27,10 @@ export class FileUploadService {
     // Check if Cloudinary settings are available
     try {
       if (!environment.cloudinary) {
-        console.error(
-          'FileUploadService: Missing Cloudinary configuration in environment'
-        );
       } else {
 
       }
     } catch (err) {
-      console.error(
-        'FileUploadService: Error checking Cloudinary configuration:',
-        err
-      );
     }
   }
 

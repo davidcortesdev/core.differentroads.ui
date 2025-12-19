@@ -279,7 +279,6 @@ export class FlightSectionV2Component implements OnChanges {
         const details = await firstValueFrom(
           this.flightsNetService.getFlightDetail(this.returnFlight.id).pipe(
             catchError((error) => {
-              console.error('❌ Error al obtener detalles del vuelo de vuelta:', error);
               return of(null);
             })
           )

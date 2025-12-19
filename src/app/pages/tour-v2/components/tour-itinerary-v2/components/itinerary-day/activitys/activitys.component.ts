@@ -102,7 +102,6 @@ export class ActivitysComponent implements OnInit, OnChanges {
         this.loadDataWithFilters();
       },
       error: (error) => {
-        console.error('Error loading age groups:', error);
         // Continuar sin grupos de edad, usar valores por defecto
         this.loadDataWithFilters();
       }
@@ -129,7 +128,6 @@ export class ActivitysComponent implements OnInit, OnChanges {
       )
       .pipe(
         catchError((err) => {
-          console.error('Error al cargar actividades:', err);
           this.error =
             'Error al cargar las actividades. Por favor intente nuevamente.';
           return of([]);
@@ -178,10 +176,6 @@ export class ActivitysComponent implements OnInit, OnChanges {
         .pipe(
           map((prices) => (prices.length > 0 ? prices : [])),
           catchError((error) => {
-            console.error(
-              `Error loading price for activity ${activity.id}:`,
-              error
-            );
             return of([]);
           })
         )
@@ -208,10 +202,6 @@ export class ActivitysComponent implements OnInit, OnChanges {
         .pipe(
           map((prices) => (prices.length > 0 ? prices : [])),
           catchError((error) => {
-            console.error(
-              `Error loading price for pack ${activity.id}:`,
-              error
-            );
             return of([]);
           })
         )

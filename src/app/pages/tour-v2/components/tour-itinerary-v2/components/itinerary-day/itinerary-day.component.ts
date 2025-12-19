@@ -124,7 +124,6 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
     if (this.itineraryId) {
       this.loadItineraryDaysData([this.itineraryId]);
     } else {
-      console.warn('⚠️ No se proporcionó itineraryId específico');
       this.loading = false;
       this.clearData();
     }
@@ -149,10 +148,6 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
     const itineraryDaysObservables = itineraryIds.map((itineraryId) =>
       this.itineraryDayService.getAll({ itineraryId }).pipe(
         catchError((error) => {
-          console.error(
-            `❌ Error loading days for itinerary ${itineraryId}:`,
-            error
-          );
           return of([]);
         })
       )
@@ -163,7 +158,6 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
       .pipe(
         map((daysArrays) => daysArrays.flat()), // Aplanar el array de arrays
         catchError((error) => {
-          console.error('❌ Error loading itinerary days:', error);
           return of([]);
         })
       )
@@ -189,7 +183,6 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
     const itineraryDaysCMSObservables = dayIds.map((dayId) =>
       this.itineraryDayCMSService.getAll({ itineraryDayId: dayId }).pipe(
         catchError((error) => {
-          console.error(`❌ Error loading CMS for day ${dayId}:`, error);
           return of([]);
         })
       )

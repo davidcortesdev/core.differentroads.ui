@@ -158,7 +158,6 @@ export class TourInfoAccordionV2Component
 
         },
         error: (error) => {
-          console.error('Error al cargar la información del tour:', error);
         },
       });
   }

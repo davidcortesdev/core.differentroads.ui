@@ -159,7 +159,6 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
             }
           },
           error: (imageError) => {
-            console.error('Error loading banner images:', imageError);
           },
         });
       },

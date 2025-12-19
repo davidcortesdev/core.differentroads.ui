@@ -360,7 +360,6 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
           // Los datos de pasajeros ahora se cargan directamente en el componente booking-personal-data
         },
         error: (error) => {
-          console.error('Error cargando datos de reserva:', error);
           this.messageService.add({
             key: 'center',
             severity: 'error',
@@ -382,7 +381,6 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
         this.updateTripItemsFromSummary(summary);
       },
       error: (error) => {
-        console.error('Error loading reservation summary:', error);
       },
     });
   }
@@ -473,7 +471,6 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
 
       },
       error: (error) => {
-        console.error('Error loading reservation status code:', error);
         // El statusCode permanece undefined en caso de error
       },
     });
@@ -493,7 +490,6 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
         }
       },
       error: (error) => {
-        console.error('Error loading tour data:', error);
         this.bookingData.title = `Tour ${tourId}`;
         if (this.bookingImages.length > 0) {
           this.bookingImages[0].name = `Tour ${tourId}`;
@@ -517,7 +513,6 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
         }
       },
       error: (error) => {
-        console.error('Error loading tour image:', error);
       },
     });
   }
@@ -536,7 +531,6 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
         }
       },
       error: (error) => {
-        console.error('Error loading retailer data:', error);
         this.bookingData.retailer = `Retailer ${retailerId}`;
         if (this.bookingImages.length > 0) {
           this.bookingImages[0].retailer = `Retailer ${retailerId}`;
@@ -579,7 +573,6 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
         }
       },
       error: (error) => {
-        console.error('Error loading departure data:', error);
         // Mantener la fecha por defecto si hay error
       },
     });
@@ -787,8 +780,6 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
         });
       },
       error: (error) => {
-        console.error('❌ Error al cancelar la reserva:', error);
-        
         this.messageService.add({
           key: 'center',
           severity: 'error',

@@ -497,3 +497,45 @@ $primary: var(--p-primary-color);
 }
 
 .departure-empty .empty-content{display:flex;flex-direction:column;align-items:center;text-align:center;padding:2rem;.empty-icon{font-size:3rem}}
+
+.flight-times {
+  font-size: 0.75rem;
+  color: #666;
+  text-align: center;
+  max-width: 100%;
+  padding: 0.25rem 0;
+  margin-top: 0.5rem;
+  font-weight: 500;
+  
+  .flight-line {
+    line-height: 1.3;
+    margin-bottom: 0.2rem;
+    &:last-child {
+      margin-bottom: 0;
+    }
+    
+    // ✅ AGREGAR: Estilo para el texto de carga
+    &.loading-text {
+      color: #999;
+      font-style: italic;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+  
+  // Estilos para el contenedor del skeleton
+  .flight-times-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 0.7rem;
+    .flight-line {
+      line-height: 1.2;
+    }
+  }
+}

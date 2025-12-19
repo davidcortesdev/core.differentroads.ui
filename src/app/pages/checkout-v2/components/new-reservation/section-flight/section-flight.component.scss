@@ -1,4 +1,6 @@
 // section-flight.component.scss
+@use "sass:map";
+
 // Variables globales
 $azul: var(--background-azul);
 $coral: #ea685c;
@@ -45,12 +47,12 @@ $font-size: (
 
 // Función para acceder al sistema de espaciado
 @function spacing($key) {
-    @return map-get($spacing, $key);
+    @return map.get($spacing, $key);
 }
 
 // Función para acceder al sistema de tamaños de fuente
 @function font-size($key) {
-    @return map-get($font-size, $key);
+    @return map.get($font-size, $key);
 }
 
 :host {

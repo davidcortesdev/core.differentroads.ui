@@ -93,7 +93,6 @@ if (currentValue && currentValue !== existingValue) {
     return true;  // ✅ Hay cambios válidos para guardar
   } else {
     // ❌ Campo inválido, no se guardará
-    console.log(`[SKIP-INVALID] ${fieldCode}: inválido`);
   }
 }
 ```
@@ -215,7 +214,6 @@ if ((control.dirty || (hasValue && isDifferent)) && isValid) {
   formData.push(fieldData);
 } else if (!isValid && (control.dirty || (hasValue && isDifferent))) {
   // ❌ NO guardar: tiene cambios pero es inválido
-  console.log(`[SKIP-INVALID] ${fieldCode}: inválido`);
 }
 ```
 

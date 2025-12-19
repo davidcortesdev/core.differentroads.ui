@@ -37,7 +37,6 @@ isReadyToContinue(): boolean
 
 ```typescript
 if (!this.traveler) {
-  console.log('[isReadyToContinue] ❌ No hay viajero cargado');
   return false;
 }
 ```
@@ -46,7 +45,6 @@ if (!this.traveler) {
 
 ```typescript
 if (this.hasPendingChanges()) {
-  console.log('[isReadyToContinue] ❌ Hay cambios pendientes sin guardar');
   return false;
 }
 ```
@@ -93,21 +91,17 @@ export class InfoTravelersComponent {
   canContinueToNextStep(): boolean {
     // Verificar que haya formularios
     if (!this.travelerForms || this.travelerForms.length === 0) {
-      console.log('[canContinueToNextStep] ❌ No hay formularios de viajeros');
       return false;
     }
 
     // Verificar que TODOS los viajeros estén listos
     const allReady = this.travelerForms.toArray().every(form => {
       const isReady = form.isReadyToContinue();
-      console.log(`[canContinueToNextStep] Viajero ${form.travelerId}: ${isReady ? '✅' : '❌'}`);
       return isReady;
     });
 
     if (allReady) {
-      console.log('[canContinueToNextStep] ✅ Todos los viajeros están listos');
     } else {
-      console.log('[canContinueToNextStep] ❌ Algunos viajeros no están listos');
     }
 
     return allReady;
@@ -170,7 +164,6 @@ checkSpecificTraveler(travelerId: number): boolean {
     .find(form => form.travelerId === travelerId);
 
   if (!travelerForm) {
-    console.log(`[checkSpecificTraveler] ❌ Viajero ${travelerId} no encontrado`);
     return false;
   }
 

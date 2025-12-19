@@ -14,6 +14,7 @@
         class="p-button-rounded search-button"
         [ngClass]="{'active': showTable}"
         (click)="toggleTable()"
+        aria-label="Buscar puntos"
       >
         <i class="pi pi-search"></i>
       </button>
@@ -21,10 +22,12 @@
   </p-toolbar>
 
   <!-- Componente de tabla de puntos -->
-  <app-points-table 
-    [points]="points" 
-    [showTable]="showTable">
-  </app-points-table>
+  <div class="table-wrapper" *ngIf="showTable">
+    <app-points-table 
+      [points]="points" 
+      [showTable]="showTable">
+    </app-points-table>
+  </div>
 
   <!-- Componente de tarjetas de membresía -->
   <app-membership-cards 

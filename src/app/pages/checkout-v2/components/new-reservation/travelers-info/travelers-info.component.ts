@@ -102,7 +102,6 @@ export class TravelersInfoComponent implements OnInit, OnChanges {
 
   private loadData(): void {
     if (!this.reservationId) {
-      console.warn('No reservation ID provided to travelers-info component');
       return;
     }
 
@@ -120,7 +119,6 @@ export class TravelersInfoComponent implements OnInit, OnChanges {
           this.loadTravelersFields(travelers);
         },
         error: (error) => {
-          console.error('Error loading travelers:', error);
           this.loading = false;
         },
       });
@@ -170,7 +168,6 @@ export class TravelersInfoComponent implements OnInit, OnChanges {
         }, 100);
       },
       error: (error) => {
-        console.error('Error loading travelers data:', error);
         this.loading = false;
       },
     });
@@ -232,7 +229,6 @@ export class TravelersInfoComponent implements OnInit, OnChanges {
       );
       processed.room = roomName;
     } catch (error) {
-      console.error('Error getting accommodation name:', error);
       processed.room = `Acomodación ID: ${accommodations[0].departureAccommodationId}`;
     }
   }
@@ -280,7 +276,6 @@ export class TravelersInfoComponent implements OnInit, OnChanges {
 
       return accommodationInfo.name;
     } catch (error) {
-      console.error('Error fetching accommodation details:', error);
       return `Acomodación ID: ${departureAccommodationId}`;
     }
   }
@@ -304,7 +299,6 @@ export class TravelersInfoComponent implements OnInit, OnChanges {
             const roomName = await this.getAccommodationName(accommodationId);
             this.travelers[index].room = roomName;
           } catch (error) {
-            console.error('Error updating accommodation name:', error);
           }
         }
       }

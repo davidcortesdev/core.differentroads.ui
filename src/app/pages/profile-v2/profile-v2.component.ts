@@ -49,7 +49,6 @@ export class ProfileV2Component implements OnInit, OnDestroy {
     this.authSubscription = from(this.authenticateService.getCognitoSub()).pipe(
       switchMap(cognitoSub => {
         if (!cognitoSub) {
-          console.warn('⚠️ No se encontró Cognito Sub');
           return of([]);
         }
         this.cognitoId = cognitoSub;
@@ -60,7 +59,6 @@ export class ProfileV2Component implements OnInit, OnDestroy {
         return userId ? userId.toString() : '';
       }),
       catchError(error => {
-        console.error('Error obteniendo el usuario:', error);
         return of('');
       })
     ).subscribe({
@@ -69,7 +67,6 @@ export class ProfileV2Component implements OnInit, OnDestroy {
         this.isLoadingUserId = false;
       },
       error: (error) => {
-        console.error('Error crítico en la obtención del usuario:', error);
         this.isLoadingUserId = false;
       }
     });

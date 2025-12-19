@@ -224,7 +224,6 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     const userDataObservable = this.isUserAuthenticated() 
       ? this.checkoutUserDataService.getCurrentUserData().pipe(
           catchError((error) => {
-            console.warn('No se pudieron cargar los datos del usuario:', error);
             return of(null);
           })
         )
@@ -284,7 +283,6 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
           });
       },
       error: (error) => {
-        console.error('Error al cargar datos del usuario:', error);
         this.loading = false;
       }
     });
@@ -325,7 +323,6 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
           this.initializeTravelerForm();
         },
         error: (error) => {
-          console.error('Error al cargar campos del viajero:', error);
           this.loading = false;
         },
       });
@@ -1457,7 +1454,6 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
         life: 2000,
       });
     } catch (error) {
-      console.error('[AutoSave] Error en guardado automático:', error);
       
       this.messageService.add({
         severity: 'error',
@@ -1632,7 +1628,6 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       });
 
     } catch (error) {
-      console.error('Error al guardar datos del viajero:', error);
       
       this.messageService.add({
         severity: 'error',
@@ -1730,7 +1725,6 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
 
             },
             error: (error) => {
-              console.error('Error al recargar campos del viajero:', error);
             },
           });
       }
@@ -1739,7 +1733,6 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       // No notificar al padre después de guardar para evitar actualizaciones innecesarias
 
     } catch (error) {
-      console.error('Error al guardar datos del viajero:', error);
       throw error;
     }
   }
@@ -1999,7 +1992,6 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
         });
       },
       error: (error) => {
-        console.error('Error al cargar datos del usuario:', error);
         this.loadingUserData = false;
         
         this.messageService.add({

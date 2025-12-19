@@ -148,7 +148,6 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
         this.cdr.markForCheck();
       },
       error: (error) => {
-        console.error('Error loading flight consolidator data:', error);
         this.isConsolidadorVuelosActive = false;
         this.cdr.markForCheck();
       }
@@ -214,7 +213,6 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
       try {
         await this.defaultFlightsComponent.saveFlightAssignments();
       } catch (error) {
-        console.error('Error al guardar las asignaciones de vuelos en la base de datos:', error);
       }
     }
 
@@ -250,7 +248,6 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
         next: () => {
         },
         error: (error: any) => {
-          console.error('Error al deseleccionar vuelos de specific-search desde flight-management:', error);
         }
       });
     }
@@ -260,7 +257,6 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
       try {
         await this.defaultFlightsComponent.saveFlightAssignments();
       } catch (error) {
-        console.error('Error al guardar las asignaciones de vuelos en la base de datos:', error);
       }
     }
 
@@ -288,7 +284,6 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
       try {
         await this.defaultFlightsComponent.saveFlightAssignmentsForAllTravelers(0, false);
       } catch (error) {
-        console.error('Error al asignar "sin vuelos" a todos los viajeros:', error);
       }
     }
 
@@ -299,7 +294,6 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
       try {
         await this.defaultFlightsComponent.deselectDepartureFlightWithoutSaving();
       } catch (error) {
-        console.error('Error al deseleccionar el vuelo del departure:', error);
       }
     }
 
@@ -308,7 +302,6 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
       try {
         await this.specificSearchComponent.saveFlightAssignments();
       } catch (error) {
-        console.error('Error al guardar las asignaciones de vuelos en la base de datos:', error);
       }
     }
 

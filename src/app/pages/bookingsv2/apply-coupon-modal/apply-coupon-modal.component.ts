@@ -79,7 +79,6 @@ export class ApplyCouponModalComponent {
       .pipe(
         take(1),
         catchError((error) => {
-          console.error('Error obteniendo atributos del usuario:', error);
           this.discountMessage = 'Error: No se pudo obtener la información del usuario logueado';
           this.discountMessageSeverity = 'error';
           this.isApplying = false;
@@ -105,7 +104,6 @@ export class ApplyCouponModalComponent {
           return this.usersNetService.getUsersByEmail(email).pipe(
             take(1),
             catchError((error) => {
-              console.error('Error buscando usuario por email:', error);
               this.discountMessage = 'Error: No se pudo buscar el usuario';
               this.discountMessageSeverity = 'error';
               this.isApplying = false;
@@ -136,7 +134,6 @@ export class ApplyCouponModalComponent {
           // Aplicar el cupón con el userId del usuario logueado (NO de la reserva)
           return this.reservationCouponService.apply(trimmedCode, this.reservationId, userId).pipe(
             catchError((error) => {
-              console.error('Error al aplicar código de descuento:', error);
               this.discountMessage = 'Error al aplicar el código de descuento';
               this.discountMessageSeverity = 'error';
               this.isApplying = false;

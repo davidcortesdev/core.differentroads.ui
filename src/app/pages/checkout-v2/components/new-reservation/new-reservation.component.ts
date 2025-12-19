@@ -199,26 +199,22 @@ export class NewReservationComponent implements OnInit {
         if (statuses.success && statuses.success.length > 0) {
           this.successId = statuses.success[0].id;
         } else {
-          console.error('SUCCESS status not found');
         }
 
         if (statuses.failed && statuses.failed.length > 0) {
           this.failedId = statuses.failed[0].id;
         } else {
-          console.error('FAILED status not found');
         }
 
         if (statuses.pending && statuses.pending.length > 0) {
           this.pendingId = statuses.pending[0].id;
         } else {
-          console.error('PENDING status not found');
         }
 
         // Cargar reserva después de obtener los estados
         this.loadReservation();
       },
       error: (error) => {
-        console.error('Error loading payment statuses:', error);
         this.handleError('Error loading payment statuses');
       },
     });
@@ -252,7 +248,6 @@ export class NewReservationComponent implements OnInit {
         this.loadPayment();
       },
       error: (error) => {
-        console.error('Error loading reservation:', error);
         this.handleError('Error al cargar los datos de la reserva');
       },
     });
@@ -272,7 +267,6 @@ export class NewReservationComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading retailer info:', error);
         // En caso de error, mantener el comportamiento por defecto
       },
     });
@@ -295,7 +289,6 @@ export class NewReservationComponent implements OnInit {
           }
         },
         error: (error) => {
-          console.error('Error loading lead traveler:', error);
         },
       });
   }
@@ -327,7 +320,6 @@ export class NewReservationComponent implements OnInit {
           this.updateBankConceptsWithName();
         },
         error: (error) => {
-          console.error('Error loading lead traveler fields:', error);
         },
       });
   }
@@ -397,7 +389,6 @@ export class NewReservationComponent implements OnInit {
         this.loading = false;
       },
       error: (error) => {
-        console.error('Error loading payment:', error);
         this.handleError('Error al cargar los datos del pago');
       },
     });
@@ -422,7 +413,6 @@ export class NewReservationComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading payment method:', error);
       },
     });
   }
@@ -454,7 +444,6 @@ export class NewReservationComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading payment status:', error);
       },
     });
   }
@@ -483,7 +472,6 @@ export class NewReservationComponent implements OnInit {
    */
   captureOrder(): void {
     if (!this.payment?.transactionReference) {
-      console.error('No transaction reference available');
       return;
     }
 
@@ -521,8 +509,6 @@ export class NewReservationComponent implements OnInit {
           }
         },
         error: (error: any) => {
-          console.error('Error capturing order:', error);
-
           // Actualizar estado del pago como fallido
           if (this.payment) {
             this.payment.paymentStatusId = this.failedId;
@@ -550,7 +536,6 @@ export class NewReservationComponent implements OnInit {
 
       },
       error: (error) => {
-        console.error('Error updating payment status:', error);
       },
     });
   }
@@ -755,7 +740,6 @@ export class NewReservationComponent implements OnInit {
         );
       },
       error: (error) => {
-        console.error('Error al reservar vuelo:', error);
         this.flightBookingError = true;
         this.flightBookingLoading = false;
 
@@ -830,9 +814,6 @@ export class NewReservationComponent implements OnInit {
   private async generatePointsAfterPayment(): Promise<void> {
     try {
       if (!this.reservation?.id || !this.reservation?.totalAmount) {
-        console.warn(
-          'No se puede generar puntos: falta reservationId o totalAmount'
-        );
         return;
       }
 
@@ -842,7 +823,6 @@ export class NewReservationComponent implements OnInit {
       // 2. Obtener el cognito:sub del usuario principal
       const cognitoSub = this.authService.getCognitoIdValue();
       if (!cognitoSub) {
-        console.warn('No se puede generar puntos: usuario no autenticado');
         return;
       }
 
@@ -877,7 +857,6 @@ export class NewReservationComponent implements OnInit {
         life: 5000,
       });
     } catch (error) {
-      console.error('Error generando puntos:', error);
       // No mostrar error al usuario para no interrumpir el flujo de pago
     }
   }
@@ -888,7 +867,6 @@ export class NewReservationComponent implements OnInit {
   private async updateReservationStatusToBooked(): Promise<void> {
     try {
       if (!this.reservation?.id) {
-        console.warn('No se puede actualizar estado: falta reservationId');
         return;
       }
 
@@ -898,7 +876,6 @@ export class NewReservationComponent implements OnInit {
         .toPromise();
 
     } catch (error) {
-      console.error('Error actualizando estado de reserva a BOOKED:', error);
       // No lanzar error para no interrumpir el flujo de pago
     }
   }

@@ -95,7 +95,6 @@ export class BookingFlightsV2Component implements OnInit, OnChanges {
    */
   private loadFlightData(): void {
     if (!this.reservationId) {
-      console.error('❌ No reservation ID available');
       return;
     }
 
@@ -125,7 +124,6 @@ export class BookingFlightsV2Component implements OnInit, OnChanges {
           this.isLoading = false;
         },
         error: (error) => {
-          console.error('❌ Error loading flight data:', error);
           this.isLoading = false;
           this.flight = this.createEmptyFlight();
         }

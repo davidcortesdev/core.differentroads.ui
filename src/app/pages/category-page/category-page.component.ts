@@ -71,12 +71,10 @@ export class CategoryPageComponent implements OnInit, OnDestroy {
               this.tagId = this.tagData.id;
               this.updatePageInfo();
             } else {
-              console.warn(`No se encontró tag para: ${tagName}`);
               this.router.navigate(['/not-found']);
             }
           },
           error: (error) => {
-            console.error('Error al buscar tag:', error);
             this.router.navigate(['/not-found']);
           }
         });
@@ -94,12 +92,10 @@ export class CategoryPageComponent implements OnInit, OnDestroy {
               this.categoryId = this.categoryData.id;
               this.updatePageInfo();
             } else {
-              console.warn(`No se encontró categoría para: ${categoryName}`);
               this.router.navigate(['/not-found']);
             }
           },
           error: (error) => {
-            console.error('Error al buscar categoría:', error);
             this.router.navigate(['/not-found']);
           }
         });
@@ -199,12 +195,10 @@ export class CategoryPageComponent implements OnInit, OnDestroy {
             if (categoryTagIds.length > 0) {
               this.loadToursByTags(categoryTagIds);
             } else {
-              console.warn('No se encontraron tags para la categoría');
               this.isLoadingTours = false;
             }
           },
           error: (error) => {
-            console.error('Error al cargar tags de la categoría:', error);
             this.tourIds = [];
             this.isLoadingTours = false;
           }
@@ -214,7 +208,6 @@ export class CategoryPageComponent implements OnInit, OnDestroy {
 
     // Si hay tagIds directamente, cargar los tours
     if (tagIds.length === 0) {
-      console.warn('No hay IDs de tags para filtrar tours');
       return;
     }
 
@@ -237,7 +230,6 @@ export class CategoryPageComponent implements OnInit, OnDestroy {
           this.isLoadingTours = false;
         },
         error: (error) => {
-          console.error('Error al cargar tours por tags:', error);
           this.tourIds = [];
           this.isLoadingTours = false;
         }

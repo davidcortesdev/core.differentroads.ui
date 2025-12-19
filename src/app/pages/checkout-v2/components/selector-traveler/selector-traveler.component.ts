@@ -147,7 +147,6 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
       error: (error) => {
         this.error = 'Error al cargar los datos iniciales.';
         this.loading = false;
-        console.error('Error loading initial data:', error);
       },
     });
   }
@@ -173,7 +172,6 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
         },
         error: (error) => {
           this.error = 'Error al cargar los suplementos de precio del viaje.';
-          console.error('Error loading supplements:', error);
         },
       });
   }
@@ -214,7 +212,6 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
           'Error al cargar la información de grupos de edad.';
         this.loadingAgeGroups = false;
         this.orderedAgeGroups = [];
-        console.error('Error loading age groups:', error);
       },
     });
   }
@@ -239,7 +236,6 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
         error: (error) => {
           this.error = 'Error al cargar la información de viajeros.';
           this.loading = false;
-          console.error('Error loading existing travelers:', error);
         },
       });
   }
@@ -323,7 +319,6 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
         life: 2000,
       });
     } catch (error) {
-      console.error('❌ Error añadiendo traveler:', error);
       this.messageService.add({
         severity: 'error',
         summary: 'Error',
@@ -353,7 +348,6 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
         .slice(0, count);
 
       if (travelersToDelete.length === 0) {
-        console.warn('⚠️ No hay travelers para eliminar');
         return;
       }
 
@@ -370,7 +364,6 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
           // Si la petición no lanza error, quitar de la lista
           this.travelers = this.travelers.filter(t => t.id !== traveler.id);
         } catch (error) {
-          console.error(`Error eliminando traveler ${traveler.id}:`, error);
           throw error;  // Re-lanzar para que se maneje en el catch principal
         }
       }
@@ -382,7 +375,6 @@ export class SelectorTravelerComponent implements OnInit, OnChanges, OnDestroy {
         life: 2000,
       });
     } catch (error) {
-      console.error('❌ Error eliminando traveler:', error);
       this.messageService.add({
         severity: 'error',
         summary: 'Error',

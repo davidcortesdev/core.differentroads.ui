@@ -266,7 +266,6 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
           this.loadingProforma = false;
         },
         error: (error) => {
-          console.error('Error cargando proforma summary:', error);
           this.proformaData = null;
           this.grossPaymentInfo = null;
           this.netPaymentInfo = null;
@@ -351,7 +350,6 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
           this.isLoadingPayments = false;
         },
         error: (error) => {
-          console.error('Error cargando pagos:', error);
           this.paymentHistory = [];
           this.isLoadingPayments = false;
         }
@@ -478,7 +476,6 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
             }
           },
           error: (error) => {
-            console.error('Error obteniendo userId desde la reserva:', error);
           }
         });
       return;
@@ -526,7 +523,6 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
           if (reservation.departureId) {
             return this.departureService.getById(reservation.departureId).pipe(
               catchError((error) => {
-                console.error('Error obteniendo fecha de salida desde departure:', error);
                 return of(null);
               })
             );
@@ -542,7 +538,6 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
           }
         },
         error: (error) => {
-          console.error('Error obteniendo datos desde la reserva:', error);
         }
       });
   }
@@ -961,7 +956,6 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
             );
           }),
           catchError((error) => {
-            console.error('Error obteniendo datos para analytics:', error);
             return this.analyticsService.buildEcommerceItemFromTourData(
               data.tourDataForEcommerce,
               'booking_detail',
@@ -1024,7 +1018,6 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
           this.loadingStatuses = false;
         },
         error: (error) => {
-          console.error('Error cargando estados de pago:', error);
           this.loadingStatuses = false;
         }
       });
@@ -1048,7 +1041,6 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
           this.loadingMethods = false;
         },
         error: (error) => {
-          console.error('Error cargando métodos de pago:', error);
           this.loadingMethods = false;
         }
       });
@@ -1106,7 +1098,6 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
         this.isChanging[payment.publicID] = false;
       },
       error: (error) => {
-        console.error('Error actualizando estado del pago:', error);
         this.isChanging[payment.publicID] = false;
       }
     });
@@ -1231,7 +1222,6 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
           return this.paymentsNetService.update(updateData);
         }),
         catchError((error) => {
-          console.error('Error eliminando justificante:', error);
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
@@ -1259,7 +1249,6 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
           }
         },
         error: (error) => {
-          console.error('Error en el flujo de eliminación:', error);
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
@@ -1317,7 +1306,6 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
    */
   navigateToUploadVoucher(payment: Payment): void {
     if (!this.reservationId || !payment.id) {
-      console.error('No se puede navegar: falta reservationId o payment.id');
       return;
     }
 
@@ -1456,7 +1444,6 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
           );
         }),
         catchError((error) => {
-          console.error('Error subiendo justificante:', error);
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
@@ -1484,7 +1471,6 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
           }
         },
         error: (error) => {
-          console.error('Error en el flujo de subida:', error);
           this.messageService.add({
             severity: 'error',
             summary: 'Error',

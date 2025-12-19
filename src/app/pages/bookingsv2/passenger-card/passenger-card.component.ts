@@ -104,7 +104,6 @@ export class PassengerCardV2Component implements OnInit, OnChanges, OnDestroy {
           }
         },
         error: (error) => {
-          console.error('Error loading phone prefixes:', error);
         }
       });
 
@@ -549,7 +548,6 @@ export class PassengerCardV2Component implements OnInit, OnChanges, OnDestroy {
 
       return dateString;
     } catch (e) {
-      console.error('Error formatting date:', e);
       return String(dateStr) || 'Pendiente';
     }
   }
@@ -564,7 +562,6 @@ export class PassengerCardV2Component implements OnInit, OnChanges, OnDestroy {
 
       return `${year}-${month}-${day}`;
     } catch (error) {
-      console.error('Error converting Date to string:', error);
       return '';
     }
   }

@@ -74,7 +74,6 @@ export class SummaryInfoComponent implements OnInit, OnChanges, OnDestroy {
         catchError((err) => {
           this.error = true;
           this.loading = false;
-          console.error('Error fetching reservation summary:', err);
           return EMPTY;
         })
       )

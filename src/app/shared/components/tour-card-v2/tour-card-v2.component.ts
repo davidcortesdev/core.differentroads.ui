@@ -42,15 +42,11 @@ export class TourCardV2Component implements OnInit, AfterViewInit {
   ngOnInit(): void {
     // Validación más robusta
     if (!this.tourData) {
-      console.error(
-        'TourData no proporcionado al componente TourCardComponent'
-      );
       return;
     }
 
     // Validate that externalID exists and is not undefined or empty
     if (!this.tourData.externalID?.trim()) {
-      console.warn('Missing or invalid externalID:', this.tourData);
     }
 
     // Pre-calculate monthly price to avoid recalculation in template

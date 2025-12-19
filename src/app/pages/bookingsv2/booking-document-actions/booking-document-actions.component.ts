@@ -18,6 +18,7 @@ import {
   ReservationStatusService,
 } from '../../../core/services/reservation/reservation-status.service';
 import { ReservationsSyncsService, EnqueueSyncResponse, SyncJobStatusResponse } from '../../../core/services/reservation/reservations-syncs.service';
+import { InvoiceProcessService } from '../../../core/services/v2/invoice-process.service';
 
 interface DocumentActionConfig {
   id: string;
@@ -62,9 +63,10 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
     },
     {
       id: 'PROFORMA',
-      test: 'Enviar proforma',
+      test: 'Generar proforma',
       icon: 'pi pi-file-pdf',
       emailCode: 'PROFORMA',
+      documentCode: 'PROFORMA',
       visible: true,
     },
     {
@@ -92,6 +94,13 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
       emailCode: 'ETICKETS',
       visible: false,
     },
+    {
+      id: 'GENERAR_FACTURA',
+      test: 'Generar factura',
+      icon: 'pi pi-file',
+      visible: true,
+      documentCode: 'INVOICE',
+    },
   ];
 
   constructor(
@@ -101,7 +110,8 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
     private notificationServicev2: NotificationServicev2,
     private documentServicev2: DocumentServicev2,
     private reservationStatusService: ReservationStatusService,
-    private reservationsSyncsService: ReservationsSyncsService
+    private reservationsSyncsService: ReservationsSyncsService,
+    private invoiceProcessService: InvoiceProcessService
   ) {}
 
   ngOnInit(): void {
@@ -754,6 +764,10 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
   }
 
   hasEmailCode(): boolean {
+    // El botón de factura también necesita el botón de enviar aunque no tenga emailCode
+    if (this.currentAction?.id === 'GENERAR_FACTURA') {
+      return true;
+    }
     return !!this.currentAction?.emailCode;
   }
 
@@ -792,6 +806,12 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
         detail: 'ID de reserva inválido',
         life: 3000,
       });
+      return;
+    }
+
+    // Si es GENERAR_FACTURA, usar las APIs de InvoiceProcess
+    if (this.currentAction.id === 'GENERAR_FACTURA') {
+      this.handleGenerateInvoice();
       return;
     }
 
@@ -856,6 +876,12 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
       return;
     }
 
+    // Si es GENERAR_FACTURA, usar las APIs de InvoiceProcess
+    if (this.currentAction.id === 'GENERAR_FACTURA') {
+      this.handleDownloadInvoice(reservationId);
+      return;
+    }
+
     if (!this.currentAction.documentCode) {
       this.messageService.add({
         severity: 'warn',
@@ -882,6 +908,41 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
         },
         error: (error) => this.handleDownloadError(error),
       });
+  }
+
+  /**
+   * Maneja la descarga de factura usando las APIs de InvoiceProcess
+   */
+  private handleDownloadInvoice(reservationId: number): void {
+    this.isProcessing = true;
+
+    this.invoiceProcessService.downloadDocumentByReservation(reservationId).subscribe({
+      next: (result) => {
+        this.handleDownloadSuccess(
+          result.blob,
+          result.fileName,
+          'Factura descargada exitosamente'
+        );
+      },
+      error: (error) => {
+        this.isProcessing = false;
+        console.error('Error descargando factura:', error);
+        let errorMessage = 'Error al descargar la factura';
+        if (error.status === 500) {
+          errorMessage = 'Error interno del servidor. Inténtalo más tarde.';
+        } else if (error.status === 404) {
+          errorMessage = 'Factura no encontrada. Primero debe generar la factura.';
+        } else if (error.status === 400) {
+          errorMessage = error.error?.message || 'Datos inválidos para descargar la factura.';
+        }
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: errorMessage,
+          life: 3000,
+        });
+      },
+    });
   }
 
   private getDocumentSuccessMessage(documentCode: string): string {
@@ -960,6 +1021,89 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
   }
 
   onActionClick(action: DocumentActionConfig): void {
+    // Para todas las acciones, abrir el modal de email
+    // Las acciones especiales se manejarán en onSend()
     this.openEmailModal(action);
   }
+
+  /**
+   * Maneja la generación de factura usando las APIs de InvoiceProcess
+   * Flujo: 1. Generar documento (si es necesario), 2. Encolar proceso completo con /api/InvoiceProcess/full-process/enqueue
+   */
+  private handleGenerateInvoice(): void {
+    const reservationId = parseInt(this.bookingId, 10);
+    if (isNaN(reservationId)) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'ID de reserva inválido',
+        life: 3000,
+      });
+      return;
+    }
+    
+    this.isProcessing = true;
+
+    // Intentar primero con reservationId directamente (como NotificationService)
+    // Si el endpoint espera invoiceId, intentaremos obtenerlo después
+    this.invoiceProcessService.enqueueFullProcessByReservation(reservationId, this.userEmail).pipe(
+      catchError((error) => {
+        // Si falla con reservationId, intentar obtener invoiceId primero
+        if (error.status === 400 || error.status === 404) {
+          return this.invoiceProcessService.getInvoiceByReservation(reservationId).pipe(
+            switchMap((invoiceId) => {
+              // Primero generar el documento si es necesario
+              return this.invoiceProcessService.generateDocument(invoiceId).pipe(
+                switchMap((generateResponse) => {
+                  if (!generateResponse.success) {
+                    throw new Error(generateResponse.message || 'Error al generar el documento');
+                  }
+                  
+                  // Luego encolar el proceso completo con invoiceId
+                  return this.invoiceProcessService.enqueueFullProcess(invoiceId, this.userEmail);
+                })
+              );
+            }),
+            catchError((innerError) => {
+              if (innerError.status === 404) {
+                throw new Error('No se encontró una factura asociada a esta reserva. Debe crear la factura primero.');
+              }
+              throw innerError;
+            })
+          );
+        }
+        throw error;
+      })
+    ).subscribe({
+      next: (response) => {
+        this.isProcessing = false;
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Éxito',
+          detail: `Factura enviada a ${this.userEmail}`,
+          life: 3000,
+        });
+        this.closeEmailModal();
+      },
+      error: (error) => {
+        this.isProcessing = false;
+        console.error('[InvoiceProcess] Error generando factura:', error);
+        let errorMessage = 'Error al enviar la factura';
+        if (error.status === 500) {
+          errorMessage = 'Error interno del servidor. Inténtalo más tarde.';
+        } else if (error.status === 404) {
+          errorMessage = 'Factura no encontrada. Debe crear la factura primero.';
+        } else if (error.status === 400) {
+          errorMessage = 'Datos inválidos para enviar la factura.';
+        }
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: errorMessage,
+          life: 3000,
+        });
+      },
+    });
+  }
+
 }

@@ -115,7 +115,6 @@ export class TourItineraryV2Component implements OnInit {
     if (this.tourId) {
       this.loadMapData(this.tourId);
     } else {
-      console.warn('⚠️ No se proporcionó tourId para el itinerario');
       this.loading = false;
     }
   }
@@ -155,10 +154,6 @@ export class TourItineraryV2Component implements OnInit {
             : [];
         }),
         catchError((error: Error) => {
-          console.warn(
-            `⚠️ No se encontraron ubicaciones para tipo MAP:`,
-            error
-          );
           return of([]);
         }),
         switchMap((mapLocations: ITourLocationResponse[]) => {
@@ -177,7 +172,6 @@ export class TourItineraryV2Component implements OnInit {
           ];
 
           if (locationIds.length === 0) {
-            console.warn('⚠️ No se encontraron locationIds para cargar');
             return of({ tourLocations: validMapLocations, locations: [] });
           }
 
@@ -187,7 +181,6 @@ export class TourItineraryV2Component implements OnInit {
               return { tourLocations: validMapLocations, locations };
             }),
             catchError((error: Error) => {
-              console.error('❌ Error loading specific locations:', error);
               return of({ tourLocations: validMapLocations, locations: [] });
             })
           );
@@ -271,11 +264,6 @@ export class TourItineraryV2Component implements OnInit {
         };
 
         this.processedLocations.push(processedLocation);
-      } else {
-        console.warn(`⚠️ No se encontró ubicación para tourLocation:`, {
-          tourLocationId: tourLocation.id,
-          locationId: tourLocation.locationId,
-        });
       }
     });
 

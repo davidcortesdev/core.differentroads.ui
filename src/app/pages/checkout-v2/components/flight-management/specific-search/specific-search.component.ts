@@ -158,14 +158,9 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
             if (success) {
 
             } else {
-              console.error('Error al guardar asignaciones desde padre');
             }
           })
           .catch((error) => {
-            console.error(
-              'Error al guardar asignaciones desde padre:',
-              error
-            );
           });
       }
 
@@ -329,7 +324,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
           }
         },
         error: (err) => {
-          console.error('Error obteniendo datos de aeropuerto:', err);
         }
       });
   }
@@ -343,7 +337,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
 
   searchFlights() {
     if (!this.departureId || !this.reservationId) {
-      console.error('Faltan departureId o reservationId');
       return;
     }
 
@@ -388,7 +381,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
             const warningsArray = JSON.parse(response.warningsJson);
             this.searchWarnings = Array.isArray(warningsArray) ? warningsArray : [];
           } catch (error) {
-            console.warn('Error al parsear warnings JSON:', error);
             this.searchWarnings = [];
           }
         } else {
@@ -400,7 +392,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
           try {
             this.searchMeta = JSON.parse(response.metaJson);
           } catch (error) {
-            console.warn('Error al parsear meta JSON:', error);
             this.searchMeta = null;
           }
         } else {
@@ -409,9 +400,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         
         // Log de información de la búsqueda
         if (this.hasSearchWarnings && this.searchWarnings.length > 0) {
-          console.warn('⚠️ La búsqueda tiene warnings:', this.searchWarnings);
           this.searchWarnings.forEach(warning => {
-            console.warn(`  - ${warning.title}: ${warning.detail} (Status: ${warning.status}, Code: ${warning.code})`);
           });
         }
         
@@ -430,7 +419,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         this.transformedFlights = [];
         this.filteredFlightsChange.emit([]);
         this.errorMessage = 'Ocurrió un error al buscar vuelos. Por favor, inténtalo de nuevo.';
-        console.error('Error al buscar vuelos:', err);
       },
     });
   }
@@ -518,7 +506,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       },
       error: (err) => {
         this.isLoadingDetails = false;
-        console.error('Error al cargar detalles de vuelos:', err);
         // Si falla la carga de detalles, mostrar todos los vuelos
         this.filterOffers();
       }
@@ -828,11 +815,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
 
         this.selectFlightFromFlightItem(originalFlight);
       } else {
-        console.warn('⚠️ No se encontró el vuelo original para seleccionar');
-
       }
     } else {
-      console.warn('⚠️ flightPack inválido o nulo:', flightPack);
     }
   }
 
@@ -850,7 +834,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
 
         },
         error: (error) => {
-          console.error('❌ Error al cargar viajeros:', error);
         },
       });
   }
@@ -882,7 +865,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
 
           },
           error: (error) => {
-            console.error('❌ Error al deseleccionar vuelo en el servicio:', error);
           }
         });
       }
@@ -958,7 +940,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
                 resolve(travelers);
               },
               error: (error) => {
-                console.error('❌ Error al obtener viajeros:', error);
                 reject(error);
               },
             });
@@ -988,13 +969,11 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
 
           },
           error: (error) => {
-            console.error('Error al seleccionar vuelo en specific-search:', error);
           },
         });
       }
 
     } catch (error) {
-      console.error('💥 Error en findAndAssignNoFlightOption:', error);
     }
   }
 
@@ -1018,7 +997,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
                 resolve(travelers);
               },
               error: (error) => {
-                console.error('❌ Error al obtener viajeros:', error);
                 reject(error);
               },
             });
@@ -1059,10 +1037,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
                 });
               },
               error: (error) => {
-                console.error(
-                  `❌ Error al obtener asignaciones para viajero ${traveler.id}:`,
-                  error
-                );
                 reject(error);
               },
             });
@@ -1102,17 +1076,10 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
                     if (updated) {
 
                     } else {
-                      console.error(
-                        `❌ Error al actualizar asignación del departure ${mostRecentAssignment.id} para viajero ${traveler.id}`
-                      );
                     }
                     resolve(updated);
                   },
                   error: (error: any) => {
-                    console.error(
-                      `❌ Error al actualizar asignación del departure para viajero ${traveler.id}:`,
-                      error
-                    );
                     reject(error);
                   },
                 });
@@ -1140,7 +1107,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
 
       return true;
     } catch (error) {
-      console.error('💥 Error en saveFlightAssignments:', error);
       return false;
     }
   }

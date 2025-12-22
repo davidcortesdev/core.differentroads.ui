@@ -51,7 +51,6 @@ export class UpdateProfileV2Service {
       switchMap(() => this.updateAdditionalFields(userId, personalInfo)),
       switchMap(() => of(personalInfo)),
       catchError((error) => {
-        console.warn('No se pudo obtener usuario por cognitoId, usando valores predeterminados', error);
         const basicUserData = this.mapToBasicUserData(personalInfo, cognitoId);
         return this.updateBasicUserData(userId, basicUserData).pipe(
           switchMap(() => this.updateAdditionalFields(userId, personalInfo)),

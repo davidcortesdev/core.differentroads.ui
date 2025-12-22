@@ -41,9 +41,6 @@ export class SortByPipe implements PipeTransform {
     });
 
     if (!propertyExists && array.length > 0) {
-      console.warn(
-        `SortByPipe: Property '${path}' not found in any array item. Check if the property name is correct.`
-      );
     }
 
     const sortedArray = [...array].sort((a, b) => {

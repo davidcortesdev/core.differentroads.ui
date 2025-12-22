@@ -166,7 +166,6 @@ export class PersonalInfoV2Service {
   private getUserFields(): Observable<any[]> {
     return this.http.get<any[]>(this.USER_FIELD_API_URL, this.httpOptions).pipe(
       catchError((error) => {
-        console.warn('Error al obtener campos de usuario:', error);
         return of([]);
       })
     );
@@ -184,7 +183,6 @@ export class PersonalInfoV2Service {
       ...this.httpOptions 
     }).pipe(
       catchError((error) => {
-        console.warn('Error al obtener valores de campos de usuario:', error);
         return of([]);
       })
     );
@@ -230,7 +228,6 @@ export class PersonalInfoV2Service {
         return forkJoin(saveObservables);
       }),
       catchError((error) => {
-        console.warn('Error al guardar campos de usuario:', error);
         return of([]);
       })
     );
@@ -244,7 +241,6 @@ export class PersonalInfoV2Service {
   private saveUserFieldValue(fieldValue: any): Observable<any> {
     return this.http.post<any>(this.USER_FIELD_VALUE_API_URL, fieldValue, this.httpOptions).pipe(
       catchError((error) => {
-        console.warn(`Error al guardar campo ${fieldValue.fieldId}:`, error);
         return of(null);
       })
     );
@@ -256,7 +252,6 @@ export class PersonalInfoV2Service {
    * @returns Observable con error manejado
    */
   private handleError(error: any): Observable<never> {
-    console.error('Error en PersonalInfoV2Service:', error);
     return throwError(() => error);
   }
 

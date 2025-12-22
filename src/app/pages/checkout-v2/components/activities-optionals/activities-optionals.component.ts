@@ -139,7 +139,6 @@ export class ActivitiesOptionalsComponent
         this.initializeComponent();
       },
       error: (error) => {
-        console.error('Error loading age groups:', error);
         this.initializeComponent();
       },
     });
@@ -179,7 +178,6 @@ export class ActivitiesOptionalsComponent
           this.loadAvailabilityForActivities();
         },
         error: (error) => {
-          console.error('Error loading activities:', error);
         },
       });
   }
@@ -224,10 +222,6 @@ export class ActivitiesOptionalsComponent
                 }
               },
               error: (error) => {
-                console.error(
-                  `Error obteniendo actividades del viajero ${traveler.travelerNumber}:`,
-                  error
-                );
                 processedTravelers++;
 
                 if (processedTravelers === travelers.length) {
@@ -239,7 +233,6 @@ export class ActivitiesOptionalsComponent
           });
         },
         error: (error) => {
-          console.error('Error obteniendo viajeros:', error);
         },
       });
   }
@@ -283,10 +276,6 @@ export class ActivitiesOptionalsComponent
         .pipe(
           map((availabilities) => (availabilities.length > 0 ? availabilities : [])),
           catchError((error) => {
-            console.error(
-              `Error loading availability for activity ${activity.id}:`,
-              error
-            );
             return of([]);
           })
         )
@@ -308,10 +297,6 @@ export class ActivitiesOptionalsComponent
         .pipe(
           map((availabilities) => (availabilities.length > 0 ? availabilities : [])),
           catchError((error) => {
-            console.error(
-              `Error loading availability for activity pack ${activity.id}:`,
-              error
-            );
             return of([]);
           })
         )
@@ -344,10 +329,6 @@ export class ActivitiesOptionalsComponent
         .pipe(
           map((prices) => (prices.length > 0 ? prices : [])),
           catchError((error) => {
-            console.error(
-              `Error loading price for activity ${activity.id}:`,
-              error
-            );
             return of([]);
           })
         )
@@ -369,10 +350,6 @@ export class ActivitiesOptionalsComponent
         .pipe(
           map((prices) => (prices.length > 0 ? prices : [])),
           catchError((error) => {
-            console.error(
-              `Error loading price for pack ${activity.id}:`,
-              error
-            );
             return of([]);
           })
         )
@@ -514,7 +491,6 @@ export class ActivitiesOptionalsComponent
             })
             .catch((error) => {
               this.setActivityLoading(item, false);
-              console.error('❌ Error guardando actividad:', error);
 
               this.addedActivities.delete(item.id);
               this.errorMessage =
@@ -526,7 +502,6 @@ export class ActivitiesOptionalsComponent
         },
         error: (error) => {
           this.setActivityLoading(item, false);
-          console.error('❌ Error obteniendo viajeros:', error);
 
           this.addedActivities.delete(item.id);
           this.errorMessage =
@@ -621,7 +596,6 @@ export class ActivitiesOptionalsComponent
             })
             .catch((error) => {
               this.setActivityLoading(item, false);
-              console.error('❌ Error eliminando actividad:', error);
 
               this.addedActivities.add(item.id);
               this.errorMessage =
@@ -633,7 +607,6 @@ export class ActivitiesOptionalsComponent
         },
         error: (error) => {
           this.setActivityLoading(item, false);
-          console.error('❌ Error obteniendo viajeros:', error);
 
           this.addedActivities.add(item.id);
           this.errorMessage =

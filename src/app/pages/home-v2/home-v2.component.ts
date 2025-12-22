@@ -85,7 +85,6 @@ export class HomeV2Component implements OnInit, OnDestroy {
           const email = attributes.email;
           
           if (!cognitoId || !email) {
-            console.error('❌ Datos incompletos');
             return;
           }
           
@@ -127,11 +126,9 @@ export class HomeV2Component implements OnInit, OnDestroy {
           });
         },
         error: (error) => {
-          console.error('❌ Error obteniendo atributos:', error);
         }
       });
     } catch (error) {
-      console.error('❌ Error procesando callback:', error);
     }
   }
 
@@ -161,7 +158,6 @@ export class HomeV2Component implements OnInit, OnDestroy {
           // mediante Intersection Observer en los componentes hijos
         },
         error: (error) => {
-          console.error('Error loading home configurations:', error);
           this.hasError = true;
           this.isLoading = false;
         },
@@ -256,7 +252,6 @@ export class HomeV2Component implements OnInit, OnDestroy {
           );
         }),
         catchError((error) => {
-          console.error(`Error cargando tours para configuración ${config.id}:`, error);
           return of([]);
         })
       );
@@ -278,7 +273,6 @@ export class HomeV2Component implements OnInit, OnDestroy {
         return [...new Set(allTourIds)]; // Eliminar duplicados
       }),
       catchError((error) => {
-        console.error('Error obteniendo tour IDs desde filtros:', error);
         return of([]);
       })
     );
@@ -294,7 +288,6 @@ export class HomeV2Component implements OnInit, OnDestroy {
       case 'tag':
         return this.tourTagService.getToursByTags([filter.tagId!]).pipe(
           catchError((error) => {
-            console.error(`Error obteniendo tours por tag ${filter.tagId}:`, error);
             return of([]);
           })
         );
@@ -302,7 +295,6 @@ export class HomeV2Component implements OnInit, OnDestroy {
       case 'location':
         return this.tourLocationService.getToursByLocations([filter.locationId!]).pipe(
           catchError((error) => {
-            console.error(`Error obteniendo tours por location ${filter.locationId}:`, error);
             return of([]);
           })
         );
@@ -314,12 +306,10 @@ export class HomeV2Component implements OnInit, OnDestroy {
           );
           return of(tourIds);
         } catch (error) {
-          console.error('Error parseando specific tour IDs:', error);
           return of([]);
         }
 
       default:
-        console.warn(`Tipo de filtro desconocido: ${filter.filterType}`);
         return of([]);
     }
   }
@@ -353,7 +343,6 @@ export class HomeV2Component implements OnInit, OnDestroy {
           });
         }),
         catchError((error: Error) => {
-          console.error(`Error cargando tour ${id}:`, error);
           return of(null);
         }),
         map(
@@ -475,7 +464,6 @@ export class HomeV2Component implements OnInit, OnDestroy {
         return tours.filter((tour): tour is TourDataV2 => tour !== null);
       }),
       catchError((error) => {
-        console.error('Error cargando tours:', error);
         return of([]);
       }),
       takeUntil(this.destroy$)

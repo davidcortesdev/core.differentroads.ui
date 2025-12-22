@@ -59,13 +59,11 @@ export class TourCardComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
     // Validación más robusta
     if (!this.tourData) {
-      console.error('TourData no proporcionado al componente TourCardComponent');
       return;
     }
   
     // Validate that externalID exists and is not undefined or empty
     if (!this.tourData.externalID?.trim()) {
-      console.warn('Missing or invalid externalID:', this.tourData);
     }
   
     // Pre-calculate monthly price to avoid recalculation in template
@@ -152,9 +150,6 @@ export class TourCardComponent implements OnInit, AfterViewInit {
     //     this.configureScalapayWidget();
     //   };
      
-    //   script.onerror = (error) => {
-    //     console.error('Error al cargar script de Scalapay:', error);
-    //   };
      
     //   // Añadir el script al head
     //   this.document.head.appendChild(script);
@@ -193,7 +188,6 @@ export class TourCardComponent implements OnInit, AfterViewInit {
       window.dispatchEvent(new CustomEvent('scalapay-widget-reload'));
  
     } catch (error) {
-      console.error('Error al configurar Scalapay:', error);
     }
   }
 }

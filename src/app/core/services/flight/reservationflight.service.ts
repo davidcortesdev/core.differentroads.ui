@@ -37,7 +37,6 @@ export class ReservationFlightService {
         return this.http.get<IFlightPackDTO | IFlightPackDTO[]>(`${this.API_URL}/${reservationId}`, { headers })
             .pipe(
                 catchError(error => {
-                    console.error('Error al obtener flight pack:', error);
                     return throwError(() => error);
                 })
             );

@@ -74,7 +74,6 @@ export class HotelDetailsComponent implements OnInit, OnChanges {
       return this.hotelService.getById(hotelIds[0]).pipe(
         map(hotel => [hotel]),
         catchError(error => {
-          console.error(`Error hotel ${hotelIds[0]}:`, error);
           return of([]);
         })
       );
@@ -94,7 +93,6 @@ export class HotelDetailsComponent implements OnInit, OnChanges {
       forkJoin(batch.map(hotelId =>
         this.hotelService.getById(hotelId).pipe(
           catchError(error => {
-            console.error(`Error hotel ${hotelId}:`, error);
             return of(null);
           })
         )
@@ -107,7 +105,6 @@ export class HotelDetailsComponent implements OnInit, OnChanges {
         return allHotels;
       }),
       catchError(error => {
-        console.error('Error en consulta de múltiples hoteles:', error);
         return of([]);
       })
     );
@@ -152,7 +149,6 @@ export class HotelDetailsComponent implements OnInit, OnChanges {
         const departureHotelObservables = departureDayIds.map(departureDayId => 
           this.departureHotelService.getAll({ departureDayId }).pipe(
             catchError(error => {
-              console.error(`Error departure hotels para departureDayId ${departureDayId}:`, error);
               return of([]);
             })
           )
@@ -185,7 +181,6 @@ export class HotelDetailsComponent implements OnInit, OnChanges {
         );
       }),
       catchError(error => {
-        console.error('❌ Error en carga con filtros:', error);
         return of({ departureHotels: [], hotels: [] });
       }),
       finalize(() => {

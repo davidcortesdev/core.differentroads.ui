@@ -52,7 +52,6 @@ export class CloudinaryService {
         alt: ''
       } as CldImage)),
       catchError(error => {
-        console.error('Error uploading to Cloudinary:', error);
         return throwError(() => error);
       })
     );

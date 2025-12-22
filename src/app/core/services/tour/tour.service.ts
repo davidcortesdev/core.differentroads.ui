@@ -212,7 +212,6 @@ export class TourService {
 
     return this.http.get<ITourResponse>(`${this.API_URL}/${id}`, { params }).pipe(
       catchError((error) => {
-        console.error(`Error al obtener tour con ID ${id}:`, error);
         // Retornar tour por defecto en caso de error
         return of({
           id: id,
@@ -245,7 +244,6 @@ export class TourService {
       headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
     }).pipe(
       catchError((error) => {
-        console.error('Error al crear tour:', error);
         throw error;
       })
     );
@@ -262,7 +260,6 @@ export class TourService {
       headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
     }).pipe(
       catchError((error) => {
-        console.error(`Error al actualizar tour con ID ${id}:`, error);
         return of(false);
       })
     );
@@ -276,7 +273,6 @@ export class TourService {
   delete(id: number): Observable<boolean> {
     return this.http.delete<boolean>(`${this.API_URL}/${id}`).pipe(
       catchError((error) => {
-        console.error(`Error al eliminar tour con ID ${id}:`, error);
         return of(false);
       })
     );
@@ -293,11 +289,9 @@ export class TourService {
         if (tours.length > 0 && tours[0].id) {
           return tours[0].id;
         }
-        console.warn(`No se encontró ningún tour con tkId: ${tkId}`);
         return 0;
       }),
       catchError((error) => {
-        console.error('Error al buscar tour por tkId:', error);
         return of(0);
       })
     );
@@ -398,7 +392,6 @@ export class TourService {
   updateMinPrice(id: number): Observable<boolean> {
     return this.http.put<boolean>(`${this.API_URL}/${id}/update-min-price`, {}).pipe(
       catchError((error) => {
-        console.error(`Error al actualizar precio mínimo del tour con ID ${id}:`, error);
         return of(false);
       })
     );
@@ -419,7 +412,6 @@ export class TourService {
 
     return this.http.get<DepartureCityDto[]>(`${this.API_URL}/${id}/departure-cities`, { params }).pipe(
       catchError((error) => {
-        console.error(`Error al obtener ciudades de salida del tour con ID ${id}:`, error);
         return of([]);
       })
     );
@@ -440,7 +432,6 @@ export class TourService {
 
     return this.http.get<number[]>(`${this.API_URL}/${id}/agegroups`, { params }).pipe(
       catchError((error) => {
-        console.error(`Error al obtener agegroups del tour con ID ${id}:`, error);
         return of([]);
       })
     );
@@ -461,7 +452,6 @@ export class TourService {
 
     return this.http.get<number[]>(`${this.API_URL}/${id}/triptype-ids`, { params }).pipe(
       catchError((error) => {
-        console.error(`Error al obtener tripTypeIds del tour con ID ${id}:`, error);
         return of([]);
       })
     );
@@ -482,7 +472,6 @@ export class TourService {
 
     return this.http.get<number[]>(`${this.API_URL}/${id}/departure-months`, { params }).pipe(
       catchError((error) => {
-        console.error(`Error al obtener departure-months del tour con ID ${id}:`, error);
         return of([]);
       })
     );
@@ -531,7 +520,6 @@ export class TourService {
   getDeparturesPrices(activityId: number): Observable<FinalPriceDTO[]> {
     return this.http.get<FinalPriceDTO[]>(`${this.API_URL}/${activityId}/departures-prices`).pipe(
       catchError((error) => {
-        console.error(`Error al obtener precios de salidas para la actividad con ID ${activityId}:`, error);
         return of([]);
       })
     );
@@ -570,7 +558,6 @@ export class TourService {
 
     return this.http.get<TourSearchSimpleResult[]>(`${this.API_URL}/search`, { params: httpParams }).pipe(
       catchError((error) => {
-        console.error('Error al buscar tours:', error);
         return of([]);
       })
     );
@@ -609,7 +596,6 @@ export class TourService {
 
     return this.http.get<TourSearchDetailedResult[]>(`${this.API_URL}/search-with-score`, { params: httpParams }).pipe(
       catchError((error) => {
-        console.error('Error al buscar tours con score:', error);
         return of([]);
       })
     );
@@ -645,7 +631,6 @@ export class TourService {
 
     return this.http.get<UnifiedSearchResult[]>(`${this.API_URL}/autocomplete`, { params: httpParams }).pipe(
       catchError((error) => {
-        console.error('Error al realizar autocompletado:', error);
         return of([]);
       })
     );

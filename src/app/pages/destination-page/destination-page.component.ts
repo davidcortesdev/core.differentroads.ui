@@ -68,12 +68,10 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
               this.destinationLocation = destinationLocations[0];
               this.destinationId = this.destinationLocation.id;
             } else {
-              console.warn(`No se encontró ubicación para el destino: ${destinationName}`);
             }
             this.updatePageInfo();
           },
           error: (error) => {
-            console.error('Error al buscar destino:', error);
             this.updatePageInfo();
           }
         });
@@ -90,12 +88,10 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
               this.continentLocation = continentLocations[0];
               this.continentId = this.continentLocation.id;
             } else {
-              console.warn(`No se encontró ubicación para el continente: ${continentName}`);
             }
             this.updatePageInfo();
           },
           error: (error) => {
-            console.error('Error al buscar continente:', error);
             this.updatePageInfo();
           }
         });
@@ -168,7 +164,6 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
 
     // Si no hay ubicaciones, no hacer nada
     if (locationIds.length === 0) {
-      console.warn('No hay IDs de ubicación para filtrar tours');
       return;
     }
 
@@ -184,7 +179,6 @@ export class DestinationPageComponent implements OnInit, OnDestroy {
           this.isLoadingTours = false;
         },
         error: (error) => {
-          console.error('Error al cargar tours por ubicaciones:', error);
           this.tourIds = [];
           this.isLoadingTours = false;
         }

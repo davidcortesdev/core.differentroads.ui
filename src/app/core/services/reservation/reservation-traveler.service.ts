@@ -152,7 +152,6 @@ export class ReservationTravelerService {
   delete(id: number): Observable<boolean> {
       return this.http.delete<boolean>(`${this.API_URL}/${id}`).pipe(
         catchError((error) => {
-          console.error(`Error al eliminar viajero de reservación con ID ${id}:`, error);
           return of(false);
         })
       );

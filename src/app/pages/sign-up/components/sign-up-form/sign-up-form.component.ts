@@ -136,7 +136,6 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
           }
         },
         error: (error) => {
-          console.error('Error loading phone prefixes:', error);
         }
       });
 
@@ -214,7 +213,6 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
     }).catch((error) => {
       this.isLoading = false;
       this.showToastError('Error al iniciar sesión con Google');
-      console.error(error);
     });
   }
 
@@ -467,7 +465,6 @@ export class SignUpFormComponent implements OnInit, OnDestroy {
         this.analyticsService.signUp(method, completeUserData);
       },
       error: (error) => {
-        console.error('Error obteniendo datos de usuario para analytics:', error);
         // Fallback con datos del formulario - solo UNA VEZ
         const phone = this.signUpForm.value.phone || '';
         const formattedPhone = phone ? this.analyticsService.formatPhoneNumber(phone) : '';

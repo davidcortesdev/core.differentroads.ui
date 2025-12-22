@@ -64,7 +64,7 @@ export class AddPaymentModalComponent implements OnInit {
           this.transferMethodId = methods[0].id;
         }
       },
-      error: (error: any) => console.error('Error loading transfer method:', error)
+      error: (error: any) => {}
     });
 
     this.paymentMethodService.getPaymentMethodByCode('REDSYS').subscribe({
@@ -73,7 +73,7 @@ export class AddPaymentModalComponent implements OnInit {
           this.redsysMethodId = methods[0].id;
         }
       },
-      error: (error: any) => console.error('Error loading redsys method:', error)
+      error: (error: any) => {}
     });
 
     this.paymentStatusService.getPaymentStatusByCode('PENDING').subscribe({
@@ -82,7 +82,7 @@ export class AddPaymentModalComponent implements OnInit {
           this.pendingStatusId = statuses[0].id;
         }
       },
-      error: (error: any) => console.error('Error loading pending status:', error)
+      error: (error: any) => {}
     });
   }
 
@@ -146,7 +146,6 @@ export class AddPaymentModalComponent implements OnInit {
           break;
       }
     } catch (error: any) {
-      console.error('Error procesando pago:', error);
       this.processingPayment = false;
       
       let errorMessage = 'Ha ocurrido un error al procesar el pago. Por favor, inténtelo nuevamente.';
@@ -219,7 +218,6 @@ export class AddPaymentModalComponent implements OnInit {
                   }
                 },
                 error: (error: any) => {
-                  console.error('Error generando formulario Redsys:', error);
                   this.processingPayment = false;
                   this.messageService.add({
                     severity: 'error',
@@ -231,7 +229,6 @@ export class AddPaymentModalComponent implements OnInit {
               });
             },
             error: (error: any) => {
-              console.error('Error al actualizar el pago:', error);
               this.processingPayment = false;
               this.messageService.add({
                 severity: 'error',
@@ -243,7 +240,6 @@ export class AddPaymentModalComponent implements OnInit {
           });
         },
         error: (error: any) => {
-          console.error('Error al crear el pago:', error);
           this.processingPayment = false;
           this.messageService.add({
             severity: 'error',
@@ -254,7 +250,6 @@ export class AddPaymentModalComponent implements OnInit {
         }
       });
     } catch (error) {
-      console.error('Error procesando pago con tarjeta:', error);
       this.processingPayment = false;
       throw error;
     }
@@ -322,7 +317,6 @@ export class AddPaymentModalComponent implements OnInit {
               this.router.navigate([`/reservation/${this.reservationId}/${paymentId}`]);
             },
             error: (error: any) => {
-              console.error('Error al actualizar el pago:', error);
               this.processingPayment = false;
               this.messageService.add({
                 severity: 'error',
@@ -334,7 +328,6 @@ export class AddPaymentModalComponent implements OnInit {
           });
         },
         error: (error: any) => {
-          console.error('Error al crear el pago:', error);
           this.processingPayment = false;
           this.messageService.add({
             severity: 'error',
@@ -345,7 +338,6 @@ export class AddPaymentModalComponent implements OnInit {
         }
       });
     } catch (error) {
-      console.error('Error procesando transferencia bancaria:', error);
       this.processingPayment = false;
       throw error;
     }
@@ -372,14 +364,6 @@ export class AddPaymentModalComponent implements OnInit {
         throw new Error('No se pudo obtener la URL de checkout de Scalapay');
       }
     } catch (error: any) {
-      console.error('❌ Scalapay - Error completo:', {
-        error: error,
-        status: error?.status,
-        statusText: error?.statusText,
-        message: error?.message,
-        errorDetails: error?.error
-      });
-      
       // Si es error 500, agregar más contexto
       if (error?.status === 500) {
         throw new Error('El servicio de Scalapay no está disponible temporalmente. Por favor, intente con otro método de pago o contacte con soporte.');

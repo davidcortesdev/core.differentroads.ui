@@ -144,7 +144,6 @@ export class PasswordRecoveryFormComponent implements OnInit {
         this.errorMessage = 'Código inválido o contraseña débil.';
       }
     } catch (error: any) {
-      console.error('Error al actualizar la contraseña:', error);
       this.errorMessage = error.message || 'Error al actualizar la contraseña.';
     } finally {
       this.isLoading = false;

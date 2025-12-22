@@ -44,7 +44,6 @@ export class ImageCropperComponent {
     if (this.fileInput?.nativeElement) {
       this.fileInput.nativeElement.click();
     } else {
-      console.error('File input element is not available');
     }
   }
 
@@ -89,7 +88,6 @@ export class ImageCropperComponent {
    */
   initCropper(): void {
     if (!this.cropperImageElement?.nativeElement) {
-      console.error('Cropper image element not found');
       return;
     }
 
@@ -99,10 +97,8 @@ export class ImageCropperComponent {
     }
 
     if (!this.aspectRatio) {
-      console.info('Aspect ratio values are not set, defaulting to 16:9.');
       this.aspectRatio = 16 / 9;
     } else {
-      console.info('Aspect ratio set to:', this.aspectRatio);
     }
 
     this.cropper = new Cropper(this.cropperImageElement.nativeElement, {
@@ -198,7 +194,6 @@ export class ImageCropperComponent {
       }, 300);
 
     } else {
-      console.warn('Attempted to load invalid image:', image);
     }
   }
 
@@ -230,7 +225,6 @@ export class ImageCropperComponent {
           this.resetCropper();
         },
         error: (error) => {
-          console.error('Error uploading image:', error);
           this.uploadError.emit('Error al subir la imagen. Por favor, intenta de nuevo.');
           this.loading = false;
         }

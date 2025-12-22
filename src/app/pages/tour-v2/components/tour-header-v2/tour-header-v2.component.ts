@@ -442,7 +442,6 @@ export class TourHeaderV2Component
     this.subscriptions.add(
       this.tourReviewService.getAverageRating(filters).pipe(
         catchError((error) => {
-          console.error('Error al cargar rating promedio desde TourReview:', error);
           this.averageRating = null;
           this.reviewCount = 0;
           this.isLoadingRating = false;
@@ -462,7 +461,6 @@ export class TourHeaderV2Component
           this.isLoadingRating = false;
         },
         error: (error) => {
-          console.error('Error cargando rating y reviews desde TourReview:', error);
           this.averageRating = null;
           this.reviewCount = 0;
           this.isLoadingRating = false;
@@ -553,7 +551,6 @@ export class TourHeaderV2Component
       .pipe(
         takeUntil(this.tripTypesDestroy$),
         catchError((error) => {
-          console.error('Error al obtener tripTypeIds del tour:', error);
           return of([]);
         })
       )
@@ -569,7 +566,6 @@ export class TourHeaderV2Component
           this.tripTypeService.getById(id).pipe(
             takeUntil(this.tripTypesDestroy$),
             catchError((error) => {
-              console.error(`Error al obtener trip type con ID ${id}:`, error);
               return of(null);
             })
           )
@@ -579,7 +575,6 @@ export class TourHeaderV2Component
           .pipe(
             takeUntil(this.tripTypesDestroy$),
             catchError((error) => {
-              console.error('Error al obtener detalles de trip types:', error);
               return of([]);
             }),
             finalize(() => {
@@ -638,7 +633,6 @@ export class TourHeaderV2Component
           );
         }),
         catchError((error) => {
-          console.error('💥 Error cargando tour:', error);
           return of(null);
         })
       ).subscribe()
@@ -882,7 +876,6 @@ export class TourHeaderV2Component
             return exists;
           }),
           catchError((error) => {
-            console.error('❌ Error verificando actividad existente:', error);
             return of(false); // En caso de error, permitir crear
           })
         );
@@ -899,7 +892,6 @@ export class TourHeaderV2Component
             return exists;
           }),
           catchError((error) => {
-            console.error('❌ Error verificando paquete existente:', error);
             return of(false); // En caso de error, permitir crear
           })
         );
@@ -916,11 +908,6 @@ export class TourHeaderV2Component
     const validation = this.validateActivity(activity);
 
     if (!validation.isValid) {
-      console.error(
-        '❌ Booking - Actividad inválida:',
-        validation.error,
-        activity
-      );
       return of({
         success: false,
         activity: activity,
@@ -930,11 +917,6 @@ export class TourHeaderV2Component
 
     // ✅ VALIDACIÓN ADICIONAL: Verificar que no sea un paquete
     if (activity.type !== 'act') {
-      console.error(
-        '❌ Booking - Error de tipo: Se intentó crear actividad individual con tipo incorrecto:',
-        activity.type,
-        activity
-      );
       return of({
         success: false,
         activity: activity,
@@ -992,11 +974,6 @@ export class TourHeaderV2Component
     const validation = this.validateActivity(activity);
 
     if (!validation.isValid) {
-      console.error(
-        '❌ Booking - Paquete inválido:',
-        validation.error,
-        activity
-      );
       return of({
         success: false,
         activity: activity,
@@ -1006,11 +983,6 @@ export class TourHeaderV2Component
 
     // ✅ VALIDACIÓN ADICIONAL: Verificar que sea un paquete
     if (activity.type !== 'pack') {
-      console.error(
-        '❌ Booking - Error de tipo: Se intentó crear paquete con tipo incorrecto:',
-        activity.type,
-        activity
-      );
       return of({
         success: false,
         activity: activity,
@@ -1049,16 +1021,6 @@ export class TourHeaderV2Component
               };
             }),
             catchError((error) => {
-              console.error(
-                '❌ Booking - Error creando paquete de actividades:',
-                {
-                  travelerId,
-                  activityPackId: activity.id,
-                  activityTitle: activity.title,
-                  error: error,
-                }
-              );
-
               return of({
                 success: false,
                 activity: activity,
@@ -1147,7 +1109,6 @@ export class TourHeaderV2Component
         return { successful, failed, details: results };
       }),
       catchError((error) => {
-        console.error('💥 Booking - Error fatal en procesamiento:', error);
         throw error;
       })
     );
@@ -1208,7 +1169,6 @@ export class TourHeaderV2Component
               this.createReservation(userId);
             },
             error: (error) => {
-              console.error('Error buscando usuario por Cognito ID:', error);
               // El flag se manejará dentro de createReservation
               this.createReservation(null); // Usar null en caso de error
             },
@@ -1218,7 +1178,6 @@ export class TourHeaderV2Component
         }
       },
       error: (error) => {
-        console.error('Error obteniendo Cognito ID:', error);
         // El flag se manejará dentro de createReservation
         this.createReservation(null); // Usar null en caso de error
       },
@@ -1303,7 +1262,6 @@ export class TourHeaderV2Component
         );
       }),
       catchError((error) => {
-        console.error('Error obteniendo datos completos del tour para add_to_cart:', error);
         return of(null);
       })
     ).subscribe((result) => {
@@ -1636,11 +1594,6 @@ export class TourHeaderV2Component
                 });
               },
               error: (error) => {
-                console.error('💥 Booking - Error fatal en el proceso:', {
-                  error: error,
-                  errorMessage: error.message,
-                  errorStatus: error.status,
-                });
 
                 let errorMessage =
                   'Error al crear la reservación. Por favor, inténtalo de nuevo.';
@@ -1669,13 +1622,11 @@ export class TourHeaderV2Component
           );
         },
         error: (error) => {
-          console.error('💥 Error obteniendo estado DRAFT:', error);
           this.isCreatingReservation = false;
           alert('Error al obtener el estado de reservación. Por favor, inténtalo de nuevo.');
         }
       });
     } catch (error) {
-      console.error('💥 Booking - Error en preparación de datos:', error);
       this.isCreatingReservation = false;
       
       let errorMessage = 'Error al preparar los datos de la reservación.';

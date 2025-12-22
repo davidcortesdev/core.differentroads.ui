@@ -256,7 +256,7 @@ export class PaymentManagementComponent
           this.transferMethodId = methods[0].id;
         }
       },
-      error: (error) => console.error('Error loading transfer method:', error),
+      error: (error) => {},
     });
 
     this.paymentMethodService.getPaymentMethodByCode('REDSYS').subscribe({
@@ -265,7 +265,7 @@ export class PaymentManagementComponent
           this.redsysMethodId = methods[0].id;
         }
       },
-      error: (error) => console.error('Error loading redsys method:', error),
+      error: (error) => {},
     });
 
     this.paymentStatusService.getPaymentStatusByCode('PENDING').subscribe({
@@ -274,7 +274,7 @@ export class PaymentManagementComponent
           this.pendingStatusId = statuses[0].id;
         }
       },
-      error: (error) => console.error('Error loading pending status:', error),
+      error: (error) => {},
     });
   }
 
@@ -480,7 +480,6 @@ export class PaymentManagementComponent
         life: 5000,
       });
     } catch (error) {
-      console.error('Payment processing failed:', error);
 
       let errorMessage =
         'Ha ocurrido un error inesperado. Por favor, inténtelo nuevamente.';
@@ -569,7 +568,6 @@ export class PaymentManagementComponent
         throw new Error('La actualización del estado falló');
       }
     } catch (error) {
-      console.error('❌ Error al actualizar estado de reservación:', error);
       this.messageService.add({
         severity: 'error',
         summary: 'Error al guardar reserva',
@@ -608,7 +606,6 @@ export class PaymentManagementComponent
       'https://cdn.scalapay.com/widget/scalapay-widget-loader.js?version=V5';
 
     script.onerror = (error) => {
-      console.error('❌ Error al cargar script de Scalapay:', error);
     };
 
     document.head.appendChild(script);
@@ -871,7 +868,6 @@ export class PaymentManagementComponent
           this.travelersCount = count > 0 ? count : 1;
         },
         error: (error) => {
-          console.error('Error al cargar cantidad de viajeros:', error);
           // En caso de error, usar 1 como valor por defecto
           this.travelersCount = 1;
         },
@@ -903,7 +899,6 @@ export class PaymentManagementComponent
       .pipe(
         take(1),
         catchError((error) => {
-          console.error('Error obteniendo atributos del usuario:', error);
           this.discountMessage = 'Error: No se pudo obtener la información del usuario logueado';
           this.discountMessageSeverity = 'error';
           return of(null);
@@ -926,7 +921,6 @@ export class PaymentManagementComponent
           return this.usersNetService.getUsersByEmail(email).pipe(
             take(1),
             catchError((error) => {
-              console.error('Error buscando usuario por email:', error);
               this.discountMessage = 'Error: No se pudo buscar el usuario';
               this.discountMessageSeverity = 'error';
               return of(null);
@@ -954,7 +948,6 @@ export class PaymentManagementComponent
           // Aplicar el cupón con el userId del usuario logueado (NO de la reserva)
           return this.reservationCouponService.apply(trimmedCode, this.reservationId, userId).pipe(
             catchError((error) => {
-              console.error('Error al aplicar código de descuento:', error);
               this.discountMessage = 'Error al aplicar el código de descuento';
               this.discountMessageSeverity = 'error';
               return of(false);

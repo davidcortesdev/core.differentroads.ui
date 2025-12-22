@@ -90,7 +90,6 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
       .pipe(
         takeUntil(this.tripTypesDestroy$),
         catchError((error) => {
-          console.error('Error al obtener tripTypeIds del tour:', error);
           return of([]);
         })
       )
@@ -106,7 +105,6 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
           this.tripTypeService.getById(id).pipe(
             takeUntil(this.tripTypesDestroy$),
             catchError((error) => {
-              console.error(`Error al obtener trip type con ID ${id}:`, error);
               return of(null);
             })
           )
@@ -116,7 +114,6 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
           .pipe(
             takeUntil(this.tripTypesDestroy$),
             catchError((error) => {
-              console.error('Error al obtener detalles de trip types:', error);
               return of([]);
             }),
             finalize(() => {
@@ -158,7 +155,6 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
       .pipe(
         takeUntil(this.monthsDestroy$),
         catchError((error) => {
-          console.error('Error al obtener departure-months del tour:', error);
           return of([]);
         }),
         finalize(() => {
@@ -217,7 +213,6 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
         }
       }),
       catchError((error) => {
-        console.error('Error al cargar el rating promedio desde TourReview:', error);
         this.averageRating = undefined;
         return of(null);
       }),

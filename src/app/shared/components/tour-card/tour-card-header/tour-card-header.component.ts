@@ -103,7 +103,6 @@ export class TourCardHeaderComponent implements OnInit, OnDestroy {
             }
           }),
           catchError((error) => {
-            console.error('Error al cargar el rating promedio desde TourReview:', error);
             this.averageRating = undefined;
             return of(null);
           }),
@@ -113,7 +112,6 @@ export class TourCardHeaderComponent implements OnInit, OnDestroy {
         );
       }),
       catchError((error) => {
-        console.error('Error al obtener el ID del tour:', error);
         this.isLoadingRating = false;
         return of(null);
       })

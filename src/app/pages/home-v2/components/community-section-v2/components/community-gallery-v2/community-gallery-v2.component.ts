@@ -46,7 +46,6 @@ export class CommunityGalleryV2Component implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading community section:', error);
         this.error = 'Error loading community section';
         this.loading = false;
       },
@@ -68,7 +67,6 @@ export class CommunityGalleryV2Component implements OnInit {
           }
         },
         error: (error) => {
-          console.error('Error loading section configurations:', error);
           this.error = 'Error loading section configurations';
           this.loading = false;
         },
@@ -87,7 +85,6 @@ export class CommunityGalleryV2Component implements OnInit {
           this.loading = false;
         },
         error: (error) => {
-          console.error('Error loading section cards:', error);
           this.error = 'Error loading section cards';
           this.loading = false;
         },

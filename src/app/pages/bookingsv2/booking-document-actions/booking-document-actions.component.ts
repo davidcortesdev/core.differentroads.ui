@@ -242,7 +242,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
             detail: 'No se pudo crear el proceso de sincronización. Por favor, verifica que la reserva esté completa y vuelve a intentarlo. Si el problema persiste, contacta con soporte técnico.',
             life: 6000,
           });
-          console.error('[EnqueueSync] JobId inválido o vacío:', { response, reservationId });
           return;
         }
         this.previousRetryCount = 0;
@@ -258,11 +257,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
       error: (error) => {
         this.isProcessingEnqueueSync = false;
         this.previousRetryCount = 0;
-        console.error('[EnqueueSync] Error al encolar sincronización:', { 
-          reservationId, 
-          error: error.error,
-          status: error.status 
-        });
         const errorInfo = this.getEnqueueSyncInitialErrorMessage(error, reservationId);
         this.messageService.add({
           severity: 'error',
@@ -395,12 +389,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
           return this.reservationsSyncsService.getSyncJobStatus(jobId).pipe(
             catchError((error) => {
               if (error.status === 404) {
-                console.error('[EnqueueSync] Job no encontrado:', { 
-                  jobId, 
-                  reservationId,
-                  error: error.error,
-                  pollingAttempt: pollingAttempts 
-                });
                 throw { 
                   type: 'JOB_NOT_FOUND',
                   jobId,
@@ -410,11 +398,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
                 };
               }
               if (error.status === 500) {
-                console.error('[EnqueueSync] Error interno del servidor:', { 
-                  jobId, 
-                  reservationId,
-                  error: error.error 
-                });
                 throw { 
                   type: 'SERVER_ERROR',
                   jobId,
@@ -423,11 +406,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
                 };
               }
               if (error.status === 0 || error.name === 'TimeoutError') {
-                console.error('[EnqueueSync] Error de conexión o timeout:', { 
-                  jobId, 
-                  reservationId,
-                  error 
-                });
                 throw { 
                   type: 'CONNECTION_ERROR',
                   jobId,
@@ -926,7 +904,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
       },
       error: (error) => {
         this.isProcessing = false;
-        console.error('Error descargando factura:', error);
         let errorMessage = 'Error al descargar la factura';
         if (error.status === 500) {
           errorMessage = 'Error interno del servidor. Inténtalo más tarde.';
@@ -981,8 +958,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
 
   private handleDownloadError(error: any): void {
     this.isProcessing = false;
-    console.error('Error downloading document:', error);
-
     let errorMessage = 'Error al descargar el documento';
     if (error.status === 500) {
       errorMessage = error.error?.message?.includes('KeyNotFoundException')
@@ -1003,7 +978,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
   }
 
   private handleSendError(error: any): void {
-    console.error('Error sending notification:', error);
     let errorMessage = 'Error al enviar el documento';
     if (error.status === 500) {
       errorMessage = 'Error interno del servidor. Inténtalo más tarde.';
@@ -1087,7 +1061,6 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
       },
       error: (error) => {
         this.isProcessing = false;
-        console.error('[InvoiceProcess] Error generando factura:', error);
         let errorMessage = 'Error al enviar la factura';
         if (error.status === 500) {
           errorMessage = 'Error interno del servidor. Inténtalo más tarde.';

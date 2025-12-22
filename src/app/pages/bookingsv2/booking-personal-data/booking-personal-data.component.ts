@@ -102,7 +102,6 @@ private loadDepartureData(departureId: number): void {
       }
     },
     error: (error) => {
-      console.error('Error loading departure data:', error);
     }
   });
 }
@@ -135,7 +134,6 @@ private loadDepartureData(departureId: number): void {
         }
       },
       error: (error) => {
-        console.error('Error al cargar configuración de campos:', error);
         // Continuar cargando pasajeros aunque falle la configuración
         if (this.reservationId) {
           this.loadPassengerData();

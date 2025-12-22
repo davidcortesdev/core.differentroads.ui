@@ -384,7 +384,6 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         this.loading = false;
-        console.error('Error al descargar presupuesto:', error);
         this.additionalInfoService.showError('Error al descargar el presupuesto. Inténtalo de nuevo.');
       }
     });
@@ -462,7 +461,6 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
         // No navegar al checkout, solo mostrar notificación
       },
       error: (error) => {
-        console.error('Error al crear presupuesto:', error);
         this.loading = false;
         this.additionalInfoService.showError('No se pudo guardar el presupuesto. Inténtalo de nuevo.');
       }
@@ -601,7 +599,6 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         this.loading = false;
-        console.error('Error al compartir presupuesto:', error);
         this.additionalInfoService.showError('Error al compartir el presupuesto. Inténtalo de nuevo.');
       }
     });
@@ -658,7 +655,6 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         this.loading = false;
-        console.error('Error al descargar presupuesto:', error);
         this.additionalInfoService.showError(
           'Ha ocurrido un error al descargar el presupuesto. Por favor, inténtalo de nuevo.'
         );
@@ -782,7 +778,6 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         this.loadingEmailModal = false;
-        console.error('Error al procesar descarga de presupuesto:', error);
         this.additionalInfoService.showError('Error al procesar la descarga. Inténtalo de nuevo.');
       }
     });
@@ -933,17 +928,14 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
               if (success) {
 
               } else {
-                console.warn('⚠️ No se pudo actualizar el estado de la reserva:', reservationId);
               }
             },
             error: (error) => {
-              console.error('❌ Error al actualizar estado de reserva:', error);
             }
           });
         }
       },
       error: (error) => {
-        console.error('❌ Error al obtener estado BUDGET:', error);
       }
     });
   }
@@ -975,7 +967,6 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
             },
             error: (error) => {
               this.loading = false;
-              console.error('Error al descargar presupuesto:', error);
               this.additionalInfoService.showError('Error al descargar el presupuesto. Inténtalo de nuevo.');
             }
           });
@@ -986,7 +977,6 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         this.loading = false;
-        console.error('Error al crear presupuesto:', error);
         this.additionalInfoService.showError('No se pudo crear el presupuesto. Inténtalo de nuevo.');
       }
     });
@@ -1025,7 +1015,6 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
             },
             error: (error) => {
               this.loading = false;
-              console.error('Error al compartir presupuesto:', error);
               this.additionalInfoService.showError('Error al compartir el presupuesto. Inténtalo de nuevo.');
             }
           });
@@ -1036,7 +1025,6 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         this.loading = false;
-        console.error('Error al crear presupuesto:', error);
         this.additionalInfoService.showError('No se pudo crear el presupuesto. Inténtalo de nuevo.');
       }
     });
@@ -1072,7 +1060,6 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
             },
             error: (error) => {
               this.loading = false;
-              console.error('Error al descargar presupuesto:', error);
               this.additionalInfoService.showError('Error al descargar el presupuesto. Inténtalo de nuevo.');
             }
           });
@@ -1083,7 +1070,6 @@ export class AdditionalInfoComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         this.loading = false;
-        console.error('Error al crear presupuesto:', error);
         this.additionalInfoService.showError('No se pudo crear el presupuesto. Inténtalo de nuevo.');
       }
     });

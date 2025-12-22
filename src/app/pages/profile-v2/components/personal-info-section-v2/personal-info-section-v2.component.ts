@@ -104,7 +104,6 @@ export class PersonalInfoSectionV2Component implements OnInit, OnChanges {
         this.isLoading = false;
       },
       error: (error) => {
-        console.error('Error al cargar datos del usuario:', error);
         this.errorMessage = 'Error al cargar los datos del usuario. Por favor, inténtalo de nuevo.';
         this.isLoading = false;
       }
@@ -191,7 +190,6 @@ export class PersonalInfoSectionV2Component implements OnInit, OnChanges {
         this.passwordErrorMessage = 'Código inválido o contraseña débil.';
       }
     } catch (error: any) {
-      console.error('Error al actualizar la contraseña:', error);
       this.passwordErrorMessage = this.translatePasswordError(error) || 'Error al actualizar la contraseña.';
     } finally {
       this.isPasswordLoading = false;

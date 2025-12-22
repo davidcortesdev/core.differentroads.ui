@@ -67,7 +67,6 @@ export class UpdateProfileSectionV2Component implements OnInit, OnDestroy {
           }
         },
         error: (error) => {
-          console.error('Error loading phone prefixes:', error);
         }
       });
   }
@@ -107,7 +106,6 @@ export class UpdateProfileSectionV2Component implements OnInit, OnDestroy {
             setTimeout(() => this.successMessage = '', 3000);
           },
           error: (error) => {
-            console.error('Error uploading image:', error);
             this.errorMessage = 'Error al subir la imagen. Por favor, intenta de nuevo.';
             this.isUploadingImage = false;
             this.uploadedFiles = [];

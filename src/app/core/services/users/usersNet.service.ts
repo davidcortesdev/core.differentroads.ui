@@ -301,7 +301,6 @@ export class UsersNetService {
         return this.createUser(leadUser);
       }),
       catchError((error) => {
-        console.error('❌ Error creando usuario lead:', error);
         throw error;
       })
     );

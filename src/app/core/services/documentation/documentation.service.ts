@@ -179,10 +179,6 @@ export class DocumentationService {
               document: document,
             })),
             catchError((error) => {
-              console.warn(
-                `Error getting document ${docRes.documentId}:`,
-                error
-              );
               return of({
                 ...docRes,
                 document: null,

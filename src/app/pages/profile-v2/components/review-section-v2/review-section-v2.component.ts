@@ -59,7 +59,6 @@ export class ReviewSectionV2Component implements OnInit, OnChanges, OnDestroy {
 
     const userIdNumber = parseInt(this.userId, 10);
     if (isNaN(userIdNumber)) {
-      console.error('Invalid userId:', this.userId);
       return;
     }
 
@@ -99,13 +98,11 @@ export class ReviewSectionV2Component implements OnInit, OnChanges, OnDestroy {
             return of(mappedReviews);
           }),
           catchError(error => {
-            console.error('Error loading reviews:', error);
             return of([]);
           })
         );
       }),
       catchError(error => {
-        console.error('Error loading user data:', error);
         // Si falla obtener el usuario, intentar cargar las reviews de todas formas
         return this.reviewsService.getByUserId(userIdNumber).pipe(
           takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
@@ -127,7 +124,6 @@ export class ReviewSectionV2Component implements OnInit, OnChanges, OnDestroy {
             return of(mappedReviews);
           }),
           catchError(reviewError => {
-            console.error('Error loading reviews:', reviewError);
             return of([]);
           })
         );
@@ -137,7 +133,6 @@ export class ReviewSectionV2Component implements OnInit, OnChanges, OnDestroy {
         this.enrichReviewsWithTourData(reviewsWithTravelers);
       },
       error: (error) => {
-        console.error('Error in loadReviews:', error);
         this.reviewsCards = [];
         this.loading = false;
         this.cdr.markForCheck();
@@ -161,7 +156,6 @@ export class ReviewSectionV2Component implements OnInit, OnChanges, OnDestroy {
       this.tourService.getTourById(tourId).pipe(
         takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
         catchError(error => {
-          console.error(`Error fetching tour ${tourId}:`, error);
           return of(null);
         })
       )
@@ -193,7 +187,6 @@ export class ReviewSectionV2Component implements OnInit, OnChanges, OnDestroy {
         this.cdr.markForCheck();
       },
       error: (error) => {
-        console.error('Error enriching reviews with tour data:', error);
         // En caso de error, usar las reviews sin enriquecer
         this.reviewsCards = reviews;
         this.loading = false;
@@ -217,7 +210,6 @@ export class ReviewSectionV2Component implements OnInit, OnChanges, OnDestroy {
       takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
       map((reservations) => reservations.length > 0),
       catchError(error => {
-        console.error('Error checking completed bookings:', error);
         return of(false);
       })
     ).subscribe({

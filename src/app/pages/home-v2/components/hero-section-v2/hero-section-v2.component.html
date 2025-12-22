@@ -6,7 +6,7 @@
   </video>
 
   <!-- Imagen de fondo dinámica -->
-  <img *ngIf="isImage && getBannerUrl()" class="hero-bg" [src]="getBannerUrl()" [alt]="getBannerAltText()" />
+  <img *ngIf="isImage && getBannerUrl()" class="hero-bg" [src]="getBannerUrl()" [alt]="getBannerAltText()" loading="lazy" />
 
   <div class="hero-search">
     <!-- Mensaje de validación de fechas -->

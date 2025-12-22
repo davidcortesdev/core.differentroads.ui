@@ -10,6 +10,7 @@ import { DepartureConsolidadorTourAirportService, DepartureConsolidadorTourAirpo
 import { DepartureService, DepartureAirportTimesResponse } from '../../../../../core/services/departure/departure.service';
 import { LocationAirportNetService } from '../../../../../core/services/locations/locationAirportNet.service';
 import { LocationNetService } from '../../../../../core/services/locations/locationNet.service';
+import { LocationAirport, Location } from '../../../../../core/models/location/location.model';
 import { FlightSearchService, FlightSearchRequest, IFlightPackDTO, IFlightDetailDTO, IFlightSearchResultDTO, IFlightSearchWarning, IFlightSearchMeta } from '../../../../../core/services/flight/flight-search.service';
 import { IFlightPackDTO as IFlightsNetFlightPackDTO } from '../../../services/flightsNet.service';
 import { ReservationTravelerService, IReservationTravelerResponse } from '../../../../../core/services/reservation/reservation-traveler.service';
@@ -20,6 +21,18 @@ import { AirportCityCacheService } from '../../../../../core/services/locations/
 interface Ciudad {
   nombre: string;
   codigo: string;
+}
+
+// Constantes para tipos de fuente de aeropuertos
+enum AirportSourceType {
+  DEFAULT = 'Default',
+  TOUR_AIRPORT = 'TourAirport',
+  LOCATION = 'Location'
+}
+
+// Constantes para tipos de fuente de vuelos
+enum FlightSourceType {
+  AMADEUS = 'amadeus'
 }
 
 @Component({
@@ -252,7 +265,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
 
     // Obtener aeropuertos por defecto (IsDefaultConsolidator=true) desde la API de Locations
     const defaultAirports$ = this.locationAirportNetService.getAirports({ IsDefaultConsolidator: true }).pipe(
-      map((airports: any[]) => {
+      map((airports: LocationAirport[]) => {
         return airports.filter(airport => airport.isDefaultConsolidator === true);
       }),
       catchError(error => {
@@ -332,21 +345,21 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
             // Crear mapa con aeropuertos por defecto
             // La API ya debe devolver solo los que tienen IsDefaultConsolidator=true
             const citiesMap = new Map<string, { nombre: string; codigo: string; source: string; id: number }>();
-            defaultAirports.forEach((airport: any) => {
+            defaultAirports.forEach((airport: LocationAirport) => {
               if (airport.iata && airport.name) {
                 const key = airport.iata.toUpperCase();
                 citiesMap.set(key, {
                   nombre: airport.name,
                   codigo: airport.iata,
-                  source: 'Default',
+                  source: AirportSourceType.DEFAULT,
                   id: airport.id
                 });
               }
             });
 
             // Agregar ubicaciones configuradas al mapa
-            const locationMap = new Map(configuredLocationsDetails.locations.map((l: any) => [l.id, l]));
-            const airportMap = new Map(configuredLocationsDetails.airports.map((a: any) => [a.id, a]));
+            const locationMap = new Map(configuredLocationsDetails.locations.map((l: Location) => [l.id, l]));
+            const airportMap = new Map(configuredLocationsDetails.airports.map((a: LocationAirport) => [a.id, a]));
             
             // TODO: Agregar aeropuertos asociados a las localizaciones configuradas
             // COMENTADO TEMPORALMENTE - Hay un problema en el backend que no devuelve las localizaciones configuradas
@@ -362,7 +375,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
             //             citiesMap.set(key, {
             //               nombre: airport.name,
             //               codigo: airport.iata,
-            //               source: 'Location',
+            //               source: AirportSourceType.LOCATION,
             //               id: airport.id
             //             });
             //           }
@@ -411,7 +424,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
                     citiesMap.set(key, {
                       nombre: airport.name ? airport.name : '',
                       codigo: airport.iata,
-                      source: 'TourAirport',
+                      source: AirportSourceType.TOUR_AIRPORT,
                       id: tourAirport.id
                     });
                   }
@@ -869,7 +882,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
             },
         price: flightPack.ageGroupPrices?.[0]?.price || 0,
         priceData: priceData,
-        source: 'amadeus',
+        source: FlightSourceType.AMADEUS,
       };
 
       return flight;

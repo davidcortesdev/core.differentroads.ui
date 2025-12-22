@@ -62,10 +62,32 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
+  /**
+   * Configuración responsive del carousel
+   * Los breakpoints se aplican cuando el viewport es menor al valor especificado
+   * Orden: de mayor a menor breakpoint
+   */
   protected readonly responsiveOptions: ResponsiveOption[] = [
-    { breakpoint: '1024px', numVisible: 3, numScroll: 1 },
-    { breakpoint: '768px', numVisible: 2, numScroll: 1 },
-    { breakpoint: '560px', numVisible: 1, numScroll: 1 },
+    {
+      breakpoint: '1400px',
+      numVisible: 3,
+      numScroll: 1,
+    },
+    {
+      breakpoint: '1200px',
+      numVisible: 2,
+      numScroll: 1,
+    },
+    {
+      breakpoint: '768px',
+      numVisible: 2,
+      numScroll: 1,
+    },
+    {
+      breakpoint: '576px',
+      numVisible: 1,
+      numScroll: 1,
+    },
   ];
 
   constructor(

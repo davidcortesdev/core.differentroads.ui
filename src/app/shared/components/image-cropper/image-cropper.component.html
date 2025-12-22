@@ -11,7 +11,7 @@
     <!-- Contenedor del cropper -->
     <div class="cropper-container" *ngIf="imageSource && !croppedImage && !loading">
       <div class="img-container">
-        <img #cropperImage [src]="imageSource" alt="Imagen para recortar" class="cropper-image">
+        <img #cropperImage [src]="imageSource" alt="Imagen para recortar" class="cropper-image" loading="lazy">
       </div>
       
       <div class="cropper-controls">

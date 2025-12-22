@@ -78,12 +78,9 @@
                     </span>
                   </div>
 
-                  <!-- Columna 4: Notas y botón justificante (comparten columna) -->
+                  <!-- Columna 4: Botón justificante -->
                   <div class="history-column notes-column">
                     <div class="notes-content">
-                      <span class="notes" *ngIf="item.notes">
-                        <i class="pi pi-comment"></i> {{ getFriendlyErrorMessage(item.notes) }}
-                      </span>
                       <!-- Botón para subir justificante si es transferencia -->
                       <span class="upload-voucher-action" *ngIf="isTransfer(item)">
                         <input
@@ -112,10 +109,9 @@
                     </div>
                   </div>
 
-                  <!-- Columna 5: Fecha de salida -->
+                  <!-- Columna 5: Fecha del pago -->
                   <div class="history-column date-column">
-                    <span class="date" *ngIf="displayDepartureDate">{{ displayDepartureDate | date : 'dd/MM/yyyy' }}</span>
-                    <span class="date" *ngIf="!displayDepartureDate">{{ item.createdAt | date : 'dd/MM/yyyy' }}</span>
+                    <span class="date">{{ item.createdAt | date : 'dd/MM/yyyy' }}</span>
                   </div>
 
                   <!-- Columna 6: Acciones ATC -->

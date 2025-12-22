@@ -1,4 +1,7 @@
-<section *ngIf="isActive" class="carousel-section">
+<section 
+  *ngIf="isActive" 
+  class="carousel-section"
+  [ngClass]="themeCode ? 'theme-' + themeCode.toLowerCase() : ''">
   <!-- Título y descripción de la sección -->
   <div class="carousel-section-description">
     <h2 *ngIf="title" class="section-title">{{ title }}</h2>

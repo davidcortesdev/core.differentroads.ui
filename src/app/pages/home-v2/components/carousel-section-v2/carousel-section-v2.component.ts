@@ -22,6 +22,9 @@ import {
   HomeSectionCardService,
   IHomeSectionCardResponse,
 } from '../../../../core/services/home/home-section-card.service';
+import {
+  HomeSectionThemeService,
+} from '../../../../core/services/home/home-section-theme.service';
 
 // Interfaces locales simples (sin modelos externos)
 interface ResponsiveOption {
@@ -59,6 +62,7 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
   protected textContent = '';
   protected title = '';
   protected isActive = false;
+  protected themeCode: string | null = null;
 
   private destroy$ = new Subject<void>();
 
@@ -96,6 +100,7 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
     private readonly homeSectionConfigurationService: HomeSectionConfigurationService,
     private readonly homeSectionContentService: HomeSectionContentService,
     private readonly homeSectionCardService: HomeSectionCardService,
+    private readonly homeSectionThemeService: HomeSectionThemeService,
     private readonly cdr: ChangeDetectorRef
   ) {}
 
@@ -168,6 +173,13 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
           this.title = configuration.title || '';
           this.isActive = configuration.isActive;
 
+          // Cargar tema si existe themeId
+          if (configuration.themeId) {
+            this.loadTheme(configuration.themeId);
+          } else {
+            this.themeCode = null;
+          }
+
           // Forzar detección de cambios
           this.cdr.markForCheck();
 
@@ -185,9 +197,29 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error(
-            '❌ CarouselSectionV2 - Error loading configuration:',
+            'CarouselSectionV2 - Error loading configuration:',
             error
           );
+        },
+      });
+  }
+
+  private loadTheme(themeId: number): void {
+    this.homeSectionThemeService
+      .getById(themeId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (theme) => {
+          this.themeCode = theme.code || null;
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          console.error(
+            'CarouselSectionV2 - Error loading theme:',
+            error
+          );
+          this.themeCode = null;
+          this.cdr.markForCheck();
         },
       });
   }

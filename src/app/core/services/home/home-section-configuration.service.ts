@@ -39,6 +39,7 @@ export interface IHomeSectionConfigurationResponse {
   title?: string;
   content?: string;
   theme?: string;
+  themeId?: number;
   displayOrder: number;
   isActive: boolean;
   showMonthTags?: boolean;

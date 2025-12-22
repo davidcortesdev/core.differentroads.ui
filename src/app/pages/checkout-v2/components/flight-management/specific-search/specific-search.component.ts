@@ -1,11 +1,12 @@
 import { Component, EventEmitter, Input, OnInit, Output, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { forkJoin, of, Subject, Observable } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, catchError, switchMap, map } from 'rxjs/operators';
 import { FlightSegment, Flight } from '../../../../../core/models/tours/flight.model';
 import { TextsService } from '../../../../../core/services/checkout/texts.service';
 import { TravelersService } from '../../../../../core/services/checkout/travelers.service';
 import { DepartureConsolidadorSearchLocationService, ConsolidadorSearchLocationWithSourceResponse } from '../../../../../core/services/departure/departure-consolidador-search-location.service';
+import { DepartureConsolidadorTourAirportService, DepartureConsolidadorTourAirportResponse } from '../../../../../core/services/departure/departure-consolidador-tour-airport.service';
 import { DepartureService, DepartureAirportTimesResponse } from '../../../../../core/services/departure/departure.service';
 import { LocationAirportNetService } from '../../../../../core/services/locations/locationAirportNet.service';
 import { LocationNetService } from '../../../../../core/services/locations/locationNet.service';
@@ -39,6 +40,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   @Input() flights: Flight[] = [];
   @Input() departureId: number | null = null;
   @Input() reservationId: number | null = null;
+  @Input() tourId: number | null = null; // ✅ NUEVO: Necesario para obtener aeropuertos permitidos
   @Input() departureActivityPackId: number | null = null; // ✅ NUEVO: ID del paquete del departure
   @Input() selectedFlightFromParent: IFlightPackDTO | null = null; // Nuevo input para sincronización con el padre
 
@@ -48,7 +50,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   equipajeMano = false;
   equipajeBodega = false;
   tourOrigenConstante: Ciudad = { nombre: '', codigo: '' };
-  tourDestinoConstante: Ciudad = { nombre: 'Madrid', codigo: 'MAD' };
+  tourDestinoConstante: Ciudad = { nombre: '', codigo: '' }; // ✅ CORREGIDO: Ya no está hardcodeado, se llena desde la API
   fechaIdaConstante = '';
   fechaRegresoConstante = '';
   horaIdaConstante = '';
@@ -102,6 +104,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     private readonly travelersService: TravelersService,
     private readonly textsService: TextsService,
     private readonly departureConsolidadorSearchLocationService: DepartureConsolidadorSearchLocationService,
+    private readonly departureConsolidadorTourAirportService: DepartureConsolidadorTourAirportService,
     private readonly departureService: DepartureService,
     private readonly locationAirportNetService: LocationAirportNetService,
     private readonly locationNetService: LocationNetService,
@@ -129,12 +132,13 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-
-    if (changes['departureId'] && changes['departureId'].currentValue && 
-        changes['departureId'].currentValue !== changes['departureId'].previousValue) {
-
-      this.loadCombinedCities();
-      this.loadAirportTimes();
+    if ((changes['departureId'] && changes['departureId'].currentValue && 
+        changes['departureId'].currentValue !== changes['departureId'].previousValue) ||
+        (changes['tourId'] && changes['tourId'].currentValue !== changes['tourId'].previousValue)) {
+      if (this.departureId) {
+        this.loadCombinedCities();
+        this.loadAirportTimes();
+      }
     }
 
     // Nuevo: Actualizar selectedFlight cuando cambie desde el padre
@@ -182,6 +186,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   private createFlightForm(): FormGroup {
     return this.fb.group({
       origen: [null],
+      destinoVuelta: [null], // ✅ NUEVO: Campo para destino de vuelta en ida y vuelta
       tipoViaje: [this.tipoViaje],
       equipajeMano: [this.equipajeMano],
       equipajeBodega: [this.equipajeBodega],
@@ -201,9 +206,24 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   private initFormListeners(): void {
-    this.flightForm.get('tipoViaje')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((value) => {
-      this.tipoViaje = value;
+      this.flightForm.get('tipoViaje')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((value) => {
+        this.tipoViaje = value;
+        
+        if (value === 'IdaVuelta' && this.flightForm.get('origen')?.value) {
+          this.flightForm.get('destinoVuelta')?.setValue(this.flightForm.get('origen')?.value);
+        }
+        
+        if (value === 'Ida' || value === 'Vuelta') {
+          this.flightForm.get('destinoVuelta')?.setValue(null);
+        }
+      });
+    
+    this.flightForm.get('origen')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((value) => {
+      if (this.tipoViaje === 'IdaVuelta' && value) {
+        this.flightForm.get('destinoVuelta')?.setValue(value);
+      }
     });
+    
     this.flightForm.get('equipajeMano')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((value) => {
       this.equipajeMano = value;
     });
@@ -225,50 +245,191 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   private loadCombinedCities(): void {
-    this.departureConsolidadorSearchLocationService.getCombinedLocations(this.departureId!)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (data: ConsolidadorSearchLocationWithSourceResponse[]) => {
-          const locationIds = data.filter(item => typeof item.locationId === 'number').map(item => item.locationId as number);
-          const airportIds = data.filter(item => typeof item.locationAirportId === 'number').map(item => item.locationAirportId as number);
-          forkJoin({
-            locations: locationIds.length ? this.locationNetService.getLocationsByIds(locationIds) : of([]),
-            airports: airportIds.length ? this.locationAirportNetService.getAirportsByIds(airportIds) : of([])
-          }).pipe(takeUntil(this.destroy$)).subscribe(({ locations, airports }) => {
-            const locationMap = new Map(locations.map((l: any) => [l.id, l]));
-            const airportMap = new Map(airports.map((a: any) => [a.id, a]));
-            this.combinedCities = data.map(item => {
-              if (item.locationId && locationMap.has(item.locationId)) {
-                const loc = locationMap.get(item.locationId);
-                return {
-                  nombre: loc && loc.name ? loc.name : '',
-                  codigo: loc && loc.iataCode ? String(loc.iataCode) : (loc && loc.code ? String(loc.code) : ''),
-                  source: item.source,
-                  id: item.id
-                };
-              } else if (item.locationAirportId && airportMap.has(item.locationAirportId)) {
-                const airport = airportMap.get(item.locationAirportId);
-                return {
-                  nombre: airport && airport.name ? airport.name : '',
-                  codigo: airport && airport.iata ? String(airport.iata) : '',
-                  source: item.source,
-                  id: item.id
-                };
-              } else {
-                return {
-                  nombre: '',
-                  codigo: '',
-                  source: item.source,
-                  id: item.id
-                };
+    if (!this.departureId) {
+      this.combinedCities = [];
+      return;
+    }
+
+    // Obtener aeropuertos por defecto (IsDefaultConsolidator=true) desde la API de Locations
+    const defaultAirports$ = this.locationAirportNetService.getAirports({ IsDefaultConsolidator: true }).pipe(
+      map((airports: any[]) => {
+        return airports.filter(airport => airport.isDefaultConsolidator === true);
+      }),
+      catchError(error => {
+        return of([]);
+      })
+    );
+
+    // Obtener ubicaciones configuradas en el consolidador (Tour + Departure)
+    const configuredLocations$ = this.departureConsolidadorSearchLocationService.getCombinedLocations(this.departureId!).pipe(
+      catchError(error => {
+        return of([]);
+      })
+    );
+    
+    // También obtener las localizaciones directamente del departure (por si el combined no las incluye)
+    const departureLocations$ = this.departureConsolidadorSearchLocationService.getDepartureLocations(this.departureId!).pipe(
+      catchError(error => {
+        return of([]);
+      })
+    );
+
+    // Obtener aeropuertos del tour configurados en el consolidador
+    const tourAirports$ = this.departureConsolidadorTourAirportService.getTourAirports(this.departureId!).pipe(
+      catchError(error => {
+        return of([]);
+      })
+    );
+
+    // Combinar todas las fuentes
+    forkJoin({
+      defaultAirports: defaultAirports$,
+      configuredLocations: configuredLocations$,
+      departureLocations: departureLocations$,
+      tourAirports: tourAirports$
+    }).pipe(
+      takeUntil(this.destroy$),
+      switchMap(({ defaultAirports, configuredLocations, departureLocations, tourAirports }) => {
+        // Combinar configuredLocations y departureLocations, eliminando duplicados por ID
+        const allLocationsMap = new Map<number, ConsolidadorSearchLocationWithSourceResponse>();
+        [...configuredLocations, ...departureLocations].forEach(loc => {
+          if (!allLocationsMap.has(loc.id)) {
+            allLocationsMap.set(loc.id, loc);
+          }
+        });
+        const allConfiguredLocations = Array.from(allLocationsMap.values());
+
+        // Obtener IDs de aeropuertos del tour (solo los incluidos)
+        const tourAirportIds = tourAirports
+          .filter((airport: DepartureConsolidadorTourAirportResponse) => airport.isIncluded === true)
+          .map((airport: DepartureConsolidadorTourAirportResponse) => airport.locationAirportId);
+
+        // Obtener detalles de las ubicaciones configuradas (usando todas las localizaciones combinadas)
+        const locationIds = allConfiguredLocations.filter(item => typeof item.locationId === 'number').map(item => item.locationId as number);
+        const configuredAirportIds = allConfiguredLocations.filter(item => typeof item.locationAirportId === 'number').map(item => item.locationAirportId as number);
+        
+        // TODO: Obtener todos los aeropuertos asociados a las localizaciones configuradas
+        // Para cada locationId, obtener sus aeropuertos usando el filtro LocationId
+        // COMENTADO TEMPORALMENTE - Hay un problema en el backend que no devuelve las localizaciones configuradas
+        // const locationAirportsRequests = locationIds.map(locationId => 
+        //   this.locationAirportNetService.getAirports({ LocationId: locationId }).pipe(
+        //     catchError(error => {
+        //       return of([]);
+        //     })
+        //   )
+        // );
+        
+        // Combinar todos los IDs de aeropuertos (configurados + tour) sin duplicados
+        const allAirportIds = [...new Set([...configuredAirportIds, ...tourAirportIds])];
+        
+        return forkJoin({
+          locations: locationIds.length ? this.locationNetService.getLocationsByIds(locationIds) : of([]),
+          airports: allAirportIds.length ? this.locationAirportNetService.getAirportsByIds(allAirportIds) : of([]),
+          // locationAirports: locationAirportsRequests.length > 0 ? forkJoin(locationAirportsRequests) : of([])
+          locationAirports: of([]) // COMENTADO TEMPORALMENTE
+        }).pipe(
+          map(configuredLocationsDetails => {
+            // Crear mapa con aeropuertos por defecto
+            // La API ya debe devolver solo los que tienen IsDefaultConsolidator=true
+            const citiesMap = new Map<string, { nombre: string; codigo: string; source: string; id: number }>();
+            defaultAirports.forEach((airport: any) => {
+              if (airport.iata && airport.name) {
+                const key = airport.iata.toUpperCase();
+                citiesMap.set(key, {
+                  nombre: airport.name,
+                  codigo: airport.iata,
+                  source: 'Default',
+                  id: airport.id
+                });
               }
             });
-          });
-        },
-        error: () => {
-          this.combinedCities = [];
-        }
-      });
+
+            // Agregar ubicaciones configuradas al mapa
+            const locationMap = new Map(configuredLocationsDetails.locations.map((l: any) => [l.id, l]));
+            const airportMap = new Map(configuredLocationsDetails.airports.map((a: any) => [a.id, a]));
+            
+            // TODO: Agregar aeropuertos asociados a las localizaciones configuradas
+            // COMENTADO TEMPORALMENTE - Hay un problema en el backend que no devuelve las localizaciones configuradas
+            // locationAirports es un array de arrays (cada elemento es un array de aeropuertos para cada locationId)
+            // const locationAirportsArray = configuredLocationsDetails.locationAirports || [];
+            // if (Array.isArray(locationAirportsArray) && locationAirportsArray.length > 0) {
+            //   locationAirportsArray.forEach((airportsForLocation: any[]) => {
+            //     if (Array.isArray(airportsForLocation)) {
+            //       airportsForLocation.forEach((airport: any) => {
+            //         if (airport.iata && airport.name) {
+            //           const key = airport.iata.toUpperCase();
+            //           if (!citiesMap.has(key)) {
+            //             citiesMap.set(key, {
+            //               nombre: airport.name,
+            //               codigo: airport.iata,
+            //               source: 'Location',
+            //               id: airport.id
+            //             });
+            //           }
+            //         }
+            //       });
+            //     }
+            //   });
+            // }
+
+            // Agregar ubicaciones configuradas (search locations) - usar allConfiguredLocations
+            allConfiguredLocations.forEach(item => {
+              if (item.locationId && locationMap.has(item.locationId)) {
+                const loc = locationMap.get(item.locationId);
+                const codigo = loc && loc.iataCode ? String(loc.iataCode) : (loc && loc.code ? String(loc.code) : '');
+                if (codigo) {
+                  const key = codigo.toUpperCase();
+                  citiesMap.set(key, {
+                    nombre: loc && loc.name ? loc.name : '',
+                    codigo: codigo,
+                    source: item.source,
+                    id: item.id
+                  });
+                }
+              } else if (item.locationAirportId && airportMap.has(item.locationAirportId)) {
+                const airport = airportMap.get(item.locationAirportId);
+                if (airport && airport.iata) {
+                  const key = airport.iata.toUpperCase();
+                  citiesMap.set(key, {
+                    nombre: airport.name ? airport.name : '',
+                    codigo: airport.iata,
+                    source: item.source,
+                    id: item.id
+                  });
+                }
+              }
+            });
+
+            // Agregar aeropuertos del tour configurados (solo los incluidos)
+            tourAirports
+              .filter((airport: DepartureConsolidadorTourAirportResponse) => airport.isIncluded === true)
+              .forEach((tourAirport: DepartureConsolidadorTourAirportResponse) => {
+                if (airportMap.has(tourAirport.locationAirportId)) {
+                  const airport = airportMap.get(tourAirport.locationAirportId);
+                  if (airport && airport.iata) {
+                    const key = airport.iata.toUpperCase();
+                    citiesMap.set(key, {
+                      nombre: airport.name ? airport.name : '',
+                      codigo: airport.iata,
+                      source: 'TourAirport',
+                      id: tourAirport.id
+                    });
+                  }
+                }
+              });
+
+            return { defaultAirports, configuredLocationsDetails, citiesMap };
+          })
+        );
+      })
+    ).subscribe({
+      next: ({ citiesMap }) => {
+        this.combinedCities = Array.from(citiesMap.values());
+      },
+      error: (error) => {
+        this.combinedCities = [];
+      }
+    });
   }
 
   private loadAirportTimes(): void {
@@ -352,8 +513,21 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
 
     const formValue = this.flightForm.value;
     const tipoViaje = formValue.tipoViaje;
-    const originCode = formValue.origen?.codigo || null;
-    const destinationCode = formValue.origen?.codigo || null;
+    
+    // ✅ CORREGIDO: Determinar códigos según el tipo de viaje
+    let originCode: string | null = null;
+    let destinationCode: string | null = null;
+    
+    if (tipoViaje === 'Ida') {
+      originCode = formValue.origen?.codigo || null;
+      destinationCode = this.tourOrigenConstante.codigo || null;
+    } else if (tipoViaje === 'Vuelta') {
+      originCode = this.tourDestinoConstante.codigo || null;
+      destinationCode = formValue.origen?.codigo || null;
+    } else if (tipoViaje === 'IdaVuelta') {
+      originCode = formValue.origen?.codigo || null;
+      destinationCode = formValue.destinoVuelta?.codigo || formValue.origen?.codigo || null;
+    }
 
     const request: FlightSearchRequest = {
       departureId: this.departureId!,
@@ -363,12 +537,9 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       iataDestino: destinationCode
     };
     
-    // Pasar autoSearch=false para evitar llamadas automáticas que causen bucles
     this.flightSearchService.searchFlights(request, false).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response: IFlightSearchResultDTO) => {
         this.isLoading = false;
-        
-        // Extraer los flightPacks de la nueva respuesta
         this.flightOffersRaw = response.flightPacks || [];
         
         // Procesar warnings y meta información
@@ -427,7 +598,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     const city = this.filteredCities.find(
       (c) => c.nombre.toLowerCase() === cityName.toLowerCase()
     );
-    return city ? city.codigo : 'MAD';
+    // ✅ CORREGIDO: Ya no hay valor hardcodeado, retorna vacío si no se encuentra
+    return city ? city.codigo : '';
   }
 
   filterOffers() {
@@ -708,7 +880,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     const city = this.filteredCities.find(
       (c) => c.nombre.toLowerCase() === cityName.toLowerCase()
     );
-    return city ? city.codigo : 'MAD';
+    // ✅ CORREGIDO: Ya no hay valor hardcodeado, retorna vacío si no se encuentra
+    return city ? city.codigo : '';
   }
 
   /**

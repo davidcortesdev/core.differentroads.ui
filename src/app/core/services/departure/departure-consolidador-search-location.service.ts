@@ -16,7 +16,8 @@ export interface ConsolidadorSearchLocationWithSourceResponse {
   providedIn: 'root',
 })
 export class DepartureConsolidadorSearchLocationService {
-  private readonly baseUrl = `${environment.toursApiUrl}/DepartureConsolidadorSearchLocation/combined`;
+  private readonly baseUrl = `${environment.toursApiUrl}/DepartureConsolidadorSearchLocation`;
+  private readonly combinedUrl = `${this.baseUrl}/combined`;
 
   constructor(private http: HttpClient) {}
 
@@ -25,6 +26,14 @@ export class DepartureConsolidadorSearchLocationService {
    * @param departureId ID de la departure a consultar
    */
   getCombinedLocations(departureId: number): Observable<ConsolidadorSearchLocationWithSourceResponse[]> {
-    return this.http.get<ConsolidadorSearchLocationWithSourceResponse[]>(`${this.baseUrl}/${departureId}`);
+    return this.http.get<ConsolidadorSearchLocationWithSourceResponse[]>(`${this.combinedUrl}/${departureId}`);
+  }
+
+  /**
+   * Obtiene las ubicaciones de búsqueda del consolidador para un departureId dado (solo del departure, sin combinar con tour).
+   * @param departureId ID de la departure a consultar
+   */
+  getDepartureLocations(departureId: number): Observable<ConsolidadorSearchLocationWithSourceResponse[]> {
+    return this.http.get<ConsolidadorSearchLocationWithSourceResponse[]>(`${this.baseUrl}?DepartureId=${departureId}`);
   }
 } 

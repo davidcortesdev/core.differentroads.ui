@@ -47,6 +47,7 @@ export interface LocationAirport {
   daylightSavingTimeId?: number;
   locationId?: number;
   tkId?: string;
+  isDefaultConsolidator?: boolean; // ✅ NUEVO: Flag para aeropuertos por defecto del consolidador
 }
 
 export interface FuzzyLocationAirportResponse {

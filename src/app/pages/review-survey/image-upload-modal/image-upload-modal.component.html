@@ -74,7 +74,7 @@
     class="photos-carousel">
     <ng-template let-image let-i="index" #item>
       <div class="carousel-photo-item">
-        <img [src]="image" alt="Foto {{i + 1}}" class="carousel-photo">
+        <img [src]="image" alt="Foto {{i + 1}}" class="carousel-photo" loading="lazy">
         <button type="button" class="remove-photo-btn" (click)="onRemoveImage(i)" title="Eliminar foto">
           <i class="pi pi-times"></i>
         </button>

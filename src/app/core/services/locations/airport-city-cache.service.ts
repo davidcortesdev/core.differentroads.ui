@@ -154,7 +154,6 @@ export class AirportCityCacheService {
     // Esperar a que todas las promesas se completen
     return Promise.all(airportPromises).then(() => {
     }).catch((error) => {
-      console.warn('⚠️ Algunas ciudades no se pudieron cargar:', error);
     });
   }
 
@@ -305,7 +304,6 @@ export class AirportCityCacheService {
                       resolve();
                     },
                     error: (error) => {
-                      console.warn(`⚠️ Error al obtener ciudad para aeropuerto ${airportIATA}:`, error);
                       this.setFallbackCityName(airportIATA, cacheKey, airport.name || airportIATA);
                       resolve();
                     }
@@ -320,12 +318,10 @@ export class AirportCityCacheService {
             } else {
               // Si no se encuentra el aeropuerto, usar el código IATA como fallback
               this.setFallbackCityName(airportIATA, cacheKey, airportIATA);
-              console.warn(`⚠️ Aeropuerto ${airportIATA} no encontrado, usando código IATA como fallback`);
               resolve();
             }
           },
           error: (error) => {
-            console.warn(`⚠️ Error al obtener aeropuerto ${airportIATA}:`, error);
             // En caso de error, usar el código IATA como fallback
             this.setFallbackCityName(airportIATA, cacheKey, airportIATA);
             resolve();

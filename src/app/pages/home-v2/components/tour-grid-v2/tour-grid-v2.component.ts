@@ -328,7 +328,6 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
         });
       }),
       catchError((error) => {
-        console.error('❌ Error loading trip types:', error);
         return of(undefined);
       })
     );
@@ -502,10 +501,6 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
             additionalData: this.getAdditionalTourData(id),
           }).pipe(
             catchError((error: Error) => {
-              console.error(
-                `❌ Error loading tour with ID ${id}:`,
-                error
-              );
               return of(null);
             }),
             map(
@@ -523,9 +518,6 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
                 } | null
               ): TourDataV2 | null => {
                 if (!combinedData) {
-                  if (this.DEBUG_MODE) {
-                    console.warn(`⚠️ No se encontraron datos para tour ID: ${id}`);
-                  }
                   return null;
                 }
 
@@ -575,7 +567,6 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
           this.isInitialLoadingView = false;
         },
         error: (error) => {
-          console.error('❌ Error en la carga de tours:', error);
           this.isLoading = false;
         }
       });
@@ -664,10 +655,6 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
         const departureRequests = itineraries.map((itinerary) =>
           this.departureService.getByItinerary(itinerary.id, false).pipe(
             catchError((error) => {
-              console.error(
-                `❌ Error obteniendo departures para itinerary ${itinerary.id}:`,
-                error
-              );
               return of([]);
             })
           )
@@ -684,10 +671,6 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
                     .getAll({ itineraryId: itineraries[0].id })
                     .pipe(
                       catchError((error) => {
-                        console.error(
-                          `❌ Error obteniendo días de itinerario para itinerary ${itineraries[0].id}:`,
-                          error
-                        );
                         return of([]);
                       })
                     )
@@ -769,10 +752,6 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
         );
       }),
       catchError((error) => {
-        console.error(
-          `❌ Error obteniendo datos adicionales para tour ${tourId}:`,
-          error
-        );
         return of({
           departures: [],
           tags: [],
@@ -1004,9 +983,8 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
           userData
         );
       },
-      error: (error) => {
-        console.error('Error obteniendo datos de usuario para analytics:', error);
-        // Disparar evento sin datos de usuario en caso de error
+        error: (error) => {
+          // Disparar evento sin datos de usuario en caso de error
         this.analyticsService.viewItemList(
           this.itemListId,
           this.itemListName,

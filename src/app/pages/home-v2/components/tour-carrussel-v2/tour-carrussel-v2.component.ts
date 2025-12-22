@@ -174,12 +174,10 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
         if (reviewType) {
           this.generalReviewTypeId = reviewType.id;
         } else {
-          console.warn('ReviewType con code "GENERAL" no encontrado');
           this.generalReviewTypeId = null;
         }
       }),
       catchError((error) => {
-        console.error('Error loading GENERAL review type:', error);
         this.generalReviewTypeId = null;
         return of(undefined);
       })
@@ -613,7 +611,6 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
         });
       }),
       catchError((error) => {
-        console.error('❌ Error loading trip types:', error);
         return of(undefined);
       })
     );
@@ -709,10 +706,6 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
           }
         },
         error: (error) => {
-          console.error(
-            '❌ [Tour Carrussel V2] Error loading configuration or filters:',
-            error
-          );
           this.tours = [];
         },
       });
@@ -804,10 +797,6 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
             return tourIds;
           }),
           catchError((error) => {
-            console.error(
-              '❌ [Tour Carrussel V2] Error loading tours by tag:',
-              error
-            );
             return of([]);
           })
         );
@@ -820,10 +809,6 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
               return tourIds;
             }),
             catchError((error) => {
-              console.error(
-                '❌ [Tour Carrussel V2] Error loading tours by location:',
-                error
-              );
               return of([]);
             })
           );
@@ -836,10 +821,6 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
             );
           return of(tourIds);
         } catch (error) {
-          console.error(
-            '❌ [Tour Carrussel V2] Error parsing specific tour IDs:',
-            error
-          );
           return of([]);
         }
 

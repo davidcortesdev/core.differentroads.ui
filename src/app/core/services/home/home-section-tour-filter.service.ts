@@ -381,7 +381,6 @@ export class HomeSectionTourFilterService {
     try {
       return JSON.parse(specificTourIds);
     } catch (error) {
-      console.error('Error al parsear specificTourIds:', error);
       return [];
     }
   }

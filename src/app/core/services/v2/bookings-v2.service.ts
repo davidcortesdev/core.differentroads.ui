@@ -290,14 +290,12 @@ export class BookingsServiceV2 {
   getReservationsByBucket(bucket: string, userId?: number, email?: string): Observable<ReservationResponse[]> {
     // Validar que al menos uno de los parámetros esté presente
     if (!userId && !email) {
-      console.error('Error: Se requiere al menos userId o email para obtener reservas por bucket');
       return of([]);
     }
 
     // Validar que el bucket sea válido
     const validBuckets = ['Active', 'Pending', 'Budget', 'History'];
     if (!validBuckets.includes(bucket)) {
-      console.error(`Error: Bucket inválido "${bucket}". Valores válidos: ${validBuckets.join(', ')}`);
       return of([]);
     }
 
@@ -315,18 +313,10 @@ export class BookingsServiceV2 {
 
     return this.http.get<ReservationResponse[]>(url, { params }).pipe(
       catchError((error) => {
-        console.error(`Error obteniendo reservas con bucket "${bucket}":`, error);
         
         // Log detallado del error para debugging
         if (error.error) {
-          console.error('Detalles del error:', {
-            status: error.status,
-            statusText: error.statusText,
-            message: error.error?.message || error.message,
-            bucket,
-            userId,
-            email: email ? '***' : undefined // Ocultar email en logs por seguridad
-          });
+
         }
         
         // Retornar array vacío en caso de error para no romper el flujo
@@ -383,7 +373,6 @@ export class BookingsServiceV2 {
       switchMap(() => this.paymentsNetService.getAll({ reservationId })),
       map((payments: IPaymentResponse[]) => this.mapPaymentsToPaymentModel(payments, bookingID)),
       catchError((error) => {
-        console.error('Error cargando pagos:', error);
         return of([]);
       })
     );
@@ -465,7 +454,6 @@ export class BookingsServiceV2 {
         }
       }
     } catch (error) {
-      console.warn('Error extrayendo nombre de archivo de URL:', error);
     }
     
     return 'Justificante';
@@ -536,7 +524,6 @@ export class BookingsServiceV2 {
     observables.push(
       this.getReservationsByBucket('Active', userId).pipe(
         catchError((error) => {
-          console.error('Error obteniendo reservas activas del titular:', error);
           return of([]);
         })
       )
@@ -547,7 +534,6 @@ export class BookingsServiceV2 {
       observables.push(
         this.getReservationsByBucket('Active', undefined, email).pipe(
           catchError((error) => {
-            console.error('Error obteniendo reservas activas del viajero:', error);
             return of([]);
           })
         )
@@ -578,7 +564,6 @@ export class BookingsServiceV2 {
   getPendingBookingsByBucket(userId: number): Observable<ReservationResponse[]> {
     return this.getReservationsByBucket('Pending', userId).pipe(
       catchError((error) => {
-        console.error('Error obteniendo reservas pendientes:', error);
         return of([]);
       })
     );
@@ -592,7 +577,6 @@ export class BookingsServiceV2 {
   getRecentBudgetsByBucket(userId: number): Observable<ReservationResponse[]> {
     return this.getReservationsByBucket('Budget', userId).pipe(
       catchError((error) => {
-        console.error('Error obteniendo presupuestos recientes:', error);
         return of([]);
       })
     );
@@ -611,7 +595,6 @@ export class BookingsServiceV2 {
     observables.push(
       this.getReservationsByBucket('History', userId).pipe(
         catchError((error) => {
-          console.error('Error obteniendo historial del titular:', error);
           return of([]);
         })
       )
@@ -622,7 +605,6 @@ export class BookingsServiceV2 {
       observables.push(
         this.getReservationsByBucket('History', undefined, email).pipe(
           catchError((error) => {
-            console.error('Error obteniendo historial del viajero:', error);
             return of([]);
           })
         )

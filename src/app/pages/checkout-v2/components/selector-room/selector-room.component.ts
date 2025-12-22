@@ -288,7 +288,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
       // FASE 3: Actualizar UI sin redistribuir
       this.updateUIWithoutDistribution();
     } catch (error) {
-      console.error('Error initializing component:', error);
     }
   }
 
@@ -371,7 +370,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
         }
       });
     } catch (error) {
-      console.error('Error loading room availability:', error);
       // En caso de error, establecer disponibilidad en undefined para no bloquear la UI
     }
   }
@@ -395,7 +393,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
       this.syncSelectedRoomsFromAssignments();
     } else {
       // ❌ Asignaciones inválidas → Limpiar y esperar interacción
-      console.warn('⚠️ Asignaciones inválidas:', validation.error);
       this.clearInvalidAssignments();
     }
   }
@@ -564,7 +561,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
   // Método para actualizar la UI después de cargar todos los datos
   // ⚠️ OBSOLETO: Usar updateUIWithoutDistribution() en su lugar
   updateUIFromData(): void {
-    console.warn('⚠️ updateUIFromData() es obsoleto, usar updateUIWithoutDistribution()');
     this.updateUIWithoutDistribution();
   }
 
@@ -742,10 +738,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
       // Extraer IDs de grupos de niños
       this.childAgeGroupIds = (childGroups || []).map((group) => group.id);
     } catch (error) {
-      console.error(
-        'ROOM_VALIDATION: Error loading age groups for validation:',
-        error
-      );
     }
   }
 
@@ -1707,7 +1699,6 @@ export class SelectorRoomComponent implements OnInit, OnChanges, OnDestroy {
       // Actualizar UI sin redistribuir
       this.updateUIWithoutDistribution();
     } catch (error) {
-      console.error('❌ Error al recargar habitaciones:', error);
       this.errorMsg = 'Error al recargar las habitaciones.';
       this.errorMsgType = 'error';
     }

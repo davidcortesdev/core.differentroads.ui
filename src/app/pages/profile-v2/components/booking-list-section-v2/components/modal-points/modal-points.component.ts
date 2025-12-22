@@ -69,7 +69,6 @@ export class ModalPointsComponent implements OnInit, OnChanges {
         this.loadingUserData = false;
       },
       error: (error: any) => {
-        console.error('Error cargando saldo de puntos:', error);
         this.availablePoints = 0;
         this.loadingUserData = false;
         this.messageService.add({
@@ -304,7 +303,6 @@ export class ModalPointsComponent implements OnInit, OnChanges {
         }
       })
       .catch(error => {
-        console.error('Error aplicando descuento:', error);
         this.messageService.add({
           severity: 'error',
           summary: 'Error',

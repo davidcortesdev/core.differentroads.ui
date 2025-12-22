@@ -95,7 +95,6 @@ export class ToursComponent implements OnInit, OnChanges, OnDestroy {
           this.isLoadingTours = false;
         },
         error: (error) => {
-          console.error('Error al buscar tours:', error);
           this.tourIds = [];
           this.isLoadingTours = false;
         },

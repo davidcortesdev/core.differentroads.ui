@@ -136,7 +136,6 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         this.checkReservationStatus();
       },
       error: (error) => {
-        console.error('Error al cargar estados de reserva:', error);
         this.error = 'Error al cargar estados de reserva';
         this.checkingReservationStatus = false;
       }
@@ -166,7 +165,6 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
                 }
               },
               error: (error) => {
-                console.error('Error al actualizar estado de la reserva:', error);
                 this.error = 'Error al actualizar estado de la reserva';
                 this.checkingReservationStatus = false;
               }
@@ -177,7 +175,6 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         }
       },
       error: (error) => {
-        console.error('Error al obtener información de la reserva:', error);
         this.error = 'Error al obtener información de la reserva';
         this.checkingReservationStatus = false;
       }
@@ -207,7 +204,6 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
           this.loading = false;
         },
         error: (error) => {
-          console.error('Error al cargar datos:', error);
           this.error = 'Error al cargar los datos de los viajeros';
           this.loading = false;
           this.messageService.add({
@@ -285,7 +281,6 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         }
       },
       error: (error) => {
-        console.error('Error al verificar selección de vuelo:', error);
         this.isCheckingFlightStatus = false;
         this.loadReservationStatuses();
       }
@@ -309,7 +304,6 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         this.loadReservationStatuses();
       },
       error: (error) => {
-        console.error('Error al obtener requisitos de Amadeus:', error);
         this.amadeusBookingRequirements = null;
         this.isCheckingFlightStatus = false;
         this.loadReservationStatuses();

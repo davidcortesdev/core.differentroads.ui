@@ -224,7 +224,6 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
         
       }),
       catchError((error) => {
-        console.error('Error loading trip types:', error);
         return of(undefined);
       })
     );
@@ -295,7 +294,6 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
         return this.tourService.getTours({ slug, filterByVisible: !this.preview });
       }),
       catchError((err: Error) => {
-        console.error('Error al cargar el tour:', err);
         this.error = 'Error al cargar el tour. Por favor, inténtalo de nuevo más tarde.';
         return of([]);
       })
@@ -447,7 +445,6 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
         );
       }),
       catchError((error) => {
-        console.error('Error obteniendo datos completos del tour para view_item:', error);
         return of(null);
       })
     ).subscribe((result: { item: any; userData?: any } | null) => {

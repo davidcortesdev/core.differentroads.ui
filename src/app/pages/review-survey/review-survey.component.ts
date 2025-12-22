@@ -145,7 +145,6 @@ export class ReviewSurveyComponent implements OnInit {
             return this.tourService.getById(itinerary.tourId);
           }),
           catchError((error) => {
-            console.error('Error during trip info loading:', error);
             this.setErrorTripInfo();
             return [];
           })
@@ -431,7 +430,6 @@ export class ReviewSurveyComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error al buscar usuario por email', error);
         this.messageService.add({
           severity: 'error',
           summary: 'Error',

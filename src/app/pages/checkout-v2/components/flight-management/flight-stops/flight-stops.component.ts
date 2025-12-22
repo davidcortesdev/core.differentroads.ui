@@ -44,7 +44,6 @@ export class FlightStopsComponent implements OnInit {
 
         await this.getFlightDetail();
       } else {
-        console.warn(`⚠️ FlightStops: Valores inválidos para nuevo servicio - flightId=${this.flightId}, packId=${this.packId}`);
       }
     } else {
       // Para el servicio actual: mantener la comprobación original
@@ -52,7 +51,6 @@ export class FlightStopsComponent implements OnInit {
 
         await this.getFlightDetail();
       } else {
-        console.warn(`⚠️ FlightStops: flightId inválido para servicio actual - flightId=${this.flightId}`);
       }
     }
   }
@@ -80,7 +78,6 @@ export class FlightStopsComponent implements OnInit {
         this.isLoading = false;
       },
       error: (error) => {
-        console.error(`❌ FlightStops: Error al obtener detalles del nuevo servicio:`, error);
         this.isLoading = false;
       },
     });
@@ -99,7 +96,6 @@ export class FlightStopsComponent implements OnInit {
         this.isLoading = false;
       },
       error: (error) => {
-        console.error(`❌ FlightStops: Error al obtener detalles del servicio actual:`, error);
         this.isLoading = false;
       },
     });
@@ -132,7 +128,6 @@ export class FlightStopsComponent implements OnInit {
       try {
         await this.airportCityCacheService.preloadAllAirportCities(airportCodes);
       } catch (error) {
-        console.warn('⚠️ FlightStops: Error al precargar ciudades:', error);
       }
     }
     

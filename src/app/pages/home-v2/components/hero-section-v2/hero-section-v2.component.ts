@@ -144,13 +144,11 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
               }
             },
             error: (error) => {
-              console.error('Error loading banner images:', error);
             },
           });
         }
       },
       error: (error) => {
-        console.error('Error loading banner videos:', error);
         // Fallback to images on error
         this.homeSectionContentService.getImages(true).subscribe({
           next: (images) => {
@@ -161,7 +159,6 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
             }
           },
           error: (imageError) => {
-            console.error('Error loading banner images:', imageError);
           },
         });
       },
@@ -194,11 +191,9 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
           // Video playing successfully
         })
         .catch((error) => {
-          console.error('Error playing video:', error);
           // Try to play again after a short delay
           setTimeout(() => {
             video.play().catch((retryError) => {
-              console.error('Retry failed:', retryError);
             });
           }, 100);
         });
@@ -211,7 +206,6 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
         this.destinations = countries;
       },
       error: (error) => {
-        console.error('Error loading destinations:', error);
       },
     });
   }
@@ -227,7 +221,6 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
         }
       },
       error: (error) => {
-        console.error('Error loading trip types:', error);
       },
     });
   }

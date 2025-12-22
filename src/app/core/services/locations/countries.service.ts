@@ -20,7 +20,6 @@ export class CountriesService {
         return countries;
       }),
       catchError((error) => {
-        console.error('Error loading airports data', error);
         return of([]);
       })
     );

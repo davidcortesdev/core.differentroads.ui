@@ -35,15 +35,13 @@ export class TourCardV2Component implements OnInit {
   ngOnInit(): void {
     // Validación más robusta
     if (!this.tourData) {
-      console.error(
-        'TourData no proporcionado al componente TourCardComponent'
-      );
       this.isLoading = false;
       return;
     }
 
     // Validate that externalID exists and is not undefined or empty
     if (!this.tourData.externalID?.trim()) {
+      
       console.warn('Missing or invalid externalID:', this.tourData);
     }
     

@@ -428,7 +428,6 @@ export class InfoTravelersRoomComponent implements OnInit, OnChanges, OnDestroy 
           this.loading = false;
         },
         error: (error) => {
-          console.error('Error al cargar asignaciones de habitaciones:', error);
           this.loading = false;
           this.messageService.add({
             severity: 'error',

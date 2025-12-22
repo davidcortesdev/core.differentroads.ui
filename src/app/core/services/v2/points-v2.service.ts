@@ -378,7 +378,6 @@ export class PointsV2Service {
         return balance;
       }),
       catchError(error => {
-        console.error('Error loading loyalty balance from API:', error);
         return of(null);
       })
     );
@@ -401,7 +400,6 @@ export class PointsV2Service {
         return transactions || [];
       }),
       catchError(error => {
-        console.error('Error loading loyalty transactions from API:', error);
         return of([]);
       })
     );
@@ -414,7 +412,6 @@ export class PointsV2Service {
   getLoyaltyTransactionTypesFromAPI(): Observable<any[]> {
     return this.http.get<any[]>(`${this.AUTH_API_URL}/LoyaltyTransactionType`).pipe(
       catchError(error => {
-        console.error('Error loading loyalty transaction types from API:', error);
         return of([]);
       })
     );
@@ -428,7 +425,6 @@ export class PointsV2Service {
     return this.http.get<any[]>(`${this.AUTH_API_URL}/LoyaltyProgramCategory`).pipe(
       map(apiCategories => apiCategories.map(category => this.mapApiCategoryToMembershipCard(category))),
       catchError(error => {
-        console.error('Error loading membership categories from API:', error);
         return of([]);
       })
     );
@@ -453,7 +449,6 @@ export class PointsV2Service {
         membershipCards: [] // Se cargará por separado
       })),
       catchError(error => {
-        console.error('Error loading all points data from API:', error);
         return of({
           balance: null,
           transactions: [],
@@ -1401,9 +1396,6 @@ export class PointsV2Service {
       };
 
     } catch (error: any) {
-      console.error('Error en canje de puntos:', error);
-      console.error('Status:', error?.status);
-      console.error('Error del servidor:', error?.error);
       
       // Mensaje de error más específico
       let errorMessage = 'Error al procesar el canje de puntos. Por favor, inténtalo de nuevo.';
@@ -1430,7 +1422,6 @@ export class PointsV2Service {
       const summary = await this.http.get<any>(url).toPromise();
       return summary.paymentPercentage >= 100;
     } catch (error) {
-      console.error('Error verificando estado de pago:', error);
       return false;
     }
   }
@@ -1458,7 +1449,6 @@ export class PointsV2Service {
       
       return response;
     } catch (error) {
-      console.error('Error obteniendo saldo de puntos:', error);
       return {
         id: 0,
         userId: parseInt(userId),
@@ -1523,7 +1513,6 @@ export class PointsV2Service {
       };
 
     } catch (error) {
-      console.error('Error validando canje de puntos:', error);
       return {
         isValid: false,
         message: 'Error al validar el canje de puntos',
@@ -1549,9 +1538,6 @@ export class PointsV2Service {
       
       return result;
     } catch (error: any) {
-      console.error('Error en createLoyaltyTransaction:', error);
-      console.error('Status:', error?.status);
-      console.error('Errores de validación:', error?.error?.errors);
       throw error;
     }
   }
@@ -1576,9 +1562,6 @@ export class PointsV2Service {
       await this.http.put(url, updateData).toPromise();
       
     } catch (error: any) {
-      console.error('Error actualizando LoyaltyBalance:', error);
-      console.error('Status:', error?.status);
-      console.error('Error:', error?.error);
       throw error;
     }
   }
@@ -1613,7 +1596,6 @@ export class PointsV2Service {
       await this.http.put(url, updateData).toPromise();
       
     } catch (error: any) {
-      console.error('Error actualizando total de reserva:', error);
       throw error;
     }
   }
@@ -1628,7 +1610,6 @@ export class PointsV2Service {
       const url = `${this.RESERVATIONS_API_URL}/Reservation/${reservationId}`;
       return await this.http.get<any>(url).toPromise();
     } catch (error) {
-      console.error('Error obteniendo reserva:', error);
       return null;
     }
   }
@@ -1651,7 +1632,6 @@ export class PointsV2Service {
       
       return null;
     } catch (error) {
-      console.error('Error obteniendo categoría del usuario:', error);
       return null;
     }
   }
@@ -1667,7 +1647,6 @@ export class PointsV2Service {
       const result = await this.http.get<LoyaltyProgramCategory>(url).toPromise();
       return result || null;
     } catch (error) {
-      console.error('Error obteniendo categoría:', error);
       return null;
     }
   }
@@ -1688,7 +1667,6 @@ export class PointsV2Service {
       
       return null;
     } catch (error) {
-      console.error('Error obteniendo usuario por email:', error);
       return null;
     }
   }

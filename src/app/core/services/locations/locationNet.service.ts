@@ -69,7 +69,6 @@ export class LocationNetService {
     return this.http.get<Location[]>(`${this.apiUrl}/location`, { params })
       .pipe(
         catchError(error => {
-          console.error('Error obteniendo ubicaciones:', error);
           return of([]);
         })
       );
@@ -106,7 +105,6 @@ export class LocationNetService {
           });
         }),
         catchError(error => {
-          console.error('Error obteniendo ubicaciones por IDs:', error);
           // Limpiar el observable cache en caso de error para permitir reintentos
           this.locationsBatchCache.delete(cacheKey);
           return of([]);
@@ -143,7 +141,6 @@ export class LocationNetService {
           this.locationObservableCache.delete(id);
         }),
         catchError(error => {
-          console.error(`Error obteniendo ubicación con ID ${id}:`, error);
           // Limpiar el observable cache en caso de error
           this.locationObservableCache.delete(id);
           return of({} as Location);
@@ -162,7 +159,6 @@ export class LocationNetService {
     return this.http.get<LocationType[]>(`${this.apiUrl}/locationtype`)
       .pipe(
         catchError(error => {
-          console.error('Error obteniendo tipos de ubicación:', error);
           return of([]);
         })
       );
@@ -172,7 +168,6 @@ export class LocationNetService {
     return this.http.get<LocationType>(`${this.apiUrl}/locationtype/${id}`)
       .pipe(
         catchError(error => {
-          console.error(`Error obteniendo tipo de ubicación con ID ${id}:`, error);
           return of({} as LocationType);
         })
       );
@@ -191,7 +186,6 @@ export class LocationNetService {
     return this.http.get<LocationRelationship[]>(`${this.apiUrl}/locationrelationship`, { params })
       .pipe(
         catchError(error => {
-          console.error('Error obteniendo relaciones de ubicación:', error);
           return of([]);
         })
       );
@@ -201,7 +195,6 @@ export class LocationNetService {
     return this.http.get<LocationRelationship>(`${this.apiUrl}/locationrelationship/${id}`)
       .pipe(
         catchError(error => {
-          console.error(`Error obteniendo relación de ubicación con ID ${id}:`, error);
           return of({} as LocationRelationship);
         })
       );
@@ -212,7 +205,6 @@ export class LocationNetService {
     return this.http.get<LocationRelationshipType[]>(`${this.apiUrl}/locationrelationshiptype`)
       .pipe(
         catchError(error => {
-          console.error('Error obteniendo tipos de relación de ubicación:', error);
           return of([]);
         })
       );
@@ -222,7 +214,6 @@ export class LocationNetService {
     return this.http.get<LocationRelationshipType>(`${this.apiUrl}/locationrelationshiptype/${id}`)
       .pipe(
         catchError(error => {
-          console.error(`Error obteniendo tipo de relación de ubicación con ID ${id}:`, error);
           return of({} as LocationRelationshipType);
         })
       );
@@ -234,7 +225,6 @@ export class LocationNetService {
       params: new HttpParams().set('parentLocationId', parentId.toString())
     }).pipe(
       catchError(error => {
-        console.error(`Error obteniendo relaciones para ubicación padre ${parentId}:`, error);
         return of([]);
       })
     );
@@ -245,7 +235,6 @@ export class LocationNetService {
       params: new HttpParams().set('childLocationId', childId.toString())
     }).pipe(
       catchError(error => {
-        console.error(`Error obteniendo relaciones para ubicación hija ${childId}:`, error);
         return of([]);
       })
     );
@@ -263,7 +252,6 @@ export class LocationNetService {
           }
         }),
         catchError(error => {
-          console.error(`Error actualizando ubicación con ID ${location.id}:`, error);
           return of({} as Location);
         })
       );
@@ -280,7 +268,6 @@ export class LocationNetService {
       .pipe(
         map(response => response.isDuplicate),
         catchError(error => {
-          console.error('Error verificando duplicados:', error);
           return of(false); // En caso de error, permitimos continuar
         })
       );
@@ -297,7 +284,6 @@ export class LocationNetService {
           }
         }),
         catchError(error => {
-          console.error('Error creando ubicación:', error);
           return of({} as Location);
         })
       );
@@ -312,7 +298,6 @@ export class LocationNetService {
           this.invalidateLocationCache(id);
         }),
         catchError(error => {
-          console.error(`Error eliminando ubicación con ID ${id}:`, error);
           return of({ success: false, error });
         })
       );
@@ -323,7 +308,6 @@ export class LocationNetService {
     return this.http.post<LocationRelationship>(`${this.apiUrl}/locationrelationship`, relationship)
       .pipe(
         catchError(error => {
-          console.error('Error creando relación de ubicación:', error);
           throw error;
         })
       );
@@ -333,7 +317,6 @@ export class LocationNetService {
     return this.http.put<LocationRelationship>(`${this.apiUrl}/locationrelationship/${relationship.id}`, relationship)
       .pipe(
         catchError(error => {
-          console.error(`Error actualizando relación de ubicación con ID ${relationship.id}:`, error);
           throw error;
         })
       );
@@ -343,7 +326,6 @@ export class LocationNetService {
     return this.http.delete(`${this.apiUrl}/locationrelationship/${id}`)
       .pipe(
         catchError(error => {
-          console.error(`Error eliminando relación de ubicación con ID ${id}:`, error);
           throw error;
         })
       );
@@ -360,7 +342,6 @@ export class LocationNetService {
       .pipe(
         map(response => response.isValid),
         catchError(error => {
-          console.error('Error validando relación de ubicación:', error);
           return of(false);
         })
       );

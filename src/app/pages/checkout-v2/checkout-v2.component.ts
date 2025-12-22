@@ -951,7 +951,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     try {
       await this.insuranceSelector?.saveInsuranceAssignments?.();
     } catch (err) {
-      console.error('Error guardando asignaciones de seguro:', err);
     }
 
     // Disparar actualización del summary inmediatamente
@@ -996,7 +995,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         await this.flightManagement.defaultFlightsComponent.saveFlightAssignments();
       }
     } catch (err) {
-      console.error('Error guardando asignaciones de vuelos:', err);
     }
 
     // Disparar actualización del summary inmediatamente
@@ -1384,7 +1382,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           JSON.stringify(summaryData)
         );
       } catch (error) {
-        console.warn('No se pudo persistir el resumen en localStorage:', error);
       }
     }
   }
@@ -1458,7 +1455,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     try {
       // Verificar que tenemos el componente travelerSelector con datos
       if (!this.travelerSelector) {
-        console.error('No se encontró el componente travelerSelector');
         throw new Error('No se encontró información de viajeros');
       }
 
@@ -1466,7 +1462,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       const existingTravelers = this.travelerSelector.travelers || [];
 
       if (existingTravelers.length === 0) {
-        console.error('No se encontraron viajeros para esta reserva');
         throw new Error('No se encontraron viajeros para esta reserva');
       }
 
@@ -1500,16 +1495,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
                   resolve(result);
                 },
                 error: (error) => {
-                  console.error(
-                    `Error al asignar actividad ${activity.id} al viajero ${traveler.id}:`,
-                    error
-                  );
-                  console.error('Detalles del error:', {
-                    status: error?.status,
-                    message: error?.message,
-                    error: error?.error,
-                    stack: error?.stack,
-                  });
                   reject(error);
                 },
               });
@@ -1536,16 +1521,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
                   resolve(result);
                 },
                 error: (error) => {
-                  console.error(
-                    `Error al asignar pack ${pack.id} al viajero ${traveler.id}:`,
-                    error
-                  );
-                  console.error('Detalles del error:', {
-                    status: error?.status,
-                    message: error?.message,
-                    error: error?.error,
-                    stack: error?.stack,
-                  });
                   reject(error);
                 },
               });
@@ -1571,7 +1546,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
           // Si hay operaciones fallidas, mostrar detalles y fallar
           if (failed.length > 0) {
-            console.error('Operaciones fallidas:', failed);
             const errorMessages = failed.map((result, index) => {
               const reason =
                 result.status === 'rejected'
@@ -1596,10 +1570,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             );
           }
         } catch (error) {
-          console.error(
-            'Error durante la ejecución de operaciones de creación:',
-            error
-          );
           throw error; // Re-lanzar el error para que sea capturado por el catch externo
         }
       } else {
@@ -1607,10 +1577,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
       return true;
     } catch (error) {
-      console.error('Error completo:', error);
-      console.error('Stack trace:', (error as any)?.stack);
-      console.error('Mensaje del error:', (error as any)?.message);
-
       this.messageService.add({
         severity: 'error',
         summary: 'Error al guardar actividades',
@@ -1645,15 +1611,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
                   resolve(activities);
                 },
                 error: (error) => {
-                  console.warn(
-                    `Error al obtener actividades para viajero ${traveler.id}:`,
-                    error
-                  );
-                  console.warn('Detalles del error:', {
-                    status: (error as any)?.status,
-                    message: (error as any)?.message,
-                    error: (error as any)?.error,
-                  });
                   resolve([]); // Continuar con lista vacía
                 },
               });
@@ -1670,15 +1627,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
                   resolve(result);
                 },
                 error: (error) => {
-                  console.warn(
-                    `Error al eliminar actividad ${activity.id} del viajero ${traveler.id}:`,
-                    error
-                  );
-                  console.warn('Detalles del error:', {
-                    status: (error as any)?.status,
-                    message: (error as any)?.message,
-                    error: (error as any)?.error,
-                  });
                   resolve(false); // Continuar aunque falle la eliminación
                 },
               });
@@ -1696,15 +1644,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
                 resolve(packs);
               },
               error: (error) => {
-                console.warn(
-                  `Error al obtener packs para viajero ${traveler.id}:`,
-                  error
-                );
-                console.warn('Detalles del error:', {
-                  status: (error as any)?.status,
-                  message: (error as any)?.message,
-                  error: (error as any)?.error,
-                });
                 resolve([]); // Continuar con lista vacía
               },
             });
@@ -1720,15 +1659,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
                   resolve(result);
                 },
                 error: (error) => {
-                  console.warn(
-                    `Error al eliminar pack ${pack.id} del viajero ${traveler.id}:`,
-                    error
-                  );
-                  console.warn('Detalles del error:', {
-                    status: (error as any)?.status,
-                    message: (error as any)?.message,
-                    error: (error as any)?.error,
-                  });
                   resolve(false); // Continuar aunque falle la eliminación
                 },
               });
@@ -1736,7 +1666,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           deletePromises.push(deletePromise);
         });
       } catch (error) {
-        console.warn(`Error al procesar viajero ${traveler.id}:`, error);
         // Continuar con el siguiente viajero
       }
     }
@@ -1746,10 +1675,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       try {
         await Promise.all(deletePromises);
       } catch (error) {
-        console.warn(
-          'Algunas eliminaciones fallaron, pero continuando:',
-          error
-        );
       }
     } else {
     }
@@ -1788,10 +1713,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           deletePromises.push(deletePromise);
         });
       } catch (error) {
-        console.warn(
-          `Error al obtener actividades para el viajero ${traveler.id}:`,
-          error
-        );
       }
     }
 
@@ -1933,7 +1854,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         try {
           this.infoTravelers.reloadData();
         } catch (error) {
-          console.error('Error al recargar datos:', error);
         }
       }, 200);
     }
@@ -1964,7 +1884,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         queryParamsHandling: 'merge',
       });
     } else {
-      console.error('Invalid step value:', step);
     }
   }
 
@@ -1981,12 +1900,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         !this.insuranceSelector ||
         !this.activitiesOptionals
       ) {
-        console.error('Componentes requeridos no están disponibles:', {
-          travelerSelector: !!this.travelerSelector,
-          roomSelector: !!this.roomSelector,
-          insuranceSelector: !!this.insuranceSelector,
-          activitiesOptionals: !!this.activitiesOptionals,
-        });
         this.messageService.add({
           severity: 'error',
           summary: 'Error de inicialización',
@@ -2031,7 +1944,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
       // Verificar que las operaciones fueron exitosas
       if (roomsSaved.status === 'rejected') {
-        console.error('Error al guardar habitaciones:', roomsSaved.reason);
         this.messageService.add({
           severity: 'error',
           summary: 'Error al guardar habitaciones',
@@ -2043,7 +1955,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       }
 
       if (activitiesSaved.status === 'rejected') {
-        console.error('Error al guardar actividades:', activitiesSaved.reason);
         this.messageService.add({
           severity: 'error',
           summary: 'Error al guardar actividades',
@@ -2103,10 +2014,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
                   resolve(response);
                 } else {
-                  console.error(
-                    'La actualización no fue exitosa. Respuesta:',
-                    response
-                  );
                   reject(
                     new Error(
                       `Error al actualizar la reserva. Respuesta del servicio: ${JSON.stringify(
@@ -2117,10 +2024,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
                 }
               },
               error: (error) => {
-                console.error(
-                  'Error en la llamada al servicio de actualización:',
-                  error
-                );
                 reject(
                   new Error(
                     `Error al actualizar la reserva: ${
@@ -2135,7 +2038,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
       return true;
     } catch (error) {
-      console.error('Error en saveStep0Data:', error);
       this.messageService.add({
         severity: 'error',
         summary: 'Error inesperado',
@@ -2170,7 +2072,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
               subscription.unsubscribe();
             },
             error: (error) => {
-              console.error('❌ Error al verificar autenticación:', error);
               // En caso de error, asumir que no está logueado por seguridad
               resolve(false);
               subscription.unsubscribe();
@@ -2212,11 +2113,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         !this.roomSelector ||
         !this.insuranceSelector
       ) {
-        console.error('Componentes requeridos no están disponibles:', {
-          travelerSelector: !!this.travelerSelector,
-          roomSelector: !!this.roomSelector,
-          insuranceSelector: !!this.insuranceSelector,
-        });
         this.messageService.add({
           severity: 'error',
           summary: 'Error de inicialización',
@@ -2239,7 +2135,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     // Validar datos de viajeros antes de continuar al paso de pago (targetStep === 3)
     if (targetStep === 3) {
       if (!this.infoTravelers) {
-        console.error('Componente infoTravelers no está disponible');
         this.messageService.add({
           severity: 'error',
           summary: 'Error de inicialización',
@@ -2322,24 +2217,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
                   // Actualizar la reservación con el userId correcto
                   this.updateReservationUserId(userId);
                 } else {
-                  console.warn('⚠️ [checkAndUpdateUserId] No se encontró usuario en BD con el Cognito ID:', {
-                    cognitoId,
-                    timestamp: new Date().toISOString()
-                  });
                   this.isUpdatingUserId = false;
                 }
               },
               error: (error) => {
-                console.error(
-                  '❌ [checkAndUpdateUserId] Error buscando usuario por Cognito ID:',
-                  {
-                    error,
-                    cognitoId,
-                    errorMessage: error?.message,
-                    errorStatus: error?.status,
-                    timestamp: new Date().toISOString()
-                  }
-                );
                 this.isUpdatingUserId = false;
               },
             });
@@ -2348,12 +2229,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           }
         },
         error: (error) => {
-          console.error('❌ [checkAndUpdateUserId] Error obteniendo Cognito ID:', {
-            error,
-            errorMessage: error?.message,
-            errorStatus: error?.status,
-            timestamp: new Date().toISOString()
-          });
           this.isUpdatingUserId = false;
         },
       });
@@ -2371,14 +2246,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   private updateReservationUserId(userId: number): void {
     
     if (!this.reservationId || !this.reservationData) {
-      console.error(
-        '❌ [updateReservationUserId] No se puede actualizar userId:',
-        {
-          reservationId: this.reservationId,
-          reservationDataExists: !!this.reservationData,
-          timestamp: new Date().toISOString()
-        }
-      );
       return;
     }
 
@@ -2406,28 +2273,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             life: 3000,
           });
         } else {
-          console.error('❌ [updateReservationUserId] Error: La actualización no fue exitosa:', {
-            success,
-            reservationId: this.reservationId,
-            userId,
-            timestamp: new Date().toISOString()
-          });
         }
         this.isUpdatingUserId = false;
       },
       error: (error) => {
-        console.error(
-          '❌ [updateReservationUserId] Error al actualizar userId en la reservación:',
-          {
-            error,
-            errorMessage: error?.message,
-            errorStatus: error?.status,
-            errorResponse: error?.error,
-            reservationId: this.reservationId,
-            userId,
-            timestamp: new Date().toISOString()
-          }
-        );
         this.messageService.add({
           severity: 'error',
           summary: 'Error al actualizar',
@@ -2467,7 +2316,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           subscription.unsubscribe();
         },
         error: (error) => {
-          console.error('❌ Error al verificar autenticación:', error);
           resolve(false);
           subscription.unsubscribe();
         }
@@ -2617,10 +2465,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
                   }
                 },
                 error: (error) => {
-                  console.error(
-                    'Error al actualizar el estado de la reservación:',
-                    error
-                  );
                 },
                 complete: () => {
                   this.loadReservationData(this.reservationId!);
@@ -2631,7 +2475,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           }
         },
         error: (error) => {
-          console.error('Error al obtener el estado de la reservación:', error);
         },
       });
     }
@@ -2667,7 +2510,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       try {
         localStorage.removeItem(`checkout_summary_${this.reservationId}`);
       } catch (error) {
-        console.warn('⚠️ Error al limpiar resumen del localStorage:', error);
       }
     }
   }
@@ -2789,7 +2631,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         );
       }),
       catchError((error) => {
-        console.error('Error obteniendo datos completos del tour para view_cart:', error);
         // Fallback con datos básicos
         const tourDataForEcommerce = this.prepareTourDataForEcommerce();
         // Usar el ID del tour desde tourDataForEcommerce
@@ -3210,7 +3051,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         );
       }),
       catchError((error) => {
-        console.error('Error obteniendo datos para analytics:', error);
         // Usar el ID del tour desde tourDataForEcommerce
         const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
         
@@ -3285,7 +3125,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         );
       }),
       catchError((error) => {
-        console.error('Error obteniendo datos completos del tour para begin_checkout:', error);
         // Fallback con datos básicos
         const tourDataForEcommerce = this.prepareTourDataForEcommerce();
         // Usar el ID del tour desde tourDataForEcommerce
@@ -3371,7 +3210,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         );
       }),
       catchError((error) => {
-        console.error('Error obteniendo datos completos del tour para view_flights_info:', error);
         // Fallback con datos básicos
         const tourDataForEcommerce = this.prepareTourDataForEcommerce();
         const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
@@ -3455,7 +3293,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         );
       }),
       catchError((error) => {
-        console.error('Error obteniendo datos completos del tour para add_flights_info:', error);
         // Fallback con datos básicos
         const tourDataForEcommerce = this.prepareTourDataForEcommerce();
         const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
@@ -3539,7 +3376,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         );
       }),
       catchError((error) => {
-        console.error('Error obteniendo datos completos del tour para view_personal_info:', error);
         // Fallback con datos básicos
         const tourDataForEcommerce = this.prepareTourDataForEcommerce();
         const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
@@ -3633,7 +3469,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         );
       }),
       catchError((error) => {
-        console.error('Error obteniendo datos completos del tour para add_payment_info:', error);
         // Fallback con datos básicos
         const tourDataForEcommerce = this.prepareTourDataForEcommerce();
         const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
@@ -3718,7 +3553,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         );
       }),
       catchError((error) => {
-        console.error('Error obteniendo datos completos del tour para view_payment_info:', error);
         // Fallback con datos básicos
         const tourDataForEcommerce = this.prepareTourDataForEcommerce();
         const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
@@ -3802,7 +3636,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         );
       }),
       catchError((error) => {
-        console.error('Error obteniendo datos completos del tour para add_personal_info:', error);
         // Fallback con datos básicos
         const tourDataForEcommerce = this.prepareTourDataForEcommerce();
         const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';

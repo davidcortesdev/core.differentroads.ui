@@ -153,11 +153,9 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
             if (success) {
             
             } else {
-              console.error('Error al guardar asignaciones desde padre');
             }
           })
           .catch((error) => {
-            console.error('Error al guardar asignaciones desde padre:', error);
           });
       }
 
@@ -254,10 +252,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
           availabilities.length > 0 ? availabilities : []
         ),
         catchError((error) => {
-          console.error(
-            `Error loading availability for flight pack ${pack.id}:`,
-            error
-          );
           return of([]);
         })
       )
@@ -367,7 +361,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       } else {
       }
     } catch (error) {
-      console.error('Error al cargar vuelo existente:', error);
     }
   }
 
@@ -481,7 +474,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
             : 'No se encontraron vuelos existentes',
       };
     } catch (error) {
-      console.error('💥 Error al verificar vuelos existentes:', error);
       return {
         hasExistingFlights: false,
         flightIds: [],
@@ -512,7 +504,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       }
 
     } catch (error) {
-      console.error('💥 Error en forceUpdateDepartureData:', error);
     }
   }
 
@@ -531,7 +522,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       try {
         await this.saveFlightAssignmentsForAllTravelers(0, false); // 0 = sin vuelos, false = no deseleccionar specific-search
       } catch (error) {
-        console.error('Error al guardar la deselección del departure en la base de datos:', error);
       }
       
       // Emitir el cambio DESPUÉS de guardar
@@ -617,7 +607,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       try {
         await this.saveFlightAssignmentsForAllTravelers(0, true); // 0 = sin vuelos, true = deseleccionar specific-search
       } catch (error) {
-        console.error('Error al guardar la deselección de vuelos en la base de datos:', error);
       }
 
       // Emitir "Sin Vuelos" con precio 0 DESPUÉS de guardar
@@ -635,7 +624,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       try {
         await this.saveFlightAssignmentsForAllTravelers(flightPack.id, true); // flightPack.id, true = deseleccionar specific-search
       } catch (error) {
-        console.error('Error al guardar la selección de vuelos en la base de datos:', error);
       }
 
       // Emitir eventos DESPUÉS de guardar
@@ -665,7 +653,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       try {
         await this.saveFlightAssignmentsForAllTravelers(sinVuelosPack.id, true);
       } catch (error) {
-        console.error('Error al guardar la selección de "sin vuelos":', error);
       }
 
       this.flightSelectionChange.emit({
@@ -680,7 +667,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
 
       this.isInternalSelection = false;
     } else {
-      console.error('No se encontró el vuelo "sin vuelos" en la lista completa');
     }
   }
 
@@ -802,7 +788,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                 resolve(travelers);
               },
               error: (error) => {
-                console.error('❌ Error al obtener viajeros:', error);
                 reject(error);
               },
             });
@@ -845,17 +830,10 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
 
                           resolve(true);
                         } else {
-                          console.error(
-                            `Error al actualizar asignación para viajero ${traveler.id}`
-                          );
                           resolve(false);
                         }
                       },
                       error: (error) => {
-                        console.error(
-                          `Error al actualizar asignación para viajero ${traveler.id}:`,
-                          error
-                        );
                         reject(error);
                       },
                     });
@@ -877,27 +855,16 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                         if (created) {
                           resolve(true);
                         } else {
-                          console.error(
-                            `Error al crear asignación para viajero ${traveler.id}`
-                          );
                           resolve(false);
                         }
                       },
                       error: (error) => {
-                        console.error(
-                          `Error al crear asignación para viajero ${traveler.id}:`,
-                          error
-                        );
                         reject(error);
                       },
                     });
                 }
               },
               error: (error) => {
-                console.error(
-                  `Error al obtener asignaciones para viajero ${traveler.id}:`,
-                  error
-                );
                 reject(error);
               },
             });
@@ -913,14 +880,12 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
           next: () => {
           },
           error: (error) => {
-            console.error('Error al deseleccionar vuelos de specific-search:', error);
           },
         });
       }
 
       return true;
     } catch (error) {
-      console.error('Error en saveFlightAssignmentsForAllTravelers:', error);
       return false;
     }
   }
@@ -943,7 +908,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                 resolve(travelers);
               },
               error: (error) => {
-                console.error('❌ Error al obtener viajeros:', error);
                 reject(error);
               },
             });
@@ -992,26 +956,15 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                       next: (updated: boolean) => {
                         if (updated) {
                         } else {
-                          console.error(
-                            `Error al actualizar asignación del departure ${mostRecentAssignment.id} para viajero ${traveler.id}`
-                          );
                         }
                         resolve(updated);
                       },
                       error: (error: any) => {
-                        console.error(
-                          `Error al actualizar asignación del departure para viajero ${traveler.id}:`,
-                          error
-                        );
                         reject(error);
                       },
                     });
                 },
                 error: (error: any) => {
-                  console.error(
-                    `Error al obtener asignaciones para viajero ${traveler.id}:`,
-                    error
-                  );
                   reject(error);
                 },
               });
@@ -1049,10 +1002,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                 });
               },
               error: (error) => {
-                console.error(
-                  `Error al obtener asignaciones para viajero ${traveler.id}:`,
-                  error
-                );
                 reject(error);
               },
             });
@@ -1091,17 +1040,10 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                   next: (updated: boolean) => {
                     if (updated) {
                     } else {
-                      console.error(
-                        `Error al actualizar asignación del departure ${mostRecentAssignment.id} para viajero ${traveler.id}`
-                      );
                     }
                     resolve(updated);
                   },
                   error: (error: any) => {
-                    console.error(
-                      `Error al actualizar asignación del departure para viajero ${traveler.id}:`,
-                      error
-                    );
                     reject(error);
                   },
                 });
@@ -1120,7 +1062,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
           next: () => {
           },
           error: (error) => {
-            console.error('Error al deseleccionar vuelos de specific-search después de guardar:', error);
           }
         });
       }
@@ -1140,17 +1081,12 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
               );
             },
             error: (error) => {
-              console.error(
-                `Error al verificar estado final del departure para viajero ${traveler.id}:`,
-                error
-              );
             },
           });
       }
 
       return true;
     } catch (error) {
-      console.error('Error en saveFlightAssignments:', error);
       return false;
     }
   }
@@ -1171,10 +1107,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                 resolve(travelers);
               },
               error: (error) => {
-                console.error(
-                  'Error al obtener viajeros para carga de asignaciones:',
-                  error
-                );
                 reject(error);
               },
             });
@@ -1220,17 +1152,10 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                       next: (updated: boolean) => {
                         if (updated) {  
                         } else {
-                          console.error(
-                            `Error al actualizar asignación del departure ${mostRecentAssignment.id} para viajero ${traveler.id}`
-                          );
                         }
                         resolve(updated);
                       },
                       error: (error: any) => {
-                        console.error(
-                          `Error al actualizar asignación del departure para viajero ${traveler.id}:`,
-                          error
-                        );
                         reject(error);
                       },
                     });
@@ -1241,10 +1166,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                 }
               },
               error: (error: any) => {
-                console.error(
-                  `Error al obtener asignaciones para viajero ${traveler.id}:`,
-                  error
-                );
                 reject(error);
               },
             });
@@ -1253,7 +1174,6 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
 
       await Promise.all(updatePromises);
     } catch (error) {
-      console.error('Error en loadExistingFlightAssignments:', error);
     }
   }
 
@@ -1319,20 +1239,12 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                                     );
                                 },
                                 error: (error) => {
-                                  console.error(
-                                    `Error en verificación después de eliminación del departure para viajero ${traveler.id}:`,
-                                    error
-                                  );
                                 },
                               });
                           }
                           resolveDelete();
                         },
                         error: (error: any) => {
-                          console.error(
-                            `Error al eliminar asignación del departure ${assignment.id} para viajero ${traveler.id}:`,
-                            error
-                          );
                           resolveDelete();
                         },
                       });
@@ -1345,18 +1257,10 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
                   resolve();
                 })
                 .catch((error) => {
-                  console.error(
-                    `Error en limpieza del departure para viajero ${traveler.id}:`,
-                    error
-                  );
                   resolve();
                 });
             },
             error: (error: any) => {
-              console.error(
-                `Error al obtener asignaciones del departure para limpieza del viajero ${traveler.id}:`,
-                error
-              );
               resolve();
             },
           });

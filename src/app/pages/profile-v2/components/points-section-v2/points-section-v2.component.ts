@@ -72,35 +72,30 @@ export class PointsSectionV2Component implements OnInit, OnChanges {
                         this.isLoading = false;
                       },
                       error: (error) => {
-                        console.error('Error loading travel history:', error);
                         this.processApiData(balance, transactions, transactionTypes, []);
                         this.isLoading = false;
                       }
                     });
                   },
                   error: (error) => {
-                    console.error('Error loading transaction types:', error);
                     this.processApiData(balance, transactions, [], []);
                     this.isLoading = false;
                   }
                 });
               },
               error: (error) => {
-                console.error('Error loading transactions:', error);
                 this.processApiData(balance, [], [], []);
                 this.isLoading = false;
               }
             });
           },
           error: (error) => {
-            console.error('Error loading membership cards:', error);
             this.processApiData(balance, [], [], []);
             this.isLoading = false;
           }
         });
       },
       error: (error) => {
-        console.error('Error loading loyalty balance:', error);
         this.isLoading = false;
       }
     });

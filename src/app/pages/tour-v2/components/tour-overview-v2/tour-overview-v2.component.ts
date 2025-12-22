@@ -107,7 +107,6 @@ export class TourOverviewV2Component implements OnInit {
     if (this.tourId) {
       this.loadTour(this.tourId);
     } else {
-      console.warn('⚠️ No se proporcionó tourId');
       this.loading = false;
     }
   }
@@ -122,14 +121,12 @@ export class TourOverviewV2Component implements OnInit {
     forkJoin([
       this.tourService.getTourById(id, !this.preview).pipe(
         catchError(error => {
-          console.error('❌ Error loading tour data:', error);
           return of(null);
         })
       ) as Observable<TourData | null>,
       
       this.cmsTourService.getAllTours({ tourId: id }).pipe(
         catchError(error => {
-          console.error('❌ Error loading CMS tour data:', error);
           return of([]);
         })
       ) as Observable<CMSTourData[]>
@@ -182,21 +179,18 @@ export class TourOverviewV2Component implements OnInit {
       this.tourLocationService.getByTourAndType(id, "COUNTRY").pipe(
         map(response => Array.isArray(response) ? response : (response ? [response] : [])),
         catchError(error => {
-          console.warn('⚠️ No se encontraron ubicaciones COUNTRY:', error);
           return of([]);
         })
       ),
       this.tourLocationService.getByTourAndType(id, "HEADER").pipe(
         map(response => Array.isArray(response) ? response : (response ? [response] : [])),
         catchError(error => {
-          console.warn('⚠️ No se encontraron ubicaciones HEADER:', error);
           return of([]);
         })
       ),
       this.tourLocationService.getByTourAndType(id, "CONTINENT").pipe(
         map(response => Array.isArray(response) ? response : (response ? [response] : [])),
         catchError(error => {
-          console.warn('⚠️ No se encontraron ubicaciones CONTINENT:', error);
           return of([]);
         })
       ),
@@ -204,7 +198,6 @@ export class TourOverviewV2Component implements OnInit {
       // ✅ NUEVO: Cargar tipos de relación visibles para la web
       this.tourTagRelationTypeService.getAll({ isVisible: true }).pipe(
         catchError(error => {
-          console.error('❌ Error loading visible tag relation types:', error);
           return of([]);
         })
       )
@@ -232,7 +225,6 @@ export class TourOverviewV2Component implements OnInit {
           tagObservables.push(
             this.locationNetService.getLocationsByIds(locationIds).pipe(
               catchError(error => {
-                console.error('❌ Error loading specific locations:', error);
                 return of([]);
               })
             )
@@ -246,7 +238,6 @@ export class TourOverviewV2Component implements OnInit {
           tagObservables.push(
             this.tourTagService.getAll({ tourId: [id], tourTagRelationTypeId: relationTypeId }).pipe(
               catchError(error => {
-                console.warn(`⚠️ No se encontraron tags para relationTypeId ${relationTypeId}:`, error);
                 return of([]);
               })
             )
@@ -284,7 +275,6 @@ export class TourOverviewV2Component implements OnInit {
           const tagDetailObservables = tagIds.map(tagId => 
             this.tagService.getById(tagId).pipe(
               catchError(error => {
-                console.warn(`⚠️ Error loading tag ${tagId}:`, error);
                 return of(null);
               })
             )
@@ -297,7 +287,6 @@ export class TourOverviewV2Component implements OnInit {
             forkJoin(tagDetailObservables).pipe(
               map(tagDetails => tagDetails.filter(tag => tag !== null && tag.isActive)),
               catchError(error => {
-                console.error('❌ Error loading tag details:', error);
                 return of([]);
               })
             )
@@ -342,7 +331,6 @@ export class TourOverviewV2Component implements OnInit {
     if (creatorId) {
       return (this.cmsCreatorService.getById(creatorId) as Observable<CreatorData>).pipe(
         catchError(error => {
-          console.error('❌ Error loading creator data:', error);
           return of(null);
         })
       );

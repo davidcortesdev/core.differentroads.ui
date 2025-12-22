@@ -35,6 +35,14 @@ enum FlightSourceType {
   AMADEUS = 'amadeus'
 }
 
+// Constantes para tipos de vuelo (flightTypeId)
+enum FlightTypeId {
+  IDA_NEW = 0,        // IDA en el nuevo sistema
+  VUELTA_NEW = 1,     // VUELTA en el nuevo sistema
+  IDA_LEGACY = 4,     // IDA en el sistema legacy
+  VUELTA_LEGACY = 5   // VUELTA en el sistema legacy
+}
+
 @Component({
   selector: 'app-specific-search',
   standalone: false,
@@ -589,6 +597,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         }
         
         // Transformar los datos directamente aquí para evitar recreaciones constantes
+        // El ordenamiento se hace dentro de adaptFlightPackForFlightItem
         this.adaptedFlightPacks = this.flightOffersRaw.map(flightPack => this.adaptFlightPackForFlightItem(flightPack));
         
         // Precargar nombres de ciudades para todos los aeropuertos
@@ -705,8 +714,10 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     this.flightOffersRaw = this.flightOffersRaw.filter((flightPack) => {
       if (!flightPack.flights || flightPack.flights.length === 0) return false;
       
-      // Buscar el primer vuelo de ida (flightTypeId === 4)
-      const outboundFlight = flightPack.flights.find(f => f.flightTypeId === 4);
+      // Buscar el primer vuelo de ida
+      const outboundFlight = flightPack.flights.find(f => 
+        f.flightTypeId === FlightTypeId.IDA_NEW || f.flightTypeId === FlightTypeId.IDA_LEGACY
+      );
       if (!outboundFlight) return false;
       
       // Por ahora, mostrar todos los vuelos ya que los detalles se cargan internamente
@@ -791,8 +802,12 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
 
   transformOffersToFlightFormat(offers: IFlightPackDTO[]): Flight[] {
     return offers.map((flightPack) => {
-      const outboundFlight = flightPack.flights?.find(f => f.flightTypeId === 4); // IDA
-      const inboundFlight = flightPack.flights?.find(f => f.flightTypeId === 5); // VUELTA
+      const outboundFlight = flightPack.flights?.find(f => 
+        f.flightTypeId === FlightTypeId.IDA_NEW || f.flightTypeId === FlightTypeId.IDA_LEGACY
+      );
+      const inboundFlight = flightPack.flights?.find(f => 
+        f.flightTypeId === FlightTypeId.VUELTA_NEW || f.flightTypeId === FlightTypeId.VUELTA_LEGACY
+      );
 
       // Crear segmentos básicos basados en la información disponible
       const outboundSegments: FlightSegment[] = outboundFlight ? [{
@@ -1304,6 +1319,45 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   // Adaptador para convertir IFlightPackDTO del FlightSearchService al formato esperado por app-flight-item
   adaptFlightPackForFlightItem(flightPack: IFlightPackDTO): IFlightsNetFlightPackDTO {
     // Crear nuevo objeto adaptado
+    const adaptedFlights = (flightPack.flights?.map(flight => ({
+      id: flight.id,
+      tkId: flight.tkId || '',
+      name: flight.name || '',
+      activityId: flight.activityId,
+      departureId: flight.departureId,
+      tkActivityPeriodId: flight.tkActivityPeriodId || '',
+      tkServiceCombinationId: flight.tkServiceCombinationId || '',
+      date: flight.date || '',
+      tkServiceId: flight.tkServiceId || '',
+      tkJourneyId: flight.tkJourneyId || '',
+      flightTypeId: flight.flightTypeId,
+      departureIATACode: flight.departureIATACode || '',
+      arrivalIATACode: flight.arrivalIATACode || '',
+      departureDate: flight.departureDate || '',
+      departureTime: flight.departureTime || '',
+      arrivalDate: flight.arrivalDate || '',
+      arrivalTime: flight.arrivalTime || '',
+      departureCity: this.airportCityCacheService.getCityNameFromCache(flight.departureIATACode) || flight.departureCity || '',
+      arrivalCity: this.airportCityCacheService.getCityNameFromCache(flight.arrivalIATACode) || flight.arrivalCity || ''
+    })) || []);
+
+    // Ordenar vuelos por flightTypeId para asegurar que IDA aparezca antes que VUELTA
+    const isIda = (flightTypeId: number): boolean => {
+      return flightTypeId === FlightTypeId.IDA_NEW || flightTypeId === FlightTypeId.IDA_LEGACY;
+    };
+    
+    adaptedFlights.sort((a, b) => {
+      const idA = a.flightTypeId ?? 0;
+      const idB = b.flightTypeId ?? 0;
+      const aIsIda = isIda(idA);
+      const bIsIda = isIda(idB);
+      
+      if (aIsIda && !bIsIda) return -1;
+      if (!aIsIda && bIsIda) return 1;
+      
+      return idA - idB;
+    });
+
     const adaptedObject: IFlightsNetFlightPackDTO = {
       id: flightPack.id,
       code: flightPack.code || '',
@@ -1320,27 +1374,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         ageGroupId: price.ageGroupId || 0,
         ageGroupName: price.ageGroupName || 'Adultos'
       })) || [],
-      flights: flightPack.flights?.map(flight => ({
-        id: flight.id,
-        tkId: flight.tkId || '',
-        name: flight.name || '',
-        activityId: flight.activityId,
-        departureId: flight.departureId,
-        tkActivityPeriodId: flight.tkActivityPeriodId || '',
-        tkServiceCombinationId: flight.tkServiceCombinationId || '',
-        date: flight.date || '',
-        tkServiceId: flight.tkServiceId || '',
-        tkJourneyId: flight.tkJourneyId || '',
-        flightTypeId: flight.flightTypeId,
-        departureIATACode: flight.departureIATACode || '',
-        arrivalIATACode: flight.arrivalIATACode || '',
-        departureDate: flight.departureDate || '',
-        departureTime: flight.departureTime || '',
-        arrivalDate: flight.arrivalDate || '',
-        arrivalTime: flight.arrivalTime || '',
-        departureCity: this.airportCityCacheService.getCityNameFromCache(flight.departureIATACode) || flight.departureCity || '',
-        arrivalCity: this.airportCityCacheService.getCityNameFromCache(flight.arrivalIATACode) || flight.arrivalCity || ''
-      })) || []
+      flights: adaptedFlights
     };
 
     return adaptedObject;

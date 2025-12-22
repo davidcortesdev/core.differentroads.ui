@@ -11,7 +11,7 @@
     <div class="flight-itinerary-journey">
       <div class="journey-item" *ngFor="let flight of flightPack.flights; let i = index">
         <div class="journey-direction">
-          <span class="direction-text">{{flight.flightTypeId === FLIGHT_TYPE_SALIDA ? "IDA" : "VUELTA"}}</span>
+          <span class="direction-text">{{isIdaFlight(flight.flightTypeId) ? "IDA" : "VUELTA"}}</span>
         </div>
         <div class="journey-row">
           <div class="journey-time-block departure">

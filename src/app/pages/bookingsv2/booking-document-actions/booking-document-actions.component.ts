@@ -22,7 +22,7 @@ import { InvoiceProcessService } from '../../../core/services/v2/invoice-process
 
 interface DocumentActionConfig {
   id: string;
-  test: string;
+  text: string;
   icon: string;
   emailCode?: string;
   documentCode?: string;
@@ -48,14 +48,14 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
   documentList: DocumentActionConfig[] = [
     {
       id: 'PAYMENT_REMINDER',
-      test: 'Enviar recordatorio de pago',
+      text: 'Enviar recordatorio de pago',
       icon: 'pi pi-calendar',
       emailCode: 'PAYMENT_REMINDER',
       visible: true,
     },
     {
       id: 'RESERVATION_VOUCHER',
-      test: 'Enviar bono reserva',
+      text: 'Enviar bono reserva',
       icon: 'pi pi-ticket',
       emailCode: 'RESERVATION_VOUCHER',
       documentCode: 'RESERVATION_VOUCHER',
@@ -63,7 +63,7 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
     },
     {
       id: 'PROFORMA',
-      test: 'Generar proforma',
+      text: 'Generar proforma',
       icon: 'pi pi-file-pdf',
       emailCode: 'PROFORMA',
       documentCode: 'PROFORMA',
@@ -71,7 +71,7 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
     },
     {
       id: 'PRACTICAL_INFO',
-      test: 'Enviar información práctica',
+      text: 'Enviar información práctica',
       icon: 'pi pi-print',
       emailCode: 'PRACTICAL_INFO',
       documentCode: 'PRACTICAL_INFO',
@@ -79,7 +79,7 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
     },
     {
       id: 'COMBINED_CONTRACT',
-      test: 'Enviar contrato combinado',
+      text: 'Enviar contrato combinado',
       icon: 'pi pi-file',
       emailCode: 'COMBINED_CONTRACT',
       documentCode: 'COMBINED_CONTRACT',
@@ -88,7 +88,7 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
 
     {
       id: 'ETICKETS',
-      test: 'Enviar e-tickets',
+      text: 'Enviar e-tickets',
       icon: 'pi pi-ticket',
       documentCode: 'ETICKETS',
       emailCode: 'ETICKETS',
@@ -96,11 +96,19 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
     },
     {
       id: 'GENERAR_FACTURA',
-      test: 'Generar factura',
+      text: 'Generar factura',
       icon: 'pi pi-file',
       visible: true,
       documentCode: 'INVOICE',
     },
+    {
+      id: 'FULL_DOCUMENTATION',
+      text: 'Generar documentación completa',
+      icon: 'pi pi-file',
+      visible: true,
+      emailCode: 'FULL_DOCUMENTATION',
+
+    }
   ];
 
   constructor(
@@ -738,7 +746,7 @@ export class BookingDocumentActionsV2Component implements OnInit, OnDestroy {
   }
 
   getModalTitle(): string {
-    return this.currentAction?.test || '';
+    return this.currentAction?.text || '';
   }
 
   hasEmailCode(): boolean {

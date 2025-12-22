@@ -189,7 +189,6 @@ export class BookingListSectionV2Component
 
     // ✅ Cancelar cualquier suscripción previa del timer antes de crear una nueva
     if (this.emailWaitSubscription) {
-      console.log('Cancelando timer previo de espera de email para iniciar uno nuevo');
       this.emailWaitSubscription.unsubscribe();
       this.emailWaitSubscription = null;
     }
@@ -227,7 +226,6 @@ export class BookingListSectionV2Component
             onEmailFound(userId, userEmail);
           } else {
             // Último intento sin email, ejecutar fallback
-            console.warn('No se pudo obtener el email del usuario después de', maxAttempts, 'intentos. Cargando solo con userId.');
             onEmailNotFound(userId);
           }
           // Retornar un valor para que el stream continúe y se complete
@@ -235,7 +233,6 @@ export class BookingListSectionV2Component
         }),
         catchError((error) => {
           // En caso de error, ejecutar fallback
-          console.error('Error esperando email del usuario:', error);
           onEmailNotFound(userId);
           return EMPTY;
         })
@@ -245,7 +242,6 @@ export class BookingListSectionV2Component
           // El callback ya se ejecutó en el map, solo necesitamos completar
         },
         error: (error) => {
-          console.error('Error en el observable de espera de email:', error);
           onEmailNotFound(userId);
         },
         complete: () => {
@@ -264,7 +260,6 @@ export class BookingListSectionV2Component
   private loadActiveBookingsWithEmail(userId: number, userEmail: string): void {
     // Solo cancelar si hay una suscripción activa Y está cargando
     if (this.activeBookingsSubscription && this.loading) {
-      console.log('Cancelando carga previa de reservas activas para iniciar una nueva');
       this.activeBookingsSubscription.unsubscribe();
     }
     
@@ -283,19 +278,15 @@ export class BookingListSectionV2Component
         takeUntil(this.destroy$),
         switchMap((reservations: ReservationResponse[]) => {
           if (!reservations || reservations.length === 0) {
-            console.log('No se encontraron reservas activas');
             return of([]);
           }
-
-          console.log(`Cargando ${reservations.length} reservas activas`);
 
           // Obtener información de tours, imágenes CMS y departures para cada reserva
           const tourPromises = reservations.map((reservation) =>
             forkJoin({
               tour: this.toursService.getTourById(reservation.tourId).pipe(
                 takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
-                catchError((error) => {
-                  console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
+                  catchError((error) => {
                   return of(null);
                 })
               ),
@@ -307,7 +298,6 @@ export class BookingListSectionV2Component
                     cmsTours.length > 0 ? cmsTours[0] : null
                   ),
                   catchError((error) => {
-                    console.warn(`Error obteniendo CMS tour ${reservation.tourId}:`, error);
                     return of(null);
                   })
                 ),
@@ -315,7 +305,6 @@ export class BookingListSectionV2Component
                 ? this.departureService.getById(reservation.departureId).pipe(
                     takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
                     catchError((error) => {
-                      console.warn(`Error obteniendo departure ${reservation.departureId}:`, error);
                       return of(null);
                     })
                   )
@@ -333,7 +322,6 @@ export class BookingListSectionV2Component
           return forkJoin(tourPromises).pipe(
             takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
             catchError((error) => {
-              console.error('Error obteniendo información de tours:', error);
               // Si falla la obtención de tours, retornar las reservas sin información de tour
               return of(
                 reservations.map((reservation) => ({
@@ -362,18 +350,6 @@ export class BookingListSectionV2Component
           );
         }),
         catchError((error) => {
-          console.error('Error obteniendo reservas activas:', error);
-          
-          // Log detallado del error
-          if (error.status) {
-            console.error('Detalles del error HTTP:', {
-              status: error.status,
-              statusText: error.statusText,
-              message: error.error?.message || error.message,
-              url: error.url
-            });
-          }
-          
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
@@ -391,20 +367,17 @@ export class BookingListSectionV2Component
         if (this.currentSubscriptionId === subscriptionId) {
           this.bookingItems = bookingItems || [];
           this.loading = false;
-          console.log(`Reservas activas cargadas: ${bookingItems.length} items`);
           // Limpiar solo si esta sigue siendo la suscripción activa
           if (this.activeBookingsSubscription === subscription) {
             this.activeBookingsSubscription = null;
           }
         } else {
           // Esta es una suscripción obsoleta, ignorar el resultado
-          console.log('Ignorando resultado de suscripción obsoleta');
         }
       },
       error: (error) => {
         // ✅ CORREGIDO: Verificar si esta es la suscripción activa actual usando el ID único
         if (this.currentSubscriptionId === subscriptionId) {
-          console.error('Error en la suscripción de reservas activas:', error);
           this.bookingItems = [];
           this.loading = false;
           // Limpiar solo si esta sigue siendo la suscripción activa
@@ -413,7 +386,6 @@ export class BookingListSectionV2Component
           }
         } else {
           // Esta es una suscripción obsoleta, ignorar el error
-          console.log('Ignorando error de suscripción obsoleta');
         }
       },
     });
@@ -444,8 +416,7 @@ export class BookingListSectionV2Component
             forkJoin({
               tour: this.toursService.getTourById(reservation.tourId).pipe(
                 takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
-                catchError((error) => {
-                  console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
+                  catchError((error) => {
                   return of(null);
                 })
               ),
@@ -457,7 +428,6 @@ export class BookingListSectionV2Component
                     cmsTours.length > 0 ? cmsTours[0] : null
                   ),
                   catchError((error) => {
-                    console.warn(`Error obteniendo CMS tour ${reservation.tourId}:`, error);
                     return of(null);
                   })
                 ),
@@ -465,7 +435,6 @@ export class BookingListSectionV2Component
                 ? this.departureService.getById(reservation.departureId).pipe(
                     takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
                     catchError((error) => {
-                      console.warn(`Error obteniendo departure ${reservation.departureId}:`, error);
                       return of(null);
                     })
                   )
@@ -483,7 +452,6 @@ export class BookingListSectionV2Component
           return forkJoin(tourPromises).pipe(
             takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
             catchError((error) => {
-              console.error('Error obteniendo información de tours:', error);
               return of(
                 reservations.map((reservation) => ({
                   reservation,
@@ -509,7 +477,6 @@ export class BookingListSectionV2Component
           );
         }),
         catchError((error) => {
-          console.error('Error obteniendo reservas activas:', error);
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
@@ -524,7 +491,6 @@ export class BookingListSectionV2Component
           this.loading = false;
         },
         error: (error) => {
-          console.error('Error en la suscripción:', error);
           this.bookingItems = [];
           this.loading = false;
         },
@@ -552,8 +518,7 @@ export class BookingListSectionV2Component
             forkJoin({
               tour: this.toursService.getTourById(reservation.tourId).pipe(
                 takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
-                catchError((error) => {
-                  console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
+                  catchError((error) => {
                   return of(null);
                 })
               ),
@@ -565,7 +530,6 @@ export class BookingListSectionV2Component
                     cmsTours.length > 0 ? cmsTours[0] : null
                   ),
                   catchError((error) => {
-                    console.warn(`Error obteniendo CMS tour ${reservation.tourId}:`, error);
                     return of(null);
                   })
                 ),
@@ -573,7 +537,6 @@ export class BookingListSectionV2Component
                 ? this.departureService.getById(reservation.departureId).pipe(
                     takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
                     catchError((error) => {
-                      console.warn(`Error obteniendo departure ${reservation.departureId}:`, error);
                       return of(null);
                     })
                   )
@@ -591,7 +554,6 @@ export class BookingListSectionV2Component
           return forkJoin(tourPromises).pipe(
             takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
             catchError((error) => {
-              console.error('Error obteniendo información de tours:', error);
               return of(
                 reservations.map((reservation) => ({
                   reservation,
@@ -617,7 +579,6 @@ export class BookingListSectionV2Component
           );
         }),
         catchError((error) => {
-          console.error('Error obteniendo reservas pendientes:', error);
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
@@ -672,8 +633,7 @@ export class BookingListSectionV2Component
             forkJoin({
               tour: this.toursService.getTourById(reservation.tourId).pipe(
                 takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
-                catchError((error) => {
-                  console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
+                  catchError((error) => {
                   return of(null);
                 })
               ),
@@ -685,7 +645,6 @@ export class BookingListSectionV2Component
                     cmsTours.length > 0 ? cmsTours[0] : null
                   ),
                   catchError((error) => {
-                    console.warn(`Error obteniendo CMS tour ${reservation.tourId}:`, error);
                     return of(null);
                   })
                 ),
@@ -693,7 +652,6 @@ export class BookingListSectionV2Component
                 ? this.departureService.getById(reservation.departureId).pipe(
                     takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
                     catchError((error) => {
-                      console.warn(`Error obteniendo departure ${reservation.departureId}:`, error);
                       return of(null);
                     })
                   )
@@ -711,7 +669,6 @@ export class BookingListSectionV2Component
           return forkJoin(tourPromises).pipe(
             takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
             catchError((error) => {
-              console.error('Error obteniendo información de tours:', error);
               return of(
                 reservations.map((reservation) => ({
                   reservation,
@@ -733,7 +690,6 @@ export class BookingListSectionV2Component
           );
         }),
         catchError((error) => {
-          console.error('Error obteniendo historial de viajes:', error);
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
@@ -748,7 +704,6 @@ export class BookingListSectionV2Component
           this.loading = false;
         },
         error: (error) => {
-          console.error('Error en la suscripción:', error);
           this.bookingItems = [];
           this.loading = false;
         },
@@ -775,8 +730,7 @@ export class BookingListSectionV2Component
             forkJoin({
               tour: this.toursService.getTourById(reservation.tourId).pipe(
                 takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
-                catchError((error) => {
-                  console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
+                  catchError((error) => {
                   return of(null);
                 })
               ),
@@ -788,7 +742,6 @@ export class BookingListSectionV2Component
                     cmsTours.length > 0 ? cmsTours[0] : null
                   ),
                   catchError((error) => {
-                    console.warn(`Error obteniendo CMS tour ${reservation.tourId}:`, error);
                     return of(null);
                   })
                 ),
@@ -796,7 +749,6 @@ export class BookingListSectionV2Component
                 ? this.departureService.getById(reservation.departureId).pipe(
                     takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
                     catchError((error) => {
-                      console.warn(`Error obteniendo departure ${reservation.departureId}:`, error);
                       return of(null);
                     })
                   )
@@ -814,7 +766,6 @@ export class BookingListSectionV2Component
           return forkJoin(tourPromises).pipe(
             takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
             catchError((error) => {
-              console.error('Error obteniendo información de tours:', error);
               return of(
                 reservations.map((reservation) => ({
                   reservation,
@@ -836,7 +787,6 @@ export class BookingListSectionV2Component
           );
         }),
         catchError((error) => {
-          console.error('Error obteniendo historial de viajes:', error);
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
@@ -851,7 +801,6 @@ export class BookingListSectionV2Component
           this.loading = false;
         },
         error: (error) => {
-          console.error('Error en la suscripción:', error);
           this.bookingItems = [];
           this.loading = false;
         },
@@ -879,8 +828,7 @@ export class BookingListSectionV2Component
             forkJoin({
               tour: this.toursService.getTourById(reservation.tourId).pipe(
                 takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
-                catchError((error) => {
-                  console.warn(`Error obteniendo tour ${reservation.tourId}:`, error);
+                  catchError((error) => {
                   return of(null);
                 })
               ),
@@ -892,7 +840,6 @@ export class BookingListSectionV2Component
                     cmsTours.length > 0 ? cmsTours[0] : null
                   ),
                   catchError((error) => {
-                    console.warn(`Error obteniendo CMS tour ${reservation.tourId}:`, error);
                     return of(null);
                   })
                 ),
@@ -900,7 +847,6 @@ export class BookingListSectionV2Component
                 ? this.departureService.getById(reservation.departureId).pipe(
                     takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
                     catchError((error) => {
-                      console.warn(`Error obteniendo departure ${reservation.departureId}:`, error);
                       return of(null);
                     })
                   )
@@ -918,7 +864,6 @@ export class BookingListSectionV2Component
           return forkJoin(tourPromises).pipe(
             takeUntil(this.destroy$), // ✅ AGREGADO: Cancelar si el componente se destruye
             catchError((error) => {
-              console.error('Error obteniendo información de tours:', error);
               return of(
                 reservations.map((reservation) => ({
                   reservation,
@@ -940,7 +885,6 @@ export class BookingListSectionV2Component
           );
         }),
         catchError((error) => {
-          console.error('Error obteniendo presupuestos recientes:', error);
           this.messageService.add({
             severity: 'error',
             summary: 'Error',
@@ -955,7 +899,6 @@ export class BookingListSectionV2Component
           this.loading = false;
         },
         error: (error) => {
-          console.error('Error en la suscripción:', error);
           this.bookingItems = [];
           this.loading = false;
         },
@@ -1090,7 +1033,6 @@ export class BookingListSectionV2Component
           },
           error: (error) => {
             this.notificationLoading[item.id] = false;
-            console.error('Error sending email:', error);
 
             let errorMessage = 'Error al enviar el email';
             if (error.status === 500) {
@@ -1157,7 +1099,6 @@ export class BookingListSectionV2Component
       },
       error: (error) => {
         this.notificationLoading[item.id] = false;
-        console.error('Error sending budget notification:', error);
         let errorMessage = 'Error al enviar la notificación de presupuesto';
         if (error.status === 500) {
           errorMessage = 'Error interno del servidor. Inténtalo más tarde.';
@@ -1214,7 +1155,6 @@ export class BookingListSectionV2Component
       },
       error: (error) => {
         this.notificationLoading[item.id] = false;
-        console.error('Error sending reservation notification:', error);
         let errorMessage = 'Error al enviar la notificación de reserva';
         if (error.status === 500) {
           errorMessage = 'Error interno del servidor. Inténtalo más tarde.';
@@ -1349,7 +1289,6 @@ export class BookingListSectionV2Component
    */
   private handleDownloadError(error: any, itemId: string): void {
     this.downloadLoading[itemId] = false;
-    console.error('Error downloading document:', error);
 
     let errorMessage = 'Error al descargar el documento';
     if (error.status === 500) {
@@ -1416,7 +1355,6 @@ export class BookingListSectionV2Component
         return this.reservationsWithPointsRedeemed;
       }),
       catchError((error) => {
-        console.error('Error cargando transacciones de puntos:', error);
         return of(new Set());
       })
     );

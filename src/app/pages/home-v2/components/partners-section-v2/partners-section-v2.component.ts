@@ -56,7 +56,6 @@ export class PartnersSectionV2Component implements OnInit {
   private loadPartners(): void {
     // Si no se proporciona configurationId, mostrar error y no cargar nada
     if (!this.configurationId) {
-      console.error('PartnersSectionV2 - configurationId is required');
       this.partners = [];
       return;
     }
@@ -71,8 +70,6 @@ export class PartnersSectionV2Component implements OnInit {
         this.loadPartnersImages();
       },
       error: (error) => {
-        console.error('PartnersSectionV2 - Error loading configuration:', error);
-        console.error('ConfigurationId:', this.configurationId);
         // Continuar con la carga de imágenes aunque falle la configuración
         this.loadPartnersImages();
       },
@@ -94,8 +91,6 @@ export class PartnersSectionV2Component implements OnInit {
           this.partners = sortedImages.slice(0, 8);
         },
         error: (error) => {
-          console.error('Error loading partners images:', error);
-          console.error('ConfigurationId:', this.configurationId);
           this.partners = [];
         },
       });

@@ -73,7 +73,6 @@ export class TravelInfoComponent implements OnInit, OnChanges {
 
   private loadData(): void {
     if (!this.reservationId) {
-      console.warn('No reservation ID provided to travel-info component');
       return;
     }
 
@@ -105,7 +104,6 @@ export class TravelInfoComponent implements OnInit, OnChanges {
           this.loadTravelersFields(travelers);
         },
         error: (error) => {
-          console.error('Error loading travelers:', error);
           this.loading = false;
         },
       });
@@ -133,7 +131,6 @@ export class TravelInfoComponent implements OnInit, OnChanges {
         this.loading = false;
       },
       error: (error) => {
-        console.error('Error loading travelers fields:', error);
         this.loading = false;
       },
     });
@@ -148,7 +145,6 @@ export class TravelInfoComponent implements OnInit, OnChanges {
 
       },
       error: (error) => {
-        console.error('Error loading tour info:', error);
       },
     });
   }
@@ -162,7 +158,6 @@ export class TravelInfoComponent implements OnInit, OnChanges {
 
       },
       error: (error) => {
-        console.error('Error loading departure info:', error);
       },
     });
   }

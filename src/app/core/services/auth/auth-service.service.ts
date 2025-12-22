@@ -90,11 +90,9 @@ export class AuthenticateService {
             this.currentUserCognitoId.next(cognitoUserId);
           }
         } catch (error) {
-          console.error('Error fetching user attributes:', error);
         }
       }
     } catch (error) {
-      console.error('Error checking auth status:', error);
       this.isAuthenticated.next(false);
     } finally {
       // ✅ NUEVO: Resolver la Promise cuando termine la verificación (exitosa o fallida)
@@ -117,7 +115,6 @@ export class AuthenticateService {
       // Decodificar el JWT (es Base64URL)
       const parts = idToken.split('.');
       if (parts.length !== 3) {
-        console.error('Token JWT inválido');
         return null;
       }
 
@@ -132,7 +129,6 @@ export class AuthenticateService {
 
       return decoded.sub || null;
     } catch (error) {
-      console.error('Error al extraer sub del ID token:', error);
       return null;
     }
   }
@@ -152,7 +148,6 @@ export class AuthenticateService {
           });
         })
         .catch((error) => {
-          console.error('Error en verificación de autenticación:', error);
           observer.next(false);
           observer.complete();
         });
@@ -170,7 +165,6 @@ export class AuthenticateService {
       const attributes = await fetchUserAttributes();
       return attributes.sub || '';
     } catch (error) {
-      console.error('Error obteniendo sub:', error);
       return '';
     }
   }
@@ -194,7 +188,6 @@ export class AuthenticateService {
           });
         })
         .catch((error) => {
-          console.error('Error en verificación de autenticación:', error);
           observer.next('');
           observer.complete();
         });
@@ -329,10 +322,6 @@ export class AuthenticateService {
                 observer.complete();
               },
               error: (hubspotError) => {
-                console.error(
-                  'Error al crear contacto en Hubspot:',
-                  hubspotError
-                );
 
                 // Even if Hubspot fails, return the Cognito user for component to handle navigation
                 observer.next(this.cognitoUser);
@@ -368,9 +357,6 @@ export class AuthenticateService {
           } else if (error.name === 'InvalidParameterException') {
             errorMessage =
               'El flujo USER_PASSWORD_AUTH no está habilitado para este cliente';
-            console.error(
-              'Error: USER_PASSWORD_AUTH no está habilitado. Verifica la configuración del User Pool Client.'
-            );
           }
           observer.error({ message: errorMessage, error });
         });
@@ -424,7 +410,6 @@ export class AuthenticateService {
       this.cognitoUser = this.getUserData(username);
       this.cognitoUser.resendConfirmationCode((err, result) => {
         if (err) {
-          console.error('Error al reenviar código de confirmación:', err);
           reject(err);
           return;
         }
@@ -564,7 +549,6 @@ export class AuthenticateService {
                 }
               }
             } catch (error) {
-              console.error('Error al extraer Cognito ID del token:', error);
               // Fallback: usar username
               const currentUser = this.userPool.getCurrentUser();
               if (currentUser) {
@@ -649,7 +633,6 @@ export class AuthenticateService {
     try {
       await signInWithRedirect({ provider: 'Google' });
     } catch (error) {
-      console.error('Error al iniciar sesión con Google:', error);
     }
   }
 
@@ -671,7 +654,6 @@ export class AuthenticateService {
         }
       }
     } catch (error) {
-      console.error('Error al manejar la redirección de autenticación:', error);
     }
   }
 

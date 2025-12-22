@@ -196,7 +196,6 @@ export class FlightSectionV2Component implements OnChanges {
         })
         .replace(/^\w/, (c) => c.toUpperCase());
     } catch (error) {
-      console.error('Error formatting date:', error);
       return '';
     }
   }
@@ -246,7 +245,6 @@ export class FlightSectionV2Component implements OnChanges {
         const details = await firstValueFrom(
           this.flightsNetService.getFlightDetail(this.departureFlight.id).pipe(
             catchError((error) => {
-              console.error('❌ Error al obtener detalles del vuelo de ida:', error);
               return of(null);
             })
           )
@@ -270,7 +268,6 @@ export class FlightSectionV2Component implements OnChanges {
           this.cdr.detectChanges();
         }
       } catch (error) {
-        console.warn('Error cargando escalas para vuelo de ida:', error);
         this.departureFlightLayovers = [];
         this.cdr.detectChanges();
       }
@@ -282,7 +279,6 @@ export class FlightSectionV2Component implements OnChanges {
         const details = await firstValueFrom(
           this.flightsNetService.getFlightDetail(this.returnFlight.id).pipe(
             catchError((error) => {
-              console.error('❌ Error al obtener detalles del vuelo de vuelta:', error);
               return of(null);
             })
           )
@@ -306,7 +302,6 @@ export class FlightSectionV2Component implements OnChanges {
           this.cdr.detectChanges();
         }
       } catch (error) {
-        console.warn('Error cargando escalas para vuelo de vuelta:', error);
         this.returnFlightLayovers = [];
         this.cdr.detectChanges();
       }

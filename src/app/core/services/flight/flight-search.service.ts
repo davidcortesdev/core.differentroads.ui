@@ -569,7 +569,6 @@ export class FlightSearchService {
         return result; // Retornar el resultado real del API
       }),
       catchError((error: unknown) => {
-        console.error('❌ Error en unselectAllFlights:', error);
         return of(false); // Retornar false en caso de error
       })
     );
@@ -588,7 +587,6 @@ export class FlightSearchService {
         return result; // Retornar el resultado real del API
       }),
       catchError((error: unknown) => {
-        console.error('❌ Error en selectFlight:', error);
         return of(false); // Retornar false en caso de error
       })
     );
@@ -607,7 +605,6 @@ export class FlightSearchService {
         return result; // Retornar el resultado real del API
       }),
       catchError((error: unknown) => {
-        console.error('❌ Error en unselectFlight:', error);
         return of(false); // Retornar false en caso de error
       })
     );

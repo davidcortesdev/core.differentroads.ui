@@ -135,7 +135,6 @@ export class BookingDocumentationV2Component implements OnInit {
         this.statusesLoading = false;
       },
       error: (error) => {
-        console.error('❌ Error loading notification statuses:', error);
         this.notificationStatuses = [];
         this.statusesLoading = false;
       },
@@ -154,7 +153,6 @@ export class BookingDocumentationV2Component implements OnInit {
         this.typesLoading = false;
       },
       error: (error) => {
-        console.error('❌ Error loading notification types:', error);
         this.notificationTypes = [];
         this.typesLoading = false;
       },
@@ -173,7 +171,6 @@ export class BookingDocumentationV2Component implements OnInit {
         this.documentTypesLoading = false;
       },
       error: (error) => {
-        console.error('❌ Error loading document types:', error);
         this.documentTypes = [];
         this.documentTypesLoading = false;
       },
@@ -194,7 +191,6 @@ export class BookingDocumentationV2Component implements OnInit {
           this.documentsLoading = false;
         },
         error: (error) => {
-          console.error('❌ Error loading documents:', error);
           this.apiDocuments = [];
           this.documentsLoading = false;
           this.messageService.add({
@@ -220,7 +216,6 @@ export class BookingDocumentationV2Component implements OnInit {
           this.notificationsLoading = false;
         },
         error: (error) => {
-          console.error('❌ Error loading notifications:', error);
           this.apiNotifications = [];
           this.notificationsLoading = false;
           this.messageService.add({
@@ -419,7 +414,6 @@ export class BookingDocumentationV2Component implements OnInit {
 
         },
         error: (error) => {
-          console.error('❌ TEST: Notifications service error:', error);
         },
       });
 
@@ -431,7 +425,6 @@ export class BookingDocumentationV2Component implements OnInit {
 
         },
         error: (error) => {
-          console.error('❌ TEST: Documentation service error:', error);
         },
       });
   }
@@ -446,7 +439,6 @@ export class BookingDocumentationV2Component implements OnInit {
 
     const reservationIdNumber = parseInt(this.bookingId, 10);
     if (isNaN(reservationIdNumber)) {
-      console.error('ID de reserva no válido:', this.bookingId);
       return;
     }
 
@@ -455,7 +447,6 @@ export class BookingDocumentationV2Component implements OnInit {
       .getByReservation(reservationIdNumber)
       .pipe(
         catchError((error) => {
-          console.error('Error al cargar logs de TK:', error);
           this.tkLogsLoading = false;
           return of([]);
         })
@@ -667,10 +658,6 @@ export class BookingDocumentationV2Component implements OnInit {
           },
           error: (error) => {
             // Si falla el método unificado, intentar con el método alternativo
-            console.warn(
-              'No se pudo descargar con el método unificado, intentando método alternativo:',
-              error
-            );
             this.downloadDocumentAlternative(fileName, documentId);
           },
         });
@@ -710,7 +697,6 @@ export class BookingDocumentationV2Component implements OnInit {
       },
       error: (error) => {
         this.downloadLoading[documentId] = false;
-        console.error('Error al descargar documento:', error);
         this.handleDownloadError(error);
       },
     });

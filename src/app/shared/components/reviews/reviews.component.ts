@@ -157,7 +157,6 @@ export class ReviewsComponent implements OnInit {
         return this.enrichWithTravelerNames(mappedReviews);
       }),
       catchError(error => {
-        console.error('Error loading reviews:', error);
         return of([]);
       })
     ).subscribe({
@@ -166,7 +165,6 @@ export class ReviewsComponent implements OnInit {
         // Ya no se cargan estadísticas desde reviewsService, se obtienen de TourReview
       },
       error: (error) => {
-        console.error('Error in loadReviews:', error);
         this.enrichedReviews = [];
         this.loading = false;
         this.cdr.markForCheck();
@@ -199,7 +197,6 @@ export class ReviewsComponent implements OnInit {
     const userObservables = userIds.map(id => 
       this.usersNetService.getUserById(id).pipe(
         catchError(error => {
-          console.error(`Error fetching user ${id}:`, error);
           return of(null); // Retorna null en caso de error para no romper el forkJoin
         })
       )
@@ -228,7 +225,6 @@ export class ReviewsComponent implements OnInit {
         });
       }),
       catchError(error => {
-        console.error('Error processing users with individual calls:', error);
         // Fallback: mantener nombres existentes o asignar por defecto
         return of(reviews.map((review: IEnrichedReviewResponse) => ({
           ...review,
@@ -278,7 +274,6 @@ export class ReviewsComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: (error) => {
-        console.error('Error enriching reviews with tour data:', error);
         // En caso de error, usar las reviews sin enriquecer
         this.enrichedReviews = reviews;
         this.loading = false;
@@ -325,7 +320,6 @@ export class ReviewsComponent implements OnInit {
         return this.enrichWithTravelerNames(mappedReviews);
       }),
       catchError(error => {
-        console.error('Error loading reviews by departure:', error);
         return of([]);
       })
     ).subscribe({
@@ -334,7 +328,6 @@ export class ReviewsComponent implements OnInit {
         this.loadReviewStats();
       },
       error: (error) => {
-        console.error('Error in loadReviewsByDeparture:', error);
         this.enrichedReviews = [];
         this.loading = false;
         this.cdr.markForCheck();
@@ -364,7 +357,6 @@ export class ReviewsComponent implements OnInit {
         return this.enrichWithTravelerNames(mappedReviews);
       }),
       catchError(error => {
-        console.error('Error loading reviews by traveler:', error);
         return of([]);
       })
     ).subscribe({
@@ -373,7 +365,6 @@ export class ReviewsComponent implements OnInit {
         this.loadReviewStats();
       },
       error: (error) => {
-        console.error('Error in loadReviewsByTraveler:', error);
         this.enrichedReviews = [];
         this.loading = false;
         this.cdr.markForCheck();

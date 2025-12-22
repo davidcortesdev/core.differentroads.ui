@@ -108,7 +108,6 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
                       this.loading = false;
                     }
                     this.isRetrying = false;
-                    console.error(`Error fetching reservation summary after ${this.retryAttempts} attempts:`, err);
                     return throwError(() => err);
                   }
                   this.isRetrying = true;
@@ -124,7 +123,6 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
                 this.loading = false;
               }
               this.isRetrying = false;
-              console.error('Error fetching reservation summary:', err);
               return EMPTY;
             })
           );

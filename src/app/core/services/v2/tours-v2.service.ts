@@ -91,7 +91,6 @@ export class ToursServiceV2 {
         name: tour.name || `Tour ${id}`
       })),
       catchError(error => {
-        console.error(`Error obteniendo tour con ID ${id}:`, error);
         return of({
           id: typeof id === 'string' ? parseInt(id) : id,
           code: 'unknown',
@@ -115,7 +114,6 @@ export class ToursServiceV2 {
     const requests = ids.map(id => 
       this.getTourById(id, false).pipe(
         catchError(err => {
-          console.warn('No se pudo obtener el tour', id, err);
           return of(undefined);
         })
       )
@@ -128,7 +126,6 @@ export class ToursServiceV2 {
         return ids.map(id => byId.get(id)).filter((t): t is TourV2 => !!t);
       }),
       catchError(error => {
-        console.error('Error obteniendo múltiples tours:', error);
         return of([]);
       })
     );
@@ -152,7 +149,6 @@ export class ToursServiceV2 {
         return 0;
       }),
       catchError(error => {
-        console.error('Error obteniendo tour por TK ID:', error);
         return of(0);
       })
     );

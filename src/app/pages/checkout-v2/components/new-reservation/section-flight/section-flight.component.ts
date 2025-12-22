@@ -103,7 +103,6 @@ export class SectionFlightComponent implements OnInit, OnChanges {
         this.loading = false;
       },
       error: (error: any) => {
-        console.error('Error loading flights:', error);
         this.formattedFlights = null;
         this.loading = false;
       },
@@ -193,7 +192,6 @@ export class SectionFlightComponent implements OnInit, OnChanges {
         basicFlight.layovers = [];
       }
     } catch (error) {
-      console.warn('No se pudieron cargar los detalles del vuelo para escalas:', error);
       basicFlight.layovers = [];
     }
     
@@ -276,7 +274,6 @@ export class SectionFlightComponent implements OnInit, OnChanges {
       // Fallback: cálculo básico
       return this.calculateBasicDuration(departureTime, arrivalTime);
     } catch (error) {
-      console.error('Error calculating duration:', error);
       return 'N/A';
     }
   }

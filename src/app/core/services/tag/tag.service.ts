@@ -101,7 +101,6 @@ export class TagService {
         }
       }),
       catchError(error => {
-        console.error('Error creando etiqueta:', error);
         throw error;
       })
     );
@@ -135,7 +134,6 @@ export class TagService {
           this.tagObservableCache.delete(id);
         }),
         catchError(error => {
-          console.error(`Error obteniendo etiqueta con ID ${id}:`, error);
           // Limpiar el observable cache en caso de error
           this.tagObservableCache.delete(id);
           throw error;
@@ -166,7 +164,6 @@ export class TagService {
         }
       }),
       catchError(error => {
-        console.error(`Error actualizando etiqueta con ID ${id}:`, error);
         throw error;
       })
     );
@@ -186,7 +183,6 @@ export class TagService {
         }
       }),
       catchError(error => {
-        console.error(`Error eliminando etiqueta con ID ${id}:`, error);
         throw error;
       })
     );

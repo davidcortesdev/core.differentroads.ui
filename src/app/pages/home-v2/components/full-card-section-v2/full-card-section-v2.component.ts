@@ -79,21 +79,15 @@ export class FullCardSectionV2Component implements OnInit {
                     // 3. Obtener todas las cards de todas las configuraciones
                     this.loadAllCardsFromConfigurations(configurations);
                   } else {
-                    console.error(
-                      'No configuration found for FULLSCREEN_CARDS section'
-                    );
                   }
                 },
                 error: (error) => {
-                  console.error('Error loading configuration:', error);
                 },
               });
           } else {
-            console.error('No FULLSCREEN_CARDS section found');
           }
         },
         error: (error) => {
-          console.error('Error loading FULLSCREEN_CARDS section:', error);
         },
       });
   }
@@ -130,10 +124,6 @@ export class FullCardSectionV2Component implements OnInit {
             }
           },
           error: (error) => {
-            console.error(
-              `Error loading cards for configuration ${configuration.id}:`,
-              error
-            );
             completedRequests++;
 
             // Si hemos completado todas las peticiones (incluso con errores), actualizar

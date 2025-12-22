@@ -48,7 +48,6 @@ export class CheckoutUserDataService {
         return this.personalInfoService.getUserData(userId);
       }),
       catchError((error) => {
-        console.error('Error al obtener datos del usuario para checkout:', error);
         return throwError(() => error);
       })
     );

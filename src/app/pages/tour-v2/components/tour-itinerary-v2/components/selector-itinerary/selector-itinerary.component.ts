@@ -127,9 +127,6 @@ export class SelectorItineraryComponent
     if (this.tourId) {
       this.loadSelectorData(this.tourId);
     } else {
-      console.warn(
-        '⚠️ No se proporcionó tourId para el selector de itinerarios'
-      );
       this.loading = false;
       this.error = 'ID del tour no proporcionado';
     }
@@ -206,7 +203,6 @@ export class SelectorItineraryComponent
       .pipe(
         takeUntil(this.destroy$),
         catchError((error) => {
-          console.error('❌ Error loading trip types:', error);
           return of([]);
         }),
         switchMap((tripTypes) => {
@@ -232,7 +228,6 @@ export class SelectorItineraryComponent
           }, 100);
         },
         error: (error) => {
-          console.error('❌ Error cargando datos del selector:', error);
           this.error = 'Error al cargar los datos del selector';
           this.loading = false;
         },
@@ -284,7 +279,6 @@ export class SelectorItineraryComponent
         return forkJoin(itineraryDeparturesObservables);
       }),
       catchError((error) => {
-        console.error('❌ Error loading itineraries:', error);
         return of([]);
       })
     );
@@ -320,10 +314,6 @@ export class SelectorItineraryComponent
         return itineraryWithDepartures;
       }),
       catchError((error) => {
-        console.error(
-          `❌ Error loading departures for itinerary ${itinerary.id}:`,
-          error
-        );
 
         const itineraryWithDepartures: ItineraryWithDepartures = {
           itinerary,
@@ -349,7 +339,6 @@ export class SelectorItineraryComponent
         
         // Debug: verificar que tripTypeData se asigne correctamente
         if (!tripTypeData && tripTypeId > 0) {
-          console.warn('⚠️ TripType no encontrado para tripTypeId:', tripTypeId, 'Mapa tiene:', Array.from(this.tripTypesMap.keys()));
         }
 
         const option: DateOption = {
@@ -549,7 +538,6 @@ export class SelectorItineraryComponent
    * Maneja errores de descarga
    */
   private handleDownloadError(error: unknown): void {
-    console.error('Error al descargar itinerario:', error);
     this.messageService.add({
       severity: 'error',
       summary: 'Error',

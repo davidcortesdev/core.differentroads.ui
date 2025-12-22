@@ -207,7 +207,6 @@ export class FlightItemComponent implements OnInit, OnDestroy {
             }
           },
           error: (error) => {
-            console.warn(`⚠️ FlightItem: Error al cargar detalles para vuelo ${flight.id}:`, error);
           }
         });
     });
@@ -241,7 +240,6 @@ export class FlightItemComponent implements OnInit, OnDestroy {
             }
           },
           error: (error) => {
-            console.warn(`⚠️ FlightItem: Error al cargar escalas para vuelo ${flight.id}:`, error);
             this.flightLayovers.set(flight.id, []);
           }
         });
@@ -259,7 +257,6 @@ export class FlightItemComponent implements OnInit, OnDestroy {
         next: (airlineNames) => {
         },
         error: (error) => {
-          console.warn(`⚠️ FlightItem: Error al precargar aerolíneas:`, error);
         }
       });
   }

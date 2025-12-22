@@ -72,7 +72,6 @@ export class CommunityHeroV2Component implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading community section:', error);
         this.error = 'Error loading community section';
         this.loading = false;
       },
@@ -100,7 +99,6 @@ export class CommunityHeroV2Component implements OnInit {
           }
         },
         error: (error) => {
-          console.error('Error loading section configurations:', error);
           this.error = 'Error loading section configurations';
           this.loading = false;
         },
@@ -140,7 +138,6 @@ export class CommunityHeroV2Component implements OnInit {
           this.loading = false;
         },
         error: (error) => {
-          console.error('Error loading featured images:', error);
           this.error = 'Error loading featured images';
           this.loading = false;
         },

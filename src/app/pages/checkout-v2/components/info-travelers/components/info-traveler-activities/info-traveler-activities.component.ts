@@ -134,19 +134,16 @@ export class InfoTravelerActivitiesComponent implements OnInit, OnDestroy {
                       this.loadTravelerActivities();
                     },
                     error: (error) => {
-                      console.error('Error al cargar catálogo de actividades:', error);
                       this.loading = false;
                     }
                   });
               },
               error: (error) => {
-                console.error('Error al cargar actividades de viajeros:', error);
                 this.loading = false;
               }
             });
         },
         error: (error) => {
-          console.error('Error al cargar viajeros de la reserva:', error);
           this.loading = false;
         }
       });
@@ -174,7 +171,6 @@ export class InfoTravelerActivitiesComponent implements OnInit, OnDestroy {
           this.emitInitialActivitiesState();
         },
         error: (error) => {
-          console.error('Error al cargar actividades del viajero:', error);
           this.loading = false;
         }
       });

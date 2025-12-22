@@ -274,7 +274,6 @@ export class AdditionalInfoService {
     return this.authService.getCognitoId().pipe(
       switchMap(cognitoId => {
         if (!cognitoId) {
-          console.warn('⚠️ No se encontró Cognito ID, creando presupuesto sin userId');
           return this.createCompleteBudget(null);
         }
         
@@ -288,7 +287,6 @@ export class AdditionalInfoService {
         );
       }),
       catchError(error => {
-        console.error('Error en createBudget:', error);
         throw error;
       })
     );
@@ -354,12 +352,10 @@ export class AdditionalInfoService {
           return this.reservationService.createComplete(completeData);
         }),
         catchError((error) => {
-          console.error('💥 Error en preparación de datos del presupuesto:', error);
           throw error;
         })
       );
     } catch (error) {
-      console.error('💥 Error en preparación de datos del presupuesto:', error);
       throw error;
     }
   }
@@ -583,7 +579,6 @@ export class AdditionalInfoService {
   ): void {
     const tourIdNumber = parseInt(tourId, 10);
     if (!tourIdNumber || isNaN(tourIdNumber)) {
-      console.error('Invalid tourId for add_to_wishlist:', tourId);
       return;
     }
 
@@ -636,7 +631,6 @@ export class AdditionalInfoService {
         );
       }),
       catchError((error) => {
-        console.error('Error obteniendo datos completos del tour para add_to_wishlist:', error);
         // Fallback con datos básicos
         return this.analyticsService.buildEcommerceItemFromTourData(
           {
@@ -990,7 +984,6 @@ export class AdditionalInfoService {
         };
       }),
       catchError((error) => {
-        console.error('Error al descargar presupuesto:', error);
         return of({
           success: false,
           message: 'Error al descargar el presupuesto. Inténtalo de nuevo.',
@@ -1026,7 +1019,6 @@ export class AdditionalInfoService {
         }
       }),
       catchError((error) => {
-        console.error('Error al enviar presupuesto por email:', error);
         return of({
           success: false,
           message: 'Error al enviar el presupuesto por email. Inténtalo de nuevo.',

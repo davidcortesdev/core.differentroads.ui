@@ -130,7 +130,6 @@ export class PhonePrefixService {
     // POST directo a UserFieldValue para crear el campo
     return this.http.post(this.USER_FIELD_VALUE_API_URL, fieldValue, this.httpOptions).pipe(
       catchError((error) => {
-        console.error('Error al guardar prefijo telefónico:', error);
         return of(null);
       })
     );

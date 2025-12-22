@@ -41,7 +41,6 @@ export class TourReviewsV2Component implements OnInit, OnChanges {
       showOnTourPage: true
     }).pipe(
       catchError((error) => {
-        console.error('Error al verificar reviews:', error);
         return of(0);
       })
     ).subscribe((count: number) => {

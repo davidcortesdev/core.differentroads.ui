@@ -241,7 +241,6 @@ export class HeaderV2Component implements OnInit, OnDestroy {
           this.processMenuItems([menuItems]);
         },
         error: (error) => {
-          console.error('Error al cargar configuración del menú:', error);
           this.isLoadingMenu = false;
         },
       });
@@ -330,7 +329,6 @@ export class HeaderV2Component implements OnInit, OnDestroy {
           this.updateMenusWithCountries();
         },
         error: (error: unknown) => {
-          console.error(`Error al cargar países para continente ${continentId}:`, error);
           // Inicializar como array vacío para evitar que se intente cargar múltiples veces
           if (!this.countriesByMenuItem[menuItemId]) {
             this.countriesByMenuItem[menuItemId] = [];
@@ -369,7 +367,6 @@ export class HeaderV2Component implements OnInit, OnDestroy {
           this.updateMenusWithTags();
         },
         error: (error: unknown) => {
-          console.error(`Error al cargar tags para categoría ${categoryId}:`, error);
           // Inicializar como array vacío para evitar que se intente cargar múltiples veces
           if (!this.tagsByMenuItem[menuItemId]) {
             this.tagsByMenuItem[menuItemId] = [];
@@ -690,7 +687,6 @@ export class HeaderV2Component implements OnInit, OnDestroy {
         this.analyticsService.menuInteraction(clickElement, userData);
       },
       error: (error) => {
-        console.error('Error obteniendo datos de usuario para analytics:', error);
         // Fallback con datos básicos
         this.analyticsService.menuInteraction(clickElement, this.getUserData());
       }
@@ -706,7 +702,6 @@ export class HeaderV2Component implements OnInit, OnDestroy {
         this.analyticsService.clickLogo(userData);
       },
       error: (error) => {
-        console.error('Error obteniendo datos de usuario para analytics:', error);
         // Fallback con datos básicos
         this.analyticsService.clickLogo(this.getUserData());
       }

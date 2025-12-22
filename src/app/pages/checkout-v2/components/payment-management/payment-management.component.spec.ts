@@ -252,7 +252,6 @@ describe('PaymentManagementComponent', () => {
     });
 
     it('should handle payment processing errors', async () => {
-      spyOn(console, 'error');
       mockScalapayService.createOrder.and.throwError('Test error');
       
       component.selectPaymentType('installments');
@@ -260,7 +259,6 @@ describe('PaymentManagementComponent', () => {
       
       await component.submitPayment();
       
-      expect(console.error).toHaveBeenCalledWith('Payment processing failed:', jasmine.any(Error));
       expect(component.isLoading).toBe(false);
     });
   });

@@ -121,7 +121,6 @@ export class LoginFormComponent implements OnInit {
         const cognitoId = attributes?.sub;
 
         if (!cognitoId) {
-          console.error('No se pudo obtener el Cognito ID del usuario');
           this.isLoading = false;
           return;
         }
@@ -129,7 +128,6 @@ export class LoginFormComponent implements OnInit {
         this.verifyAndCreateUser(cognitoId, email, method);
       },
       error: (error) => {
-        console.error('Error obteniendo atributos del usuario:', error);
         this.isLoading = false;
         this.errorMessage = 'Error al obtener información del usuario';
       },
@@ -201,7 +199,6 @@ export class LoginFormComponent implements OnInit {
               }
             },
             error: (error) => {
-              console.error('❌ Error buscando usuario por email:', error);
               // En caso de error, intentar crear el usuario
               this.createNewUser(cognitoId, email);
             },
@@ -209,7 +206,6 @@ export class LoginFormComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('❌ Error buscando usuario por Cognito ID:', error);
         // En caso de error, buscar por email
 
         this.usersNetService.getUsersByEmail(email).subscribe({
@@ -227,7 +223,6 @@ export class LoginFormComponent implements OnInit {
             }
           },
           error: (emailError) => {
-            console.error('❌ Error buscando usuario por email:', emailError);
             this.createNewUser(cognitoId, email, method);
           },
         });
@@ -292,15 +287,12 @@ export class LoginFormComponent implements OnInit {
 
           },
           error: (error) => {
-            console.error('❌ Error obteniendo usuario actualizado:', error);
             this.isLoading = false;
             this.authService.navigateAfterUserVerification();
           },
         });
       },
       error: (error) => {
-        console.error('❌ Error actualizando usuario con Cognito ID:', error);
-
         this.isLoading = false;
 
         // Navegar incluso si hay error en la actualización
@@ -363,8 +355,6 @@ export class LoginFormComponent implements OnInit {
 
       },
       error: (error) => {
-        console.error('❌ Error creando nuevo usuario:', error);
-
         this.isLoading = false;
 
         // Navegar incluso si hay error en la creación
@@ -424,7 +414,6 @@ export class LoginFormComponent implements OnInit {
       .catch((error) => {
         this.isLoading = false;
         this.errorMessage = 'Error al iniciar sesión con Google';
-        console.error(error);
       });
   }
 

@@ -32,7 +32,7 @@
                 <p-skeleton *ngIf="!item.image || (item.imageLoading === true)" width="100%" height="100%"
                   styleClass="booking-image-skeleton"></p-skeleton>
                 <img *ngIf="item.image && (item.imageLoading !== true)" [src]="item.image" [alt]="item.title" 
-                  (error)="imageLoadError(item)" loading="eager"/>
+                  (error)="imageLoadError(item)" loading="lazy"/>
               </div>
 
               <!-- Item information -->

@@ -62,7 +62,7 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
   protected textContent = '';
   protected title = '';
   protected isActive = false;
-  protected themeCode: string | null = null;
+  protected themeCode: string = 'light'; // Por defecto tema LIGHT
 
   private destroy$ = new Subject<void>();
 
@@ -147,15 +147,12 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
             }
             this.loadSpecificConfiguration(targetConfig.id);
           } else {
-            console.warn(
-              '⚠️ CarouselSectionV2 - No configurations found for section type:',
-              this.sectionType
-            );
+            
           }
         },
         error: (error) => {
           console.error(
-            '❌ CarouselSectionV2 - Error loading carousel configurations:',
+            'CarouselSectionV2 - Error loading carousel configurations:',
             error
           );
         },
@@ -173,11 +170,12 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
           this.title = configuration.title || '';
           this.isActive = configuration.isActive;
 
-          // Cargar tema si existe themeId
+          // Cargar tema si existe themeId, si no existe se aplica LIGHT por defecto
           if (configuration.themeId) {
             this.loadTheme(configuration.themeId);
           } else {
-            this.themeCode = null;
+            // Por defecto aplicar tema LIGHT
+            this.themeCode = 'light';
           }
 
           // Forzar detección de cambios
@@ -188,11 +186,6 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
             this.loadSectionContent(configId);
             // Cargar cards para el carrusel
             this.loadSectionCards(configId);
-          } else {
-            console.warn(
-              '⚠️ CarouselSectionV2 - Configuration is not active:',
-              configId
-            );
           }
         },
         error: (error) => {
@@ -210,7 +203,15 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (theme) => {
-          this.themeCode = theme.code || null;
+          // Comparar el code con "DARK" o "LIGHT" en mayúsculas
+          if (theme.code === 'DARK') {
+            this.themeCode = 'dark';
+          } else if (theme.code === 'LIGHT') {
+            this.themeCode = 'light';
+          } else {
+            // Por defecto aplicar tema LIGHT si es null o cualquier otro valor
+            this.themeCode = 'light';
+          }
           this.cdr.markForCheck();
         },
         error: (error) => {
@@ -218,7 +219,8 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
             'CarouselSectionV2 - Error loading theme:',
             error
           );
-          this.themeCode = null;
+          // En caso de error, aplicar tema LIGHT por defecto
+          this.themeCode = 'light';
           this.cdr.markForCheck();
         },
       });
@@ -242,7 +244,7 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error(
-            '❌ CarouselSectionV2 - Error loading section content:',
+            'CarouselSectionV2 - Error loading section content:',
             error
           );
         },
@@ -261,7 +263,7 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error(
-            '❌ CarouselSectionV2 - Error loading section cards:',
+            'CarouselSectionV2 - Error loading section cards:',
             error
           );
           this.cards = [];

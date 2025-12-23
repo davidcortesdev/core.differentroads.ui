@@ -124,6 +124,11 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
       numScroll: 1,
     },
     {
+      breakpoint: '1390px',
+      numVisible: 2,
+      numScroll: 1,
+    },
+    {
       breakpoint: '1024px', // <=1024px (tablet)
       numVisible: 2,
       numScroll: 1,

@@ -166,8 +166,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         changes['departureId'].currentValue !== changes['departureId'].previousValue) ||
         (changes['tourId'] && changes['tourId'].currentValue !== changes['tourId'].previousValue)) {
       if (this.departureId) {
-        this.loadCombinedCities();
-        this.loadAirportTimes();
+      this.loadCombinedCities();
+      this.loadAirportTimes();
       }
     }
 
@@ -215,7 +215,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
 
   private createFlightForm(): FormGroup {
     return this.fb.group({
-      origen: [null],
+      origen: [null, Validators.required],
       destinoVuelta: [null], // ✅ NUEVO: Campo para destino de vuelta en ida y vuelta
       tipoViaje: [this.tipoViaje],
       equipajeMano: [this.equipajeMano],
@@ -225,8 +225,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       infants: [0],
       aerolinea: [null],
       escala: [null],
-      fechaHoraIda: [null, [this.validateFechaHoraIda]],
-      fechaHoraVuelta: [null, [this.validateFechaHoraVuelta]],
+      fechaHoraIda: [null, [this.validateFechaHoraIda, this.validateRequiredFechaHoraIda]],
+      fechaHoraVuelta: [null, [this.validateFechaHoraVuelta, this.validateRequiredFechaHoraVuelta]],
     });
   }
 
@@ -238,15 +238,35 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   private initFormListeners(): void {
-      this.flightForm.get('tipoViaje')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((value) => {
-        this.tipoViaje = value;
+    this.flightForm.get('tipoViaje')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((value) => {
+      this.tipoViaje = value;
+        
+        // Actualizar validaciones requeridas según el tipo de viaje
+        const fechaHoraIdaControl = this.flightForm.get('fechaHoraIda');
+        const fechaHoraVueltaControl = this.flightForm.get('fechaHoraVuelta');
+        
+        if (fechaHoraIdaControl) {
+          fechaHoraIdaControl.updateValueAndValidity();
+        }
+        if (fechaHoraVueltaControl) {
+          fechaHoraVueltaControl.updateValueAndValidity();
+        }
+        
+        // Limpiar fecha/hora de vuelta si el tipo de viaje es "Solo ida"
+        // Hacerlo ANTES de actualizar validaciones para evitar validar campos que no deberían existir
+        if (value === 'Ida') {
+          this.flightForm.get('fechaHoraVuelta')?.setValue(null, { emitEvent: false });
+          this.flightForm.get('destinoVuelta')?.setValue(null, { emitEvent: false });
+        }
+        
+        // Limpiar fecha/hora de ida si el tipo de viaje es "Solo vuelta"
+        if (value === 'Vuelta') {
+          this.flightForm.get('fechaHoraIda')?.setValue(null, { emitEvent: false });
+          this.flightForm.get('destinoVuelta')?.setValue(null, { emitEvent: false });
+        }
         
         if (value === 'IdaVuelta' && this.flightForm.get('origen')?.value) {
           this.flightForm.get('destinoVuelta')?.setValue(this.flightForm.get('origen')?.value);
-        }
-        
-        if (value === 'Ida' || value === 'Vuelta') {
-          this.flightForm.get('destinoVuelta')?.setValue(null);
         }
       });
     
@@ -314,7 +334,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     );
 
     // Combinar todas las fuentes
-    forkJoin({
+          forkJoin({
       defaultAirports: defaultAirports$,
       configuredLocations: configuredLocations$,
       departureLocations: departureLocations$,
@@ -355,7 +375,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         const allAirportIds = [...new Set([...configuredAirportIds, ...tourAirportIds])];
         
         return forkJoin({
-          locations: locationIds.length ? this.locationNetService.getLocationsByIds(locationIds) : of([]),
+            locations: locationIds.length ? this.locationNetService.getLocationsByIds(locationIds) : of([]),
           airports: allAirportIds.length ? this.locationAirportNetService.getAirportsByIds(allAirportIds) : of([]),
           // locationAirports: locationAirportsRequests.length > 0 ? forkJoin(locationAirportsRequests) : of([])
           locationAirports: of([]) // COMENTADO TEMPORALMENTE
@@ -412,10 +432,10 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
                 if (codigo) {
                   const key = codigo.toUpperCase();
                   citiesMap.set(key, {
-                    nombre: loc && loc.name ? loc.name : '',
+                  nombre: loc && loc.name ? loc.name : '',
                     codigo: codigo,
-                    source: item.source,
-                    id: item.id
+                  source: item.source,
+                  id: item.id
                   });
                 }
               } else if (item.locationAirportId && airportMap.has(item.locationAirportId)) {
@@ -425,8 +445,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
                   citiesMap.set(key, {
                     nombre: airport.name ? airport.name : '',
                     codigo: airport.iata,
-                    source: item.source,
-                    id: item.id
+                  source: item.source,
+                  id: item.id
                   });
                 }
               }
@@ -459,9 +479,9 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         this.combinedCities = Array.from(citiesMap.values());
       },
       error: (error) => {
-        this.combinedCities = [];
-      }
-    });
+          this.combinedCities = [];
+        }
+      });
   }
 
   private loadAirportTimes(): void {
@@ -554,7 +574,23 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   // --- Métodos públicos y de lógica de negocio ---
 
   buscar() {
+    // Marcar todos los campos como touched para mostrar errores
+    this.flightForm.markAllAsTouched();
+    
+    // Verificar si el formulario es válido
+    if (this.flightForm.invalid) {
+      this.errorMessage = 'Por favor, completa todos los campos requeridos';
+      // Limpiar resultados anteriores para evitar que se muestre el mensaje de carga de ciudades
+      this.flightOffersRaw = [];
+      this.adaptedFlightPacks = [];
+      this.searchPerformed = false;
+      // Limpiar el caché de ciudades para evitar estados inconsistentes
+      this.airportCityCacheService.clearCache();
+      return;
+    }
+    
     this.searchPerformed = true;
+    this.errorMessage = ''; // Limpiar mensaje de error anterior
     this.searchFlights();
   }
 
@@ -592,8 +628,9 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     }
     
     // Obtener fechas/horas seleccionadas y formatearlas
+    // Solo incluir fecha/hora de vuelta si el tipo de viaje requiere vuelta
     const fechaHoraIda = formValue.fechaHoraIda;
-    const fechaHoraVuelta = formValue.fechaHoraVuelta;
+    const fechaHoraVuelta = (tipoViaje === 'Vuelta' || tipoViaje === 'IdaVuelta') ? formValue.fechaHoraVuelta : null;
     
     const fechaIdaFormatted = fechaHoraIda ? this.formatDateForAPI(fechaHoraIda) : null;
     const horaIdaFormatted = fechaHoraIda ? this.formatTimeForAPI(fechaHoraIda) : null;
@@ -605,6 +642,12 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     if (validationError) {
       this.isLoading = false;
       this.errorMessage = validationError;
+      // Limpiar resultados anteriores para evitar que se muestre el mensaje de carga de ciudades
+      this.flightOffersRaw = [];
+      this.adaptedFlightPacks = [];
+      this.searchPerformed = false;
+      // Limpiar el caché de ciudades para evitar estados inconsistentes
+      this.airportCityCacheService.clearCache();
       return;
     }
 
@@ -616,14 +659,37 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       iataDestino: destinationCode,
       fechaIda: fechaIdaFormatted,
       horaIda: horaIdaFormatted,
-      fechaVuelta: fechaVueltaFormatted,
-      horaVuelta: horaVueltaFormatted
+      // Solo incluir fecha/hora de vuelta si el tipo de viaje requiere vuelta
+      fechaVuelta: (tipoViaje === 'Vuelta' || tipoViaje === 'IdaVuelta') ? fechaVueltaFormatted : null,
+      horaVuelta: (tipoViaje === 'Vuelta' || tipoViaje === 'IdaVuelta') ? horaVueltaFormatted : null
     };
     
     this.flightSearchService.searchFlights(request, false).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response: IFlightSearchResultDTO) => {
         this.isLoading = false;
         this.flightOffersRaw = response.flightPacks || [];
+        
+        // Ordenar vuelos dentro de cada paquete ANTES de adaptar
+        // Esto asegura que IDA aparezca antes que VUELTA
+        this.flightOffersRaw.forEach(flightPack => {
+          if (flightPack.flights && flightPack.flights.length > 0) {
+            const isIda = (flightTypeId: number): boolean => {
+              return flightTypeId === FlightTypeId.IDA_NEW || flightTypeId === FlightTypeId.IDA_LEGACY;
+            };
+            
+            flightPack.flights.sort((a, b) => {
+              const idA = a.flightTypeId ?? 0;
+              const idB = b.flightTypeId ?? 0;
+              const aIsIda = isIda(idA);
+              const bIsIda = isIda(idB);
+              
+              if (aIsIda && !bIsIda) return -1;
+              if (!aIsIda && bIsIda) return 1;
+              
+              return idA - idB;
+            });
+          }
+        });
         
         // Procesar warnings y meta información
         this.hasSearchWarnings = response.hasWarnings || false;
@@ -659,7 +725,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         }
         
         // Transformar los datos directamente aquí para evitar recreaciones constantes
-        // El ordenamiento se hace dentro de adaptFlightPackForFlightItem
+        // El ordenamiento se hace dentro de adaptFlightPackForFlightItem también
         this.adaptedFlightPacks = this.flightOffersRaw.map(flightPack => this.adaptFlightPackForFlightItem(flightPack));
         
         // Precargar nombres de ciudades para todos los aeropuertos
@@ -714,6 +780,27 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
    * Método privado para mostrar los vuelos una vez que las ciudades están cargadas
    */
   private displayFlights(): void {
+    // Asegurar que los vuelos estén ordenados antes de adaptar
+    this.flightOffersRaw.forEach(flightPack => {
+      if (flightPack.flights && flightPack.flights.length > 0) {
+        const isIda = (flightTypeId: number): boolean => {
+          return flightTypeId === FlightTypeId.IDA_NEW || flightTypeId === FlightTypeId.IDA_LEGACY;
+        };
+        
+        flightPack.flights.sort((a, b) => {
+          const idA = a.flightTypeId ?? 0;
+          const idB = b.flightTypeId ?? 0;
+          const aIsIda = isIda(idA);
+          const bIsIda = isIda(idB);
+          
+          if (aIsIda && !bIsIda) return -1;
+          if (!aIsIda && bIsIda) return 1;
+          
+          return idA - idB;
+        });
+      }
+    });
+    
     // Actualizar adaptedFlightPacks para mantener sincronización
     this.adaptedFlightPacks = this.flightOffersRaw.map(flightPack => this.adaptFlightPackForFlightItem(flightPack));
     
@@ -785,6 +872,27 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       // Por ahora, mostrar todos los vuelos ya que los detalles se cargan internamente
       // en cada flight-item cuando useNewService="true"
       return true;
+    });
+    
+    // Asegurar ordenamiento de vuelos dentro de cada paquete
+    this.flightOffersRaw.forEach(flightPack => {
+      if (flightPack.flights && flightPack.flights.length > 0) {
+        const isIda = (flightTypeId: number): boolean => {
+          return flightTypeId === FlightTypeId.IDA_NEW || flightTypeId === FlightTypeId.IDA_LEGACY;
+        };
+        
+        flightPack.flights.sort((a, b) => {
+          const idA = a.flightTypeId ?? 0;
+          const idB = b.flightTypeId ?? 0;
+          const aIsIda = isIda(idA);
+          const bIsIda = isIda(idB);
+          
+          if (aIsIda && !bIsIda) return -1;
+          if (!aIsIda && bIsIda) return 1;
+          
+          return idA - idB;
+        });
+      }
     });
     
     this.sortFlights(this.selectedSortOption);
@@ -1382,25 +1490,25 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   adaptFlightPackForFlightItem(flightPack: IFlightPackDTO): IFlightsNetFlightPackDTO {
     // Crear nuevo objeto adaptado
     const adaptedFlights = (flightPack.flights?.map(flight => ({
-      id: flight.id,
-      tkId: flight.tkId || '',
-      name: flight.name || '',
-      activityId: flight.activityId,
-      departureId: flight.departureId,
-      tkActivityPeriodId: flight.tkActivityPeriodId || '',
-      tkServiceCombinationId: flight.tkServiceCombinationId || '',
-      date: flight.date || '',
-      tkServiceId: flight.tkServiceId || '',
-      tkJourneyId: flight.tkJourneyId || '',
-      flightTypeId: flight.flightTypeId,
-      departureIATACode: flight.departureIATACode || '',
-      arrivalIATACode: flight.arrivalIATACode || '',
-      departureDate: flight.departureDate || '',
-      departureTime: flight.departureTime || '',
-      arrivalDate: flight.arrivalDate || '',
-      arrivalTime: flight.arrivalTime || '',
-      departureCity: this.airportCityCacheService.getCityNameFromCache(flight.departureIATACode) || flight.departureCity || '',
-      arrivalCity: this.airportCityCacheService.getCityNameFromCache(flight.arrivalIATACode) || flight.arrivalCity || ''
+        id: flight.id,
+        tkId: flight.tkId || '',
+        name: flight.name || '',
+        activityId: flight.activityId,
+        departureId: flight.departureId,
+        tkActivityPeriodId: flight.tkActivityPeriodId || '',
+        tkServiceCombinationId: flight.tkServiceCombinationId || '',
+        date: flight.date || '',
+        tkServiceId: flight.tkServiceId || '',
+        tkJourneyId: flight.tkJourneyId || '',
+        flightTypeId: flight.flightTypeId,
+        departureIATACode: flight.departureIATACode || '',
+        arrivalIATACode: flight.arrivalIATACode || '',
+        departureDate: flight.departureDate || '',
+        departureTime: flight.departureTime || '',
+        arrivalDate: flight.arrivalDate || '',
+        arrivalTime: flight.arrivalTime || '',
+        departureCity: this.airportCityCacheService.getCityNameFromCache(flight.departureIATACode) || flight.departureCity || '',
+        arrivalCity: this.airportCityCacheService.getCityNameFromCache(flight.arrivalIATACode) || flight.arrivalCity || ''
     })) || []);
 
     // Ordenar vuelos por flightTypeId para asegurar que IDA aparezca antes que VUELTA
@@ -1647,6 +1755,59 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       return null;
     }
   };
+
+  /**
+   * Validador requerido condicional para fecha/hora de ida
+   * El campo es requerido si el tipo de viaje es 'Ida' o 'IdaVuelta'
+   */
+  private validateRequiredFechaHoraIda = (control: AbstractControl): ValidationErrors | null => {
+    const tipoViaje = this.flightForm?.get('tipoViaje')?.value;
+    const fechaHora = control.value;
+    
+    if ((tipoViaje === 'Ida' || tipoViaje === 'IdaVuelta') && !fechaHora) {
+      return { required: true };
+    }
+    
+    return null;
+  };
+
+  /**
+   * Validador requerido condicional para fecha/hora de vuelta
+   * El campo es requerido si el tipo de viaje es 'Vuelta' o 'IdaVuelta'
+   */
+  private validateRequiredFechaHoraVuelta = (control: AbstractControl): ValidationErrors | null => {
+    const tipoViaje = this.flightForm?.get('tipoViaje')?.value;
+    const fechaHora = control.value;
+    
+    if ((tipoViaje === 'Vuelta' || tipoViaje === 'IdaVuelta') && !fechaHora) {
+      return { required: true };
+    }
+    
+    return null;
+  };
+
+  /**
+   * Método helper para verificar si el campo de fecha/hora de ida es requerido
+   */
+  isFechaHoraIdaRequired(): boolean {
+    const tipoViaje = this.flightForm?.get('tipoViaje')?.value;
+    return tipoViaje === 'Ida' || tipoViaje === 'IdaVuelta';
+  }
+
+  /**
+   * Método helper para verificar si el campo de fecha/hora de vuelta es requerido
+   */
+  isFechaHoraVueltaRequired(): boolean {
+    const tipoViaje = this.flightForm?.get('tipoViaje')?.value;
+    return tipoViaje === 'Vuelta' || tipoViaje === 'IdaVuelta';
+  }
+
+  /**
+   * Método helper para verificar si el campo origen es requerido
+   */
+  isOrigenRequired(): boolean {
+    return true; // Siempre requerido
+  }
 
   /**
    * Valida las fechas/horas antes de enviar la petición de búsqueda

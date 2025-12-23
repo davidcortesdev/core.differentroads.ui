@@ -23,7 +23,7 @@
     </div>
   </ng-template>
 
-  <form [formGroup]="flightForm">
+  <form [formGroup]="flightForm" class="flight-form-container">
     <div class="travel-type">
       <div class="radio">
         <p-radioButton
@@ -52,221 +52,279 @@
         ></p-radioButton>
         <label for="Vuelta">Solo vuelta</label>
       </div>
-      <!-- Baggage filters removed -->
     </div>
 
-    <div class="flt-details">
-      <!-- Ida -->
-      <div class="row" *ngIf="tipoViaje !== 'Vuelta'">
-        <div class="label">
-          <label>Ida</label>
-          <div class="from">Desde</div>
+    <!-- Ida -->
+    <div class="flight-row" *ngIf="tipoViaje !== 'Vuelta'">
+      <div class="row-label">
+        <label>Ida</label>
+        <span class="from-label">Desde</span>
+      </div>
+      
+      <div class="field-group origin-field">
+        <label>
+          Origen
+          <i class="pi pi-info-circle info-icon" 
+             pTooltip="Selecciona el aeropuerto desde donde quieres iniciar tu viaje. Este será el punto de partida de tu vuelo de ida."
+             tooltipPosition="top"
+             [showDelay]="300"></i>
+        </label>
+        <i class="pi pi-plane plane-icon"></i>
+        <p-autocomplete
+          formControlName="origen"
+          [suggestions]="filteredCities"
+          (completeMethod)="searchCities($event)"
+          field="nombre"
+          [forceSelection]="true"
+          [styleClass]="flightForm.get('origen')?.invalid && flightForm.get('origen')?.touched ? 'p-invalid' : ''"
+          [dropdown]="true"
+          [minLength]="1"
+          [delay]="0"
+          [appendTo]="'body'"
+          [showEmptyMessage]="true"
+          emptyMessage="No se encontraron ciudades"
+        >
+          <ng-template #item let-city>
+            <div class="city-item">{{ city.codigo }} - {{ city.nombre }}</div>
+          </ng-template>
+          <ng-template #selectedItem let-city>
+            <div class="selected-city">{{ city.codigo }} - {{ city.nombre }}</div>
+          </ng-template>
+        </p-autocomplete>
+        <div class="field-hint">
+          <span>Selecciona uno de nuestros aeropuertos seleccionados</span>
         </div>
-        <div class="input origin">
-          <i class="pi pi-plane"></i>
-          <!-- Componente de autocomplete mejorado para mostrar todas las ciudades -->
-          <p-autocomplete
-            formControlName="origen"
-            [suggestions]="filteredCities"
-            (completeMethod)="searchCities($event)"
-            field="nombre"
-            [forceSelection]="true"
-            styleClass="w-full"
-            [dropdown]="true"
-            [minLength]="1"
-            [delay]="0"
-            [appendTo]="'body'"
-            [showEmptyMessage]="true"
-            emptyMessage="No se encontraron ciudades"
-          >
-            <!-- Plantilla personalizada para los elementos del dropdown -->
-            <ng-template #item let-city>
-              <div class="city-item">
-                {{ city.codigo }} - {{ city.nombre }}
-              </div>
-            </ng-template>
-            <!-- Plantilla personalizada para el input cuando está seleccionado -->
-            <ng-template #selectedItem let-city>
-              <div class="selected-city">
-                {{ city.codigo }} - {{ city.nombre }}
-              </div>
-            </ng-template>
-          </p-autocomplete>
-        </div>
-        <div class="input destination">
-          <div class="dest-lbl">Llegada</div>
-          <div class="static-field">
-            {{ tourOrigenConstante.codigo }} - {{ tourOrigenConstante.nombre }}
-          </div>
-        </div>
-        <div class="date">
-          <div class="date-lbl">Fecha y hora de llegada</div>
-          <p-datepicker
-            formControlName="fechaHoraIda"
-            [showTime]="true"
-            [hourFormat]="'24'"
-            [maxDate]="maxFechaIda"
-            [showIcon]="true"
-            appendTo="body"
-            dateFormat="dd/mm/yy"
-            [showButtonBar]="true"
-            placeholder="Seleccionar fecha y hora"
-            styleClass="w-full"
-          >
-          </p-datepicker>
+        <small class="p-error" *ngIf="flightForm.get('origen')?.invalid && flightForm.get('origen')?.touched">
+          Por favor, rellena este campo
+        </small>
+      </div>
+      
+      <div class="field-group">
+        <label>
+          Llegada
+          <i class="pi pi-info-circle info-icon" 
+             pTooltip="Este es el aeropuerto de destino del tour, donde aterrizará tu vuelo de ida. Este valor está predeterminado según tu destino turístico."
+             tooltipPosition="top"
+             [showDelay]="300"></i>
+        </label>
+        <div class="static-field" 
+             [pTooltip]="tourOrigenConstante.codigo && tourOrigenConstante.nombre ? (tourOrigenConstante.codigo + ' - ' + tourOrigenConstante.nombre) : ''"
+             tooltipPosition="top"
+             [showDelay]="300">
+          {{ tourOrigenConstante.codigo }} - {{ tourOrigenConstante.nombre }}
         </div>
       </div>
-
-      <!-- Solo vuelta: origen fijo (aeropuerto de salida del tour), destino editable -->
-      <div class="row" *ngIf="tipoViaje === 'Vuelta'">
-        <div class="label">
-          <label>Vuelta</label>
-          <div class="from">Desde</div>
-        </div>
-        <div class="input origin">
-          <i class="pi pi-plane"></i>
-          <div class="static-field">
-            {{ tourDestinoConstante.codigo }} - {{ tourDestinoConstante.nombre }}
-          </div>
-        </div>
-        <div class="input destination">
-          <div class="dest-lbl">Llegada</div>
-          <p-autocomplete
-            formControlName="origen"
-            [suggestions]="filteredCities"
-            (completeMethod)="searchCities($event)"
-            field="nombre"
-            [forceSelection]="true"
-            styleClass="w-full"
-            [dropdown]="true"
-            [minLength]="1"
-            [delay]="0"
-            [appendTo]="'body'"
-            [showEmptyMessage]="true"
-            emptyMessage="No se encontraron ciudades"
-          >
-            <ng-template #item let-city>
-              <div class="city-item">
-                {{ city.codigo }} - {{ city.nombre }}
-              </div>
-            </ng-template>
-            <ng-template #selectedItem let-city>
-              <div class="selected-city">
-                {{ city.codigo }} - {{ city.nombre }}
-              </div>
-            </ng-template>
-          </p-autocomplete>
-        </div>
-        <div class="date">
-          <div class="date-lbl">Fecha y hora de salida</div>
-          <p-datepicker
-            formControlName="fechaHoraVuelta"
-            [showTime]="true"
-            [hourFormat]="'24'"
-            [minDate]="minFechaVuelta"
-            [showIcon]="true"
-            appendTo="body"
-            dateFormat="dd/mm/yy"
-            [showButtonBar]="true"
-            placeholder="Seleccionar fecha y hora"
-            styleClass="w-full"
-          >
-          </p-datepicker>
-        </div>
-      </div>
-
-      <!-- Regreso -->
-      <div class="row" *ngIf="tipoViaje === 'IdaVuelta'">
-        <div class="label">
-          <label>Regreso</label>
-          <div class="from">Desde</div>
-        </div>
-        <div class="input origin">
-          <i class="pi pi-plane"></i>
-          <div class="static-field">{{ tourDestinoConstante.codigo }} - {{ tourDestinoConstante.nombre }}</div>
-        </div>
-        <div class="input destination">
-          <div class="dest-lbl">Llegada</div>
-          <p-autocomplete
-            formControlName="destinoVuelta"
-            [suggestions]="filteredCities"
-            (completeMethod)="searchCities($event)"
-            field="nombre"
-            [forceSelection]="true"
-            styleClass="w-full"
-            [dropdown]="true"
-            [minLength]="1"
-            [delay]="0"
-            [appendTo]="'body'"
-            [showEmptyMessage]="true"
-            emptyMessage="No se encontraron ciudades"
-          >
-            <ng-template #item let-city>
-              <div class="city-item">
-                {{ city.codigo }} - {{ city.nombre }}
-              </div>
-            </ng-template>
-            <ng-template #selectedItem let-city>
-              <div class="selected-city">
-                {{ city.codigo }} - {{ city.nombre }}
-              </div>
-            </ng-template>
-          </p-autocomplete>
-        </div>
-        <div class="date">
-          <div class="date-lbl">Fecha y hora de salida</div>
-          <p-datepicker
-            formControlName="fechaHoraVuelta"
-            [showTime]="true"
-            [hourFormat]="'24'"
-            [minDate]="minFechaVuelta"
-            [showIcon]="true"
-            appendTo="body"
-            dateFormat="dd/mm/yy"
-            [showButtonBar]="true"
-            placeholder="Seleccionar fecha y hora"
-            styleClass="w-full"
-          >
-          </p-datepicker>
-        </div>
-      </div>
-    </div>
-
-    <div class="search-opts">
-      <div class="sort">
-        <!-- <p-dropdown
-          [options]="sortOptions"
-          [(ngModel)]="selectedSortOption"
-          [ngModelOptions]="{ standalone: true }"
-          placeholder="Ordenar por"
-          (onChange)="onSortChange($event)"
-          styleClass="p-button-outlined mobile-friendly-dropdown"
-          [showClear]="false"
+      
+      <div class="field-group date-field-group">
+        <label>
+          Fecha y hora de llegada
+          <i class="pi pi-info-circle info-icon" 
+             pTooltip="Hora local del aeropuerto de llegada"
+             tooltipPosition="top"
+             [showDelay]="300"></i>
+        </label>
+        <p-datepicker
+          formControlName="fechaHoraIda"
+          [showTime]="true"
+          [hourFormat]="'24'"
+          [maxDate]="maxFechaIda"
+          [showIcon]="true"
           appendTo="body"
-        ></p-dropdown> -->
+          dateFormat="dd/mm/yy"
+          [showButtonBar]="true"
+          placeholder="Seleccionar fecha y hora"
+          [styleClass]="flightForm.get('fechaHoraIda')?.invalid && flightForm.get('fechaHoraIda')?.touched ? 'p-invalid' : ''"
+        >
+        </p-datepicker>
+        <small class="p-error" *ngIf="flightForm.get('fechaHoraIda')?.invalid && flightForm.get('fechaHoraIda')?.touched">
+          <span *ngIf="flightForm.get('fechaHoraIda')?.errors?.['required']">Por favor, rellena este campo</span>
+          <span *ngIf="flightForm.get('fechaHoraIda')?.errors?.['fechaHoraIdaExceedsMax']">La fecha/hora seleccionada excede el límite máximo permitido</span>
+        </small>
       </div>
-      <div class="filter">
-        <!--   <p-dropdown
-          [options]="escalaOptions"
-          formControlName="escala"
-          placeholder="Escala"
-          styleClass="p-button-outlined"
-        ></p-dropdown>
-        <p-dropdown
-          [options]="aerolineaOptions"
-          formControlName="aerolinea"
-          placeholder="Aerolínea"
-          styleClass="p-button-outlined"
-        ></p-dropdown> -->
+    </div>
+
+    <!-- Solo vuelta: origen fijo (aeropuerto de salida del tour), destino editable -->
+    <div class="flight-row" *ngIf="tipoViaje === 'Vuelta'">
+      <div class="row-label">
+        <label>Vuelta</label>
+        <span class="from-label">Desde</span>
       </div>
-      <div class="btn-search">
-        <p-button 
-          label="Buscar" 
-          styleClass="mobile-friendly-button" 
-          (click)="buscar()"
-          [disabled]="isLoading"
-        ></p-button>
+      
+      <div class="field-group">
+        <label>
+          Origen
+          <i class="pi pi-info-circle info-icon" 
+             pTooltip="Este es el aeropuerto de salida del tour, desde donde partirá tu vuelo de vuelta. Este valor está predeterminado según tu destino turístico."
+             tooltipPosition="top"
+             [showDelay]="300"></i>
+        </label>
+        <div class="static-field"
+             [pTooltip]="tourDestinoConstante.codigo && tourDestinoConstante.nombre ? (tourDestinoConstante.codigo + ' - ' + tourDestinoConstante.nombre) : ''"
+             tooltipPosition="top"
+             [showDelay]="300">
+          {{ tourDestinoConstante.codigo }} - {{ tourDestinoConstante.nombre }}
+        </div>
       </div>
+      
+      <div class="field-group origin-field">
+        <label>
+          Llegada
+          <i class="pi pi-info-circle info-icon" 
+             pTooltip="Selecciona el aeropuerto al que quieres llegar en tu vuelo de vuelta. Este será tu destino final."
+             tooltipPosition="top"
+             [showDelay]="300"></i>
+        </label>
+        <i class="pi pi-plane plane-icon"></i>
+        <p-autocomplete
+          formControlName="origen"
+          [suggestions]="filteredCities"
+          (completeMethod)="searchCities($event)"
+          field="nombre"
+          [forceSelection]="true"
+          [styleClass]="flightForm.get('origen')?.invalid && flightForm.get('origen')?.touched ? 'p-invalid' : ''"
+          [dropdown]="true"
+          [minLength]="1"
+          [delay]="0"
+          [appendTo]="'body'"
+          [showEmptyMessage]="true"
+          emptyMessage="No se encontraron ciudades"
+        >
+          <ng-template #item let-city>
+            <div class="city-item">{{ city.codigo }} - {{ city.nombre }}</div>
+          </ng-template>
+          <ng-template #selectedItem let-city>
+            <div class="selected-city">{{ city.codigo }} - {{ city.nombre }}</div>
+          </ng-template>
+        </p-autocomplete>
+        <div class="field-hint">
+          <span>Selecciona uno de nuestros aeropuertos seleccionados</span>
+        </div>
+        <small class="p-error" *ngIf="flightForm.get('origen')?.invalid && flightForm.get('origen')?.touched">
+          Por favor, rellena este campo
+        </small>
+      </div>
+      
+      <div class="field-group date-field-group">
+        <label>
+          Fecha y hora de salida
+          <i class="pi pi-info-circle info-icon" 
+             pTooltip="Hora local del aeropuerto de salida"
+             tooltipPosition="top"
+             [showDelay]="300"></i>
+        </label>
+        <p-datepicker
+          formControlName="fechaHoraVuelta"
+          [showTime]="true"
+          [hourFormat]="'24'"
+          [minDate]="minFechaVuelta"
+          [showIcon]="true"
+          appendTo="body"
+          dateFormat="dd/mm/yy"
+          [showButtonBar]="true"
+          placeholder="Seleccionar fecha y hora"
+          [styleClass]="flightForm.get('fechaHoraVuelta')?.invalid && flightForm.get('fechaHoraVuelta')?.touched ? 'p-invalid' : ''"
+        >
+        </p-datepicker>
+        <small class="p-error" *ngIf="flightForm.get('fechaHoraVuelta')?.invalid && flightForm.get('fechaHoraVuelta')?.touched">
+          <span *ngIf="flightForm.get('fechaHoraVuelta')?.errors?.['required']">Por favor, rellena este campo</span>
+          <span *ngIf="flightForm.get('fechaHoraVuelta')?.errors?.['fechaHoraVueltaBeforeMin']">La fecha/hora seleccionada es anterior al límite mínimo permitido</span>
+        </small>
+      </div>
+    </div>
+
+    <!-- Regreso -->
+    <div class="flight-row" *ngIf="tipoViaje === 'IdaVuelta'">
+      <div class="row-label">
+        <label>Regreso</label>
+        <span class="from-label">Desde</span>
+      </div>
+      
+      <div class="field-group">
+        <label>
+          Origen
+          <i class="pi pi-info-circle info-icon" 
+             pTooltip="Este es el aeropuerto de salida del tour, desde donde partirá tu vuelo de regreso. Este valor está predeterminado según tu destino turístico."
+             tooltipPosition="top"
+             [showDelay]="300"></i>
+        </label>
+        <div class="static-field"
+             [pTooltip]="tourDestinoConstante.codigo && tourDestinoConstante.nombre ? (tourDestinoConstante.codigo + ' - ' + tourDestinoConstante.nombre) : ''"
+             tooltipPosition="top"
+             [showDelay]="300">
+          {{ tourDestinoConstante.codigo }} - {{ tourDestinoConstante.nombre }}
+        </div>
+      </div>
+      
+      <div class="field-group origin-field">
+        <label>
+          Llegada
+          <i class="pi pi-info-circle info-icon" 
+             pTooltip="Selecciona el aeropuerto al que quieres llegar en tu vuelo de regreso. Puede ser el mismo aeropuerto desde donde partiste o uno diferente."
+             tooltipPosition="top"
+             [showDelay]="300"></i>
+        </label>
+        <i class="pi pi-plane plane-icon"></i>
+        <p-autocomplete
+          formControlName="destinoVuelta"
+          [suggestions]="filteredCities"
+          (completeMethod)="searchCities($event)"
+          field="nombre"
+          [forceSelection]="true"
+          [styleClass]="flightForm.get('destinoVuelta')?.invalid && flightForm.get('destinoVuelta')?.touched ? 'p-invalid' : ''"
+          [dropdown]="true"
+          [minLength]="1"
+          [delay]="0"
+          [appendTo]="'body'"
+          [showEmptyMessage]="true"
+          emptyMessage="No se encontraron ciudades"
+        >
+          <ng-template #item let-city>
+            <div class="city-item">{{ city.codigo }} - {{ city.nombre }}</div>
+          </ng-template>
+          <ng-template #selectedItem let-city>
+            <div class="selected-city">{{ city.codigo }} - {{ city.nombre }}</div>
+          </ng-template>
+        </p-autocomplete>
+        <div class="field-hint">
+          <span>Selecciona uno de nuestros aeropuertos seleccionados</span>
+        </div>
+      </div>
+      
+      <div class="field-group date-field-group">
+        <label>
+          Fecha y hora de salida
+          <i class="pi pi-info-circle info-icon" 
+             pTooltip="Hora local del aeropuerto de salida"
+             tooltipPosition="top"
+             [showDelay]="300"></i>
+        </label>
+        <p-datepicker
+          formControlName="fechaHoraVuelta"
+          [showTime]="true"
+          [hourFormat]="'24'"
+          [minDate]="minFechaVuelta"
+          [showIcon]="true"
+          appendTo="body"
+          dateFormat="dd/mm/yy"
+          [showButtonBar]="true"
+          placeholder="Seleccionar fecha y hora"
+          [styleClass]="flightForm.get('fechaHoraVuelta')?.invalid && flightForm.get('fechaHoraVuelta')?.touched ? 'p-invalid' : ''"
+        >
+        </p-datepicker>
+        <small class="p-error" *ngIf="flightForm.get('fechaHoraVuelta')?.invalid && flightForm.get('fechaHoraVuelta')?.touched">
+          <span *ngIf="flightForm.get('fechaHoraVuelta')?.errors?.['required']">Por favor, rellena este campo</span>
+          <span *ngIf="flightForm.get('fechaHoraVuelta')?.errors?.['fechaHoraVueltaBeforeMin']">La fecha/hora seleccionada es anterior al límite mínimo permitido</span>
+        </small>
+      </div>
+    </div>
+
+    <div class="search-button-container">
+      <p-button 
+        label="Buscar" 
+        styleClass="p-button-danger" 
+        (click)="buscar()"
+        [disabled]="isLoading"
+      ></p-button>
     </div>
   </form>
 </p-panel>
@@ -416,7 +474,3 @@
   </p-panel>
 </div>
 
-<!-- Mensaje de error -->
-<div *ngIf="errorMessage" class="error-message">
-  <p>{{ errorMessage }}</p>
-</div>

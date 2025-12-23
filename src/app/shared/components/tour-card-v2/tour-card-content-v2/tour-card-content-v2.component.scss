@@ -56,7 +56,6 @@ $color-primary: var(--background-azul);
   padding: 1rem 1rem 1rem 1rem;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   background-color: var(--theme-card-bg);
   color: white;
   height: 160px;
@@ -83,17 +82,16 @@ $color-primary: var(--background-azul);
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
-    flex-shrink: 0;
-    margin-bottom: 0.75rem;
+    flex-shrink: 1;
+    min-height: 0;
+    overflow: hidden;
 
     @include tablet {
       gap: 0.3rem;
-      margin-bottom: 0.65rem;
     }
 
     @include mobile {
       gap: 0.25rem;
-      margin-bottom: 0.6rem;
     }
   }
 
@@ -150,7 +148,7 @@ $color-primary: var(--background-azul);
     display: flex;
     flex-direction: column;
     width: 100%;
-    margin-top: 0;
+    margin-top: auto;
     flex-shrink: 0;
   }
 

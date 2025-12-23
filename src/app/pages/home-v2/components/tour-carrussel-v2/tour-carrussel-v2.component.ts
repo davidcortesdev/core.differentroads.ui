@@ -33,6 +33,9 @@ import {
   HomeSectionTourFilterService,
   IHomeSectionTourFilterResponse,
 } from '../../../../core/services/home/home-section-tour-filter.service';
+import {
+  HomeSectionThemeService,
+} from '../../../../core/services/home/home-section-theme.service';
 
 // Importar servicios para filtros por tag y ubicación
 import { TourTagService } from '../../../../core/services/tag/tour-tag.service';
@@ -73,6 +76,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
   tours: TourDataV2[] = [];
   title: string = '';
   description: string = '';
+  theme: string = 'light';
   showMonthTags: boolean = false;
   maxToursToShow: number = 6;
   viewMoreButton?: {
@@ -111,29 +115,31 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
   private touchEndHandler: ((event: Event) => void) | null = null;
   private touchCancelHandler: ((event: Event) => void) | null = null;
 
+  // PrimeNG v19: breakpoints apply when viewport <= breakpoint (max-width)
+  // Por defecto (sin breakpoint aplicado) se usan 3 cards visibles.
   responsiveOptions = [
     {
-      breakpoint: '2100px',
-      numVisible: 4,
-      numScroll: 1,
-    },
-    {
-      breakpoint: '1700px',
-      numVisible: 3,
-      numScroll: 1,
-    },
-    {
-      breakpoint: '1024px',
+      breakpoint: '1650px', // >=1025px y <=1600px
       numVisible: 2,
       numScroll: 1,
     },
     {
-      breakpoint: '768px', // NUEVO: Añadir breakpoint intermedio
+      breakpoint: '1200px', // <=1200px
       numVisible: 2,
       numScroll: 1,
     },
     {
-      breakpoint: '560px',
+      breakpoint: '1024px', // <=1024px (tablet)
+      numVisible: 2,
+      numScroll: 1,
+    },
+    {
+      breakpoint: '768px', // <=768px
+      numVisible: 1,
+      numScroll: 1,
+    },
+    {
+      breakpoint: '560px', // <=560px (mobile)
       numVisible: 1,
       numScroll: 1,
     },
@@ -145,6 +151,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
     private readonly cmsTourService: CMSTourService,
     private readonly homeSectionConfigurationService: HomeSectionConfigurationService,
     private readonly homeSectionTourFilterService: HomeSectionTourFilterService,
+    private readonly homeSectionThemeService: HomeSectionThemeService,
     private readonly tourTagService: TourTagService,
     private readonly tagService: TagService,
     private readonly tourLocationService: TourLocationService,
@@ -692,6 +699,27 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
           this.showMonthTags = configuration.showMonthTags || false;
           this.maxToursToShow = configuration.maxToursToShow || 6;
 
+          // Obtener el tema desde el servicio si hay themeId
+          if (configuration.themeId) {
+            return this.homeSectionThemeService.getById(configuration.themeId).pipe(
+              map((theme) => {
+                // Usar el código del tema (en minúsculas) o 'light' por defecto
+                this.theme = theme?.code?.toLowerCase() || configuration.theme || 'light';
+                return configuration;
+              }),
+              catchError(() => {
+                // Si falla la obtención del tema, usar el theme directo o 'light'
+                this.theme = configuration.theme || 'light';
+                return of(configuration);
+              })
+            );
+          } else {
+            // Si no hay themeId, usar el theme directo o 'light' por defecto
+            this.theme = configuration.theme || 'light';
+            return of(configuration);
+          }
+        }),
+        switchMap((configuration) => {
           // Cargar filtros de tours para esta configuración
           return this.homeSectionTourFilterService.getByConfigurationOrdered(
             configId,

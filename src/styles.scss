@@ -133,9 +133,9 @@
   --background-azul-color-letra: white;
   --background-white: #f7f6f2;
 
-  --color-group: #3aa0ff;
-  --color-single: #8e00fd;
-  --color-private: #00b27a;
+  --color-group: var(--rose-nude-500);
+  --color-single: var(--light-blue-500);
+  --color-private: var(--yellow-sun-500);
 
   --surface-color-0: #f7f6f2;
   --surface-color-50: #fafaf9;

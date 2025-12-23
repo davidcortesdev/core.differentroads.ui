@@ -72,28 +72,24 @@
 
   <!-- Grid de tours -->
   <div class="tours-list">
-    <p-dataView #dv [value]="tours" [layout]="'grid'">
-      <ng-template let-tours #grid>
-        <div class="grid">
-          <div
-            *ngFor="let tour of tours; let i = index"
-            class="col-12 sm:col-6 lg:col-3"
-          >
-            <app-tour-card-v2 
-              [tourData]="tour" 
-              [showScalapayPrice]="showScalapayPrice"
-              [itemListId]="itemListId"
-              [itemListName]="itemListName"
-              [index]="i"
-            ></app-tour-card-v2>
-          </div>
-        </div>
-      </ng-template>
-    </p-dataView>
-
     <!-- Indicador de carga -->
     <div *ngIf="isLoading && tours.length === 0" class="loading-container">
       <p-progressSpinner></p-progressSpinner>
+    </div>
+
+    <!-- Grid de tours -->
+    <div *ngIf="!isLoading || tours.length > 0" class="grid">
+      <div
+        *ngFor="let tour of tours; let i = index"
+        class="tour-card-wrapper"
+      >
+        <app-tour-card-v2 
+          [tourData]="tour" 
+          [itemListId]="itemListId"
+          [itemListName]="itemListName"
+          [index]="i"
+        ></app-tour-card-v2>
+      </div>
     </div>
 
     <!-- Mensaje cuando no hay tours -->

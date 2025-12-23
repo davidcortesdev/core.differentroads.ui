@@ -286,7 +286,7 @@
                   *ngIf="getTripType(item.tripTypeId)"
                   [value]="getTripType(item.tripTypeId)?.name || 'Sin tipo'"
                   [style.background-color]="getTripType(item.tripTypeId)?.color || '#ccc'"
-                  [style.color]="'#fff'"
+                  [style.color]="'black'"
                   [style.border]="'none'"
                 ></p-tag>
                 <span *ngIf="!getTripType(item.tripTypeId)">Sin tipo</span>

@@ -141,8 +141,6 @@ $breakpoint-small: 768px;
     }
 
     @media screen and (max-width: $breakpoint-small) {
-        margin-top: 2rem;
-
         .tours-section-layout {
             gap: 20px;
             padding: 0 1rem;

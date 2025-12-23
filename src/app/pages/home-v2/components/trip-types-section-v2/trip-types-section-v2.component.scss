@@ -18,21 +18,16 @@ $spacing-lg: 1.5rem;
     max-width: 1200px;
     margin: 0 auto;
     display: flex;
+    flex-direction: row; // Por defecto en fila
+    flex-wrap: nowrap; // Mantener en una sola línea
     justify-content: space-between;
-    align-items: stretch; // Cambiado a stretch para igualar alturas
+    align-items: stretch;
     padding: $spacing-md;
     gap: $spacing-md;
 
-    // Estilos para tablets (entre 481px y 992px)
-    @media (min-width: ($breakpoint-mobile + 1)) and (max-width: $breakpoint-tablet) {
-        flex-wrap: nowrap; // Asegura que permanezcan en una sola fila
-        overflow-x: auto; // Permite scroll horizontal si no caben
-        padding-bottom: $spacing-md; // Espacio para scroll
-    }
-
-    // Estilos para móviles (hasta 480px)
-    @media (max-width: $breakpoint-mobile) {
-        flex-direction: column;
+    // Cuando no quepan en pantalla, cambiar a columna
+    @media (max-width: $breakpoint-tablet) {
+        flex-direction: column; // Cambiar a columna cuando no quepan
         gap: $spacing-lg;
         align-items: center;
     }
@@ -54,14 +49,8 @@ $spacing-lg: 1.5rem;
         transform: translateY(-5px);
     }
 
-    // Tablet styles
-    @media (min-width: ($breakpoint-mobile + 1)) and (max-width: $breakpoint-tablet) {
-        flex: 0 0 auto; // Permite que se ajusten al contenido
-        width: 30%; // Ancho similar al desktop
-    }
-
-    // Mobile styles
-    @media (max-width: $breakpoint-mobile) {
+    // Cuando el contenedor cambia a columna (tablet y mobile)
+    @media (max-width: $breakpoint-tablet) {
         width: 100%;
         align-items: center;
         text-align: center;

@@ -25,21 +25,18 @@ $breakpoint-small: 768px;
     background-color: var(--theme-section-bg);
 
     .tours-section-layout {
-        display: flex;
-        align-items: stretch;
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: 1fr 2fr; // Descripción 1/3, carrusel 2/3
         gap: 60px;
         width: 100%;
-        padding: 0 8rem;
+        padding: 0 6rem;
+        align-items: stretch;
     }
 
     .tours-section-description {
         display: flex;
         flex-direction: column;
         justify-content: center;
-        flex: 0 0 auto;
-        width: 20%;
-        max-width: 480px;
         color: var(--theme-description-text);
 
         .header-with-icon {
@@ -86,21 +83,7 @@ $breakpoint-small: 768px;
     }
 
     .carousel-wrapper {
-        flex: 1;
         min-width: 0;
-        padding: 0;
-        margin: 0;
-        width: 100%;
-        
-        // Agregar padding al carrusel para que las tarjetas no toquen los bordes
-        ::ng-deep .p-carousel {
-            width: 100%;
-            
-            .p-carousel-content {
-                padding: 0;
-                width: 100%;
-            }
-        }
     }
 
     .buttonVertour {
@@ -116,17 +99,13 @@ $breakpoint-small: 768px;
     }
 
     @media screen and (max-width: $breakpoint-medium) {
-
         .tours-section-layout {
-            flex-direction: column;
-            align-items: stretch;
+            grid-template-columns: 1fr; // Una columna en tablet
             gap: 30px;
             padding: 0 2rem;
         }
 
         .tours-section-description {
-            width: 100%;
-            max-width: 100%;
             justify-content: flex-start;
 
             .title {
@@ -142,13 +121,12 @@ $breakpoint-small: 768px;
 
     @media screen and (max-width: $breakpoint-small) {
         .tours-section-layout {
+            grid-template-columns: 1fr; // Una columna en móvil
             gap: 20px;
             padding: 0 1rem;
         }
 
         .tours-section-description {
-            width: 100%;
-            max-width: 100%;
             align-items: center;
             text-align: center;
 

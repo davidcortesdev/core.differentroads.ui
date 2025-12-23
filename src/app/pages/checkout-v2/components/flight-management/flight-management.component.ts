@@ -113,6 +113,10 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
     if (changes['selectedFlight']) {
       this.clearFlightCache();
     }
+    
+    if (changes['specificSearchVisible']) {
+      // Componente specific-search visibility changed
+    }
   }
 
   // Método para limpiar el cache de vuelos
@@ -133,7 +137,6 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
       return;
     }
 
-    // Usar forkJoin para esperar ambas respuestas
     this.dataSubscription = forkJoin({
       tour: this.tourService.getTourById(this.tourId),
       departure: this.departureService.getById(this.departureId)
@@ -141,7 +144,7 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
       next: (results) => {
         const tourActive = !!results.tour.isConsolidadorVuelosActive;
         const departureActive = !!results.departure.isConsolidadorVuelosActive;
-
+        
         this.isConsolidadorVuelosActive = tourActive && departureActive;
 
         // Forzar detección de cambios
@@ -158,21 +161,16 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
     // Este método ya no se usa con la nueva lógica AND
   }
 
-  // Métodos para autenticación
   checkAuthAndShowSpecificSearch(): void {
-    // NUEVO: En modo standalone, mostrar directamente la búsqueda específica
     if (this.isStandaloneMode) {
       this.specificSearchVisible = true;
       return;
     }
 
-    // Lógica normal para modo no-standalone
     this.authService.isLoggedIn().subscribe((isLoggedIn) => {
       if (isLoggedIn) {
-        // Usuario está logueado, mostrar sección específica
         this.specificSearchVisible = true;
       } else {
-        // Usuario no está logueado, mostrar modal
         // Guardar la URL actual con el step en sessionStorage (step 1 = vuelos)
         const currentUrl = window.location.pathname;
         const redirectUrl = `${currentUrl}?step=1`;

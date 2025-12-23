@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import {
@@ -14,7 +14,7 @@ import { FlightsNetService } from '../../../services/flightsNet.service';
   templateUrl: './flight-item.component.html',
   styleUrl: './flight-item.component.scss',
 })
-export class FlightItemComponent implements OnInit, OnDestroy {
+export class FlightItemComponent implements OnInit, OnChanges, OnDestroy {
   @Input() flightPack: IFlightPackDTO | null = null;
   @Input() selectedFlight: IFlightPackDTO | null = null;
   @Input() flightDetails: Map<number, IFlightDetailDTO> = new Map();
@@ -29,6 +29,12 @@ export class FlightItemComponent implements OnInit, OnDestroy {
 
   FLIGHT_TYPE_SALIDA = 4;
   
+  // Constantes para tipos de vuelo (soporta valores legacy y nuevos)
+  private readonly FLIGHT_TYPE_IDA_NEW = 0;
+  private readonly FLIGHT_TYPE_IDA_LEGACY = 4;
+  private readonly FLIGHT_TYPE_VUELTA_NEW = 1;
+  private readonly FLIGHT_TYPE_VUELTA_LEGACY = 5;
+  
   // Propiedades privadas para manejo interno
   private internalFlightDetails: Map<number, IFlightDetailDTO | IFlightSearchFlightDetailDTO> = new Map();
   private readonly destroy$ = new Subject<void>();
@@ -42,10 +48,35 @@ export class FlightItemComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.sortAndInitializeFlights();
+  }
 
-    if (this.flightPack && this.flightPack.flights) {
-      // ✅ NUEVO: Ordenar flights por flightTypeId ascendente
-      this.flightPack.flights.sort((a, b) => a.flightTypeId - b.flightTypeId);
+  ngOnChanges(changes: SimpleChanges): void {
+    // Ordenar también cuando flightPack cambia (incluida la primera vez)
+    if (changes['flightPack'] && changes['flightPack'].currentValue) {
+      this.sortAndInitializeFlights();
+    }
+  }
+
+  private sortAndInitializeFlights(): void {
+    if (this.flightPack && this.flightPack.flights && this.flightPack.flights.length > 0) {
+      // Ordenar flights por flightTypeId para que IDA aparezca antes que VUELTA
+      const isIda = (flightTypeId: number): boolean => {
+        return flightTypeId === this.FLIGHT_TYPE_IDA_NEW || flightTypeId === this.FLIGHT_TYPE_IDA_LEGACY;
+      };
+      
+      const sortedFlights = [...this.flightPack.flights].sort((a, b) => {
+        const idA = a.flightTypeId ?? 0;
+        const idB = b.flightTypeId ?? 0;
+        const aIsIda = isIda(idA);
+        const bIsIda = isIda(idB);
+        
+        if (aIsIda && !bIsIda) return -1;
+        if (!aIsIda && bIsIda) return 1;
+        
+        return idA - idB;
+      });
+      this.flightPack.flights = sortedFlights;
 
       this.flightPack.flights.forEach((flight, index) => {
 
@@ -58,16 +89,20 @@ export class FlightItemComponent implements OnInit, OnDestroy {
         // Cargar escalas usando el servicio actual
         this.loadFlightLayoversFromCurrentService();
       }
-    } else {
-
     }
-
   }
 
   ngOnDestroy(): void {
     this.internalFlightDetails.clear();
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  /**
+   * Determina si un flightTypeId representa un vuelo de IDA
+   */
+  isIdaFlight(flightTypeId: number): boolean {
+    return flightTypeId === this.FLIGHT_TYPE_IDA_NEW || flightTypeId === this.FLIGHT_TYPE_IDA_LEGACY;
   }
 
   /**

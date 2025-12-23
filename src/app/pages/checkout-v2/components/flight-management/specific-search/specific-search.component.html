@@ -100,10 +100,20 @@
           </div>
         </div>
         <div class="date">
-          <div class="date-lbl">Fecha</div>
-          <div class="static-field">
-            {{ fechaIdaConstante }}<span *ngIf="horaIdaConstante"> {{ horaIdaConstante }} <i class="pi pi-info-circle" title="Hora local"></i></span>
-          </div>
+          <div class="date-lbl">Fecha y hora de llegada</div>
+          <p-datepicker
+            formControlName="fechaHoraIda"
+            [showTime]="true"
+            [hourFormat]="'24'"
+            [maxDate]="maxFechaIda"
+            [showIcon]="true"
+            appendTo="body"
+            dateFormat="dd/mm/yy"
+            [showButtonBar]="true"
+            placeholder="Seleccionar fecha y hora"
+            styleClass="w-full"
+          >
+          </p-datepicker>
         </div>
       </div>
 
@@ -148,10 +158,20 @@
           </p-autocomplete>
         </div>
         <div class="date">
-          <div class="date-lbl">Fecha</div>
-          <div class="static-field">
-            {{ fechaRegresoConstante }}<span *ngIf="horaRegresoConstante"> {{ horaRegresoConstante }} <i class="pi pi-info-circle" title="Hora local"></i></span>
-          </div>
+          <div class="date-lbl">Fecha y hora de salida</div>
+          <p-datepicker
+            formControlName="fechaHoraVuelta"
+            [showTime]="true"
+            [hourFormat]="'24'"
+            [minDate]="minFechaVuelta"
+            [showIcon]="true"
+            appendTo="body"
+            dateFormat="dd/mm/yy"
+            [showButtonBar]="true"
+            placeholder="Seleccionar fecha y hora"
+            styleClass="w-full"
+          >
+          </p-datepicker>
         </div>
       </div>
 
@@ -194,10 +214,20 @@
           </p-autocomplete>
         </div>
         <div class="date">
-          <div class="date-lbl">Fecha</div>
-          <div class="static-field">
-            {{ fechaRegresoConstante }}<span *ngIf="horaRegresoConstante"> {{ horaRegresoConstante }} <i class="pi pi-info-circle" title="Hora local"></i></span>
-          </div>
+          <div class="date-lbl">Fecha y hora de salida</div>
+          <p-datepicker
+            formControlName="fechaHoraVuelta"
+            [showTime]="true"
+            [hourFormat]="'24'"
+            [minDate]="minFechaVuelta"
+            [showIcon]="true"
+            appendTo="body"
+            dateFormat="dd/mm/yy"
+            [showButtonBar]="true"
+            placeholder="Seleccionar fecha y hora"
+            styleClass="w-full"
+          >
+          </p-datepicker>
         </div>
       </div>
     </div>

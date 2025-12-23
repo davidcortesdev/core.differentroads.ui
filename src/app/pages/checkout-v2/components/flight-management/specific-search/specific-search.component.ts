@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { forkJoin, of, Subject, Observable } from 'rxjs';
 import { takeUntil, catchError, switchMap, map } from 'rxjs/operators';
 import { FlightSegment, Flight } from '../../../../../core/models/tours/flight.model';
@@ -76,6 +76,15 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   fechaRegresoConstante = '';
   horaIdaConstante = '';
   horaRegresoConstante = '';
+  
+  // Límites para fecha/hora de ida (llegada al aeropuerto)
+  maxFechaIda: Date | null = null;
+  maxHoraIda: string | null = null;
+  
+  // Límites para fecha/hora de vuelta (salida del aeropuerto)
+  minFechaVuelta: Date | null = null;
+  minHoraVuelta: string | null = null;
+  
   filteredCities: Ciudad[] = [];
   combinedCities: { nombre: string; codigo: string; source: string; id: number }[] = [];
   readonly aerolineas: Ciudad[] = [
@@ -216,6 +225,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       infants: [0],
       aerolinea: [null],
       escala: [null],
+      fechaHoraIda: [null, [this.validateFechaHoraIda]],
+      fechaHoraVuelta: [null, [this.validateFechaHoraVuelta]],
     });
   }
 
@@ -496,13 +507,43 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
               };
             }
           }
+          
+          // Configurar límites y valores por defecto para fecha/hora de IDA (llegada)
           if (data.maxArrivalDateAtAirport) {
             this.fechaIdaConstante = data.maxArrivalDateAtAirport || '';
             this.horaIdaConstante = data.maxArrivalTimeAtAirport || '';
+            
+            // Convertir string a Date para el límite máximo
+            const maxDateIda = new Date(data.maxArrivalDateAtAirport);
+            if (!isNaN(maxDateIda.getTime())) {
+              this.maxFechaIda = maxDateIda;
+              this.maxHoraIda = data.maxArrivalTimeAtAirport || null;
+              
+              // Precargar el valor por defecto en el formulario (combinar fecha y hora)
+              const fechaHoraIda = this.combineDateAndTime(maxDateIda, data.maxArrivalTimeAtAirport);
+              this.flightForm.patchValue({
+                fechaHoraIda: fechaHoraIda
+              });
+            }
           }
+          
+          // Configurar límites y valores por defecto para fecha/hora de VUELTA (salida)
           if (data.minDepartureDateFromAirport) {
             this.fechaRegresoConstante = data.minDepartureDateFromAirport || '';
             this.horaRegresoConstante = data.minDepartureTimeFromAirport || '';
+            
+            // Convertir string a Date para el límite mínimo
+            const minDateVuelta = new Date(data.minDepartureDateFromAirport);
+            if (!isNaN(minDateVuelta.getTime())) {
+              this.minFechaVuelta = minDateVuelta;
+              this.minHoraVuelta = data.minDepartureTimeFromAirport || null;
+              
+              // Precargar el valor por defecto en el formulario (combinar fecha y hora)
+              const fechaHoraVuelta = this.combineDateAndTime(minDateVuelta, data.minDepartureTimeFromAirport);
+              this.flightForm.patchValue({
+                fechaHoraVuelta: fechaHoraVuelta
+              });
+            }
           }
         },
         error: (err) => {
@@ -549,13 +590,34 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       originCode = formValue.origen?.codigo || null;
       destinationCode = formValue.destinoVuelta?.codigo || formValue.origen?.codigo || null;
     }
+    
+    // Obtener fechas/horas seleccionadas y formatearlas
+    const fechaHoraIda = formValue.fechaHoraIda;
+    const fechaHoraVuelta = formValue.fechaHoraVuelta;
+    
+    const fechaIdaFormatted = fechaHoraIda ? this.formatDateForAPI(fechaHoraIda) : null;
+    const horaIdaFormatted = fechaHoraIda ? this.formatTimeForAPI(fechaHoraIda) : null;
+    const fechaVueltaFormatted = fechaHoraVuelta ? this.formatDateForAPI(fechaHoraVuelta) : null;
+    const horaVueltaFormatted = fechaHoraVuelta ? this.formatTimeForAPI(fechaHoraVuelta) : null;
+    
+    // Validar fechas/horas antes de enviar la petición (usando valores formateados para evitar problemas de zona horaria)
+    const validationError = this.validateFlightDatesBeforeSearch(tipoViaje, fechaHoraIda, fechaHoraVuelta, fechaIdaFormatted, horaIdaFormatted, fechaVueltaFormatted, horaVueltaFormatted);
+    if (validationError) {
+      this.isLoading = false;
+      this.errorMessage = validationError;
+      return;
+    }
 
     const request: FlightSearchRequest = {
       departureId: this.departureId!,
       reservationId: this.reservationId || 0,
       tipoViaje: tipoViaje,
       iataOrigen: originCode,
-      iataDestino: destinationCode
+      iataDestino: destinationCode,
+      fechaIda: fechaIdaFormatted,
+      horaIda: horaIdaFormatted,
+      fechaVuelta: fechaVueltaFormatted,
+      horaVuelta: horaVueltaFormatted
     };
     
     this.flightSearchService.searchFlights(request, false).pipe(takeUntil(this.destroy$)).subscribe({
@@ -1428,5 +1490,235 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     this.searchMeta = null;
     this.hasSearchWarnings = false;
     this.isEmptySearchResult = false;
+  }
+
+  /**
+   * Formatea una fecha Date a string en formato YYYY-MM-DD para la API
+   * @param date Fecha a formatear
+   * @returns String en formato YYYY-MM-DD o null si la fecha no es válida
+   */
+  private formatDateForAPI(date: Date | string | null): string | null {
+    if (!date) return null;
+    
+    try {
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      if (isNaN(dateObj.getTime())) return null;
+      
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      
+      return `${year}-${month}-${day}`;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Formatea la hora de un Date a string en formato HH:mm para la API
+   * @param date Fecha con hora a formatear
+   * @returns String en formato HH:mm o null si la fecha no es válida
+   */
+  private formatTimeForAPI(date: Date | string | null): string | null {
+    if (!date) return null;
+    
+    try {
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      if (isNaN(dateObj.getTime())) return null;
+      
+      const hours = String(dateObj.getHours()).padStart(2, '0');
+      const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+      
+      return `${hours}:${minutes}`;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Formatea una hora string (HH:MM:SS o HH:MM) a formato HH:MM para mostrar en mensajes
+   * @param timeString Hora en formato HH:MM:SS o HH:MM
+   * @returns String en formato HH:MM o null si la hora no es válida
+   */
+  private formatTimeForDisplay(timeString: string | null | undefined): string | null {
+    if (!timeString) return null;
+    
+    try {
+      // Si tiene formato HH:MM:SS, tomar solo HH:MM
+      if (timeString.length >= 5 && timeString.indexOf(':') !== -1) {
+        const parts = timeString.split(':');
+        if (parts.length >= 2) {
+          const hours = parts[0].padStart(2, '0');
+          const minutes = parts[1].padStart(2, '0');
+          return `${hours}:${minutes}`;
+        }
+      }
+      return timeString;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Combina una fecha Date con una hora en formato string (HH:mm) en un Date completo
+   * @param date Fecha base
+   * @param timeString Hora en formato HH:mm
+   * @returns Date combinado o null si hay error
+   */
+  private combineDateAndTime(date: Date | null, timeString: string | null): Date | null {
+    if (!date || !timeString) return date;
+    
+    try {
+      const [hours, minutes] = timeString.split(':').map(Number);
+      if (isNaN(hours) || isNaN(minutes)) return date;
+      
+      const combinedDate = new Date(date);
+      combinedDate.setHours(hours, minutes, 0, 0);
+      return combinedDate;
+    } catch {
+      return date;
+    }
+  }
+
+  /**
+   * Validador personalizado para fecha/hora de ida
+   * Valida que la fecha/hora seleccionada no exceda el límite máximo configurado
+   */
+  private validateFechaHoraIda = (control: AbstractControl): ValidationErrors | null => {
+    const fechaHora = control.value;
+    if (!fechaHora || !this.maxFechaIda) {
+      return null;
+    }
+
+    try {
+      const selectedDate = new Date(fechaHora);
+      const maxDate = new Date(this.maxFechaIda);
+
+      // Si hay hora máxima configurada, incluirla en la comparación
+      if (this.maxHoraIda) {
+        const [maxHours, maxMinutes] = this.maxHoraIda.split(':').map(Number);
+        if (!isNaN(maxHours) && !isNaN(maxMinutes)) {
+          maxDate.setHours(maxHours, maxMinutes, 59, 999);
+        }
+      } else {
+        maxDate.setHours(23, 59, 59, 999);
+      }
+
+      if (selectedDate > maxDate) {
+        return { fechaHoraIdaExceedsMax: true };
+      }
+
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
+  /**
+   * Validador personalizado para fecha/hora de vuelta
+   * Valida que la fecha/hora seleccionada no sea anterior al límite mínimo configurado
+   */
+  private validateFechaHoraVuelta = (control: AbstractControl): ValidationErrors | null => {
+    const fechaHora = control.value;
+    if (!fechaHora || !this.minFechaVuelta) {
+      return null;
+    }
+
+    try {
+      const selectedDate = new Date(fechaHora);
+      const minDate = new Date(this.minFechaVuelta);
+
+      // Si hay hora mínima configurada, incluirla en la comparación
+      if (this.minHoraVuelta) {
+        const [minHours, minMinutes] = this.minHoraVuelta.split(':').map(Number);
+        if (!isNaN(minHours) && !isNaN(minMinutes)) {
+          minDate.setHours(minHours, minMinutes, 0, 0);
+        }
+      } else {
+        minDate.setHours(0, 0, 0, 0);
+      }
+
+      if (selectedDate < minDate) {
+        return { fechaHoraVueltaBeforeMin: true };
+      }
+
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
+  /**
+   * Valida las fechas/horas antes de enviar la petición de búsqueda
+   * Retorna un mensaje de error en español si hay problemas, o null si todo está bien
+   */
+  private validateFlightDatesBeforeSearch(
+    tipoViaje: 'Ida' | 'Vuelta' | 'IdaVuelta',
+    fechaHoraIda: Date | null,
+    fechaHoraVuelta: Date | null,
+    fechaIdaFormatted: string | null,
+    horaIdaFormatted: string | null,
+    fechaVueltaFormatted: string | null,
+    horaVueltaFormatted: string | null
+  ): string | null {
+    const errors: string[] = [];
+
+    // Validar fecha/hora de ida (llegada al aeropuerto) usando comparación de strings
+    if (tipoViaje === 'Ida' || tipoViaje === 'IdaVuelta') {
+      if (fechaIdaFormatted && horaIdaFormatted) {
+        // Intentar validar si hay límites disponibles
+        const hasStringLimit = !!(this.fechaIdaConstante && this.fechaIdaConstante.trim() !== '');
+        
+        if (!hasStringLimit) {
+          // Si no hay límites configurados, no validamos (el backend lo hará)
+        } else {
+          try {
+            const maxFechaStr = this.fechaIdaConstante;
+            const maxHoraStr = this.formatTimeForDisplay(this.horaIdaConstante) || '23:59';
+            
+            // Comparar directamente usando strings (YYYY-MM-DD y HH:mm)
+            // Esto evita problemas de zona horaria
+            if (fechaIdaFormatted > maxFechaStr || 
+                (fechaIdaFormatted === maxFechaStr && horaIdaFormatted > maxHoraStr)) {
+              errors.push(
+                `La fecha/hora de ida (${fechaIdaFormatted} ${horaIdaFormatted}) excede el límite máximo permitido (${maxFechaStr} ${maxHoraStr}).`
+              );
+            }
+          } catch (error) {
+            errors.push('Error al validar la fecha de ida.');
+          }
+        }
+      }
+    }
+
+    // Validar fecha/hora de vuelta (salida del aeropuerto) usando comparación de strings
+    if (tipoViaje === 'Vuelta' || tipoViaje === 'IdaVuelta') {
+      if (fechaVueltaFormatted && horaVueltaFormatted) {
+        // Intentar validar si hay límites disponibles
+        const hasStringLimit = !!(this.fechaRegresoConstante && this.fechaRegresoConstante.trim() !== '');
+        
+        if (!hasStringLimit) {
+          // Si no hay límites configurados, no validamos (el backend lo hará)
+        } else {
+          try {
+            const minFechaStr = this.fechaRegresoConstante;
+            const minHoraStr = this.formatTimeForDisplay(this.horaRegresoConstante) || '00:00';
+            
+            // Comparar directamente usando strings (YYYY-MM-DD y HH:mm)
+            // Esto evita problemas de zona horaria
+            if (fechaVueltaFormatted < minFechaStr || 
+                (fechaVueltaFormatted === minFechaStr && horaVueltaFormatted < minHoraStr)) {
+              errors.push(
+                `La fecha/hora de vuelta (${fechaVueltaFormatted} ${horaVueltaFormatted}) es anterior al límite mínimo permitido (${minFechaStr} ${minHoraStr}).`
+              );
+            }
+          } catch (error) {
+            errors.push('Error al validar la fecha de vuelta.');
+          }
+        }
+      }
+    }
+
+    return errors.length > 0 ? errors.join(' ') : null;
   }
 }

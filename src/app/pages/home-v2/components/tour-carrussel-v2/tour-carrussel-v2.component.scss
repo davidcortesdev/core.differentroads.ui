@@ -30,7 +30,7 @@ $breakpoint-small: 768px;
         justify-content: space-between;
         gap: 60px;
         width: 100%;
-        padding: 0 8rem;
+        padding: 0 6rem;
     }
 
     .tours-section-description {
@@ -59,6 +59,22 @@ $breakpoint-small: 768px;
             display: flex;
             flex-direction: column;
             align-items: flex-start;
+            width: 100%;
+            
+            @media screen and (max-width: $breakpoint-large) {
+                // Ajustes para pantallas grandes medianas
+            }
+            
+            @media screen and (max-width: $breakpoint-medium) {
+                // Tablet: mantener alineación izquierda
+                align-items: flex-start;
+            }
+            
+            @media screen and (max-width: $breakpoint-small) {
+                // Mobile: centrar contenido
+                align-items: center;
+                text-align: center;
+            }
         }
 
         .title {
@@ -68,6 +84,23 @@ $breakpoint-small: 768px;
             padding: 0;
             text-align: left;
             color: var(--primary-color-500);
+            line-height: 1.2;
+            
+            @media screen and (max-width: $breakpoint-large) {
+                font-size: 1.75rem;
+                margin-bottom: 0.875rem;
+            }
+            
+            @media screen and (max-width: $breakpoint-medium) {
+                font-size: $title-tablet-size;
+                margin-bottom: 0.875rem;
+            }
+            
+            @media screen and (max-width: $breakpoint-small) {
+                font-size: $title-mobile-size;
+                margin-bottom: 0.75rem;
+                text-align: center;
+            }
         }
 
         .description {
@@ -77,6 +110,24 @@ $breakpoint-small: 768px;
             margin: 0 0 1.5rem 0;
             padding: 0;
             color: var(--theme-description-text);
+            
+            @media screen and (max-width: $breakpoint-large) {
+                font-size: 1.25rem;
+                margin-bottom: 1.25rem;
+            }
+            
+            @media screen and (max-width: $breakpoint-medium) {
+                font-size: 1.1rem;
+                line-height: 1.35;
+                margin-bottom: 1.25rem;
+            }
+            
+            @media screen and (max-width: $breakpoint-small) {
+                font-size: 0.85rem;
+                line-height: 1.3;
+                margin-bottom: 1rem;
+                text-align: center;
+            }
         }
 
         .tours-sectionMore {
@@ -113,6 +164,18 @@ $breakpoint-small: 768px;
             padding: 0 3rem;
             gap: 50px;
         }
+        
+        .tours-section-description {
+            .header-content {
+                .title {
+                    font-size: 1.75rem;
+                }
+                
+                .description {
+                    font-size: 1.25rem;
+                }
+            }
+        }
     }
 
     @media screen and (max-width: $breakpoint-medium) {
@@ -129,9 +192,21 @@ $breakpoint-small: 768px;
             max-width: 100%;
             justify-content: flex-start;
 
+            .header-content {
+                align-items: flex-start;
+                text-align: left;
+            }
+
             .title {
                 font-size: $title-tablet-size;
                 text-align: left;
+                margin-bottom: 0.875rem;
+            }
+            
+            .description {
+                font-size: 1.1rem;
+                text-align: left;
+                margin-bottom: 1.25rem;
             }
         }
 

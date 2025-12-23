@@ -1,6 +1,7 @@
 // Variables for reusability
 $breakpoint-mobile: 480px;
 $breakpoint-tablet: 992px;
+$breakpoint-column: 600px; // Breakpoint para cambiar a columna
 $border-radius-sm: 0.5rem;
 $border-radius-md: 8px;
 $spacing-sm: 0.4rem;
@@ -25,9 +26,9 @@ $spacing-lg: 1.5rem;
     padding: $spacing-md;
     gap: $spacing-md;
 
-    // Cuando no quepan en pantalla, cambiar a columna
-    @media (max-width: $breakpoint-tablet) {
-        flex-direction: column; // Cambiar a columna cuando no quepan
+    // De 600px hacia abajo, cambiar a columna
+    @media (max-width: $breakpoint-column) {
+        flex-direction: column; // Cambiar a columna
         gap: $spacing-lg;
         align-items: center;
     }
@@ -40,8 +41,8 @@ $spacing-lg: 1.5rem;
     padding: $spacing-md;
     border-radius: $border-radius-sm;
     transition: transform 0.3s ease;
-    flex: 1;
-    min-width: 200px; // Ancho mínimo para cada item
+    flex: 1; // Se ajustan al tamaño disponible
+    min-width: 0; // Permitir que se reduzcan más allá del contenido mínimo
     align-items: center; // Center items in all views
     text-align: center; // Center text in all views
 
@@ -49,11 +50,19 @@ $spacing-lg: 1.5rem;
         transform: translateY(-5px);
     }
 
-    // Cuando el contenedor cambia a columna (tablet y mobile)
-    @media (max-width: $breakpoint-tablet) {
+    // De 600px hacia arriba, ajustar el tamaño para que quepan
+    @media (min-width: ($breakpoint-column + 1px)) {
+        // Los elementos se ajustarán automáticamente con flex: 1
+        // Pero podemos reducir padding si es necesario para que quepan mejor
+        padding: $spacing-sm $spacing-md;
+    }
+
+    // De 600px hacia abajo, cambiar a columna (ancho completo)
+    @media (max-width: $breakpoint-column) {
         width: 100%;
         align-items: center;
         text-align: center;
+        padding: $spacing-md;
     }
 }
 

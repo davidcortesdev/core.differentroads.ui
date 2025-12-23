@@ -78,11 +78,6 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
   @Input() itemListName: string = 'Grid de tours';
 
   /**
-   * Mostrar precios de Scalapay en las tarjetas
-   */
-  @Input() showScalapayPrice: boolean = false;
-
-  /**
    * Número máximo de tours a mostrar
    */
   @Input() maxToursToShow?: number;

@@ -33,6 +33,9 @@ import {
   HomeSectionTourFilterService,
   IHomeSectionTourFilterResponse,
 } from '../../../../core/services/home/home-section-tour-filter.service';
+import {
+  HomeSectionThemeService,
+} from '../../../../core/services/home/home-section-theme.service';
 
 // Importar servicios para filtros por tag y ubicación
 import { TourTagService } from '../../../../core/services/tag/tour-tag.service';
@@ -73,6 +76,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
   tours: TourDataV2[] = [];
   title: string = '';
   description: string = '';
+  theme: string = 'light';
   showMonthTags: boolean = false;
   maxToursToShow: number = 6;
   viewMoreButton?: {
@@ -113,13 +117,8 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
 
   responsiveOptions = [
     {
-      breakpoint: '2100px',
-      numVisible: 4,
-      numScroll: 1,
-    },
-    {
-      breakpoint: '1700px',
-      numVisible: 3,
+      breakpoint: '1600px',
+      numVisible: 2,
       numScroll: 1,
     },
     {
@@ -128,7 +127,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
       numScroll: 1,
     },
     {
-      breakpoint: '768px', // NUEVO: Añadir breakpoint intermedio
+      breakpoint: '768px',
       numVisible: 2,
       numScroll: 1,
     },
@@ -145,6 +144,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
     private readonly cmsTourService: CMSTourService,
     private readonly homeSectionConfigurationService: HomeSectionConfigurationService,
     private readonly homeSectionTourFilterService: HomeSectionTourFilterService,
+    private readonly homeSectionThemeService: HomeSectionThemeService,
     private readonly tourTagService: TourTagService,
     private readonly tagService: TagService,
     private readonly tourLocationService: TourLocationService,
@@ -692,6 +692,27 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
           this.showMonthTags = configuration.showMonthTags || false;
           this.maxToursToShow = configuration.maxToursToShow || 6;
 
+          // Obtener el tema desde el servicio si hay themeId
+          if (configuration.themeId) {
+            return this.homeSectionThemeService.getById(configuration.themeId).pipe(
+              map((theme) => {
+                // Usar el código del tema (en minúsculas) o 'light' por defecto
+                this.theme = theme?.code?.toLowerCase() || configuration.theme || 'light';
+                return configuration;
+              }),
+              catchError(() => {
+                // Si falla la obtención del tema, usar el theme directo o 'light'
+                this.theme = configuration.theme || 'light';
+                return of(configuration);
+              })
+            );
+          } else {
+            // Si no hay themeId, usar el theme directo o 'light' por defecto
+            this.theme = configuration.theme || 'light';
+            return of(configuration);
+          }
+        }),
+        switchMap((configuration) => {
           // Cargar filtros de tours para esta configuración
           return this.homeSectionTourFilterService.getByConfigurationOrdered(
             configId,

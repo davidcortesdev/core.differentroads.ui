@@ -24,6 +24,7 @@ import { es } from 'primelocale/es.json';
 export class TourCardHeaderV2Component implements OnInit, OnDestroy {
   @Input() tourData!: TourDataV2;
   @Output() tourClick = new EventEmitter<void>();
+  @Output() loaded = new EventEmitter<void>();
 
   averageRating?: number = undefined;
   isLoadingRating = false;
@@ -53,6 +54,9 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
       this.loadRatingAndReviewCount(this.tourData.id);
       this.loadTripTypes(this.tourData.id);
       this.loadDepartureMonths(this.tourData.id);
+    } else {
+      // Si no hay ID, considerar que ya está cargado
+      this.loaded.emit();
     }
   }
 
@@ -80,7 +84,11 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
    * @param tourId ID del tour
    */
   private loadTripTypes(tourId: number): void {
-    if (!tourId) return;
+    if (!tourId) {
+      this.isLoadingTripTypes = false;
+      this.checkIfFullyLoaded();
+      return;
+    }
 
     this.isLoadingTripTypes = true;
 
@@ -96,6 +104,7 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
       .subscribe((tripTypeIds: number[]) => {
         if (tripTypeIds.length === 0) {
           this.isLoadingTripTypes = false;
+          this.checkIfFullyLoaded();
           return;
         }
 
@@ -118,6 +127,7 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
             }),
             finalize(() => {
               this.isLoadingTripTypes = false;
+              this.checkIfFullyLoaded();
             })
           )
           .subscribe((tripTypes: (ITripTypeResponse | null)[]) => {
@@ -126,12 +136,14 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
               (tt): tt is ITripTypeResponse => tt !== null
             );
 
-            const mappedTripTypes = validTripTypes.map((tripType) => ({
-              name: tripType.name,
-              code: tripType.code,
-              color: tripType.color || '#D3D3D3', // Gris clarito si el color es null
-              abbreviation: tripType.abbreviation || tripType.name.charAt(0).toUpperCase(),
-            }));
+            const mappedTripTypes = validTripTypes.map((tripType) => {
+              return {
+                name: tripType.name,
+                code: tripType.code,
+                color: tripType.color || '#ffffff', // Color directamente desde la base de datos (masterdata TripType)
+                abbreviation: tripType.abbreviation || tripType.name.charAt(0).toUpperCase(),
+              };
+            });
 
             // Actualizar tourData con los trip types obtenidos
             this.tourData.tripTypes = mappedTripTypes;
@@ -145,7 +157,11 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
    * @param tourId ID del tour
    */
   private loadDepartureMonths(tourId: number): void {
-    if (!tourId) return;
+    if (!tourId) {
+      this.isLoadingMonths = false;
+      this.checkIfFullyLoaded();
+      return;
+    }
 
     this.isLoadingMonths = true;
 
@@ -159,6 +175,7 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
         }),
         finalize(() => {
           this.isLoadingMonths = false;
+          this.checkIfFullyLoaded();
         })
       )
       .subscribe((monthNumbers: number[]) => {
@@ -185,7 +202,11 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
   }
 
   private loadRatingAndReviewCount(tourId: number) {
-    if (!tourId) return;
+    if (!tourId) {
+      this.isLoadingRating = false;
+      this.checkIfFullyLoaded();
+      return;
+    }
 
     // Evitar llamadas duplicadas para el mismo tourId (a nivel de componente)
     // El servicio también tiene cache compartido para evitar llamadas HTTP duplicadas
@@ -218,7 +239,14 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
       }),
       finalize(() => {
         this.isLoadingRating = false;
+        this.checkIfFullyLoaded();
       })
     ).subscribe();
+  }
+  
+  private checkIfFullyLoaded(): void {
+    if (!this.isLoadingRating && !this.isLoadingTripTypes && !this.isLoadingMonths) {
+      this.loaded.emit();
+    }
   }
 }

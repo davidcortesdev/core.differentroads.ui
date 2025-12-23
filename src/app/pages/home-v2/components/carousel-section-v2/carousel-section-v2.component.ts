@@ -73,8 +73,13 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
    */
   protected readonly responsiveOptions: ResponsiveOption[] = [
     {
+      breakpoint: '1500px',
+      numVisible: 2,
+      numScroll: 1,
+    },
+    {
       breakpoint: '1400px',
-      numVisible: 3,
+      numVisible: 2,
       numScroll: 1,
     },
     {

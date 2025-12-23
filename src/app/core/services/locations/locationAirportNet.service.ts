@@ -18,9 +18,7 @@ export class LocationAirportNetService {
         if (filters) {
             Object.keys(filters).forEach(key => {
                 if (filters[key] !== undefined && filters[key] !== null) {
-                    // ✅ Convertir boolean a string para query params
-                    const value = typeof filters[key] === 'boolean' ? filters[key].toString() : filters[key];
-                    params = params.append(key, value);
+                    params = params.append(key, filters[key]);
                 }
             });
         }

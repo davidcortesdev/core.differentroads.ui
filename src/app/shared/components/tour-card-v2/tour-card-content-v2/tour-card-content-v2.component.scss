@@ -105,10 +105,11 @@ $color-primary: var(--background-azul);
     padding: 0;
     line-height: 1.3;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    text-overflow: ellipsis;
 
     @include tablet {
       font-size: 1.2rem;

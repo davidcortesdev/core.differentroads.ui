@@ -79,6 +79,11 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
     },
     {
       breakpoint: '1200px',
+      numVisible: 3,
+      numScroll: 1,
+    },
+    {
+      breakpoint: '930px',
       numVisible: 2,
       numScroll: 1,
     },

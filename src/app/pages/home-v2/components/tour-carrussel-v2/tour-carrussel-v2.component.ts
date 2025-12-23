@@ -86,6 +86,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
 
   private tripTypesMap: Map<number, ITripTypeResponse> = new Map();
   private generalReviewTypeId: number | null = null;
+  private tripTypesAbortController?: AbortController;
 
   // Debug: IDs de tours para mostrar en pantalla
   debugTourIds: number[] = [];
@@ -161,6 +162,9 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
   ) { }
 
   ngOnInit(): void {
+    // Inicializar AbortController para trip types
+    this.tripTypesAbortController = new AbortController();
+    
     // Cargar trip types y review type GENERAL en paralelo
     forkJoin({
       tripTypes: this.loadTripTypes(),
@@ -198,6 +202,11 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
   }
 
   ngOnDestroy(): void {
+    // Cancelar petición de trip types si está pendiente
+    if (this.tripTypesAbortController) {
+      this.tripTypesAbortController.abort();
+      this.tripTypesAbortController = undefined;
+    }
     // Limpiar Intersection Observer
     if (this.intersectionObserver) {
       this.intersectionObserver.disconnect();
@@ -601,7 +610,8 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
   }
 
   private loadTripTypes(): Observable<void> {
-    return this.tripTypeService.getActiveTripTypes().pipe(
+    const signal = this.tripTypesAbortController?.signal;
+    return this.tripTypeService.getActiveTripTypes(signal).pipe(
       map((tripTypes: ITripTypeResponse[]) => {
         this.tripTypesMap.clear();
         tripTypes.forEach(tripType => {

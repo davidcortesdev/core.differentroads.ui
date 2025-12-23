@@ -115,24 +115,31 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
   private touchEndHandler: ((event: Event) => void) | null = null;
   private touchCancelHandler: ((event: Event) => void) | null = null;
 
+  // PrimeNG v19: breakpoints apply when viewport <= breakpoint (max-width)
+  // Por defecto (sin breakpoint aplicado) se usan 3 cards visibles.
   responsiveOptions = [
     {
-      breakpoint: '1600px',
+      breakpoint: '1650px', // >=1025px y <=1600px
       numVisible: 2,
       numScroll: 1,
     },
     {
-      breakpoint: '1024px',
+      breakpoint: '1200px', // <=1200px
       numVisible: 2,
       numScroll: 1,
     },
     {
-      breakpoint: '768px',
+      breakpoint: '1024px', // <=1024px (tablet)
       numVisible: 2,
       numScroll: 1,
     },
     {
-      breakpoint: '560px',
+      breakpoint: '768px', // <=768px
+      numVisible: 1,
+      numScroll: 1,
+    },
+    {
+      breakpoint: '560px', // <=560px (mobile)
       numVisible: 1,
       numScroll: 1,
     },

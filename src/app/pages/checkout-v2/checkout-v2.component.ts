@@ -995,7 +995,11 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         this.flightManagement?.defaultFlightsComponent?.saveFlightAssignmentsForAllTravelers
       ) {
         const targetId = this.selectedFlight ? this.selectedFlight.id : 0;
-        await this.flightManagement.defaultFlightsComponent.saveFlightAssignmentsForAllTravelers(targetId, true);
+        const shouldUnselectSpecificSearch = targetId === 0;
+        await this.flightManagement.defaultFlightsComponent.saveFlightAssignmentsForAllTravelers(
+          targetId,
+          shouldUnselectSpecificSearch
+        );
       }
     } catch (err) {
     }

@@ -180,6 +180,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   // NUEVO: Propiedades para controlar el estado de carga del botón "Sin Vuelos"
   isFlightlessProcessing: boolean = false;
   flightlessProcessingMessage: string = '';
+  isFlightProcessing: boolean = false;
 
   // Propiedades para controlar la verificación de precios
   priceCheckExecuted: boolean = false;
@@ -964,6 +965,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     selectedFlight: IFlightPackDTO | null;
     totalPrice: number;
   }): Promise<void> {
+    this.isFlightProcessing = true;
     this.selectedFlight = flightData.selectedFlight;
     this.flightPrice = flightData.totalPrice; // Ahora es el precio por persona
 
@@ -990,9 +992,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     // Guardar inmediatamente cambios de vuelos
     try {
       if (
-        this.flightManagement?.defaultFlightsComponent?.saveFlightAssignments
+        this.flightManagement?.defaultFlightsComponent?.saveFlightAssignmentsForAllTravelers
       ) {
-        await this.flightManagement.defaultFlightsComponent.saveFlightAssignments();
+        const targetId = this.selectedFlight ? this.selectedFlight.id : 0;
+        await this.flightManagement.defaultFlightsComponent.saveFlightAssignmentsForAllTravelers(targetId, true);
       }
     } catch (err) {
     }
@@ -2528,6 +2531,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * ✅ NUEVO: Método para obtener el tooltip del botón Continuar
    */
   public getContinueButtonTooltip(): string {
+    if (this.selectedFlight && this.isNoFlightOption(this.selectedFlight) && !this.hasFlightlessAvailability) {
+      return 'Esta opción no tiene disponibilidad';
+    }
+    if (this.isFlightProcessing) {
+      return 'Procesando selección de vuelo...';
+    }
     if (this.isFlightlessProcessing) {
       return 'Espera a que se complete el procesamiento de sin vuelos';
     }
@@ -2570,6 +2579,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   onTotalChanged(newTotal: number): void {
     this.totalAmountCalculated = newTotal;
     this.cdr.detectChanges();
+    this.isFlightProcessing = false;
   }
 
   /**

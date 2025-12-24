@@ -65,6 +65,7 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
   loginDialogVisible: boolean = false;
   flightDetails: Map<number, IFlightDetailDTO> = new Map();
   travelers: IReservationTravelerResponse[] = [];
+  private isProcessing: boolean = false;
 
   constructor(
     private router: Router,
@@ -595,7 +596,10 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
   }
 
   async selectFlight(flightPack: IFlightPackDTO): Promise<void> {
+    if (this.isProcessing) return;
+    this.isProcessing = true;
     if (this.isSinVuelosFlight(flightPack) && !this.isInternalSelection) {
+      this.isProcessing = false;
       return;
     }
 
@@ -637,9 +641,12 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
         totalPrice: basePrice,
       });
     }
+    this.isProcessing = false;
   }
 
   async selectSinVuelos(): Promise<void> {
+    if (this.isProcessing) return;
+    this.isProcessing = true;
     const sinVuelosPack = this.allFlightPacks.find((pack) => {
       return this.isSinVuelosFlight(pack);
     });
@@ -668,6 +675,7 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       this.isInternalSelection = false;
     } else {
     }
+    this.isProcessing = false;
   }
 
   getSelectedFlightText(): string {

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
@@ -468,11 +468,21 @@ export class FlightSearchService {
    * Obtiene los detalles de un vuelo específico por su ID de paquete y ID de vuelo
    * @param consolidatorSearchId ID del paquete de vuelos (consolidatorSearchId)
    * @param amadeusFlightId ID del vuelo específico (amadeusFlightId)
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con los detalles del vuelo
    */
-  getFlightDetails(consolidatorSearchId: number, amadeusFlightId: string): Observable<IFlightDetailDTO> {
+  getFlightDetails(consolidatorSearchId: number, amadeusFlightId: string, signal?: AbortSignal): Observable<IFlightDetailDTO> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
     return this.http.get<IFlightDetailDTO>(
-      `${this.DETAILS_API_URL}/${consolidatorSearchId}/details/${amadeusFlightId}`
+      `${this.DETAILS_API_URL}/${consolidatorSearchId}/details/${amadeusFlightId}`,
+      options
     );
   }
 
@@ -517,33 +527,63 @@ export class FlightSearchService {
   /**
    * Obtiene los requisitos de reserva para una reserva específica
    * @param reservationId ID de la reserva
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con los requisitos de reserva
    */
-  getBookingRequirements(reservationId: number): Observable<IBookingRequirements> {
+  getBookingRequirements(reservationId: number, signal?: AbortSignal): Observable<IBookingRequirements> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
     return this.http.get<IBookingRequirements>(
-      `${this.API_URL}/reservation/${reservationId}/booking-requirements`
+      `${this.API_URL}/reservation/${reservationId}/booking-requirements`,
+      options
     );
   }
 
   /**
    * Verifica si existe un ConsolidatorSearch seleccionado para una reserva específica
    * @param reservationId ID de la reserva
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con el estado de selección (boolean)
    */
-  getSelectionStatus(reservationId: number): Observable<boolean> {
+  getSelectionStatus(reservationId: number, signal?: AbortSignal): Observable<boolean> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
     return this.http.get<boolean>(
-      `${this.API_URL}/reservation/${reservationId}/consolidator/selection-status`
+      `${this.API_URL}/reservation/${reservationId}/consolidator/selection-status`,
+      options
     );
   }
 
   /**
    * Valida si el precio de una oferta de vuelo ha cambiado entre el registro en base de datos y la respuesta actual de Amadeus
    * @param reservationId ID de la reserva para la cual validar el cambio de precio
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con la información del cambio de precio o null si no hay cambios
    */
-  validatePriceChange(reservationId: number): Observable<IPriceChangeInfo | null> {
+  validatePriceChange(reservationId: number, signal?: AbortSignal): Observable<IPriceChangeInfo | null> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
     return this.http.get<IPriceChangeInfo | null>(
-      `${this.API_URL}/reservation/${reservationId}/validate-price-change`
+      `${this.API_URL}/reservation/${reservationId}/validate-price-change`,
+      options
     );
   }
 

@@ -124,6 +124,7 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
   
   private destroy$ = new Subject<void>();
   private tripTypesLoaded = false;
+  private abortController = new AbortController();
   
   // ✅ DEBUG: Flag para controlar logs de debug (cambiar a false en producción)
   private readonly DEBUG_MODE = false;
@@ -207,6 +208,7 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
   }
 
   ngOnDestroy(): void {
+    this.abortController.abort();
     // Limpiar Intersection Observer
     if (this.intersectionObserver) {
       this.intersectionObserver.disconnect();
@@ -314,7 +316,7 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
     });
   }
   private loadTripTypes(): Observable<void> {
-    return this.tripTypeService.getActiveTripTypes().pipe(
+    return this.tripTypeService.getActiveTripTypes(this.abortController.signal).pipe(
       map((tripTypes: ITripTypeResponse[]) => {
         this.tripTypesMap.clear();
         tripTypes.forEach(tripType => {
@@ -496,8 +498,8 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
           }
           // Combinar datos del TourNetService, CMSTourService y datos adicionales
           return forkJoin({
-            tourData: this.tourService.getTourById(id),
-            cmsData: this.cmsTourService.getAllTours({ tourId: id }),
+            tourData: this.tourService.getById(id, true, this.abortController.signal),
+            cmsData: this.cmsTourService.getAllTours({ tourId: id }, this.abortController.signal),
             additionalData: this.getAdditionalTourData(id),
           }).pipe(
             catchError((error: Error) => {
@@ -589,16 +591,16 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
     };
 
     // Obtener itinerarios del tour para luego obtener departures
-    return this.itineraryService.getAll(itineraryFilters, false).pipe(
+    return this.itineraryService.getAll(itineraryFilters, false, this.abortController.signal).pipe(
       concatMap((itineraries: IItineraryResponse[]) => {
         if (itineraries.length === 0) {
           // Obtener continent y country incluso si no hay itinerarios
           return forkJoin({
-            countryLocations: this.tourLocationService.getByTourAndType(tourId, 'COUNTRY').pipe(
+            countryLocations: this.tourLocationService.getByTourAndType(tourId, 'COUNTRY', this.abortController.signal).pipe(
               map((response) => Array.isArray(response) ? response : response ? [response] : []),
               catchError(() => of([] as ITourLocationResponse[]))
             ),
-            continentLocations: this.tourLocationService.getByTourAndType(tourId, 'CONTINENT').pipe(
+            continentLocations: this.tourLocationService.getByTourAndType(tourId, 'CONTINENT', this.abortController.signal).pipe(
               map((response) => Array.isArray(response) ? response : response ? [response] : []),
               catchError(() => of([] as ITourLocationResponse[]))
             )
@@ -619,7 +621,7 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
                 });
               }
               
-              return this.locationService.getLocationsByIds(locationIds).pipe(
+              return this.locationService.getLocationsByIds(locationIds, this.abortController.signal).pipe(
                 map((locations: Location[]) => {
                   const countries = countryLocations
                     .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
@@ -653,7 +655,7 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
 
         // Obtener departures de todos los itinerarios
         const departureRequests = itineraries.map((itinerary) =>
-          this.departureService.getByItinerary(itinerary.id, false).pipe(
+          this.departureService.getByItinerary(itinerary.id, false, this.abortController.signal).pipe(
             catchError((error) => {
               return of([]);
             })
@@ -668,7 +670,7 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
             const itineraryDaysRequest =
               itineraries.length > 0
                 ? this.itineraryDayService
-                    .getAll({ itineraryId: itineraries[0].id })
+                    .getAll({ itineraryId: itineraries[0].id }, this.abortController.signal)
                     .pipe(
                       catchError((error) => {
                         return of([]);
@@ -678,7 +680,7 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
 
             // Obtener tags del tour usando el tipo de relación "VISIBLE"
             // Usar el endpoint más eficiente getByTourAndType con el code "VISIBLE"
-            const tagRequest = this.tourTagService.getByTourAndType(tourId, 'VISIBLE').pipe(
+            const tagRequest = this.tourTagService.getByTourAndType(tourId, 'VISIBLE', this.abortController.signal).pipe(
               switchMap((tourTags) => {
                 // Validar que haya tags y que el primer tag tenga un tagId válido
                 if (tourTags.length === 0 || !tourTags[0]?.tagId || tourTags[0].tagId <= 0) {
@@ -686,7 +688,7 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
                 }
                 // Obtener el nombre del primer tag
                 const firstTagId = tourTags[0].tagId;
-                return this.tagService.getById(firstTagId).pipe(
+                return this.tagService.getById(firstTagId, this.abortController.signal).pipe(
                   map((tag) => tag?.name && tag.name.trim().length > 0 ? [tag.name.trim()] : []),
                   catchError(() => of([]))
                 );
@@ -696,11 +698,11 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
             
             // Obtener continent y country
             const locationRequest = forkJoin({
-              countryLocations: this.tourLocationService.getByTourAndType(tourId, 'COUNTRY').pipe(
+              countryLocations: this.tourLocationService.getByTourAndType(tourId, 'COUNTRY', this.abortController.signal).pipe(
                 map((response) => Array.isArray(response) ? response : response ? [response] : []),
                 catchError(() => of([] as ITourLocationResponse[]))
               ),
-              continentLocations: this.tourLocationService.getByTourAndType(tourId, 'CONTINENT').pipe(
+              continentLocations: this.tourLocationService.getByTourAndType(tourId, 'CONTINENT', this.abortController.signal).pipe(
                 map((response) => Array.isArray(response) ? response : response ? [response] : []),
                 catchError(() => of([] as ITourLocationResponse[]))
               )
@@ -715,7 +717,7 @@ export class TourGridV2Component implements OnInit, OnDestroy, OnChanges, AfterV
                   return of({ continent: '', country: '' });
                 }
                 
-                return this.locationService.getLocationsByIds(locationIds).pipe(
+                return this.locationService.getLocationsByIds(locationIds, this.abortController.signal).pipe(
                   map((locations: Location[]) => {
                     const countries = countryLocations
                       .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))

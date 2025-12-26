@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TourService, Tour } from '../../core/services/tour/tour.service';
 import { catchError, switchMap, map, first, concatMap } from 'rxjs/operators';
@@ -73,7 +73,7 @@ interface TourTripType {
   templateUrl: './tour-v2.component.html',
   styleUrls: ['./tour-v2.component.scss'],
 })
-export class TourV2Component implements OnInit {
+export class TourV2Component implements OnInit, OnDestroy {
   tourSlug: string = '';
   tour: Tour | null = null;
   loading: boolean = true;
@@ -83,6 +83,7 @@ export class TourV2Component implements OnInit {
   totalPrice: number = 0;
   
   private viewItemTracked: boolean = false;
+  private abortController = new AbortController();
 
   selectedCity: string = '';
 
@@ -165,6 +166,11 @@ export class TourV2Component implements OnInit {
       }
     });
   }
+
+  ngOnDestroy(): void {
+    this.abortController.abort();
+  }
+
 private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
   const itineraryFilters: ItineraryFilters = {
     tourId: tourId,
@@ -172,14 +178,14 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
     isBookable: true,
   };
 
-  return this.itineraryService.getAll(itineraryFilters, false).pipe(
+  return this.itineraryService.getAll(itineraryFilters, false, this.abortController.signal).pipe(
     switchMap((itineraries) => {
       if (itineraries.length === 0) {
         return of([]);
       }
 
       const departureRequests = itineraries.map((itinerary) =>
-        this.departureService.getByItinerary(itinerary.id, false).pipe(
+        this.departureService.getByItinerary(itinerary.id, false, this.abortController.signal).pipe(
           catchError(() => of([] as IDepartureResponse[]))
         )
       );
@@ -210,7 +216,7 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
 }
 
   private loadTripTypes(): Observable<void> {
-    return this.tripTypeService.getActiveTripTypes().pipe(
+    return this.tripTypeService.getActiveTripTypes(this.abortController.signal).pipe(
       map((tripTypes: ITripTypeResponse[]) => {
         this.tripTypesMap.clear();
         tripTypes.forEach(tripType => {
@@ -259,14 +265,14 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
       isBookable: true,
     };
   
-    this.itineraryService.getAll(itineraryFilters, false).pipe(
+    this.itineraryService.getAll(itineraryFilters, false, this.abortController.signal).pipe(
       switchMap((itineraries) => {
         if (itineraries.length === 0) {
           return of([] as IDepartureResponse[]);
         }
   
         const departureRequests = itineraries.map((itinerary) =>
-          this.departureService.getByItinerary(itinerary.id, false).pipe(
+          this.departureService.getByItinerary(itinerary.id, false, this.abortController.signal).pipe(
             catchError(() => of([] as IDepartureResponse[]))
           )
         );
@@ -465,7 +471,7 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
       isBookable: true,
     };
   
-    return this.itineraryService.getAll(itineraryFilters, false).pipe(
+    return this.itineraryService.getAll(itineraryFilters, false, this.abortController.signal).pipe(
       concatMap((itineraries) => {
         if (itineraries.length === 0) {
           return of({
@@ -480,15 +486,15 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
         }
   
         const itineraryDaysRequest = this.itineraryDayService
-          .getAll({ itineraryId: itineraries[0].id })
+          .getAll({ itineraryId: itineraries[0].id }, this.abortController.signal)
           .pipe(catchError(() => of([] as IItineraryDayResponse[])));
         
         const locationRequest = forkJoin({
-          countryLocations: this.tourLocationService.getByTourAndType(tourId, 'COUNTRY').pipe(
+          countryLocations: this.tourLocationService.getByTourAndType(tourId, 'COUNTRY', this.abortController.signal).pipe(
             map((response) => Array.isArray(response) ? response : response ? [response] : []),
             catchError(() => of([] as ITourLocationResponse[]))
           ),
-          continentLocations: this.tourLocationService.getByTourAndType(tourId, 'CONTINENT').pipe(
+          continentLocations: this.tourLocationService.getByTourAndType(tourId, 'CONTINENT', this.abortController.signal).pipe(
             map((response) => Array.isArray(response) ? response : response ? [response] : []),
             catchError(() => of([] as ITourLocationResponse[]))
           )
@@ -503,7 +509,7 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
               return of({ continent: '', country: '' });
             }
             
-            return this.locationService.getLocationsByIds(locationIds).pipe(
+            return this.locationService.getLocationsByIds(locationIds, this.abortController.signal).pipe(
               map((locations: Location[]) => {
                 const countries = countryLocations
                   .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
@@ -529,9 +535,9 @@ private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {
           itineraryDays: itineraryDaysRequest,
           locationData: locationRequest,
           monthTags: this.tourService
-            .getDepartureMonths(tourId, !this.preview)
+            .getDepartureMonths(tourId, !this.preview, this.abortController.signal)
             .pipe(catchError(() => of([] as number[]))),
-          tour: this.tourService.getById(tourId, false),
+          tour: this.tourService.getById(tourId, false, this.abortController.signal),
           tripTypes: this.getTourTripTypesForAnalytics(tourId)
         }).pipe(
           map(({ itineraryDays, locationData, monthTags, tour, tripTypes }) => {

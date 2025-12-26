@@ -100,6 +100,7 @@ export class SelectorItineraryComponent
 
   // Control de destrucción del componente
   private destroy$ = new Subject<void>();
+  private abortController = new AbortController();
 
   // Estados del componente
   loading: boolean = true;
@@ -133,6 +134,7 @@ export class SelectorItineraryComponent
   }
 
   ngOnDestroy(): void {
+    this.abortController.abort();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -261,7 +263,7 @@ export class SelectorItineraryComponent
       };
     }
 
-    return this.itineraryService.getAll(itineraryFilters, this.preview).pipe(
+    return this.itineraryService.getAll(itineraryFilters, this.preview, this.abortController.signal).pipe(
       map((itineraries) => {
         return itineraries.filter(
           (itinerary) => itinerary.tkId && itinerary.tkId.trim() !== ''
@@ -288,7 +290,7 @@ export class SelectorItineraryComponent
    * Cargar departures para un itinerario específico
    */
   private loadDeparturesForItinerary(itinerary: IItineraryResponse) {
-    return this.departureService.getByItinerary(itinerary.id, this.preview).pipe(
+    return this.departureService.getByItinerary(itinerary.id, this.preview, this.abortController.signal).pipe(
       map((departures) => {
         const departuresData: DepartureData[] = departures.map((departure) => {
           const tripTypeId = departure.tripTypeId ?? 0;

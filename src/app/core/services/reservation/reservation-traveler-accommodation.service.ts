@@ -101,21 +101,44 @@ export class ReservationTravelerAccommodationService {
    * Actualiza una acomodación de viajero de reservación existente.
    * @param id ID de la acomodación de viajero de reservación a actualizar.
    * @param data Datos actualizados.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Resultado de la operación.
    */
-  update(id: number, data: ReservationTravelerAccommodationUpdate): Observable<boolean> {
-    return this.http.put<boolean>(`${this.API_URL}/${id}`, data, {
+  update(id: number, data: ReservationTravelerAccommodationUpdate, signal?: AbortSignal): Observable<boolean> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = {
       headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
-    });
+    };
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.put<boolean>(`${this.API_URL}/${id}`, data, options);
   }
 
   /**
    * Elimina una acomodación de viajero de reservación existente.
    * @param id ID de la acomodación de viajero de reservación a eliminar.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Resultado de la operación.
    */
-  delete(id: number): Observable<boolean> {
-    return this.http.delete<boolean>(`${this.API_URL}/${id}`);
+  delete(id: number, signal?: AbortSignal): Observable<boolean> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      observe?: 'body';
+      params?: HttpParams | { [param: string]: any };
+      reportProgress?: boolean;
+      responseType?: 'json';
+      withCredentials?: boolean;
+      signal?: AbortSignal;
+    } = {
+      responseType: 'json'
+    };
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.delete<boolean>(`${this.API_URL}/${id}`, options);
   }
 
   /**
@@ -207,7 +230,7 @@ export class ReservationTravelerAccommodationService {
 
         // Crear array de observables para eliminar todas las acomodaciones
         const deleteObservables = accommodations.map(accommodation => 
-          this.delete(accommodation.id)
+          this.delete(accommodation.id, signal)
         );
         
         // Ejecutar todas las eliminaciones usando forkJoin

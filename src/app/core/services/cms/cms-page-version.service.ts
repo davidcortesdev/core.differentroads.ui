@@ -54,7 +54,7 @@ export class CMSPageVersionService {
     seoTitle?: string;
     seoDescription?: string;
     pageId?: number;
-  }): Observable<ICMSPageVersionResponse[]> {
+  }, signal?: AbortSignal): Observable<ICMSPageVersionResponse[]> {
     let httpParams = new HttpParams();
     
     if (params) {
@@ -68,11 +68,26 @@ export class CMSPageVersionService {
       if (params.pageId !== undefined) httpParams = httpParams.set('PageId', params.pageId.toString());
     }
 
-    return this.http.get<ICMSPageVersionResponse[]>(this.API_URL, { params: httpParams });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params: httpParams };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<ICMSPageVersionResponse[]>(this.API_URL, options);
   }
 
-  getPageVersionById(id: number): Observable<ICMSPageVersionResponse> {
-    return this.http.get<ICMSPageVersionResponse>(`${this.API_URL}/${id}`);
+  getPageVersionById(id: number, signal?: AbortSignal): Observable<ICMSPageVersionResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<ICMSPageVersionResponse>(`${this.API_URL}/${id}`, options);
   }
 
   createPageVersion(versionData: CMSPageVersionCreate): Observable<ICMSPageVersionResponse> {

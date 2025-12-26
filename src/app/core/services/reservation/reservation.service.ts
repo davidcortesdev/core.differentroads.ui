@@ -466,9 +466,17 @@ export class ReservationService {
           totalAmount: current.totalAmount,
         };
 
-        return this.http.put<boolean>(`${this.API_URL}/${reservationId}`, fullPayload, {
+        const options: {
+          headers?: HttpHeaders | { [header: string]: string | string[] };
+          signal?: AbortSignal;
+        } = {
           headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
-        });
+        };
+        if (signal) {
+          options.signal = signal;
+        }
+
+        return this.http.put<boolean>(`${this.API_URL}/${reservationId}`, fullPayload, options);
       })
     );
   }

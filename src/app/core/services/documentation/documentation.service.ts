@@ -85,7 +85,7 @@ export class DocumentationService {
     fileNames?: string[];
     mimeTypes?: string[];
     reservationId?: number;
-  }): Observable<IDocumentReservationResponse[]> {
+  }, signal?: AbortSignal): Observable<IDocumentReservationResponse[]> {
     let params = new HttpParams();
 
     if (filters) {
@@ -114,9 +114,15 @@ export class DocumentationService {
       }
     }
 
-    return this.http.get<IDocumentReservationResponse[]>(this.API_URL, {
-      params,
-    });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IDocumentReservationResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -125,16 +131,24 @@ export class DocumentationService {
    * @returns Observable de array de IDocumentReservationResponse
    */
   getDocumentsByReservationId(
-    reservationId: number
+    reservationId: number,
+    signal?: AbortSignal
   ): Observable<IDocumentReservationResponse[]> {
 
     const params = new HttpParams().set(
       'ReservationId',
       reservationId.toString()
     );
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
     return this.http.get<IDocumentReservationResponse[]>(
       this.DOCUMENT_RESERVATION_URL,
-      { params }
+      options
     );
   }
 
@@ -143,18 +157,32 @@ export class DocumentationService {
    * @param documentId - ID del documento
    * @returns Observable de IDocumentResponse
    */
-  getDocumentById(documentId: number): Observable<IDocumentResponse> {
+  getDocumentById(documentId: number, signal?: AbortSignal): Observable<IDocumentResponse> {
     const url = `${this.API_URL}/${documentId}`;
-    return this.http.get<IDocumentResponse>(url);
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<IDocumentResponse>(url, options);
   }
 
   /**
    * Obtiene tipos de documento disponibles
    * @returns Observable de array de IDocumentTypeResponse
    */
-  getDocumentTypes(): Observable<IDocumentTypeResponse[]> {
+  getDocumentTypes(signal?: AbortSignal): Observable<IDocumentTypeResponse[]> {
     const url = `${environment.documentationApiUrl}/DocumentType`;
-    return this.http.get<IDocumentTypeResponse[]>(url);
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<IDocumentTypeResponse[]>(url, options);
   }
 
   /**
@@ -163,9 +191,10 @@ export class DocumentationService {
    * @returns Observable de array con documentos completos
    */
   getCompleteDocumentsByReservationId(
-    reservationId: number
+    reservationId: number,
+    signal?: AbortSignal
   ): Observable<any[]> {
-    return this.getDocumentsByReservationId(reservationId).pipe(
+    return this.getDocumentsByReservationId(reservationId, signal).pipe(
       switchMap((documentReservations: IDocumentReservationResponse[]) => {
         if (documentReservations.length === 0) {
           return of([]);
@@ -173,7 +202,7 @@ export class DocumentationService {
 
         // Obtener detalles de cada documento
         const documentPromises = documentReservations.map((docRes) =>
-          this.getDocumentById(docRes.documentId).pipe(
+          this.getDocumentById(docRes.documentId, signal).pipe(
             map((document) => ({
               ...docRes,
               document: document,

@@ -41,7 +41,8 @@ export class DepartureAccommodationAvailabilityService {
    * @returns Lista de disponibilidades de habitaciones de departure.
    */
   getAll(
-    filters?: DepartureAccommodationAvailabilityFilters
+    filters?: DepartureAccommodationAvailabilityFilters,
+    signal?: AbortSignal
   ): Observable<IDepartureAccommodationAvailabilityResponse[]> {
     let params = new HttpParams();
 
@@ -57,9 +58,15 @@ export class DepartureAccommodationAvailabilityService {
       });
     }
 
-    return this.http.get<IDepartureAccommodationAvailabilityResponse[]>(this.API_URL, {
-      params,
-    });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IDepartureAccommodationAvailabilityResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -68,12 +75,13 @@ export class DepartureAccommodationAvailabilityService {
    * @returns Disponibilidad de la habitación.
    */
   getByDepartureAccommodation(
-    departureAccommodationId: number
+    departureAccommodationId: number,
+    signal?: AbortSignal
   ): Observable<IDepartureAccommodationAvailabilityResponse[]> {
     const filters: DepartureAccommodationAvailabilityFilters = {
       departureAccommodationId,
     };
-    return this.getAll(filters);
+    return this.getAll(filters, signal);
   }
 
   /**
@@ -82,13 +90,21 @@ export class DepartureAccommodationAvailabilityService {
    * @returns Lista de disponibilidades de habitaciones del departure.
    */
   getByDeparture(
-    departureId: number
+    departureId: number,
+    signal?: AbortSignal
   ): Observable<IDepartureAccommodationAvailabilityResponse[]> {
     // Nota: Este método requiere primero obtener los departure accommodations
     // y luego buscar la disponibilidad de cada uno
     // Por ahora, retornamos un observable vacío ya que el endpoint no tiene filtro directo por departureId
     // Se puede implementar obteniendo primero los accommodations y luego sus disponibilidades
-    return this.http.get<IDepartureAccommodationAvailabilityResponse[]>(this.API_URL);
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<IDepartureAccommodationAvailabilityResponse[]>(this.API_URL, options);
   }
 }
 

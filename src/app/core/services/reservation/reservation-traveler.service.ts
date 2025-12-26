@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, forkJoin } from 'rxjs';
 import { map, switchMap, catchError, retry, delay } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
 import { environment } from '../../../../environments/environment';
@@ -151,12 +151,20 @@ export class ReservationTravelerService {
    * Actualiza un viajero de reservación existente.
    * @param id ID del viajero de reservación a actualizar.
    * @param data Datos actualizados.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Resultado de la operación.
    */
-  update(id: number, data: ReservationTravelerUpdate): Observable<boolean> {
-    return this.http.put<boolean>(`${this.API_URL}/${id}`, data, {
+  update(id: number, data: ReservationTravelerUpdate, signal?: AbortSignal): Observable<boolean> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = {
       headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
-    });
+    };
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.put<boolean>(`${this.API_URL}/${id}`, data, options);
   }
 
   /**
@@ -279,17 +287,21 @@ export class ReservationTravelerService {
   ): Observable<boolean> {
     return this.getByReservation(reservationId, signal).pipe(
       switchMap((travelers) => {
+        if (travelers.length === 0) {
+          return of(true);
+        }
+
         // Crear array de observables para actualizar todos los viajeros
         const updateObservables = travelers.map((traveler) => {
           const updatedTraveler: ReservationTravelerUpdate = {
             ...traveler,
             isLeadTraveler: traveler.id === travelerId,
           };
-          return this.update(traveler.id, updatedTraveler);
+          return this.update(traveler.id, updatedTraveler, signal);
         });
 
         // Ejecutar todas las actualizaciones
-        return Promise.all(updateObservables);
+        return forkJoin(updateObservables);
       }),
       map(() => true) // Simplificar el resultado
     );
@@ -303,6 +315,10 @@ export class ReservationTravelerService {
   reorderTravelerNumbers(reservationId: number, signal?: AbortSignal): Observable<boolean> {
     return this.getByReservation(reservationId, signal).pipe(
       switchMap((travelers) => {
+        if (travelers.length === 0) {
+          return of(true);
+        }
+
         // Ordenar por número de viajero actual
         const sortedTravelers = travelers.sort(
           (a, b) => a.travelerNumber - b.travelerNumber
@@ -314,10 +330,10 @@ export class ReservationTravelerService {
             ...traveler,
             travelerNumber: index + 1,
           };
-          return this.update(traveler.id, updatedTraveler);
+          return this.update(traveler.id, updatedTraveler, signal);
         });
 
-        return Promise.all(updateObservables);
+        return forkJoin(updateObservables);
       }),
       map(() => true) // Simplificar el resultado
     );

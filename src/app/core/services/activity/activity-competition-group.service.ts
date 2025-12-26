@@ -74,7 +74,7 @@ export class ActivityCompetitionGroupService {
    * @param filters Filtros para aplicar en la búsqueda.
    * @returns Lista de grupos de competición de actividades.
    */
-  getAll(filter?: ActivityCompetitionGroupFilters): Observable<IActivityCompetitionGroupResponse[]> {
+  getAll(filter?: ActivityCompetitionGroupFilters, signal?: AbortSignal): Observable<IActivityCompetitionGroupResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -89,7 +89,15 @@ export class ActivityCompetitionGroupService {
       });
     }
 
-    return this.http.get<IActivityCompetitionGroupResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IActivityCompetitionGroupResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -97,8 +105,15 @@ export class ActivityCompetitionGroupService {
    * @param id ID del grupo de competición de actividades.
    * @returns Grupo de competición de actividades correspondiente.
    */
-  getById(id: number): Observable<IActivityCompetitionGroupResponse> {
-    return this.http.get<IActivityCompetitionGroupResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<IActivityCompetitionGroupResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<IActivityCompetitionGroupResponse>(`${this.API_URL}/${id}`, options);
   }
 
   /**
@@ -106,8 +121,8 @@ export class ActivityCompetitionGroupService {
    * @param itineraryId ID del itinerario.
    * @returns Lista de grupos de competición del itinerario.
    */
-  getByItineraryId(itineraryId: number): Observable<IActivityCompetitionGroupResponse[]> {
-    return this.getAll({ itineraryId });
+  getByItineraryId(itineraryId: number, signal?: AbortSignal): Observable<IActivityCompetitionGroupResponse[]> {
+    return this.getAll({ itineraryId }, signal);
   }
 
   /**
@@ -115,8 +130,8 @@ export class ActivityCompetitionGroupService {
    * @param tkId Código TK del grupo de competición.
    * @returns Grupo de competición correspondiente.
    */
-  getByTkId(tkId: string): Observable<IActivityCompetitionGroupResponse[]> {
-    return this.getAll({ tkId });
+  getByTkId(tkId: string, signal?: AbortSignal): Observable<IActivityCompetitionGroupResponse[]> {
+    return this.getAll({ tkId }, signal);
   }
 
   /**
@@ -168,13 +183,20 @@ export class ActivityCompetitionGroupService {
    * @param itineraryId ID del itinerario.
    * @returns Objeto con grupos opcionales y no opcionales.
    */
-  getGroupedByOptional(itineraryId: number): Observable<{
+  getGroupedByOptional(itineraryId: number, signal?: AbortSignal): Observable<{
     optional: IActivityCompetitionGroupResponse[];
     required: IActivityCompetitionGroupResponse[];
   }> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
     return this.http.get<{
       optional: IActivityCompetitionGroupResponse[];
       required: IActivityCompetitionGroupResponse[];
-    }>(`${this.API_URL}/itinerary/${itineraryId}/grouped-by-optional`);
+    }>(`${this.API_URL}/itinerary/${itineraryId}/grouped-by-optional`, options);
   }
 }

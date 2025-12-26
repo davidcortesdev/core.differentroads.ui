@@ -11,6 +11,10 @@ export interface FlightSearchRequest {
   tipoViaje: 'Ida' | 'Vuelta' | 'IdaVuelta';
   iataOrigen?: string | null;
   iataDestino?: string | null;
+  fechaIda?: string | null;
+  horaIda?: string | null;
+  fechaVuelta?: string | null;
+  horaVuelta?: string | null;
 }
 
 export interface IAgeGroupPriceDTO {

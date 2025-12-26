@@ -73,12 +73,20 @@ export class ReservationTravelerAccommodationService {
   /**
    * Crea una nueva acomodación de viajero de reservación.
    * @param data Datos para crear la acomodación de viajero de reservación.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns La acomodación de viajero de reservación creada.
    */
-  create(data: ReservationTravelerAccommodationCreate): Observable<IReservationTravelerAccommodationResponse> {
-    return this.http.post<IReservationTravelerAccommodationResponse>(`${this.API_URL}`, data, {
+  create(data: ReservationTravelerAccommodationCreate, signal?: AbortSignal): Observable<IReservationTravelerAccommodationResponse> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = {
       headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
-    });
+    };
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.post<IReservationTravelerAccommodationResponse>(`${this.API_URL}`, data, options);
   }
 
   /**
@@ -241,11 +249,13 @@ export class ReservationTravelerAccommodationService {
    * Asigna múltiples acomodaciones a un viajero de reservación.
    * @param reservationTravelerId ID del viajero de reservación.
    * @param departureAccommodationIds Array de IDs de acomodaciones de salida.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Resultado de la operación.
    */
   assignMultipleAccommodations(
     reservationTravelerId: number, 
-    departureAccommodationIds: number[]
+    departureAccommodationIds: number[],
+    signal?: AbortSignal
   ): Observable<IReservationTravelerAccommodationResponse[]> {
     if (departureAccommodationIds.length === 0) {
       return of([]);
@@ -257,7 +267,7 @@ export class ReservationTravelerAccommodationService {
         reservationTravelerId,
         departureAccommodationId: accommodationId
       };
-      return this.create(data);
+      return this.create(data, signal);
     });
 
     return forkJoin(createObservables);

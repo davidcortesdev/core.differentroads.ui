@@ -34,7 +34,7 @@ export class UpdateProfileV2Service {
     // Primero obtener los datos actuales del usuario por cognitoId
     if (!cognitoId) {
       const basicUserData = this.mapToBasicUserData(personalInfo, cognitoId);
-      return this.updateBasicUserData(userId, basicUserData).pipe(
+      return this.updateBasicUserData(userId, basicUserData, signal).pipe(
         switchMap(() => this.updateAdditionalFields(userId, personalInfo, signal)),
         switchMap(() => of(personalInfo)),
         catchError(this.handleError)
@@ -46,13 +46,13 @@ export class UpdateProfileV2Service {
         const currentUser = Array.isArray(response) && response.length > 0 ? response[0] : null;
         
         const basicUserData = this.mapToBasicUserData(personalInfo, cognitoId, currentUser);
-        return this.updateBasicUserData(userId, basicUserData);
+        return this.updateBasicUserData(userId, basicUserData, signal);
       }),
       switchMap(() => this.updateAdditionalFields(userId, personalInfo, signal)),
       switchMap(() => of(personalInfo)),
       catchError((error) => {
         const basicUserData = this.mapToBasicUserData(personalInfo, cognitoId);
-        return this.updateBasicUserData(userId, basicUserData).pipe(
+        return this.updateBasicUserData(userId, basicUserData, signal).pipe(
           switchMap(() => this.updateAdditionalFields(userId, personalInfo, signal)),
           switchMap(() => of(personalInfo))
         );
@@ -64,10 +64,18 @@ export class UpdateProfileV2Service {
    * Actualiza los datos básicos del usuario (nombre, apellido, email, teléfono, avatar)
    * @param userId - ID del usuario
    * @param userData - Datos del usuario en formato API
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con la respuesta de la API
    */
-  private updateBasicUserData(userId: string, userData: any): Observable<any> {
-    return this.http.put<any>(`${this.API_URL}/${userId}`, userData, this.httpOptions).pipe(
+  private updateBasicUserData(userId: string, userData: any, signal?: AbortSignal): Observable<any> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = { ...this.httpOptions };
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.put<any>(`${this.API_URL}/${userId}`, userData, options).pipe(
       catchError(this.handleError)
     );
   }
@@ -125,12 +133,12 @@ export class UpdateProfileV2Service {
           return of([]);
         }
         
-        return this.processFieldUpdates(fieldValues, existingFieldValues);
+        return this.processFieldUpdates(fieldValues, existingFieldValues, signal);
       }),
       catchError(() => {
         // Si no se pueden obtener los valores existentes, intentar crear nuevos
         const fieldValues = this.mapToFieldValues(userId, personalInfo);
-        return this.processFieldUpdates(fieldValues, []);
+        return this.processFieldUpdates(fieldValues, [], signal);
       })
     );
   }
@@ -139,9 +147,10 @@ export class UpdateProfileV2Service {
    * Procesa las actualizaciones de campos (actualizar existentes o crear nuevos)
    * @param fieldValues - Valores de campos a procesar
    * @param existingFieldValues - Valores existentes
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con el resultado
    */
-  private processFieldUpdates(fieldValues: any[], existingFieldValues: any[]): Observable<any[]> {
+  private processFieldUpdates(fieldValues: any[], existingFieldValues: any[], signal?: AbortSignal): Observable<any[]> {
     const existingMap = new Map();
     existingFieldValues.forEach(existing => {
       existingMap.set(existing.userFieldId, existing);
@@ -159,6 +168,14 @@ export class UpdateProfileV2Service {
     const updateObservables = Array.from(uniqueFieldValues.values()).map(fieldValue => {
       const existing = existingMap.get(fieldValue.userFieldId);
       
+      const options: {
+        headers?: HttpHeaders | { [header: string]: string | string[] };
+        signal?: AbortSignal;
+      } = { ...this.httpOptions };
+      if (signal) {
+        options.signal = signal;
+      }
+      
       if (existing) {
         // Actualizar campo existente
         const updateData = {
@@ -166,12 +183,16 @@ export class UpdateProfileV2Service {
           userFieldId: fieldValue.userFieldId,
           value: fieldValue.value
         };
-        return this.http.put(`${this.USER_FIELD_VALUE_API_URL}/${existing.id}`, updateData, this.httpOptions);
+        return this.http.put(`${this.USER_FIELD_VALUE_API_URL}/${existing.id}`, updateData, options);
       } else {
         // Crear nuevo campo
-        return this.http.post(this.USER_FIELD_VALUE_API_URL, fieldValue, this.httpOptions);
+        return this.http.post(this.USER_FIELD_VALUE_API_URL, fieldValue, options);
       }
     });
+    
+    if (updateObservables.length === 0) {
+      return of([]);
+    }
     
     return forkJoin(updateObservables);
   }

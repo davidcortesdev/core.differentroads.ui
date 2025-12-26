@@ -119,10 +119,18 @@ export class PersonalInfoV2Service {
   /**
    * Crea un nuevo usuario
    * @param userData - Datos del usuario a crear
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con el usuario creado
    */
-  createUser(userData: PersonalInfo): Observable<PersonalInfo> {
-    return this.http.post<PersonalInfo>(this.API_URL, userData, this.httpOptions).pipe(
+  createUser(userData: PersonalInfo, signal?: AbortSignal): Observable<PersonalInfo> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = { ...this.httpOptions };
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.post<PersonalInfo>(this.API_URL, userData, options).pipe(
       catchError(this.handleError)
     );
   }
@@ -131,10 +139,18 @@ export class PersonalInfoV2Service {
    * Actualiza un usuario existente
    * @param id - ID del usuario a actualizar
    * @param userData - Datos actualizados del usuario
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con el usuario actualizado
    */
-  updateUser(id: string, userData: Partial<PersonalInfo>): Observable<PersonalInfo> {
-    return this.http.put<PersonalInfo>(`${this.API_URL}/${id}`, userData, this.httpOptions).pipe(
+  updateUser(id: string, userData: Partial<PersonalInfo>, signal?: AbortSignal): Observable<PersonalInfo> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = { ...this.httpOptions };
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.put<PersonalInfo>(`${this.API_URL}/${id}`, userData, options).pipe(
       catchError(this.handleError)
     );
   }
@@ -142,10 +158,22 @@ export class PersonalInfoV2Service {
   /**
    * Elimina un usuario
    * @param id - ID del usuario a eliminar
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con el resultado de la operación
    */
-  deleteUser(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.API_URL}/${id}`, this.httpOptions).pipe(
+  deleteUser(id: string, signal?: AbortSignal): Observable<void> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      observe?: 'body';
+      params?: HttpParams | { [param: string]: any };
+      reportProgress?: boolean;
+      withCredentials?: boolean;
+      signal?: AbortSignal;
+    } = { ...this.httpOptions };
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.delete<void>(`${this.API_URL}/${id}`, options).pipe(
       catchError(this.handleError)
     );
   }

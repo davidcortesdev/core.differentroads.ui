@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, tap, switchMap } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
@@ -85,10 +85,18 @@ export class UsersNetService {
    * Crea un nuevo usuario
    * POST /api/User
    * @param user Datos del usuario a crear
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Usuario creado
    */
-  createUser(user: UserCreate): Observable<IUserResponse> {
-    return this.http.post<IUserResponse>(`${this.apiUrl}/User`, user).pipe(
+  createUser(user: UserCreate, signal?: AbortSignal): Observable<IUserResponse> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.post<IUserResponse>(`${this.apiUrl}/User`, user, options).pipe(
       tap((response) => {
         // Response handling if needed
       }),
@@ -103,10 +111,18 @@ export class UsersNetService {
    * PUT /api/User/{id}
    * @param id ID del usuario a actualizar
    * @param user Datos del usuario a actualizar
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns true si se actualizó correctamente
    */
-  updateUser(id: number, user: UserUpdate): Observable<boolean> {
-    return this.http.put<boolean>(`${this.apiUrl}/User/${id}`, user).pipe(
+  updateUser(id: number, user: UserUpdate, signal?: AbortSignal): Observable<boolean> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.put<boolean>(`${this.apiUrl}/User/${id}`, user, options).pipe(
       tap((response) => {
         // Response handling if needed
       }),

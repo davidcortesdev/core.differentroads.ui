@@ -92,12 +92,20 @@ export class ReservationFieldService {
   /**
    * Crea un nuevo campo de reservación.
    * @param data Datos para crear el campo de reservación.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns El campo de reservación creado.
    */
-  create(data: ReservationFieldCreate): Observable<IReservationFieldResponse> {
-    return this.http.post<IReservationFieldResponse>(`${this.API_URL}`, data, {
+  create(data: ReservationFieldCreate, signal?: AbortSignal): Observable<IReservationFieldResponse> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = {
       headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
-    });
+    };
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.post<IReservationFieldResponse>(`${this.API_URL}`, data, options);
   }
 
   /**

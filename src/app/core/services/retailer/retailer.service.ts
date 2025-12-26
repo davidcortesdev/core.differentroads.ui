@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Observable, catchError, throwError, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
@@ -139,15 +139,23 @@ export class RetailerService {
   /**
    * Create a new retailer
    * @param retailerData Retailer creation data
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable of created Retailer
    */
-  createRetailer(retailerData: CreateRetailerRequest): Observable<Retailer> {
-    return this.http.post<Retailer>(this.API_URL, retailerData, {
+  createRetailer(retailerData: CreateRetailerRequest, signal?: AbortSignal): Observable<Retailer> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'text/plain'
       }
-    }).pipe(
+    };
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.post<Retailer>(this.API_URL, retailerData, options).pipe(
       catchError(error => {
         return throwError(() => error);
       })
@@ -158,15 +166,23 @@ export class RetailerService {
    * Update an existing retailer
    * @param id Retailer ID to update
    * @param retailerData Retailer update data
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable of updated Retailer
    */
-  updateRetailer(id: number, retailerData: UpdateRetailerRequest): Observable<Retailer> {
-    return this.http.put<Retailer>(`${this.API_URL}/${id}`, retailerData, {
+  updateRetailer(id: number, retailerData: UpdateRetailerRequest, signal?: AbortSignal): Observable<Retailer> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'text/plain'
       }
-    }).pipe(
+    };
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.put<Retailer>(`${this.API_URL}/${id}`, retailerData, options).pipe(
       catchError(error => {
         return throwError(() => error);
       })

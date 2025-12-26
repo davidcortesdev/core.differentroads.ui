@@ -88,17 +88,26 @@ export class ReservationTravelerService {
   /**
    * Crea un nuevo viajero de reservación con número de viajero auto-incrementable.
    * @param data Datos para crear el viajero de reservación.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns El viajero de reservación creado.
    */
   create(
-    data: ReservationTravelerCreate
+    data: ReservationTravelerCreate,
+    signal?: AbortSignal
   ): Observable<IReservationTravelerResponse> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = {
+      headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
+    };
+    if (signal) {
+      options.signal = signal;
+    }
     return this.http.post<IReservationTravelerResponse>(
       `${this.API_URL}`,
       data,
-      {
-        headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
-      }
+      options
     );
   }
 
@@ -126,7 +135,7 @@ export class ReservationTravelerService {
           tkId,
           ageGroupId,
         };
-        return this.create(data);
+        return this.create(data, signal);
       })
     );
   }

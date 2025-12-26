@@ -123,9 +123,10 @@ export class ReservationService {
   /**
    * Obtiene todas las reservaciones según los criterios de filtrado.
    * @param filters Filtros para aplicar en la búsqueda.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de reservaciones.
    */
-  getAll(filters?: ReservationFilters): Observable<IReservationResponse[]> {
+  getAll(filters?: ReservationFilters, signal?: AbortSignal): Observable<IReservationResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -137,7 +138,15 @@ export class ReservationService {
       });
     }
 
-    return this.http.get<IReservationResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -169,10 +178,18 @@ export class ReservationService {
   /**
    * Obtiene una reservación específica por su ID.
    * @param id ID de la reservación.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns La reservación encontrada.
    */
-  getById(id: number): Observable<IReservationResponse> {
-    return this.http.get<IReservationResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<IReservationResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<IReservationResponse>(`${this.API_URL}/${id}`, options);
   }
 
   /**
@@ -233,127 +250,210 @@ export class ReservationService {
   /**
    * Obtiene reservaciones por ID de usuario.
    * @param userId ID del usuario.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de reservaciones del usuario.
    */
-  getByUser(userId: number): Observable<IReservationResponse[]> {
+  getByUser(userId: number, signal?: AbortSignal): Observable<IReservationResponse[]> {
     const params = new HttpParams()
       .set('UserId', userId.toString())
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<IReservationResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationResponse[]>(this.API_URL, options);
   }
 
   /**
    * Obtiene reservaciones por ID de tour.
    * @param tourId ID del tour.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de reservaciones del tour.
    */
-  getByTour(tourId: number): Observable<IReservationResponse[]> {
+  getByTour(tourId: number, signal?: AbortSignal): Observable<IReservationResponse[]> {
     const params = new HttpParams()
       .set('TourId', tourId.toString())
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<IReservationResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationResponse[]>(this.API_URL, options);
   }
 
   /**
    * Obtiene reservaciones por ID de departure.
    * @param departureId ID del departure.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de reservaciones del departure.
    */
-  getByDeparture(departureId: number): Observable<IReservationResponse[]> {
+  getByDeparture(departureId: number, signal?: AbortSignal): Observable<IReservationResponse[]> {
     const params = new HttpParams()
       .set('DepartureId', departureId.toString())
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<IReservationResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationResponse[]>(this.API_URL, options);
   }
 
   /**
    * Obtiene reservaciones por ID de retailer.
    * @param retailerId ID del retailer.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de reservaciones del retailer.
    */
-  getByRetailer(retailerId: number): Observable<IReservationResponse[]> {
+  getByRetailer(retailerId: number, signal?: AbortSignal): Observable<IReservationResponse[]> {
     const params = new HttpParams()
       .set('RetailerId', retailerId.toString())
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<IReservationResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationResponse[]>(this.API_URL, options);
   }
 
   /**
    * Obtiene reservaciones por estado de reservación.
    * @param reservationStatusId ID del estado de reservación.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de reservaciones con el estado especificado.
    */
   getByReservationStatus(
-    reservationStatusId: number
+    reservationStatusId: number,
+    signal?: AbortSignal
   ): Observable<IReservationResponse[]> {
     const params = new HttpParams()
       .set('ReservationStatusId', reservationStatusId.toString())
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<IReservationResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationResponse[]>(this.API_URL, options);
   }
 
   /**
    * Obtiene reservaciones por rango de fechas de creación.
    * @param startDate Fecha de inicio (formato ISO string).
    * @param endDate Fecha de fin (formato ISO string).
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de reservaciones en el rango de fechas.
    */
   getByDateRange(
     startDate: string,
-    endDate: string
+    endDate: string,
+    signal?: AbortSignal
   ): Observable<IReservationResponse[]> {
     const params = new HttpParams()
       .set('CreatedAtFrom', startDate)
       .set('CreatedAtTo', endDate)
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<IReservationResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationResponse[]>(this.API_URL, options);
   }
 
   /**
    * Obtiene reservaciones abandonadas.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de reservaciones abandonadas.
    */
-  getAbandoned(): Observable<IReservationResponse[]> {
+  getAbandoned(signal?: AbortSignal): Observable<IReservationResponse[]> {
     const params = new HttpParams()
       .set('AbandonedAtIsNotNull', 'true')
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<IReservationResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationResponse[]>(this.API_URL, options);
   }
 
   /**
    * Obtiene reservaciones en carrito (no completadas).
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de reservaciones en carrito.
    */
-  getInCart(): Observable<IReservationResponse[]> {
+  getInCart(signal?: AbortSignal): Observable<IReservationResponse[]> {
     const params = new HttpParams()
       .set('CartAtIsNotNull', 'true')
       .set('ReservedAtIsNull', 'true')
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<IReservationResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationResponse[]>(this.API_URL, options);
   }
 
   /**
    * Obtiene reservaciones completadas.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de reservaciones completadas.
    */
-  getCompleted(): Observable<IReservationResponse[]> {
+  getCompleted(signal?: AbortSignal): Observable<IReservationResponse[]> {
     const params = new HttpParams()
       .set('ReservedAtIsNotNull', 'true')
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<IReservationResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationResponse[]>(this.API_URL, options);
   }
 
-  updateStatus(reservationId: number, statusId: number): Observable<boolean> {
-    return this.getById(reservationId).pipe(
+  updateStatus(reservationId: number, statusId: number, signal?: AbortSignal): Observable<boolean> {
+    return this.getById(reservationId, signal).pipe(
       switchMap((current) => {
         const fullPayload: ReservationUpdate = {
           tkId: current.tkId,

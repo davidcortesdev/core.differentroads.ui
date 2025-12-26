@@ -17,9 +17,10 @@ export class UsersNetService {
    * Obtiene usuarios basados en criterios de filtro
    * GET /api/User
    * @param filters Filtros para aplicar en la búsqueda
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de usuarios
    */
-  getUsers(filters?: UserFilter): Observable<IUserResponse[]> {
+  getUsers(filters?: UserFilter, signal?: AbortSignal): Observable<IUserResponse[]> {
     let params = new HttpParams();
 
     if (filters) {
@@ -41,8 +42,16 @@ export class UsersNetService {
       });
     }
 
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
     return this.http
-      .get<IUserResponse[]>(`${this.apiUrl}/User`, { params })
+      .get<IUserResponse[]>(`${this.apiUrl}/User`, options)
       .pipe(
         catchError((error) => {
           return of([]);
@@ -54,10 +63,18 @@ export class UsersNetService {
    * Obtiene un usuario específico por su ID
    * GET /api/User/{id}
    * @param id ID del usuario a recuperar
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Datos del usuario
    */
-  getUserById(id: number): Observable<IUserResponse> {
-    return this.http.get<IUserResponse>(`${this.apiUrl}/User/${id}`).pipe(
+  getUserById(id: number, signal?: AbortSignal): Observable<IUserResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<IUserResponse>(`${this.apiUrl}/User/${id}`, options).pipe(
       catchError((error) => {
         throw error;
       })
@@ -116,10 +133,11 @@ export class UsersNetService {
   /**
    * Obtiene usuarios por email
    * @param email Email del usuario
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de usuarios con ese email
    */
-  getUsersByEmail(email: string): Observable<IUserResponse[]> {
-    return this.getUsers({ Email: email }).pipe(
+  getUsersByEmail(email: string, signal?: AbortSignal): Observable<IUserResponse[]> {
+    return this.getUsers({ Email: email }, signal).pipe(
       tap((users) => {
         // Response handling if needed
       }),
@@ -132,19 +150,21 @@ export class UsersNetService {
   /**
    * Obtiene usuarios por nombre
    * @param name Nombre del usuario
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de usuarios con ese nombre
    */
-  getUsersByName(name: string): Observable<IUserResponse[]> {
-    return this.getUsers({ Name: name });
+  getUsersByName(name: string, signal?: AbortSignal): Observable<IUserResponse[]> {
+    return this.getUsers({ Name: name }, signal);
   }
 
   /**
    * Obtiene usuarios por Cognito ID
    * @param cognitoId Cognito ID del usuario
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de usuarios con ese Cognito ID
    */
-  getUsersByCognitoId(cognitoId: string): Observable<IUserResponse[]> {
-    return this.getUsers({ CognitoId: cognitoId }).pipe(
+  getUsersByCognitoId(cognitoId: string, signal?: AbortSignal): Observable<IUserResponse[]> {
+    return this.getUsers({ CognitoId: cognitoId }, signal).pipe(
       tap((users) => {
         // Response handling if needed
       }),
@@ -157,60 +177,69 @@ export class UsersNetService {
   /**
    * Obtiene usuarios con acceso web
    * @param hasWebAccess true para usuarios con acceso web, false para los que no
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de usuarios con el acceso web especificado
    */
-  getUsersByWebAccess(hasWebAccess: boolean): Observable<IUserResponse[]> {
-    return this.getUsers({ HasWebAccess: hasWebAccess });
+  getUsersByWebAccess(hasWebAccess: boolean, signal?: AbortSignal): Observable<IUserResponse[]> {
+    return this.getUsers({ HasWebAccess: hasWebAccess }, signal);
   }
 
   /**
    * Obtiene usuarios con acceso middle
    * @param hasMiddleAccess true para usuarios con acceso middle, false para los que no
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de usuarios con el acceso middle especificado
    */
   getUsersByMiddleAccess(
-    hasMiddleAccess: boolean
+    hasMiddleAccess: boolean,
+    signal?: AbortSignal
   ): Observable<IUserResponse[]> {
-    return this.getUsers({ HasMiddleAccess: hasMiddleAccess });
+    return this.getUsers({ HasMiddleAccess: hasMiddleAccess }, signal);
   }
 
   /**
    * Obtiene usuarios con acceso middle ATC
    * @param hasMiddleAtcAccess true para usuarios con acceso middle ATC, false para los que no
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de usuarios con el acceso middle ATC especificado
    */
   getUsersByMiddleAtcAccess(
-    hasMiddleAtcAccess: boolean
+    hasMiddleAtcAccess: boolean,
+    signal?: AbortSignal
   ): Observable<IUserResponse[]> {
-    return this.getUsers({ HasMiddleAtcAccess: hasMiddleAtcAccess });
+    return this.getUsers({ HasMiddleAtcAccess: hasMiddleAtcAccess }, signal);
   }
 
   /**
    * Obtiene usuarios con acceso tour operation
    * @param hasTourOperationAccess true para usuarios con acceso tour operation, false para los que no
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de usuarios con el acceso tour operation especificado
    */
   getUsersByTourOperationAccess(
-    hasTourOperationAccess: boolean
+    hasTourOperationAccess: boolean,
+    signal?: AbortSignal
   ): Observable<IUserResponse[]> {
-    return this.getUsers({ HasTourOperationAccess: hasTourOperationAccess });
+    return this.getUsers({ HasTourOperationAccess: hasTourOperationAccess }, signal);
   }
 
   /**
    * Obtiene usuarios por Retailer ID
    * @param retailerId ID del retailer
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de usuarios con ese Retailer ID
    */
-  getUsersByRetailerId(retailerId: number): Observable<IUserResponse[]> {
-    return this.getUsers({ RetailerId: retailerId });
+  getUsersByRetailerId(retailerId: number, signal?: AbortSignal): Observable<IUserResponse[]> {
+    return this.getUsers({ RetailerId: retailerId }, signal);
   }
 
   /**
    * Obtiene todos los usuarios
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de todos los usuarios
    */
-  getAllUsers(): Observable<IUserResponse[]> {
-    return this.getUsers();
+  getAllUsers(signal?: AbortSignal): Observable<IUserResponse[]> {
+    return this.getUsers(undefined, signal);
   }
 
   /**
@@ -233,7 +262,7 @@ export class UsersNetService {
     const normalizedEmail = email.trim().toLowerCase();
 
     // Primero verificar si el usuario ya existe
-    return this.getUsersByEmail(normalizedEmail).pipe(
+    return this.getUsersByEmail(normalizedEmail, undefined).pipe(
       switchMap((existingUsers) => {
         if (existingUsers && existingUsers.length > 0) {
           // Si ya existe, verificar si tiene un cognitoId real (no es un email)
@@ -271,7 +300,7 @@ export class UsersNetService {
             };
             
             return this.updateUser(existingUser.id, updateData).pipe(
-              switchMap(() => this.getUserById(existingUser.id))
+              switchMap(() => this.getUserById(existingUser.id, undefined))
             );
           }
           

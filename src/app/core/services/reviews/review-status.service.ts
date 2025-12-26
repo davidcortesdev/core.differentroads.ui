@@ -60,9 +60,10 @@ export class ReviewStatusService {
   /**
    * Obtiene todos los review statuses disponibles.
    * @param filters Filtros para aplicar en la búsqueda.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de review statuses.
    */
-  getAll(filters?: ReviewStatusFilters): Observable<IReviewStatusResponse[]> {
+  getAll(filters?: ReviewStatusFilters, signal?: AbortSignal): Observable<IReviewStatusResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -77,16 +78,32 @@ export class ReviewStatusService {
       });
     }
 
-    return this.http.get<IReviewStatusResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReviewStatusResponse[]>(this.API_URL, options);
   }
 
   /**
    * Obtiene un review status específico por su ID.
    * @param id ID del review status.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Review status correspondiente.
    */
-  getById(id: number): Observable<IReviewStatusResponse> {
-    return this.http.get<IReviewStatusResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<IReviewStatusResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<IReviewStatusResponse>(`${this.API_URL}/${id}`, options);
   }
 
   /**
@@ -126,30 +143,33 @@ export class ReviewStatusService {
 
   /**
    * Obtiene review statuses activos ordenados por displayOrder.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de review statuses activos.
    */
-  getActiveStatuses(): Observable<IReviewStatusResponse[]> {
+  getActiveStatuses(signal?: AbortSignal): Observable<IReviewStatusResponse[]> {
     const filters: ReviewStatusFilters = { isActive: true };
-    return this.getAll(filters);
+    return this.getAll(filters, signal);
   }
 
   /**
    * Obtiene un review status por su código.
    * @param code Código del review status.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Review status correspondiente.
    */
-  getByCode(code: string): Observable<IReviewStatusResponse[]> {
+  getByCode(code: string, signal?: AbortSignal): Observable<IReviewStatusResponse[]> {
     const filters: ReviewStatusFilters = { code };
-    return this.getAll(filters);
+    return this.getAll(filters, signal);
   }
 
   /**
    * Busca review statuses por nombre (búsqueda parcial).
    * @param name Nombre o parte del nombre a buscar.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de review statuses que coinciden.
    */
-  searchByName(name: string): Observable<IReviewStatusResponse[]> {
+  searchByName(name: string, signal?: AbortSignal): Observable<IReviewStatusResponse[]> {
     const filters: ReviewStatusFilters = { name };
-    return this.getAll(filters);
+    return this.getAll(filters, signal);
   }
 }

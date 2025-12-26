@@ -23,6 +23,7 @@ export class ReviewSectionV2Component implements OnInit, OnChanges, OnDestroy {
   
   // Subject para manejar la destrucción del componente y cancelar suscripciones
   private destroy$ = new Subject<void>();
+  private abortController = new AbortController();
   
   constructor(
     private reviewsService: ReviewsService,
@@ -47,6 +48,7 @@ export class ReviewSectionV2Component implements OnInit, OnChanges, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.abortController.abort();
     // Emitir señal de destrucción para cancelar todas las suscripciones con takeUntil
     this.destroy$.next();
     this.destroy$.complete();
@@ -78,7 +80,7 @@ export class ReviewSectionV2Component implements OnInit, OnChanges, OnDestroy {
         }
 
         // Ahora obtener las reviews del usuario
-        return this.reviewsService.getByUserId(userIdNumber).pipe(
+        return this.reviewsService.getByUserId(userIdNumber, undefined, this.abortController.signal).pipe(
           takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
           switchMap(reviews => {
             if (reviews.length === 0) {
@@ -104,7 +106,7 @@ export class ReviewSectionV2Component implements OnInit, OnChanges, OnDestroy {
       }),
       catchError(error => {
         // Si falla obtener el usuario, intentar cargar las reviews de todas formas
-        return this.reviewsService.getByUserId(userIdNumber).pipe(
+        return this.reviewsService.getByUserId(userIdNumber, undefined, this.abortController.signal).pipe(
           takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
           switchMap(reviews => {
             if (reviews.length === 0) {
@@ -153,7 +155,7 @@ export class ReviewSectionV2Component implements OnInit, OnChanges, OnDestroy {
 
     // Crear observables para obtener información de cada tour
     const tourObservables = uniqueTourIds.map(tourId => 
-      this.tourService.getTourById(tourId).pipe(
+      this.tourService.getById(tourId, true, this.abortController.signal).pipe(
         takeUntil(this.destroy$), // ✅ Cancelar si el componente se destruye
         catchError(error => {
           return of(null);

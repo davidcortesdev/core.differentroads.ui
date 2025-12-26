@@ -2,6 +2,7 @@ import {
   Component,
   Input,
   OnInit,
+  OnDestroy,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
 } from '@angular/core';
@@ -21,7 +22,7 @@ import { IEnrichedReviewResponse } from '../../../core/models/reviews/review.mod
   styleUrls: ['./reviews.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ReviewsComponent implements OnInit {
+export class ReviewsComponent implements OnInit, OnDestroy {
   @Input() reviews: IEnrichedReviewResponse[] = []; // Para recibir reviews desde el componente padre
   @Input() tourId?: number;
   @Input() showOnHomePage?: boolean;
@@ -37,6 +38,8 @@ export class ReviewsComponent implements OnInit {
   // Nuevas propiedades para aprovechar los métodos del servicio
   totalReviews = 0;
   averageRating = 0;
+
+  private abortController = new AbortController();
 
   readonly responsiveOptions = [
     {
@@ -98,6 +101,10 @@ export class ReviewsComponent implements OnInit {
     }
   }
 
+  ngOnDestroy(): void {
+    this.abortController.abort();
+  }
+
   loadReviews(): void {
     this.loading = true;
     
@@ -118,23 +125,23 @@ export class ReviewsComponent implements OnInit {
     if (this.showOnHomePage) {
       // Usar método específico para homepage
       reviewsObservable = this.limit 
-        ? this.reviewsService.getTopReviews(this.limit, additionalFilters)
-        : this.reviewsService.getForHomePage(additionalFilters);
+        ? this.reviewsService.getTopReviews(this.limit, additionalFilters, this.abortController.signal)
+        : this.reviewsService.getForHomePage(additionalFilters, this.abortController.signal);
     } else if (this.showOnTourPage && this.tourId) {
       // Usar método específico para tour page
       reviewsObservable = this.limit 
-        ? this.reviewsService.getTopReviews(this.limit, { tourId: this.tourId, ...additionalFilters })
-        : this.reviewsService.getForTourPage(this.tourId, additionalFilters);
+        ? this.reviewsService.getTopReviews(this.limit, { tourId: this.tourId, ...additionalFilters }, this.abortController.signal)
+        : this.reviewsService.getForTourPage(this.tourId, additionalFilters, this.abortController.signal);
     } else if (this.tourId) {
       // Usar método específico por tour ID
       reviewsObservable = this.limit 
-        ? this.reviewsService.getTopReviews(this.limit, { tourId: this.tourId, ...additionalFilters })
-        : this.reviewsService.getByTourId(this.tourId, additionalFilters);
+        ? this.reviewsService.getTopReviews(this.limit, { tourId: this.tourId, ...additionalFilters }, this.abortController.signal)
+        : this.reviewsService.getByTourId(this.tourId, additionalFilters, this.abortController.signal);
     } else {
       // Usar getAll como fallback
       reviewsObservable = this.limit 
-        ? this.reviewsService.getTopReviews(this.limit, additionalFilters)
-        : this.reviewsService.getAll(additionalFilters);
+        ? this.reviewsService.getTopReviews(this.limit, additionalFilters, this.abortController.signal)
+        : this.reviewsService.getAll(additionalFilters, this.abortController.signal);
     }
 
     reviewsObservable.pipe(
@@ -247,7 +254,7 @@ export class ReviewsComponent implements OnInit {
 
     // Crear observables para obtener información de cada tour
     const tourObservables = uniqueTourIds.map(tourId => 
-      this.tourService.getTourById(tourId)
+      this.tourService.getById(tourId, true, this.abortController.signal)
     );
 
     forkJoin(tourObservables).subscribe({
@@ -304,7 +311,7 @@ export class ReviewsComponent implements OnInit {
    */
   loadReviewsByDeparture(departureId: number): void {
     this.loading = true;
-    this.reviewsService.getByDepartureId(departureId).pipe(
+    this.reviewsService.getByDepartureId(departureId, undefined, this.abortController.signal).pipe(
       switchMap(reviews => {
         if (reviews.length === 0) {
           return of([]);
@@ -341,7 +348,7 @@ export class ReviewsComponent implements OnInit {
    */
   loadReviewsByTraveler(userId: number): void {
     this.loading = true;
-    this.reviewsService.getByUserId(userId).pipe(
+    this.reviewsService.getByUserId(userId, undefined, this.abortController.signal).pipe(
       switchMap(reviews => {
         if (reviews.length === 0) {
           return of([]);

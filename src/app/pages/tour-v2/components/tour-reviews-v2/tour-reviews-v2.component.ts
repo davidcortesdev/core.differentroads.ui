@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges, OnDestroy } from '@angular/core';
 import { ReviewsService } from '../../../../core/services/reviews/reviews.service';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
@@ -9,10 +9,12 @@ import { of } from 'rxjs';
   templateUrl: './tour-reviews-v2.component.html',
   styleUrl: './tour-reviews-v2.component.scss'
 })
-export class TourReviewsV2Component implements OnInit, OnChanges {
+export class TourReviewsV2Component implements OnInit, OnChanges, OnDestroy {
   @Input() tourId: number | undefined;
   hasReviews: boolean = false;
   loading: boolean = true;
+
+  private abortController = new AbortController();
 
   constructor(private reviewsService: ReviewsService) {}
 
@@ -24,6 +26,10 @@ export class TourReviewsV2Component implements OnInit, OnChanges {
     if (changes['tourId'] && !changes['tourId'].firstChange) {
       this.checkReviews();
     }
+  }
+
+  ngOnDestroy(): void {
+    this.abortController.abort();
   }
 
   private checkReviews(): void {
@@ -39,7 +45,7 @@ export class TourReviewsV2Component implements OnInit, OnChanges {
     this.reviewsService.getCount({
       tourId: this.tourId,
       showOnTourPage: true
-    }).pipe(
+    }, this.abortController.signal).pipe(
       catchError((error) => {
         return of(0);
       })

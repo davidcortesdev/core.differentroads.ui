@@ -132,9 +132,10 @@
                 label="Continuar"
                 icon="pi pi-arrow-right"
                 iconPos="right"
-                [disabled]="!selectedFlight || isFlightlessProcessing"
+                [disabled]="!selectedFlight || isFlightlessProcessing || isFlightProcessing"
                 [pTooltip]="getContinueButtonTooltip()"
                 tooltipPosition="top"
+                [loading]="isFlightProcessing"
                 (onClick)="
                   checkAuthAndContinue(2, onActiveIndexChange.bind(this), false)
                 "

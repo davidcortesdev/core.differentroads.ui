@@ -65,6 +65,7 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
   loginDialogVisible: boolean = false;
   flightDetails: Map<number, IFlightDetailDTO> = new Map();
   travelers: IReservationTravelerResponse[] = [];
+  private isProcessing: boolean = false;
 
   constructor(
     private router: Router,
@@ -286,6 +287,12 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
   // ✅ HELPER: Verificar si un ID pertenece a un flight pack real
   private isFlightPackId(id: number): boolean {
     return Array.isArray(this.allFlightPacks) && this.allFlightPacks.some(p => p.id === id);
+  }
+
+  // ✅ HELPER NUEVO: Verificar si un ID corresponde al pack "Sin Vuelos"
+  private isSinVuelosPackId(id: number): boolean {
+    const pack = this.allFlightPacks?.find(p => p.id === id);
+    return pack ? this.isSinVuelosFlight(pack) : false;
   }
 
   // ✅ MÉTODO NUEVO: Cargar y mostrar como seleccionado el vuelo que ya existe en la BD
@@ -600,7 +607,10 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
   }
 
   async selectFlight(flightPack: IFlightPackDTO): Promise<void> {
+    if (this.isProcessing) return;
+    this.isProcessing = true;
     if (this.isSinVuelosFlight(flightPack) && !this.isInternalSelection) {
+      this.isProcessing = false;
       return;
     }
 
@@ -610,7 +620,7 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
 
       // Guardar estado "sin vuelo" para todos los viajeros ANTES de emitir el evento
       try {
-        await this.saveFlightAssignmentsForAllTravelers(0, true); // 0 = sin vuelos, true = deseleccionar specific-search
+        await this.saveFlightAssignmentsForAllTravelers(0, true); // 0 = sin vuelos, deseleccionar specific-search
       } catch (error) {
       }
 
@@ -627,7 +637,7 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
 
       // Guardar asignaciones del vuelo seleccionado para todos los viajeros ANTES de emitir eventos
       try {
-        await this.saveFlightAssignmentsForAllTravelers(flightPack.id, true); // flightPack.id, true = deseleccionar specific-search
+        await this.saveFlightAssignmentsForAllTravelers(flightPack.id, false); // flightPack.id, NO deseleccionar specific-search
       } catch (error) {
       }
 
@@ -642,9 +652,12 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
         totalPrice: basePrice,
       });
     }
+    this.isProcessing = false;
   }
 
   async selectSinVuelos(): Promise<void> {
+    if (this.isProcessing) return;
+    this.isProcessing = true;
     const sinVuelosPack = this.allFlightPacks.find((pack) => {
       return this.isSinVuelosFlight(pack);
     });
@@ -656,7 +669,7 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       const basePrice = 0;
 
       try {
-        await this.saveFlightAssignmentsForAllTravelers(sinVuelosPack.id, true);
+        await this.saveFlightAssignmentsForAllTravelers(sinVuelosPack.id, true); // deseleccionar specific-search
       } catch (error) {
       }
 
@@ -673,6 +686,7 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       this.isInternalSelection = false;
     } else {
     }
+    this.isProcessing = false;
   }
 
   getSelectedFlightText(): string {
@@ -878,6 +892,43 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
 
       // 3. Esperar a que se completen todas las actualizaciones
       await Promise.all(updatePromises);
+
+      // 3.1. Si se seleccionó un vuelo real (NO "Sin Vuelos"), eliminar asignaciones previas de "Sin Vuelos"
+      if (finalFlightPackId !== 0 && !this.isSinVuelosPackId(finalFlightPackId)) {
+        const sinVuelosPack = this.allFlightPacks?.find((pack) => this.isSinVuelosFlight(pack));
+        if (sinVuelosPack) {
+          const cleanupPromises = travelers.map((traveler) => {
+            return new Promise<void>((resolve) => {
+              this.reservationTravelerActivityPackService
+                .getByReservationTraveler(traveler.id)
+                .subscribe({
+                  next: (assignments) => {
+                    const toDelete = (assignments || []).filter(
+                      (a) => a.activityPackId === sinVuelosPack.id
+                    );
+                    if (toDelete.length === 0) {
+                      resolve();
+                      return;
+                    }
+                    const deletePromises = toDelete.map((a) =>
+                      new Promise<void>((resDel) => {
+                        this.reservationTravelerActivityPackService
+                          .delete(a.id)
+                          .subscribe({
+                            next: () => resDel(),
+                            error: () => resDel(),
+                          });
+                      })
+                    );
+                    Promise.all(deletePromises).then(() => resolve());
+                  },
+                  error: () => resolve(),
+                });
+            });
+          });
+          await Promise.all(cleanupPromises);
+        }
+      }
 
       // 4. Deseleccionar vuelos de specific-search si es necesario
       if (shouldUnselectSpecificSearch && this.reservationId) {

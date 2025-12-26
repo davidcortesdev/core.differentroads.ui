@@ -54,9 +54,10 @@ export class TourTagService {
   /**
    * Obtiene todas las relaciones entre tours y etiquetas según los criterios de filtrado.
    * @param filters Filtros para aplicar en la búsqueda.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de relaciones tour-etiqueta.
    */
-  getAll(filters?: TourTagFilters): Observable<ITourTagResponse[]> {
+  getAll(filters?: TourTagFilters, signal?: AbortSignal): Observable<ITourTagResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -77,7 +78,16 @@ export class TourTagService {
       });
     }
 
-    return this.http.get<ITourTagResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<ITourTagResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -94,10 +104,20 @@ export class TourTagService {
   /**
    * Obtiene una relación específica por su ID.
    * @param id ID de la relación.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns La relación encontrada.
    */
-  getById(id: number): Observable<ITourTagResponse> {
-    return this.http.get<ITourTagResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<ITourTagResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<ITourTagResponse>(`${this.API_URL}/${id}`, options);
   }
 
   /**
@@ -125,14 +145,26 @@ export class TourTagService {
    * Obtiene relaciones tour-etiqueta por ID del tour y código de tipo de relación.
    * @param tourId ID del tour.
    * @param typeCode Código de tipo de relación.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de relaciones que coinciden con los criterios.
    */
   getByTourAndType(
     tourId: number,
-    typeCode: string
+    typeCode: string,
+    signal?: AbortSignal
   ): Observable<ITourTagResponse[]> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
     return this.http.get<ITourTagResponse[]>(
-      `${this.API_URL}/bytourandtype/${tourId}/${typeCode}`
+      `${this.API_URL}/bytourandtype/${tourId}/${typeCode}`,
+      options
     );
   }
 
@@ -150,9 +182,10 @@ export class TourTagService {
   /**
    * Obtiene todos los IDs de tours relacionados con una o más etiquetas específicas.
    * @param tagIds Lista de IDs de etiquetas
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de IDs de tours
    */
-  getToursByTags(tagIds: number[]): Observable<number[]> {
+  getToursByTags(tagIds: number[], signal?: AbortSignal): Observable<number[]> {
     let params = new HttpParams();
     
     // Agregar cada tagId como parámetro de consulta
@@ -160,6 +193,15 @@ export class TourTagService {
       params = params.append('tagIds', id.toString());
     });
 
-    return this.http.get<number[]>(`${this.API_URL}/tours-by-tags`, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<number[]>(`${this.API_URL}/tours-by-tags`, options);
   }
 }

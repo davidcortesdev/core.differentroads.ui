@@ -89,9 +89,10 @@ export class DepartureService {
   /**
    * Obtiene todas las departures según los criterios de filtrado.
    * @param filters Filtros para aplicar en la búsqueda.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de departures.
    */
-  getAll(filters?: DepartureFilters): Observable<IDepartureResponse[]> {
+  getAll(filters?: DepartureFilters, signal?: AbortSignal): Observable<IDepartureResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -106,7 +107,16 @@ export class DepartureService {
       });
     }
 
-    return this.http.get<IDepartureResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IDepartureResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -123,13 +133,24 @@ export class DepartureService {
   /**
    * Obtiene una departure específica por su ID.
    * @param id ID de la departure.
+   * @param previewMode Modo de vista previa.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns La departure encontrada.
    */
-  getById(id: number, previewMode: boolean = false): Observable<IDepartureResponse> {
+  getById(id: number, previewMode: boolean = false, signal?: AbortSignal): Observable<IDepartureResponse> {
     let params = new HttpParams()
       .set('FilterByVisible', !previewMode);
 
-    return this.http.get<IDepartureResponse>(`${this.API_URL}/${id}`, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IDepartureResponse>(`${this.API_URL}/${id}`, options);
   }
 
   /**
@@ -156,15 +177,26 @@ export class DepartureService {
   /**
    * Obtiene departures por ID de itinerario.
    * @param itineraryId ID del itinerario.
+   * @param previewMode Modo de vista previa.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de departures del itinerario.
    */
-  getByItinerary(itineraryId: number, previewMode: boolean = false): Observable<IDepartureResponse[]> {
+  getByItinerary(itineraryId: number, previewMode: boolean = false, signal?: AbortSignal): Observable<IDepartureResponse[]> {
     let params = new HttpParams()
       .set('ItineraryId', itineraryId.toString())
       .set('useExactMatchForStrings', 'false')
       .set('FilterByVisible', !previewMode);
 
-    return this.http.get<IDepartureResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IDepartureResponse[]>(this.API_URL, options);
   }
 
   /**

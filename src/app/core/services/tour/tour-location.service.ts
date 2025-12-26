@@ -64,10 +64,11 @@ export class TourLocationService {
 
   /**
    * Obtiene todas las relaciones tour-localización disponibles.
-   * @param filters Filtros para aplicar en la búsqueda.
+   * @param filter Filtros para aplicar en la búsqueda.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de relaciones tour-localización.
    */
-  getAll(filter?: TourLocationFilters): Observable<ITourLocationResponse[]> {
+  getAll(filter?: TourLocationFilters, signal?: AbortSignal): Observable<ITourLocationResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -82,25 +83,61 @@ export class TourLocationService {
       });
     }
 
-    return this.http.get<ITourLocationResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<ITourLocationResponse[]>(this.API_URL, options);
   }
 
-  getById(id: number): Observable<ITourLocationResponse> {
-    return this.http.get<ITourLocationResponse>(`${this.API_URL}/${id}`);
+  /**
+   * Obtiene una relación tour-localización específica por su ID.
+   * @param id ID de la relación.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
+   * @returns La relación encontrada.
+   */
+  getById(id: number, signal?: AbortSignal): Observable<ITourLocationResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<ITourLocationResponse>(`${this.API_URL}/${id}`, options);
   }
 
   /**
    * Obtiene relaciones tour-localización por ID del tour y código de tipo de relación.
    * @param tourId ID del tour
    * @param typeCode Código del tipo de relación
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de relaciones tour-localización
    */
   getByTourAndType(
     tourId: number,
-    typeCode: string
+    typeCode: string,
+    signal?: AbortSignal
   ): Observable<ITourLocationResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
     return this.http.get<ITourLocationResponse>(
-      `${this.API_URL}/bytourandtype/${tourId}/${typeCode}`
+      `${this.API_URL}/bytourandtype/${tourId}/${typeCode}`,
+      options
     );
   }
 
@@ -120,9 +157,10 @@ export class TourLocationService {
   /**
    * Obtiene todos los IDs de tours relacionados con una o más ubicaciones específicas.
    * @param locationIds Lista de IDs de ubicaciones (países, continentes, etc.)
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de IDs de tours
    */
-  getToursByLocations(locationIds: number[]): Observable<number[]> {
+  getToursByLocations(locationIds: number[], signal?: AbortSignal): Observable<number[]> {
     let params = new HttpParams();
     
     // Agregar cada locationId como parámetro de consulta
@@ -130,7 +168,16 @@ export class TourLocationService {
       params = params.append('locationIds', id.toString());
     });
 
-    return this.http.get<number[]>(`${this.API_URL}/tours-by-locations`, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<number[]>(`${this.API_URL}/tours-by-locations`, options);
   }
 
   create(data: TourLocationCreate): Observable<ITourLocationResponse> {

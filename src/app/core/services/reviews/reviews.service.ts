@@ -228,9 +228,10 @@ export class ReviewsService {
   /**
    * Obtiene el rating promedio de reviews basado en criterios de filtro.
    * @param filters Filtros para aplicar en el cálculo.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Rating promedio.
    */
-  getAverageRating(filters?: ReviewFilters): Observable<AverageRatingResponse> {
+  getAverageRating(filters?: ReviewFilters, signal?: AbortSignal): Observable<AverageRatingResponse> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -245,8 +246,17 @@ export class ReviewsService {
       });
     }
 
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
     // El endpoint puede devolver un número directamente o un objeto
-    return this.http.get<number | AverageRatingResponse>(`${this.API_URL}/average-rating`, { params }).pipe(
+    return this.http.get<number | AverageRatingResponse>(`${this.API_URL}/average-rating`, options).pipe(
       map((response) => {
         // Si la respuesta es un número, convertirla al formato esperado
         if (typeof response === 'number') {

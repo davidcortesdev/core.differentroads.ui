@@ -35,10 +35,12 @@ export class HomeSectionThemeService {
   /**
    * Obtiene todos los temas de sección de inicio según los criterios de filtrado.
    * @param filters Filtros para aplicar en la búsqueda.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de temas de sección de inicio.
    */
   getAll(
-    filters?: HomeSectionThemeFilters
+    filters?: HomeSectionThemeFilters,
+    signal?: AbortSignal
   ): Observable<IHomeSectionThemeResponse[]> {
     let params = new HttpParams();
 
@@ -54,27 +56,45 @@ export class HomeSectionThemeService {
       });
     }
 
-    return this.http.get<IHomeSectionThemeResponse[]>(this.API_URL, {
-      params,
-    });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IHomeSectionThemeResponse[]>(this.API_URL, options);
   }
 
   /**
    * Obtiene un tema de sección de inicio específico por su ID.
    * @param id ID del tema de sección de inicio.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns El tema de sección de inicio encontrado.
    */
-  getById(id: number): Observable<IHomeSectionThemeResponse> {
-    return this.http.get<IHomeSectionThemeResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<IHomeSectionThemeResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IHomeSectionThemeResponse>(`${this.API_URL}/${id}`, options);
   }
 
   /**
    * Obtiene un tema por su código.
    * @param code Código del tema (ej: "DARK", "LIGHT").
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns El tema encontrado.
    */
-  getByCode(code: string): Observable<IHomeSectionThemeResponse[]> {
-    return this.getAll({ code });
+  getByCode(code: string, signal?: AbortSignal): Observable<IHomeSectionThemeResponse[]> {
+    return this.getAll({ code }, signal);
   }
 }
 

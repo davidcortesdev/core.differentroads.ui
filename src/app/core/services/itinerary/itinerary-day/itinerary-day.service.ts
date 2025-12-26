@@ -55,9 +55,10 @@ export class ItineraryDayService {
 /**
    * Obtiene todos los días de itinerario, con opción de aplicar filtros.
    * @param filters Filtros opcionales para la búsqueda.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de días de itinerario.
    */
-  getAll(filters?: ItineraryDayFilters): Observable<IItineraryDayResponse[]> {
+ getAll(filters?: ItineraryDayFilters, signal?: AbortSignal): Observable<IItineraryDayResponse[]> {
       let params = new HttpParams();
   
       if (filters) {
@@ -69,18 +70,37 @@ export class ItineraryDayService {
             );
           }
         });
-      }
+      }
   
-      return this.http.get<IItineraryDayResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+  
+      return this.http.get<IItineraryDayResponse[]>(this.API_URL, options);
     }
 
   /**
    * Obtiene un día de itinerario por su ID.
    * @param id ID del día de itinerario.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Día de itinerario correspondiente.
    */
-  getById(id: number): Observable<IItineraryDayResponse> {
-    return this.http.get<IItineraryDayResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<IItineraryDayResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IItineraryDayResponse>(`${this.API_URL}/${id}`, options);
   }
 
   /**

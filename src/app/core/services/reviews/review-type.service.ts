@@ -45,9 +45,10 @@ export class ReviewTypeService {
   /**
    * Obtiene todos los review types disponibles.
    * @param filters Filtros para aplicar en la búsqueda.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de review types.
    */
-  getAll(filters?: ReviewTypeFilters): Observable<IReviewTypeResponse[]> {
+  getAll(filters?: ReviewTypeFilters, signal?: AbortSignal): Observable<IReviewTypeResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -62,30 +63,50 @@ export class ReviewTypeService {
       });
     }
 
-    return this.http.get<IReviewTypeResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReviewTypeResponse[]>(this.API_URL, options);
   }
 
   /**
    * Obtiene un review type específico por su ID.
    * @param id ID del review type.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Review type correspondiente.
    */
-  getById(id: number): Observable<IReviewTypeResponse> {
-    return this.http.get<IReviewTypeResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<IReviewTypeResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReviewTypeResponse>(`${this.API_URL}/${id}`, options);
   }
 
   /**
    * Obtiene un review type por su código.
    * @param code Código del review type (ej: "GENERAL").
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Review type correspondiente o null si no se encuentra.
    */
-  getByCode(code: string): Observable<IReviewTypeResponse | null> {
+  getByCode(code: string, signal?: AbortSignal): Observable<IReviewTypeResponse | null> {
     const filters: ReviewTypeFilters = { 
       code,
       useExactMatchForStrings: true 
     };
     
-    return this.getAll(filters).pipe(
+    return this.getAll(filters, signal).pipe(
       map((types) => {
         const found = types.find((type) => type.code === code);
         return found || null;

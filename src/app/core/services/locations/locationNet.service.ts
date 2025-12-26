@@ -75,7 +75,7 @@ export class LocationNetService {
   }
 
   // NUEVO: Método para obtener múltiples ubicaciones por IDs
-  getLocationsByIds(ids: number[]): Observable<Location[]> {
+  getLocationsByIds(ids: number[], signal?: AbortSignal): Observable<Location[]> {
     if (!ids || ids.length === 0) {
       return of([]);
     }
@@ -94,7 +94,16 @@ export class LocationNetService {
       params = params.append('Id', id.toString());
     });
 
-    const locationsObservable = this.http.get<Location[]>(`${this.apiUrl}/location`, { params })
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    const locationsObservable = this.http.get<Location[]>(`${this.apiUrl}/location`, options)
       .pipe(
         tap((locations) => {
           // Guardar ubicaciones individuales en el cache

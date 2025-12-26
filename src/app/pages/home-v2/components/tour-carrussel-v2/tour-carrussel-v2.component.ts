@@ -87,6 +87,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
   private tripTypesMap: Map<number, ITripTypeResponse> = new Map();
   private generalReviewTypeId: number | null = null;
   private tripTypesAbortController?: AbortController;
+  private abortController = new AbortController();
 
   // Debug: IDs de tours para mostrar en pantalla
   debugTourIds: number[] = [];
@@ -177,7 +178,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
   }
 
   private loadGeneralReviewType(): Observable<void> {
-    return this.reviewTypeService.getByCode('GENERAL').pipe(
+    return this.reviewTypeService.getByCode('GENERAL', this.abortController.signal).pipe(
       map((reviewType) => {
         if (reviewType) {
           this.generalReviewTypeId = reviewType.id;
@@ -207,6 +208,8 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
       this.tripTypesAbortController.abort();
       this.tripTypesAbortController = undefined;
     }
+    // Cancelar todas las peticiones HTTP pendientes
+    this.abortController.abort();
     // Limpiar Intersection Observer
     if (this.intersectionObserver) {
       this.intersectionObserver.disconnect();
@@ -647,7 +650,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
       isActive: true
     };
 
-    return this.tourReviewService.getAverageRating(filters).pipe(
+    return this.tourReviewService.getAverageRating(filters, this.abortController.signal).pipe(
       map((ratingResponse) => {
         // Si hay rating, devolverlo tal cual (sin redondeos)
         // Si no hay rating o es 0, devolver null para que formatRating devuelva ''
@@ -666,7 +669,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
 
     // Si no, cargar la primera configuración activa del carrusel de tours
     this.homeSectionConfigurationService
-      .getTourCarouselConfigurations()
+      .getTourCarouselConfigurations(this.abortController.signal)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (configurations) => {
@@ -693,7 +696,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
   private loadSpecificConfiguration(configId: number): void {
     // Cargar la configuración específica
     this.homeSectionConfigurationService
-      .getById(configId)
+      .getById(configId, this.abortController.signal)
       .pipe(
         switchMap((configuration) => {
           // Establecer datos de la configuración
@@ -704,7 +707,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
 
           // Obtener el tema desde el servicio si hay themeId
           if (configuration.themeId) {
-            return this.homeSectionThemeService.getById(configuration.themeId).pipe(
+            return this.homeSectionThemeService.getById(configuration.themeId, this.abortController.signal).pipe(
               map((theme) => {
                 // Usar el código del tema (en minúsculas) o 'light' por defecto
                 this.theme = theme?.code?.toLowerCase() || configuration.theme || 'light';
@@ -726,7 +729,8 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
           // Cargar filtros de tours para esta configuración
           return this.homeSectionTourFilterService.getByConfigurationOrdered(
             configId,
-            true
+            true,
+            this.abortController.signal
           );
         }),
         takeUntil(this.destroy$)
@@ -826,7 +830,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
   ): Observable<number[]> {
     switch (filter.filterType) {
       case 'tag':
-        return this.tourTagService.getToursByTags([filter.tagId!]).pipe(
+        return this.tourTagService.getToursByTags([filter.tagId!], this.abortController.signal).pipe(
           map((tourIds) => {
             return tourIds;
           }),
@@ -837,7 +841,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
 
       case 'location':
         return this.tourLocationService
-          .getToursByLocations([filter.locationId!])
+          .getToursByLocations([filter.locationId!], this.abortController.signal)
           .pipe(
             map((tourIds) => {
               return tourIds;
@@ -880,7 +884,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
       isBookable: true,
     };
 
-    return this.itineraryService.getAll(itineraryFilters, false).pipe(
+    return this.itineraryService.getAll(itineraryFilters, false, this.abortController.signal).pipe(
       switchMap((itineraries: IItineraryResponse[]) => {
         if (itineraries.length === 0) {
           return of({
@@ -893,7 +897,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
         }
 
         const departureRequests = itineraries.map((itinerary) =>
-          this.departureService.getByItinerary(itinerary.id, false).pipe(
+          this.departureService.getByItinerary(itinerary.id, false, this.abortController.signal).pipe(
             catchError(() => of([]))
           )
         );
@@ -905,17 +909,17 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
             const itineraryDaysRequest =
               itineraries.length > 0
                 ? this.itineraryDayService
-                  .getAll({ itineraryId: itineraries[0].id })
+                  .getAll({ itineraryId: itineraries[0].id }, this.abortController.signal)
                   .pipe(catchError(() => of([])))
                 : of([]);
 
             const tagRequest = this.tourTagService
-              .getByTourAndType(tourId, 'VISIBLE')
+              .getByTourAndType(tourId, 'VISIBLE', this.abortController.signal)
               .pipe(
                 switchMap((tourTags) => {
                   if (tourTags.length > 0 && tourTags[0]?.tagId && tourTags[0].tagId > 0) {
                     const firstTagId = tourTags[0].tagId;
-                    return this.tagService.getById(firstTagId).pipe(
+                    return this.tagService.getById(firstTagId, this.abortController.signal).pipe(
                       map((tag) => tag?.name && tag.name.trim().length > 0 ? [tag.name.trim()] : []),
                       catchError(() => of([]))
                     );
@@ -926,14 +930,14 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
               );
 
             const countryLocationRequest = this.tourLocationService
-              .getByTourAndType(tourId, 'COUNTRY')
+              .getByTourAndType(tourId, 'COUNTRY', this.abortController.signal)
               .pipe(
                 map((response) => Array.isArray(response) ? response : response ? [response] : []),
                 catchError(() => of([]))
               );
 
             const continentLocationRequest = this.tourLocationService
-              .getByTourAndType(tourId, 'CONTINENT')
+              .getByTourAndType(tourId, 'CONTINENT', this.abortController.signal)
               .pipe(
                 map((response) => Array.isArray(response) ? response : response ? [response] : []),
                 catchError(() => of([]))
@@ -964,7 +968,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
                   });
                 }
 
-                return this.locationService.getLocationsByIds(uniqueLocationIds).pipe(
+                return this.locationService.getLocationsByIds(uniqueLocationIds, this.abortController.signal).pipe(
                   map((locations: Location[]) => {
                     const locationsMap = new Map<number, Location>();
                     locations.forEach((location) => {
@@ -1030,8 +1034,8 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
         mergeMap((id: string) => {
           // Combinar datos del TourNetService, CMSTourService y datos adicionales
           return forkJoin({
-            tourData: this.tourService.getTourById(Number(id)),
-            cmsData: this.cmsTourService.getAllTours({ tourId: Number(id) }),
+            tourData: this.tourService.getById(Number(id), true, this.abortController.signal),
+            cmsData: this.cmsTourService.getAllTours({ tourId: Number(id) }, this.abortController.signal),
             additionalData: this.getAdditionalTourData(Number(id))
           }).pipe(
             catchError((error: Error) => {

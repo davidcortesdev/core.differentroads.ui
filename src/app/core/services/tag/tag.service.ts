@@ -109,9 +109,10 @@ export class TagService {
   /**
    * Obtiene una etiqueta específica por su ID.
    * @param id ID de la etiqueta.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns La etiqueta encontrada.
    */
-  getById(id: number): Observable<ITagResponse> {
+  getById(id: number, signal?: AbortSignal): Observable<ITagResponse> {
     // Verificar si la etiqueta ya está en cache
     if (this.tagCache.has(id)) {
       return of(this.tagCache.get(id)!);
@@ -122,8 +123,17 @@ export class TagService {
       return this.tagObservableCache.get(id)!;
     }
 
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
     // Crear nueva llamada HTTP y configurar cache
-    const tagObservable = this.http.get<ITagResponse>(`${this.API_URL}/${id}`)
+    const tagObservable = this.http.get<ITagResponse>(`${this.API_URL}/${id}`, options)
       .pipe(
         tap(tag => {
           // Guardar en cache solo si la respuesta es válida

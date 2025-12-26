@@ -160,6 +160,8 @@ export class TourHeaderV2Component
   private subscriptions = new Subscription();
   // Cancellation token independiente para la petición de trip types
   private tripTypesDestroy$ = new Subject<void>();
+  // AbortController compartido para cancelar peticiones HTTP
+  private abortController = new AbortController();
 
   // Estado para controlar el proceso de reservación
   isCreatingReservation = false;
@@ -230,6 +232,8 @@ export class TourHeaderV2Component
   }
 
   ngOnDestroy() {
+    // Cancelar todas las peticiones HTTP pendientes
+    this.abortController.abort();
     // Cancelar petición de trip types
     this.tripTypesDestroy$.next();
     this.tripTypesDestroy$.complete();
@@ -440,7 +444,7 @@ export class TourHeaderV2Component
     };
 
     this.subscriptions.add(
-      this.tourReviewService.getAverageRating(filters).pipe(
+      this.tourReviewService.getAverageRating(filters, this.abortController.signal).pipe(
         catchError((error) => {
           this.averageRating = null;
           this.reviewCount = 0;
@@ -547,7 +551,7 @@ export class TourHeaderV2Component
 
     // Petición independiente con su propio cancellation token
     this.tourService
-      .getTripTypeIds(tourId, !this.preview)
+      .getTripTypeIds(tourId, !this.preview, this.abortController.signal)
       .pipe(
         takeUntil(this.tripTypesDestroy$),
         catchError((error) => {
@@ -563,7 +567,7 @@ export class TourHeaderV2Component
         // Obtener todos los trip types usando la lista de IDs directamente
         // Crear peticiones para cada ID y combinarlas
         const tripTypeRequests = tripTypeIds.map((id) =>
-          this.tripTypeService.getById(id).pipe(
+          this.tripTypeService.getById(id, this.abortController.signal).pipe(
             takeUntil(this.tripTypesDestroy$),
             catchError((error) => {
               return of(null);
@@ -606,17 +610,17 @@ export class TourHeaderV2Component
     const filterByVisible = !this.preview;
     
     this.subscriptions.add(
-      this.tourService.getById(tourId, filterByVisible).pipe(
+      this.tourService.getById(tourId, filterByVisible, this.abortController.signal).pipe(
         switchMap((tourData) => {
           this.tour = { ...tourData };
           this.loadCountryAndContinent(tourId);
           
           // Obtener el primer tag visible del tour
-          return this.tourTagService.getByTourAndType(tourId, 'VISIBLE').pipe(
+          return this.tourTagService.getByTourAndType(tourId, 'VISIBLE', this.abortController.signal).pipe(
             switchMap((tourTags) => {
               if (tourTags.length > 0 && tourTags[0]?.tagId && tourTags[0].tagId > 0) {
                 const firstTagId = tourTags[0].tagId;
-                return this.tagService.getById(firstTagId).pipe(
+                return this.tagService.getById(firstTagId, this.abortController.signal).pipe(
                   map((tag) => tag?.name || null),
                   catchError(() => of(null))
                 );
@@ -1287,10 +1291,10 @@ export class TourHeaderV2Component
       isBookable: true,
     };
 
-    return this.itineraryService.getAll(itineraryFilters, false).pipe(
+    return this.itineraryService.getAll(itineraryFilters, false, this.abortController.signal).pipe(
       concatMap((itineraries) => {
         if (itineraries.length === 0) {
-          return this.tourService.getById(tourId, false).pipe(
+          return this.tourService.getById(tourId, false, this.abortController.signal).pipe(
             map((tour) => ({
               id: tourId,
               tkId: tour.tkId ?? undefined,
@@ -1308,16 +1312,16 @@ export class TourHeaderV2Component
 
         // Obtener días de itinerario del primer itinerario disponible
         const itineraryDaysRequest = this.itineraryDayService
-          .getAll({ itineraryId: itineraries[0].id })
+          .getAll({ itineraryId: itineraries[0].id }, this.abortController.signal)
           .pipe(catchError(() => of([] as IItineraryDayResponse[])));
 
         // Obtener continent y country
         const locationRequest = forkJoin({
-          countryLocations: this.tourLocationService.getByTourAndType(tourId, 'COUNTRY').pipe(
+          countryLocations: this.tourLocationService.getByTourAndType(tourId, 'COUNTRY', this.abortController.signal).pipe(
             map((response) => Array.isArray(response) ? response : response ? [response] : []),
             catchError(() => of([] as ITourLocationResponse[]))
           ),
-          continentLocations: this.tourLocationService.getByTourAndType(tourId, 'CONTINENT').pipe(
+          continentLocations: this.tourLocationService.getByTourAndType(tourId, 'CONTINENT', this.abortController.signal).pipe(
             map((response) => Array.isArray(response) ? response : response ? [response] : []),
             catchError(() => of([] as ITourLocationResponse[]))
           )
@@ -1332,7 +1336,7 @@ export class TourHeaderV2Component
               return of({ continent: '', country: '' });
             }
             
-            return this.locationNetService.getLocationsByIds(locationIds).pipe(
+            return this.locationNetService.getLocationsByIds(locationIds, this.abortController.signal).pipe(
               map((locations: Location[]) => {
                 const countries = countryLocations
                   .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
@@ -1358,9 +1362,9 @@ export class TourHeaderV2Component
           itineraryDays: itineraryDaysRequest,
           locationData: locationRequest,
           monthTags: this.tourService
-            .getDepartureMonths(tourId, true)
+            .getDepartureMonths(tourId, true, this.abortController.signal)
             .pipe(catchError(() => of([] as number[]))),
-          tour: this.tourService.getById(tourId, false)
+          tour: this.tourService.getById(tourId, false, this.abortController.signal)
         }).pipe(
           map(({ itineraryDays, locationData, monthTags, tour }) => {
             const days = itineraryDays.length;

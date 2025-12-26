@@ -63,9 +63,10 @@ export class AgeGroupService {
   /**
    * Obtiene todos los grupos de edad según los criterios de filtrado.
    * @param filters Filtros para aplicar en la búsqueda.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de grupos de edad.
    */
-  getAll(filters?: AgeGroupFilters): Observable<IAgeGroupResponse[]> {
+  getAll(filters?: AgeGroupFilters, signal?: AbortSignal): Observable<IAgeGroupResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -86,7 +87,16 @@ export class AgeGroupService {
       });
     }
 
-    return this.http.get<IAgeGroupResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IAgeGroupResponse[]>(this.API_URL, options);
   }
 
   /**

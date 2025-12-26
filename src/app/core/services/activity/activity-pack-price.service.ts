@@ -84,9 +84,10 @@ export class ActivityPackPriceService {
   /**
    * Obtiene todos los precios de pack de actividad disponibles.
    * @param filters Filtros para aplicar en la búsqueda.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de precios de pack de actividad.
    */
-  getAll(filter?: ActivityPackPriceFilters): Observable<IActivityPackPriceResponse[]> {
+  getAll(filter?: ActivityPackPriceFilters, signal?: AbortSignal): Observable<IActivityPackPriceResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -101,7 +102,16 @@ export class ActivityPackPriceService {
       });
     }
 
-    return this.http.get<IActivityPackPriceResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IActivityPackPriceResponse[]>(this.API_URL, options);
   }
 
   /**

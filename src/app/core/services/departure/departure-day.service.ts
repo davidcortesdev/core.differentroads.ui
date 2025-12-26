@@ -130,13 +130,23 @@ export class DepartureDayService {
   /**
    * Obtiene días de salida por itineraryDayId.
    * @param itineraryDayId ID del día del itinerario.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de días de salida que coinciden con el itineraryDayId.
    */
-  getByItineraryDayId(itineraryDayId: number): Observable<IDepartureDayResponse[]> {
+  getByItineraryDayId(itineraryDayId: number, signal?: AbortSignal): Observable<IDepartureDayResponse[]> {
     const params = new HttpParams()
       .set('ItineraryDayId', itineraryDayId.toString())
       .set('useExactMatchForStrings', 'false');
+    
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
         
-    return this.http.get<IDepartureDayResponse[]>(this.API_URL, { params });
+    return this.http.get<IDepartureDayResponse[]>(this.API_URL, options);
   }
 }

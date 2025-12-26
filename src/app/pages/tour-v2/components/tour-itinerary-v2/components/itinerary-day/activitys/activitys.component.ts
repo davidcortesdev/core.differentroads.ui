@@ -2,6 +2,7 @@ import {
   Component,
   Input,
   OnInit,
+  OnDestroy,
   OnChanges,
   SimpleChanges,
   Output,
@@ -44,7 +45,7 @@ interface ActivityWithPrice extends IActivityResponse {
   templateUrl: './activitys.component.html',
   styleUrl: './activitys.component.scss',
 })
-export class ActivitysComponent implements OnInit, OnChanges {
+export class ActivitysComponent implements OnInit, OnDestroy, OnChanges {
   @Input() itineraryId: number | undefined;
   @Input() itineraryDayId: number | undefined;
   @Input() departureId: number | undefined;
@@ -61,6 +62,7 @@ export class ActivitysComponent implements OnInit, OnChanges {
   
   // Cache de grupos de edad
   private ageGroupsCache: IAgeGroupResponse[] = [];
+  private abortController = new AbortController();
 
   constructor(
     private activityService: ActivityService,
@@ -92,11 +94,15 @@ export class ActivitysComponent implements OnInit, OnChanges {
     }
   }
 
+  ngOnDestroy(): void {
+    this.abortController.abort();
+  }
+
   /**
    * Carga los grupos de edad desde el servicio
    */
   private loadAgeGroups(): void {
-    this.ageGroupService.getAll().subscribe({
+    this.ageGroupService.getAll(undefined, this.abortController.signal).subscribe({
       next: (ageGroups) => {
         this.ageGroupsCache = ageGroups;
         this.loadDataWithFilters();
@@ -124,7 +130,9 @@ export class ActivitysComponent implements OnInit, OnChanges {
         this.itineraryId,
         this.departureId,
         this.itineraryDayId,
-        true // isVisibleOnWeb = true
+        true, // isVisibleOnWeb = true
+        undefined, // onlyOpt
+        this.abortController.signal
       )
       .pipe(
         catchError((err) => {
@@ -172,7 +180,7 @@ export class ActivitysComponent implements OnInit, OnChanges {
         .getAll({
           ActivityId: [activity.id],
           DepartureId: this.departureId,
-        })
+        }, this.abortController.signal)
         .pipe(
           map((prices) => (prices.length > 0 ? prices : [])),
           catchError((error) => {
@@ -198,7 +206,7 @@ export class ActivitysComponent implements OnInit, OnChanges {
         .getAll({
           activityPackId: activity.id,
           departureId: this.departureId,
-        })
+        }, this.abortController.signal)
         .pipe(
           map((prices) => (prices.length > 0 ? prices : [])),
           catchError((error) => {

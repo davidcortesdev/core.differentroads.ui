@@ -267,7 +267,7 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
           availablePlaces,
         };
       });
-  }
+    }
 
   // ✅ MÉTODO HELPER: Verificar si un vuelo es "sin vuelos"
   private isSinVuelosFlight(flightPack: IFlightPackDTO): boolean {
@@ -282,6 +282,11 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       description.includes('pack sin vuelos') ||
       code.includes('sin vuelos')
     );
+  }
+  
+  // ✅ HELPER: Verificar si un ID pertenece a un flight pack real
+  private isFlightPackId(id: number): boolean {
+    return Array.isArray(this.allFlightPacks) && this.allFlightPacks.some(p => p.id === id);
   }
 
   // ✅ HELPER NUEVO: Verificar si un ID corresponde al pack "Sin Vuelos"
@@ -331,9 +336,9 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
           });
       });
 
-      // Buscar asignaciones de vuelos (activityPackId > 0)
+      // Buscar asignaciones de vuelos reales (solo IDs presentes en flight packs)
       const flightAssignments = existingAssignments.filter(
-        (a) => a.activityPackId > 0
+        (a) => this.isFlightPackId(a.activityPackId)
       );
 
       if (flightAssignments.length > 0) {
@@ -358,18 +363,18 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
               (price) => price.ageGroupId === travelers[0]?.ageGroupId
             )?.price || 0;
 
-          this.flightSelectionChange.emit({
-            selectedFlight: matchingFlight,
-            totalPrice: basePrice,
-          });
+        this.flightSelectionChange.emit({
+          selectedFlight: matchingFlight,
+          totalPrice: basePrice,
+        });
 
-        } else {
-        }
       } else {
       }
-    } catch (error) {
+    } else {
     }
+  } catch (error) {
   }
+}
 
   // ✅ MÉTODO NUEVO: Seleccionar vuelo basado en el departure
   private selectFlightFromDeparture(departureActivityPackId: number): void {
@@ -466,7 +471,7 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
       });
 
       const flightAssignments = existingAssignments.filter(
-        (a) => a.activityPackId > 0
+        (a) => this.isFlightPackId(a.activityPackId)
       );
       const flightIds = flightAssignments.map((a) => a.activityPackId);
 
@@ -819,9 +824,9 @@ export class DefaultFlightsComponent implements OnInit, OnChanges {
             .getByReservationTraveler(traveler.id)
             .subscribe({
               next: (assignments) => {
-                // Filtrar por flightPacks (activityPackId > 0)
+                // Filtrar por flight packs reales (IDs presentes en lista de flights)
                 const flightPackAssignments = assignments.filter(
-                  (a) => a.activityPackId > 0
+                  (a) => this.isFlightPackId(a.activityPackId)
                 );
 
                 if (flightPackAssignments.length > 0) {

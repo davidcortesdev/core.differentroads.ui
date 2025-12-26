@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import {
   HomeSectionImageService,
   IHomeSectionImageResponse,
@@ -14,10 +14,11 @@ import { CAROUSEL_CONFIG } from '../../../../shared/constants/carousel.constants
   templateUrl: './partners-section-v2.component.html',
   styleUrl: './partners-section-v2.component.scss',
 })
-export class PartnersSectionV2Component implements OnInit {
+export class PartnersSectionV2Component implements OnInit, OnDestroy {
   @Input() configurationId?: number; // ID específico de configuración
 
   partners: IHomeSectionImageResponse[] = [];
+  private abortController = new AbortController();
   numVisible = 4;
   title = 'Colaboradores'; // Valor por defecto
   responsiveOptions = [
@@ -53,6 +54,10 @@ export class PartnersSectionV2Component implements OnInit {
     this.loadPartners();
   }
 
+  ngOnDestroy(): void {
+    this.abortController.abort();
+  }
+
   private loadPartners(): void {
     // Si no se proporciona configurationId, mostrar error y no cargar nada
     if (!this.configurationId) {
@@ -61,7 +66,7 @@ export class PartnersSectionV2Component implements OnInit {
     }
 
     // Primero cargar la configuración para obtener el título
-    this.homeSectionConfigurationService.getById(this.configurationId).subscribe({
+    this.homeSectionConfigurationService.getById(this.configurationId, this.abortController.signal).subscribe({
       next: (configuration) => {
         // Establecer el título desde la configuración
         this.title = configuration.title || 'Colaboradores';
@@ -83,7 +88,7 @@ export class PartnersSectionV2Component implements OnInit {
 
     // Obtener imágenes activas de la configuración específica
     this.homeSectionImageService
-      .getByConfiguration(this.configurationId, true)
+      .getByConfiguration(this.configurationId, true, this.abortController.signal)
       .subscribe({
         next: (images: IHomeSectionImageResponse[]) => {
           // Ordenar por displayOrder y limitar a 8 partners si es necesario

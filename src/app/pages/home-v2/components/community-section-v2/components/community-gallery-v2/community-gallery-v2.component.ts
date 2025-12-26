@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import {
   HomeSectionService,
   IHomeSectionResponse,
@@ -18,10 +18,11 @@ import {
   templateUrl: './community-gallery-v2.component.html',
   styleUrls: ['./community-gallery-v2.component.scss'],
 })
-export class CommunityGalleryV2Component implements OnInit {
+export class CommunityGalleryV2Component implements OnInit, OnDestroy {
   communityImages: IHomeSectionCardResponse[] = [];
   loading = true;
   error: string | null = null;
+  private abortController = new AbortController();
 
   constructor(
     private homeSectionService: HomeSectionService,
@@ -33,9 +34,13 @@ export class CommunityGalleryV2Component implements OnInit {
     this.loadCommunityImages();
   }
 
+  ngOnDestroy(): void {
+    this.abortController.abort();
+  }
+
   private loadCommunityImages() {
     // First, get the community section (assuming it has a specific code)
-    this.homeSectionService.getAll({ code: 'TRAVELER_SECTION' }).subscribe({
+    this.homeSectionService.getAll({ code: 'TRAVELER_SECTION' }, this.abortController.signal).subscribe({
       next: (sections: IHomeSectionResponse[]) => {
         if (sections.length > 0) {
           const communitySection = sections[0];
@@ -54,7 +59,7 @@ export class CommunityGalleryV2Component implements OnInit {
 
   private loadSectionConfigurations(sectionId: number) {
     this.homeSectionConfigurationService
-      .getBySectionType(sectionId, true)
+      .getBySectionType(sectionId, true, this.abortController.signal)
       .subscribe({
         next: (configurations: IHomeSectionConfigurationResponse[]) => {
           if (configurations.length > 0) {
@@ -75,7 +80,7 @@ export class CommunityGalleryV2Component implements OnInit {
 
   private loadSectionCards(configurationId: number) {
     this.homeSectionCardService
-      .getByConfiguration(configurationId, true)
+      .getByConfiguration(configurationId, true, this.abortController.signal)
       .subscribe({
         next: (cards: IHomeSectionCardResponse[]) => {
           // Filtrar solo las cards que NO son destacadas (isFeatured: false)

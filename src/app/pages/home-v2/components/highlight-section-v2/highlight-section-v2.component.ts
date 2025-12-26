@@ -45,6 +45,7 @@ export class HighlightSectionV2Component implements OnInit, OnDestroy {
   protected isActive = false;
 
   private destroy$ = new Subject<void>();
+  private abortController = new AbortController();
 
   constructor(
     private readonly sanitizer: DomSanitizer,
@@ -59,6 +60,7 @@ export class HighlightSectionV2Component implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.abortController.abort();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -82,7 +84,7 @@ export class HighlightSectionV2Component implements OnInit, OnDestroy {
 
     // Si no, cargar la primera configuración activa del tipo de sección especificado
     this.homeSectionConfigurationService
-      .getBySectionType(this.sectionType, true)
+      .getBySectionType(this.sectionType, true, this.abortController.signal)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (configurations) => {
@@ -109,7 +111,7 @@ export class HighlightSectionV2Component implements OnInit, OnDestroy {
   private loadSpecificConfiguration(configId: number): void {
     // Cargar la configuración específica
     this.homeSectionConfigurationService
-      .getById(configId)
+      .getById(configId, this.abortController.signal)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (configuration) => {
@@ -132,7 +134,7 @@ export class HighlightSectionV2Component implements OnInit, OnDestroy {
 
   private loadSectionImage(configId: number): void {
     this.homeSectionImageService
-      .getByConfigurationOrdered(configId, true)
+      .getByConfigurationOrdered(configId, true, this.abortController.signal)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (images) => {

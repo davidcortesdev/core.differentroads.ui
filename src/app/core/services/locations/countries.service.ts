@@ -1,5 +1,5 @@
-import { Injectable } from '@angular/core'; // <-- New import
-import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { catchError, map, Observable, of } from 'rxjs';
 import { Country } from '../../../shared/models/country.model';
 
@@ -10,11 +10,18 @@ export class CountriesService {
 
   constructor(private http: HttpClient) {}
 
-  getCountries(): Observable<Country[]> {
+  getCountries(signal?: AbortSignal): Observable<Country[]> {
     if (this.countries.length > 0) {
       return of(this.countries);
     }
-    return this.http.get<Country[]>(this.countriesUrl).pipe(
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<Country[]>(this.countriesUrl, options).pipe(
       map((countries) => {
         this.countries = countries;
         return countries;

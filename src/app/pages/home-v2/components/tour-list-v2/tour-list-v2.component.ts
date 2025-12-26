@@ -46,6 +46,7 @@ export class TourListV2Component implements OnInit, OnDestroy {
   };
 
   private destroy$ = new Subject<void>();
+  private abortController = new AbortController();
 
   constructor(
     private readonly router: Router,
@@ -60,6 +61,7 @@ export class TourListV2Component implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.abortController.abort();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -82,7 +84,8 @@ export class TourListV2Component implements OnInit, OnDestroy {
     } else {
       configObservable = this.homeSectionConfigurationService.getBySectionType(
         sectionType,
-        true
+        true,
+        this.abortController.signal
       );
     }
 
@@ -114,7 +117,7 @@ export class TourListV2Component implements OnInit, OnDestroy {
   private loadSpecificConfiguration(configId: number): void {
     // Cargar la configuración específica
     this.homeSectionConfigurationService
-      .getById(configId)
+      .getById(configId, this.abortController.signal)
       .pipe(
         switchMap((configuration) => {
           // Establecer datos de la configuración
@@ -126,7 +129,8 @@ export class TourListV2Component implements OnInit, OnDestroy {
           // Cargar filtros de tours para esta configuración
           return this.homeSectionTourFilterService.getByConfigurationOrdered(
             configId,
-            true
+            true,
+            this.abortController.signal
           );
         }),
         takeUntil(this.destroy$)
@@ -213,7 +217,7 @@ export class TourListV2Component implements OnInit, OnDestroy {
   ): Observable<number[]> {
     switch (filter.filterType) {
       case 'tag':
-        return this.tourTagService.getToursByTags([filter.tagId!]).pipe(
+        return this.tourTagService.getToursByTags([filter.tagId!], this.abortController.signal).pipe(
           map((tourIds) => {
             return tourIds;
           }),
@@ -224,7 +228,7 @@ export class TourListV2Component implements OnInit, OnDestroy {
 
       case 'location':
         return this.tourLocationService
-          .getToursByLocations([filter.locationId!])
+          .getToursByLocations([filter.locationId!], this.abortController.signal)
           .pipe(
             map((tourIds) => {
               return tourIds;

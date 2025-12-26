@@ -232,7 +232,7 @@ export class HomeV2Component implements OnInit, OnDestroy {
   ): Observable<TourDataV2[]> {
     // Obtener los filtros de la configuración
     return this.homeSectionTourFilterService
-      .getByConfigurationOrdered(config.id, true)
+      .getByConfigurationOrdered(config.id, true, this.abortController.signal)
       .pipe(
         switchMap((filters) => {
           if (filters.length === 0) {

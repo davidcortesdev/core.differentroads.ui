@@ -51,9 +51,10 @@ export class MenuTipoService {
   /**
    * Obtiene todos los tipos de menú disponibles.
    * @param filters Filtros para aplicar en la búsqueda.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de tipos de menú.
    */
-  getAll(filters?: MenuTipoFilters): Observable<IMenuTipoResponse[]> {
+  getAll(filters?: MenuTipoFilters, signal?: AbortSignal): Observable<IMenuTipoResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -68,7 +69,16 @@ export class MenuTipoService {
       });
     }
 
-    return this.http.get<IMenuTipoResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IMenuTipoResponse[]>(this.API_URL, options);
   }
 
   /**

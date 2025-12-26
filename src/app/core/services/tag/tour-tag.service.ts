@@ -173,9 +173,19 @@ export class TourTagService {
    * @param tagCategoryId ID de la categoría de tag
    * @returns Lista de tags con tours
    */
-  getTagsWithTours(tagCategoryId: number): Observable<TagWithToursResponse[]> {
+  getTagsWithTours(tagCategoryId: number, signal?: AbortSignal): Observable<TagWithToursResponse[]> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
     return this.http.get<TagWithToursResponse[]>(
-      `${this.API_URL}/tags-with-tours/${tagCategoryId}`
+      `${this.API_URL}/tags-with-tours/${tagCategoryId}`,
+      options
     );
   }
 

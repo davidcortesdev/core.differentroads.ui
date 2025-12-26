@@ -30,6 +30,7 @@ interface ExtendedMenuItem extends MenuItem {
 })
 export class HeaderV2Component implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
+  private abortController = new AbortController();
   private documentClickListener: Function | null = null;
   isLoadingMenu = true;
   isLoadingUser = false;
@@ -89,6 +90,7 @@ export class HeaderV2Component implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.abortController.abort();
     // Limpiar el listener de resize
     window.removeEventListener('resize', this.checkScreenSize.bind(this));
 
@@ -223,8 +225,8 @@ export class HeaderV2Component implements OnInit, OnDestroy {
 
     // Cargar menuItems y menuTipos en paralelo
     forkJoin({
-      menuItems: this.menuItemService.getAll({ isActive: true }),
-      menuTipos: this.menuTipoService.getAll({ isActive: true })
+      menuItems: this.menuItemService.getAll({ isActive: true }, this.abortController.signal),
+      menuTipos: this.menuTipoService.getAll({ isActive: true }, this.abortController.signal)
     })
       .pipe(
         takeUntil(this.destroy$),
@@ -301,7 +303,7 @@ export class HeaderV2Component implements OnInit, OnDestroy {
    */
   private loadCountriesForContinent(continentId: number, menuItemId: number): void {
     this.tourLocationService
-      .getCountriesWithToursByContinent(continentId)
+      .getCountriesWithToursByContinent(continentId, this.abortController.signal)
       .pipe(
         takeUntil(this.destroy$),
         switchMap((countries: CountryWithToursResponse[]) => {
@@ -315,7 +317,7 @@ export class HeaderV2Component implements OnInit, OnDestroy {
           
           // Cargar todos los países en paralelo usando forkJoin
           const locationRequests = countryIds.map(countryId => 
-            this.locationNetService.getLocationById(countryId).pipe(
+            this.locationNetService.getLocationById(countryId, this.abortController.signal).pipe(
               takeUntil(this.destroy$)
             )
           );
@@ -342,7 +344,7 @@ export class HeaderV2Component implements OnInit, OnDestroy {
    */
   private loadTagsForCategory(categoryId: number, menuItemId: number): void {
     this.tourTagService
-      .getTagsWithTours(categoryId)
+      .getTagsWithTours(categoryId, this.abortController.signal)
       .pipe(
         takeUntil(this.destroy$),
         switchMap((tagsWithTours) => {
@@ -354,7 +356,7 @@ export class HeaderV2Component implements OnInit, OnDestroy {
           }
           
           // Obtener la información completa de cada tag en paralelo
-          const tagRequests = tagIds.map(tagId => this.tagService.getById(tagId));
+          const tagRequests = tagIds.map(tagId => this.tagService.getById(tagId, this.abortController.signal));
           return forkJoin(tagRequests);
         })
       )

@@ -127,7 +127,7 @@ export class LocationNetService {
     return locationsObservable;
   }
 
-  getLocationById(id: number): Observable<Location> {
+  getLocationById(id: number, signal?: AbortSignal): Observable<Location> {
     // Verificar si la ubicación ya está en cache
     if (this.locationCache.has(id)) {
       return of(this.locationCache.get(id)!);
@@ -139,7 +139,16 @@ export class LocationNetService {
     }
 
     // Crear nueva llamada HTTP y configurar cache
-    const locationObservable = this.http.get<Location>(`${this.apiUrl}/location/${id}`)
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    const locationObservable = this.http.get<Location>(`${this.apiUrl}/location/${id}`, options)
       .pipe(
         tap(location => {
           // Guardar en cache solo si la respuesta es válida

@@ -147,10 +147,21 @@ export class TourLocationService {
    * @returns Lista de países con tours
    */
   getCountriesWithToursByContinent(
-    continentId: number
+    continentId: number,
+    signal?: AbortSignal
   ): Observable<CountryWithToursResponse[]> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
     return this.http.get<CountryWithToursResponse[]>(
-      `${this.API_URL}/countries-with-tours/${continentId}`
+      `${this.API_URL}/countries-with-tours/${continentId}`,
+      options
     );
   }
 

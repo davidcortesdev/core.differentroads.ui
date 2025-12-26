@@ -55,9 +55,10 @@ export class MenuItemService {
   /**
    * Obtiene todos los elementos de menú disponibles.
    * @param filters Filtros para aplicar en la búsqueda.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de elementos de menú.
    */
-  getAll(filters?: MenuItemFilters): Observable<IMenuItemResponse[]> {
+  getAll(filters?: MenuItemFilters, signal?: AbortSignal): Observable<IMenuItemResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -72,7 +73,16 @@ export class MenuItemService {
       });
     }
 
-    return this.http.get<IMenuItemResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IMenuItemResponse[]>(this.API_URL, options);
   }
 
   /**

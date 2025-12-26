@@ -129,12 +129,9 @@ export class ReservationTravelerAccommodationService {
       observe?: 'body';
       params?: HttpParams | { [param: string]: any };
       reportProgress?: boolean;
-      responseType?: 'json';
       withCredentials?: boolean;
       signal?: AbortSignal;
-    } = {
-      responseType: 'json'
-    };
+    } = {};
     if (signal) {
       options.signal = signal;
     }

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
@@ -22,7 +22,12 @@ getRawDepartureByTkId(externalId: string, signal?: AbortSignal): Observable<any>
   const params = new HttpParams().set('TKId', externalId);
   
   const options: {
+    headers?: HttpHeaders | { [header: string]: string | string[] };
+    observe?: 'body';
     params?: HttpParams | { [param: string]: any };
+    reportProgress?: boolean;
+    responseType?: 'json';
+    withCredentials?: boolean;
     signal?: AbortSignal;
   } = { params };
   if (signal) {

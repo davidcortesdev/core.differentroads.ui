@@ -130,10 +130,22 @@ export class ReservationTravelerActivityPackService {
   /**
    * Elimina un paquete de actividades de viajero de reservación existente.
    * @param id ID del paquete de actividades de viajero de reservación a eliminar.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Resultado de la operación.
    */
-  delete(id: number): Observable<boolean> {
-    return this.http.delete<boolean>(`${this.API_URL}/${id}`);
+  delete(id: number, signal?: AbortSignal): Observable<boolean> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      observe?: 'body';
+      params?: HttpParams | { [param: string]: any };
+      reportProgress?: boolean;
+      withCredentials?: boolean;
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.delete<boolean>(`${this.API_URL}/${id}`, options);
   }
 
   /**

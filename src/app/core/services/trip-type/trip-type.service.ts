@@ -63,7 +63,7 @@ export class TripTypeService {
    * @param filters Filtros para aplicar en la búsqueda.
    * @returns Lista de tipos de viaje.
    */
-  getAll(filters?: TripTypeFilters): Observable<ITripTypeResponse[]> {
+  getAll(filters?: TripTypeFilters, signal?: AbortSignal): Observable<ITripTypeResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -78,7 +78,16 @@ export class TripTypeService {
       });
     }
 
-    return this.http.get<ITripTypeResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<ITripTypeResponse[]>(this.API_URL, options);
   }
 
   /**

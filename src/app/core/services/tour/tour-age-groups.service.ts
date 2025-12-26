@@ -24,7 +24,7 @@ export class TourAgeGroupsService {
    * @param filters Filtros para aplicar en la búsqueda.
    * @returns Lista de IDs de grupos de edad del tour.
    */
-  getAll(tourId: number, filters?: TourAgeGroupFilters, previewMode?: boolean): Observable<number[]> {
+  getAll(tourId: number, filters?: TourAgeGroupFilters, previewMode?: boolean, signal?: AbortSignal): Observable<number[]> {
     let params = new HttpParams();
     if (previewMode !== undefined) {
       params = params.set('tourVisibility', !previewMode);
@@ -42,7 +42,16 @@ export class TourAgeGroupsService {
       });
     }
 
-    return this.http.get<number[]>(`${this.API_URL}/${tourId}/agegroups`, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<number[]>(`${this.API_URL}/${tourId}/agegroups`, options);
   }
 
   /**
@@ -102,9 +111,9 @@ export class TourAgeGroupsService {
    * @param tourId ID del tour.
    * @returns Número total de grupos de edad asignados.
    */
-  getCount(tourId: number, previewMode?: boolean): Observable<number> {
+  getCount(tourId: number, previewMode?: boolean, signal?: AbortSignal): Observable<number> {
     return new Observable(observer => {
-      this.getAll(tourId, undefined, previewMode).subscribe({
+      this.getAll(tourId, undefined, previewMode, signal).subscribe({
         next: (ageGroupIds) => {
           observer.next(ageGroupIds.length);
           observer.complete();
@@ -237,9 +246,9 @@ export class TourAgeGroupsService {
    * @param tourId ID del tour.
    * @returns True si tiene grupos de edad asignados, false si no.
    */
-  hasAgeGroups(tourId: number, previewMode?: boolean): Observable<boolean> {
+  hasAgeGroups(tourId: number, previewMode?: boolean, signal?: AbortSignal): Observable<boolean> {
     return new Observable(observer => {
-      this.getCount(tourId, previewMode).subscribe({
+      this.getCount(tourId, previewMode, signal).subscribe({
         next: (count) => {
           observer.next(count > 0);
           observer.complete();

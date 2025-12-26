@@ -125,6 +125,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
   // Control de destrucción del componente
   private destroy$ = new Subject<void>();
+  private abortController = new AbortController();
   
   // Subject para notificar cuando allDepartures esté disponible (ReplaySubject para mantener último valor)
   private allDeparturesReady$ = new ReplaySubject<void>(1);
@@ -265,6 +266,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   }
 
   ngOnDestroy(): void {
+    this.abortController.abort();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -295,7 +297,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     this.citiesLoadingUpdate.emit(true);
 
     this.tourDepartureCitiesService
-      .getAll(this.tourId, {}, !this.preview)
+      .getAll(this.tourId, {}, !this.preview, this.abortController.signal)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (citiesResponse: ITourDepartureCityResponse[]) => {
@@ -441,7 +443,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     }
 
     return this.tourDeparturesPricesService
-      .getAll(validActivityIds, filters)
+      .getAll(validActivityIds, filters, this.abortController.signal)
       .pipe(
         takeUntil(this.destroy$),
         tap((pricesResponse: ITourDeparturesPriceResponse[]) => {
@@ -477,7 +479,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     if (!this.tourId) return;
 
     this.tourAgeGroupsService
-      .getAll(this.tourId, {}, this.preview)
+      .getAll(this.tourId, {}, this.preview, this.abortController.signal)
       .pipe(
         takeUntil(this.destroy$),
         switchMap((ageGroupIds: number[]) => {
@@ -492,7 +494,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           }
 
           const ageGroupRequests = ageGroupIds.map((id) =>
-            this.ageGroupService.getById(id).pipe(
+            this.ageGroupService.getById(id, this.abortController.signal).pipe(
               catchError(() => {
                 return of(null);
               })
@@ -652,7 +654,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     if (!this.tourId) return;
 
     this.tourAgeGroupsService
-      .getCount(this.tourId, this.preview)
+      .getCount(this.tourId, this.preview, this.abortController.signal)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (count) => {
@@ -663,7 +665,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       });
 
     this.tourAgeGroupsService
-      .hasAgeGroups(this.tourId, this.preview)
+      .hasAgeGroups(this.tourId, this.preview, this.abortController.signal)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (hasAgeGroups) => {
@@ -680,7 +682,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
   private loadTripTypes(): void {
     this.tripTypeService
-      .getAll()
+      .getAll(undefined, this.abortController.signal)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (tripTypes: ITripTypeResponse[]) => {
@@ -723,7 +725,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     }
 
     this.departureAvailabilityService
-      .getDefaultSelectionByTour(this.tourId)
+      .getDefaultSelectionByTour(this.tourId, this.abortController.signal)
       .pipe(
         takeUntil(this.destroy$),
         catchError(() => {
@@ -754,7 +756,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       .filter((city) => city.activityPackId)
       .map((city) =>
         this.departureAvailabilityService
-          .getByTourAndActivityPack(this.tourId!, city.activityPackId!, true)
+          .getByTourAndActivityPack(this.tourId!, city.activityPackId!, true, this.abortController.signal)
           .pipe(
             takeUntil(this.destroy$),
             map((departures) => ({
@@ -924,7 +926,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     // Cargar tripTypeIds de los departures en paralelo
     if (departureIdsToLoad.size > 0) {
       const departureRequests = Array.from(departureIdsToLoad).map((departureId) =>
-        this.departureService.getById(departureId, this.preview).pipe(
+        this.departureService.getById(departureId, this.preview, this.abortController.signal).pipe(
           catchError(() => of(null))
         )
       );
@@ -953,7 +955,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     this.error = undefined;
 
     this.departureService
-      .getById(departureId, this.preview)
+      .getById(departureId, this.preview, this.abortController.signal)
       .pipe(
         takeUntil(this.destroy$),
         switchMap((departure) => {
@@ -1840,7 +1842,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
     this.flightTimesLoading[departureId] = true;
     this.flightTimesError[departureId] = false;
   
-    this.flightsNetService.getFlights(departureId)
+    this.flightsNetService.getFlights(departureId, this.abortController.signal)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (flightPacks: any[]) => {

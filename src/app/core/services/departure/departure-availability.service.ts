@@ -117,11 +117,21 @@ export class DepartureAvailabilityService {
    * @returns Respuesta con la salida y ciudad por defecto, o null si no hay selección por defecto (204).
    */
   getDefaultSelectionByTour(
-    tourId: number
+    tourId: number,
+    signal?: AbortSignal
   ): Observable<IDefaultDepartureSelectionResponse | null> {
+    const options: {
+      observe: 'response';
+      signal?: AbortSignal;
+    } = { observe: 'response' as const };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
     return this.http.get<IDefaultDepartureSelectionResponse>(
       `${this.API_URL}/default-selection/tour/${tourId}`,
-      { observe: 'response' }
+      options
     ).pipe(
       map(response => {
         if (response.status === 204 || !response.body) {
@@ -149,14 +159,24 @@ export class DepartureAvailabilityService {
   getByTourAndActivityPack(
     tourId: number,
     activityPackId: number,
-    filterByVisible: boolean = true
+    filterByVisible: boolean = true,
+    signal?: AbortSignal
   ): Observable<IDepartureAvailabilityByTourResponse[]> {
     let params = new HttpParams();
     params = params.set('filterByVisible', filterByVisible.toString());
 
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
     return this.http.get<IDepartureAvailabilityByTourResponse[]>(
       `${this.API_URL}/by-tour/${tourId}/activitypack/${activityPackId}`,
-      { params }
+      options
     );
   }
 }

@@ -113,10 +113,20 @@ export class AgeGroupService {
   /**
    * Obtiene un grupo de edad específico por su ID.
    * @param id ID del grupo de edad.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns El grupo de edad encontrado.
    */
-  getById(id: number): Observable<IAgeGroupResponse> {
-    return this.http.get<IAgeGroupResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<IAgeGroupResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IAgeGroupResponse>(`${this.API_URL}/${id}`, options);
   }
 
   /**

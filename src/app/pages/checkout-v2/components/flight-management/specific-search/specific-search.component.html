@@ -107,14 +107,20 @@
         </div>
       </div>
 
-      <!-- Solo vuelta: origen editable, destino fijo -->
+      <!-- Solo vuelta: origen fijo (aeropuerto de salida del tour), destino editable -->
       <div class="row" *ngIf="tipoViaje === 'Vuelta'">
         <div class="label">
           <label>Vuelta</label>
-          <div class="from">a</div>
+          <div class="from">Desde</div>
         </div>
         <div class="input origin">
           <i class="pi pi-plane"></i>
+          <div class="static-field">
+            {{ tourDestinoConstante.codigo }} - {{ tourDestinoConstante.nombre }}
+          </div>
+        </div>
+        <div class="input destination">
+          <div class="dest-lbl">Llegada</div>
           <p-autocomplete
             formControlName="origen"
             [suggestions]="filteredCities"
@@ -141,12 +147,6 @@
             </ng-template>
           </p-autocomplete>
         </div>
-        <div class="input destination">
-          <div class="dest-lbl">Desde</div>
-          <div class="static-field">
-            {{ tourDestinoConstante.codigo }} - {{ tourDestinoConstante.nombre }}
-          </div>
-        </div>
         <div class="date">
           <div class="date-lbl">Fecha</div>
           <div class="static-field">
@@ -167,9 +167,31 @@
         </div>
         <div class="input destination">
           <div class="dest-lbl">Llegada</div>
-          <div class="static-field">
-            {{ flightForm.get("origen")?.value?.codigo || flightForm.get("origen")?.value }} - {{ flightForm.get("origen")?.value?.nombre || flightForm.get("origen")?.value }}
-          </div>
+          <p-autocomplete
+            formControlName="destinoVuelta"
+            [suggestions]="filteredCities"
+            (completeMethod)="searchCities($event)"
+            field="nombre"
+            [forceSelection]="true"
+            styleClass="w-full"
+            [dropdown]="true"
+            [minLength]="1"
+            [delay]="0"
+            [appendTo]="'body'"
+            [showEmptyMessage]="true"
+            emptyMessage="No se encontraron ciudades"
+          >
+            <ng-template #item let-city>
+              <div class="city-item">
+                {{ city.codigo }} - {{ city.nombre }}
+              </div>
+            </ng-template>
+            <ng-template #selectedItem let-city>
+              <div class="selected-city">
+                {{ city.codigo }} - {{ city.nombre }}
+              </div>
+            </ng-template>
+          </p-autocomplete>
         </div>
         <div class="date">
           <div class="date-lbl">Fecha</div>

@@ -45,7 +45,8 @@ export class ReservationTravelerActivityPackService {
    * @returns Lista de paquetes de actividades de viajeros de reservaciones.
    */
   getAll(
-    filters?: ReservationTravelerActivityPackFilters
+    filters?: ReservationTravelerActivityPackFilters,
+    signal?: AbortSignal
   ): Observable<IReservationTravelerActivityPackResponse[]> {
     let params = new HttpParams();
 
@@ -61,11 +62,17 @@ export class ReservationTravelerActivityPackService {
       });
     }
 
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
     return this.http.get<IReservationTravelerActivityPackResponse[]>(
       this.API_URL,
-      {
-        params,
-      }
+      options
     );
   }
 
@@ -91,9 +98,17 @@ export class ReservationTravelerActivityPackService {
    * @param id ID del paquete de actividades de viajero de reservación.
    * @returns El paquete de actividades de viajero de reservación encontrado.
    */
-  getById(id: number): Observable<IReservationTravelerActivityPackResponse> {
+  getById(id: number, signal?: AbortSignal): Observable<IReservationTravelerActivityPackResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
     return this.http.get<IReservationTravelerActivityPackResponse>(
-      `${this.API_URL}/${id}`
+      `${this.API_URL}/${id}`,
+      options
     );
   }
 
@@ -127,17 +142,24 @@ export class ReservationTravelerActivityPackService {
    * @returns Lista de paquetes de actividades del viajero de reservación.
    */
   getByReservationTraveler(
-    reservationTravelerId: number
+    reservationTravelerId: number,
+    signal?: AbortSignal
   ): Observable<IReservationTravelerActivityPackResponse[]> {
     const params = new HttpParams()
       .set('ReservationTravelerId', reservationTravelerId.toString())
       .set('useExactMatchForStrings', 'false');
 
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
     return this.http.get<IReservationTravelerActivityPackResponse[]>(
       this.API_URL,
-      {
-        params,
-      }
+      options
     );
   }
 
@@ -147,17 +169,24 @@ export class ReservationTravelerActivityPackService {
    * @returns Lista de viajeros de reservación asociados al paquete de actividades.
    */
   getByActivityPack(
-    activityPackId: number
+    activityPackId: number,
+    signal?: AbortSignal
   ): Observable<IReservationTravelerActivityPackResponse[]> {
     const params = new HttpParams()
       .set('ActivityPackId', activityPackId.toString())
       .set('useExactMatchForStrings', 'false');
 
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
     return this.http.get<IReservationTravelerActivityPackResponse[]>(
       this.API_URL,
-      {
-        params,
-      }
+      options
     );
   }
 
@@ -167,7 +196,8 @@ export class ReservationTravelerActivityPackService {
    * @returns Lista de activityPackId de vuelos guardados para la reservación.
    */
   getFlightActivityPackIdsByReservation(
-    reservationId: number
+    reservationId: number,
+    signal?: AbortSignal
   ): Observable<number[]> {
     // Primero obtener todos los viajeros de la reservación
     const travelersUrl = `${environment.reservationsApiUrl}/ReservationTraveler`;
@@ -175,7 +205,15 @@ export class ReservationTravelerActivityPackService {
       .set('ReservationId', reservationId.toString())
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<any[]>(travelersUrl, { params: travelersParams }).pipe(
+    const travelersOptions: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params: travelersParams };
+    if (signal) {
+      travelersOptions.signal = signal;
+    }
+
+    return this.http.get<any[]>(travelersUrl, travelersOptions).pipe(
       switchMap((travelers) => {
         if (travelers.length === 0) {
           return of([]);
@@ -187,9 +225,17 @@ export class ReservationTravelerActivityPackService {
             .set('ReservationTravelerId', traveler.id.toString())
             .set('useExactMatchForStrings', 'false');
 
+          const options: {
+            params?: HttpParams | { [param: string]: any };
+            signal?: AbortSignal;
+          } = { params };
+          if (signal) {
+            options.signal = signal;
+          }
+
           return this.http.get<IReservationTravelerActivityPackResponse[]>(
             this.API_URL,
-            { params }
+            options
           );
         });
 
@@ -214,10 +260,12 @@ export class ReservationTravelerActivityPackService {
   /**
    * Obtiene las asignaciones de vuelos completas para una reservación específica.
    * @param reservationId ID de la reservación.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista completa de asignaciones de vuelos para la reservación.
    */
   getFlightAssignmentsByReservation(
-    reservationId: number
+    reservationId: number,
+    signal?: AbortSignal
   ): Observable<IReservationTravelerActivityPackResponse[]> {
     // Primero obtener todos los viajeros de la reservación
     const travelersUrl = `${environment.reservationsApiUrl}/ReservationTraveler`;
@@ -225,7 +273,15 @@ export class ReservationTravelerActivityPackService {
       .set('ReservationId', reservationId.toString())
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<any[]>(travelersUrl, { params: travelersParams }).pipe(
+    const travelersOptions: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params: travelersParams };
+    if (signal) {
+      travelersOptions.signal = signal;
+    }
+
+    return this.http.get<any[]>(travelersUrl, travelersOptions).pipe(
       switchMap((travelers) => {
         if (travelers.length === 0) {
           return of([]);
@@ -237,9 +293,17 @@ export class ReservationTravelerActivityPackService {
             .set('ReservationTravelerId', traveler.id.toString())
             .set('useExactMatchForStrings', 'false');
 
+          const options: {
+            params?: HttpParams | { [param: string]: any };
+            signal?: AbortSignal;
+          } = { params };
+          if (signal) {
+            options.signal = signal;
+          }
+
           return this.http.get<IReservationTravelerActivityPackResponse[]>(
             this.API_URL,
-            { params }
+            options
           );
         });
 

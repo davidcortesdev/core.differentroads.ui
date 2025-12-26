@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -52,11 +52,12 @@ interface ProcessedLocation {
   styleUrls: ['./tour-overview-v2.component.scss'],
   standalone: false
 })
-export class TourOverviewV2Component implements OnInit {
+export class TourOverviewV2Component implements OnInit, OnDestroy {
   @Input() tourId: number | undefined;
   @Input() preview: boolean = false;
   
   loading = true;
+  private abortController = new AbortController();
   
   // Propiedades para manejar las ubicaciones
   tourLocations: ITourLocationResponse[] = [];
@@ -111,6 +112,10 @@ export class TourOverviewV2Component implements OnInit {
     }
   }
 
+  ngOnDestroy(): void {
+    this.abortController.abort();
+  }
+
   private loadTour(id: number): void {
     this.loading = true;
     this.loadEssentialData(id);
@@ -119,13 +124,13 @@ export class TourOverviewV2Component implements OnInit {
   private loadEssentialData(id: number): void {
     // FASE 1: Cargar datos esenciales del tour
     forkJoin([
-      this.tourService.getTourById(id, !this.preview).pipe(
+      this.tourService.getById(id, !this.preview, this.abortController.signal).pipe(
         catchError(error => {
           return of(null);
         })
       ) as Observable<TourData | null>,
       
-      this.cmsTourService.getAllTours({ tourId: id }).pipe(
+      this.cmsTourService.getAllTours({ tourId: id }, this.abortController.signal).pipe(
         catchError(error => {
           return of([]);
         })
@@ -176,19 +181,19 @@ export class TourOverviewV2Component implements OnInit {
     // ✅ OPTIMIZACIÓN MÁXIMA: Cargar ubicaciones y tags en paralelo
     forkJoin([
       // Cargar ubicaciones (existente)
-      this.tourLocationService.getByTourAndType(id, "COUNTRY").pipe(
+      this.tourLocationService.getByTourAndType(id, "COUNTRY", this.abortController.signal).pipe(
         map(response => Array.isArray(response) ? response : (response ? [response] : [])),
         catchError(error => {
           return of([]);
         })
       ),
-      this.tourLocationService.getByTourAndType(id, "HEADER").pipe(
+      this.tourLocationService.getByTourAndType(id, "HEADER", this.abortController.signal).pipe(
         map(response => Array.isArray(response) ? response : (response ? [response] : [])),
         catchError(error => {
           return of([]);
         })
       ),
-      this.tourLocationService.getByTourAndType(id, "CONTINENT").pipe(
+      this.tourLocationService.getByTourAndType(id, "CONTINENT", this.abortController.signal).pipe(
         map(response => Array.isArray(response) ? response : (response ? [response] : [])),
         catchError(error => {
           return of([]);
@@ -223,7 +228,7 @@ export class TourOverviewV2Component implements OnInit {
         // Cargar ubicaciones
         if (locationIds.length > 0) {
           tagObservables.push(
-            this.locationNetService.getLocationsByIds(locationIds).pipe(
+            this.locationNetService.getLocationsByIds(locationIds, this.abortController.signal).pipe(
               catchError(error => {
                 return of([]);
               })
@@ -236,7 +241,7 @@ export class TourOverviewV2Component implements OnInit {
         // Cargar tags para cada tipo de relación visible
         visibleRelationTypeIds.forEach(relationTypeId => {
           tagObservables.push(
-            this.tourTagService.getAll({ tourId: [id], tourTagRelationTypeId: relationTypeId }).pipe(
+            this.tourTagService.getAll({ tourId: [id], tourTagRelationTypeId: relationTypeId }, this.abortController.signal).pipe(
               catchError(error => {
                 return of([]);
               })
@@ -273,7 +278,7 @@ export class TourOverviewV2Component implements OnInit {
           
           // ✅ OPTIMIZADO: Cargar solo los tags específicos del tour
           const tagDetailObservables = tagIds.map(tagId => 
-            this.tagService.getById(tagId).pipe(
+            this.tagService.getById(tagId, this.abortController.signal).pipe(
               catchError(error => {
                 return of(null);
               })

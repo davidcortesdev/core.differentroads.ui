@@ -43,7 +43,7 @@ export class CMSTourService {
     imageAlt?: string;
     creatorId?: number;
     creatorComments?: string;
-  }): Observable<ICMSTourResponse[]> {
+  }, signal?: AbortSignal): Observable<ICMSTourResponse[]> {
     let httpParams = new HttpParams();
 
     if (params) {
@@ -56,13 +56,29 @@ export class CMSTourService {
       if (params.creatorComments) httpParams = httpParams.set('creatorComments', params.creatorComments);
     }
 
-    return this.http.get<ICMSTourResponse[]>(this.API_URL, {
-      params: httpParams,
-    });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params: httpParams };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<ICMSTourResponse[]>(this.API_URL, options);
   }
 
-  getTourById(id: number): Observable<ICMSTourResponse> {
-    return this.http.get<ICMSTourResponse>(`${this.API_URL}/${id}`);
+  getTourById(id: number, signal?: AbortSignal): Observable<ICMSTourResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<ICMSTourResponse>(`${this.API_URL}/${id}`, options);
   }
 
   createTour(tourData: CMSTourCreate): Observable<ICMSTourResponse> {

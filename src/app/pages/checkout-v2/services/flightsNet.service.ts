@@ -101,8 +101,17 @@ export class FlightsNetService {
 
   constructor(private http: HttpClient) {}
 
-  getFlights(periodId: number): Observable<IFlightPackDTO[]> {
-    return this.http.get<IFlightPackDTO[]>(`${this.API_URL_DEPARTURE}/${periodId}/flights`);
+  getFlights(periodId: number, signal?: AbortSignal): Observable<IFlightPackDTO[]> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IFlightPackDTO[]>(`${this.API_URL_DEPARTURE}/${periodId}/flights`, options);
   }
 
   getFlightDetail(flightId: number): Observable<IFlightDetailDTO> {

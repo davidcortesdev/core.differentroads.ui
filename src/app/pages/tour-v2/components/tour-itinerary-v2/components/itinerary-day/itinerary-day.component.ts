@@ -2,6 +2,7 @@ import {
   Component,
   Input,
   OnInit,
+  OnDestroy,
   ViewChildren,
   QueryList,
   OnChanges,
@@ -57,7 +58,7 @@ interface ProcessedItineraryDay {
   templateUrl: './itinerary-day.component.html',
   styleUrl: './itinerary-day.component.scss',
 })
-export class ItineraryDayComponent implements OnInit, OnChanges {
+export class ItineraryDayComponent implements OnInit, OnChanges, OnDestroy {
   @Input() tourId: number | undefined;
   @Input() itineraryId: number | undefined;
   @Input() departureId: number | undefined; // NUEVO: Recibir el departure ID seleccionado
@@ -81,6 +82,7 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
 
   // Map para optimización de búsquedas O(1)
   private daysCMSMap = new Map<number, IItineraryDayCMSResponse>();
+  private abortController = new AbortController();
 
   constructor(
     private itineraryService: ItineraryService,
@@ -115,6 +117,10 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
     }
   }
 
+  ngOnDestroy(): void {
+    this.abortController.abort();
+  }
+
   // NUEVO: Manejar selección de actividad y reenviar al padre
   onActivitySelected(activityHighlight: ActivityHighlight): void {
     this.activitySelected.emit(activityHighlight);
@@ -146,7 +152,7 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
 
     // Crear observables para cada itineraryId y combinar los resultados
     const itineraryDaysObservables = itineraryIds.map((itineraryId) =>
-      this.itineraryDayService.getAll({ itineraryId }).pipe(
+      this.itineraryDayService.getAll({ itineraryId }, this.abortController.signal).pipe(
         catchError((error) => {
           return of([]);
         })
@@ -181,7 +187,7 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
 
     // Crear observables para obtener CMS de cada día
     const itineraryDaysCMSObservables = dayIds.map((dayId) =>
-      this.itineraryDayCMSService.getAll({ itineraryDayId: dayId }).pipe(
+      this.itineraryDayCMSService.getAll({ itineraryDayId: dayId }, this.abortController.signal).pipe(
         catchError((error) => {
           return of([]);
         })

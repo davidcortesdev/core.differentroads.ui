@@ -38,6 +38,8 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
   private monthsDestroy$ = new Subject<void>();
   // Cancellation token independiente para la petición de rating/reviews
   private ratingDestroy$ = new Subject<void>();
+  // AbortController compartido para cancelar peticiones HTTP
+  private abortController = new AbortController();
   // Variable para evitar llamadas duplicadas de rating
   private lastLoadedTourId: number | undefined = undefined;
 
@@ -61,6 +63,8 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    // Cancelar todas las peticiones HTTP pendientes
+    this.abortController.abort();
     // Cancelar petición de trip types
     this.tripTypesDestroy$.next();
     this.tripTypesDestroy$.complete();
@@ -94,7 +98,7 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
 
     // Petición independiente con su propio cancellation token
     this.tourService
-      .getTripTypeIds(tourId, true)
+      .getTripTypeIds(tourId, true, this.abortController.signal)
       .pipe(
         takeUntil(this.tripTypesDestroy$),
         catchError((error) => {
@@ -111,7 +115,7 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
         // Obtener todos los trip types usando la lista de IDs directamente
         // Crear peticiones para cada ID y combinarlas
         const tripTypeRequests = tripTypeIds.map((id) =>
-          this.tripTypeService.getById(id).pipe(
+          this.tripTypeService.getById(id, this.abortController.signal).pipe(
             takeUntil(this.tripTypesDestroy$),
             catchError((error) => {
               return of(null);
@@ -167,7 +171,7 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
 
     // Petición independiente con su propio cancellation token
     this.tourService
-      .getDepartureMonths(tourId, true)
+      .getDepartureMonths(tourId, true, this.abortController.signal)
       .pipe(
         takeUntil(this.monthsDestroy$),
         catchError((error) => {
@@ -224,7 +228,7 @@ export class TourCardHeaderV2Component implements OnInit, OnDestroy {
       isActive: true
     };
 
-    this.tourReviewService.getAverageRating(filters).pipe(
+    this.tourReviewService.getAverageRating(filters, this.abortController.signal).pipe(
       takeUntil(this.ratingDestroy$),
       tap((rating) => {
         if (rating && rating.averageRating > 0) {

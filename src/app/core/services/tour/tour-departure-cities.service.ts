@@ -47,7 +47,8 @@ export class TourDepartureCitiesService {
   getAll(
     tourId: number,
     filters?: TourDepartureCityFilters,
-    tourVisibility?: boolean
+    tourVisibility?: boolean,
+    signal?: AbortSignal
   ): Observable<ITourDepartureCityResponse[]> {
     let params = new HttpParams();
     if (tourVisibility !== undefined) {
@@ -66,9 +67,18 @@ export class TourDepartureCitiesService {
       });
     }
 
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
     return this.http.get<ITourDepartureCityResponse[]>(
       `${this.API_URL}/${tourId}/departure-cities`,
-      { params }
+      options
     );
   }
 

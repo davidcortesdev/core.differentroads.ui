@@ -80,7 +80,8 @@ export class HomeSectionImageService {
    * @returns Lista de imágenes de sección de inicio.
    */
   getAll(
-    filters?: HomeSectionImageFilters
+    filters?: HomeSectionImageFilters,
+    signal?: AbortSignal
   ): Observable<IHomeSectionImageResponse[]> {
     let params = new HttpParams();
 
@@ -96,7 +97,15 @@ export class HomeSectionImageService {
       });
     }
 
-    return this.http.get<IHomeSectionImageResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IHomeSectionImageResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -155,7 +164,8 @@ export class HomeSectionImageService {
    */
   getByConfiguration(
     homeSectionConfigurationId: number,
-    isActive?: boolean
+    isActive?: boolean,
+    signal?: AbortSignal
   ): Observable<IHomeSectionImageResponse[]> {
     const filters: HomeSectionImageFilters = {
       homeSectionConfigurationId: homeSectionConfigurationId,
@@ -165,7 +175,7 @@ export class HomeSectionImageService {
       filters.isActive = isActive;
     }
 
-    return this.getAll(filters);
+    return this.getAll(filters, signal);
   }
 
   /**
@@ -184,9 +194,10 @@ export class HomeSectionImageService {
    */
   getByConfigurationOrdered(
     homeSectionConfigurationId: number,
-    isActive: boolean = true
+    isActive: boolean = true,
+    signal?: AbortSignal
   ): Observable<IHomeSectionImageResponse[]> {
-    return this.getByConfiguration(homeSectionConfigurationId, isActive);
+    return this.getByConfiguration(homeSectionConfigurationId, isActive, signal);
   }
 
   /**

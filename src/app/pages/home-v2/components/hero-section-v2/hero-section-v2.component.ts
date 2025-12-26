@@ -3,6 +3,7 @@ import {
   Input,
   OnInit,
   AfterViewInit,
+  OnDestroy,
   ViewChild,
   ElementRef,
 } from '@angular/core';
@@ -36,7 +37,7 @@ interface TripQueryParams {
   templateUrl: './hero-section-v2.component.html',
   styleUrls: ['./hero-section-v2.component.scss'],
 })
-export class HeroSectionV2Component implements OnInit, AfterViewInit {
+export class HeroSectionV2Component implements OnInit, AfterViewInit, OnDestroy {
 
   @Input() initialDestination: string | null = null;
   @Input() initialDepartureDate: Date | null = null;
@@ -74,6 +75,8 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
 
   destinations: Country[] = [];
   tripTypes: ITripTypeResponse[] = [];
+
+  private abortController = new AbortController();
 
   constructor(
     private router: Router,
@@ -121,10 +124,14 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
     }
   }
 
+  ngOnDestroy(): void {
+    this.abortController.abort();
+  }
+
   private loadBannerContent(): void {
     // Assuming banner content has a specific configuration ID
     // You may need to adjust this based on your actual configuration
-    this.homeSectionContentService.getVideos(true).subscribe({
+    this.homeSectionContentService.getVideos(true, this.abortController.signal).subscribe({
       next: (videos) => {
         if (videos && videos.length > 0) {
           // Get the first video content
@@ -135,7 +142,7 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
           setTimeout(() => this.playVideo(), 100);
         } else {
           // Fallback to images if no videos
-          this.homeSectionContentService.getImages(true).subscribe({
+          this.homeSectionContentService.getImages(true, this.abortController.signal).subscribe({
             next: (images) => {
               if (images && images.length > 0) {
                 this.bannerContent = images[0];
@@ -150,7 +157,7 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
       },
       error: (error) => {
         // Fallback to images on error
-        this.homeSectionContentService.getImages(true).subscribe({
+        this.homeSectionContentService.getImages(true, this.abortController.signal).subscribe({
           next: (images) => {
             if (images && images.length > 0) {
               this.bannerContent = images[0];
@@ -201,7 +208,7 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
   }
 
   private loadDestinations(): void {
-    this.countriesService.getCountries().subscribe({
+    this.countriesService.getCountries(this.abortController.signal).subscribe({
       next: (countries) => {
         this.destinations = countries;
       },
@@ -211,7 +218,7 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit {
   }
 
   private loadTripTypes(): void {
-    this.tripTypeService.getActiveTripTypes().subscribe({
+    this.tripTypeService.getActiveTripTypes(this.abortController.signal).subscribe({
       next: (tripTypes) => {
         this.tripTypes = tripTypes;
         // Si viene initialTripType (code), mapea a id

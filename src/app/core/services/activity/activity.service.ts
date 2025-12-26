@@ -234,7 +234,8 @@ export class ActivityService {
     departureId?: number,
     itineraryDayId?: number,
     isVisibleOnWeb?: boolean,
-    onlyOpt?: boolean
+    onlyOpt?: boolean,
+    signal?: AbortSignal
   ): Observable<IActivityResponse[]> {
     let params = new HttpParams().set('itineraryId', itineraryId.toString());
 
@@ -254,11 +255,18 @@ export class ActivityService {
       params = params.set('onlyOpt', onlyOpt.toString());
     }
 
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
     return this.http.get<IActivityResponse[]>(
       `${this.API_URL}/for-itinerary-with-packs`,
-      {
-        params,
-      }
+      options
     );
   }
 }

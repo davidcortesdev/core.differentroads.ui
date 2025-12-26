@@ -63,7 +63,7 @@ export class TripTypeService {
    * @param filters Filtros para aplicar en la búsqueda.
    * @returns Lista de tipos de viaje.
    */
-  getAll(filters?: TripTypeFilters): Observable<ITripTypeResponse[]> {
+  getAll(filters?: TripTypeFilters, signal?: AbortSignal): Observable<ITripTypeResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -78,7 +78,16 @@ export class TripTypeService {
       });
     }
 
-    return this.http.get<ITripTypeResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<ITripTypeResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -106,9 +115,10 @@ export class TripTypeService {
   /**
    * Obtiene un tipo de viaje específico por su ID.
    * @param id ID del tipo de viaje.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns El tipo de viaje encontrado.
    */
-  getById(id: number): Observable<ITripTypeResponse> {
+  getById(id: number, signal?: AbortSignal): Observable<ITripTypeResponse> {
     // Verificar si el tipo de viaje ya está en cache
     if (this.tripTypeCache.has(id)) {
       return of(this.tripTypeCache.get(id)!);
@@ -119,8 +129,17 @@ export class TripTypeService {
       return this.tripTypeObservableCache.get(id)!;
     }
 
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
     // Crear nueva llamada HTTP y configurar cache
-    const tripTypeObservable = this.http.get<ITripTypeResponse>(`${this.API_URL}/${id}`)
+    const tripTypeObservable = this.http.get<ITripTypeResponse>(`${this.API_URL}/${id}`, options)
       .pipe(
         tap(tripType => {
           // Guardar en cache solo si la respuesta es válida
@@ -202,14 +221,24 @@ export class TripTypeService {
 
   /**
    * Obtiene solo los tipos de viaje activos.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de tipos de viaje activos.
    */
-  getActiveTripTypes(): Observable<ITripTypeResponse[]> {
+  getActiveTripTypes(signal?: AbortSignal): Observable<ITripTypeResponse[]> {
     const params = new HttpParams()
       .set('IsActive', 'true')
       .set('useExactMatchForStrings', 'false');
     
-    return this.http.get<ITripTypeResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+    
+    return this.http.get<ITripTypeResponse[]>(this.API_URL, options);
   }
 
   // Métodos de gestión de cache para tipos de viaje

@@ -71,10 +71,12 @@ export class ItineraryService {
 
   /**
    * Obtiene todos los itinerarios disponibles.
-   * @param filters Filtros para aplicar en la búsqueda.
+   * @param filter Filtros para aplicar en la búsqueda.
+   * @param previewMode Modo de vista previa.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de itinerarios.
    */
-  getAll(filter?: ItineraryFilters, previewMode?: boolean): Observable<IItineraryResponse[]> {
+  getAll(filter?: ItineraryFilters, previewMode?: boolean, signal?: AbortSignal): Observable<IItineraryResponse[]> {
     let params = new HttpParams();
 
     if (previewMode) {
@@ -93,16 +95,35 @@ export class ItineraryService {
       });
     }
 
-    return this.http.get<IItineraryResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IItineraryResponse[]>(this.API_URL, options);
   }
 
   /**
    * Obtiene un itinerario específico por su ID.
    * @param id ID del itinerario.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Itinerario correspondiente.
    */
-  getById(id: number): Observable<IItineraryResponse> {
-    return this.http.get<IItineraryResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<IItineraryResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IItineraryResponse>(`${this.API_URL}/${id}`, options);
   }
 
   /**

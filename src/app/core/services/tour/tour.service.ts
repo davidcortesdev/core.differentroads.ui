@@ -205,12 +205,22 @@ export class TourService {
    * Obtiene un tour específico por su ID.
    * @param id ID del tour.
    * @param filterByVisible Si es true, solo devuelve tours visibles en web.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable de tour.
    */
-  getById(id: number, filterByVisible: boolean = true): Observable<ITourResponse> {
+  getById(id: number, filterByVisible: boolean = true, signal?: AbortSignal): Observable<ITourResponse> {
     let params = new HttpParams().set('FilterByVisible', filterByVisible.toString());
 
-    return this.http.get<ITourResponse>(`${this.API_URL}/${id}`, { params }).pipe(
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<ITourResponse>(`${this.API_URL}/${id}`, options).pipe(
       catchError((error) => {
         // Retornar tour por defecto en caso de error
         return of({
@@ -441,16 +451,26 @@ export class TourService {
    * Obtiene la lista de tripTypeId únicos de todos los departures de un tour.
    * @param id ID del tour.
    * @param tourVisibility Si es true, solo devuelve tripTypeIds de tours visibles.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable de array de IDs de trip types.
    */
-  getTripTypeIds(id: number, tourVisibility?: boolean): Observable<number[]> {
+  getTripTypeIds(id: number, tourVisibility?: boolean, signal?: AbortSignal): Observable<number[]> {
     let params = new HttpParams();
     
     if (tourVisibility !== undefined) {
       params = params.set('tourVisibility', tourVisibility.toString());
     }
 
-    return this.http.get<number[]>(`${this.API_URL}/${id}/triptype-ids`, { params }).pipe(
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<number[]>(`${this.API_URL}/${id}/triptype-ids`, options).pipe(
       catchError((error) => {
         return of([]);
       })
@@ -461,16 +481,26 @@ export class TourService {
    * Obtiene la lista de números de mes (1-12) únicos en los que hay salidas para un tour.
    * @param id ID del tour.
    * @param tourVisibility Si es true, solo devuelve meses de tours visibles.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable de array de números de mes (1-12).
    */
-  getDepartureMonths(id: number, tourVisibility?: boolean): Observable<number[]> {
+  getDepartureMonths(id: number, tourVisibility?: boolean, signal?: AbortSignal): Observable<number[]> {
     let params = new HttpParams();
     
     if (tourVisibility !== undefined) {
       params = params.set('tourVisibility', tourVisibility.toString());
     }
 
-    return this.http.get<number[]>(`${this.API_URL}/${id}/departure-months`, { params }).pipe(
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<number[]>(`${this.API_URL}/${id}/departure-months`, options).pipe(
       catchError((error) => {
         return of([]);
       })

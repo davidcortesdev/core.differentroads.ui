@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
 import { forkJoin, of, Observable } from 'rxjs';
 import { catchError, finalize, switchMap, map } from 'rxjs/operators';
 
@@ -20,7 +20,7 @@ interface OptimizedHotelInfo {
   templateUrl: './hotel-details.component.html',
   styleUrl: './hotel-details.component.scss'
 })
-export class HotelDetailsComponent implements OnInit, OnChanges {
+export class HotelDetailsComponent implements OnInit, OnDestroy, OnChanges {
   
   // Inputs del componente
   @Input() itineraryDayId: number | undefined;
@@ -38,6 +38,7 @@ export class HotelDetailsComponent implements OnInit, OnChanges {
   // NUEVO: Cache para evitar consultas duplicadas
   private lastQuery: string = '';
   private isLoadingData = false;
+  private abortController = new AbortController();
   
   constructor(
     private departureDayService: DepartureDayService,
@@ -61,6 +62,10 @@ export class HotelDetailsComponent implements OnInit, OnChanges {
     }
   }
 
+  ngOnDestroy(): void {
+    this.abortController.abort();
+  }
+
   /**
    * MÉTODO OPTIMIZADO: Obtener múltiples hoteles usando el servicio actual
    */
@@ -71,7 +76,7 @@ export class HotelDetailsComponent implements OnInit, OnChanges {
 
     if (hotelIds.length === 1) {
       // Un solo hotel - usar getById
-      return this.hotelService.getById(hotelIds[0]).pipe(
+      return this.hotelService.getById(hotelIds[0], this.abortController.signal).pipe(
         map(hotel => [hotel]),
         catchError(error => {
           return of([]);
@@ -91,7 +96,7 @@ export class HotelDetailsComponent implements OnInit, OnChanges {
     // Procesar lotes secuencialmente para no sobrecargar el servidor
     const batchObservables = batches.map(batch => 
       forkJoin(batch.map(hotelId =>
-        this.hotelService.getById(hotelId).pipe(
+        this.hotelService.getById(hotelId, this.abortController.signal).pipe(
           catchError(error => {
             return of(null);
           })
@@ -130,7 +135,7 @@ export class HotelDetailsComponent implements OnInit, OnChanges {
     this.isLoadingData = true;
     this.loading = true;
     // CONSULTA 1: Departure days filtrados directamente por el servicio
-    this.departureDayService.getByItineraryDayId(this.itineraryDayId).pipe(
+    this.departureDayService.getByItineraryDayId(this.itineraryDayId, this.abortController.signal).pipe(
       map((departureDays: IDepartureDayResponse[]) => {
         // Filtrar solo los del departure seleccionado
         const filteredDepartureDays = departureDays.filter(dd => 
@@ -147,7 +152,7 @@ export class HotelDetailsComponent implements OnInit, OnChanges {
         // CONSULTA 2: Departure hotels filtrados POR CADA departureDayId específico
         // Usar el filtro del servicio directamente
         const departureHotelObservables = departureDayIds.map(departureDayId => 
-          this.departureHotelService.getAll({ departureDayId }).pipe(
+          this.departureHotelService.getAll({ departureDayId }, this.abortController.signal).pipe(
             catchError(error => {
               return of([]);
             })

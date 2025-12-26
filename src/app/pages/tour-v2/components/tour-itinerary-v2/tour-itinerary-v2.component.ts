@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { catchError, map, finalize, switchMap } from 'rxjs/operators';
@@ -61,7 +61,7 @@ interface DepartureFromParent {
   templateUrl: './tour-itinerary-v2.component.html',
   styleUrl: './tour-itinerary-v2.component.scss',
 })
-export class TourItineraryV2Component implements OnInit {
+export class TourItineraryV2Component implements OnInit, OnDestroy {
   @Input() tourId: number | undefined;
   @Input() preview: boolean = false;
 
@@ -97,6 +97,7 @@ export class TourItineraryV2Component implements OnInit {
   // Maps para optimización de búsquedas O(1)
   private locationTypesMap = new Map<number, ITourLocationTypeResponse>();
   private locationsMap = new Map<number, Location>();
+  private abortController = new AbortController();
 
   constructor(
     private tourLocationService: TourLocationService,
@@ -117,6 +118,10 @@ export class TourItineraryV2Component implements OnInit {
     } else {
       this.loading = false;
     }
+  }
+
+  ngOnDestroy(): void {
+    this.abortController.abort();
   }
 
   /**
@@ -143,7 +148,7 @@ export class TourItineraryV2Component implements OnInit {
 
     // Solo cargar ubicaciones MAP del tour
     this.tourLocationService
-      .getByTourAndType(tourId, 'MAP')
+      .getByTourAndType(tourId, 'MAP', this.abortController.signal)
       .pipe(
         map((response: ITourLocationResponse | ITourLocationResponse[]) => {
           // Si es un array, devolverlo como está; si es un objeto, convertir a array
@@ -176,7 +181,7 @@ export class TourItineraryV2Component implements OnInit {
           }
 
           // OPTIMIZACIÓN: Cargar solo las ubicaciones específicas que necesitamos
-          return this.locationNetService.getLocationsByIds(locationIds).pipe(
+          return this.locationNetService.getLocationsByIds(locationIds, this.abortController.signal).pipe(
             map((locations: Location[]) => {
               return { tourLocations: validMapLocations, locations };
             }),

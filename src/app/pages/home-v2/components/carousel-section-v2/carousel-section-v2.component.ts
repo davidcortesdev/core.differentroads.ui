@@ -65,6 +65,7 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
   protected themeCode: string = 'light'; // Por defecto tema LIGHT
 
   private destroy$ = new Subject<void>();
+  private abortController = new AbortController();
 
   /**
    * Configuración responsive del carousel
@@ -119,6 +120,7 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.abortController.abort();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -140,7 +142,7 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
 
     // Si no, cargar la primera configuración activa del tipo de sección especificado
     this.homeSectionConfigurationService
-      .getBySectionType(this.sectionType, true)
+      .getBySectionType(this.sectionType, true, this.abortController.signal)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (configurations) => {
@@ -172,7 +174,7 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
   private loadSpecificConfiguration(configId: number): void {
     // Cargar la configuración específica
     this.homeSectionConfigurationService
-      .getById(configId)
+      .getById(configId, this.abortController.signal)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (configuration) => {
@@ -209,7 +211,7 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
 
   private loadTheme(themeId: number): void {
     this.homeSectionThemeService
-      .getById(themeId)
+      .getById(themeId, this.abortController.signal)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (theme) => {
@@ -238,7 +240,7 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
 
   private loadSectionContent(configId: number): void {
     this.homeSectionContentService
-      .getByConfigurationOrdered(configId, true)
+      .getByConfigurationOrdered(configId, true, this.abortController.signal)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (contents) => {
@@ -263,7 +265,7 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
 
   private loadSectionCards(configId: number): void {
     this.homeSectionCardService
-      .getByConfigurationOrdered(configId, true)
+      .getByConfigurationOrdered(configId, true, this.abortController.signal)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (cards) => {

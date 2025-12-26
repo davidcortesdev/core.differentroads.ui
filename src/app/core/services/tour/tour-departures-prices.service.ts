@@ -36,7 +36,7 @@ export class TourDeparturesPricesService {
    * @param filters Filtros para aplicar en la búsqueda.
    * @returns Lista de precios de departures de las actividades.
    */
-  getAll(activityIds: number[] | number, filters?: TourDeparturesPriceFilters): Observable<ITourDeparturesPriceResponse[]> {
+  getAll(activityIds: number[] | number, filters?: TourDeparturesPriceFilters, signal?: AbortSignal): Observable<ITourDeparturesPriceResponse[]> {
     // Normalizar activityIds a array
     const activityIdsArray = Array.isArray(activityIds) ? activityIds : [activityIds];
     
@@ -67,8 +67,17 @@ export class TourDeparturesPricesService {
         });
       }
 
+      const options: {
+        params?: HttpParams | { [param: string]: any };
+        signal?: AbortSignal;
+      } = { params };
+      
+      if (signal) {
+        options.signal = signal;
+      }
+
       // Usar el endpoint base sin activityId en la URL cuando hay múltiples IDs
-      return this.http.get<ITourDeparturesPriceResponse[]>(`${this.API_URL}/departures-prices`, { params });
+      return this.http.get<ITourDeparturesPriceResponse[]>(`${this.API_URL}/departures-prices`, options);
     
   }
 

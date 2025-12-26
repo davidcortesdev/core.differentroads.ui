@@ -34,6 +34,7 @@ export class HomeV2Component implements OnInit, OnDestroy {
   hasError = false;
 
   private destroy$ = new Subject<void>();
+  private abortController = new AbortController();
 
   constructor(
     private titleService: Title,
@@ -68,6 +69,7 @@ export class HomeV2Component implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.abortController.abort();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -145,7 +147,7 @@ export class HomeV2Component implements OnInit, OnDestroy {
 
     // Cargar todas las configuraciones activas ordenadas
     this.homeSectionConfigurationService
-      .getActiveOrdered()
+      .getActiveOrdered(this.abortController.signal)
       .pipe(
         take(1), // Solo tomar el primer valor para evitar múltiples emisiones
         takeUntil(this.destroy$)
@@ -230,7 +232,7 @@ export class HomeV2Component implements OnInit, OnDestroy {
   ): Observable<TourDataV2[]> {
     // Obtener los filtros de la configuración
     return this.homeSectionTourFilterService
-      .getByConfigurationOrdered(config.id, true)
+      .getByConfigurationOrdered(config.id, true, this.abortController.signal)
       .pipe(
         switchMap((filters) => {
           if (filters.length === 0) {
@@ -286,14 +288,14 @@ export class HomeV2Component implements OnInit, OnDestroy {
   ): Observable<number[]> {
     switch (filter.filterType) {
       case 'tag':
-        return this.tourTagService.getToursByTags([filter.tagId!]).pipe(
+        return this.tourTagService.getToursByTags([filter.tagId!], this.abortController.signal).pipe(
           catchError((error) => {
             return of([]);
           })
         );
 
       case 'location':
-        return this.tourLocationService.getToursByLocations([filter.locationId!]).pipe(
+        return this.tourLocationService.getToursByLocations([filter.locationId!], this.abortController.signal).pipe(
           catchError((error) => {
             return of([]);
           })
@@ -325,11 +327,11 @@ export class HomeV2Component implements OnInit, OnDestroy {
 
     // Crear observables para cada tour
     const tourObservables = tourIds.map((id) => {
-      return this.tourService.getTourById(id).pipe(
+      return this.tourService.getById(id, true, this.abortController.signal).pipe(
         switchMap((tourData) => {
           // Obtener tripType si existe tripTypeId
           const tripTypeObservable = tourData.tripTypeId
-            ? this.tripTypeService.getById(tourData.tripTypeId).pipe(
+            ? this.tripTypeService.getById(tourData.tripTypeId, this.abortController.signal).pipe(
                 map((tripType) => [tripType.name]),
                 catchError(() => of([]))
               )
@@ -337,7 +339,7 @@ export class HomeV2Component implements OnInit, OnDestroy {
 
           return forkJoin({
             tourData: of(tourData),
-            cmsData: this.cmsTourService.getAllTours({ tourId: id }),
+            cmsData: this.cmsTourService.getAllTours({ tourId: id }, this.abortController.signal),
             additionalData: this.getAdditionalTourData(id),
             tripType: tripTypeObservable
           });
@@ -486,7 +488,7 @@ export class HomeV2Component implements OnInit, OnDestroy {
       isBookable: true,
     };
 
-    return this.itineraryService.getAll(itineraryFilters, false).pipe(
+    return this.itineraryService.getAll(itineraryFilters, false, this.abortController.signal).pipe(
       switchMap((itineraries: IItineraryResponse[]) => {
         if (itineraries.length === 0) {
           return of({
@@ -497,7 +499,7 @@ export class HomeV2Component implements OnInit, OnDestroy {
         }
 
         const departureRequests = itineraries.map((itinerary) =>
-          this.departureService.getByItinerary(itinerary.id, false).pipe(
+          this.departureService.getByItinerary(itinerary.id, false, this.abortController.signal).pipe(
             catchError(() => of([]))
           )
         );
@@ -509,17 +511,17 @@ export class HomeV2Component implements OnInit, OnDestroy {
             const itineraryDaysRequest =
               itineraries.length > 0
                 ? this.itineraryDayService
-                    .getAll({ itineraryId: itineraries[0].id })
+                    .getAll({ itineraryId: itineraries[0].id }, this.abortController.signal)
                     .pipe(catchError(() => of([])))
                 : of([]);
 
             const tagRequest = this.tourTagService
-              .getByTourAndType(tourId, 'VISIBLE')
+              .getByTourAndType(tourId, 'VISIBLE', this.abortController.signal)
               .pipe(
                 switchMap((tourTags) => {
                   if (tourTags.length > 0 && tourTags[0]?.tagId && tourTags[0].tagId > 0) {
                     const firstTagId = tourTags[0].tagId;
-                    return this.tagService.getById(firstTagId).pipe(
+                    return this.tagService.getById(firstTagId, this.abortController.signal).pipe(
                       map((tag) => tag?.name && tag.name.trim().length > 0 ? [tag.name.trim()] : []),
                       catchError(() => of([]))
                     );
@@ -531,14 +533,14 @@ export class HomeV2Component implements OnInit, OnDestroy {
 
             // Obtener continent y country usando TourLocationService
             const countryLocationRequest = this.tourLocationService
-              .getByTourAndType(tourId, 'COUNTRY')
+              .getByTourAndType(tourId, 'COUNTRY', this.abortController.signal)
               .pipe(
                 map((response) => Array.isArray(response) ? response : response ? [response] : []),
                 catchError(() => of([]))
               );
 
             const continentLocationRequest = this.tourLocationService
-              .getByTourAndType(tourId, 'CONTINENT')
+              .getByTourAndType(tourId, 'CONTINENT', this.abortController.signal)
               .pipe(
                 map((response) => Array.isArray(response) ? response : response ? [response] : []),
                 catchError(() => of([]))
@@ -569,7 +571,7 @@ export class HomeV2Component implements OnInit, OnDestroy {
                   });
                 }
 
-                return this.locationNetService.getLocationsByIds(uniqueLocationIds).pipe(
+                return this.locationNetService.getLocationsByIds(uniqueLocationIds, this.abortController.signal).pipe(
                   map((locations: Location[]) => {
                     const locationsMap = new Map<number, Location>();
                     locations.forEach((location) => {

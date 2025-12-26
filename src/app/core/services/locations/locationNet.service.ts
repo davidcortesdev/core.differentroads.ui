@@ -75,7 +75,7 @@ export class LocationNetService {
   }
 
   // NUEVO: Método para obtener múltiples ubicaciones por IDs
-  getLocationsByIds(ids: number[]): Observable<Location[]> {
+  getLocationsByIds(ids: number[], signal?: AbortSignal): Observable<Location[]> {
     if (!ids || ids.length === 0) {
       return of([]);
     }
@@ -94,7 +94,16 @@ export class LocationNetService {
       params = params.append('Id', id.toString());
     });
 
-    const locationsObservable = this.http.get<Location[]>(`${this.apiUrl}/location`, { params })
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    const locationsObservable = this.http.get<Location[]>(`${this.apiUrl}/location`, options)
       .pipe(
         tap((locations) => {
           // Guardar ubicaciones individuales en el cache
@@ -118,7 +127,7 @@ export class LocationNetService {
     return locationsObservable;
   }
 
-  getLocationById(id: number): Observable<Location> {
+  getLocationById(id: number, signal?: AbortSignal): Observable<Location> {
     // Verificar si la ubicación ya está en cache
     if (this.locationCache.has(id)) {
       return of(this.locationCache.get(id)!);
@@ -130,7 +139,16 @@ export class LocationNetService {
     }
 
     // Crear nueva llamada HTTP y configurar cache
-    const locationObservable = this.http.get<Location>(`${this.apiUrl}/location/${id}`)
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    const locationObservable = this.http.get<Location>(`${this.apiUrl}/location/${id}`, options)
       .pipe(
         tap(location => {
           // Guardar en cache solo si la respuesta es válida

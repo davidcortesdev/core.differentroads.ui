@@ -52,7 +52,7 @@ export class MandatoryTypeService {
 
   constructor(private http: HttpClient) {}
 
-  getAll(filters?: MandatoryTypeFilters): Observable<IMandatoryTypeResponse[]> {
+  getAll(filters?: MandatoryTypeFilters, signal?: AbortSignal): Observable<IMandatoryTypeResponse[]> {
     let params = new HttpParams();
 
     if (filters) {
@@ -66,7 +66,15 @@ export class MandatoryTypeService {
       });
     }
 
-    return this.http.get<IMandatoryTypeResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IMandatoryTypeResponse[]>(this.API_URL, options);
   }
 
   create(data: MandatoryTypeCreate): Observable<IMandatoryTypeResponse> {
@@ -75,8 +83,15 @@ export class MandatoryTypeService {
     });
   }
 
-  getById(id: number): Observable<IMandatoryTypeResponse> {
-    return this.http.get<IMandatoryTypeResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<IMandatoryTypeResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<IMandatoryTypeResponse>(`${this.API_URL}/${id}`, options);
   }
 
   update(id: number, data: MandatoryTypeUpdate): Observable<boolean> {
@@ -89,16 +104,24 @@ export class MandatoryTypeService {
     return this.http.delete<boolean>(`${this.API_URL}/${id}`);
   }
 
-  getByCode(code: string): Observable<IMandatoryTypeResponse[]> {
+  getByCode(code: string, signal?: AbortSignal): Observable<IMandatoryTypeResponse[]> {
     const params = new HttpParams()
       .set('Code', code)
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<IMandatoryTypeResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IMandatoryTypeResponse[]>(this.API_URL, options);
   }
 
-  getAllOrdered(): Observable<IMandatoryTypeResponse[]> {
-    return this.getAll().pipe(
+  getAllOrdered(signal?: AbortSignal): Observable<IMandatoryTypeResponse[]> {
+    return this.getAll(undefined, signal).pipe(
       map((types) => types.sort((a, b) => a.id - b.id))
     );
   }

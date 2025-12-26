@@ -40,7 +40,7 @@ export class CMSPrensaService {
     name?: string;
     visibleWeb?: boolean;
     versionActiva?: number;
-  }): Observable<ICMSPrensaResponse[]> {
+  }, signal?: AbortSignal): Observable<ICMSPrensaResponse[]> {
     let httpParams = new HttpParams();
     
     if (params) {
@@ -51,11 +51,26 @@ export class CMSPrensaService {
       if (params.versionActiva !== undefined) httpParams = httpParams.set('VersionActiva', params.versionActiva.toString());
     }
 
-    return this.http.get<ICMSPrensaResponse[]>(this.API_URL, { params: httpParams });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params: httpParams };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<ICMSPrensaResponse[]>(this.API_URL, options);
   }
 
-  getPrensaById(id: number): Observable<ICMSPrensaResponse> {
-    return this.http.get<ICMSPrensaResponse>(`${this.API_URL}/${id}`);
+  getPrensaById(id: number, signal?: AbortSignal): Observable<ICMSPrensaResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<ICMSPrensaResponse>(`${this.API_URL}/${id}`, options);
   }
 
   createPrensa(prensaData: CMSPrensaCreate): Observable<ICMSPrensaResponse> {

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
@@ -14,12 +14,23 @@ export class PeriodsService {
 
 /**
  * Obtiene toda la información de la departure asociada a un periodo usando el tkid.
- * @param tkid - El ID de TK del periodo
+ * @param externalId - El ID de TK del periodo
+ * @param signal Signal de cancelación opcional para abortar la petición HTTP.
  * @returns Observable con toda la información de la departure (sin transformar)
  */
-getRawDepartureByTkId(externalId: string): Observable<any> {
+getRawDepartureByTkId(externalId: string, signal?: AbortSignal): Observable<any> {
+  const params = new HttpParams().set('TKId', externalId);
+  
+  const options: {
+    params?: HttpParams | { [param: string]: any };
+    signal?: AbortSignal;
+  } = { params };
+  if (signal) {
+    options.signal = signal;
+  }
+  
   // Llama a la misma URL pero devuelve el JSON tal cual lo recibe, sin map ni transformación
-  return this.http.get<any>(`${environment.toursApiUrl}/salidas?TKId=${externalId}`);
+  return this.http.get<any>(`${environment.toursApiUrl}/salidas`, options);
 }
 
 }

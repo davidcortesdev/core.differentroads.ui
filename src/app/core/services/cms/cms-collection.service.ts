@@ -39,7 +39,7 @@ export class CMSCollectionService {
     name?: string;
     visibleWeb?: boolean;
     versionActiva?: number;
-  }): Observable<ICMSCollectionResponse[]> {
+  }, signal?: AbortSignal): Observable<ICMSCollectionResponse[]> {
     let httpParams = new HttpParams();
     
     if (params) {
@@ -50,11 +50,26 @@ export class CMSCollectionService {
       if (params.versionActiva !== undefined) httpParams = httpParams.set('VersionActiva', params.versionActiva.toString());
     }
 
-    return this.http.get<ICMSCollectionResponse[]>(this.API_URL, { params: httpParams });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params: httpParams };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<ICMSCollectionResponse[]>(this.API_URL, options);
   }
 
-  getCollectionById(id: number): Observable<ICMSCollectionResponse> {
-    return this.http.get<ICMSCollectionResponse>(`${this.API_URL}/${id}`);
+  getCollectionById(id: number, signal?: AbortSignal): Observable<ICMSCollectionResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<ICMSCollectionResponse>(`${this.API_URL}/${id}`, options);
   }
 
   createCollection(collectionData: CMSCollectionCreate): Observable<ICMSCollectionResponse> {

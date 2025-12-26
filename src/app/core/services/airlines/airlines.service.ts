@@ -42,9 +42,10 @@ export class AirlinesService {
   /**
    * Obtiene aerolíneas con filtros opcionales
    * @param filter Criterios de filtro opcionales
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable de array de Airline
    */
-  getAirlines(filter?: AirlineFilter): Observable<Airline[]> {
+  getAirlines(filter?: AirlineFilter, signal?: AbortSignal): Observable<Airline[]> {
     let params = new HttpParams();
 
     // Añadir parámetros de filtro si se proporcionan
@@ -66,8 +67,16 @@ export class AirlinesService {
       return of(cachedData.data);
     }
 
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
     // Si no hay caché válida, realizar la petición HTTP
-    this.ongoingRequests[cacheKey] = this.http.get<Airline[]>(`${this.API_URL}`, { params }).pipe(
+    this.ongoingRequests[cacheKey] = this.http.get<Airline[]>(`${this.API_URL}`, options).pipe(
       tap(airlines => {
         // Guardar en caché
         this.airlinesCache[cacheKey] = {
@@ -101,9 +110,10 @@ export class AirlinesService {
   /**
    * Obtiene el nombre de una aerolínea a partir del prefijo IATA (primeras 2 letras del número de vuelo)
    * @param flightNumber Número de vuelo
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con el nombre de la aerolínea
    */
-  getAirlineNameByFlightNumber(flightNumber: string): Observable<string> {
+  getAirlineNameByFlightNumber(flightNumber: string, signal?: AbortSignal): Observable<string> {
     if (!flightNumber || flightNumber.length < 2) {
       return of('');
     }
@@ -129,7 +139,7 @@ export class AirlinesService {
     }
     
     // Si no está en caché, hacer la petición específica
-    return this.getAirlines({ codeIATA }).pipe(
+    return this.getAirlines({ codeIATA }, signal).pipe(
       map(airlines => {
         if (airlines && airlines.length > 0) {
           const airlineName = airlines[0].name || codeIATA;

@@ -94,7 +94,7 @@
         (onClick)="onBookingClick()"
         [pTooltip]="getBookingTooltip()"
         [tooltipPosition]="'top'"
-        [disabled]="preview || !hasSelectedDate || !isDepartureBookable || isStandaloneMode">
+        [disabled]="preview || !hasSelectedDate || !isFullyBookable || isStandaloneMode">
       </p-button>
     </div>
   </div>

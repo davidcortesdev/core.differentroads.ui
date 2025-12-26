@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ReviewsService } from '../../core/services/reviews/reviews.service';
 import { ReviewStatusService } from '../../core/services/reviews/review-status.service';
@@ -101,6 +101,8 @@ export class ReviewSurveyComponent implements OnInit {
   readonly MAX_IMAGES = 40;
   uploadedImages: string[] = [];
 
+  private abortController = new AbortController();
+
   constructor(
     private titleService: Title,
     private route: ActivatedRoute,
@@ -126,7 +128,7 @@ export class ReviewSurveyComponent implements OnInit {
       if (params['periodTkId']) {
         this.periodExternalId = params['periodTkId'];
 
-        this.departureService.getAll({ tkId: this.periodExternalId }).pipe(
+        this.departureService.getAll({ tkId: this.periodExternalId }, this.abortController.signal).pipe(
           switchMap((departures: IDepartureResponse[]) => {
             if (departures && departures.length > 0) {
               const departure = departures[0];
@@ -135,14 +137,14 @@ export class ReviewSurveyComponent implements OnInit {
               this.tripInfo.date = departure.departureDate || 'Fecha no disponible';
               this.formattedDate = this.datePipe.transform(this.tripInfo.date, 'yyyy/MM/dd') || '';
 
-              return this.itineraryService.getById(departure.itineraryId);
+              return this.itineraryService.getById(departure.itineraryId, this.abortController.signal);
             } else {
               throw new Error('No departures found');
             }
           }),
           switchMap((itinerary: IItineraryResponse) => {
             this.tripInfo.tourId = itinerary.tourId;
-            return this.tourService.getById(itinerary.tourId);
+            return this.tourService.getById(itinerary.tourId, true, this.abortController.signal);
           }),
           catchError((error) => {
             this.setErrorTripInfo();
@@ -166,6 +168,10 @@ export class ReviewSurveyComponent implements OnInit {
         }
       });
     });
+  }
+
+  ngOnDestroy(): void {
+    this.abortController.abort();
   }
 
   /**
@@ -273,7 +279,7 @@ export class ReviewSurveyComponent implements OnInit {
 
     const continueWithReview = (userId: number) => {
       // Primero obtenemos el reviewStatusId para "DRAFT"
-      this.reviewStatusService.getByCode('DRAFT').subscribe({
+      this.reviewStatusService.getByCode('DRAFT', this.abortController.signal).subscribe({
         next: (reviewStatuses) => {
           let reviewStatusId = 1; // Valor por defecto en caso de error
 

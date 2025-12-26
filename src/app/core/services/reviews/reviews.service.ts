@@ -117,9 +117,10 @@ export class ReviewsService {
   /**
    * Obtiene todas las reviews disponibles.
    * @param filters Filtros para aplicar en la búsqueda.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de reviews.
    */
-  getAll(filter?: ReviewFilters): Observable<IReviewResponse[]> {
+  getAll(filter?: ReviewFilters, signal?: AbortSignal): Observable<IReviewResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -134,16 +135,32 @@ export class ReviewsService {
       });
     }
 
-    return this.http.get<IReviewResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReviewResponse[]>(this.API_URL, options);
   }
 
   /**
    * Obtiene una review específica por su ID.
    * @param id ID de la review.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Review correspondiente.
    */
-  getById(id: number): Observable<IReviewResponse> {
-    return this.http.get<IReviewResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<IReviewResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<IReviewResponse>(`${this.API_URL}/${id}`, options);
   }
 
   /**
@@ -182,9 +199,10 @@ export class ReviewsService {
    * Obtiene las top N reviews basadas en rating.
    * @param count Número de reviews a obtener.
    * @param filters Filtros adicionales para aplicar.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de las mejores reviews.
    */
-  getTopReviews(count: number, filters?: ReviewFilters): Observable<IReviewResponse[]> {
+  getTopReviews(count: number, filters?: ReviewFilters, signal?: AbortSignal): Observable<IReviewResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -199,15 +217,24 @@ export class ReviewsService {
       });
     }
 
-    return this.http.get<IReviewResponse[]>(`${this.API_URL}/top/${count}`, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReviewResponse[]>(`${this.API_URL}/top/${count}`, options);
   }
 
   /**
    * Obtiene el conteo total de reviews basado en criterios de filtro.
    * @param filters Filtros para aplicar en el conteo.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Número total de reviews.
    */
-  getCount(filters?: ReviewFilters): Observable<number> {
+  getCount(filters?: ReviewFilters, signal?: AbortSignal): Observable<number> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -222,7 +249,15 @@ export class ReviewsService {
       });
     }
 
-    return this.http.get<number>(`${this.API_URL}/count`, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<number>(`${this.API_URL}/count`, options);
   }
 
   /**
@@ -275,57 +310,62 @@ export class ReviewsService {
    * Obtiene reviews por Tour ID.
    * @param tourId ID del tour.
    * @param additionalFilters Filtros adicionales opcionales.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de reviews del tour.
    */
-  getByTourId(tourId: number, additionalFilters?: Partial<ReviewFilters>): Observable<IReviewResponse[]> {
+  getByTourId(tourId: number, additionalFilters?: Partial<ReviewFilters>, signal?: AbortSignal): Observable<IReviewResponse[]> {
     const filters: ReviewFilters = { tourId, ...additionalFilters };
-    return this.getAll(filters);
+    return this.getAll(filters, signal);
   }
 
   /**
    * Obtiene reviews por Departure ID.
    * @param departureId ID de la salida.
    * @param additionalFilters Filtros adicionales opcionales.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de reviews de la salida.
    */
-  getByDepartureId(departureId: number, additionalFilters?: Partial<ReviewFilters>): Observable<IReviewResponse[]> {
+  getByDepartureId(departureId: number, additionalFilters?: Partial<ReviewFilters>, signal?: AbortSignal): Observable<IReviewResponse[]> {
     const filters: ReviewFilters = { departureId, ...additionalFilters };
-    return this.getAll(filters);
+    return this.getAll(filters, signal);
   }
 
   /**
    * Obtiene reviews por User ID.
    * @param userId ID del viajero.
    * @param additionalFilters Filtros adicionales opcionales.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de reviews del viajero.
    */
-  getByUserId(userId: number, additionalFilters?: Partial<ReviewFilters>): Observable<IReviewResponse[]> {
+  getByUserId(userId: number, additionalFilters?: Partial<ReviewFilters>, signal?: AbortSignal): Observable<IReviewResponse[]> {
     const filters: ReviewFilters = { userId, ...additionalFilters };
-    return this.getAll(filters);
+    return this.getAll(filters, signal);
   }
 
   /**
    * Obtiene reviews para mostrar en la página de inicio.
    * @param additionalFilters Filtros adicionales opcionales.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de reviews para homepage.
    */
-  getForHomePage(additionalFilters?: Partial<ReviewFilters>): Observable<IReviewResponse[]> {
+  getForHomePage(additionalFilters?: Partial<ReviewFilters>, signal?: AbortSignal): Observable<IReviewResponse[]> {
     const filters: ReviewFilters = { showOnHomePage: true, ...additionalFilters };
-    return this.getAll(filters);
+    return this.getAll(filters, signal);
   }
 
   /**
    * Obtiene reviews para mostrar en la página del  tour.
    * @param tourId ID del tour (opcional).
    * @param additionalFilters Filtros adicionales opcionales.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de reviews para tour page.
    */
-  getForTourPage(tourId?: number, additionalFilters?: Partial<ReviewFilters>): Observable<IReviewResponse[]> {
+  getForTourPage(tourId?: number, additionalFilters?: Partial<ReviewFilters>, signal?: AbortSignal): Observable<IReviewResponse[]> {
     const filters: ReviewFilters = { 
       showOnTourPage: true, 
       ...(tourId && { tourId }), 
       ...additionalFilters 
     };
-    return this.getAll(filters);
+    return this.getAll(filters, signal);
   }
 }

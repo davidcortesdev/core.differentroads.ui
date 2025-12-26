@@ -48,9 +48,10 @@ export class ReviewImageService {
   /**
    * Obtiene todas las imágenes de review disponibles.
    * @param filters Filtros para aplicar en la búsqueda.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de imágenes de review.
    */
-  getAll(filter?: ReviewImageFilters): Observable<IReviewImageResponse[]> {
+  getAll(filter?: ReviewImageFilters, signal?: AbortSignal): Observable<IReviewImageResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -65,16 +66,32 @@ export class ReviewImageService {
       });
     }
 
-    return this.http.get<IReviewImageResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReviewImageResponse[]>(this.API_URL, options);
   }
 
   /**
    * Obtiene una imagen de review específica por su ID.
    * @param id ID de la imagen de review.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Imagen de review correspondiente.
    */
-  getById(id: number): Observable<IReviewImageResponse> {
-    return this.http.get<IReviewImageResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<IReviewImageResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<IReviewImageResponse>(`${this.API_URL}/${id}`, options);
   }
 
   /**
@@ -112,10 +129,11 @@ export class ReviewImageService {
   /**
    * Obtiene todas las imágenes de una review específica.
    * @param reviewId ID de la review.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de imágenes de la review.
    */
-  getByReviewId(reviewId: number): Observable<IReviewImageResponse[]> {
-    return this.getAll({ reviewId });
+  getByReviewId(reviewId: number, signal?: AbortSignal): Observable<IReviewImageResponse[]> {
+    return this.getAll({ reviewId }, signal);
   }
 
   /**
@@ -163,11 +181,12 @@ export class ReviewImageService {
   /**
    * Elimina todas las imágenes de una review específica.
    * @param reviewId ID de la review.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable que se completa cuando todas las imágenes son eliminadas.
    */
-  deleteByReviewId(reviewId: number): Observable<boolean> {
+  deleteByReviewId(reviewId: number, signal?: AbortSignal): Observable<boolean> {
     return new Observable(observer => {
-      this.getByReviewId(reviewId).subscribe({
+      this.getByReviewId(reviewId, signal).subscribe({
         next: (images) => {
           if (images.length === 0) {
             observer.next(true);
@@ -208,12 +227,13 @@ export class ReviewImageService {
    * Elimina las existentes y crea las nuevas.
    * @param reviewId ID de la review.
    * @param newImageUrls Array de nuevas URLs de imágenes.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Array de nuevas imágenes creadas.
    */
-  updateReviewImages(reviewId: number, newImageUrls: string[]): Observable<IReviewImageResponse[]> {
+  updateReviewImages(reviewId: number, newImageUrls: string[], signal?: AbortSignal): Observable<IReviewImageResponse[]> {
     return new Observable(observer => {
       // Primero eliminar las imágenes existentes
-      this.deleteByReviewId(reviewId).subscribe({
+      this.deleteByReviewId(reviewId, signal).subscribe({
         next: () => {
           // Luego crear las nuevas imágenes
           if (newImageUrls.length === 0) {
@@ -242,11 +262,12 @@ export class ReviewImageService {
   /**
    * Verifica si una review tiene imágenes asociadas.
    * @param reviewId ID de la review.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns `true` si la review tiene imágenes.
    */
-  hasImages(reviewId: number): Observable<boolean> {
+  hasImages(reviewId: number, signal?: AbortSignal): Observable<boolean> {
     return new Observable(observer => {
-      this.getByReviewId(reviewId).subscribe({
+      this.getByReviewId(reviewId, signal).subscribe({
         next: (images) => {
           observer.next(images.length > 0);
           observer.complete();

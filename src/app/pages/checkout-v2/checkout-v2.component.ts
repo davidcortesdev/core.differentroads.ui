@@ -3017,6 +3017,11 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     // Calcular pasajeros niños
     const childrenCount = this.getChildrenPassengersCount();
 
+    // ✅ CORRECCIÓN: El backend está devolviendo nights en el campo days
+    // El campo days contiene el valor de nights, por lo que days = nights + 1
+    const nightsValue = tourData.days !== undefined ? tourData.days : tourData.nights;
+    const daysValue = tourData.days !== undefined ? (tourData.days + 1) : (tourData.nights !== undefined ? tourData.nights + 1 : undefined);
+
     return {
       id: this.tourId || tourData.id,
       tkId: tourData.tkId,
@@ -3025,8 +3030,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         continent: tourData.destination?.continent,
         country: tourData.destination?.country
       },
-      days: tourData.days,
-      nights: tourData.nights,
+      days: daysValue,
+      nights: nightsValue,
       rating: tourData.rating,
       monthTags: tourData.monthTags,
       tourType: tourData.tourType,

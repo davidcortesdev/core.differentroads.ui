@@ -28,6 +28,7 @@
       <!-- Formulario de inicio de sesión manual -->
       <form
         *ngIf="!isConfirming; else confirmTemplate"
+        id="dr-login-form"
         [formGroup]="loginForm"
         (ngSubmit)="onSubmit($event)"
         class="form-login"

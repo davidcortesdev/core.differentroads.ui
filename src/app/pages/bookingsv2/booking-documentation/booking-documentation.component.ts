@@ -67,6 +67,9 @@ export class BookingDocumentationV2Component implements OnInit {
   // Mapa para almacenar los adjuntos de cada notificación (notificationId -> attachments[])
   notificationAttachments: { [key: number]: NotificationAttachment[] } = {};
   attachmentsLoading: { [key: number]: boolean } = {};
+  
+  // Mapa para rastrear qué notificaciones están expandidas (notificationId -> boolean)
+  expandedNotifications: { [key: number]: boolean } = {};
 
   // Propiedades para estados y tipos
   notificationStatuses: INotificationStatusResponse[] = [];
@@ -1011,5 +1014,31 @@ export class BookingDocumentationV2Component implements OnInit {
   isAttachmentDownloading(notificationId: number, attachmentIndex: number): boolean {
     const key = this.getAttachmentLoadingKey(notificationId, attachmentIndex);
     return this.attachmentDownloadLoading[key] || false;
+  }
+
+  /**
+   * Alterna el estado expandido de una notificación
+   * @param notificationId - ID de la notificación
+   */
+  toggleNotificationExpanded(notificationId: number): void {
+    this.expandedNotifications[notificationId] = !this.expandedNotifications[notificationId];
+  }
+
+  /**
+   * Verifica si una notificación está expandida
+   * @param notificationId - ID de la notificación
+   * @returns true si está expandida
+   */
+  isNotificationExpanded(notificationId: number): boolean {
+    return this.expandedNotifications[notificationId] || false;
+  }
+
+  /**
+   * Obtiene la cantidad de adjuntos de una notificación
+   * @param notificationId - ID de la notificación
+   * @returns Número de adjuntos
+   */
+  getAttachmentCount(notificationId: number): number {
+    return this.notificationAttachments[notificationId]?.length || 0;
   }
 }

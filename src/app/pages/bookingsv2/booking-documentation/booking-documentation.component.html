@@ -99,6 +99,7 @@
       >
         <ng-template #header>
           <tr>
+            <th style="width: 3rem"></th>
             <th>Tipo</th>
             <th>Email</th>
             <th>Estado</th>
@@ -110,7 +111,26 @@
         </ng-template>
 
         <ng-template #body let-notification>
+          <!-- Fila principal de la notificación -->
           <tr>
+            <td>
+              <button
+                *ngIf="getAttachmentCount(notification.id) > 0"
+                type="button"
+                class="expand-button"
+                (click)="toggleNotificationExpanded(notification.id)"
+                [attr.aria-expanded]="isNotificationExpanded(notification.id)"
+              >
+                <i
+                  class="pi"
+                  [ngClass]="
+                    isNotificationExpanded(notification.id)
+                      ? 'pi-chevron-down'
+                      : 'pi-chevron-right'
+                  "
+                ></i>
+              </button>
+            </td>
             <td>
               {{ getNotificationTypeText(notification.notificationTypeId) }}
             </td>
@@ -131,49 +151,31 @@
             <td>{{ formatNotificationDate(notification.createdAt) }}</td>
             <td>{{ formatNotificationDate(notification.sentAt) }}</td>
             <td>
-              <div
-                *ngIf="getNotificationAttachments(notification).length > 0; else noAttachments"
-                class="attachments-container"
-              >
-                <div
-                  *ngFor="
-                    let attachment of getNotificationAttachments(notification);
-                    let i = index
-                  "
-                  class="attachment-item"
+              <div class="attachments-badge-container">
+                <span
+                  *ngIf="attachmentsLoading[notification.id]"
+                  class="attachments-loading"
+                >
+                  <i class="pi pi-spin pi-spinner" style="font-size: 0.875rem"></i>
+                  Cargando...
+                </span>
+                <span
+                  *ngIf="!attachmentsLoading[notification.id]"
+                  class="attachments-badge"
                 >
                   <i class="pi pi-paperclip"></i>
-                  <span
-                    [pTooltip]="attachment.fileName"
-                    tooltipPosition="top"
-                    class="attachment-name"
-                  >
-                    {{ truncateFileName(attachment.fileName, 20) }}
+                  <span class="badge-count">
+                    {{ getAttachmentCount(notification.id) }}
                   </span>
-                  <p-button
-                    icon="pi pi-download"
-                    severity="secondary"
-                    [text]="true"
-                    [rounded]="true"
-                    [loading]="
-                      isAttachmentDownloading(notification.id, i)
-                    "
-                    [disabled]="isAttachmentDownloading(notification.id, i)"
-                    (click)="
-                      downloadNotificationAttachment(
-                        attachment,
-                        notification.id,
-                        i
-                      )
-                    "
-                    pTooltip="Descargar adjunto"
-                  >
-                  </p-button>
-                </div>
+                  <span class="badge-text">
+                    {{
+                      getAttachmentCount(notification.id) === 1
+                        ? "adjunto"
+                        : "adjuntos"
+                    }}
+                  </span>
+                </span>
               </div>
-              <ng-template #noAttachments>
-                <span class="text-muted">Sin adjuntos</span>
-              </ng-template>
             </td>
             <td>
               <p-button
@@ -187,11 +189,75 @@
               </p-button>
             </td>
           </tr>
+          
+          <!-- Fila expandida con los adjuntos -->
+          <tr
+            *ngIf="
+              isNotificationExpanded(notification.id) &&
+              getAttachmentCount(notification.id) > 0
+            "
+            class="expanded-row"
+          >
+            <td></td>
+            <td colspan="7" class="attachments-expanded-content">
+              <div class="attachments-list">
+                <h4 class="attachments-list-title">
+                  <i class="pi pi-paperclip"></i>
+                  Archivos adjuntos ({{ getAttachmentCount(notification.id) }})
+                </h4>
+                <div class="attachments-grid">
+                  <div
+                    *ngFor="
+                      let attachment of getNotificationAttachments(notification);
+                      let i = index
+                    "
+                    class="attachment-card"
+                  >
+                    <div class="attachment-info">
+                      <i class="pi pi-file attachment-icon"></i>
+                      <div class="attachment-details">
+                        <span class="attachment-name">{{
+                          attachment.fileName
+                        }}</span>
+                        <span class="attachment-size">
+                          {{
+                            attachment.fileSize > 1024
+                              ? (attachment.fileSize / 1024).toFixed(2) + " KB"
+                              : attachment.fileSize + " bytes"
+                          }}
+                        </span>
+                      </div>
+                    </div>
+                    <p-button
+                      icon="pi pi-download"
+                      label="Descargar"
+                      severity="secondary"
+                      [loading]="
+                        isAttachmentDownloading(notification.id, i)
+                      "
+                      [disabled]="
+                        isAttachmentDownloading(notification.id, i)
+                      "
+                      (click)="
+                        downloadNotificationAttachment(
+                          attachment,
+                          notification.id,
+                          i
+                        )
+                      "
+                      [style]="{ 'margin-left': 'auto' }"
+                    >
+                    </p-button>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
         </ng-template>
 
         <ng-template #emptymessage>
           <tr>
-            <td colspan="7">No hay notificaciones registradas.</td>
+            <td colspan="8">No hay notificaciones registradas.</td>
           </tr>
         </ng-template>
       </p-table>

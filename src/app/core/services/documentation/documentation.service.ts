@@ -21,9 +21,13 @@ export interface IDocumentResponse {
   id: number;
   documentTypeId: number;
   fileName: string;
+  filePath?: string;
+  url?: string;
   mimeType: string;
   fileSize: number;
+  uploadedAt?: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 /**
@@ -51,18 +55,6 @@ export interface DocumentReservationCreate {
 export interface DocumentReservationUpdate {
   documentId: number;
   reservationId: number;
-}
-
-/**
- * Interfaz para la respuesta de documentos
- */
-export interface IDocumentResponse {
-  id: number;
-  documentTypeId: number;
-  fileName: string;
-  mimeType: string;
-  fileSize: number;
-  createdAt: string;
 }
 
 @Injectable({

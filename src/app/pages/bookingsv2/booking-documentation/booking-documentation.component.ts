@@ -11,6 +11,7 @@ import {
   INotification,
   INotificationStatusResponse,
   INotificationTypeResponse,
+  INotificationDocument,
 } from '../../../core/services/documentation/notification.service';
 import {
   ReservationTKLogService,
@@ -23,9 +24,10 @@ import {
 } from '../../../core/services/v2/document.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
+import { forkJoin, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { MessageService } from 'primeng/api';
 import { BookingNote } from '../../../core/models/bookings/booking-note.model';
-import { catchError, of } from 'rxjs';
 
 type Severity =
   | 'success'
@@ -39,8 +41,12 @@ type Severity =
  * Interfaz para los adjuntos de notificaciones
  */
 interface NotificationAttachment {
+  id: number;
   url: string;
+  filePath: string;
   fileName: string;
+  mimeType: string;
+  fileSize: number;
 }
 
 @Component({
@@ -57,6 +63,10 @@ export class BookingDocumentationV2Component implements OnInit {
   apiNotifications: INotification[] = [];
   documentsLoading: boolean = false;
   notificationsLoading: boolean = false;
+
+  // Mapa para almacenar los adjuntos de cada notificación (notificationId -> attachments[])
+  notificationAttachments: { [key: number]: NotificationAttachment[] } = {};
+  attachmentsLoading: { [key: number]: boolean } = {};
 
   // Propiedades para estados y tipos
   notificationStatuses: INotificationStatusResponse[] = [];
@@ -225,6 +235,11 @@ export class BookingDocumentationV2Component implements OnInit {
         next: (notifications: INotification[]) => {
           this.apiNotifications = notifications;
           this.notificationsLoading = false;
+          
+          // Cargar adjuntos para cada notificación
+          notifications.forEach((notification) => {
+            this.loadNotificationAttachments(notification.id);
+          });
         },
         error: (error) => {
           this.apiNotifications = [];
@@ -234,6 +249,68 @@ export class BookingDocumentationV2Component implements OnInit {
             summary: 'Advertencia',
             detail: 'No se pudieron cargar las notificaciones',
           });
+        },
+      });
+  }
+
+  /**
+   * Carga los adjuntos (documentos) relacionados con una notificación
+   * @param notificationId - ID de la notificación
+   */
+  loadNotificationAttachments(notificationId: number): void {
+    this.attachmentsLoading[notificationId] = true;
+
+    // Obtener las relaciones notificación-documento
+    this.notificationService
+      .getNotificationDocumentsByNotificationId(notificationId)
+      .subscribe({
+        next: (notificationDocuments: INotificationDocument[]) => {
+          if (notificationDocuments.length === 0) {
+            this.notificationAttachments[notificationId] = [];
+            this.attachmentsLoading[notificationId] = false;
+            return;
+          }
+
+          // Obtener los detalles de cada documento
+          const documentPromises = notificationDocuments.map((notifDoc) =>
+            this.documentationService.getDocumentById(notifDoc.documentId).pipe(
+              map((document) => ({
+                id: document.id,
+                url: document.url || '',
+                filePath: document.filePath || '',
+                fileName: document.fileName,
+                mimeType: document.mimeType,
+                fileSize: document.fileSize,
+                displayOrder: notifDoc.displayOrder,
+              })),
+              catchError((error) => {
+                // Si hay error al obtener un documento, retornar null
+                return of(null);
+              })
+            )
+          );
+
+          // Esperar a que se carguen todos los documentos
+          forkJoin(documentPromises).subscribe({
+            next: (attachments) => {
+              // Filtrar nulls y ordenar por displayOrder
+              const validAttachments = attachments
+                .filter((att): att is NotificationAttachment & { displayOrder: number } => att !== null)
+                .sort((a, b) => a.displayOrder - b.displayOrder)
+                .map(({ displayOrder, ...att }) => att);
+
+              this.notificationAttachments[notificationId] = validAttachments;
+              this.attachmentsLoading[notificationId] = false;
+            },
+            error: (error) => {
+              this.notificationAttachments[notificationId] = [];
+              this.attachmentsLoading[notificationId] = false;
+            },
+          });
+        },
+        error: (error) => {
+          this.notificationAttachments[notificationId] = [];
+          this.attachmentsLoading[notificationId] = false;
         },
       });
   }
@@ -742,36 +819,12 @@ export class BookingDocumentationV2Component implements OnInit {
   }
 
   /**
-   * Parsea los adjuntos de una notificación desde attachmentUrl
-   * Formato esperado: "url1|filename1,url2|filename2" o solo "url" (sin nombre)
-   * @param notification - Notificación con attachmentUrl
-   * @returns Array de adjuntos parseados
+   * Obtiene los adjuntos de una notificación desde el mapa de adjuntos cargados
+   * @param notification - Notificación
+   * @returns Array de adjuntos relacionados con la notificación
    */
   getNotificationAttachments(notification: INotification): NotificationAttachment[] {
-    if (!notification.attachmentUrl) {
-      return [];
-    }
-
-    // Separar múltiples adjuntos por comas
-    const attachmentEntries = notification.attachmentUrl
-      .split(',')
-      .map((entry) => entry.trim())
-      .filter((entry) => entry.length > 0);
-
-    return attachmentEntries.map((entry) => {
-      // Extraer URL y nombre del archivo del formato "url|filename"
-      const parts = entry.split('|');
-      const fileUrl = parts[0].trim();
-      const fileName =
-        parts.length > 1
-          ? parts[1].trim()
-          : this.extractFileNameFromUrl(fileUrl);
-
-      return {
-        url: fileUrl,
-        fileName: fileName,
-      };
-    });
+    return this.notificationAttachments[notification.id] || [];
   }
 
   /**
@@ -818,9 +871,70 @@ export class BookingDocumentationV2Component implements OnInit {
       detail: 'Descargando adjunto...',
     });
 
-    // Descargar el archivo directamente desde la URL
+    // Si hay URL directa, intentar descargarla
+    if (attachment.url) {
+      this.http
+        .get(attachment.url, { responseType: 'blob' })
+        .subscribe({
+          next: (blob) => {
+            this.attachmentDownloadLoading[loadingKey] = false;
+
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = attachment.fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(downloadUrl);
+
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Éxito',
+              detail: 'Adjunto descargado exitosamente',
+            });
+          },
+          error: (error) => {
+            // Si falla la URL, intentar con filePath
+            if (attachment.filePath) {
+              this.downloadAttachmentByFilePath(attachment, loadingKey);
+            } else {
+              this.attachmentDownloadLoading[loadingKey] = false;
+              this.handleAttachmentDownloadError(error, attachment.url);
+            }
+          },
+        });
+    } else if (attachment.filePath) {
+      // Si no hay URL pero hay filePath, usar filePath
+      this.downloadAttachmentByFilePath(attachment, loadingKey);
+    } else {
+      this.attachmentDownloadLoading[loadingKey] = false;
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se puede descargar el adjunto: información incompleta',
+      });
+    }
+  }
+
+  /**
+   * Descarga un adjunto usando filePath
+   * @param attachment - Adjunto a descargar
+   * @param loadingKey - Clave para el estado de carga
+   */
+  private downloadAttachmentByFilePath(
+    attachment: NotificationAttachment,
+    loadingKey: string
+  ): void {
+    const url = `${environment.documentationApiUrl}/File/Get`;
+    const params = new URLSearchParams();
+    params.set('filepath', attachment.filePath);
+
     this.http
-      .get(attachment.url, { responseType: 'blob' })
+      .get(`${url}?${params.toString()}`, {
+        headers: { accept: 'application/octet-stream' },
+        responseType: 'blob',
+      })
       .subscribe({
         next: (blob) => {
           this.attachmentDownloadLoading[loadingKey] = false;
@@ -842,32 +956,40 @@ export class BookingDocumentationV2Component implements OnInit {
         },
         error: (error) => {
           this.attachmentDownloadLoading[loadingKey] = false;
-          
-          // Si falla con CORS o error de red, intentar abrir en nueva pestaña
-          if (error.status === 0 || error.status === null || error.name === 'HttpErrorResponse') {
-            try {
-              window.open(attachment.url, '_blank');
-              this.messageService.add({
-                severity: 'info',
-                summary: 'Info',
-                detail: 'Abriendo adjunto en nueva pestaña...',
-              });
-            } catch (openError) {
-              this.messageService.add({
-                severity: 'error',
-                summary: 'Error',
-                detail: 'No se pudo abrir el adjunto. Por favor, intenta acceder directamente a la URL.',
-              });
-            }
-          } else {
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Error',
-              detail: 'No se pudo descargar el adjunto. Por favor, inténtalo más tarde.',
-            });
-          }
+          this.handleAttachmentDownloadError(error, attachment.url || attachment.filePath);
         },
       });
+  }
+
+  /**
+   * Maneja errores al descargar adjuntos
+   * @param error - Error recibido
+   * @param urlOrPath - URL o ruta del archivo
+   */
+  private handleAttachmentDownloadError(error: any, urlOrPath?: string): void {
+    // Si falla con CORS o error de red, intentar abrir en nueva pestaña
+    if (urlOrPath && (error.status === 0 || error.status === null || error.name === 'HttpErrorResponse')) {
+      try {
+        window.open(urlOrPath, '_blank');
+        this.messageService.add({
+          severity: 'info',
+          summary: 'Info',
+          detail: 'Abriendo adjunto en nueva pestaña...',
+        });
+      } catch (openError) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudo abrir el adjunto. Por favor, intenta acceder directamente a la URL.',
+        });
+      }
+    } else {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudo descargar el adjunto. Por favor, inténtalo más tarde.',
+      });
+    }
   }
 
   /**

@@ -35,6 +35,14 @@ type Severity =
   | 'secondary'
   | 'contrast';
 
+/**
+ * Interfaz para los adjuntos de notificaciones
+ */
+interface NotificationAttachment {
+  url: string;
+  fileName: string;
+}
+
 @Component({
   selector: 'app-booking-documentation-v2',
   standalone: false,
@@ -73,6 +81,9 @@ export class BookingDocumentationV2Component implements OnInit {
 
   // Propiedad para el estado de carga de descarga por documento
   downloadLoading: { [key: number]: boolean } = {};
+
+  // Propiedad para el estado de descarga de adjuntos por notificación y archivo
+  attachmentDownloadLoading: { [key: string]: boolean } = {};
 
   // Propiedades para el modal de contenido de notificación
   showNotificationContentModal: boolean = false;
@@ -728,5 +739,155 @@ export class BookingDocumentationV2Component implements OnInit {
       summary: 'Error al descargar documento',
       detail: errorDetail,
     });
+  }
+
+  /**
+   * Parsea los adjuntos de una notificación desde attachmentUrl
+   * Formato esperado: "url1|filename1,url2|filename2" o solo "url" (sin nombre)
+   * @param notification - Notificación con attachmentUrl
+   * @returns Array de adjuntos parseados
+   */
+  getNotificationAttachments(notification: INotification): NotificationAttachment[] {
+    if (!notification.attachmentUrl) {
+      return [];
+    }
+
+    // Separar múltiples adjuntos por comas
+    const attachmentEntries = notification.attachmentUrl
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter((entry) => entry.length > 0);
+
+    return attachmentEntries.map((entry) => {
+      // Extraer URL y nombre del archivo del formato "url|filename"
+      const parts = entry.split('|');
+      const fileUrl = parts[0].trim();
+      const fileName =
+        parts.length > 1
+          ? parts[1].trim()
+          : this.extractFileNameFromUrl(fileUrl);
+
+      return {
+        url: fileUrl,
+        fileName: fileName,
+      };
+    });
+  }
+
+  /**
+   * Extrae el nombre del archivo de una URL
+   * @param url - URL del archivo
+   * @returns Nombre del archivo extraído
+   */
+  private extractFileNameFromUrl(url: string): string {
+    try {
+      // Intentar extraer el nombre del archivo de la URL
+      const urlObj = new URL(url);
+      const pathname = urlObj.pathname;
+      const fileName = pathname.split('/').pop() || 'archivo';
+      
+      // Si no tiene extensión, intentar inferirla del tipo MIME o usar genérico
+      if (!fileName.includes('.')) {
+        return `adjunto_${Date.now()}`;
+      }
+      
+      return fileName;
+    } catch (error) {
+      // Si la URL no es válida, usar un nombre genérico
+      return `adjunto_${Date.now()}`;
+    }
+  }
+
+  /**
+   * Descarga un adjunto de notificación
+   * @param attachment - Adjunto a descargar
+   * @param notificationId - ID de la notificación
+   * @param attachmentIndex - Índice del adjunto en la lista
+   */
+  downloadNotificationAttachment(
+    attachment: NotificationAttachment,
+    notificationId: number,
+    attachmentIndex: number
+  ): void {
+    const loadingKey = `${notificationId}_${attachmentIndex}`;
+    this.attachmentDownloadLoading[loadingKey] = true;
+
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Info',
+      detail: 'Descargando adjunto...',
+    });
+
+    // Descargar el archivo directamente desde la URL
+    this.http
+      .get(attachment.url, { responseType: 'blob' })
+      .subscribe({
+        next: (blob) => {
+          this.attachmentDownloadLoading[loadingKey] = false;
+
+          const downloadUrl = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = downloadUrl;
+          link.download = attachment.fileName;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(downloadUrl);
+
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Éxito',
+            detail: 'Adjunto descargado exitosamente',
+          });
+        },
+        error: (error) => {
+          this.attachmentDownloadLoading[loadingKey] = false;
+          
+          // Si falla con CORS o error de red, intentar abrir en nueva pestaña
+          if (error.status === 0 || error.status === null || error.name === 'HttpErrorResponse') {
+            try {
+              window.open(attachment.url, '_blank');
+              this.messageService.add({
+                severity: 'info',
+                summary: 'Info',
+                detail: 'Abriendo adjunto en nueva pestaña...',
+              });
+            } catch (openError) {
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'No se pudo abrir el adjunto. Por favor, intenta acceder directamente a la URL.',
+              });
+            }
+          } else {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'No se pudo descargar el adjunto. Por favor, inténtalo más tarde.',
+            });
+          }
+        },
+      });
+  }
+
+  /**
+   * Obtiene la clave de carga para un adjunto específico
+   * @param notificationId - ID de la notificación
+   * @param attachmentIndex - Índice del adjunto
+   * @returns Clave única para el estado de carga
+   */
+  getAttachmentLoadingKey(notificationId: number, attachmentIndex: number): string {
+    return `${notificationId}_${attachmentIndex}`;
+  }
+
+  /**
+   * Verifica si un adjunto se está descargando
+   * @param notificationId - ID de la notificación
+   * @param attachmentIndex - Índice del adjunto
+   * @returns true si se está descargando
+   */
+  isAttachmentDownloading(notificationId: number, attachmentIndex: number): boolean {
+    const key = this.getAttachmentLoadingKey(notificationId, attachmentIndex);
+    return this.attachmentDownloadLoading[key] || false;
   }
 }

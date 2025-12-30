@@ -49,6 +49,42 @@
     overflow: hidden;
     flex-grow: 1;
     min-height: 100%;
+
+    .attachments-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      min-width: 200px;
+
+      .attachment-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem 0.5rem;
+        background-color: #f5f5f5;
+        border-radius: 4px;
+        font-size: 0.875rem;
+
+        i.pi-paperclip {
+          color: var(--background-azul);
+          font-size: 0.875rem;
+        }
+
+        .attachment-name {
+          flex: 1;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          color: var(--background-azul);
+        }
+      }
+    }
+
+    .text-muted {
+      color: #999;
+      font-style: italic;
+      font-size: 0.875rem;
+    }
   }
 
   .notes-container {

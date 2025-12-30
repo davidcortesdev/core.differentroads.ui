@@ -24,6 +24,7 @@ export interface INotification {
   recipient: string | null;
   emailId: string | null;
   error: string | null;
+  attachmentUrl?: string | null; // URLs de archivos adjuntos (puede ser múltiple separado por comas, formato: "url|filename" o "url")
 }
 
 /**

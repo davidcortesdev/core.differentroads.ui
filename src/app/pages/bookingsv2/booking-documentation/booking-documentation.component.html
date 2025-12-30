@@ -104,6 +104,7 @@
             <th>Estado</th>
             <th>Fecha de creación</th>
             <th>Fecha de envío</th>
+            <th>Adjuntos</th>
             <th style="width: 5rem">Acciones</th>
           </tr>
         </ng-template>
@@ -130,6 +131,51 @@
             <td>{{ formatNotificationDate(notification.createdAt) }}</td>
             <td>{{ formatNotificationDate(notification.sentAt) }}</td>
             <td>
+              <div
+                *ngIf="getNotificationAttachments(notification).length > 0; else noAttachments"
+                class="attachments-container"
+              >
+                <div
+                  *ngFor="
+                    let attachment of getNotificationAttachments(notification);
+                    let i = index
+                  "
+                  class="attachment-item"
+                >
+                  <i class="pi pi-paperclip"></i>
+                  <span
+                    [pTooltip]="attachment.fileName"
+                    tooltipPosition="top"
+                    class="attachment-name"
+                  >
+                    {{ truncateFileName(attachment.fileName, 20) }}
+                  </span>
+                  <p-button
+                    icon="pi pi-download"
+                    severity="secondary"
+                    [text]="true"
+                    [rounded]="true"
+                    [loading]="
+                      isAttachmentDownloading(notification.id, i)
+                    "
+                    [disabled]="isAttachmentDownloading(notification.id, i)"
+                    (click)="
+                      downloadNotificationAttachment(
+                        attachment,
+                        notification.id,
+                        i
+                      )
+                    "
+                    pTooltip="Descargar adjunto"
+                  >
+                  </p-button>
+                </div>
+              </div>
+              <ng-template #noAttachments>
+                <span class="text-muted">Sin adjuntos</span>
+              </ng-template>
+            </td>
+            <td>
               <p-button
                 icon="pi pi-eye"
                 severity="secondary"
@@ -145,7 +191,7 @@
 
         <ng-template #emptymessage>
           <tr>
-            <td colspan="6">No hay notificaciones registradas.</td>
+            <td colspan="7">No hay notificaciones registradas.</td>
           </tr>
         </ng-template>
       </p-table>

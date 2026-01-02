@@ -121,12 +121,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
   // Por defecto (sin breakpoint aplicado) se usan 3 cards visibles.
   responsiveOptions = [
     {
-      breakpoint: '1650px', // >=1025px y <=1600px
-      numVisible: 3,
-      numScroll: 1,
-    },
-    {
-      breakpoint: '1390px',
+      breakpoint: '1300px', // Desde 1300px hacia abajo mostrar 2 tarjetas
       numVisible: 2,
       numScroll: 1,
     },

@@ -101,8 +101,8 @@ $breakpoint-small: 768px;
         .tours-section-layout {
             padding: 0 3rem;
             gap: 50px;
-            // Reducir mínimo de descripción cuando el espacio es limitado
-            grid-template-columns: minmax(250px, 1fr) minmax(0, 2fr);
+            // Reducir mínimo de descripción cuando el espacio es limitado para dar más espacio a 3 tarjetas
+            grid-template-columns: minmax(240px, 0.8fr) minmax(0, 2.2fr);
         }
 
         .tours-section-description {
@@ -228,6 +228,8 @@ $breakpoint-small: 768px;
 // ===============================================
 ::ng-deep {
     .p-carousel {
+        overflow: visible !important; // Importante: evitar que corte las tarjetas
+        
         // En móvil, permitir ambos gestos - el JavaScript detectará la dirección
         @media screen and (max-width: $breakpoint-small) {
             // Permitir ambos gestos - pan-x para swipe horizontal, pan-y para scroll vertical
@@ -320,8 +322,10 @@ $breakpoint-small: 768px;
             }
         }
         
-        // Contenedor de items - permitir ambos gestos
+        // Contenedor de items - asegurar que no corte las tarjetas
         .p-carousel-items-container {
+            overflow: visible !important; // Importante: evitar que corte las tarjetas
+            
             @media screen and (max-width: $breakpoint-small) {
                 // Permitir ambos gestos - el JavaScript manejará la detección
                 touch-action: pan-x pan-y;
@@ -332,6 +336,8 @@ $breakpoint-small: 768px;
         
         // Contenedor de contenido del carrusel
         .p-carousel-content {
+            overflow: visible !important; // Importante: evitar que corte las tarjetas
+            
             @media screen and (max-width: $breakpoint-small) {
                 touch-action: pan-x pan-y;
                 pointer-events: auto !important;
@@ -341,22 +347,26 @@ $breakpoint-small: 768px;
         
         // Contenido interno del carrusel
         .p-carousel-items-content {
+            overflow: visible !important; // Importante: evitar que corte las tarjetas
+            
             @media screen and (max-width: $breakpoint-small) {
                 touch-action: pan-x pan-y;
                 will-change: transform;
             }
         }
         
-        // Contenedor para cada tarjeta - usar margin simple como en el ejemplo (m-2 = 0.5rem)
+        // Contenedor para cada tarjeta - reducir márgenes para evitar que se corten
         .tour-carousel-item {
-            margin: 0 0.75rem; // Similar a m-2 del ejemplo pero solo horizontal
+            margin: 0 0.5rem; // Reducido de 0.75rem para evitar cortes
+            box-sizing: border-box;
+            flex-shrink: 0; // Evitar que las tarjetas se compriman
             
             @media screen and (max-width: $breakpoint-medium) {
-                margin: 0 0.5rem;
+                margin: 0 0.4rem; // Márgenes aún más pequeños en tablet
             }
             
             @media screen and (max-width: $breakpoint-small) {
-                margin: 0 0.5rem;
+                margin: 0 0.4rem;
             }
         }
     }

@@ -96,32 +96,14 @@ $breakpoint-small: 768px;
         width: 7rem;
     }
 
-    // Media queries
-    @media screen and (max-width: $breakpoint-large) {
+    // Media queries - Optimizado para pantallas de 10-15 pulgadas con 3 tarjetas
+    
+    // Pantallas de 15 pulgadas (1281px-1600px) - Optimizado para 3 tarjetas
+    @media screen and (max-width: 1600px) and (min-width: 1281px) {
         .tours-section-layout {
-            padding: 0 3rem;
-            gap: 50px;
-            // Reducir mínimo de descripción cuando el espacio es limitado para dar más espacio a 3 tarjetas
+            padding: 0 3.5rem;
+            gap: 45px;
             grid-template-columns: minmax(240px, 0.8fr) minmax(0, 2.2fr);
-        }
-
-        .tours-section-description {
-            .title {
-                font-size: 1.75rem; // Reducir tamaño de título
-            }
-
-            .description {
-                font-size: 1.2rem; // Reducir tamaño de descripción
-            }
-        }
-    }
-
-    // Media query para pantallas donde el carrusel necesita más espacio para 3 tarjetas
-    @media screen and (max-width: 1650px) and (min-width: 1367px) {
-        .tours-section-layout {
-            // Reducir aún más el mínimo cuando estamos cerca del breakpoint de 3 tarjetas
-            grid-template-columns: minmax(240px, 0.8fr) minmax(0, 2.2fr);
-            gap: 40px;
         }
 
         .tours-section-description {
@@ -130,7 +112,26 @@ $breakpoint-small: 768px;
             }
 
             .description {
-                font-size: 1.3rem;
+                font-size: 1.2rem;
+            }
+        }
+    }
+
+    // Pantallas de 10-13 pulgadas (1025px-1280px) - Optimizado para 3 tarjetas
+    @media screen and (max-width: 1280px) and (min-width: 1025px) {
+        .tours-section-layout {
+            padding: 0 3rem;
+            gap: 40px;
+            grid-template-columns: minmax(220px, 0.75fr) minmax(0, 2.25fr);
+        }
+
+        .tours-section-description {
+            .title {
+                font-size: 1.7rem;
+            }
+
+            .description {
+                font-size: 1.15rem;
             }
         }
     }

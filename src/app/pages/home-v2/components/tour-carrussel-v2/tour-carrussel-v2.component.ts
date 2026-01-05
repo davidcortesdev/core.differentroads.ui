@@ -96,14 +96,15 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
   protected carouselConfig = CAROUSEL_CONFIG;
   
   // Propiedad para mostrar/ocultar navegadores según el tamaño de pantalla
+  // Visibles solo por encima de 1390px
   protected showNavigators: boolean = true;
 
   // Listener para actualizar showNavigators cuando cambie el tamaño de la ventana
   @HostListener('window:resize')
   onResize(): void {
     if (typeof window !== 'undefined') {
-      // Ocultar navegadores en pantallas muy pequeñas (<= 350px)
-      this.showNavigators = window.innerWidth > 350;
+      // Ocultar navegadores en pantallas <= 1390px
+      this.showNavigators = window.innerWidth > 1390;
     }
   }
 
@@ -130,10 +131,10 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
   private touchCancelHandler: ((event: Event) => void) | null = null;
 
   // PrimeNG v19: breakpoints apply when viewport <= breakpoint (max-width)
-  // Por defecto (sin breakpoint aplicado, >1254px) se usan 3 cards visibles.
+  // Por defecto (sin breakpoint aplicado, >1024px) se usan 3 cards visibles.
   responsiveOptions = [
     {
-      breakpoint: '1254px', // Desde 1254px hacia abajo: 2 tarjetas
+      breakpoint: '1024px', // Desde 1024px hacia abajo: 2 tarjetas
       numVisible: 2,
       numScroll: 1,
     },
@@ -179,7 +180,7 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
   ngOnInit(): void {
     // Inicializar valor de showNavigators según el tamaño actual de la ventana
     if (typeof window !== 'undefined') {
-      this.showNavigators = window.innerWidth > 320;
+      this.showNavigators = window.innerWidth > 1390;
     }
     
     // Inicializar AbortController para trip types

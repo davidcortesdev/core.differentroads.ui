@@ -118,21 +118,22 @@ $breakpoint-xsmall: 320px; // Pantallas muy pequeñas
         }
     }
 
-    // Pantallas de 10-13 pulgadas (1025px-1280px) - Optimizado para 3 tarjetas
+    // Pantallas de 10-13 pulgadas (1025px-1280px) - 3 tarjetas ajustadas
+    // Reducimos padding/gap y ampliamos el espacio del carrusel para evitar cortes
     @media screen and (max-width: 1280px) and (min-width: 1025px) {
         .tours-section-layout {
-            padding: 0 3rem;
-            gap: 40px;
-            grid-template-columns: minmax(220px, 0.75fr) minmax(0, 2.25fr);
+            padding: 0 1.5rem;
+            gap: 24px;
+            grid-template-columns: minmax(180px, 0.6fr) minmax(0, 2.4fr);
         }
 
         .tours-section-description {
             .title {
-                font-size: 1.7rem;
+                font-size: 1.55rem;
             }
 
             .description {
-                font-size: 1.15rem;
+                font-size: 1rem;
             }
         }
     }
@@ -339,10 +340,10 @@ $breakpoint-xsmall: 320px; // Pantallas muy pequeñas
         
         // Contenedor de items - asegurar que no corte las tarjetas
         .p-carousel-items-container {
-            overflow: visible !important; // Importante: evitar que corte las tarjetas
+            overflow: visible !important;
+            width: 100%;
             
             @media screen and (max-width: $breakpoint-small) {
-                // Permitir ambos gestos - el JavaScript manejará la detección
                 touch-action: pan-x pan-y;
                 overscroll-behavior: contain !important;
                 overflow: visible !important;
@@ -351,7 +352,8 @@ $breakpoint-xsmall: 320px; // Pantallas muy pequeñas
         
         // Contenedor de contenido del carrusel
         .p-carousel-content {
-            overflow: visible !important; // Importante: evitar que corte las tarjetas
+            overflow: visible !important;
+            width: 100%;
             
             @media screen and (max-width: $breakpoint-small) {
                 touch-action: pan-x pan-y;
@@ -362,7 +364,9 @@ $breakpoint-xsmall: 320px; // Pantallas muy pequeñas
         
         // Contenido interno del carrusel
         .p-carousel-items-content {
-            overflow: visible !important; // Importante: evitar que corte las tarjetas
+            overflow: visible !important;
+            display: flex;
+            width: 100%;
             
             @media screen and (max-width: $breakpoint-small) {
                 touch-action: pan-x pan-y;
@@ -370,24 +374,47 @@ $breakpoint-xsmall: 320px; // Pantallas muy pequeñas
             }
         }
         
-        // Contenedor para cada tarjeta - reducir márgenes para evitar que se corten
-        .tour-carousel-item {
-            margin: 0 0.5rem; // Reducido de 0.75rem para evitar cortes
+        // Ajustar ancho de los items sin usar margen (PrimeNG no descuenta márgenes)
+        // Usamos padding muy pequeño y flex-basis fijo para cada tarjeta
+        .p-carousel-item {
             box-sizing: border-box;
-            flex-shrink: 0; // Evitar que las tarjetas se compriman
-            
-            @media screen and (max-width: $breakpoint-medium) {
-                margin: 0 0.4rem; // Márgenes aún más pequeños en tablet
+            padding: 0 0.1rem; // ~1.6px a cada lado
+            flex: 0 0 calc(100% / 3);
+        }
+
+        @media screen and (max-width: $breakpoint-medium) and (min-width: 769px) {
+            .p-carousel-item {
+                flex: 0 0 50%; // 2 tarjetas
+                padding: 0 0.25rem;
             }
-            
-            @media screen and (max-width: $breakpoint-small) {
-                margin: 0 0.4rem;
+        }
+
+        @media screen and (max-width: $breakpoint-small) and (min-width: 561px) {
+            .p-carousel-item {
+                flex: 0 0 50%;
+                padding: 0 0.2rem;
             }
-            
-            // Para pantallas muy pequeñas, reducir o eliminar márgenes
-            @media screen and (max-width: $breakpoint-xsmall) {
-                margin: 0 0.25rem; // Márgenes mínimos (4px) en pantallas muy pequeñas
+        }
+
+        @media screen and (max-width: 560px) {
+            .p-carousel-item {
+                flex: 0 0 100%; // 1 tarjeta
+                padding: 0 0.25rem;
             }
+        }
+
+        @media screen and (max-width: $breakpoint-xsmall) {
+            .p-carousel-item {
+                padding: 0 0.2rem;
+            }
+        }
+        
+        // Contenedor para cada tarjeta - sin márgenes (solo padding del item)
+        .tour-carousel-item {
+            box-sizing: border-box;
+            flex-shrink: 0;
+            margin: 0;
+            width: 100%;
         }
     }
 }

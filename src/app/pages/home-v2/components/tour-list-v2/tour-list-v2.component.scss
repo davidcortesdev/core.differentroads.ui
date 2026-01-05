@@ -69,6 +69,14 @@ $margin: 20px 0px 20px 0px;
             margin-top: 4rem;
         }
 
+        @media (max-width: 768px) {
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 480px) {
+            margin-top: 1rem;
+        }
+
         ::ng-deep .main-btn-circle {
             font-size: 13px;
             width: 100px !important;
@@ -84,15 +92,21 @@ $margin: 20px 0px 20px 0px;
             }
 
             @media (max-width: 1024px) {
-                font-size: 14px;
-                width: 90px !important;
-                height: 90px !important;
+                font-size: 13px;
+                width: 85px !important;
+                height: 85px !important;
             }
 
             @media (max-width: 768px) {
-                font-size: 14px;
-                width: 90px !important;
-                height: 90px !important;
+                font-size: 12px;
+                width: 75px !important;
+                height: 75px !important;
+            }
+
+            @media (max-width: 480px) {
+                font-size: 11px;
+                width: 70px !important;
+                height: 70px !important;
             }
 
             @media (min-width: 1920px) {

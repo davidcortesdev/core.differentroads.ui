@@ -28,5 +28,30 @@
       "providerPlugin": "awscloudformation",
       "service": "Cognito"
     }
+  },
+  "function": {
+    "userMigrationLambda": {
+      "build": true,
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    }
+  },
+  "parameters": {
+    "AMPLIFY_function_userMigrationLambda_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "userMigrationLambda"
+        }
+      ]
+    },
+    "AMPLIFY_function_userMigrationLambda_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "userMigrationLambda"
+        }
+      ]
+    }
   }
 }

@@ -93,7 +93,8 @@ export class HomeSectionCardService {
    * @returns Lista de cards de sección de inicio.
    */
   getAll(
-    filters?: HomeSectionCardFilters
+    filters?: HomeSectionCardFilters,
+    signal?: AbortSignal
   ): Observable<IHomeSectionCardResponse[]> {
     let params = new HttpParams();
 
@@ -109,7 +110,15 @@ export class HomeSectionCardService {
       });
     }
 
-    return this.http.get<IHomeSectionCardResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IHomeSectionCardResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -168,7 +177,8 @@ export class HomeSectionCardService {
    */
   getByConfiguration(
     homeSectionConfigurationId: number,
-    isActive?: boolean
+    isActive?: boolean,
+    signal?: AbortSignal
   ): Observable<IHomeSectionCardResponse[]> {
     const filters: HomeSectionCardFilters = {
       homeSectionConfigurationId: homeSectionConfigurationId,
@@ -178,7 +188,7 @@ export class HomeSectionCardService {
       filters.isActive = isActive;
     }
 
-    return this.getAll(filters);
+    return this.getAll(filters, signal);
   }
 
   /**
@@ -213,9 +223,10 @@ export class HomeSectionCardService {
    */
   getByConfigurationOrdered(
     homeSectionConfigurationId: number,
-    isActive: boolean = true
+    isActive: boolean = true,
+    signal?: AbortSignal
   ): Observable<IHomeSectionCardResponse[]> {
-    return this.getByConfiguration(homeSectionConfigurationId, isActive);
+    return this.getByConfiguration(homeSectionConfigurationId, isActive, signal);
   }
 
   /**

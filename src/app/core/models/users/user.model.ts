@@ -4,38 +4,58 @@ import { CldImage } from '../commons/cld-image.model';
 export interface IUserResponse {
   id: number;
   name?: string;
-  lastName?: string;
   cognitoId?: string;
   email?: string;
+  lastName?: string;
   phone?: string;
   hasWebAccess: boolean;
   hasMiddleAccess: boolean;
   createdAt: string;
   updatedAt?: string;
+  hasMiddleAtcAccess: boolean;
+  hasTourOperationAccess: boolean;
+  retailerId?: number;
 }
 
 export interface UserCreate {
-  cognitoId?: string;
-  name?: string;
+  cognitoId: string;
+  name: string;
+  email: string;
   lastName?: string;
-  email?: string;
   phone?: string;
   hasWebAccess?: boolean;
   hasMiddleAccess?: boolean;
+  hasMiddleAtcAccess?: boolean;
+  hasTourOperationAccess?: boolean;
+  retailerId?: number;
+  politicasAceptadas?: boolean;
+  detalleDeLaFuenteDeRegistro1?: string;
 }
 
-export interface UserUpdate extends UserCreate {
-
+export interface UserUpdate {
+  cognitoId: string;
+  name: string;
+  email: string;
+  lastName?: string;
+  phone?: string;
+  hasWebAccess?: boolean;
+  hasMiddleAccess?: boolean;
+  hasMiddleAtcAccess?: boolean;
+  hasTourOperationAccess?: boolean;
+  retailerId?: number;
 }
 
 // Filtros para la búsqueda de usuarios según el swagger
 export interface UserFilter {
-  Id?: number;
+  Id?: number | number[];
   Name?: string;
   Email?: string;
   CognitoId?: string;
   HasWebAccess?: boolean;
   HasMiddleAccess?: boolean;
+  HasMiddleAtcAccess?: boolean;
+  HasTourOperationAccess?: boolean;
+  RetailerId?: number;
 }
 
 // Modelo legacy para compatibilidad (mantener si es necesario)

@@ -4,6 +4,20 @@
 
   @media (max-width: 576px) {
     margin: 0px 20px 0px 20px;
+    
+    // En móvil, reordenar para que la imagen aparezca primero visualmente
+    display: flex;
+    flex-direction: column;
+    
+    // Breadcrumb aparece después de la imagen en el orden visual
+    .destinations-breadcrumb,
+    .breadcrumb-skeleton {
+      order: 2; // Aparece después de tour-content (order: 1)
+    }
+    
+    .tour-content {
+      order: 1; // Aparece primero
+    }
   }
 
   // Layout principal
@@ -115,41 +129,53 @@
 
   // ===== SECCIÓN DEL EXPERTO =====
   .expert-section {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-top: 0.5rem;
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 0.75rem;
 
     @media (max-width: 991px) {
-      flex-direction: row;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 1rem;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+
+    @media (max-width: 576px) {
+      padding: 0.75rem;
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+    }
+
+    .expert-details-container {
+      margin-bottom: 1rem;
+      display: flex;
       align-items: center;
-      text-align: center;
-      flex-wrap: wrap;
-      justify-content: center;
+      gap: 0.75rem;
+      flex: 0 0 auto;
+
+      @media (max-width: 991px) {
+        justify-content: center;
+        width: 100%;
+      }
+
+      @media (max-width: 576px) {
+        gap: 0.5rem;
+      }
     }
 
     .expert-avatar {
       flex: 0 0 auto;
 
-      @media (max-width: 991px) {
-        margin-right: 0.75rem;
-
-        ::ng-deep {
-          .p-avatar {
-            width: 60px !important;
-            height: 60px !important;
-          }
-        }
-      }
-
       ::ng-deep {
         .p-avatar {
           border-radius: 50% !important;
           overflow: hidden !important;
-          width: 70px !important;
-          height: 70px !important;
+          width: 50px !important;
+          height: 50px !important;
           aspect-ratio: 1 / 1 !important;
           display: block !important;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
 
           img {
             object-fit: cover !important;
@@ -159,50 +185,82 @@
           }
         }
       }
+
+      @media (max-width: 991px) {
+        ::ng-deep {
+          .p-avatar {
+            width: 60px !important;
+            height: 60px !important;
+          }
+        }
+      }
+
+      @media (max-width: 576px) {
+        ::ng-deep {
+          .p-avatar {
+            width: 50px !important;
+            height: 50px !important;
+          }
+        }
+      }
     }
 
     .expert-details {
       flex: 0 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
 
       @media (max-width: 991px) {
-        flex: 0 0 auto;
         text-align: center;
+        align-items: center;
       }
 
       h4 {
         margin: 0;
         color: var(--text-color);
-        font-size: 1.1rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+        line-height: 1.3;
+
+        @media (max-width: 991px) {
+          font-size: 0.9rem;
+        }
+
+        @media (max-width: 576px) {
+          font-size: 0.85rem;
+        }
       }
 
       .expert-role {
         color: var(--text-color-secondary);
         font-size: 0.75rem;
+        line-height: 1.4;
+
+        @media (max-width: 991px) {
+          font-size: 0.7rem;
+        }
+
+        @media (max-width: 576px) {
+          font-size: 0.65rem;
+        }
       }
     }
 
     .expert-opinion {
       flex: 1;
-      position: relative;
-      margin-left: auto;
+      min-width: 0;
 
       @media (max-width: 991px) {
         width: 100%;
-        margin-top: 0.75rem;
-        margin-left: 0;
-        flex-basis: 100%;
+        flex: 1 1 100%;
       }
 
       ::ng-deep {
         .p-panel {
           border-radius: 1rem !important;
-          width: 90%;
-          margin: 0 0 0 auto;
-
-          @media (max-width: 991px) {
-            width: 100%;
-            margin: 0;
-          }
+          width: 100%;
+          margin: 0;
 
           .p-panel-header {
             display: none !important;
@@ -210,31 +268,47 @@
 
           .p-panel-content {
             border-radius: 1rem !important;
-            background-color: #f5f7f9 !important;
-            border: none !important;
-            font-size: 0.75rem !important;
-            padding: 1rem !important;
+            background-color: #fff !important;
+            border: 1px solid #e5e7eb !important;
+            font-size: 1.05rem !important;
+            padding: 1.25rem !important;
             color: var(--text-color) !important;
-            line-height: 1.5 !important;
-            box-shadow: none !important;
+            line-height: 1.6 !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
             position: relative;
 
+            @media (max-width: 991px) {
+              padding: 1rem !important;
+              font-size: 0.85rem !important;
+            }
+
+            @media (max-width: 576px) {
+              padding: 0.875rem !important;
+              font-size: 0.8rem !important;
+              line-height: 1.5 !important;
+            }
+
             p {
-              margin: 0;
+              margin: 0 0 0.5rem 0;
+
+              &:last-child {
+                margin-bottom: 0;
+              }
             }
 
             @media (min-width: 992px) {
               &::before {
                 content: "";
                 position: absolute;
-                width: 25px;
-                height: 40px;
-                background-color: #f5f7f9;
-                bottom: 3%;
-                left: -3px;
+                width: 20px;
+                height: 20px;
+                background-color: #fff;
+                border-left: 1px solid #e5e7eb;
+                border-top: 1px solid #e5e7eb;
+                top: -11px;
+                left: 80px;
                 transform: rotate(45deg);
-                z-index: -1;
-                border-radius: 0.2rem !important;
+                z-index: 1;
               }
             }
           }
@@ -250,9 +324,41 @@
   .destinations-breadcrumb {
     border: none;
     background: transparent;
+    
+    @media (max-width: 576px) {
+      .p-menuitem-text {
+        font-size: 0.5rem !important;
+        color: #94a3b8 !important;
+        line-height: 1.2 !important;
+      }
+
+      .p-breadcrumb-chevron {
+        font-size: 0.5rem !important;
+        margin: 0 0.15rem !important;
+        color: #cbd5e1 !important;
+      }
+
+      .p-breadcrumb-home {
+        font-size: 0.5rem !important;
+        color: #94a3b8 !important;
+        padding: 0.1rem !important;
+        
+        i {
+          font-size: 0.5rem !important;
+        }
+      }
+    }
   }
   .breadcrumb-skeleton {
     margin-bottom: 1.5rem;
+    
+    @media (max-width: 576px) {
+      margin-bottom: 0.15rem;
+      
+      ::ng-deep .p-skeleton {
+        height: 18px !important;
+      }
+    }
   }
 
   .tour-image-skeleton {
@@ -284,29 +390,33 @@
   background: transparent;
 
   @media (max-width: 576px) {
-    margin-bottom: 0.5rem;
-    padding: 0.5rem 0;
+    margin-bottom: 0.15rem;
+    padding: 0.1rem 0;
+    opacity: 0.6; /* Hacer más discreto */
+    line-height: 1.2;
 
     .p-breadcrumb-list {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
+      gap: 0.1rem;
     }
 
     /* Selecciona el último elemento del breadcrumb */
     .p-menuitem:last-child {
       flex-basis: 100%;
-      margin-top: 0.25rem;
+      margin-top: 0.15rem;
 
       /* Añade un pequeño margen izquierdo para alinear con el nivel anterior */
-      margin-left: 1rem;
+      margin-left: 0.8rem;
 
       /* Agrega un indicador visual que muestre que es una continuación */
       &::before {
         content: "→";
         display: inline-block;
-        margin-right: 0.3rem;
-        color: #64748b;
+        margin-right: 0.2rem;
+        color: #94a3b8;
+        font-size: 0.5rem;
       }
     }
 
@@ -317,19 +427,30 @@
 
     .p-menuitem {
       white-space: nowrap; /* Mantiene el texto en una línea */
+      padding: 0.1rem 0;
+      line-height: 1.2;
     }
 
     .p-menuitem-text {
-      font-size: 0.75rem; /* Texto más pequeño en móvil */
+      font-size: 0.5rem !important; /* Texto más pequeño en móvil */
+      color: #94a3b8 !important; /* Color más discreto */
+      line-height: 1.2 !important;
     }
 
     .p-breadcrumb-chevron {
-      font-size: 0.75rem;
-      margin: 0 0.25rem;
+      font-size: 0.5rem !important;
+      margin: 0 0.15rem !important;
+      color: #cbd5e1 !important; /* Color más discreto */
     }
 
     .p-breadcrumb-home {
-      font-size: 0.75rem;
+      font-size: 0.5rem !important;
+      color: #94a3b8 !important;
+      padding: 0.1rem !important;
+      
+      i {
+        font-size: 0.5rem !important;
+      }
     }
   }
 

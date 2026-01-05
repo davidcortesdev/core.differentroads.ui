@@ -14,12 +14,12 @@
   
   <!-- Content -->
   <p-panel styleClass="price-pan" *ngIf="!loading && !error">
-    <ng-template pTemplate="header">
+    <ng-template #header>
       <div class="pan-hdr">Precio total / Servicios contratados</div>
     </ng-template>
     
     <p-table [value]="priceDetails" styleClass="price-tbl">
-      <ng-template pTemplate="header">
+      <ng-template #header>
         <tr>
           <th>Descripción</th>
           <th>Importe</th>
@@ -28,7 +28,7 @@
         </tr>
       </ng-template>
       
-      <ng-template pTemplate="body" let-item>
+      <ng-template #body let-item>
         <tr>
           <td>{{item.description}}</td>
           <td>{{item.amount | number:'1.0-0' }} €</td>
@@ -37,7 +37,7 @@
         </tr>
       </ng-template>
       
-      <ng-template pTemplate="footer">
+      <ng-template #footer>
         <tr class="last-row">
           <td colspan="3" class="txt-left">Total</td>
           <td>{{totalPrice | number:'1.0-0' }} €</td>

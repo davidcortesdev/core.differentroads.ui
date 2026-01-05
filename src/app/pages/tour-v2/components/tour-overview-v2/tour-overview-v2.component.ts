@@ -1,9 +1,9 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { TourNetService } from '../../../../core/services/tourNet.service';
-import { CMSTourService, ICMSTourResponse } from '../../../../core/services/cms/cms-tour.service';
+import { TourService } from '../../../../core/services/tour/tour.service';
+import { CMSTourService } from '../../../../core/services/cms/cms-tour.service';
 import { CMSCreatorService } from '../../../../core/services/cms/cms-creator.service';
 import { TourLocationService, ITourLocationResponse } from '../../../../core/services/tour/tour-location.service';
 import { LocationNetService, Location } from '../../../../core/services/locations/locationNet.service';
@@ -52,11 +52,12 @@ interface ProcessedLocation {
   styleUrls: ['./tour-overview-v2.component.scss'],
   standalone: false
 })
-export class TourOverviewV2Component implements OnInit {
+export class TourOverviewV2Component implements OnInit, OnDestroy {
   @Input() tourId: number | undefined;
   @Input() preview: boolean = false;
   
   loading = true;
+  private abortController = new AbortController();
   
   // Propiedades para manejar las ubicaciones
   tourLocations: ITourLocationResponse[] = [];
@@ -93,7 +94,7 @@ export class TourOverviewV2Component implements OnInit {
   constructor(
     private router: Router,
     private sanitizer: DomSanitizer,
-    private tourNetService: TourNetService,
+    private tourService: TourService,
     private cmsTourService: CMSTourService,
     private cmsCreatorService: CMSCreatorService,
     private tourLocationService: TourLocationService,
@@ -107,9 +108,12 @@ export class TourOverviewV2Component implements OnInit {
     if (this.tourId) {
       this.loadTour(this.tourId);
     } else {
-      console.warn('⚠️ No se proporcionó tourId');
       this.loading = false;
     }
+  }
+
+  ngOnDestroy(): void {
+    this.abortController.abort();
   }
 
   private loadTour(id: number): void {
@@ -120,16 +124,14 @@ export class TourOverviewV2Component implements OnInit {
   private loadEssentialData(id: number): void {
     // FASE 1: Cargar datos esenciales del tour
     forkJoin([
-      this.tourNetService.getTourById(id, !this.preview).pipe(
+      this.tourService.getById(id, !this.preview, this.abortController.signal).pipe(
         catchError(error => {
-          console.error('❌ Error loading tour data:', error);
           return of(null);
         })
       ) as Observable<TourData | null>,
       
-      this.cmsTourService.getAllTours({ tourId: id }).pipe(
+      this.cmsTourService.getAllTours({ tourId: id }, this.abortController.signal).pipe(
         catchError(error => {
-          console.error('❌ Error loading CMS tour data:', error);
           return of([]);
         })
       ) as Observable<CMSTourData[]>
@@ -141,7 +143,6 @@ export class TourOverviewV2Component implements OnInit {
             
       // Aplicar datos básicos inmediatamente
       this.applyBasicTourData(tourData, cmsTourData);
-      console.log('tour', tourData);
       
       // Cargar datos adicionales en segundo plano
       this.loadAdditionalDataOptimized(id, cmsTourData);
@@ -180,24 +181,21 @@ export class TourOverviewV2Component implements OnInit {
     // ✅ OPTIMIZACIÓN MÁXIMA: Cargar ubicaciones y tags en paralelo
     forkJoin([
       // Cargar ubicaciones (existente)
-      this.tourLocationService.getByTourAndType(id, "COUNTRY").pipe(
+      this.tourLocationService.getByTourAndType(id, "COUNTRY", this.abortController.signal).pipe(
         map(response => Array.isArray(response) ? response : (response ? [response] : [])),
         catchError(error => {
-          console.warn('⚠️ No se encontraron ubicaciones COUNTRY:', error);
           return of([]);
         })
       ),
-      this.tourLocationService.getByTourAndType(id, "HEADER").pipe(
+      this.tourLocationService.getByTourAndType(id, "HEADER", this.abortController.signal).pipe(
         map(response => Array.isArray(response) ? response : (response ? [response] : [])),
         catchError(error => {
-          console.warn('⚠️ No se encontraron ubicaciones HEADER:', error);
           return of([]);
         })
       ),
-      this.tourLocationService.getByTourAndType(id, "CONTINENT").pipe(
+      this.tourLocationService.getByTourAndType(id, "CONTINENT", this.abortController.signal).pipe(
         map(response => Array.isArray(response) ? response : (response ? [response] : [])),
         catchError(error => {
-          console.warn('⚠️ No se encontraron ubicaciones CONTINENT:', error);
           return of([]);
         })
       ),
@@ -205,7 +203,6 @@ export class TourOverviewV2Component implements OnInit {
       // ✅ NUEVO: Cargar tipos de relación visibles para la web
       this.tourTagRelationTypeService.getAll({ isVisible: true }).pipe(
         catchError(error => {
-          console.error('❌ Error loading visible tag relation types:', error);
           return of([]);
         })
       )
@@ -231,9 +228,8 @@ export class TourOverviewV2Component implements OnInit {
         // Cargar ubicaciones
         if (locationIds.length > 0) {
           tagObservables.push(
-            this.locationNetService.getLocationsByIds(locationIds).pipe(
+            this.locationNetService.getLocationsByIds(locationIds, this.abortController.signal).pipe(
               catchError(error => {
-                console.error('❌ Error loading specific locations:', error);
                 return of([]);
               })
             )
@@ -245,9 +241,8 @@ export class TourOverviewV2Component implements OnInit {
         // Cargar tags para cada tipo de relación visible
         visibleRelationTypeIds.forEach(relationTypeId => {
           tagObservables.push(
-            this.tourTagService.getAll({ tourId: id, tourTagRelationTypeId: relationTypeId }).pipe(
+            this.tourTagService.getAll({ tourId: [id], tourTagRelationTypeId: relationTypeId }, this.abortController.signal).pipe(
               catchError(error => {
-                console.warn(`⚠️ No se encontraron tags para relationTypeId ${relationTypeId}:`, error);
                 return of([]);
               })
             )
@@ -283,9 +278,8 @@ export class TourOverviewV2Component implements OnInit {
           
           // ✅ OPTIMIZADO: Cargar solo los tags específicos del tour
           const tagDetailObservables = tagIds.map(tagId => 
-            this.tagService.getById(tagId).pipe(
+            this.tagService.getById(tagId, this.abortController.signal).pipe(
               catchError(error => {
-                console.warn(`⚠️ Error loading tag ${tagId}:`, error);
                 return of(null);
               })
             )
@@ -298,7 +292,6 @@ export class TourOverviewV2Component implements OnInit {
             forkJoin(tagDetailObservables).pipe(
               map(tagDetails => tagDetails.filter(tag => tag !== null && tag.isActive)),
               catchError(error => {
-                console.error('❌ Error loading tag details:', error);
                 return of([]);
               })
             )
@@ -343,7 +336,6 @@ export class TourOverviewV2Component implements OnInit {
     if (creatorId) {
       return (this.cmsCreatorService.getById(creatorId) as Observable<CreatorData>).pipe(
         catchError(error => {
-          console.error('❌ Error loading creator data:', error);
           return of(null);
         })
       );
@@ -437,69 +429,35 @@ export class TourOverviewV2Component implements OnInit {
     })) || [];
   }
 
-  // Manejar clic en país específico
-  onCountryClick(event: MouseEvent, fullCountryText: string): void {
-    event.preventDefault();
-    
-    const clickedCountry = this.getClickedCountry(event, fullCountryText);
-    if (clickedCountry) {
-      // Navegar a la búsqueda con el país específico
-      this.router.navigate(['/tours'], {
-        queryParams: {
-          destination: clickedCountry
-        }
-      });
-    }
+  /**
+   * Convierte un texto a formato slug (minúsculas, espacios a guiones, sin acentos)
+   * Copiado del header-v2.component.ts para mantener consistencia
+   */
+  private textToSlug(text: string): string {
+    return text
+      .toLowerCase()
+      .normalize('NFD') // Normalizar para separar caracteres base de diacríticos
+      .replace(/[\u0300-\u036f]/g, '') // Eliminar diacríticos (acentos)
+      .replace(/[^a-z0-9\s-]/g, '') // Eliminar caracteres especiales excepto espacios y guiones
+      .replace(/\s+/g, '-') // Reemplazar espacios por guiones
+      .replace(/-+/g, '-') // Reemplazar múltiples guiones por uno solo
+      .replace(/^-+|-+$/g, ''); // Eliminar guiones al inicio y final
   }
 
-  // Detectar qué país se clickeó basado en la posición del clic
-  private getClickedCountry(event: MouseEvent, fullText: string): string | null {
-    const target = event.target as HTMLElement;
-    const countries = fullText.split(',').map(c => c.trim()).filter(c => c);
+  /**
+   * Construye un slug completo para enlaces de destino
+   * Formato: /destino/:menuItemSlug para continentes
+   * Formato: /destino/:menuItemSlug/:destinationSlug para países
+   */
+  private buildDestinationSlug(continentName: string, countryName?: string): string {
+    const continentSlug = this.textToSlug(continentName);
     
-    if (countries.length === 1) {
-      return countries[0];
-    }
-
-    // Obtener la posición del clic dentro del elemento
-    const rect = target.getBoundingClientRect();
-    const clickX = event.clientX - rect.left;
-    
-    // Crear un elemento temporal para medir el ancho de cada país
-    const tempElement = document.createElement('span');
-    tempElement.style.visibility = 'hidden';
-    tempElement.style.position = 'absolute';
-    tempElement.style.fontSize = window.getComputedStyle(target).fontSize;
-    tempElement.style.fontFamily = window.getComputedStyle(target).fontFamily;
-    document.body.appendChild(tempElement);
-    
-    let currentX = 0;
-    let clickedCountry: string | null = null;
-    
-    for (let i = 0; i < countries.length; i++) {
-      const country = countries[i];
-      const separator = i < countries.length - 1 ? ', ' : '';
-      const textToMeasure = country + separator;
-      
-      tempElement.textContent = textToMeasure;
-      const textWidth = tempElement.offsetWidth;
-      
-      if (clickX >= currentX && clickX <= currentX + textWidth) {
-        // Verificar si el clic está específicamente en el nombre del país (no en la coma)
-        tempElement.textContent = country;
-        const countryWidth = tempElement.offsetWidth;
-        
-        if (clickX <= currentX + countryWidth) {
-          clickedCountry = country;
-          break;
-        }
-      }
-      
-      currentX += textWidth;
+    if (countryName) {
+      const countrySlug = this.textToSlug(countryName);
+      return `/destino/${continentSlug}/${countrySlug}`;
     }
     
-    document.body.removeChild(tempElement);
-    return clickedCountry;
+    return `/destino/${continentSlug}`;
   }
 
   get breadcrumbItems(): MenuItem[] {
@@ -508,28 +466,14 @@ export class TourOverviewV2Component implements OnInit {
     if (this.tour?.continent) {
       items.push({
         label: this.tour.continent,
-        command: (event) => {
-          if (event.originalEvent) {
-            this.onCountryClick(event.originalEvent as MouseEvent, this.tour.continent);
-          }
-        },
-        routerLink: ['/tours'],
-        queryParams: { destination: this.tour.continent },
-        queryParamsHandling: 'merge'
+        routerLink: [this.buildDestinationSlug(this.tour.continent)]
       });
     }
     
     if (this.tour?.country) {
       items.push({
         label: this.tour.country,
-        command: (event) => {
-          if (event.originalEvent) {
-            this.onCountryClick(event.originalEvent as MouseEvent, this.tour.country);
-          }
-        },
-        routerLink: ['/tours'],
-        queryParams: { destination: this.tour.country },
-        queryParamsHandling: 'merge'
+        routerLink: [this.buildDestinationSlug(this.tour.continent || '', this.tour.country)]
       });
     }
     

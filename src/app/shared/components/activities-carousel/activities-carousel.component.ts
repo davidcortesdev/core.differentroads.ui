@@ -5,10 +5,7 @@ import {
   Output,
   ChangeDetectionStrategy,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { CarouselModule } from 'primeng/carousel';
 import {
-  ActivityCardComponent,
   ActivityHighlight,
 } from '../activity-card/activity-card.component';
 import { CAROUSEL_CONFIG } from '../../../shared/constants/carousel.constants';

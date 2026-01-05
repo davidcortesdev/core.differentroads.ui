@@ -1,0 +1,12 @@
+{
+  "name": "user-migration-lambda",
+  "version": "1.0.0",
+  "description": "Lambda function para migración de usuarios de Cognito",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18.x"
+  }
+}

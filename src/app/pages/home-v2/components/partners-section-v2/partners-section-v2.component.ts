@@ -1,8 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import {
   HomeSectionImageService,
   IHomeSectionImageResponse,
 } from '../../../../core/services/home/home-section-image.service';
+import {
+  HomeSectionConfigurationService,
+} from '../../../../core/services/home/home-section-configuration.service';
 import { CAROUSEL_CONFIG } from '../../../../shared/constants/carousel.constants';
 
 @Component({
@@ -11,10 +14,13 @@ import { CAROUSEL_CONFIG } from '../../../../shared/constants/carousel.constants
   templateUrl: './partners-section-v2.component.html',
   styleUrl: './partners-section-v2.component.scss',
 })
-export class PartnersSectionV2Component implements OnInit {
+export class PartnersSectionV2Component implements OnInit, OnDestroy {
+  @Input() configurationId?: number; // ID específico de configuración
+
   partners: IHomeSectionImageResponse[] = [];
+  private abortController = new AbortController();
   numVisible = 4;
-  title = 'Colaboradores';
+  title = 'Colaboradores'; // Valor por defecto
   responsiveOptions = [
     {
       breakpoint: '1800px',
@@ -39,23 +45,59 @@ export class PartnersSectionV2Component implements OnInit {
   ];
   protected carouselConfig = CAROUSEL_CONFIG;
 
-  constructor(private homeSectionImageService: HomeSectionImageService) {}
+  constructor(
+    private homeSectionImageService: HomeSectionImageService,
+    private homeSectionConfigurationService: HomeSectionConfigurationService
+  ) {}
 
   ngOnInit(): void {
     this.loadPartners();
   }
 
+  ngOnDestroy(): void {
+    this.abortController.abort();
+  }
+
   private loadPartners(): void {
-    // Obtener todas las imágenes activas
-    this.homeSectionImageService.getActive().subscribe({
-      next: (images: IHomeSectionImageResponse[]) => {
-        // Mostrar todas las imágenes por ahora para debugging
-        this.partners = images.slice(0, 8); // Limitar a 8 partners
+    // Si no se proporciona configurationId, mostrar error y no cargar nada
+    if (!this.configurationId) {
+      this.partners = [];
+      return;
+    }
+
+    // Primero cargar la configuración para obtener el título
+    this.homeSectionConfigurationService.getById(this.configurationId, this.abortController.signal).subscribe({
+      next: (configuration) => {
+        // Establecer el título desde la configuración
+        this.title = configuration.title || 'Colaboradores';
+
+        // Luego cargar las imágenes de la configuración
+        this.loadPartnersImages();
       },
       error: (error) => {
-        console.error('Error loading partners:', error);
-        this.partners = [];
+        // Continuar con la carga de imágenes aunque falle la configuración
+        this.loadPartnersImages();
       },
     });
+  }
+
+  private loadPartnersImages(): void {
+    if (!this.configurationId) {
+      return;
+    }
+
+    // Obtener imágenes activas de la configuración específica
+    this.homeSectionImageService
+      .getByConfiguration(this.configurationId, true, this.abortController.signal)
+      .subscribe({
+        next: (images: IHomeSectionImageResponse[]) => {
+          // Ordenar por displayOrder y limitar a 8 partners si es necesario
+          const sortedImages = images.sort((a, b) => a.displayOrder - b.displayOrder);
+          this.partners = sortedImages.slice(0, 8);
+        },
+        error: (error) => {
+          this.partners = [];
+        },
+      });
   }
 }

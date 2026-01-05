@@ -224,14 +224,21 @@
           "aws.cognito.signin.user.admin"
         ],
         "CallbackURLs": [
-          "http://localhost:3000/es/",
-          "https://new.staging.differentroads.es/es/",
-          "http://localhost:3000/es/"
+          "http://localhost:4200/",
+          "https://ui-dev.differentroads.es/",
+          "https://ui-pre.differentroads.es/",
+          "https://ui.differentroads.es/",
+          "https://www.differentroads.es/",
+          "https://differentroads.es"
         ],
         "ClientName": "dtours1b190f39_app_clientWeb",
         "LogoutURLs": [
-          "https://new.staging.differentroads.es/",
-          "http://localhost:3000/es/"
+          "http://localhost:4200/",
+          "https://ui-dev.differentroads.es/",
+          "https://ui-pre.differentroads.es/",
+          "https://ui.differentroads.es/",
+          "https://www.differentroads.es/",
+          "https://differentroads.es"
         ],
         "RefreshTokenValidity": {
           "Ref": "userpoolClientRefreshTokenValidity"
@@ -267,17 +274,24 @@
           "aws.cognito.signin.user.admin"
         ],
         "CallbackURLs": [
-          "http://localhost:3000/es/",
-          "https://new.staging.differentroads.es/es/",
-          "http://localhost:3000/es/"
+          "http://localhost:4200/",
+          "https://ui-dev.differentroads.es/",
+          "https://ui-pre.differentroads.es/",
+          "https://ui.differentroads.es/",
+          "https://www.differentroads.es/",
+          "https://differentroads.es"
         ],
         "ClientName": "dtours1b190f39_app_client",
         "GenerateSecret": {
           "Ref": "userpoolClientGenerateSecret"
         },
         "LogoutURLs": [
-          "https://new.staging.differentroads.es/",
-          "http://localhost:3000/es/"
+          "http://localhost:4200/",
+          "https://ui-dev.differentroads.es/",
+          "https://ui-pre.differentroads.es/",
+          "https://ui.differentroads.es/",
+          "https://www.differentroads.es/",
+          "https://differentroads.es"
         ],
         "RefreshTokenValidity": {
           "Ref": "userpoolClientRefreshTokenValidity"

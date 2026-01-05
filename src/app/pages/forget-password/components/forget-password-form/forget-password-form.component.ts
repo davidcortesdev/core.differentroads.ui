@@ -1,17 +1,17 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
   Validators,
   ReactiveFormsModule,
 } from '@angular/forms'; // Import ReactiveFormsModule
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { PasswordModule } from 'primeng/password';
 import { CommonModule } from '@angular/common'; // Import CommonModule
-import { AuthenticateService } from '../../../../core/services/auth-service.service';
+import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 
 @Component({
   selector: 'app-forget-password-form',
@@ -27,7 +27,7 @@ import { AuthenticateService } from '../../../../core/services/auth-service.serv
   templateUrl: './forget-password-form.component.html',
   styleUrls: ['./forget-password-form.component.scss'],
 })
-export class PasswordRecoveryFormComponent {
+export class PasswordRecoveryFormComponent implements OnInit {
   step: 'email' | 'reset' = 'email';
   isLoading: boolean = false;
   errorMessage: string = '';
@@ -36,6 +36,7 @@ export class PasswordRecoveryFormComponent {
   showPassword: boolean = false;
   showConfirmPassword: boolean = false;
   isRedirecting: boolean = false;
+  isStandalone: boolean = false;
 
   emailForm: FormGroup;
   resetForm: FormGroup;
@@ -43,6 +44,7 @@ export class PasswordRecoveryFormComponent {
   constructor(
     private fb: FormBuilder,
     private router: Router,
+    private route: ActivatedRoute,
     private authService: AuthenticateService
   ) {
     this.emailForm = this.fb.group({
@@ -76,6 +78,11 @@ export class PasswordRecoveryFormComponent {
     );
   }
 
+  ngOnInit(): void {
+    // Detectar si estamos en una ruta standalone
+    this.isStandalone = this.router.url.includes('/standalone/');
+  }
+
   passwordMatchValidator(form: FormGroup) {
     const password = form.get('password')?.value;
     const confirmPassword = form.get('confirmPassword')?.value;
@@ -83,7 +90,6 @@ export class PasswordRecoveryFormComponent {
   }
 
   async onEmailSubmit(event: Event) {
-    console.log('onEmailSubmit called'); // Depuración
     event.preventDefault(); // Prevenir el comportamiento predeterminado del formulario
 
     if (this.emailForm.invalid) {
@@ -109,7 +115,6 @@ export class PasswordRecoveryFormComponent {
   }
 
   async onResetSubmit(event: Event) {
-    console.log('onResetSubmit called'); // Depuración
     event.preventDefault(); // Prevenir el comportamiento predeterminado del formulario
 
     if (this.resetForm.invalid) {
@@ -139,7 +144,6 @@ export class PasswordRecoveryFormComponent {
         this.errorMessage = 'Código inválido o contraseña débil.';
       }
     } catch (error: any) {
-      console.error('Error al actualizar la contraseña:', error);
       this.errorMessage = error.message || 'Error al actualizar la contraseña.';
     } finally {
       this.isLoading = false;

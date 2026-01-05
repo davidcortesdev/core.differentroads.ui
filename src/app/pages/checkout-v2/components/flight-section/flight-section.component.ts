@@ -1,9 +1,13 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ChangeDetectorRef } from '@angular/core';
 import {
   IFlightPackDTO,
   IFlightResponse,
+  FlightsNetService,
 } from '../../services/flightsNet.service';
-import { AirportCityCacheService } from '../../../../core/services/airport-city-cache.service';
+import { AirportCityCacheService } from '../../../../core/services/locations/airport-city-cache.service';
+import { of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-flight-section-v2',
@@ -20,7 +24,15 @@ export class FlightSectionV2Component implements OnChanges {
   // ✅ NUEVO: Propiedad para controlar si se debe mostrar el componente
   shouldShowComponent: boolean = false;
 
-  constructor(private airportCityCacheService: AirportCityCacheService) {}
+  // Escalas para cada vuelo
+  departureFlightLayovers: string[] = [];
+  returnFlightLayovers: string[] = [];
+
+  constructor(
+    private flightsNetService: FlightsNetService,
+    private airportCityCacheService: AirportCityCacheService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['flightPack'] && this.flightPack) {
@@ -31,6 +43,10 @@ export class FlightSectionV2Component implements OnChanges {
         this.processFlightData();
         // Precargar ciudades de aeropuertos después de procesar los datos
         this.preloadAirportCities();
+        // Cargar escalas para cada vuelo (usar setTimeout para asegurar que los datos estén listos)
+        setTimeout(() => {
+          this.loadFlightLayovers();
+        }, 100);
       }
     }
   }
@@ -55,13 +71,13 @@ export class FlightSectionV2Component implements OnChanges {
       description.includes('pack sin vuelos');
 
     if (isFlightlessOption) {
-      console.log('🚫 FlightSection: Opción "sin vuelos" detectada, ocultando componente');
+
       return false;
     }
 
     // Verificar si hay vuelos válidos
     if (!this.flightPack.flights || this.flightPack.flights.length === 0) {
-      console.log('🚫 FlightSection: No hay vuelos disponibles, ocultando componente');
+
       return false;
     }
 
@@ -74,11 +90,10 @@ export class FlightSectionV2Component implements OnChanges {
     );
 
     if (!hasValidFlights) {
-      console.log('🚫 FlightSection: No hay vuelos con información válida, ocultando componente');
+
       return false;
     }
 
-    console.log('✅ FlightSection: Vuelos válidos detectados, mostrando componente');
     return true;
   }
 
@@ -92,6 +107,7 @@ export class FlightSectionV2Component implements OnChanges {
       this.flightPack.flights.find((f) => f.flightTypeId === 4) || null;
     this.returnFlight =
       this.flightPack.flights.find((f) => f.flightTypeId !== 4) || null;
+    
   }
 
   /**
@@ -138,7 +154,6 @@ export class FlightSectionV2Component implements OnChanges {
     });
 
     if (airportCodes.length > 0) {
-      //console.log(`🔄 FlightSection: Precargando ciudades para ${airportCodes.length} aeropuertos`);
       this.airportCityCacheService.preloadAllAirportCities(airportCodes);
     }
   }
@@ -181,7 +196,6 @@ export class FlightSectionV2Component implements OnChanges {
         })
         .replace(/^\w/, (c) => c.toUpperCase());
     } catch (error) {
-      console.error('Error formatting date:', error);
       return '';
     }
   }
@@ -216,4 +230,93 @@ export class FlightSectionV2Component implements OnChanges {
       return '';
     }
   }
+
+  /**
+   * Carga las escalas (layovers) para los vuelos de ida y vuelta
+   */
+  private async loadFlightLayovers(): Promise<void> {
+    if (!this.flightPack || !this.flightPack.id) {
+      return;
+    }
+
+    // Cargar escalas para vuelo de ida
+    if (this.departureFlight) {
+      try {
+        const details = await firstValueFrom(
+          this.flightsNetService.getFlightDetail(this.departureFlight.id).pipe(
+            catchError((error) => {
+              return of(null);
+            })
+          )
+        );
+
+        if (details && details.segments) {
+          if (details.segments.length > 1) {
+            this.departureFlightLayovers = [];
+            for (let i = 0; i < details.segments.length - 1; i++) {
+              const segment = details.segments[i];
+              if (segment.arrivalIata) {
+                this.departureFlightLayovers.push(segment.arrivalIata);
+              }
+            }
+          } else {
+            this.departureFlightLayovers = [];
+          }
+          this.cdr.detectChanges(); // Forzar actualización de la vista
+        } else {
+          this.departureFlightLayovers = [];
+          this.cdr.detectChanges();
+        }
+      } catch (error) {
+        this.departureFlightLayovers = [];
+        this.cdr.detectChanges();
+      }
+    }
+
+    // Cargar escalas para vuelo de vuelta
+    if (this.returnFlight) {
+      try {
+        const details = await firstValueFrom(
+          this.flightsNetService.getFlightDetail(this.returnFlight.id).pipe(
+            catchError((error) => {
+              return of(null);
+            })
+          )
+        );
+
+        if (details && details.segments) {
+          if (details.segments.length > 1) {
+            this.returnFlightLayovers = [];
+            for (let i = 0; i < details.segments.length - 1; i++) {
+              const segment = details.segments[i];
+              if (segment.arrivalIata) {
+                this.returnFlightLayovers.push(segment.arrivalIata);
+              }
+            }
+          } else {
+            this.returnFlightLayovers = [];
+          }
+          this.cdr.detectChanges(); // Forzar actualización de la vista
+        } else {
+          this.returnFlightLayovers = [];
+          this.cdr.detectChanges();
+        }
+      } catch (error) {
+        this.returnFlightLayovers = [];
+        this.cdr.detectChanges();
+      }
+    }
+  }
+
+  /**
+   * Obtiene el código IATA de la primera escala para mostrar (ej: "AMS")
+   */
+  getLayoversText(layovers: string[]): string {
+    if (!layovers || layovers.length === 0) {
+      return '';
+    }
+    // Mostrar solo el primer código IATA
+    return layovers[0];
+  }
+
 }

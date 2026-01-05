@@ -1,8 +1,0 @@
-<div *ngIf="title || description" class="main-container">
-  <h1 *ngIf="title" class="landingTitle">{{ title }} - Different Roads</h1>
-  <div
-    *ngIf="description"
-    [innerHTML]="sanitizeHtml(description)"
-    class="formated-content"
-  ></div>
-</div>

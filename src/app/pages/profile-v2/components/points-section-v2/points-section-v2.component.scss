@@ -3,9 +3,39 @@
     --p-paginator-background: var(--background-azul-color-letra);
     margin: -15px 1rem 0;
     font-size: 12px;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    box-sizing: border-box;
 
     @media screen and (max-width: 768px) {
         margin: -15px 0.5rem 0;
+    }
+
+    @media screen and (max-width: 480px) {
+        margin: -15px 0.25rem 0;
+    }
+
+    .table-wrapper {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        margin-bottom: 1.5rem;
+        -webkit-overflow-scrolling: touch;
+        
+        &::-webkit-scrollbar {
+            height: 8px;
+        }
+        
+        &::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        &::-webkit-scrollbar-thumb {
+            background: var(--p-primary-color);
+            border-radius: 4px;
+        }
     }
 
     ::ng-deep {
@@ -20,6 +50,16 @@
             margin: 0 -10px;
             color: var(--background-azul);
             font-weight: 700;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+
+            .p-toolbar-group-start {
+                flex: 1 1 auto;
+                min-width: 0;
+            }
 
             .p-toolbar-group-end {
                 display: flex;
@@ -27,6 +67,8 @@
                 gap: 0.5rem;
                 font-size: 1.125rem;
                 font-weight: 700;
+                flex: 0 0 auto;
+                flex-wrap: wrap;
             }
 
             h1 {
@@ -34,12 +76,16 @@
                 font-weight: 700;
                 color: var(--background-azul);
                 margin: 0;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
             }
 
             .points-display {
                 display: flex;
                 align-items: center;
                 gap: 0.25rem;
+                white-space: nowrap;
+                flex-shrink: 0;
             }
 
             .search-button {
@@ -48,6 +94,7 @@
                 background-color: transparent;
                 color: var(--p-primary-color);
                 border: 1px solid var(--p-primary-color);
+                flex-shrink: 0;
 
                 &.active {
                     background-color: transparent;
@@ -58,16 +105,20 @@
 
             @media screen and (max-width: 768px) {
                 padding: 0.75rem;
+                flex-direction: column;
+                align-items: stretch;
 
                 .p-toolbar-group-start {
                     width: 100%;
-                    margin-bottom: 0.75rem;
+                    margin-bottom: 0.5rem;
+                    text-align: center;
 
                     h1 {
                         width: 100%;
                         text-align: center;
                         margin: 0;
                         color: var(--background-azul);
+                        font-size: 1rem;
                     }
                 }
 
@@ -76,22 +127,43 @@
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    padding: 0 0.5rem;
+                    padding: 0;
+                    gap: 0.5rem;
 
                     .points-display {
-                        font-size: 1rem;
+                        font-size: 0.9rem;
                         font-weight: 600;
                     }
 
                     .search-button {
-                        width: 50px;
+                        width: 45px;
                         height: 30px;
-            background-color: transparent;
+                        background-color: transparent;
                         color: var(--p-primary-color);
                         border: 1px solid var(--p-primary-color);
-          }
+                    }
+                }
+            }
+
+            @media screen and (max-width: 480px) {
+                padding: 0.5rem;
+                margin: 0 -5px;
+
+                .p-toolbar-group-start h1 {
+                    font-size: 0.9rem;
+                }
+
+                .p-toolbar-group-end {
+                    .points-display {
+                        font-size: 0.85rem;
+                    }
+
+                    .search-button {
+                        width: 40px;
+                        height: 28px;
+                    }
+                }
+            }
         }
-      }
     }
-  }
 }

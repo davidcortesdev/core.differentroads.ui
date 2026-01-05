@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, catchError, map, of } from 'rxjs';
+import { Observable, catchError, map, of, shareReplay, tap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
 export interface Location {
@@ -46,6 +46,13 @@ export interface LocationRelationshipType {
 })
 export class LocationNetService {
   private apiUrl = environment.locationsApiUrl;
+  
+  // Cache para ubicaciones individuales
+  private locationCache = new Map<number, Location>();
+  // Cache para observables en curso para evitar múltiples llamadas simultáneas
+  private locationObservableCache = new Map<number, Observable<Location>>();
+  // Cache para llamadas batch de locations por IDs (usando string de IDs ordenados como clave)
+  private locationsBatchCache = new Map<string, Observable<Location[]>>();
 
   constructor(private http: HttpClient) { }
 
@@ -62,16 +69,24 @@ export class LocationNetService {
     return this.http.get<Location[]>(`${this.apiUrl}/location`, { params })
       .pipe(
         catchError(error => {
-          console.error('Error obteniendo ubicaciones:', error);
           return of([]);
         })
       );
   }
 
   // NUEVO: Método para obtener múltiples ubicaciones por IDs
-  getLocationsByIds(ids: number[]): Observable<Location[]> {
+  getLocationsByIds(ids: number[], signal?: AbortSignal): Observable<Location[]> {
     if (!ids || ids.length === 0) {
       return of([]);
+    }
+
+    // Crear una clave de cache basada en los IDs ordenados
+    const sortedIds = [...ids].sort((a, b) => a - b);
+    const cacheKey = sortedIds.join(',');
+
+    // Verificar si ya existe una llamada en curso para estos IDs
+    if (this.locationsBatchCache.has(cacheKey)) {
+      return this.locationsBatchCache.get(cacheKey)!;
     }
 
     let params = new HttpParams();
@@ -79,23 +94,82 @@ export class LocationNetService {
       params = params.append('Id', id.toString());
     });
 
-    return this.http.get<Location[]>(`${this.apiUrl}/location`, { params })
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    const locationsObservable = this.http.get<Location[]>(`${this.apiUrl}/location`, options)
       .pipe(
+        tap((locations) => {
+          // Guardar ubicaciones individuales en el cache
+          locations.forEach(location => {
+            if (location && location.id) {
+              this.locationCache.set(location.id, location);
+            }
+          });
+        }),
         catchError(error => {
-          console.error('Error obteniendo ubicaciones por IDs:', error);
+          // Limpiar el observable cache en caso de error para permitir reintentos
+          this.locationsBatchCache.delete(cacheKey);
           return of([]);
-        })
+        }),
+        shareReplay(1) // Compartir el resultado entre múltiples suscriptores y mantener en cache
       );
+
+    // Guardar el observable en cache para evitar múltiples llamadas simultáneas
+    this.locationsBatchCache.set(cacheKey, locationsObservable);
+    
+    return locationsObservable;
   }
 
-  getLocationById(id: number): Observable<Location> {
-    return this.http.get<Location>(`${this.apiUrl}/location/${id}`)
+  getLocationById(id: number, signal?: AbortSignal): Observable<Location> {
+    // Verificar si la ubicación ya está en cache
+    if (this.locationCache.has(id)) {
+      return of(this.locationCache.get(id)!);
+    }
+
+    // Verificar si ya hay una llamada en curso para este ID
+    if (this.locationObservableCache.has(id)) {
+      return this.locationObservableCache.get(id)!;
+    }
+
+    // Crear nueva llamada HTTP y configurar cache
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    const locationObservable = this.http.get<Location>(`${this.apiUrl}/location/${id}`, options)
       .pipe(
+        tap(location => {
+          // Guardar en cache solo si la respuesta es válida
+          if (location && location.id) {
+            this.locationCache.set(id, location);
+          }
+          // Limpiar el observable cache una vez completado
+          this.locationObservableCache.delete(id);
+        }),
         catchError(error => {
-          console.error(`Error obteniendo ubicación con ID ${id}:`, error);
+          // Limpiar el observable cache en caso de error
+          this.locationObservableCache.delete(id);
           return of({} as Location);
-        })
+        }),
+        shareReplay(1)
       );
+
+    // Guardar el observable en cache para evitar múltiples llamadas simultáneas
+    this.locationObservableCache.set(id, locationObservable);
+    
+    return locationObservable;
   }
 
   // Métodos para LocationType
@@ -103,7 +177,6 @@ export class LocationNetService {
     return this.http.get<LocationType[]>(`${this.apiUrl}/locationtype`)
       .pipe(
         catchError(error => {
-          console.error('Error obteniendo tipos de ubicación:', error);
           return of([]);
         })
       );
@@ -113,7 +186,6 @@ export class LocationNetService {
     return this.http.get<LocationType>(`${this.apiUrl}/locationtype/${id}`)
       .pipe(
         catchError(error => {
-          console.error(`Error obteniendo tipo de ubicación con ID ${id}:`, error);
           return of({} as LocationType);
         })
       );
@@ -132,7 +204,6 @@ export class LocationNetService {
     return this.http.get<LocationRelationship[]>(`${this.apiUrl}/locationrelationship`, { params })
       .pipe(
         catchError(error => {
-          console.error('Error obteniendo relaciones de ubicación:', error);
           return of([]);
         })
       );
@@ -142,7 +213,6 @@ export class LocationNetService {
     return this.http.get<LocationRelationship>(`${this.apiUrl}/locationrelationship/${id}`)
       .pipe(
         catchError(error => {
-          console.error(`Error obteniendo relación de ubicación con ID ${id}:`, error);
           return of({} as LocationRelationship);
         })
       );
@@ -153,7 +223,6 @@ export class LocationNetService {
     return this.http.get<LocationRelationshipType[]>(`${this.apiUrl}/locationrelationshiptype`)
       .pipe(
         catchError(error => {
-          console.error('Error obteniendo tipos de relación de ubicación:', error);
           return of([]);
         })
       );
@@ -163,7 +232,6 @@ export class LocationNetService {
     return this.http.get<LocationRelationshipType>(`${this.apiUrl}/locationrelationshiptype/${id}`)
       .pipe(
         catchError(error => {
-          console.error(`Error obteniendo tipo de relación de ubicación con ID ${id}:`, error);
           return of({} as LocationRelationshipType);
         })
       );
@@ -175,7 +243,6 @@ export class LocationNetService {
       params: new HttpParams().set('parentLocationId', parentId.toString())
     }).pipe(
       catchError(error => {
-        console.error(`Error obteniendo relaciones para ubicación padre ${parentId}:`, error);
         return of([]);
       })
     );
@@ -186,7 +253,6 @@ export class LocationNetService {
       params: new HttpParams().set('childLocationId', childId.toString())
     }).pipe(
       catchError(error => {
-        console.error(`Error obteniendo relaciones para ubicación hija ${childId}:`, error);
         return of([]);
       })
     );
@@ -196,8 +262,14 @@ export class LocationNetService {
   updateLocation(location: Location): Observable<Location> {
     return this.http.put<Location>(`${this.apiUrl}/location/${location.id}`, location)
       .pipe(
+        tap(updatedLocation => {
+          // Invalidar cache y actualizar con la nueva información
+          this.invalidateLocationCache(location.id);
+          if (updatedLocation && updatedLocation.id) {
+            this.locationCache.set(updatedLocation.id, updatedLocation);
+          }
+        }),
         catchError(error => {
-          console.error(`Error actualizando ubicación con ID ${location.id}:`, error);
           return of({} as Location);
         })
       );
@@ -214,7 +286,6 @@ export class LocationNetService {
       .pipe(
         map(response => response.isDuplicate),
         catchError(error => {
-          console.error('Error verificando duplicados:', error);
           return of(false); // En caso de error, permitimos continuar
         })
       );
@@ -224,8 +295,13 @@ export class LocationNetService {
   createLocation(location: Location): Observable<Location> {
     return this.http.post<Location>(`${this.apiUrl}/location`, location)
       .pipe(
+        tap(createdLocation => {
+          // Agregar la nueva ubicación al cache
+          if (createdLocation && createdLocation.id) {
+            this.locationCache.set(createdLocation.id, createdLocation);
+          }
+        }),
         catchError(error => {
-          console.error('Error creando ubicación:', error);
           return of({} as Location);
         })
       );
@@ -235,8 +311,11 @@ export class LocationNetService {
   deleteLocation(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/location/${id}`)
       .pipe(
+        tap(() => {
+          // Invalidar cache cuando se elimina exitosamente
+          this.invalidateLocationCache(id);
+        }),
         catchError(error => {
-          console.error(`Error eliminando ubicación con ID ${id}:`, error);
           return of({ success: false, error });
         })
       );
@@ -247,7 +326,6 @@ export class LocationNetService {
     return this.http.post<LocationRelationship>(`${this.apiUrl}/locationrelationship`, relationship)
       .pipe(
         catchError(error => {
-          console.error('Error creando relación de ubicación:', error);
           throw error;
         })
       );
@@ -257,7 +335,6 @@ export class LocationNetService {
     return this.http.put<LocationRelationship>(`${this.apiUrl}/locationrelationship/${relationship.id}`, relationship)
       .pipe(
         catchError(error => {
-          console.error(`Error actualizando relación de ubicación con ID ${relationship.id}:`, error);
           throw error;
         })
       );
@@ -267,7 +344,6 @@ export class LocationNetService {
     return this.http.delete(`${this.apiUrl}/locationrelationship/${id}`)
       .pipe(
         catchError(error => {
-          console.error(`Error eliminando relación de ubicación con ID ${id}:`, error);
           throw error;
         })
       );
@@ -284,9 +360,38 @@ export class LocationNetService {
       .pipe(
         map(response => response.isValid),
         catchError(error => {
-          console.error('Error validando relación de ubicación:', error);
           return of(false);
         })
       );
+  }
+
+  // Métodos de gestión de cache para ubicaciones
+  
+  /**
+   * Limpia completamente el cache de ubicaciones
+   */
+  clearLocationCache(): void {
+    this.locationCache.clear();
+    this.locationObservableCache.clear();
+  }
+
+  /**
+   * Invalida una ubicación específica del cache
+   * Útil cuando se actualiza o elimina una ubicación
+   */
+  invalidateLocationCache(id: number): void {
+    this.locationCache.delete(id);
+    this.locationObservableCache.delete(id);
+  }
+
+  /**
+   * Obtiene información del estado actual del cache
+   * Útil para debugging o monitoreo
+   */
+  getLocationCacheInfo(): { cachedLocations: number, pendingRequests: number } {
+    return {
+      cachedLocations: this.locationCache.size,
+      pendingRequests: this.locationObservableCache.size
+    };
   }
 }

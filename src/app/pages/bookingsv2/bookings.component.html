@@ -3,7 +3,7 @@
   <div *ngIf="isLoading" class="loading-container">
     <p-progressSpinner></p-progressSpinner>
   </div>
-  
+
   <!-- Contenido principal - solo se muestra cuando no está cargando -->
   <div *ngIf="!isLoading">
     <!-- Header booking section -->
@@ -20,6 +20,11 @@
       [bookingCode]="bookingData.bookingCode"
       [bookingReference]="bookingData.bookingReference"
       [status]="bookingData.status"
+      [statusId]="reservation?.reservationStatusId || 0"
+      [isATC]="isATC"
+      [isTO]="isTO"
+      [isStandaloneMode]="isStandaloneMode"
+      [isTO]="isTO"
       (cancelBooking)="cancelBooking()"
       (backEvent)="goBack()"
     >
@@ -27,12 +32,7 @@
 
     <!-- Documents booking section -->
     <app-booking-document-actions-v2
-      [isVisible]="false"
-      (sendReminder)="sendReminder()"
-      (reprintInfo)="reprintInfo()"
-      (reprintVoucher)="reprintVoucher()"
-      (reprintPaymentReminder)="reprintPaymentReminder()"
-      (reprintETickets)="reprintETickets()"
+      [isVisible]="isATC"
       [bookingId]="bookingId"
     >
     </app-booking-document-actions-v2>
@@ -41,17 +41,26 @@
     <app-booking-details-view-v2
       [bookingImages]="bookingImages"
       [tourName]="bookingData.title"
+      [refreshTrigger]="summaryRefreshTrigger"
     >
     </app-booking-details-view-v2>
 
     <!-- Payment History - Versión actualizada que solo usa tripItems -->
     <app-booking-payment-history-v2
+      #paymentHistoryComponent
       [bookingID]="bookingId"
       [tripItems]="tripItems"
       [bookingTotal]="bookingTotal"
       [isTO]="isTO"
+      [isATC]="isATC"
+      [refreshTrigger]="summaryRefreshTrigger"
+      [reservationId]="reservation?.id || 0"
+      [departureDate]="departureDate"
+      [tourId]="reservation?.tourId || 0"
       (registerPayment)="registerPayment($event)"
       (fileUploaded)="handleFileUploaded($event)"
+      (couponApplied)="handleCouponApplied()"
+      [statusCode]="bookingData.statusCode"
     >
     </app-booking-payment-history-v2>
 
@@ -60,17 +69,24 @@
       [reservationId]="reservation?.id || 0"
       [bookingId]="bookingId"
       [periodId]="reservation?.departureId?.toString() || ''"
+      [Days]="Days"
+      [isATC]="isATC"
     />
 
     <!-- Flights -->
-    <app-booking-flights-v2 *ngIf="reservation?.id" [reservationId]="reservation.id">
+    <app-booking-flights-v2
+      *ngIf="reservation?.id"
+      [reservationId]="reservation.id"
+    >
     </app-booking-flights-v2>
 
     <!-- Activities -->
     <app-booking-activities-v2
       *ngIf="reservation?.id"
       [reservationId]="reservation?.id || 0"
+      [statusCode]="bookingData.statusCode"
       [periodId]="reservation?.departureId?.toString() || ''"
+      (dataUpdated)="onActivitiesDataUpdated()"
     >
     </app-booking-activities-v2>
 
@@ -125,6 +141,93 @@
           label="Registrar pago"
           [disabled]="paymentForm.invalid"
         ></button>
+      </div>
+    </form>
+  </p-dialog>
+
+  <!-- Modal de cancelación de reserva -->
+  <p-dialog
+    header="Cancelar Reserva"
+    [(visible)]="displayCancelModal"
+    [modal]="true"
+    [style]="{ width: '580px', maxWidth: '95vw' }"
+    [draggable]="false"
+    [resizable]="false"
+    [closeOnEscape]="true"
+    styleClass="cancel-reservation-dialog"
+    [maskStyleClass]="'cancel-reservation-dialog'"
+  >
+    <form [formGroup]="cancelForm" (ngSubmit)="onSubmitCancellation()">
+      <div class="p-fluid">
+        <!-- Campo de comentario -->
+        <div class="p-field">
+          <label for="comentario">
+            Motivo de cancelación <span class="text-red-500">*</span>
+          </label>
+          <textarea
+            pInputTextarea
+            id="comentario"
+            formControlName="comentario"
+            rows="5"
+            placeholder="Describa el motivo de la cancelación de esta reserva..."
+            [autoResize]="false"
+          ></textarea>
+          <small
+            *ngIf="
+              cancelForm.get('comentario')?.invalid &&
+              cancelForm.get('comentario')?.touched
+            "
+            class="p-error"
+          >
+            Por favor, ingrese el motivo de la cancelación
+          </small>
+        </div>
+
+        <!-- Campo de tarifa (solo visible para ATC) -->
+        <div class="p-field" *ngIf="isATC">
+          <label for="cancelationFee">
+            Tarifa de cancelación <span class="text-red-500">*</span>
+          </label>
+          <p-inputNumber
+            inputId="cancelationFee"
+            formControlName="cancelationFee"
+            mode="currency"
+            currency="EUR"
+            locale="es-ES"
+            [min]="0"
+            [minFractionDigits]="2"
+            [maxFractionDigits]="2"
+            placeholder="0,00 €"
+          >
+          </p-inputNumber>
+          <small
+            *ngIf="
+              cancelForm.get('cancelationFee')?.invalid &&
+              cancelForm.get('cancelationFee')?.touched
+            "
+            class="p-error"
+          >
+            Ingrese la tarifa de cancelación (puede ser 0)
+          </small>
+        </div>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="flex justify-content-end border-top-1">
+        <p-button
+          label="Cancelar"
+          icon="pi pi-times"
+          (onClick)="hideCancelModal()"
+          styleClass="p-button-text p-button-secondary"
+        ></p-button>
+        <p-button
+          label="Confirmar Cancelación"
+          icon="pi pi-check"
+          type="submit"
+          styleClass="p-button-danger"
+          [disabled]="cancelForm.invalid"
+          [loading]="isLoading"
+        ></p-button>
       </div>
     </form>
   </p-dialog>

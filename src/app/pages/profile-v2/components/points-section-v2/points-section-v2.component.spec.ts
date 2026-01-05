@@ -5,7 +5,7 @@ import { of } from 'rxjs';
 import { PointsSectionV2Component } from './points-section-v2.component';
 import { PointsService } from '../../../../core/services/points.service';
 import { GeneralConfigService } from '../../../../core/services/general-config.service';
-import { AuthenticateService } from '../../../../core/services/auth-service.service';
+import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 import { UsersService } from '../../../../core/services/users.service';
 
 describe('PointsSectionV2Component', () => {

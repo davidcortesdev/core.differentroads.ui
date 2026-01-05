@@ -13,21 +13,24 @@
   <div *ngIf="!loading && !error && tour" class="tour-content">
     <!-- Tour Header Section - MODIFICADO PARA PASAR ACTIVIDADES SELECCIONADAS, FLAG Y DATOS DE AGE GROUPS -->
     <section class="tour-section tour-header-section">
-      <app-tour-header-v2
-        [tourId]="tour.id"
-        [totalPrice]="totalPrice"
-        [selectedCity]="selectedCity"
-        [selectedDeparture]="selectedDepartureData"
-        [totalPassengers]="totalPassengers"
-        [selectedActivities]="selectedActivities"
-        [showActivitiesStatus]="showActivitiesStatus"
-        [passengersData]="passengersData"
-        [ageGroupCategories]="ageGroupCategories"
-        [activityTypesAnalysis]="activityTypesAnalysis"
-        [preview]="preview"
-        [selectedActivityPackId]="selectedActivityPackId">
-      >
-      </app-tour-header-v2>
+      <section class="tour-section tour-header-section">
+        <app-tour-header-v2
+          [tourId]="tour.id"
+          [totalPrice]="totalPrice"
+          [selectedCity]="selectedCity"
+          [selectedDeparture]="selectedDepartureData"
+          [totalPassengers]="totalPassengers"
+          [selectedActivities]="selectedActivities"
+          [showActivitiesStatus]="showActivitiesStatus"
+          [passengersData]="passengersData"
+          [ageGroupCategories]="ageGroupCategories"
+          [activityTypesAnalysis]="activityTypesAnalysis"
+          [preview]="preview"
+          [selectedActivityPackId]="selectedActivityPackId"
+          [tourTripTypes]="tourTripTypes"
+          [citiesLoading]="citiesLoading"> <!-- ✅ NUEVO: Añadir citiesLoading -->
+        </app-tour-header-v2>
+      </section>
     </section>
     
     <!-- Tour Overview Section -->
@@ -55,6 +58,7 @@
     <section class="tour-section tour-departures-section">
       <app-tour-departures-v2
         [tourId]="tour.id"
+        [tourData]="tour"
         [selectedDepartureEvent]="selectedDepartureEvent"
         (priceUpdate)="onPriceUpdate($event)"
         (cityUpdate)="onCityUpdate($event)"
@@ -62,7 +66,8 @@
         (passengersUpdate)="onPassengersUpdate($event)"
         (ageGroupsUpdate)="onAgeGroupsUpdate($event)"
         [preview]="preview"
-        (activityPackIdUpdate)="onActivityPackIdUpdate($event)">
+        (activityPackIdUpdate)="onActivityPackIdUpdate($event)"
+        (citiesLoadingUpdate)="onCitiesLoadingUpdate($event)">
       </app-tour-departures-v2>
     </section>
     
@@ -70,9 +75,39 @@
     <section class="tour-section tour-info-accordion-section">
       <app-tour-info-accordion-v2 [tourId]="tour.id"></app-tour-info-accordion-v2>
     </section>
+
+    <!-- Tour Information Accordion Section -->
+    <section class="tour-section tour-additional-info-section">
+      <app-additional-info
+        [tourId]="tour.id?.toString() || ''"
+        [tourName]="tour.name || ''"
+        [periodID]="selectedDepartureData?.id?.toString() || ''"
+        [periodName]="selectedDepartureData?.group || ''"
+        [periodDates]="selectedDepartureData?.departureDate && selectedDepartureData?.returnDate ? selectedDepartureData.departureDate + ' - ' + selectedDepartureData.returnDate : ''"
+        [totalPrice]="totalPrice"
+        [selectedCity]="selectedCity"
+        [selectedDeparture]="selectedDepartureData"
+        [totalPassengers]="totalPassengers"
+        [travelersSelected]="passengersData"
+        [selectedActivities]="selectedActivities"
+        [showActivitiesStatus]="showActivitiesStatus"
+        [passengersData]="passengersData"
+        [ageGroupCategories]="ageGroupCategories"
+        [context]="'tour'"
+        [isAuthenticated]="isAuthenticated"
+        [tourCountry]="tourCountry"
+        [tourContinent]="tourContinent"
+        [tourRating]="tourRating"
+        [tourDuration]="tourDuration"
+        [tourTripType]="tourTripType"
+        [tourProductStyle]="tourProductStyle"
+        [tourListId]="tour.id?.toString() || ''"
+        [tourListName]="tour.name || ''">
+      </app-additional-info>
+    </section>
     
     <!-- Tour Reviews Section -->
-    <section class="tour-section tour-reviews-section">
+    <section id="tour-reviews" class="tour-section tour-reviews-section">
       <app-tour-reviews-v2 [tourId]="tour.id"></app-tour-reviews-v2>
     </section>
   </div>

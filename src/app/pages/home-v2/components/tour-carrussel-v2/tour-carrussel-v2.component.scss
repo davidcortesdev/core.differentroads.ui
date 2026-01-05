@@ -1,8 +1,8 @@
-// Variables
-$desktop-padding: 4rem;
-$tablet-padding: 3rem 1.5rem;
-$mobile-padding: 2rem 1rem;
+// Importar temas del carrusel de tours
+@import '../../../../../styles/cms-home-themes/tour-carousel-light.theme.scss';
+@import '../../../../../styles/cms-home-themes/tour-carousel-dark.theme.scss';
 
+// Variables
 $title-desktop-size: 2rem;
 $title-tablet-size: 1.75rem;
 $title-mobile-size: 1.25rem;
@@ -11,36 +11,147 @@ $title-mobile-size: 1.25rem;
 $breakpoint-large: 1366px;
 $breakpoint-medium: 1024px;
 $breakpoint-small: 768px;
+$breakpoint-xsmall: 320px; // Pantallas muy pequeñas
+
+// Wrapper del carrusel para manejar scroll vertical
+.carousel-wrapper {
+    width: 100%;
+    overflow: visible;
+}
 
 .tours-section {
-    padding: $desktop-padding;
+    padding: 6rem 0;
+    margin: 0;
+    width: 100%;
+    background-color: var(--theme-section-bg);
 
-    .title {
-        color: var(--background-azul);
-        font-weight: 400;
-        margin-top: -10px;
+    .tours-section-layout {
+        display: grid;
+        // Permite que la descripción se reduzca hasta 280px mínimo, y el carrusel puede crecer
+        grid-template-columns: minmax(280px, 1fr) minmax(0, 2fr);
+        gap: 60px;
+        width: 100%;
+        padding: 0 6rem;
+        align-items: stretch;
     }
 
-    h2 {
-        text-align: center;
-        margin-bottom: 2rem;
-        font-size: $title-desktop-size;
+    .tours-section-description {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        color: var(--theme-description-text);
+        min-width: 0; // Permite que se reduzca
+        transition: all 0.3s ease; // Transición suave al reducirse
+
+        .header-with-icon {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.9rem;
+        }
+
+        .title-icon {
+            width: 22px;
+            height: auto;
+            flex-shrink: 0;
+            margin-top: 0.25rem;
+        }
+
+        .header-content {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            min-width: 0; // Permite que se reduzca
+        }
+
+        .title {
+            font-weight: 800;
+            font-size: $title-desktop-size;
+            margin: 0 0 1rem 0;
+            padding: 0;
+            text-align: left;
+            color: var(--primary-color-500);
+            transition: font-size 0.3s ease; // Transición suave
+        }
+
+        .description {
+            font-size: 1.4rem;
+            font-weight: 600;
+            line-height: 1.4;
+            margin: 0 0 1.5rem 0;
+            padding: 0;
+            color: var(--theme-description-text);
+            transition: font-size 0.3s ease; // Transición suave
+        }
+
+        .tours-sectionMore {
+            margin: 0;
+            padding: 0;
+        }
+    }
+
+    .carousel-wrapper {
+        min-width: 0;
     }
 
     .buttonVertour {
         width: 7rem;
     }
 
-    // Media queries
-    @media screen and (max-width: $breakpoint-large) {
-        padding: $desktop-padding 1.2rem;
+    // Media queries - Optimizado para pantallas de 10-15 pulgadas con 3 tarjetas
+    
+    // Pantallas de 15 pulgadas (1281px-1600px) - Optimizado para 3 tarjetas
+    @media screen and (max-width: 1600px) and (min-width: 1281px) {
+        .tours-section-layout {
+            padding: 0 3.5rem;
+            gap: 45px;
+            grid-template-columns: minmax(240px, 0.8fr) minmax(0, 2.2fr);
+        }
+
+        .tours-section-description {
+            .title {
+                font-size: 1.85rem;
+            }
+
+            .description {
+                font-size: 1.2rem;
+            }
+        }
+    }
+
+    // Pantallas de 10-13 pulgadas (1025px-1280px) - 3 tarjetas ajustadas
+    // Reducimos padding/gap y ampliamos el espacio del carrusel para evitar cortes
+    @media screen and (max-width: 1280px) and (min-width: 1025px) {
+        .tours-section-layout {
+            padding: 0 1.5rem;
+            gap: 24px;
+            grid-template-columns: minmax(180px, 0.6fr) minmax(0, 2.4fr);
+        }
+
+        .tours-section-description {
+            .title {
+                font-size: 1.55rem;
+            }
+
+            .description {
+                font-size: 1rem;
+            }
+        }
     }
 
     @media screen and (max-width: $breakpoint-medium) {
-        padding: $tablet-padding;
+        .tours-section-layout {
+            grid-template-columns: 1fr; // Una columna en tablet
+            gap: 30px;
+            padding: 0 2rem;
+        }
 
-        h2 {
-            font-size: $title-tablet-size;
+        .tours-section-description {
+            justify-content: flex-start;
+
+            .title {
+                font-size: $title-tablet-size;
+                text-align: left;
+            }
         }
 
         .buttonVertour {
@@ -49,20 +160,261 @@ $breakpoint-small: 768px;
     }
 
     @media screen and (max-width: $breakpoint-small) {
-        padding: $mobile-padding;
-        margin-top: 20px;
+        .tours-section-layout {
+            grid-template-columns: 1fr; // Una columna en móvil
+            gap: 20px;
+            padding: 0 1rem;
+        }
+        
+        // Para pantallas muy pequeñas, reducir padding
+        @media screen and (max-width: $breakpoint-xsmall) {
+            .tours-section-layout {
+                padding: 0 0.5rem; // Reducir padding a 8px en cada lado
+                gap: 15px;
+            }
+        }
 
-        h2 {
-            font-size: $title-mobile-size;
-            margin-bottom: 1.5rem;
+        .tours-section-description {
+            align-items: center;
+            text-align: center;
+
+            .header-with-icon {
+                flex-direction: column;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .title-icon {
+                margin-top: 0;
+            }
+
+            .header-content {
+                align-items: center;
+                text-align: center;
+                width: 100%;
+            }
+
+            .title {
+                font-size: $title-mobile-size;
+                margin-bottom: 0.75rem;
+                text-align: center;
+            }
+
+            .description {
+                font-size: 0.85rem;
+                text-align: center;
+            }
+
+            .tours-sectionMore {
+                &.desktop-button {
+                    display: none; // Ocultar botón dentro de la descripción en mobile
+                }
+            }
         }
 
         .buttonVertour {
             width: auto !important;
             min-width: 6rem;
             height: 2.5rem;
-            margin-top: 35px;
             font-size: 0.9rem;
+        }
+    }
+
+    // Botón para mobile - debajo del carrusel
+    .tours-sectionMore-mobile {
+        display: none; // Oculto por defecto
+
+        @media screen and (max-width: $breakpoint-small) {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            padding: 1.5rem 1rem 0 1rem;
+            
+            // Para pantallas muy pequeñas, reducir padding
+            @media screen and (max-width: $breakpoint-xsmall) {
+                padding: 1rem 0.5rem 0 0.5rem;
+            }
+        }
+    }
+}
+
+// ===============================================
+// ESTILOS PARA PAGINADORES DEL CARRUSEL
+// ===============================================
+::ng-deep {
+    .p-carousel {
+        overflow: visible !important; // Importante: evitar que corte las tarjetas
+        
+        // En móvil, permitir ambos gestos - el JavaScript detectará la dirección
+        @media screen and (max-width: $breakpoint-small) {
+            // Permitir ambos gestos - pan-x para swipe horizontal, pan-y para scroll vertical
+            touch-action: pan-x pan-y;
+            // Asegurar que no haya overflow que interfiera
+            overflow: visible !important;
+        }
+        
+        // En desktop/tablet, permitir ambos gestos
+        @media screen and (min-width: 769px) {
+            touch-action: pan-x pan-y pinch-zoom;
+        }
+        
+        // Contenedor de indicadores
+        .p-carousel-indicator-list {
+            padding: 0.5rem 0;
+            gap: 0.25rem;
+            // Evitar que los indicadores interfieran con el scroll vertical
+            pointer-events: none;
+            
+            @media screen and (max-width: $breakpoint-medium) {
+                padding: 0.5rem 0 0.4rem;
+                gap: 4px;
+            }
+            
+            @media screen and (max-width: $breakpoint-small) {
+                gap: 3px;
+                padding: 0.4rem 0 0.3rem;
+                margin: 0 auto;
+                flex-wrap: nowrap;
+                justify-content: center;
+                align-items: center;
+            }
+        }
+        
+        // Indicadores individuales (dots)
+        .p-carousel-indicator {
+            // Permitir clicks en los dots
+            pointer-events: auto;
+            
+            @media screen and (max-width: $breakpoint-medium) {
+                button {
+                    width: 8px !important;
+                    height: 8px !important;
+                    min-width: 8px !important;
+                    border-radius: 50% !important;
+                    background-color: rgba(0, 0, 0, 0.2) !important;
+                    border: none !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    transition: all 0.3s ease;
+                }
+                
+                &.p-carousel-indicator-active button {
+                    background-color: var(--p-primary-color, #e57373) !important;
+                    width: 20px !important;
+                    min-width: 20px !important;
+                    border-radius: 4px !important;
+                }
+            }
+            
+            @media screen and (max-width: $breakpoint-small) {
+                // Dots base - pequeños para no interferir con scroll
+                button {
+                    width: 5px !important;
+                    height: 5px !important;
+                    min-width: 5px !important;
+                    border-radius: 50% !important;
+                    background-color: rgba(0, 0, 0, 0.15) !important;
+                    border: none !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    transition: all 0.3s ease;
+                    // Reducir área táctil para evitar capturas accidentales
+                    touch-action: manipulation;
+                    
+                    &:hover {
+                        background-color: rgba(0, 0, 0, 0.3) !important;
+                    }
+                }
+                
+                // Dot activo - siempre visible y destacado
+                &.p-carousel-indicator-active button {
+                    background-color: var(--p-primary-color, #e57373) !important;
+                    width: 14px !important;
+                    min-width: 14px !important;
+                    border-radius: 3px !important;
+                    transform: none;
+                }
+            }
+        }
+        
+        // Contenedor de items - asegurar que no corte las tarjetas
+        .p-carousel-items-container {
+            overflow: visible !important;
+            width: 100%;
+            
+            @media screen and (max-width: $breakpoint-small) {
+                touch-action: pan-x pan-y;
+                overscroll-behavior: contain !important;
+                overflow: visible !important;
+            }
+        }
+        
+        // Contenedor de contenido del carrusel
+        .p-carousel-content {
+            overflow: visible !important;
+            width: 100%;
+            
+            @media screen and (max-width: $breakpoint-small) {
+                touch-action: pan-x pan-y;
+                pointer-events: auto !important;
+                overflow: visible !important;
+            }
+        }
+        
+        // Contenido interno del carrusel
+        .p-carousel-items-content {
+            overflow: visible !important;
+            display: flex;
+            width: 100%;
+            
+            @media screen and (max-width: $breakpoint-small) {
+                touch-action: pan-x pan-y;
+                will-change: transform;
+            }
+        }
+        
+        // Ajustar ancho de los items sin usar margen (PrimeNG no descuenta márgenes)
+        // Usamos padding muy pequeño y flex-basis fijo para cada tarjeta
+        .p-carousel-item {
+            box-sizing: border-box;
+            padding: 0 0.1rem; // ~1.6px a cada lado
+            flex: 0 0 calc(100% / 3);
+        }
+
+        @media screen and (max-width: $breakpoint-medium) and (min-width: 769px) {
+            .p-carousel-item {
+                flex: 0 0 50%; // 2 tarjetas
+                padding: 0 0.25rem;
+            }
+        }
+
+        @media screen and (max-width: $breakpoint-small) and (min-width: 561px) {
+            .p-carousel-item {
+                flex: 0 0 50%;
+                padding: 0 0.2rem;
+            }
+        }
+
+        @media screen and (max-width: 560px) {
+            .p-carousel-item {
+                flex: 0 0 100%; // 1 tarjeta
+                padding: 0 0.25rem;
+            }
+        }
+
+        @media screen and (max-width: $breakpoint-xsmall) {
+            .p-carousel-item {
+                padding: 0 0.2rem;
+            }
+        }
+        
+        // Contenedor para cada tarjeta - sin márgenes (solo padding del item)
+        .tour-carousel-item {
+            box-sizing: border-box;
+            flex-shrink: 0;
+            margin: 0;
+            width: 100%;
         }
     }
 }

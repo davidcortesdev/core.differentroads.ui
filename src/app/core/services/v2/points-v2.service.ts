@@ -1,6 +1,9 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { MessageService } from 'primeng/api';
+import { Observable, of, map, catchError } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 import { MembershipCard, PointsRecord, TravelerCategory, CategoryConfig, PointsTransaction, TravelerPointsSummary, TransactionType, TransactionCategory } from '../../models/v2/profile-v2.model';
 
 // Interfaces para canje de puntos
@@ -10,6 +13,61 @@ export interface PointsRedemptionConfig {
   pointsPerTraveler: { [travelerId: string]: number };
   maxDiscountPerTraveler: number;
   totalDiscount: number;
+}
+
+// Interfaces para endpoints reales - ESQUEMA CORRECTO DEL BACKEND
+export interface LoyaltyTransactionCreate {
+  userId: number;                // ID del usuario en la base de datos
+  transactionDate: string;       // Fecha de la transacción en formato ISO
+  transactionTypeId: number;     // ID del tipo de transacción (4 = REDEEM_BOOKING para canje)
+  points: number;                // Cantidad de puntos (negativo para canje)
+  amountBase: number;            // Monto base asociado
+  currency: string;              // Código de moneda (EUR, USD, etc.)
+  referenceType: string;         // Tipo de referencia ("RESERVATION", etc.)
+  referenceId: string;           // ID de la referencia como string
+  comment: string;               // Comentario o descripción
+}
+
+export interface LoyaltyTransaction {
+  id: number;
+  travelerId: string;
+  points: number;
+  transactionType: string;
+  transactionCategory: string;
+  description: string;
+  reservationId: number;
+  createdAt: Date;
+}
+
+// Interface actualizada según esquema real del backend
+export interface LoyaltyBalance {
+  id: number;
+  userId: number;                // ID del usuario (numérico)
+  pointsAvailable: number;       // Nombre correcto del campo en el backend
+  pointsTotalEarned: number;     // Nombre correcto del campo
+  pointsTotalRedeemed: number;   // Nombre correcto del campo
+  createdAt: string;             // ISO string
+  updatedAt: string;             // ISO string
+}
+
+export interface UserLoyaltyCategory {
+  id: number;
+  userId: string;              // cognito:sub
+  loyaltyCategoryId: number;
+  startDate: Date;
+  endDate: Date | null;
+  isActive: boolean;
+}
+
+export interface LoyaltyProgramCategory {
+  id: number;
+  name: string;               // "Trotamundos", "Viajante", "Nómada"
+  minPoints: number;          // Puntos mínimos para alcanzar esta categoría
+  maxPoints: number;          // Puntos máximos de esta categoría
+  maxDiscountPerPurchase: number;  // Límite de canje por compra (50, 75, 100)
+  benefits: string[];         // Lista de beneficios
+  color: string;              // Color de la tarjeta
+  icon: string;               // Icono de la categoría
 }
 
 export interface TravelerData {
@@ -43,6 +101,8 @@ export interface PointsDistributionSummary {
   providedIn: 'root'
 })
 export class PointsV2Service {
+  private readonly AUTH_API_URL = environment.usersApiUrl;
+  private readonly RESERVATIONS_API_URL = environment.reservationsApiUrl;
 
   // ===== CONSTANTES DEL SISTEMA =====
   private readonly POINTS_PERCENTAGE = 0.03; // 3% del PVP
@@ -50,6 +110,7 @@ export class PointsV2Service {
   private readonly MAX_POINTS_PER_PERSON = 50; // Máximo 50€ por persona por reserva
 
   constructor(
+    private http: HttpClient,
     private sanitizer: DomSanitizer,
     private messageService: MessageService
   ) { }
@@ -148,7 +209,7 @@ export class PointsV2Service {
    * @returns Clase CSS para colorear
    */
   getPointsClass(type: string): string {
-    return type === 'canjear' ? 'redemption-points' : 'income-points';
+    return type.toLowerCase() === 'canjear' ? 'redemption-points' : 'income-points';
   }
 
   // ===== GESTIÓN DE CATEGORÍAS DE VIAJERO =====
@@ -300,117 +361,190 @@ export class PointsV2Service {
     return this.sanitizer.bypassSecurityTrustHtml(content);
   }
 
-  // ===== DATOS MOCK PARA DESARROLLO =====
+  /**
+   * Obtiene el saldo de puntos desde la API
+   * @param travelerId ID del viajero
+   * @returns Observable con el saldo de puntos
+   */
+  getLoyaltyBalanceFromAPI(travelerId: string): Observable<any> {
+    const url = `${this.AUTH_API_URL}/LoyaltyBalance?userId=${travelerId}`;
+    
+    return this.http.get<any>(url).pipe(
+      map(balance => {
+        // Si la API devuelve un array, tomar el primer elemento
+        if (Array.isArray(balance) && balance.length > 0) {
+          return balance[0];
+        }
+        return balance;
+      }),
+      catchError(error => {
+        return of(null);
+      })
+    );
+  }
 
   /**
-   * Genera datos mock de puntos para un usuario
-   * @param userId ID del usuario para generar datos únicos
-   * @returns Array de registros de puntos
+   * Obtiene las transacciones de puntos desde la API
+   * @param travelerId ID del viajero
+   * @returns Observable con las transacciones
    */
-  generateMockPoints(userId: string): PointsRecord[] {
+  getLoyaltyTransactionsFromAPI(travelerId: string): Observable<any[]> {
+    const url = `${this.AUTH_API_URL}/LoyaltyTransaction?userId=${travelerId}`;
     
-    // Simular viajes con diferentes importes para calcular puntos realistas
-    const mockBookings = [
-      { id: '001', tour: 'Tour por Italia - Roma, Florencia y Venecia', amount: 2500, date: new Date('2024-01-15') },
-      { id: '002', tour: 'Aventura en Tailandia', amount: 2000, date: new Date('2024-02-20') },
-      { id: '003', tour: 'Escapada a París', amount: 1500, date: new Date('2024-03-10') },
-      { id: '004', tour: 'Tour por Grecia', amount: 0, date: new Date('2024-04-05') },
-      { id: '005', tour: 'Viaje a Japón', amount: 0, date: new Date('2024-05-12') }
-    ];
+    return this.http.get<any[]>(url).pipe(
+      map(transactions => {
+        // Si la API devuelve un objeto en lugar de array, convertirlo a array
+        if (transactions && !Array.isArray(transactions)) {
+          return [transactions];
+        }
+        return transactions || [];
+      }),
+      catchError(error => {
+        return of([]);
+      })
+    );
+  }
 
-    const pointsRecords: PointsRecord[] = [];
+  /**
+   * Obtiene los tipos de transacciones desde la API
+   * @returns Observable con los tipos de transacciones
+   */
+  getLoyaltyTransactionTypesFromAPI(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.AUTH_API_URL}/LoyaltyTransactionType`).pipe(
+      catchError(error => {
+        return of([]);
+      })
+    );
+  }
 
-    // Generar puntos por viajes (3% del importe) - solo para viajes con amount > 0
-    mockBookings.forEach(booking => {
-      if (booking.amount > 0) {
-        const points = this.calculatePointsFromAmount(booking.amount);
-        pointsRecords.push({
-          booking: booking.id,
-          category: 'Viaje',
-          concept: 'Puntos por reserva de tour',
-          tour: booking.tour,
-          points: points,
-          type: 'Acumular',
-          amount: booking.amount,
-          date: booking.date,
-          status: 'Confirmed'
+  /**
+   * Obtiene las categorías de membresía desde la API
+   * @returns Observable con las tarjetas de membresía
+   */
+  getMembershipCardsFromAPI(): Observable<MembershipCard[]> {
+    return this.http.get<any[]>(`${this.AUTH_API_URL}/LoyaltyProgramCategory`).pipe(
+      map(apiCategories => apiCategories.map(category => this.mapApiCategoryToMembershipCard(category))),
+      catchError(error => {
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Carga todos los datos de puntos desde la API
+   * @param travelerId ID del viajero
+   * @returns Observable con todos los datos
+   */
+  loadAllPointsDataFromAPI(travelerId: string): Observable<{
+    balance: any;
+    transactions: any[];
+    transactionTypes: any[];
+    membershipCards: MembershipCard[];
+  }> {
+    return this.http.get<any>(`${this.AUTH_API_URL}/LoyaltyBalance/${travelerId}`).pipe(
+      map(balance => ({
+        balance,
+        transactions: [], // Se puede implementar si hay endpoint específico
+        transactionTypes: [], // Se puede implementar si hay endpoint específico
+        membershipCards: [] // Se cargará por separado
+      })),
+      catchError(error => {
+        return of({
+          balance: null,
+          transactions: [],
+          transactionTypes: [],
+          membershipCards: []
         });
-      }
-    });
+      })
+    );
+  }
 
-    // Simular algunos canjes de puntos
-    const redemptions = [
-      { id: 'R001', concept: 'Descuento aplicado en reserva', points: 10, amount: 10, date: new Date('2024-03-25') },
-      { id: 'R002', concept: 'Descuento en actividad opcional', points: 8, amount: 8, date: new Date('2024-04-15') },
-      { id: 'R003', concept: 'Descuento en seguro de viaje', points: 1, amount: 1, date: new Date('2024-05-20') }
+  /**
+   * Convierte una categoría del API a MembershipCard
+   * @param apiCategory Categoría desde el API
+   * @returns MembershipCard
+   */
+  private mapApiCategoryToMembershipCard(apiCategory: any): MembershipCard {
+    // Mapear el nombre de la categoría a TravelerCategory
+    const categoryMap: { [key: string]: TravelerCategory } = {
+      'Trotamundos': TravelerCategory.TROTAMUNDOS,
+      'Viajero': TravelerCategory.VIAJERO,
+      'Nómada': TravelerCategory.NOMADA
+    };
+
+    const category = categoryMap[apiCategory.name] || TravelerCategory.TROTAMUNDOS;
+
+    return {
+      type: 'Categoría de viajero',
+      title: apiCategory.name,
+      image: apiCategory.imageUrl || null,
+      benefits: this.sanitizeHtml(this.generateBenefitsFromCategory(apiCategory)),
+      unlocked: true, // Todas las categorías están desbloqueadas para mostrar
+      isCurrent: false, // Se determinará en el componente
+      requirement: this.generateRequirementFromCategory(apiCategory),
+      minTrips: this.getMinTripsForCategory(category),
+      maxTrips: this.getMaxTripsForCategory(category),
+      remainingTrips: 0,
+      statusText: 'Desbloqueado',
+      category: category,
+      maxDiscount: apiCategory.redeemCapPerBookingAmount || 0,
+      color: this.getCategoryColor(category),
+      icon: this.getCategoryIcon(category)
+    };
+  }
+
+  /**
+   * Genera beneficios basados en la categoría del API
+   */
+  private generateBenefitsFromCategory(apiCategory: any): string {
+    const benefits = [
+      `Descuento del ${apiCategory.accrualRatePercent}% en todos los tours`,
+      'Acceso prioritario a nuevas rutas',
+      'Asistencia 24/7'
     ];
 
-    redemptions.forEach(redemption => {
-      pointsRecords.push({
-        booking: redemption.id,
-        category: 'Canje',
-        concept: redemption.concept,
-        tour: 'Descuento aplicado',
-        points: redemption.points,
-        type: 'Canjear',
-        amount: redemption.amount,
-        date: redemption.date,
-        status: 'Confirmed'
-      });
-    });
+    // Agregar beneficios específicos según la categoría
+    if (apiCategory.name === 'Viajero') {
+      benefits.push('Upgrade gratuito de habitación', 'Tours exclusivos', 'Prioridad en reservas');
+    } else if (apiCategory.name === 'Nómada') {
+      benefits.push('Suite gratuita en cada viaje', 'Tours privados', 'Concierge personal', 'Acceso VIP a eventos');
+    }
 
-    // Ordenar por fecha (más recientes primero)
-    return pointsRecords.sort((a, b) => {
-      const dateA = a.date ? new Date(a.date).getTime() : 0;
-      const dateB = b.date ? new Date(b.date).getTime() : 0;
-      return dateB - dateA;
-    });
+    benefits.push(`Canje máximo de ${apiCategory.redeemCapPerBookingAmount}€ por compra`);
+
+    return benefits.map(benefit => `• ${benefit}`).join('<br>');
   }
 
   /**
-   * Genera cantidad mock de viajes para un usuario
-   * @param userId ID del usuario
-   * @returns Número de viajes completados
+   * Genera requisitos basados en la categoría del API
    */
-  generateMockTripsCount(userId: string): number {
-    // Simular cantidad de viajes basada en el userId
-    
-    
-    // Retornar 5 viajes para que le falte 1 para ser Nómada (6 viajes)
-    return 5;
+  private generateRequirementFromCategory(apiCategory: any): string {
+    const minTrips = this.getMinTripsForCategory(this.mapNameToCategory(apiCategory.name));
+    return `Completar ${minTrips} viajes para desbloquear`;
   }
 
   /**
-   * Genera datos mock de tarjetas de membresía basadas en el nuevo sistema
-   * @param currentCategory Categoría actual del viajero
-   * @returns Array de tarjetas de membresía
+   * Mapea el nombre de la categoría a TravelerCategory
    */
-  generateMockMembershipCards(currentCategory: TravelerCategory = TravelerCategory.TROTAMUNDOS): MembershipCard[] {
-    const configs = this.getAllCategoryConfigs();
-    
-    return configs.map(config => {
-      const isCurrent = config.name === currentCategory;
-      const isUnlocked = this.isCategoryUnlocked(config.name, currentCategory);
-      
-      return {
-        type: isCurrent ? 'Tu categoría actual' : 'Categoría de viajero',
-        title: config.displayName,
-        image: `https://picsum.photos/300/200?random=${config.id}`,
-        benefits: this.sanitizeHtml(`<p>${config.benefits.map(benefit => `• ${benefit}`).join('<br>')}</p>`),
-        unlocked: isUnlocked,
-        isCurrent: isCurrent,
-        requirement: config.requirements,
-        minTrips: this.getMinTripsForCategory(config.name),
-        maxTrips: this.getMaxTripsForCategory(config.name),
-        remainingTrips: this.getMinTripsForCategory(config.name),
-        statusText: isUnlocked ? 'Desbloqueado' : 'Bloqueado',
-        // Campos adicionales del nuevo sistema
-        category: config.name,
-        maxDiscount: config.maxDiscountPerPurchase,
-        color: config.color,
-        icon: config.icon
-      };
-    });
+  private mapNameToCategory(name: string): TravelerCategory {
+    const categoryMap: { [key: string]: TravelerCategory } = {
+      'Trotamundos': TravelerCategory.TROTAMUNDOS,
+      'Viajero': TravelerCategory.VIAJERO,
+      'Nómada': TravelerCategory.NOMADA
+    };
+    return categoryMap[name] || TravelerCategory.TROTAMUNDOS;
+  }
+
+  /**
+   * Obtiene el color por defecto para una categoría
+   */
+  private getCategoryColor(category: TravelerCategory): string {
+    const colors: { [key in TravelerCategory]: string } = {
+      [TravelerCategory.TROTAMUNDOS]: '#4A90E2',
+      [TravelerCategory.VIAJERO]: '#7B68EE',
+      [TravelerCategory.NOMADA]: '#FFD700'
+    };
+    return colors[category] || '#4A90E2';
   }
 
   /**
@@ -699,9 +833,6 @@ export class PointsV2Service {
         transactions.push(mainTravelerTransaction);
       }
 
-      // Simular actualización de saldo (en producción esto sería una llamada a la API)
-      await this.simulatePointsUpdate(transactions);
-
       const totalPoints = transactions.reduce((sum, t) => sum + t.points, 0);
       const message = `Se generaron ${totalPoints} puntos para ${travelers.length} viajeros en reserva ${bookingId}`;
 
@@ -718,23 +849,6 @@ export class PointsV2Service {
         message: `Error procesando finalización de viaje: ${error}`
       };
     }
-  }
-
-  /**
-   * Simula la actualización de puntos en el sistema
-   * 
-   * NOTA PARA INTEGRACIÓN CON API:
-   * Este método debe ser reemplazado por una llamada al endpoint de actualización de saldo.
-   * El endpoint debe procesar las transacciones y actualizar los saldos de los viajeros.
-   * 
-   * @param transactions Transacciones a procesar
-   */
-  private async simulatePointsUpdate(transactions: PointsTransaction[]): Promise<void> {
-    // Reemplazar con llamada real a la API
-    // const response = await this.http.post('/api/points/update-balance', { transactions }).toPromise();
-    
-    // Simular delay de API
-    await new Promise(resolve => setTimeout(resolve, 500));
   }
 
   // ===== MÉTODOS DE VALIDACIÓN PARA CANJE DE PUNTOS =====
@@ -901,39 +1015,6 @@ export class PointsV2Service {
    * @param reservationId ID de la reserva
    * @returns Objeto con resultado de validación completo
    */
-  validatePointsRedemption(
-    pointsToUse: number,
-    distribution: { [travelerId: string]: number },
-    travelers: TravelerData[],
-    availablePoints: number,
-    currentCategory: TravelerCategory,
-    maxPointsPerPerson: number,
-    reservationId: number
-  ): ValidationResult {
-    // Validar reserva activa
-    const reservationValidation = this.validateActiveReservation(reservationId);
-    if (!reservationValidation.isValid) {
-      return reservationValidation;
-    }
-    
-    // Validar distribución de puntos
-    const distributionValidation = this.validatePointsDistribution(
-      distribution,
-      travelers,
-      availablePoints,
-      currentCategory,
-      maxPointsPerPerson
-    );
-    if (!distributionValidation.isValid) {
-      return distributionValidation;
-    }
-    
-    return {
-      isValid: true,
-      message: 'Validación exitosa',
-      errorType: 'none'
-    };
-  }
 
   // ===== MÉTODOS DE DISTRIBUCIÓN =====
 
@@ -1167,64 +1248,6 @@ export class PointsV2Service {
     return true;
   }
 
-  // ===== MÉTODOS DE TRANSACCIONES =====
-
-  /**
-   * Procesa el canje de puntos creando las transacciones correspondientes
-   * @param reservationId ID de la reserva
-   * @param distribution Distribución de puntos por viajero
-   * @param travelers Datos de los viajeros
-   * @returns Promise<boolean> - true si el canje fue exitoso
-   */
-  async processPointsRedemption(
-    reservationId: number,
-    distribution: { [travelerId: string]: number },
-    travelers: TravelerData[]
-  ): Promise<boolean> {
-    try {
-      // TODO: Reemplazar con llamada real a la API
-      // const result = await this.pointsService.redeemPoints(reservationId, distribution).toPromise();
-      
-      // TEMPORAL: Simular procesamiento exitoso
-      console.log('Procesando canje de puntos:', {
-        reservationId,
-        distribution,
-        travelers: travelers.map(t => ({ id: t.id, name: t.name }))
-      });
-
-      // Simular delay de API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      return true;
-    } catch (error) {
-      console.error('Error al procesar canje de puntos:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Procesa la reversión de puntos al cancelar una reserva
-   * @param reservationId ID de la reserva
-   * @returns Promise<boolean> - true si la reversión fue exitosa
-   */
-  async processPointsReversal(reservationId: number): Promise<boolean> {
-    try {
-      // TODO: Reemplazar con llamada real a la API
-      // const result = await this.pointsService.reversePoints(reservationId).toPromise();
-      
-      // TEMPORAL: Simular procesamiento exitoso
-      console.log('Procesando reversión de puntos para reserva:', reservationId);
-
-      // Simular delay de API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      return true;
-    } catch (error) {
-      console.error('Error al procesar reversión de puntos:', error);
-      return false;
-    }
-  }
-
   // ===== MÉTODOS DE UTILIDAD =====
 
   /**
@@ -1301,5 +1324,350 @@ export class PointsV2Service {
       mainTravelerPoints,
       distribution: distributionArray
     };
+  }
+
+  // ===== MÉTODOS PARA ENDPOINTS REALES =====
+
+  /**
+   * Canjea puntos de un usuario en una reserva específica
+   * @param reservationId ID de la reserva
+   * @param userId ID numérico del usuario en la base de datos
+   * @param pointsToUse Puntos a canjear
+   * @returns Resultado de la operación
+   */
+  async redeemPointsForReservation(
+    reservationId: number,
+    userId: number,
+    pointsToUse: number
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      // Validar estado de pago
+      const isPaid = await this.checkReservationPaymentStatus(reservationId);
+      
+      if (isPaid) {
+        return { 
+          success: false, 
+          message: 'Esta reserva ya ha sido pagada. No puedes canjear puntos.' 
+        };
+      }
+
+      // Validar saldo disponible
+      const balance = await this.getLoyaltyBalance(userId.toString());
+      
+      if (balance.pointsAvailable < pointsToUse) {
+        return { 
+          success: false, 
+          message: `No tienes suficientes puntos disponibles. Tienes ${balance.pointsAvailable} puntos.` 
+        };
+      }
+
+      // Validar límites (máximo 50 euros por reserva)
+      if (pointsToUse > 50) {
+        return { 
+          success: false, 
+          message: 'El máximo de puntos que puedes canjear por reserva es 50.' 
+        };
+      }
+
+      // Crear transacción de canje con esquema correcto del backend
+      const transaction: LoyaltyTransactionCreate = {
+        userId: userId,
+        transactionDate: new Date().toISOString(),
+        transactionTypeId: 4,  // REDEEM_BOOKING (Canje por reserva)
+        points: -pointsToUse,
+        amountBase: pointsToUse,
+        currency: 'EUR',
+        referenceType: 'RESERVATION',
+        referenceId: reservationId.toString(),
+        comment: `Descuento de ${pointsToUse} puntos en reserva #${reservationId}`
+      };
+
+      const createdTransaction = await this.createLoyaltyTransaction(transaction);
+
+      // Actualizar el saldo de puntos del usuario en LoyaltyBalance
+      await this.updateLoyaltyBalance(userId, balance, pointsToUse);
+
+      // Actualizar total de la reserva
+      await this.updateReservationTotalAmount(reservationId, pointsToUse);
+
+      return { 
+        success: true, 
+        message: `Se han aplicado ${pointsToUse} puntos correctamente. El descuento se ha aplicado a tu reserva.` 
+      };
+
+    } catch (error: any) {
+      
+      // Mensaje de error más específico
+      let errorMessage = 'Error al procesar el canje de puntos. Por favor, inténtalo de nuevo.';
+      if (error?.error?.errors) {
+        const errors = Object.values(error.error.errors).flat();
+        errorMessage = `Error de validación: ${errors.join(', ')}`;
+      }
+      
+      return { 
+        success: false, 
+        message: errorMessage
+      };
+    }
+  }
+
+  /**
+   * Valida el estado de pago de una reserva
+   * @param reservationId ID de la reserva
+   * @returns true si está pagada, false si no
+   */
+  async checkReservationPaymentStatus(reservationId: number): Promise<boolean> {
+    try {
+      const url = `${this.RESERVATIONS_API_URL}/ReservationPayment/summary/${reservationId}`;
+      const summary = await this.http.get<any>(url).toPromise();
+      return summary.paymentPercentage >= 100;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * Obtiene el saldo de puntos de un usuario
+   * @param travelerId cognito:sub del usuario
+   * @returns Saldo de puntos
+   */
+  /**
+   * Obtiene el saldo de puntos de un usuario
+   * @param userId ID del usuario (como string o número)
+   * @returns Saldo de puntos
+   */
+  async getLoyaltyBalance(userId: string): Promise<LoyaltyBalance> {
+    try {
+      const url = `${this.AUTH_API_URL}/LoyaltyBalance?userId=${userId}`;
+      
+      const response = await this.http.get<any>(url).toPromise();
+      
+      // Si la API devuelve un array, tomar el primer elemento
+      if (Array.isArray(response) && response.length > 0) {
+        return response[0];
+      }
+      
+      return response;
+    } catch (error) {
+      return {
+        id: 0,
+        userId: parseInt(userId),
+        pointsAvailable: 0,
+        pointsTotalEarned: 0,
+        pointsTotalRedeemed: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+    }
+  }
+
+  /**
+   * Valida si un usuario puede canjear la cantidad de puntos especificada
+   * @param travelerId cognito:sub del usuario
+   * @param pointsToUse Puntos que quiere usar
+   * @param reservationId ID de la reserva
+   * @returns Resultado de la validación
+   */
+  async validatePointsRedemption(
+    travelerId: string,
+    pointsToUse: number,
+    reservationId: number
+  ): Promise<ValidationResult> {
+    try {
+      // Validar límite de 50 puntos por persona
+      if (pointsToUse > this.MAX_POINTS_PER_PERSON) {
+        return {
+          isValid: false,
+          message: `No puedes canjear más de ${this.MAX_POINTS_PER_PERSON} puntos por reserva.`,
+          errorType: 'per_person_limit'
+        };
+      }
+
+      // Obtener categoría del usuario para validar límites adicionales
+      const userCategory = await this.getUserLoyaltyCategory(travelerId);
+      if (userCategory) {
+        const category = await this.getLoyaltyProgramCategory(userCategory.loyaltyCategoryId);
+        if (category && pointsToUse > category.maxDiscountPerPurchase) {
+          return {
+            isValid: false,
+            message: `Según tu categoría (${category.name}), puedes canjear máximo ${category.maxDiscountPerPurchase} puntos por reserva.`,
+            errorType: 'category_limit'
+          };
+        }
+      }
+
+      // Obtener datos de la reserva para validar que no exceda el total
+      const reservation = await this.getReservation(reservationId);
+      if (reservation && pointsToUse > reservation.totalAmount) {
+        return {
+          isValid: false,
+          message: `No puedes canjear más puntos que el total de la reserva (${reservation.totalAmount}€).`,
+          errorType: 'per_person_limit'
+        };
+      }
+
+      return {
+        isValid: true,
+        message: 'Validación exitosa',
+        errorType: 'none'
+      };
+
+    } catch (error) {
+      return {
+        isValid: false,
+        message: 'Error al validar el canje de puntos',
+        errorType: 'none'
+      };
+    }
+  }
+
+  /**
+   * Crea una transacción de puntos
+   * @param transaction Datos de la transacción
+   * @returns Transacción creada
+   */
+  async createLoyaltyTransaction(transaction: LoyaltyTransactionCreate): Promise<LoyaltyTransaction> {
+    try {
+      const url = `${this.AUTH_API_URL}/LoyaltyTransaction`;
+      
+      const result = await this.http.post<LoyaltyTransaction>(url, transaction).toPromise();
+      
+      if (!result) {
+        throw new Error('No se recibió respuesta del servidor');
+      }
+      
+      return result;
+    } catch (error: any) {
+      throw error;
+    }
+  }
+
+  /**
+   * Actualiza el saldo de puntos del usuario en LoyaltyBalance
+   * @param userId ID del usuario
+   * @param currentBalance Saldo actual del usuario
+   * @param pointsRedeemed Puntos canjeados
+   */
+  async updateLoyaltyBalance(userId: number, currentBalance: LoyaltyBalance, pointsRedeemed: number): Promise<void> {
+    try {
+      const url = `${this.AUTH_API_URL}/LoyaltyBalance/${currentBalance.id}`;
+      
+      const updateData = {
+        userId: userId,
+        pointsAvailable: currentBalance.pointsAvailable - pointsRedeemed,  // Restar puntos canjeados
+        pointsTotalEarned: currentBalance.pointsTotalEarned,               // antener igual
+        pointsTotalRedeemed: currentBalance.pointsTotalRedeemed + pointsRedeemed  // umar a redimidos
+      };
+      
+      await this.http.put(url, updateData).toPromise();
+      
+    } catch (error: any) {
+      throw error;
+    }
+  }
+
+  /**
+   * Actualiza el total de una reserva restando el descuento de puntos
+   * @param reservationId ID de la reserva
+   * @param pointsDiscount Descuento en puntos a aplicar
+   */
+  async updateReservationTotalAmount(reservationId: number, pointsDiscount: number): Promise<void> {
+    try {
+      const reservation = await this.getReservation(reservationId);
+      
+      if (!reservation) {
+        throw new Error('No se pudo obtener los datos de la reserva');
+      }
+      
+      const newTotalAmount = reservation.totalAmount - pointsDiscount;
+      
+      const updateData = {
+        tkId: reservation.tkId || null,
+        reservationStatusId: reservation.reservationStatusId,
+        retailerId: reservation.retailerId,
+        tourId: reservation.tourId,
+        departureId: reservation.departureId,
+        userId: reservation.userId,
+        totalPassengers: reservation.totalPassengers,
+        totalAmount: newTotalAmount
+      };
+      
+      const url = `${this.RESERVATIONS_API_URL}/Reservation/${reservationId}`;
+      await this.http.put(url, updateData).toPromise();
+      
+    } catch (error: any) {
+      throw error;
+    }
+  }
+
+  /**
+   * Obtiene los datos de una reserva
+   * @param reservationId ID de la reserva
+   * @returns Datos de la reserva
+   */
+  async getReservation(reservationId: number): Promise<any> {
+    try {
+      const url = `${this.RESERVATIONS_API_URL}/Reservation/${reservationId}`;
+      return await this.http.get<any>(url).toPromise();
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
+   * Obtiene la categoría de lealtad de un usuario
+   * @param travelerId cognito:sub del usuario
+   * @returns Categoría del usuario
+   */
+  async getUserLoyaltyCategory(travelerId: string): Promise<UserLoyaltyCategory | null> {
+    try {
+      const url = `${this.AUTH_API_URL}/UserLoyaltyCategory?userId=${travelerId}`;
+      const response = await this.http.get<any[]>(url).toPromise();
+      
+      if (response && response.length > 0) {
+        // Buscar la categoría activa (sin endDate)
+        const activeCategory = response.find(cat => cat.isActive && !cat.endDate);
+        return activeCategory || response[0];
+      }
+      
+      return null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
+   * Obtiene los detalles de una categoría de lealtad
+   * @param categoryId ID de la categoría
+   * @returns Detalles de la categoría
+   */
+  async getLoyaltyProgramCategory(categoryId: number): Promise<LoyaltyProgramCategory | null> {
+    try {
+      const url = `${this.AUTH_API_URL}/LoyaltyProgramCategory/${categoryId}`;
+      const result = await this.http.get<LoyaltyProgramCategory>(url).toPromise();
+      return result || null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
+   * Obtiene el userId por email
+   * @param email Email del usuario
+   * @returns cognito:sub del usuario o null
+   */
+  async getUserIdByEmail(email: string): Promise<string | null> {
+    try {
+      const url = `${this.AUTH_API_URL}/User?Email=${email}`;
+      const response = await this.http.get<any[]>(url).toPromise();
+      
+      if (response && response.length > 0) {
+        return response[0].cognitoSub;
+      }
+      
+      return null;
+    } catch (error) {
+      return null;
+    }
   }
 }

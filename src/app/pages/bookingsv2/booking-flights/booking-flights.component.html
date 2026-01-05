@@ -8,7 +8,7 @@
       </ng-template>
       <!-- Mostrar componente de vuelo solo si hay información válida de vuelos -->
       <ng-container *ngIf="hasValidFlightData(); else noFlights">
-        <app-flight-section [flight]="flight"></app-flight-section>
+        <app-flight-section-v2 [flightPack]="flightPackData"></app-flight-section-v2>
       </ng-container>
       <!-- Plantilla para cuando no hay información de vuelos -->
       <ng-template #noFlights>

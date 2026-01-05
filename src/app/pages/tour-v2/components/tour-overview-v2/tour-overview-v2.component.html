@@ -58,15 +58,17 @@
         </div>
       </div>
       <div class="expert-section">
-        <div class="expert-avatar">
-          <p-skeleton shape="circle" size="70px"></p-skeleton>
-        </div>
-        <div class="expert-details">
-          <p-skeleton width="150px" height="24px" styleClass="mb-2"></p-skeleton>
-          <p-skeleton width="100px" height="16px"></p-skeleton>
+        <div class="expert-details-container">
+          <div class="expert-avatar">
+            <p-skeleton shape="circle" size="70px"></p-skeleton>
+          </div>
+          <div class="expert-details">
+            <p-skeleton width="150px" height="24px" styleClass="mb-2"></p-skeleton>
+            <p-skeleton width="100px" height="16px"></p-skeleton>
+          </div>
         </div>
         <div class="expert-opinion">
-          <p-skeleton width="90%" height="80px" styleClass="expert-panel-skeleton"></p-skeleton>
+          <p-skeleton width="100%" height="80px" styleClass="expert-panel-skeleton"></p-skeleton>
         </div>
       </div>
     </div>
@@ -93,16 +95,18 @@
         ></div>
       </div>
       <div class="expert-section">
-        <div class="expert-avatar">
-          <p-avatar
-            [image]="tour?.expert?.ephoto?.[0]?.url"
-            shape="circle"
-            size="xlarge"
-          ></p-avatar>
-        </div>
-        <div class="expert-details">
-          <h4>{{ tour?.expert?.name || 'Tour Expert' }}</h4>
-          <span class="expert-role">{{ tour?.expert?.charge || 'Travel Specialist' }}</span>
+        <div class="expert-details-container">
+          <div class="expert-avatar">
+            <p-avatar
+              [image]="tour?.expert?.ephoto?.[0]?.url"
+              shape="circle"
+              size="xlarge"
+            ></p-avatar>
+          </div>
+          <div class="expert-details">
+            <h4>{{ tour?.expert?.name || 'Tour Expert' }}</h4>
+            <span class="expert-role">{{ tour?.expert?.charge || 'Travel Specialist' }}</span>
+          </div>
         </div>
         <div class="expert-opinion">
           <p-panel styleClass="expert-panel">

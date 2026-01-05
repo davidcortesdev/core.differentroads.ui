@@ -1,5 +1,5 @@
 <div class="img" (click)="handleTourClick()">
-  <img [src]="tourData.imageUrl" [alt]="tourData.title" loading="lazy" />
+  <img [src]="tourData.imageUrl" [alt]="tourData.title" loading="lazy" data-cookieconsent="ignore" />
   <div class="overlay">
     <ng-container *ngIf="averageRating !== undefined; else loadingRating">
       <span class="rating p-button-primary">{{ averageRating }} ★</span>

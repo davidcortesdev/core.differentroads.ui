@@ -99,7 +99,6 @@
                 success: true
               });
 
-              console.log(`✅ Actividad "${item.name}" añadida a ${travelers.length} viajeros`);
             })
             .catch(error => {
               this.saving = false;
@@ -213,7 +212,6 @@
                 success: true
               });
 
-              console.log(`✅ Actividad "${item.name}" eliminada de ${travelers.length} viajeros`);
             })
             .catch(error => {
               this.saving = false;
@@ -399,7 +397,6 @@
   toggleActivity(item: ActivityWithPrice): void {
     // Si hay operaciones pendientes, no permitir nuevas
     if (this.hasPendingOperations()) {
-      console.log('⏳ Operación de guardado en curso, esperando...');
       return;
     }
 
@@ -502,7 +499,6 @@ El componente padre (`checkout-v2`) deberá:
 // En checkout-v2.component.ts
 onSaveCompleted(event: { component: string; success: boolean; error?: string }) {
   if (event.success) {
-    console.log(`✅ Guardado exitoso en ${event.component}`);
     // El padre se encarga de obtener la información por su cuenta
     this.updateOrderSummary();
   } else {

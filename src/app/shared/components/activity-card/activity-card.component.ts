@@ -8,9 +8,6 @@ import {
   SimpleChanges,
   ChangeDetectionStrategy,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { CardModule } from 'primeng/card';
-import { ButtonModule } from 'primeng/button';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 // Define a proper interface for the highlight data

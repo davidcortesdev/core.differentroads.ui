@@ -9,11 +9,7 @@
   styleClass="login-modal"
   [showHeader]="true"
 >
-  <ng-template pTemplate="header">
-    <h2>{{ modalTitle }}</h2>
-  </ng-template>
-
-  <ng-template pTemplate="header">
+  <ng-template #header>
     <h2>{{ modalTitle }}</h2>
   </ng-template>
   
@@ -22,7 +18,7 @@
     <p>Si ya tienes cuenta, inicia sesión o regístrate para continuar.</p>
   </div>
   
-  <ng-template pTemplate="footer">
+  <ng-template #footer>
     <div class="login-modal-footer">
       <p-button
         label="Iniciar sesión"

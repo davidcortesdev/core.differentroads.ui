@@ -108,12 +108,12 @@
         }
 
         .p-timeline-event-content {
-            @media (max-width: 768px) {
-                margin-left: -9px;
-            }
             width: 100%;
             margin-left: 1rem;
             padding: 0 0 1.5rem 0.5rem;
+            @media (max-width: 768px) {
+                margin-left: -9px;
+            }
         }
 
         .custom-panel {
@@ -236,7 +236,6 @@
         font-size: 1rem;
         line-height: 1.6;
         color: var(--background-azul);
-        margin-top: -20px;
 
         p {
             margin-bottom: 1rem;

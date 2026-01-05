@@ -32,7 +32,7 @@
                 <p-skeleton *ngIf="!item.image || (item.imageLoading === true)" width="100%" height="100%"
                   styleClass="booking-image-skeleton"></p-skeleton>
                 <img *ngIf="item.image && (item.imageLoading !== true)" [src]="item.image" [alt]="item.title" 
-                  (error)="imageLoadError(item)" loading="eager"/>
+                  (error)="imageLoadError(item)" loading="lazy"/>
               </div>
 
               <!-- Item information -->
@@ -99,26 +99,34 @@
               <!-- Action buttons -->
               <div class="buttons">
                 <div class="top-buttons">
-                  <p-button *ngIf="shouldShowDownload()" 
+                  <p-button *ngIf="shouldShowDownload(item)" 
                     [label]="getDownloadLabel()" 
                     styleClass="p-button-outlined" 
+                    [disabled]="isCartInProcess(item)"
                     [loading]="downloadLoading[item.id]"
                     (click)="downloadItem(item)"></p-button>
-                  <p-button *ngIf="shouldShowSend()" 
+                  <p-button *ngIf="shouldShowSend(item)" 
                     [label]="getSendLabel()" 
                     styleClass="sendbtn"
+                    [disabled]="isCartInProcess(item)"
                     [loading]="notificationLoading[item.id]"
                     (click)="sendItem(item)"></p-button>
                 </div>
                 <div class="bottom-buttons">
-                  <p-button *ngIf="shouldShowView()" 
+                  <p-button *ngIf="shouldShowView(item)" 
                     [label]="getViewLabel()" 
                     styleClass="p-button-rounded" 
                     (click)="viewItem(item)"></p-button>
-                  <p-button *ngIf="shouldShowReserve()" 
-                    [label]="getReserveLabel()" 
+                  <p-button *ngIf="shouldShowReserve(item)" 
+                    [label]="getReserveLabel(item)" 
                     styleClass="p-button-rounded" 
                     (click)="reserveItem(item)"></p-button>
+                  <p-button *ngIf="shouldShowPointsDiscount(item)" 
+                    [label]="getPointsDiscountLabel(item)" 
+                    [styleClass]="hasPointsApplied(item) ? 'p-button-rounded p-button-secondary' : 'p-button-rounded p-button-success'" 
+                    [icon]="hasPointsApplied(item) ? 'pi pi-check' : 'pi pi-gift'"
+                    [disabled]="hasPointsApplied(item)"
+                    (click)="openPointsDiscountModal(item)"></p-button>
                 </div>
               </div>
             </div>
@@ -135,3 +143,12 @@
     </p-dataView>
   </div>
 </div>
+
+<!-- Modal de descuento de puntos -->
+<app-modal-points
+  [(visible)]="pointsDiscountModalVisible"
+  [bookingItem]="selectedBookingItem"
+  [userId]="userId"
+  [parentComponent]="parentComponent"
+  (pointsApplied)="onPointsApplied()">
+</app-modal-points>

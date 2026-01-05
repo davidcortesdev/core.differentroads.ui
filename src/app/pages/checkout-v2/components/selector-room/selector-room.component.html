@@ -1,8 +1,32 @@
+<!-- Información de viajeros -->
+<div class="travelers-info" *ngIf="(travelersNumbers$ | async) as travelers">
+  <div class="travelers-summary">
+    <i class="pi pi-users"></i>
+    <span class="travelers-text">
+      <strong>{{ getTotalTravelers() }}</strong> viajero<span *ngIf="getTotalTravelers() !== 1">s</span>:
+    </span>
+    <span class="travelers-breakdown">
+      <span *ngIf="travelers.adults > 0" class="traveler-type">
+        {{ travelers.adults }} adulto<span *ngIf="travelers.adults !== 1">s</span>
+      </span>
+      <span *ngIf="travelers.childs > 0" class="traveler-type">
+        {{ travelers.childs }} niño<span *ngIf="travelers.childs !== 1">s</span>
+      </span>
+      <span *ngIf="travelers.babies > 0" class="traveler-type">
+        {{ travelers.babies }} bebé<span *ngIf="travelers.babies !== 1">s</span>
+      </span>
+    </span>
+  </div>
+</div>
+
 <div class="room-selector" [class.saving]="saving">
   <div
     *ngFor="let room of roomsAvailabilityForTravelersNumber; let i = index"
     class="room-item"
-    [ngClass]="{ selected: selectedRooms[room.tkId] > 0 }"
+    [ngClass]="{ 
+      selected: selectedRooms[room.tkId] > 0,
+      unavailable: room.availablePlaces !== undefined && room.availablePlaces === 0
+    }"
   >
     <div class="room-price-data">
       <p>
@@ -19,11 +43,12 @@
         [(ngModel)]="selectedRooms[room.tkId]"
         (ngModelChange)="onRoomSpacesChange(room, $event)"
         [min]="0"
-        [max]="8"
+        [max]="getMaxRoomsForAvailability(room)"
         [showButtons]="true"
         buttonLayout="horizontal"
         spinnerMode="horizontal"
         placeholder="0"
+        [disabled]="room.availablePlaces !== undefined && room.availablePlaces === 0"
       >
         <ng-template #incrementbuttonicon>
           <span class="pi pi-chevron-up"></span>
@@ -37,6 +62,18 @@
     <p class="room-description">
       {{ room.description }}
     </p>
+
+    <!-- Información de disponibilidad -->
+    <div class="room-availability-info" *ngIf="room.availablePlaces !== undefined">
+      <span *ngIf="room.availablePlaces > 0" class="availability-available">
+        <i class="pi pi-check-circle"></i>
+        {{ room.availablePlaces }} {{ room.availablePlaces === 1 ? ' disponible' : ' disponibles' }}
+      </span>
+      <span *ngIf="room.availablePlaces === 0" class="availability-unavailable">
+        <i class="pi pi-times-circle"></i>
+        Sin disponibilidad
+      </span>
+    </div>
   </div>
 </div>
 
@@ -59,7 +96,16 @@
     </p>
   </div>
 
-  <div *ngIf="errorMsg" class="error-message">
+  <div *ngIf="hasUnassignedTravelers" class="warning-message">
+    <i class="pi pi-exclamation-triangle"></i>
+    <p>{{ unassignedTravelersMessage }}</p>
+  </div>
+
+  <div *ngIf="errorMsg" [ngClass]="{
+    'error-message': errorMsgType === 'error',
+    'warning-message': errorMsgType === 'warning',
+    'info-message': errorMsgType === 'info'
+  }">
     <i class="pi pi-info-circle"></i>
     <p>{{ errorMsg }}</p>
   </div>

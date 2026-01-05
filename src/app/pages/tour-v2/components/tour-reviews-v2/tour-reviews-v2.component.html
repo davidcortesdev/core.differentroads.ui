@@ -1,4 +1,4 @@
-<div class="tour-reviews-container">
+<div class="tour-reviews-container" *ngIf="!loading && hasReviews">
   <app-reviews 
     [tourId]="tourId"
     [showOnTourPage]="true"

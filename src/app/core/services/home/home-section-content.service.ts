@@ -99,7 +99,8 @@ export class HomeSectionContentService {
    * @returns Lista de contenidos de sección de inicio.
    */
   getAll(
-    filters?: HomeSectionContentFilters
+    filters?: HomeSectionContentFilters,
+    signal?: AbortSignal
   ): Observable<IHomeSectionContentResponse[]> {
     let params = new HttpParams();
 
@@ -115,9 +116,15 @@ export class HomeSectionContentService {
       });
     }
 
-    return this.http.get<IHomeSectionContentResponse[]>(this.API_URL, {
-      params,
-    });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IHomeSectionContentResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -178,7 +185,8 @@ export class HomeSectionContentService {
    */
   getByConfiguration(
     homeSectionConfigurationId: number,
-    isActive?: boolean
+    isActive?: boolean,
+    signal?: AbortSignal
   ): Observable<IHomeSectionContentResponse[]> {
     const filters: HomeSectionContentFilters = {
       homeSectionConfigurationId: homeSectionConfigurationId,
@@ -188,7 +196,7 @@ export class HomeSectionContentService {
       filters.isActive = isActive;
     }
 
-    return this.getAll(filters);
+    return this.getAll(filters, signal);
   }
 
   /**
@@ -207,7 +215,8 @@ export class HomeSectionContentService {
    */
   getByContentType(
     contentType: string,
-    isActive: boolean = true
+    isActive: boolean = true,
+    signal?: AbortSignal
   ): Observable<IHomeSectionContentResponse[]> {
     const filters: HomeSectionContentFilters = {
       contentType: contentType,
@@ -217,7 +226,7 @@ export class HomeSectionContentService {
       filters.isActive = isActive;
     }
 
-    return this.getAll(filters);
+    return this.getAll(filters, signal);
   }
 
   /**
@@ -226,20 +235,23 @@ export class HomeSectionContentService {
    * @returns Lista de contenidos de imagen.
    */
   getImages(
-    isActive: boolean = true
+    isActive: boolean = true,
+    signal?: AbortSignal
   ): Observable<IHomeSectionContentResponse[]> {
-    return this.getByContentType(ContentType.IMAGE, isActive);
+    return this.getByContentType(ContentType.IMAGE, isActive, signal);
   }
 
   /**
    * Obtiene contenidos de video.
    * @param isActive Filtrar solo contenidos activos (opcional).
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de contenidos de video.
    */
   getVideos(
-    isActive: boolean = true
+    isActive: boolean = true,
+    signal?: AbortSignal
   ): Observable<IHomeSectionContentResponse[]> {
-    return this.getByContentType(ContentType.VIDEO, isActive);
+    return this.getByContentType(ContentType.VIDEO, isActive, signal);
   }
 
   /**
@@ -272,9 +284,10 @@ export class HomeSectionContentService {
    */
   getByConfigurationOrdered(
     homeSectionConfigurationId: number,
-    isActive: boolean = true
+    isActive: boolean = true,
+    signal?: AbortSignal
   ): Observable<IHomeSectionContentResponse[]> {
-    return this.getByConfiguration(homeSectionConfigurationId, isActive);
+    return this.getByConfiguration(homeSectionConfigurationId, isActive, signal);
   }
 
   /**

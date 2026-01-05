@@ -178,7 +178,6 @@ Los componentes de vuelos deben ser independientes y obtener su información dir
   // NUEVO: Método para recargar información
   refreshFlightPack(): void {
     if (this.reservationId) {
-      console.log('🔄 Actualizando información de vuelos...');
       this.loadFlightPack();
     }
   }
@@ -273,14 +272,12 @@ summaryRefreshTrigger: any = null;
 
 // NUEVO: Método para actualizar información de vuelos
 updateFlightInformation(): void {
-  console.log('🔄 Actualizando información de vuelos...');
   this.summaryRefreshTrigger = { timestamp: Date.now() };
 }
 
 // NUEVO: Escuchar eventos de guardado de componentes hijos
 onSaveCompleted(event: { component: string; success: boolean; data?: any; error?: string }) {
   if (event.success) {
-    console.log(`✅ Guardado exitoso en ${event.component}`);
     this.updateFlightInformation();
   } else {
     console.error(`❌ Error en guardado de ${event.component}:`, event.error);

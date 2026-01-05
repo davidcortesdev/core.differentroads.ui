@@ -1,11 +1,11 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import {
   IFlightPackDTO,
   IFlightDetailDTO,
 } from '../../../services/flightsNet.service';
-import { FlightSearchService, IFlightDetailDTO as IFlightSearchFlightDetailDTO } from '../../../../../core/services/flight-search.service';
+import { FlightSearchService, IFlightDetailDTO as IFlightSearchFlightDetailDTO } from '../../../../../core/services/flight/flight-search.service';
 import { FlightsNetService } from '../../../services/flightsNet.service';
 
 @Component({
@@ -14,10 +14,11 @@ import { FlightsNetService } from '../../../services/flightsNet.service';
   templateUrl: './flight-item.component.html',
   styleUrl: './flight-item.component.scss',
 })
-export class FlightItemComponent implements OnInit, OnDestroy {
+export class FlightItemComponent implements OnInit, OnChanges, OnDestroy {
   @Input() flightPack: IFlightPackDTO | null = null;
   @Input() selectedFlight: IFlightPackDTO | null = null;
   @Input() flightDetails: Map<number, IFlightDetailDTO> = new Map();
+  @Input() availablePlaces?: number;
   /**
    * Controla qué servicio usar en el componente flight-stops:
    * - false (default): Usa FlightsNetService (comportamiento actual)
@@ -28,9 +29,18 @@ export class FlightItemComponent implements OnInit, OnDestroy {
 
   FLIGHT_TYPE_SALIDA = 4;
   
+  // Constantes para tipos de vuelo (soporta valores legacy y nuevos)
+  private readonly FLIGHT_TYPE_IDA_NEW = 0;
+  private readonly FLIGHT_TYPE_IDA_LEGACY = 4;
+  private readonly FLIGHT_TYPE_VUELTA_NEW = 1;
+  private readonly FLIGHT_TYPE_VUELTA_LEGACY = 5;
+  
   // Propiedades privadas para manejo interno
   private internalFlightDetails: Map<number, IFlightDetailDTO | IFlightSearchFlightDetailDTO> = new Map();
   private readonly destroy$ = new Subject<void>();
+  
+  // Escalas por vuelo (flightId -> layovers[])
+  flightLayovers: Map<number, string[]> = new Map();
 
   constructor(
     private flightSearchService: FlightSearchService,
@@ -38,53 +48,61 @@ export class FlightItemComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    console.log('=== VUELOS RECIBIDOS ===');
+    this.sortAndInitializeFlights();
+  }
 
-    if (this.flightPack && this.flightPack.flights) {
-      // ✅ NUEVO: Ordenar flights por flightTypeId ascendente
-      this.flightPack.flights.sort((a, b) => a.flightTypeId - b.flightTypeId);
+  ngOnChanges(changes: SimpleChanges): void {
+    // Ordenar también cuando flightPack cambia (incluida la primera vez)
+    if (changes['flightPack'] && changes['flightPack'].currentValue) {
+      this.sortAndInitializeFlights();
+    }
+  }
+
+  private sortAndInitializeFlights(): void {
+    if (this.flightPack && this.flightPack.flights && this.flightPack.flights.length > 0) {
+      // Ordenar flights por flightTypeId para que IDA aparezca antes que VUELTA
+      const isIda = (flightTypeId: number): boolean => {
+        return flightTypeId === this.FLIGHT_TYPE_IDA_NEW || flightTypeId === this.FLIGHT_TYPE_IDA_LEGACY;
+      };
       
-      console.log('Paquete de vuelos:', {
-        id: this.flightPack.id,
-        code: this.flightPack.code,
-        name: this.flightPack.name,
-        description: this.flightPack.description,
+      const sortedFlights = [...this.flightPack.flights].sort((a, b) => {
+        const idA = a.flightTypeId ?? 0;
+        const idB = b.flightTypeId ?? 0;
+        const aIsIda = isIda(idA);
+        const bIsIda = isIda(idB);
+        
+        if (aIsIda && !bIsIda) return -1;
+        if (!aIsIda && bIsIda) return 1;
+        
+        return idA - idB;
       });
-
-      console.log('Número de vuelos:', this.flightPack.flights.length);
+      this.flightPack.flights = sortedFlights;
 
       this.flightPack.flights.forEach((flight, index) => {
-        console.log(`Vuelo ${index + 1}:`, {
-          id: flight.id,
-          tipo:
-            flight.flightTypeId === this.FLIGHT_TYPE_SALIDA ? 'IDA' : 'VUELTA',
-          origen: `${flight.departureCity} (${flight.departureIATACode})`,
-          destino: `${flight.arrivalCity} (${flight.arrivalIATACode})`,
-          fechaSalida: flight.departureDate,
-          horaSalida: flight.departureTime,
-          fechaLlegada: flight.arrivalDate,
-          horaLlegada: flight.arrivalTime,
-        });
+
       });
 
       // Si useNewService es true, cargar detalles internamente
       if (this.useNewService) {
-        //console.log('🔄 FlightItem: Iniciando carga de detalles y aerolíneas con nuevo servicio');
         this.loadFlightDetailsInternally();
       } else {
-        //console.log('ℹ️ FlightItem: Usando servicio actual, no se cargan detalles internamente');
+        // Cargar escalas usando el servicio actual
+        this.loadFlightLayoversFromCurrentService();
       }
-    } else {
-      console.log('No hay vuelos disponibles');
     }
-
-    console.log('========================');
   }
 
   ngOnDestroy(): void {
     this.internalFlightDetails.clear();
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  /**
+   * Determina si un flightTypeId representa un vuelo de IDA
+   */
+  isIdaFlight(flightTypeId: number): boolean {
+    return flightTypeId === this.FLIGHT_TYPE_IDA_NEW || flightTypeId === this.FLIGHT_TYPE_IDA_LEGACY;
   }
 
   /**
@@ -100,8 +118,6 @@ export class FlightItemComponent implements OnInit, OnDestroy {
     
     // Logging para debugging
     if (isSelected) {
-      //console.log(`✅ FlightItem: Vuelo ${this.flightPack.id} está seleccionado`);
-      //console.log(`📊 selectedFlight ID: ${this.selectedFlight.id}, flightPack ID: ${this.flightPack.id}`);
     }
 
     return isSelected;
@@ -119,6 +135,27 @@ export class FlightItemComponent implements OnInit, OnDestroy {
    */
   getSelectionButtonClass(): string {
     return this.isFlightSelected() ? 'selected-flight-button' : '';
+  }
+
+  /**
+   * Verifica si el vuelo tiene disponibilidad
+   */
+  hasAvailability(): boolean {
+    // Si availablePlaces es undefined, asumir que hay disponibilidad (aún no se ha cargado)
+    if (this.availablePlaces === undefined) {
+      return true;
+    }
+    // Si availablePlaces es 0, no hay disponibilidad
+    return this.availablePlaces > 0;
+  }
+
+  /**
+   * Verifica si el botón debe estar deshabilitado
+   */
+  isButtonDisabled(): boolean {
+    // Solo deshabilitar si no hay disponibilidad Y el vuelo NO está seleccionado
+    // Si el vuelo está seleccionado, siempre debe poder deseleccionarse
+    return !this.hasAvailability() && !this.isFlightSelected();
   }
 
   /**
@@ -142,46 +179,62 @@ export class FlightItemComponent implements OnInit, OnDestroy {
   private loadFlightDetailsInternally(): void {
     if (!this.flightPack || !this.flightPack.flights) return;
 
-    //console.log(`🔄 FlightItem: Cargando detalles internamente para paquete ${this.flightPack.id}`);
-
     this.flightPack.flights.forEach(flight => {
       this.flightSearchService.getFlightDetails(this.flightPack!.id, flight.id.toString())
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (detail) => {
             // Mapear los datos del nuevo servicio al formato esperado por FlightsNetService
+            const mappedSegments = detail.segments?.map(segment => ({
+              id: segment.id,
+              tkId: segment.tkId || '',
+              flightId: segment.flightId,
+              tkServiceId: segment.tkServiceId || '',
+              tkJourneyId: segment.tkJourneyId || '',
+              segmentRank: segment.segmentRank,
+              departureCity: segment.departureCity || '',
+              departureTime: segment.departureTime || '',
+              departureIata: segment.departureIata || '',
+              arrivalCity: segment.arrivalCity || '',
+              arrivalTime: segment.arrivalTime || '',
+              arrivalIata: segment.arrivalIata || '',
+              flightNumber: segment.flightNumber || '',
+              goSegment: segment.goSegment,
+              returnSegment: segment.returnSegment,
+              duringSegment: segment.duringSegment,
+              type: segment.type || '',
+              numNights: segment.numNights,
+              differential: segment.differential,
+              tkProviderId: segment.tkProviderId,
+              departureDate: segment.departureDate || '',
+              arrivalDate: segment.arrivalDate || ''
+            })) || [];
+            
+            // Ordenar segmentos por segmentRank
+            const sortedSegments = mappedSegments.sort((a, b) => a.segmentRank - b.segmentRank);
+            
             const mappedDetail: IFlightDetailDTO = {
               numScales: detail.numScales,
               duration: detail.duration,
               airlines: detail.airlines || [],
-              segments: detail.segments?.map(segment => ({
-                id: segment.id,
-                tkId: segment.tkId || '',
-                flightId: segment.flightId,
-                tkServiceId: segment.tkServiceId || '',
-                tkJourneyId: segment.tkJourneyId || '',
-                segmentRank: segment.segmentRank,
-                departureCity: segment.departureCity || '',
-                departureTime: segment.departureTime || '',
-                departureIata: segment.departureIata || '',
-                arrivalCity: segment.arrivalCity || '',
-                arrivalTime: segment.arrivalTime || '',
-                arrivalIata: segment.arrivalIata || '',
-                flightNumber: segment.flightNumber || '',
-                goSegment: segment.goSegment,
-                returnSegment: segment.returnSegment,
-                duringSegment: segment.duringSegment,
-                type: segment.type || '',
-                numNights: segment.numNights,
-                differential: segment.differential,
-                tkProviderId: segment.tkProviderId,
-                departureDate: segment.departureDate || '',
-                arrivalDate: segment.arrivalDate || ''
-              })) || []
+              segments: sortedSegments
             };
             
             this.internalFlightDetails.set(flight.id, mappedDetail);
-            //console.log(`✅ FlightItem: Detalles cargados para vuelo ${flight.id}:`, mappedDetail);
+
+            // Extraer escalas intermedias
+            if (detail.segments && detail.segments.length > 1) {
+              const layovers: string[] = [];
+              for (let i = 0; i < detail.segments.length - 1; i++) {
+                const segment = detail.segments[i];
+                if (segment.arrivalIata) {
+                  layovers.push(segment.arrivalIata);
+                }
+              }
+              this.flightLayovers.set(flight.id, layovers);
+            } else {
+              this.flightLayovers.set(flight.id, []);
+            }
 
             // Precargar nombres de aerolíneas en el servicio (la cache se maneja automáticamente)
             if (detail.airlines && detail.airlines.length > 0) {
@@ -189,7 +242,40 @@ export class FlightItemComponent implements OnInit, OnDestroy {
             }
           },
           error: (error) => {
-            console.warn(`⚠️ FlightItem: Error al cargar detalles para vuelo ${flight.id}:`, error);
+          }
+        });
+    });
+  }
+
+  /**
+   * Carga las escalas usando el servicio actual (FlightsNetService)
+   */
+  private loadFlightLayoversFromCurrentService(): void {
+    if (!this.flightPack || !this.flightPack.flights) return;
+
+    this.flightPack.flights.forEach(flight => {
+      this.flightsNetService.getFlightDetail(flight.id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (detail) => {
+            if (detail.segments && detail.segments.length > 1) {
+              const layovers: string[] = [];
+              // Ordenar segmentos por segmentRank
+              const sortedSegments = [...detail.segments].sort((a, b) => a.segmentRank - b.segmentRank);
+              
+              for (let i = 0; i < sortedSegments.length - 1; i++) {
+                const segment = sortedSegments[i];
+                if (segment.arrivalIata) {
+                  layovers.push(segment.arrivalIata);
+                }
+              }
+              this.flightLayovers.set(flight.id, layovers);
+            } else {
+              this.flightLayovers.set(flight.id, []);
+            }
+          },
+          error: (error) => {
+            this.flightLayovers.set(flight.id, []);
           }
         });
     });
@@ -204,10 +290,8 @@ export class FlightItemComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (airlineNames) => {
-          //console.log(`✅ FlightItem: ${airlineNames.length} aerolíneas precargadas exitosamente`);
         },
         error: (error) => {
-          console.warn(`⚠️ FlightItem: Error al precargar aerolíneas:`, error);
         }
       });
   }
@@ -258,7 +342,39 @@ export class FlightItemComponent implements OnInit, OnDestroy {
     return time ? time.slice(0, 5) : '--:--';
   }
 
+  /**
+   * Obtiene el precio del vuelo formateado o "N/A" si es null o undefined
+   */
+  getFlightPrice(): string {
+    const price = this.flightPack?.ageGroupPrices?.[0]?.price;
+    
+    // Si el precio es null o undefined, mostrar N/A
+    if (price == null) {
+      return 'N/A';
+    }
+    
+    // Formatear el precio usando el mismo formato que el pipe currencyFormat
+    return new Intl.NumberFormat('es-ES', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+      useGrouping: true,
+    }).format(price);
+  }
+
+  /**
+   * Obtiene las escalas de un vuelo específico
+   */
+  getFlightLayovers(flightId: number): string[] {
+    return this.flightLayovers.get(flightId) || [];
+  }
+
   selectFlight(flightPack: IFlightPackDTO): void {
+    // Prevenir selección si no hay disponibilidad
+    if (!this.hasAvailability()) {
+      return;
+    }
     this.flightSelected.emit(flightPack);
   }
 }

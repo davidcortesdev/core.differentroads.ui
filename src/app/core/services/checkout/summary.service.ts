@@ -30,12 +30,11 @@ export class SummaryService {
     roomSummary: { name: string; quantity: number }[]
   ) {
     // Logic to update the order summary with the room summary
-    console.log('Updating order summary with rooms:', roomSummary);
+
   }
 
   getOrderValue(): Order | null {
     const order = this.orderSource?.getValue();
-    // No hacemos console.log aquí para evitar spam, ya que se llama con frecuencia
     return order;
   }
 }

@@ -1,5 +1,5 @@
 import { Component, ViewChild, ElementRef, Input, Output, EventEmitter } from '@angular/core';
-import { CloudinaryService } from '../../../core/services/cloudinary.service';
+import { CloudinaryService } from '../../../core/services/media/cloudinary.service';
 import { CldImage } from '../../models/cloudinary/cld-image.model';
 import Cropper from 'cropperjs';
 
@@ -44,7 +44,6 @@ export class ImageCropperComponent {
     if (this.fileInput?.nativeElement) {
       this.fileInput.nativeElement.click();
     } else {
-      console.error('File input element is not available');
     }
   }
 
@@ -89,7 +88,6 @@ export class ImageCropperComponent {
    */
   initCropper(): void {
     if (!this.cropperImageElement?.nativeElement) {
-      console.error('Cropper image element not found');
       return;
     }
 
@@ -99,10 +97,8 @@ export class ImageCropperComponent {
     }
 
     if (!this.aspectRatio) {
-      console.info('Aspect ratio values are not set, defaulting to 16:9.');
       this.aspectRatio = 16 / 9;
     } else {
-      console.info('Aspect ratio set to:', this.aspectRatio);
     }
 
     this.cropper = new Cropper(this.cropperImageElement.nativeElement, {
@@ -124,7 +120,7 @@ export class ImageCropperComponent {
       minContainerWidth: 300,
       minContainerHeight: 300,
       ready: () => {
-        console.log('Cropper is ready');
+
         this.cropper?.crop();
       },
     });
@@ -188,7 +184,6 @@ export class ImageCropperComponent {
         this.croppedImage = image.url;
       }, 300);
 
-      console.log('Image loaded into cropper:', image);
     } else if (this.previewUrl) {
       this.imageSource = this.previewUrl;
       this.originalImageSource = this.previewUrl;
@@ -198,9 +193,7 @@ export class ImageCropperComponent {
         this.croppedImage = this.previewUrl;
       }, 300);
 
-      console.log('Image loaded from previewUrl:', this.previewUrl);
     } else {
-      console.warn('Attempted to load invalid image:', image);
     }
   }
 
@@ -208,11 +201,11 @@ export class ImageCropperComponent {
    * Sube la imagen recortada a Cloudinary y emite el resultado
    */
   private uploadImage(): void {
-    console.log('About to upload image:', this.croppedImage);
+
     this.loading = true;
 
     if (!this.croppedImage) {
-      console.log('No cropped image available');
+
       this.loading = false;
       return;
     }
@@ -221,7 +214,6 @@ export class ImageCropperComponent {
     if (this.croppedImage.startsWith('data:')) {
       this.cloudinaryService.uploadImage(this.croppedImage).subscribe({
         next: (uploadedImage) => {
-          console.log('Image uploaded to Cloudinary:', uploadedImage);
 
           const validImage: string = uploadedImage.url || '';
 
@@ -233,7 +225,6 @@ export class ImageCropperComponent {
           this.resetCropper();
         },
         error: (error) => {
-          console.error('Error uploading image:', error);
           this.uploadError.emit('Error al subir la imagen. Por favor, intenta de nuevo.');
           this.loading = false;
         }

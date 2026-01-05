@@ -1,9 +1,5 @@
 $azul: var(--background-azul);
 $primary: var(--p-primary-color);
-// Adding the paginator background variable
-:host {
-    --p-paginator-background: white;
-}
 
 @mixin flex($justify: center, $align: center) {
     display: flex;
@@ -78,15 +74,6 @@ $primary: var(--p-primary-color);
                     padding-top: 1.5rem;
                     padding-bottom: 0.5rem;
                 }
-                .p-from {
-                    position: absolute;
-                    top: 60%;
-                    left: 30%;
-                    transform: translateY(-50%);
-                    @extend %txt-azul;
-                    font-weight: 500;
-                    z-index: 1;
-                }
                 .p-btn {
                     @include flex(null, center);
                     text-align: left;
@@ -103,35 +90,7 @@ $primary: var(--p-primary-color);
             }
         }
     }
-    .m-nav {
-        margin: 10px -15px;
-        @include flex(space-between);
-        background: transparent;
-
-        .m-display {
-            font-size: 1.5rem;
-            font-weight: 500;
-            @extend %txt-azul;
-            text-align: center;
-            flex: 1;
-        }
-        ::ng-deep .p-button-text {
-            @extend %txt-azul;
-            .circle {
-                background: $primary;
-                color: #fff;
-                border-radius: 50%;
-                width: 20px;
-                height: 18px;
-                @include flex;
-                font-size: 1.5rem;
-            }
-        }
-    }
     ::ng-deep {
-        .p-icon {
-            @extend %txt-azul;
-        }
         .p-autocomplete,
         .p-btn {
             position: relative;
@@ -141,7 +100,7 @@ $primary: var(--p-primary-color);
             border: 1px solid rgba(66, 65, 65, 0.24);
             border-radius: 10px;
             .p-autocomplete-input {
-                border: none; // Remove the borde
+                border: none;
                 width: 100%;
                 @extend %brd-rad;
                 @extend %txt-azul;
@@ -186,9 +145,10 @@ $primary: var(--p-primary-color);
             .hdr-cols {
                 display: grid;
                 align-items: center;
-                grid-template-columns: repeat(4, 1fr);
+                grid-template-columns: 1.2fr 1.5fr 1fr 1fr 1fr;
                 padding: 0;
                 width: 100%;
+                gap: 0.5rem;
                 .pi-arrow-right:before {
                     margin: 40px;
                 }
@@ -196,21 +156,8 @@ $primary: var(--p-primary-color);
                     @extend %txt-azul;
                     font-weight: 500;
                     text-align: center;
+                    font-size: 0.9rem;
                 }
-            }
-        }
-        .rec-container {
-            .rec-label {
-                text-align: center;
-                background-color: #d9d9d9;
-                font-size: 14px;
-                border-radius: 17.732px 17.732px 0 0;
-                border: 0.985px solid #d9d9d9;
-            }
-            .dep-item {
-                margin-top: 0 !important;
-                border-top-left-radius: 0 !important;
-                border-top-right-radius: 0 !important;
             }
         }
         .dep-list {
@@ -220,17 +167,28 @@ $primary: var(--p-primary-color);
         }
         .dep-item {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: 1.2fr 1.5fr 1fr 1fr 1fr;
             align-items: center;
             border-radius: 17.732px;
             border: 0.985px solid #d9d9d9;
             transition: transform 0.2s ease;
             padding: 1rem 0;
+            gap: 0.5rem;
             .dates,
             .info,
+            .trip-type,
             .f-price,
             .actions {
                 @include flex;
+            }
+
+            &.not-bookable {
+                opacity: 0.6;
+                background-color: #f5f5f5;
+                border-color: #e0e0e0;
+                pointer-events: auto;
+                .dates,.f-price{color:#999}
+                .amount{color:#999!important}
             }
         }
         .p-button {
@@ -278,10 +236,12 @@ $primary: var(--p-primary-color);
         }
     }
 }
-.p-tag-info,
-.pi-users:before {
-    font-size: 13px;
-    font-weight: 600;
+.trip-type {
+    @include flex(null, center);
+    @extend %txt-azul;
+    font-size: 15px;
+    font-weight: 500;
+    text-align: center;
 }
 .f-price {
     @include flex(null, center);
@@ -328,19 +288,7 @@ $primary: var(--p-primary-color);
         }
     }
 }
-.p-actions {
-    @include flex;
-    margin-top: 1rem;
-}
-.ml-2 {
-    margin-left: 0.5rem;
-}
-.ml-auto {
-    margin-left: auto;
-}
-.p-3 {
-    padding: 1rem;
-}
+.p-actions{@include flex;margin-top:1rem}
 
 @media screen and (max-width: 1023px) {
     .t-dep {
@@ -367,27 +315,24 @@ $primary: var(--p-primary-color);
                     &.city {
                         margin-left: 6px;
                     }
-                    .p-from {
-                        left: 60%;
-                    }
                 }
             }
         }
         ::ng-deep .p-dataview {
             .dep-hdr .hdr-cols {
-                grid-template-columns: 30% 20% 25% 25%;
-                gap: 0;
+                grid-template-columns: 22% 20% 15% 20% 23%;
+                gap: 0.25rem;
                 span {
-                    font-size: 0.9rem;
-                    padding: 0 0.5rem;
+                    font-size: 0.85rem;
+                    padding: 0 0.25rem;
                     white-space: nowrap;
                     overflow: hidden;
                     text-overflow: ellipsis;
                 }
             }
             .dep-item {
-                grid-template-columns: 30% 20% 25% 25%;
-                gap: 0;
+                grid-template-columns: 22% 20% 15% 20% 23%;
+                gap: 0.25rem;
                 padding: 1rem 0.5rem;
                 .dates {
                     justify-self: start;
@@ -395,6 +340,45 @@ $primary: var(--p-primary-color);
                 }
                 .info {
                     justify-self: center;
+                    .flight-times {
+                        font-size: 0.75rem;
+                        color: #666;
+                        text-align: center;
+                        max-width: 100%;
+                        padding: 0.25rem 0;
+                        margin-top: 0.5rem;
+                        font-weight: 500;
+                        .flight-line {
+                            line-height: 1.3;
+                            margin-bottom: 0.2rem;
+                            &:last-child {
+                                margin-bottom: 0;
+                            }
+                        }
+                        @media (max-width: 768px) {
+                            font-size: 0.7rem;
+                            .flight-line {
+                                line-height: 1.2;
+                            }
+                        }
+                    }
+                    .tags-container {
+                        margin-top: 0.75rem;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 0.5rem;
+                        ::ng-deep .p-tag {
+                            margin: 0;
+                        }
+                    }
+                }
+                .trip-type {
+                    justify-self: center;
+                    color: $azul;
+                    font-size: 0.85rem;
+                    font-weight: 500;
+                    text-align: center;
                 }
                 .f-price {
                     justify-self: center;
@@ -438,14 +422,6 @@ $primary: var(--p-primary-color);
         h1 {
             font-size: 28px;
         }
-        .m-nav {
-            .m-display {
-                font-size: 1.2rem;
-            }
-            ::ng-deep .p-button.p-button-text {
-                min-width: 80px;
-            }
-        }
         ::ng-deep .p-dataview {
             .dep-hdr {
                 display: none;
@@ -457,6 +433,7 @@ $primary: var(--p-primary-color);
                 padding: 1.5rem 1rem;
                 .dates,
                 .info,
+                .trip-type,
                 .f-price,
                 .actions {
                     justify-content: center;
@@ -519,23 +496,46 @@ $primary: var(--p-primary-color);
     }
 }
 
-// Trip type tags in expanded row
-.trip-type-tag {
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: white;
-}
+.departure-empty .empty-content{display:flex;flex-direction:column;align-items:center;text-align:center;padding:2rem;.empty-icon{font-size:3rem}}
 
-.trip-type-tag-group {
-    background-color: var(--color-group);
-}
-
-.trip-type-tag-single {
-    background-color: var(--color-single);
-}
-
-.trip-type-tag-private {
-    background-color: var(--color-private);
+.flight-times {
+  font-size: 0.75rem;
+  color: #666;
+  text-align: center;
+  max-width: 100%;
+  padding: 0.25rem 0;
+  margin-top: 0.5rem;
+  font-weight: 500;
+  
+  .flight-line {
+    line-height: 1.3;
+    margin-bottom: 0.2rem;
+    &:last-child {
+      margin-bottom: 0;
+    }
+    
+    // ✅ AGREGAR: Estilo para el texto de carga
+    &.loading-text {
+      color: #999;
+      font-style: italic;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+  
+  // Estilos para el contenedor del skeleton
+  .flight-times-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 0.7rem;
+    .flight-line {
+      line-height: 1.2;
+    }
+  }
 }

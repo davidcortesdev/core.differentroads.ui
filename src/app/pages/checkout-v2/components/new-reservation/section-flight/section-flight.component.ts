@@ -17,7 +17,9 @@ import {
 } from '../../../../../core/services/flight/reservationflight.service';
 import {
   IFlightResponse,
-} from '../../../../../core/services/flight-search.service';
+  FlightSearchService,
+  IFlightDetailDTO,
+} from '../../../../../core/services/flight/flight-search.service';
 
 // Interfaces para el template
 interface FormattedFlight {
@@ -31,6 +33,7 @@ interface FormattedFlight {
   stops: number;
   segments: FormattedSegment[];
   isNextDay: boolean;
+  layovers: string[]; // Códigos IATA de las escalas intermedias
 }
 
 interface FormattedSegment {
@@ -70,7 +73,10 @@ export class SectionFlightComponent implements OnInit, OnChanges {
   private airlinesCache: Map<string, string> = new Map();
   private logoUrlCache: Map<string, string> = new Map();
 
-  constructor(@Inject(ReservationFlightService) private reservationFlightService: ReservationFlightService) {}
+  constructor(
+    @Inject(ReservationFlightService) private reservationFlightService: ReservationFlightService,
+    private flightSearchService: FlightSearchService
+  ) {}
 
   ngOnInit(): void {
     this.loadFlights();
@@ -97,7 +103,6 @@ export class SectionFlightComponent implements OnInit, OnChanges {
         this.loading = false;
       },
       error: (error: any) => {
-        console.error('Error loading flights:', error);
         this.formattedFlights = null;
         this.loading = false;
       },
@@ -138,15 +143,15 @@ export class SectionFlightComponent implements OnInit, OnChanges {
       (f: IFlightResponse) => f.flightTypeId === this.FLIGHT_TYPE_VUELTA
     );
 
-    // Formatear vuelos
+    // Formatear vuelos y cargar detalles para obtener escalas
     const formattedOutbound =
       outboundFlights.length > 0
-        ? await this.formatFlight(outboundFlights[0])
+        ? await this.formatFlight(outboundFlights[0], flightPackData.id)
         : null;
 
     const formattedInbound =
       inboundFlights.length > 0
-        ? await this.formatFlight(inboundFlights[0])
+        ? await this.formatFlight(inboundFlights[0], flightPackData.id)
         : null;
 
     this.formattedFlights = {
@@ -156,10 +161,41 @@ export class SectionFlightComponent implements OnInit, OnChanges {
   }
 
   private async formatFlight(
-    flight: IFlightResponse
+    flight: IFlightResponse,
+    packId: number
   ): Promise<FormattedFlight> {
     // Crear un vuelo básico usando los datos directos del flight
-    return this.createBasicFlight(flight);
+    const basicFlight = this.createBasicFlight(flight);
+    
+    // Intentar cargar detalles para obtener escalas
+    try {
+      const flightDetails = await this.flightSearchService.getFlightDetails(
+        packId,
+        flight.id.toString()
+      ).pipe(
+        catchError(() => of(null))
+      ).toPromise();
+      
+      if (flightDetails && flightDetails.segments && flightDetails.segments.length > 1) {
+        // Extraer escalas intermedias (todos los arrivalIata excepto el último)
+        const layovers: string[] = [];
+        for (let i = 0; i < flightDetails.segments.length - 1; i++) {
+          const segment = flightDetails.segments[i];
+          if (segment.arrivalIata) {
+            layovers.push(segment.arrivalIata);
+          }
+        }
+        basicFlight.layovers = layovers;
+        basicFlight.hasStops = layovers.length > 0;
+        basicFlight.stops = layovers.length;
+      } else {
+        basicFlight.layovers = [];
+      }
+    } catch (error) {
+      basicFlight.layovers = [];
+    }
+    
+    return basicFlight;
   }
 
   private createBasicFlight(flight: IFlightResponse): FormattedFlight {
@@ -189,6 +225,7 @@ export class SectionFlightComponent implements OnInit, OnChanges {
         isNextDay: this.isNextDay(flight.departureTime || undefined, flight.arrivalTime || undefined),
       }],
       isNextDay: this.isNextDay(flight.departureTime || undefined, flight.arrivalTime || undefined),
+      layovers: [],
     };
   }
 
@@ -237,7 +274,6 @@ export class SectionFlightComponent implements OnInit, OnChanges {
       // Fallback: cálculo básico
       return this.calculateBasicDuration(departureTime, arrivalTime);
     } catch (error) {
-      console.error('Error calculating duration:', error);
       return 'N/A';
     }
   }

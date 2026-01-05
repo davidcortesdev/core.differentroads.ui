@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 
 // Interface para los elementos del dataview de imágenes
 export interface BookingImage {
@@ -19,11 +19,25 @@ export interface BookingImage {
   styleUrls: ['./booking-details-view.component.scss'],
   standalone: false,
 })
-export class BookingDetailsViewV2Component implements OnInit {
+export class BookingDetailsViewV2Component implements OnInit, OnChanges {
   @Input() bookingImages: BookingImage[] = [];
   @Input() tourName: string = '';
+  @Input() refreshTrigger: any = null; // Trigger para refrescar los datos
 
   constructor() {}
 
   ngOnInit(): void {}
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['refreshTrigger'] && changes['refreshTrigger'].currentValue) {
+
+      this.refreshBookingDetails();
+    }
+  }
+
+  private refreshBookingDetails(): void {
+    // Aquí se pueden recargar los datos si es necesario
+    // Por ahora solo logueamos que se recibió el trigger
+
+  }
 }

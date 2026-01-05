@@ -1,6 +1,5 @@
 import { TripType } from "../models/interfaces/trip-type.interface";
 
-
 export const TRIP_TYPES: TripType[] = [
   {
     title: 'En grupo',

@@ -10,7 +10,7 @@
     showIndicators="false"
     showNavigators="false"
   >
-    <ng-template let-image pTemplate="item">
+    <ng-template let-image #item>
       <div class="partner-figure">
         <img
           [src]="image.imageUrl"

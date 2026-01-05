@@ -14,19 +14,13 @@
       <i class="pi pi-info-circle"></i>También puedes añadirlas después desde tu
       perfil
     </div>
-    <!-- OPTIMIZADO: Mensaje informativo sobre selección por usuario -->
+    <!-- Mensaje informativo sobre personalización por viajero -->
     <div
       class="step-info"
-      [ngClass]="{ saving: hasAnyActivityLoading() }"
-      *ngIf="hasAnyActivityLoading() || hasSelectedActivities"
+      *ngIf="hasSelectedActivities"
     >
-      <i class="pi pi-check-circle" *ngIf="!hasAnyActivityLoading()"></i>
-      <i class="pi pi-spin pi-spinner" *ngIf="hasAnyActivityLoading()"></i>
-      <span *ngIf="hasAnyActivityLoading()">Guardando actividad...</span>
-      <span *ngIf="!hasAnyActivityLoading() && hasSelectedActivities">
-        ✅ Actividades guardadas. Podrás elegir por usuario en el paso 3 de
-        viajeros.
-      </span>
+      <i class="pi pi-info-circle"></i>
+      <span>Las actividades seleccionadas se aplicarán a todos los viajeros. En el paso 3 podrás personalizar qué actividades desea cada viajero específicamente.</span>
     </div>
   </div>
 
@@ -39,7 +33,10 @@
         >
           <div
             class="dataview-card"
-            [ngClass]="{ 'dataview-card-border': !first }"
+            [ngClass]="{ 
+              'dataview-card-border': !first,
+              'unavailable': item.availablePlaces !== undefined && item.availablePlaces === 0 && !isActivityAdded(item)
+            }"
           >
             <div class="dataview-image">
               <img
@@ -53,13 +50,21 @@
             <div class="dataview-content">
               <div class="dataview-info">
                 <div>
-                  <div class="dataview-name">
+                  <div
+                    class="dataview-name"
+                    [class.clickable]="shouldShowReadMore(item)"
+                    (click)="shouldShowReadMore(item) && openDescriptionModal(item)"
+                  >
                     {{ item.name }}
                   </div>
-                  <div
-                    class="dataview-description"
-                    [innerHTML]="item.description"
-                  ></div>
+                  <div class="dataview-description-container">
+                    <div
+                      class="dataview-description"
+                      [class.clickable]="shouldShowReadMore(item)"
+                      [innerHTML]="item.description"
+                      (click)="shouldShowReadMore(item) && openDescriptionModal(item)"
+                    ></div>
+                  </div>
                 </div>
               </div>
 
@@ -71,13 +76,25 @@
                   <span class="dataview-per-person"> por persona </span>
                 </div>
 
+                <!-- Información de disponibilidad -->
+                <div class="activity-availability-info" *ngIf="item.availablePlaces !== undefined && item.availablePlaces <= 4">
+                  <span *ngIf="item.availablePlaces > 0" class="availability-available">
+                    <i class="pi pi-check-circle"></i>
+                    {{ item.availablePlaces }} {{ item.availablePlaces === 1 ? ' disponible' : ' disponibles' }}
+                  </span>
+                  <span *ngIf="item.availablePlaces === 0" class="availability-unavailable">
+                    <i class="pi pi-times-circle"></i>
+                    Sin disponibilidad
+                  </span>
+                </div>
+
                 <div class="dataview-buttons">
                   <p-button
                     class="dataview-buy-button"
                     [label]="isActivityAdded(item) ? 'Eliminar' : 'Añadir'"
                     [rounded]="true"
                     [loading]="isActivityLoading(item)"
-                    [disabled]="isActivityLoading(item)"
+                    [disabled]="isActivityLoading(item) || (item.availablePlaces !== undefined && item.availablePlaces === 0 && !isActivityAdded(item))"
                     [styleClass]="isActivityAdded(item) ? 'added-button' : ''"
                     (click)="toggleActivity(item)"
                   />
@@ -89,4 +106,11 @@
       </div>
     </ng-template>
   </p-dataview>
+
+  <!-- Modal de descripción completa -->
+  <app-activity-description-modal
+    [visible]="descriptionModalVisible"
+    [activity]="getActivityForModal()"
+    (close)="closeDescriptionModal()"
+  ></app-activity-description-modal>
 </div>

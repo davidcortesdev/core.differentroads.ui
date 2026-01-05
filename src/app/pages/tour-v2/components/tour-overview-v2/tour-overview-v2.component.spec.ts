@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TourOverviewV2Component } from './tour-overview-v2.component';
-import { TourNetService } from '../../../../core/services/tourNet.service';
+import { TourService } from '../../../../core/services/tour/tour.service';
 import { CMSTourService } from '../../../../core/services/cms/cms-tour.service';
 import { of } from 'rxjs';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
@@ -41,7 +41,7 @@ describe('TourOverviewV2Component', () => {
       imports: [HttpClientTestingModule],
       declarations: [TourOverviewV2Component],
       providers: [
-        { provide: TourNetService, useValue: tourNetService },
+        { provide: TourService, useValue: tourNetService },
         { provide: CMSTourService, useValue: cmsTourServiceSpy }
       ],
       schemas: [NO_ERRORS_SCHEMA] // Ignore child components for this test

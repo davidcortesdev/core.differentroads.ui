@@ -324,6 +324,24 @@ $desktop: 992px;
           box-shadow: 0 0 0 0.2rem rgba(var(--p-primary-color-rgb), 0.2) !important;
         }
       }
+
+      &:disabled,
+      &[disabled] {
+        opacity: 0.6 !important;
+        cursor: not-allowed !important;
+        pointer-events: none !important;
+        background-color: #ccc !important;
+        border-color: #ccc !important;
+        color: #666 !important;
+
+        &:hover,
+        &:focus {
+          opacity: 0.6 !important;
+          background-color: #ccc !important;
+          border-color: #ccc !important;
+          color: #666 !important;
+        }
+      }
     }
   }
 } 

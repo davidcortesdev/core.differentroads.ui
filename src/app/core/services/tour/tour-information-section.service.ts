@@ -97,10 +97,6 @@ export class TourInformationSectionService {
           };
         }),
         catchError((error) => {
-          console.error(
-            `Error fetching tour information section with ID ${id}:`,
-            error
-          );
           // Return a default section object on error
           return of({
             id: id,
@@ -130,7 +126,6 @@ export class TourInformationSectionService {
       })
       .pipe(
         catchError((error) => {
-          console.error('Error creating tour information section:', error);
           throw error;
         })
       );
@@ -155,10 +150,6 @@ export class TourInformationSectionService {
       })
       .pipe(
         catchError((error) => {
-          console.error(
-            `Error updating tour information section with ID ${id}:`,
-            error
-          );
           return of(null);
         })
       );
@@ -179,10 +170,6 @@ export class TourInformationSectionService {
       })
       .pipe(
         catchError((error) => {
-          console.error(
-            `Error deleting tour information section with ID ${id}:`,
-            error
-          );
           return of(null);
         })
       );

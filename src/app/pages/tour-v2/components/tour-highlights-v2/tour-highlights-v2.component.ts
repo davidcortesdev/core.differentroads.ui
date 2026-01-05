@@ -107,7 +107,6 @@ export class TourHighlightsV2Component implements OnInit, OnChanges {
 
   loadHighlights(): void {
     if (!this.tourId) {
-      console.warn('⚠️ No hay tourId disponible');
       return;
     }
     
@@ -122,7 +121,6 @@ export class TourHighlightsV2Component implements OnInit, OnChanges {
         this.isLoading = false;
       },
       error: (error) => {
-        console.error('❌ Error al cargar los highlights:', error);
         this.highlights = [];
         this.isLoading = false;
       }
@@ -171,7 +169,7 @@ export class TourHighlightsV2Component implements OnInit, OnChanges {
   }
 
   private getHighlightImage(highlight: ITourHighlightResponse): string {
-    const defaultImage = 'https://via.placeholder.com/300x200/4CAF50/white?text=Highlight';
+    const defaultImage = 'https://picsum.photos/300/200';
     return (highlight as any).imageUrl || defaultImage;
   }
 

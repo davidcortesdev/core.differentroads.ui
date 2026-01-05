@@ -176,6 +176,7 @@
           <div class="hdr-cols">
             <span>Salida <i class="pi pi-arrow-right header"></i> Regreso</span>
             <span>Información</span>
+            <span>Tipo de salida</span>
             <span>Precio</span>
             <span></span>
           </div>
@@ -185,7 +186,7 @@
       <ng-template #list let-departures>
         <div class="dep-list">
           <ng-container *ngFor="let item of departures; trackBy: trackByDepartureId">
-            <div class="dep-item">
+            <div class="dep-item" [ngClass]="{'not-bookable': !item.isBookable}">
               <div class="dates">
                 <div class="d-date">
                   <span class="d-name">{{
@@ -221,19 +222,81 @@
                 >
                   {{ getTripTypeInfo(item.group)?.title }}
                 </span>
+                
 
+                <!-- Horarios de vuelos -->
+                <div class="flight-times" *ngIf="!isSinVuelosSelected() && hasFlightTimesState(item.id)">
+                  <!-- Mostrar skeleton cuando está cargando -->
+                  <div class="flight-times-loading" *ngIf="isFlightTimesLoading(item.id)">
+                    <p-skeleton width="80%" height="12px" styleClass="mb-1"></p-skeleton>
+                    <p-skeleton width="70%" height="12px"></p-skeleton>
+                  </div>
+                  
+                  <!-- Mostrar horarios válidos cuando están disponibles y no está cargando -->
+                  <div *ngIf="!isFlightTimesLoading(item.id) && hasValidFlightTimes(item.id)">
+                    <div *ngFor="let line of getFlightTimesLines(item.id)" class="flight-line">
+                      {{ line }}
+                    </div>
+                  </div>
+
+                  <!-- Fallback cuando la API respondió pero no hay datos válidos -->
+                  <div
+                    *ngIf="!isFlightTimesLoading(item.id) && !hasValidFlightTimes(item.id) && hasFlightTimesError(item.id)"
+                  >
+                    <div class="flight-line loading-text">
+                      Horarios de vuelo no disponibles en este momento
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Mostrar "sin vuelos" cuando se selecciona esa opción -->
+                <div class="flight-times" *ngIf="isSinVuelosSelected()">
+                  <div class="flight-line">
+                    Sin vuelos
+                  </div>
+                </div>
+
+                <!-- Contenedor de tags con espaciado -->
+                <div class="tags-container">
+                  <p-tag
+                    severity="warn"
+                    value="Lista de espera"
+                    *ngIf="item.waitingList"
+                    ><i class="pi pi-clock" style="font-size: 0.7rem"></i>
+                  </p-tag>
+
+                  <!-- Estado de disponibilidad de plazas -->
+                  <p-tag
+                    *ngIf="item.availabilityStatus === 'no-spots'"
+                    severity="danger"
+                    value="SIN PLAZAS"
+                    styleClass="availability-tag"
+                  ></p-tag>
+                  <p-tag
+                    *ngIf="item.availabilityStatus === 'last-spots'"
+                    severity="warn"
+                    value="Últimas plazas"
+                    styleClass="availability-tag"
+                  ></p-tag>
+                </div>
+              </div>
+
+              <div class="trip-type">
                 <p-tag
-                  severity="warn"
-                  value="Lista de espera"
-                  *ngIf="item.waitingList"
-                  ><i class="pi pi-clock" style="font-size: 0.7rem"></i>
-                </p-tag>
+                  *ngIf="getTripType(item.tripTypeId)"
+                  [value]="getTripType(item.tripTypeId)?.name || 'Sin tipo'"
+                  [style.background-color]="getTripType(item.tripTypeId)?.color || '#ccc'"
+                  [style.color]="'black'"
+                  [style.border]="'none'"
+                ></p-tag>
+                <span *ngIf="!getTripType(item.tripTypeId)">Sin tipo</span>
               </div>
 
               <div class="f-price">
                 <div class="p-container">
                   <span>desde</span>
-                  <span class="amount">{{ item.price | currency:'EUR':'symbol':'1.0-0' }}</span>
+                  <span class="amount" *ngIf="!item.priceError && item.price !== null && item.price !== undefined">{{ item.price | currency:'EUR':'symbol':'1.0-0' }}</span>
+                  <span class="amount error-text" *ngIf="item.priceError || item.price === null || item.price === undefined">error</span>
                 </div>
               </div>
 
@@ -241,14 +304,16 @@
                 <button 
                   type="button" 
                   pButton 
-                  [disabled]="item.status === 'complete'"
+                  [disabled]="item.status === 'complete' || !item.isBookable"
                   (click)="addToCart(item)"
                   class="p-button-rounded"
                   [style.background-color]="selectedDepartureId === item.id ? 'transparent' : null"
                   [style.color]="selectedDepartureId === item.id ? 'var(--p-primary-color)' : null"
                   [style.border]="selectedDepartureId === item.id ? '1px solid var(--p-primary-color)' : null"
+                  [pTooltip]="!item.isBookable ? 'Esta salida no está disponible para reservar' : ''"
+                  tooltipPosition="top"
                 >
-                  {{ item.status === 'complete' ? 'COMPLETO' : (selectedDepartureId === item.id ? 'Añadido' : 'Añadir') }}
+                  {{ item.status === 'complete' ? 'COMPLETO' : (!item.isBookable ? 'NO DISPONIBLE' : (selectedDepartureId === item.id ? 'Añadido' : 'Añadir')) }}
                 </button>
               </div>
               

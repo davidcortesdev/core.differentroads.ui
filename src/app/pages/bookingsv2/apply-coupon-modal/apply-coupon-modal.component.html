@@ -1,0 +1,67 @@
+<p-dialog
+  header="Canjear cupón"
+  [(visible)]="visible"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="true"
+  [style]="{ width: '90vw', maxWidth: '450px' }"
+  styleClass="apply-coupon-dialog"
+  (onHide)="closeModal()"
+>
+  <div class="apply-coupon-container">
+    <!-- Input para código de cupón -->
+    <div class="coupon-input-section mb-4">
+      <label for="discount-code" class="input-label">
+        Código de descuento <span class="required">*</span>
+      </label>
+      <div class="discount-input-group">
+        <input
+          id="discount-code"
+          type="text"
+          pInputText
+          [(ngModel)]="discountCode"
+          placeholder="Ingresa tu cupón"
+          class="discount-input"
+          maxlength="20"
+          (input)="validateDiscountCode($event)"
+          (keyup.enter)="applyCoupon()"
+          [disabled]="isApplying"
+        />
+      </div>
+      <small class="help-text">
+        Ingresa el código de descuento que recibiste
+      </small>
+    </div>
+
+    <!-- Mensajes de éxito/error -->
+    <div class="message-section" *ngIf="discountMessage">
+      <p-message
+        [severity]="discountMessageSeverity"
+        [text]="discountMessage"
+        styleClass="w-full"
+      ></p-message>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="dialog-footer">
+      <p-button
+        label="Cancelar"
+        icon="pi pi-times"
+        styleClass="p-button-text"
+        (onClick)="closeModal()"
+        [disabled]="isApplying"
+      ></p-button>
+      <p-button
+        label="Aplicar"
+        icon="pi pi-check"
+        styleClass="p-button-success"
+        [disabled]="!discountCode || discountCode.trim() === '' || isApplying"
+        [loading]="isApplying"
+        (onClick)="applyCoupon()"
+      ></p-button>
+    </div>
+  </ng-template>
+</p-dialog>
+

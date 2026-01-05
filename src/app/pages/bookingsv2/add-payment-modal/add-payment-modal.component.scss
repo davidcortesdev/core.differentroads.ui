@@ -1,0 +1,167 @@
+:host ::ng-deep {
+  .add-payment-dialog {
+    .add-payment-container {
+      .pending-info {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+
+        .info-row {
+          display: flex;
+          justify-content: space-between;
+          padding: 0.5rem 0;
+          border-bottom: 1px solid #e0e0e0;
+
+          &:last-child {
+            border-bottom: none;
+          }
+
+          .label {
+            font-weight: 500;
+            color: #666;
+          }
+
+          .value {
+            font-weight: 600;
+            font-size: 1.1rem;
+
+            &.paid {
+              color: #28a745;
+            }
+
+            &.pending {
+              color: #ff6b6b;
+            }
+          }
+        }
+      }
+
+      .amount-input-section {
+        .input-label {
+          display: block;
+          margin-bottom: 0.5rem;
+          font-weight: 600;
+          color: var(--background-azul);
+        }
+
+        .payment-amount-input {
+          width: 100%;
+        }
+
+        .help-text {
+          display: block;
+          margin-top: 0.25rem;
+          color: #666;
+          font-size: 0.875rem;
+        }
+
+        .error-text {
+          display: block;
+          margin-top: 0.25rem;
+          color: #ff6b6b;
+          font-size: 0.875rem;
+        }
+      }
+
+      .payment-method-section {
+        .section-label {
+          display: block;
+          margin-bottom: 1rem;
+          font-weight: 600;
+          font-size: 1rem;
+          color: var(--background-azul);
+        }
+
+        .payment-methods-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 1rem;
+
+          /* Cuando solo hay un método (TO), centrarlo y mantener un layout sencillo */
+          &:has(.payment-method-option:nth-child(1):last-child) {
+            max-width: 260px;
+            margin-inline: auto;
+            grid-template-columns: 1fr;
+          }
+
+          @media (max-width: 768px) {
+            grid-template-columns: 1fr;
+          }
+
+          .payment-method-option {
+            background-color: var(--primary-color-500);
+            color: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 0.75rem;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            --p-radiobutton-background: white;
+            --p-radiobutton-icon-checked-color: var(--secondary-color-500);
+
+            .method-info {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 0.5rem;
+              width: 100%;
+
+              .method-icon {
+                font-size: 1.6rem;
+              }
+
+              .scalapay-logo {
+                height: 24px;
+                width: auto;
+              }
+
+              .method-label {
+                font-size: 0.9rem;
+                font-weight: 500;
+                text-align: center;
+              }
+            }
+          }
+        }
+      }
+
+      .method-additional-info {
+        .p-message {
+          margin-top: 0;
+          background: var(--secondary-color-500);
+          color: white;
+        }
+      }
+    }
+
+    .dialog-footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+
+      @media (max-width: 576px) {
+        flex-direction: column;
+
+        .p-button {
+          width: 100%;
+        }
+      }
+    }
+  }
+}
+
+.required {
+  color: red;
+}
+
+.mb-4 {
+  margin-bottom: 1.5rem;
+}
+
+.mt-3 {
+  margin-top: 1rem;
+}
+

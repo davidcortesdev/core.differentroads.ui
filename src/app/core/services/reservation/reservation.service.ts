@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { map, Observable, switchMap } from 'rxjs';
+import { HttpClient, HttpHeaders, HttpParams, HttpContext } from '@angular/common/http';
+import { map, Observable, switchMap, catchError } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
   IReservationStatusResponse,
@@ -8,98 +8,105 @@ import {
 } from './reservation-status.service';
 
 export interface ReservationCreate {
-  id: number;
-  tkId: string;
+  tkId?: string | null;
   reservationStatusId: number;
   retailerId: number;
   tourId: number;
   departureId: number;
-  userId: number | null;
+  userId?: number | null;
   totalPassengers: number;
   totalAmount: number;
-  budgetAt: string;
-  cartAt: string;
-  abandonedAt: string;
-  reservedAt: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface ReservationUpdate {
-  id: number;
-  tkId: string;
+  tkId?: string | null;
   reservationStatusId: number;
   retailerId: number;
   tourId: number;
   departureId: number;
-  userId: number | null;
+  userId?: number | null;
   totalPassengers: number;
   totalAmount: number;
-  budgetAt: string;
-  cartAt: string;
-  abandonedAt: string;
-  reservedAt: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface IReservationResponse {
   id: number;
-  tkId: string;
+  tkId?: string | null;
   reservationStatusId: number;
   retailerId: number;
   tourId: number;
   departureId: number;
-  userId: number;
+  userId?: number | null;
   totalPassengers: number;
   totalAmount: number;
-  budgetAt: string;
-  cartAt: string;
-  abandonedAt: string;
-  reservedAt: string;
+  budgetAt?: string | null;
+  cartAt?: string | null;
+  abandonedAt?: string | null;
+  reservedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface ReservationSummaryItem {
+export interface IReservationSummaryItem {
   itemId: number;
-  description: string;
+  description?: string | null;
   amount: number;
   quantity: number;
   total: number;
-  itemType: string;
+  itemType?: string | null;
   included: boolean;
-  ageGroupId: number;
+  ageGroupId?: number | null;
 }
+
+// Alias para mantener compatibilidad con código existente
+export type ReservationSummaryItem = IReservationSummaryItem;
 
 export interface IReservationSummaryResponse {
   id: number;
-  tkId: string;
+  tkId?: string | null;
   totalPassengers: number;
   totalAmount: number;
-  items: ReservationSummaryItem[];
+  items?: IReservationSummaryItem[] | null;
   createdAt: string;
+}
+
+export interface IReservationTravelerData {
+  ageGroupId: number;
+  isLeadTraveler: boolean;
+  tkId?: string | null;
+}
+
+export interface ReservationCompleteCreate {
+  reservation: ReservationCreate;
+  travelers?: IReservationTravelerData[] | null;
+  activityIds?: number[] | null;
+  activityPackIds?: number[] | null;
+}
+
+export interface CancelReservationResponse {
+  isSuccess: boolean;
 }
 
 /**
  * Interfaz para los filtros disponibles en el método getAll.
  */
 export interface ReservationFilters {
-  id?: number;
-  tkId?: string;
-  reservationStatusId?: number;
-  retailerId?: number;
-  tourId?: number;
-  departureId?: number;
-  userId?: number | null;
-  totalPassengers?: number;
-  totalAmount?: number;
-  budgetAt?: string;
-  cartAt?: string;
-  abandonedAt?: string;
-  reservedAt?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  Id?: number;
+  TkId?: string;
+  ReservationStatusId?: number;
+  RetailerId?: number;
+  TourId?: number;
+  DepartureId?: number;
+  UserId?: number | null;
+  TotalPassengers?: number;
+  TotalAmount?: number;
+  BudgetAt?: string;
+  CartAt?: string;
+  AbandonedAt?: string;
+  ReservedAt?: string;
+  CreatedAt?: string;
+  UpdatedAt?: string;
+  useExactMatchForStrings?: boolean;
 }
 
 @Injectable({
@@ -125,10 +132,7 @@ export class ReservationService {
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
-          params = params.set(
-            key.charAt(0).toUpperCase() + key.slice(1),
-            value.toString()
-          );
+          params = params.set(key, value.toString());
         }
       });
     }
@@ -139,10 +143,25 @@ export class ReservationService {
   /**
    * Crea una nueva reservación.
    * @param data Datos para crear la reservación.
+   * @param skipValidation Si se debe omitir la validación de reglas de estado (útil para importaciones de TK).
    * @returns La reservación creada.
    */
-  create(data: ReservationCreate): Observable<IReservationResponse> {
+  create(data: ReservationCreate, skipValidation: boolean = false): Observable<IReservationResponse> {
+    const params = new HttpParams().set('skipValidation', skipValidation.toString());
+    
     return this.http.post<IReservationResponse>(`${this.API_URL}`, data, {
+      headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
+      params
+    });
+  }
+
+  /**
+   * Crea una reservación completa con viajeros, actividades y packs de actividades.
+   * @param data Datos para crear la reservación completa.
+   * @returns La reservación creada.
+   */
+  createComplete(data: ReservationCompleteCreate): Observable<IReservationResponse> {
+    return this.http.post<IReservationResponse>(`${this.API_URL}/complete`, data, {
       headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
     });
   }
@@ -159,9 +178,10 @@ export class ReservationService {
   /**
    * Obtiene un resumen completo de una reservación incluyendo todos los ítems y costos.
    * @param id ID de la reservación.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns El resumen de la reservación.
    */
-  getSummary(id: number): Observable<IReservationSummaryResponse> {
+  getSummary(id: number, signal?: AbortSignal): Observable<IReservationSummaryResponse> {
     const headers = new HttpHeaders({
       'Cache-Control': 'no-cache',
       Pragma: 'no-cache',
@@ -169,9 +189,19 @@ export class ReservationService {
     });
     const params = new HttpParams().set('_ts', Date.now().toString());
 
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { headers, params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
     return this.http.get<IReservationSummaryResponse>(
       `${this.API_URL}/${id}/summary`,
-      { headers, params }
+      options
     );
   }
 
@@ -179,11 +209,15 @@ export class ReservationService {
    * Actualiza una reservación existente.
    * @param id ID de la reservación a actualizar.
    * @param data Datos actualizados.
+   * @param skipValidation Si se debe omitir la validación de reglas de estado (útil para importaciones de TK).
    * @returns Resultado de la operación.
    */
-  update(id: number, data: ReservationUpdate): Observable<boolean> {
+  update(id: number, data: ReservationUpdate, skipValidation: boolean = false): Observable<boolean> {
+    const params = new HttpParams().set('skipValidation', skipValidation.toString());
+    
     return this.http.put<boolean>(`${this.API_URL}/${id}`, data, {
       headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
+      params
     });
   }
 
@@ -320,10 +354,50 @@ export class ReservationService {
 
   updateStatus(reservationId: number, statusId: number): Observable<boolean> {
     return this.getById(reservationId).pipe(
-      switchMap((reservation) => {
-        reservation.reservationStatusId = statusId;
-        return this.update(reservationId, reservation as ReservationUpdate);
+      switchMap((current) => {
+        const fullPayload: ReservationUpdate = {
+          tkId: current.tkId,
+          reservationStatusId: statusId,
+          retailerId: current.retailerId,
+          tourId: current.tourId,
+          departureId: current.departureId,
+          userId: current.userId,
+          totalPassengers: current.totalPassengers,
+          totalAmount: current.totalAmount,
+        };
+
+        return this.http.put<boolean>(`${this.API_URL}/${reservationId}`, fullPayload, {
+          headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
+        });
       })
+    );
+  }
+
+  /**
+   * Cancela una reservación.
+   * @param reservationId ID de la reservación a cancelar.
+   * @param canceledBy Indica quién cancela: 1 si viene de UI directo, 2 si viene desde ATC.
+   * @param comment Comentario sobre la cancelación.
+   * @param cancelationFee Tarifa de cancelación.
+   * @returns Resultado de la operación con campo isSuccess.
+   */
+  cancelReservation(
+    reservationId: number,
+    canceledBy: number,
+    comment: string,
+    cancelationFee?: number
+  ): Observable<CancelReservationResponse> {
+    const params = new HttpParams()
+      .set('comment', comment)
+      .set('cancelationFee', (cancelationFee || 0).toString());
+    
+    return this.http.put<CancelReservationResponse>(
+      `${environment.reservationsApiUrl}/ReservationsSyncs/cancel-reservation/${reservationId}/${canceledBy}`,
+      null,
+      {
+        params: params,
+        headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
+      }
     );
   }
 }

@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { AnalyticsService } from '../../../../core/services/analytics.service';
-import { AuthenticateService } from '../../../../core/services/auth-service.service';
+import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
+import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 
 interface TripType {
   title: string;

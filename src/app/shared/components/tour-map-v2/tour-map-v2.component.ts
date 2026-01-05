@@ -140,7 +140,6 @@ export class TourMapV2Component implements OnInit, OnChanges, OnDestroy {
         if (this.isGoogleMapsFullyLoaded()) {
           this.initializeMap();
         } else {
-          console.warn('⚠️ Google Maps callback ejecutado pero API no completamente disponible');
           this.retryLoad();
         }
       }, 100);
@@ -150,13 +149,11 @@ export class TourMapV2Component implements OnInit, OnChanges, OnDestroy {
     });
 
     script.addEventListener('error', (error) => {
-      console.error('❌ Error al cargar script de Google Maps:', error);
       this.retryLoad();
     });
 
     // Timeout de seguridad
     this.loadTimeout = setTimeout(() => {
-     /*  console.warn('⏰ Timeout en carga de Google Maps'); */
       this.retryLoad();
     }, 10000); // 10 segundos
 
@@ -179,7 +176,6 @@ export class TourMapV2Component implements OnInit, OnChanges, OnDestroy {
       }
 
       if (attempts >= maxWaitAttempts) {
-        console.warn('⏰ Timeout esperando Google Maps');
         this.retryLoad();
         return;
       }
@@ -197,7 +193,6 @@ export class TourMapV2Component implements OnInit, OnChanges, OnDestroy {
     this.loadAttempts++;
 
     if (this.loadAttempts >= this.maxLoadAttempts) {
-      console.error('❌ Máximo de intentos alcanzado para cargar Google Maps');
       this.handleLoadError('No se pudo cargar Google Maps después de varios intentos');
       return;
     }    
@@ -227,7 +222,6 @@ export class TourMapV2Component implements OnInit, OnChanges, OnDestroy {
 
     try {      
       if (!this.isGoogleMapsFullyLoaded()) {
-        console.error('❌ Google Maps no está completamente disponible');
         this.retryLoad();
         return;
       }
@@ -248,7 +242,6 @@ export class TourMapV2Component implements OnInit, OnChanges, OnDestroy {
       }
 
     } catch (error) {
-      console.error('❌ Error al inicializar Google Maps:', error);
       this.retryLoad();
     }
   }
@@ -258,7 +251,6 @@ export class TourMapV2Component implements OnInit, OnChanges, OnDestroy {
    */
   private updateMapLocations(): void {
     if (!this.apiLoaded) {
-      console.warn('⚠️ Intentando actualizar ubicaciones sin API cargada');
       return;
     }
 
@@ -293,7 +285,6 @@ export class TourMapV2Component implements OnInit, OnChanges, OnDestroy {
       // Calcular centro del mapa
       this.calculateMapCenter();
       } catch (error) {
-      console.error('❌ Error creando marcadores:', error);
     }
   }
 
@@ -308,7 +299,6 @@ export class TourMapV2Component implements OnInit, OnChanges, OnDestroy {
 
     // Validar coordenadas
     if (isNaN(position.lat) || isNaN(position.lng)) {
-      console.warn('⚠️ Coordenadas inválidas para:', location.title);
       return;
     }
 
@@ -338,7 +328,6 @@ export class TourMapV2Component implements OnInit, OnChanges, OnDestroy {
     }
 
     if (!this.isGoogleMapsFullyLoaded()) {
-      console.warn('⚠️ Google Maps API no disponible para calcular bounds');
       return;
     }
 
@@ -374,7 +363,6 @@ export class TourMapV2Component implements OnInit, OnChanges, OnDestroy {
         
       }
     } catch (error) {
-      console.error('❌ Error calculando centro:', error);
     }
   }
 
@@ -410,7 +398,6 @@ export class TourMapV2Component implements OnInit, OnChanges, OnDestroy {
    * ❌ MÉTODO: Manejar errores de carga
    */
   private handleLoadError(message: string): void {
-    console.error('❌ Error del mapa:', message);
     this.isLoading = false;
     this.errorMessage = message;
     this.apiLoaded = false;

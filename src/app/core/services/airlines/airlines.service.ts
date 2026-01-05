@@ -79,7 +79,6 @@ export class AirlinesService {
         this.updateAirlineNameCache(airlines);
       }),
       catchError(error => {
-        console.error('Error al obtener aerolíneas:', error);
         // Si hay un error, intentar devolver datos en caché aunque estén caducados
         if (cachedData) {
           return of(cachedData.data);

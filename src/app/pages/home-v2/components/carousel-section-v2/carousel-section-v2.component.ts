@@ -14,16 +14,17 @@ import { CAROUSEL_CONFIG } from '../../../../shared/constants/carousel.constants
 // Servicios de Home únicamente
 import {
   HomeSectionConfigurationService,
-  IHomeSectionConfigurationResponse,
 } from '../../../../core/services/home/home-section-configuration.service';
 import {
   HomeSectionContentService,
-  IHomeSectionContentResponse,
 } from '../../../../core/services/home/home-section-content.service';
 import {
   HomeSectionCardService,
   IHomeSectionCardResponse,
 } from '../../../../core/services/home/home-section-card.service';
+import {
+  HomeSectionThemeService,
+} from '../../../../core/services/home/home-section-theme.service';
 
 // Interfaces locales simples (sin modelos externos)
 interface ResponsiveOption {
@@ -61,13 +62,47 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
   protected textContent = '';
   protected title = '';
   protected isActive = false;
+  protected themeCode: string = 'light'; // Por defecto tema LIGHT
 
   private destroy$ = new Subject<void>();
+  private abortController = new AbortController();
 
+  /**
+   * Configuración responsive del carousel
+   * Los breakpoints se aplican cuando el viewport es menor al valor especificado
+   * Orden: de mayor a menor breakpoint
+   */
   protected readonly responsiveOptions: ResponsiveOption[] = [
-    { breakpoint: '1024px', numVisible: 3, numScroll: 1 },
-    { breakpoint: '768px', numVisible: 2, numScroll: 1 },
-    { breakpoint: '560px', numVisible: 1, numScroll: 1 },
+    {
+      breakpoint: '1500px',
+      numVisible: 2,
+      numScroll: 1,
+    },
+    {
+      breakpoint: '1400px',
+      numVisible: 2,
+      numScroll: 1,
+    },
+    {
+      breakpoint: '1200px',
+      numVisible: 3,
+      numScroll: 1,
+    },
+    {
+      breakpoint: '930px',
+      numVisible: 2,
+      numScroll: 1,
+    },
+    {
+      breakpoint: '768px',
+      numVisible: 2,
+      numScroll: 1,
+    },
+    {
+      breakpoint: '576px',
+      numVisible: 1,
+      numScroll: 1,
+    },
   ];
 
   constructor(
@@ -76,6 +111,7 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
     private readonly homeSectionConfigurationService: HomeSectionConfigurationService,
     private readonly homeSectionContentService: HomeSectionContentService,
     private readonly homeSectionCardService: HomeSectionCardService,
+    private readonly homeSectionThemeService: HomeSectionThemeService,
     private readonly cdr: ChangeDetectorRef
   ) {}
 
@@ -84,6 +120,7 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.abortController.abort();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -105,7 +142,7 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
 
     // Si no, cargar la primera configuración activa del tipo de sección especificado
     this.homeSectionConfigurationService
-      .getBySectionType(this.sectionType, true)
+      .getBySectionType(this.sectionType, true, this.abortController.signal)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (configurations) => {
@@ -122,15 +159,12 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
             }
             this.loadSpecificConfiguration(targetConfig.id);
           } else {
-            console.warn(
-              '⚠️ CarouselSectionV2 - No configurations found for section type:',
-              this.sectionType
-            );
+            
           }
         },
         error: (error) => {
           console.error(
-            '❌ CarouselSectionV2 - Error loading carousel configurations:',
+            'CarouselSectionV2 - Error loading carousel configurations:',
             error
           );
         },
@@ -140,13 +174,21 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
   private loadSpecificConfiguration(configId: number): void {
     // Cargar la configuración específica
     this.homeSectionConfigurationService
-      .getById(configId)
+      .getById(configId, this.abortController.signal)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (configuration) => {
           // Establecer datos de la configuración
           this.title = configuration.title || '';
           this.isActive = configuration.isActive;
+
+          // Cargar tema si existe themeId, si no existe se aplica LIGHT por defecto
+          if (configuration.themeId) {
+            this.loadTheme(configuration.themeId);
+          } else {
+            // Por defecto aplicar tema LIGHT
+            this.themeCode = 'light';
+          }
 
           // Forzar detección de cambios
           this.cdr.markForCheck();
@@ -156,25 +198,49 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
             this.loadSectionContent(configId);
             // Cargar cards para el carrusel
             this.loadSectionCards(configId);
-          } else {
-            console.warn(
-              '⚠️ CarouselSectionV2 - Configuration is not active:',
-              configId
-            );
           }
         },
         error: (error) => {
           console.error(
-            '❌ CarouselSectionV2 - Error loading configuration:',
+            'CarouselSectionV2 - Error loading configuration:',
             error
           );
         },
       });
   }
 
+  private loadTheme(themeId: number): void {
+    this.homeSectionThemeService
+      .getById(themeId, this.abortController.signal)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (theme) => {
+          // Comparar el code con "DARK" o "LIGHT" en mayúsculas
+          if (theme.code === 'DARK') {
+            this.themeCode = 'dark';
+          } else if (theme.code === 'LIGHT') {
+            this.themeCode = 'light';
+          } else {
+            // Por defecto aplicar tema LIGHT si es null o cualquier otro valor
+            this.themeCode = 'light';
+          }
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          console.error(
+            'CarouselSectionV2 - Error loading theme:',
+            error
+          );
+          // En caso de error, aplicar tema LIGHT por defecto
+          this.themeCode = 'light';
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
   private loadSectionContent(configId: number): void {
     this.homeSectionContentService
-      .getByConfigurationOrdered(configId, true)
+      .getByConfigurationOrdered(configId, true, this.abortController.signal)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (contents) => {
@@ -190,7 +256,7 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error(
-            '❌ CarouselSectionV2 - Error loading section content:',
+            'CarouselSectionV2 - Error loading section content:',
             error
           );
         },
@@ -199,7 +265,7 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
 
   private loadSectionCards(configId: number): void {
     this.homeSectionCardService
-      .getByConfigurationOrdered(configId, true)
+      .getByConfigurationOrdered(configId, true, this.abortController.signal)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (cards) => {
@@ -209,7 +275,7 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error(
-            '❌ CarouselSectionV2 - Error loading section cards:',
+            'CarouselSectionV2 - Error loading section cards:',
             error
           );
           this.cards = [];

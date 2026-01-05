@@ -1,0 +1,57 @@
+.apply-coupon-container {
+  padding: 1rem 0;
+}
+
+.coupon-input-section {
+  .input-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-color);
+
+    .required {
+      color: var(--red-500);
+    }
+  }
+
+  .discount-input-group {
+    display: flex;
+    width: 100%;
+
+    .discount-input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid var(--surface-border);
+      border-radius: 4px;
+      font-size: 1rem;
+
+      &:focus {
+        outline: none;
+        border-color: var(--primary-color);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  .help-text {
+    display: block;
+    margin-top: 0.5rem;
+    color: var(--text-color-secondary);
+    font-size: 0.875rem;
+  }
+}
+
+.message-section {
+  margin-top: 1rem;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+

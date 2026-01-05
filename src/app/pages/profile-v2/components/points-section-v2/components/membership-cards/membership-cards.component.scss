@@ -1,74 +1,55 @@
 :host {
     --p-datatable-row-background: var(--background-azul-color-letra);
     --p-paginator-background: var(--background-azul-color-letra);
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .cards-container {
     margin-bottom: 1rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .cards-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(250px, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 1.5rem;
+    align-items: stretch;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 
     @media screen and (max-width: 1200px) {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 1rem;
-
-        .p-card {
-            display: block !important;
-            max-height: 380px;
-
-            .card-image-wrapper {
-                height: 120px;
-            }
-        }
     }
 
     @media screen and (max-width: 768px) {
         grid-template-columns: 1fr;
         gap: 1rem;
+    }
 
-        .p-card {
-            display: block !important;
-
-            .card-image-container {
-                padding: 0.5rem;
-
-                .card-image-wrapper {
-                    height: 160px;
-                }
-            }
-
-            .card-header {
-                padding: 0.5rem 1rem;
-
-                .card-title {
-                    font-size: 16px;
-                }
-            }
-
-            .card-content {
-                padding: 0 1rem;
-            }
-
-            .card-status {
-                padding: 0.75rem;
-            }
-        }
+    @media screen and (max-width: 480px) {
+        gap: 0.75rem;
     }
 }
 
 ::ng-deep {
     .p-card {
-        height: 420px;
-        border-radius: 1rem;
+        --p-card-border-radius: 1rem;
         overflow: hidden;
         transition: all 0.3s ease;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
         display: flex;
         flex-direction: column;
+        height: 100%;
+        min-width: 0;
+        max-width: 100%;
+        box-sizing: border-box;
 
         &:hover {
             transform: translateY(-5px);
@@ -87,12 +68,8 @@
                 left: 0;
                 right: 0;
                 bottom: 0;
-                background: rgba(255, 255, 255, 0.6);
+                background: rgba(177, 177, 177, 0.28);
                 pointer-events: none;
-            }
-
-            .card-image-container {
-                opacity: 0.6;
             }
 
             .card-status span {
@@ -105,7 +82,7 @@
 
         &.unlocked-card {
             border: 1px solid var(--background-azul);
-            background: transparent;
+            background: white;
 
             .card-status span {
                 color: var(--background-azul);
@@ -117,43 +94,60 @@
 
         &.current-card {
             background: var(--background-azul-color-letra);
-            border: 2px solid var(--background-azul);
+            border: 3px solid var(--primary-color-500);
+        }
+
+        .p-card-header {
+            overflow: hidden;
+            max-width: 100%;
+        }
+
+        .p-card-body {
+            padding: 0px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex: 1;
+            min-height: 0;
+            justify-content: space-between;
+            overflow: hidden;
+            max-width: 100%;
+        }
+
+        .p-card-content {
+            overflow: hidden;
+            max-width: 100%;
+        }
+
+        .p-card-footer {
+            overflow: hidden;
+            max-width: 100%;
         }
     }
-}
 
-.card-image-container {
-    padding: 0.75rem;
-
-    .card-image-wrapper {
+    .card-image {
         width: 100%;
-        height: 140px;
-        overflow: hidden;
-        border-radius: 0.75rem;
-        position: relative;
-
-        .card-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.3s ease;
-        }
-
-        &:hover .card-image {
-            transform: scale(1.05);
-        }
+        height: auto;
+        object-fit: cover;
+        max-height: 200px;
+        display: block;
     }
 }
 
 .card-header {
     padding: 0.3rem 1rem;
     background-color: transparent;
+    overflow: hidden;
+    max-width: 100%;
+    box-sizing: border-box;
 
     .card-type {
         color: var(--background-azul);
         font-size: 12px;
         display: block;
         margin-bottom: 0.25rem;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
     }
 
     .card-title {
@@ -161,20 +155,81 @@
         color: var(--background-azul);
         font-size: 16px;
         font-weight: 700;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+
+    @media screen and (max-width: 768px) {
+        padding: 0.5rem 1rem;
+
+        .card-title {
+            font-size: 14px;
+        }
+    }
+
+    @media screen and (max-width: 480px) {
+        padding: 0.5rem 0.75rem;
+
+        .card-type {
+            font-size: 11px;
+        }
+
+        .card-title {
+            font-size: 13px;
+        }
     }
 }
 
 .card-content {
     padding: 0rem 1rem;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+
+    @media screen and (max-width: 768px) {
+        padding: 0 1rem;
+    }
+
+    @media screen and (max-width: 480px) {
+        padding: 0 0.75rem;
+    }
 }
 
-.formated-content p {
-    font-size: 1rem !important;
-    content: "Normal" !important;
-    padding-top: 0.1em;
-    line-height: 1.1em;
-    margin: 0;
-    color: var(--background-azul);
+.formated-content {
+    width: 100%;
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+
+    p {
+        font-size: 1rem !important;
+        content: "Normal" !important;
+        padding-top: 0.1em;
+        line-height: 1.1em;
+        margin: 0;
+        color: var(--background-azul);
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+
+    @media screen and (max-width: 768px) {
+        p {
+            font-size: 0.9rem !important;
+            line-height: 1.2em;
+        }
+    }
+
+    @media screen and (max-width: 480px) {
+        p {
+            font-size: 0.85rem !important;
+            line-height: 1.15em;
+        }
+    }
 }
 
 .card-status {
@@ -182,22 +237,28 @@
     padding: 0.5rem;
     margin-top: auto;
     border-top: 1px solid rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    max-width: 100%;
+    box-sizing: border-box;
 
     span {
         color: var(--background-azul);
         font-size: 14px;
         font-weight: 600;
         display: block;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
     }
-}
 
-::ng-deep {
-    .p-card-body {
-        padding: 0px;
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        flex: 1;
-        justify-content: space-between;
+    @media screen and (max-width: 768px) {
+        padding: 0.75rem;
+    }
+
+    @media screen and (max-width: 480px) {
+        padding: 0.5rem 0.75rem;
+
+        span {
+            font-size: 12px;
+        }
     }
 }

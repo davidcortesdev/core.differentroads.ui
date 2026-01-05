@@ -249,7 +249,6 @@ El componente `InfoTravelersComponent` necesita mejoras significativas en valida
     const key = `${travelerId}_${activityId}`;
     
     if (this.savingActivities[key]) {
-      console.log('⏳ Guardado de actividad en curso, esperando...');
       return;
     }
 
@@ -324,7 +323,6 @@ El componente `InfoTravelersComponent` necesita mejoras significativas en valida
               activityPrice,
             });
 
-            console.log(`✅ Actividad "${activityName}" guardada inmediatamente`);
           },
           error: (error) => {
             this.savingActivities[key] = false;
@@ -386,7 +384,6 @@ El componente `InfoTravelersComponent` necesita mejoras significativas en valida
               activityPrice,
             });
 
-            console.log(`✅ Actividad "${activityName}" guardada inmediatamente`);
           },
           error: (error) => {
             this.savingActivities[key] = false;
@@ -415,7 +412,6 @@ El componente `InfoTravelersComponent` necesita mejoras significativas en valida
     const key = `${travelerId}_${activityId}`;
     
     if (this.savingActivities[key]) {
-      console.log('⏳ Eliminación de actividad en curso, esperando...');
       return;
     }
 
@@ -452,7 +448,6 @@ El componente `InfoTravelersComponent` necesita mejoras significativas en valida
               activityPrice,
             });
 
-            console.log(`✅ Actividad "${activityName}" eliminada inmediatamente`);
           },
           error: (error) => {
             this.savingActivities[key] = false;
@@ -480,7 +475,6 @@ El componente `InfoTravelersComponent` necesita mejoras significativas en valida
               activityPrice,
             });
 
-            console.log(`✅ Actividad "${activityName}" eliminada inmediatamente`);
           },
           error: (error) => {
             this.savingActivities[key] = false;
@@ -649,7 +643,6 @@ El componente `InfoTravelersComponent` necesita mejoras significativas en valida
   // NUEVO: Manejar cambio de asignación de habitación
   onRoomAssignmentChange(travelerId: number, selectedRoom: any): void {
     const roomNumber = selectedRoom ? selectedRoom : null;
-    console.log(`Viajero ${travelerId} asignado a habitación ${roomNumber}`);
     
     // Validar que no haya conflictos
     if (roomNumber && this.validateRoomAssignment(travelerId, roomNumber)) {
@@ -723,7 +716,6 @@ El componente `InfoTravelersComponent` necesita mejoras significativas en valida
   private saveRoomAssignments(): void {
     // Aquí se implementaría la lógica para guardar las asignaciones
     // Esto debería integrarse con el servicio de habitaciones
-    console.log('Guardando asignaciones de habitaciones:', this.roomAssignments);
     
     // Emitir evento para notificar al componente padre
     this.roomAssignmentsChange.emit(this.roomAssignments);
@@ -994,7 +986,6 @@ El componente padre (`checkout-v2`) deberá:
 ```typescript
 // En checkout-v2.component.ts
 onRoomAssignmentsChange(assignments: { [travelerId: number]: number }) {
-  console.log('Asignaciones de habitaciones actualizadas:', assignments);
   // El componente es independiente, no necesita sincronización externa
   this.updateOrderSummary(); // Solo actualizar resumen si es necesario
 }

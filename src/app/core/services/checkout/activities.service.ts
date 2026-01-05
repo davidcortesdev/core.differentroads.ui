@@ -40,7 +40,6 @@ export class ActivitiesService {
   // Nueva lógica con nombre más claro: selectedActivities
   updateSelectedActivities(selectedActivities: OptionalActivityRef[]) {
     this.selectedActivitiesSource.next(selectedActivities);
-    console.log('Selected Activities: ', selectedActivities);
 
     const selectedTexts: { [key: string]: any } = {};
     selectedActivities.forEach((opt) => {

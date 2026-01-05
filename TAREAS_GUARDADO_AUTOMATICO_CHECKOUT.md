@@ -37,7 +37,6 @@ onRoomSpacesChange(changedRoom: RoomAvailability, newValue: number): void {
   // NUEVO: Guardado automático
   this.saveRoomAssignments().then(success => {
     if (success) {
-      console.log('✅ Habitaciones guardadas automáticamente');
     } else {
       console.error('❌ Error al guardar habitaciones automáticamente');
     }
@@ -72,7 +71,6 @@ toggleInsurance(insurance: IActivityResponse | null): void {
   // NUEVO: Guardado automático
   this.saveInsuranceAssignments().then(success => {
     if (success) {
-      console.log('✅ Seguro guardado automáticamente');
     } else {
       console.error('❌ Error al guardar seguro automáticamente');
     }

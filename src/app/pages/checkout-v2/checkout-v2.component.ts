@@ -9,7 +9,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { MenuItem, MessageService } from 'primeng/api';
 import { HttpClient } from '@angular/common/http';
-import { TourNetService } from '../../core/services/tourNet.service';
+import { TourService } from '../../core/services/tour/tour.service';
 import { ReservationService } from '../../core/services/reservation/reservation.service';
 import {
   DepartureService,
@@ -34,15 +34,14 @@ import { SelectorRoomComponent } from './components/selector-room/selector-room.
 import { SelectorTravelerComponent } from './components/selector-traveler/selector-traveler.component';
 import { InsuranceComponent } from './components/insurance/insurance.component';
 import { InfoTravelersComponent } from './components/info-travelers/info-travelers.component';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Observable, of } from 'rxjs';
 import { PaymentsNetService } from './services/paymentsNet.service';
-import { AuthenticateService } from '../../core/services/auth-service.service';
-import { UsersNetService } from '../../core/services/usersNet.service';
-import { AnalyticsService } from '../../core/services/analytics.service';
-import { IFlightPackDTO } from './services/flightsNet.service';
+import { AuthenticateService } from '../../core/services/auth/auth-service.service';
+import { UsersNetService } from '../../core/services/users/usersNet.service';
+import { AnalyticsService } from '../../core/services/analytics/analytics.service';
+import { IFlightPackDTO, FlightsNetService } from './services/flightsNet.service';
 import {
   ReservationTravelerService,
-  IReservationTravelerResponse,
 } from '../../core/services/reservation/reservation-traveler.service';
 import { PriceCheckService } from './services/price-check.service';
 import {
@@ -51,8 +50,19 @@ import {
 } from './services/price-check.service';
 import { environment } from '../../../environments/environment';
 import { interval, Subscription } from 'rxjs';
-import { takeWhile } from 'rxjs/operators';
+import { takeWhile, switchMap, map, catchError, concatMap } from 'rxjs/operators';
 import { ReservationStatusService } from '../../core/services/reservation/reservation-status.service';
+import { Title } from '@angular/platform-browser';
+import { EcommerceItem, TourDataForEcommerce } from '../../core/services/analytics/analytics.service';
+import { ReviewsService } from '../../core/services/reviews/reviews.service';
+import { TourLocationService, ITourLocationResponse } from '../../core/services/tour/tour-location.service';
+import { LocationNetService, Location } from '../../core/services/locations/locationNet.service';
+import { ItineraryDayService, IItineraryDayResponse } from '../../core/services/itinerary/itinerary-day/itinerary-day.service';
+import { ActivityService, IActivityResponse } from '../../core/services/activity/activity.service';
+import {
+  ActivityPackAvailabilityService,
+  IActivityPackAvailabilityResponse,
+} from '../../core/services/activity/activity-pack-availability.service';
 
 @Component({
   selector: 'app-checkout-v2',
@@ -71,6 +81,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
   // Datos del tour
   tourName: string = '';
+  tourData: any = null; // Tour completo cargado desde la BD
   departureDate: string = '';
   returnDate: string = '';
   departureId: number | null = null;
@@ -88,6 +99,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   // Variable para datos del itinerario
   itineraryData: IItineraryResponse | null = null;
   departureData: IDepartureResponse | null = null; // Nuevo: para almacenar datos del departure
+  
+  // Guardar itemListId e itemListName desde el state de navegación
+  private savedItemListId: string = '';
+  private savedItemListName: string = '';
 
   // Variables para actividades
   selectedActivities: any[] = [];
@@ -109,22 +124,21 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   }> = [];
   subtotal: number = 0;
   totalAmountCalculated: number = 0;
-  
-  // Descuento por puntos
-  pointsDiscount: number = 0;
-  
+
   // Flags para controlar eventos del funnel que se disparan solo una vez
   private viewCartEventFired: boolean = false;
   private viewFlightsInfoEventFired: boolean = false;
   private viewPersonalInfoEventFired: boolean = false;
   private viewPaymentInfoEventFired: boolean = false;
+  // Flag para controlar si ya se inicializó el componente
+  private componentInitialized: boolean = false;
 
   // Datos de precios por grupo de edad
   departurePriceSupplements: IDeparturePriceSupplementResponse[] = [];
   ageGroups: IAgeGroupResponse[] = [];
   pricesByAgeGroup: { [ageGroupId: number]: number } = {};
-  ageGroupCounts: { [ageGroupId: number]: number } = {};
   reservationData: any = null;
+  userIdForCoupon: number | null = null;
 
   // Propiedades para seguros
   selectedInsurance: any = null;
@@ -134,8 +148,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   selectedFlight: IFlightPackDTO | null = null;
   flightPrice: number = 0;
   hasAvailableFlights: boolean = false; // Nueva propiedad para controlar la visibilidad del botón
-  availableFlights: IFlightPackDTO[] = []; // Nueva propiedad para almacenar los vuelos disponibles
-  departureActivityPackId: number | null = null; // ✅ NUEVO: ID del paquete de actividad del departure
+  availableFlights: IFlightPackDTO[] = [];
+  private flightlessPack: IFlightPackDTO | null = null;
+  departureActivityPackId: number | null = null;
+  hasFlightlessAvailability: boolean = false;
 
   // Steps configuration
   items: MenuItem[] = [];
@@ -143,6 +159,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
   // Tour slug para navegación
   tourSlug: string = '';
+
+  // Propiedades para datos del tour (analytics)
+  tourCountry: string = '';
+  tourContinent: string = '';
+  tourRating: number | null = null;
+  tourDuration: string = '';
+  tourTripType: string = '';
+  tourProductStyle: string = '';
 
   // Propiedades para autenticación
   loginDialogVisible: boolean = false;
@@ -153,9 +177,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   isSyncInProgress: boolean = false;
   isAuthenticated: boolean = false;
 
-  // ✅ NUEVO: Propiedades para controlar el estado de carga del botón "Sin Vuelos"
+  // NUEVO: Propiedades para controlar el estado de carga del botón "Sin Vuelos"
   isFlightlessProcessing: boolean = false;
   flightlessProcessingMessage: string = '';
+  isFlightProcessing: boolean = false;
 
   // Propiedades para controlar la verificación de precios
   priceCheckExecuted: boolean = false;
@@ -165,16 +190,23 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     numPasajeros: number;
   } | null = null;
 
-  // ✅ NUEVO: Propiedad para detectar modo standalone
+  // NUEVO: Propiedad para detectar modo standalone
   isStandaloneMode: boolean = false;
 
-  // ✅ NUEVO: Trigger para refrescar el resumen
+  // NUEVO: Propiedad para mostrar opción de transferencia del 25%
+  showTransfer25Option: boolean = false;
+  
+  // NUEVO: Propiedad para indicar si es Tour Operator (TO)
+  isTourOperator: boolean = false;
+
+  // NUEVO: Trigger para refrescar el resumen
   summaryRefreshTrigger: any = null;
 
   constructor(
+    private titleService: Title,
     private route: ActivatedRoute,
     private router: Router,
-    private tourNetService: TourNetService,
+    private tourService: TourService,
     private reservationService: ReservationService,
     private departureService: DepartureService,
     private departurePriceSupplementService: DeparturePriceSupplementService,
@@ -191,13 +223,20 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     private priceCheckService: PriceCheckService,
     private reservationStatusService: ReservationStatusService,
     private http: HttpClient,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private reviewsService: ReviewsService,
+    private tourLocationService: TourLocationService,
+    private locationNetService: LocationNetService,
+    private itineraryDayService: ItineraryDayService,
+    private activityService: ActivityService,
+    private activityPackAvailabilityService: ActivityPackAvailabilityService,
+    private flightsNetService: FlightsNetService
   ) {}
 
   ngOnInit(): void {
-    console.log('🔄 CheckoutV2Component ngOnInit iniciado');
+    this.titleService.setTitle('Checkout - Different Roads');
 
-    // ✅ NUEVO: Detectar si estamos en modo standalone
+    // NUEVO: Detectar si estamos en modo standalone
     this.detectStandaloneMode();
 
     // Configurar los steps
@@ -205,19 +244,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     // Verificar estado de autenticación inicial (solo si NO es modo standalone)
     if (!this.isStandaloneMode) {
-      console.log('🔒 Modo normal - verificando autenticación');
       this.authService.isLoggedIn().subscribe((isLoggedIn) => {
         this.isAuthenticated = isLoggedIn;
-        console.log('🔍 Estado de autenticación:', isLoggedIn);
       });
     } else {
       // En modo standalone, asumir que no necesitamos autenticación
       this.isAuthenticated = false;
-      console.log(
-        '🔓 Modo standalone detectado - omitiendo validación de autenticación'
-      );
-      console.log('🔓 isAuthenticated establecido a:', this.isAuthenticated);
-      console.log('🔓 isStandaloneMode establecido a:', this.isStandaloneMode);
     }
 
     // Leer step de URL si está presente (para redirección después del login)
@@ -226,7 +258,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         const stepParam = parseInt(params['step']);
         if (!isNaN(stepParam) && stepParam >= 0 && stepParam <= 3) {
           this.activeIndex = stepParam;
-          console.log('📍 Step activo desde URL:', this.activeIndex);
         }
       }
     });
@@ -237,12 +268,11 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       if (reservationIdParam) {
         this.reservationId = +reservationIdParam;
 
-        // ✅ NUEVO: Restaurar resumen desde localStorage antes de cargar datos
+        // NUEVO: Restaurar resumen desde localStorage antes de cargar datos
         this.restoreSummaryFromLocalStorage();
 
         // Cargar datos de la reservación desde el backend
         this.loadReservationData(this.reservationId);
-        this.cleanScalapayPendingPayments();
       } else {
         this.error = 'No se proporcionó un ID de reservación válido';
       }
@@ -252,47 +282,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     // No se ejecuta aquí para evitar llamadas duplicadas
   }
 
-  // ✅ NUEVO: Método para disparar la actualización del resumen del pedido
+  // NUEVO: Método para disparar la actualización del resumen del pedido
   triggerSummaryRefresh(): void {
-    console.log('🔄 Actualizando resumen del pedido...');
     this.summaryRefreshTrigger = { timestamp: Date.now() };
   }
 
-  /**
-   * ✅ NUEVO: Detectar si estamos en modo standalone basándose en la URL
-   */
-  private detectStandaloneMode(): void {
-    // Verificar tanto la URL del router como la URL del navegador
-    const routerUrl = this.router.url;
-    const windowUrl = window.location.pathname;
-
-    this.isStandaloneMode =
-      routerUrl.includes('/standalone/') || windowUrl.includes('/standalone/');
-
-    console.log('🔍 Router URL:', routerUrl);
-    console.log('🔍 Window URL:', windowUrl);
-    console.log('🔍 ¿Modo standalone?', this.isStandaloneMode);
-
-    if (this.isStandaloneMode) {
-      console.log(
-        '🔓 Modo standalone activado - las validaciones de autenticación serán omitidas'
-      );
-    } else {
-      console.log(
-        '🔒 Modo normal - las validaciones de autenticación están activas'
-      );
-    }
-  }
-
   ngAfterViewInit(): void {
-    // Las referencias a los componentes hijos ya están disponibles
-    console.log('✅ Componentes hijos inicializados:', {
-      travelerSelector: !!this.travelerSelector,
-      roomSelector: !!this.roomSelector,
-      insuranceSelector: !!this.insuranceSelector,
-      infoTravelers: !!this.infoTravelers,
-    });
-
     // Si hay un step activo en la URL, inicializar el componente correspondiente
     if (this.activeIndex >= 0) {
       this.initializeComponentForStep(this.activeIndex);
@@ -370,7 +365,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           }
         },
         error: (error) => {
-          console.error('Error al verificar precios:', error);
           // No mostramos error al usuario ya que esto es una verificación en segundo plano
         },
       });
@@ -428,7 +422,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         }
       },
       error: (error) => {
-        console.error('Error al verificar estado del job:', error);
         // Si hay error al verificar el job, asumir que terminó (podría haberse eliminado)
         this.onJobCompleted(false);
       },
@@ -474,6 +467,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Recarga todos los datos del componente
    */
   private reloadComponentData(): void {
+    
     if (this.reservationId) {
       // Resetear el estado de verificación de precios para permitir nueva verificación
       this.resetPriceCheckState();
@@ -519,7 +513,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       this.jobMonitoringSubscription.unsubscribe();
     }
 
-    // ✅ NUEVO: Limpiar el resumen del localStorage al destruir el componente
+    // NUEVO: Limpiar el resumen del localStorage al destruir el componente
     this.clearSummaryFromLocalStorage();
   }
 
@@ -544,19 +538,68 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       },
     ];
   }
+
+  /**
+   * Detectar si estamos en modo standalone y leer parámetros de configuración
+   */
+  private detectStandaloneMode(): void {
+    // Verificar si la URL contiene 'standalone'
+    const currentPath = window.location.pathname;
+    this.isStandaloneMode = currentPath.includes('/standalone/');
+
+    // Leer parámetros de query string
+    this.route.queryParams.subscribe((params) => {
+      // Si viene el parámetro showTransfer25Option=true, activar la opción
+      if (params['showTransfer25Option'] === 'true') {
+        this.showTransfer25Option = true;
+      }
+      
+      // Si viene el parámetro isTourOperator=true, activar modo TO
+      if (params['isTourOperator'] === 'true' || params['isTO'] === 'true') {
+        this.isTourOperator = true;
+        // Si es TO, también activar showTransfer25Option automáticamente
+        this.showTransfer25Option = true;
+      }
+    });
+
+  }
+
   // Método para cargar datos de la reservación
   private loadReservationData(reservationId: number): void {
+    
     this.loading = true;
     this.error = null;
+    
+    // Guardar itemListId e itemListName desde el state de navegación al cargar el componente
+    const navigation = this.router.getCurrentNavigation();
+    const state = navigation?.extras?.state || window.history.state;
+    const itemListIdFromState = state?.['listId'] || state?.['list_id'] || '';
+    const itemListNameFromState = state?.['listName'] || state?.['list_name'] || '';
+    
+    // Si hay valores en el state, guardarlos en sessionStorage para que persistan al recargar
+    if (itemListIdFromState) {
+      sessionStorage.setItem('checkout_itemListId', itemListIdFromState);
+    }
+    if (itemListNameFromState) {
+      sessionStorage.setItem('checkout_itemListName', itemListNameFromState);
+    }
+    
+    // Usar valores del state si están disponibles, o recuperar de sessionStorage
+    this.savedItemListId = itemListIdFromState || sessionStorage.getItem('checkout_itemListId') || '';
+    this.savedItemListName = itemListNameFromState || sessionStorage.getItem('checkout_itemListName') || '';
 
     this.reservationService.getById(reservationId).subscribe({
       next: (reservation) => {
+        
         // Extraer datos de la reservación
         this.departureId = reservation.departureId;
         this.totalAmount = reservation.totalAmount;
         this.tourId = reservation.tourId;
         this.totalPassengers = reservation.totalPassengers;
         this.reservationData = reservation; // Guardar datos completos de la reserva
+
+        // Guardar userId para el cupón
+        this.userIdForCoupon = reservation.userId ?? null;
 
         // Verificar si el userId está vacío y el usuario está logueado
         this.checkAndUpdateUserId(reservation);
@@ -576,10 +619,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         // Ejecutar verificación de precios inmediatamente cuando tengamos los datos básicos
         this.executePriceCheck();
 
-        // Disparar evento view_cart SOLO la primera vez que se visualiza el checkout
-        if (!this.viewCartEventFired && this.activeIndex === 0) {
+        // Disparar evento view_cart SOLO la primera vez que se inicializa el componente
+        if (!this.componentInitialized && this.activeIndex === 0) {
           this.trackViewCart();
-          this.viewCartEventFired = true;
+          this.componentInitialized = true;
         }
 
         // Si hay un step activo, inicializar el componente correspondiente
@@ -598,59 +641,35 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  async onActivitiesSelectionChange(activitiesData: {
-    selectedActivities: any[];
-    totalPrice: number;
-  }): Promise<void> {
-    this.selectedActivities = activitiesData.selectedActivities;
-    this.activitiesTotalPrice = activitiesData.totalPrice;
-
-    if (
-      this.travelerSelector &&
-      Object.keys(this.pricesByAgeGroup).length > 0
-    ) {
-      this.updateOrderSummary(this.ageGroupCounts);
-    }
-
-    // ✅ Esperar a que terminen guardados pendientes en actividades antes de refrescar
-    try {
-      await this.activitiesOptionals?.waitForPendingSaves?.();
-    } catch (err) {
-      console.error('❌ Error esperando guardados de actividades:', err);
-    }
-
-    // ✅ Disparar actualización del summary inmediatamente
+  /**
+   * Método llamado cuando se actualizan las actividades
+   */
+  onActivitiesUpdated(): void {
+    // Disparar actualización del summary inmediatamente
     this.triggerSummaryRefresh();
   }
 
   /**
-   * 🔥 NUEVO: Maneja el evento de guardado completado desde actividades opcionales
+   * Maneja el evento de actualización de travelers desde selector-traveler
    */
-  onSaveCompleted(event: {
-    component: string;
-    success: boolean;
-    error?: string;
-  }): void {
-    if (event.success) {
-      console.log(`✅ Guardado exitoso en ${event.component}`);
-      // El padre se encarga de obtener la información por su cuenta
-      if (
-        this.travelerSelector &&
-        Object.keys(this.ageGroupCounts).length > 0
-      ) {
-        this.updateOrderSummary(this.ageGroupCounts);
-      }
-    } else {
-      console.error(`❌ Error en guardado de ${event.component}:`, event.error);
-      // Mostrar error al usuario si es necesario
-      this.showErrorToast(
-        `Error al guardar ${event.component}: ${event.error}`
-      );
+  async onTravelersUpdated(): Promise<void> {
+    
+    // Recargar viajeros en el selector de habitaciones
+    if (this.roomSelector) {
+      await this.roomSelector.reloadOnTravelersChange();
     }
+    
+    // Recargar viajeros en el selector de seguros y actualizar asignaciones
+    if (this.insuranceSelector) {
+      await this.insuranceSelector.reloadOnTravelersChange();
+    }
+    
+    // Disparar actualización del summary
+    this.triggerSummaryRefresh();
   }
 
   /**
-   * 🔥 NUEVO: Muestra un toast de error
+   * NUEVO: Muestra un toast de error
    */
   private showErrorToast(message: string): void {
     this.messageService.add({
@@ -662,80 +681,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
-   * Maneja los cambios de asignación de actividades por viajero
+   * Maneja las actualizaciones de datos de viajeros (formularios y actividades)
    */
-  async onActivitiesAssignmentChange(event: {
-    travelerId: number;
-    activityId: number;
-    isAssigned: boolean;
-    activityName: string;
-    activityPrice: number;
-  }): Promise<void> {
-    // Inicializar el objeto para el viajero si no existe
-    if (!this.travelerActivities[event.travelerId]) {
-      this.travelerActivities[event.travelerId] = {};
-    }
-
-    // Actualizar el estado de la actividad para el viajero
-    this.travelerActivities[event.travelerId][event.activityId] =
-      event.isAssigned;
-
-    // Actualizar el conteo de actividades por actividad
-    this.updateActivitiesByTraveler(
-      event.activityId,
-      event.activityName,
-      event.activityPrice
-    );
-
-    // Recalcular el resumen del pedido
-    if (
-      Object.keys(this.ageGroupCounts).length > 0 &&
-      Object.keys(this.pricesByAgeGroup).length > 0
-    ) {
-      this.updateOrderSummary(this.ageGroupCounts);
-    } else {
-      this.updateActivitiesOnly();
-    }
-
-    // Forzar detección de cambios
-    this.cdr.detectChanges();
-
-    // ✅ Esperar a que terminen guardados pendientes en actividades antes de refrescar
-    try {
-      await this.activitiesOptionals?.waitForPendingSaves?.();
-    } catch (err) {
-      console.error('❌ Error esperando guardados de actividades:', err);
-    }
-
-    // ✅ Disparar actualización del summary inmediatamente
-    this.triggerSummaryRefresh();
-  }
-
-  /**
-   * Manejar cambios en asignaciones de habitaciones
-   */
-  onRoomAssignmentsChange(roomAssignments: {
-    [travelerId: number]: number;
-  }): void {
-    console.log(
-      '🏨 Cambios en asignaciones de habitaciones recibidos en checkout-v2:',
-      roomAssignments
-    );
-
-    // Actualizar el resumen del pedido cuando cambien las habitaciones
-    if (
-      Object.keys(this.ageGroupCounts).length > 0 &&
-      Object.keys(this.pricesByAgeGroup).length > 0
-    ) {
-      console.log(
-        '🔄 Actualizando resumen del pedido por cambios en habitaciones...'
-      );
-      this.updateOrderSummary(this.ageGroupCounts);
-    }
-
-    // Forzar detección de cambios
-    this.cdr.detectChanges();
-
+  onTravelerDataUpdated(): void {
+    
     // ✅ Disparar actualización del summary inmediatamente
     this.triggerSummaryRefresh();
   }
@@ -799,10 +748,11 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
   // Método para cargar datos del tour y obtener el itinerario
   private loadTourData(tourId: number): void {
-    this.tourNetService.getTourById(tourId).subscribe({
+    this.tourService.getTourById(tourId).subscribe({
       next: (tour) => {
         this.tourName = tour.name || '';
         this.tourSlug = tour.slug || '';
+        this.tourData = tour; // Guardar el tour completo para usarlo en analytics
 
         // Cargar itinerario basado en el tourId
         this.loadItineraryByTourId(tourId);
@@ -834,12 +784,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           this.itineraryData = itineraries[0];
           this.itineraryId = this.itineraryData.id;
         } else {
-          console.warn('No se encontraron itinerarios para el tourId:', tourId);
           this.itineraryId = null;
         }
       },
       error: (error) => {
-        console.error('Error al cargar itinerario por tourId:', error);
         this.itineraryId = null;
       },
     });
@@ -849,36 +797,40 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   private loadDepartureData(departureId: number): void {
     this.departureService.getById(departureId).subscribe({
       next: (departure) => {
+        // Verificar que departure no sea null antes de acceder a sus propiedades
+        if (departure) {
         this.departureDate = departure.departureDate ?? '';
         this.returnDate = departure.arrivalDate ?? '';
         this.departureData = departure; // Almacenar datos del departure
 
-        // ✅ NUEVO: Obtener el departureActivityPackId desde el departure
+        // NUEVO: Obtener el departureActivityPackId desde el departure
         // Por ahora, vamos a usar un valor por defecto o buscar en la BD
         this.loadDepartureActivityPackId(departureId);
 
         // Solo asignar si no se ha obtenido desde el tour (como respaldo)
         if (!this.itineraryId && departure.itineraryId) {
           this.itineraryId = departure.itineraryId;
+          }
+        } else {
+          // Si departure es null, establecer valores por defecto
+          this.departureDate = '';
+          this.returnDate = '';
+          this.departureData = null;
         }
       },
       error: (error) => {
         // Error al cargar los datos del departure - continuando sin fechas
+        this.departureDate = '';
+        this.returnDate = '';
+        this.departureData = null;
       },
     });
   }
 
-  // ✅ NUEVO: Método para cargar el departureActivityPackId
+  // NUEVO: Método para cargar el departureActivityPackId
   private loadDepartureActivityPackId(departureId: number): void {
-    // ✅ SIMPLIFICADO: No hacer nada especial, solo mantener el departureId como referencia
+    // SIMPLIFICADO: No hacer nada especial, solo mantener el departureId como referencia
     this.departureActivityPackId = departureId;
-
-    console.log(
-      '🔄 departureActivityPackId cargado:',
-      this.departureActivityPackId
-    );
-
-    // ✅ ELIMINADO: No forzar actualización del summary automáticamente
   }
 
   // Método para cargar precios del departure
@@ -936,56 +888,37 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       }
     });
 
-    // ✅ MEJORADO: Verificar si hay un resumen persistido en localStorage
+    // MEJORADO: Verificar si hay un resumen persistido en localStorage
     if (this.reservationId && this.summary.length === 0) {
-      console.log(
-        '🔄 Verificando si hay resumen persistido en localStorage...'
-      );
       this.restoreSummaryFromLocalStorage();
     }
 
-    // ✅ MEJORADO: Solo inicializar el resumen si no hay uno persistido
+    // MEJORADO: Solo inicializar el resumen si no hay uno persistido
     if (this.summary.length === 0) {
-      console.log(
-        '🔄 No hay resumen persistido, inicializando resumen automáticamente...'
-      );
       this.initializeOrderSummary();
     } else {
-      console.log(
-        '✅ Resumen restaurado desde localStorage, no se necesita inicialización'
-      );
-      // ✅ NUEVO: Recalcular totales del resumen restaurado
+      // NUEVO: Recalcular totales del resumen restaurado
       this.calculateTotals();
       this.updateReservationTotalAmount();
     }
 
-    // ✅ NUEVO: Forzar actualización adicional después de un delay para asegurar que los componentes estén listos
+    // NUEVO: Forzar actualización adicional después de un delay para asegurar que los componentes estén listos
     setTimeout(() => {
       if (this.summary.length === 0) {
-        console.log(
-          '⚠️ Resumen aún vacío después del delay, forzando actualización...'
-        );
         this.forceSummaryUpdate();
-      } else {
-        console.log(
-          '✅ Resumen ya tiene contenido, no se necesita actualización forzada'
-        );
       }
     }, 500);
   }
 
   // Método para inicializar el resumen automáticamente
   private initializeOrderSummary(): void {
-    // ✅ SIMPLIFICADO: Solo verificar una vez cuando se cargan los precios
+    // SIMPLIFICADO: Solo verificar una vez cuando se cargan los precios
     this.checkAndInitializeSummary();
 
-    // ✅ ELIMINADO: No llamar múltiples veces con delays que sobrescriben el summary
+    // ELIMINADO: No llamar múltiples veces con delays que sobrescriben el summary
     // Solo verificar una vez más después de un delay si el summary está vacío
     setTimeout(() => {
       if (this.summary.length === 0) {
-        console.log(
-          '🔄 Summary vacío después del delay, verificando nuevamente...'
-        );
         this.checkAndInitializeSummary();
       }
     }, 2000);
@@ -994,117 +927,15 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   // Método para normalizar nombres de grupos de edad
   // Eliminado: no se usan nombres fijos de grupos de edad, se trabaja por ID
 
-  /**
-   * Método llamado cuando cambian los números de viajeros en el selector de travelers
-   * Este método actualiza el componente de habitaciones con los nuevos números
-   */
-  async onAgeGroupCountsChange(counts: {
-    [ageGroupId: number]: number;
-  }): Promise<void> {
-    this.ageGroupCounts = { ...counts };
-    const newTotal = Object.values(this.ageGroupCounts).reduce(
-      (a, b) => a + b,
-      0
-    );
-    const prevTotal = this.totalPassengers;
-    this.totalPassengers = newTotal;
 
-    // Compat: informar a rooms con un fallback
-    if (this.roomSelector) {
-      const fallback = {
-        adults: this.totalPassengers,
-        childs: 0,
-        babies: 0,
-      } as any;
-      this.roomSelector.updateTravelersNumbers(fallback);
-    }
-
-    if (Object.keys(this.pricesByAgeGroup).length > 0) {
-      this.updateOrderSummary(this.ageGroupCounts);
-    }
-
-    if (newTotal !== prevTotal && newTotal > 0) {
-      this.executePriceCheck();
-    }
-
-    try {
-      await this.travelerSelector?.saveTravelersChanges?.();
-    } catch (err) {
-      console.error('❌ Error guardando cambios de viajeros:', err);
-    }
-
-    this.triggerSummaryRefresh();
-  }
 
   /**
-   * Método llamado cuando cambia el estado de guardado en el selector de travelers
-   * @param event - Evento con información del estado de guardado
+   * Método llamado cuando se actualizan las habitaciones
    */
-  onTravelerSelectorSaveStatusChange(event: {
-    saving: boolean;
-    success?: boolean;
-    error?: string;
-  }): void {
-    if (event.saving) {
-      console.log('💾 Guardando información de viajeros...');
-      // Aquí podrías mostrar un indicador de carga si es necesario
-    } else if (event.success !== undefined) {
-      if (event.success) {
-        console.log('✅ Guardado exitoso de información de viajeros');
-        // Aquí podrías mostrar un mensaje de éxito si es necesario
-      } else {
-        console.error(
-          '❌ Error al guardar información de viajeros:',
-          event.error
-        );
-        // Aquí podrías mostrar un mensaje de error si es necesario
-      }
-    }
-  }
+  onRoomsUpdated(): void {
 
-  /**
-   * Método llamado cuando se completa un guardado exitoso en el selector de travelers
-   * @param event - Evento con información del guardado completado
-   */
-  onTravelerSelectorSaveCompleted(event: {
-    component: string;
-    success: boolean;
-    data?: any;
-    error?: string;
-  }): void {
-    if (event.success) {
-      console.log(`✅ Guardado exitoso en ${event.component}:`, event.data);
-      // Actualizar resumen del pedido si es necesario
-      if (
-        this.travelerSelector &&
-        Object.keys(this.ageGroupCounts).length > 0
-      ) {
-        this.updateOrderSummary(this.ageGroupCounts);
-      }
-    } else {
-      console.error(`❌ Error en guardado de ${event.component}:`, event.error);
-      // Mostrar error al usuario si es necesario
-    }
-  }
-
-  /**
-   * OPTIMIZADO: Método llamado cuando cambian las habitaciones seleccionadas
-   */
-  async onRoomsSelectionChange(selectedRooms: {
-    [tkId: string]: number;
-  }): Promise<void> {
-    // NUEVO: Forzar actualización del summary cuando cambian las habitaciones
-    this.forceSummaryUpdate();
-
-    // ✅ Guardar inmediatamente cambios de habitaciones
-    try {
-      await this.roomSelector?.saveRoomAssignments?.();
-    } catch (err) {
-      console.error('❌ Error guardando asignaciones de habitaciones:', err);
-    }
-
-    // ✅ Disparar actualización del summary inmediatamente
-    this.triggerSummaryRefresh();
+        // Disparar actualización del summary inmediatamente
+        this.triggerSummaryRefresh();
   }
 
   /**
@@ -1117,30 +948,13 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     this.selectedInsurance = insuranceData.selectedInsurance;
     this.insurancePrice = insuranceData.price;
 
-    // Recalcular el resumen del pedido
-    if (
-      this.travelerSelector &&
-      Object.keys(this.pricesByAgeGroup).length > 0
-    ) {
-      this.updateOrderSummary(this.ageGroupCounts);
-    } else {
-      // Forzar actualización con datos básicos si no tenemos travelerSelector
-      const basicTravelers = {
-        adults: Math.max(1, this.totalPassengers),
-        childs: 0,
-        babies: 0,
-      };
-      this.updateOrderSummary(basicTravelers);
-    }
-
-    // ✅ Guardar inmediatamente cambios de seguro
+    // Guardar inmediatamente cambios de seguro
     try {
       await this.insuranceSelector?.saveInsuranceAssignments?.();
     } catch (err) {
-      console.error('❌ Error guardando asignaciones de seguro:', err);
     }
 
-    // ✅ Disparar actualización del summary inmediatamente
+    // Disparar actualización del summary inmediatamente
     this.triggerSummaryRefresh();
   }
 
@@ -1151,232 +965,228 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     selectedFlight: IFlightPackDTO | null;
     totalPrice: number;
   }): Promise<void> {
-    console.log(
-      '🔄 checkout-v2: onFlightSelectionChange llamado con:',
-      flightData
-    );
-    console.log('🕐 Timestamp:', new Date().toISOString());
-    console.log('📊 selectedFlight anterior:', this.selectedFlight);
-    console.log('💰 flightPrice anterior:', this.flightPrice);
-
+    this.isFlightProcessing = true;
     this.selectedFlight = flightData.selectedFlight;
     this.flightPrice = flightData.totalPrice; // Ahora es el precio por persona
 
-    console.log('✅ Vuelo seleccionado actualizado:', this.selectedFlight);
-    console.log('💰 Precio del vuelo actualizado:', this.flightPrice);
-
-    // ✅ MEJORADO: Verificar si es una opción "Sin Vuelos"
+    // MEJORADO: Verificar si es una opción "Sin Vuelos"
     if (this.selectedFlight && this.isNoFlightOption(this.selectedFlight)) {
-      console.log('🚫 CASO ESPECIAL: "Sin Vuelos" seleccionado');
-      console.log('🚫 selectedFlight es una opción sin vuelos');
-      console.log('🚫 flightPrice es:', this.flightPrice);
-
-      // ✅ NUEVO: Forzar precio 0 para opciones "Sin Vuelos"
+      // NUEVO: Forzar precio 0 para opciones "Sin Vuelos"
       this.flightPrice = 0;
-      console.log('🚫 Precio forzado a 0 para "Sin Vuelos"');
     }
 
-    // ✅ MEJORADO: Verificar si no hay vuelo seleccionado
+    // MEJORADO: Verificar si no hay vuelo seleccionado
     if (!this.selectedFlight) {
-      console.log('🚫 CASO ESPECIAL: No hay vuelo seleccionado');
-      console.log('🚫 selectedFlight es null');
-      console.log('🚫 flightPrice es:', this.flightPrice);
-
-      // ✅ NUEVO: Forzar precio 0 cuando no hay vuelo
+      // NUEVO: Forzar precio 0 cuando no hay vuelo
       this.flightPrice = 0;
-      console.log('🚫 Precio forzado a 0 para estado sin vuelo');
     }
 
     // Determinar si hay vuelos disponibles
     this.hasAvailableFlights = this.checkIfFlightsAvailable();
-    console.log(
-      '🛫 hasAvailableFlights actualizado:',
-      this.hasAvailableFlights
-    );
 
-    // ✅ MEJORADO: Actualizar el resumen siempre que tengamos datos de precios
-    if (Object.keys(this.pricesByAgeGroup).length > 0) {
-      let travelersToUse;
-
-      if (
-        this.travelerSelector &&
-        Object.keys(this.ageGroupCounts).length > 0
-      ) {
-        travelersToUse = this.ageGroupCounts;
-        console.log(
-          '📊 Actualizando resumen con datos de viajeros existentes:',
-          travelersToUse
-        );
-      } else {
-        travelersToUse = this.buildFallbackAgeGroupCounts(this.totalPassengers);
-        console.log(
-          '📊 Actualizando resumen con datos básicos de viajeros:',
-          travelersToUse
-        );
-      }
-
-      // ✅ NUEVO: Forzar actualización inmediata del summary
-      this.updateOrderSummary(travelersToUse);
-      console.log(
-        '✅ Resumen actualizado inmediatamente después del cambio de vuelo'
-      );
-    } else {
-      console.log(
-        '⚠️ No hay precios por grupo de edad disponibles, no se puede actualizar el resumen'
-      );
-    }
-
-    // ✅ NUEVO: Limpiar resumen anterior del localStorage antes de persistir el nuevo
+    // Limpiar resumen anterior del localStorage
     if (this.reservationId) {
       localStorage.removeItem(`checkout_summary_${this.reservationId}`);
-      console.log('🗑️ Resumen anterior del localStorage eliminado');
     }
 
-    // ✅ Guardar inmediatamente cambios de vuelos
+    // Guardar inmediatamente cambios de vuelos
     try {
       if (
-        this.flightManagement?.defaultFlightsComponent?.saveFlightAssignments
+        this.flightManagement?.defaultFlightsComponent?.saveFlightAssignmentsForAllTravelers
       ) {
-        await this.flightManagement.defaultFlightsComponent.saveFlightAssignments();
+        const targetId = this.selectedFlight ? this.selectedFlight.id : 0;
+        const shouldUnselectSpecificSearch = targetId === 0;
+        await this.flightManagement.defaultFlightsComponent.saveFlightAssignmentsForAllTravelers(
+          targetId,
+          shouldUnselectSpecificSearch
+        );
       }
     } catch (err) {
-      console.error('❌ Error guardando asignaciones de vuelos:', err);
     }
 
-    // ✅ Disparar actualización del summary inmediatamente
+    // Disparar actualización del summary inmediatamente
     this.triggerSummaryRefresh();
   }
 
   /**
    * Método para verificar si hay vuelos disponibles
-   * ✅ MODIFICADO: Ahora verifica si hay flightPacks disponibles en default-flights
+   * MODIFICADO: Ahora verifica si hay flightPacks disponibles en default-flights
    * para determinar si mostrar la opción "Sin Vuelos"
    */
   private checkIfFlightsAvailable(): boolean {
-    // ✅ NUEVA LÓGICA: Mostrar la opción "Sin Vuelos" solo cuando hay flightPacks disponibles
+    // NUEVA LÓGICA: Mostrar la opción "Sin Vuelos" solo cuando hay flightPacks disponibles
     // Esto asegura que la opción esté disponible cuando realmente hay vuelos en el sistema
 
     // Verificar si hay flightPacks disponibles
     if (this.availableFlights && this.availableFlights.length > 0) {
-      console.log(
-        '✅ Hay flightPacks disponibles - mostrando opción "Sin Vuelos"'
-      );
       return true;
     }
-
-    console.log(
-      '❌ No hay flightPacks disponibles - ocultando opción "Sin Vuelos"'
-    );
     return false;
   }
 
   /**
    * Método para verificar la disponibilidad de vuelos en el sistema
+   * Verifica la disponibilidad real usando el endpoint ActivityPackAvailability
    */
   private checkFlightsAvailability(departureId: number): void {
-    // Importar el servicio de vuelos
-    import('./services/flightsNet.service').then(({ FlightsNetService }) => {
-      const flightsService = new FlightsNetService(this.http);
+    // Resetear estado al inicio de la carga
+    this.hasAvailableFlights = false;
+    this.hasFlightlessAvailability = false;
+    this.availableFlights = [];
 
-      flightsService.getFlights(departureId).subscribe({
-        next: (flights) => {
-          // Almacenar los vuelos disponibles
-          this.availableFlights = flights || [];
+    this.flightsNetService.getFlights(departureId).subscribe({
+      next: (flights) => {
+        // Almacenar los vuelos disponibles
+        this.availableFlights = flights || [];
 
-          // Verificar si hay vuelos disponibles basándose en name y description
-          this.hasAvailableFlights =
-            flights &&
-            flights.length > 0 &&
-            flights.some((pack) => {
+        if (!flights || flights.length === 0) {
+          this.hasAvailableFlights = false;
+          this.hasFlightlessAvailability = false;
+          return;
+        }
+
+        const flightlessPack = flights.find(
+          (pack: IFlightPackDTO) => {
+            const name = pack.name?.toLowerCase() || '';
+            const description = pack.description?.toLowerCase() || '';
+            return name.includes('sin vuelos') ||
+                   description.includes('sin vuelos') ||
+                   name.includes('pack sin vuelos') ||
+                   description.includes('pack sin vuelos');
+          }
+        );
+
+        this.flightlessPack = flightlessPack || null;
+
+        if (flightlessPack) {
+          // Usar el ID del pack "sin vuelos" para verificar su disponibilidad
+          const flightlessPackId = flightlessPack.id;
+          
+          this.activityPackAvailabilityService
+            .getByActivityPackAndDeparture(flightlessPackId, departureId)
+            .pipe(
+              map((availabilities) => {
+                if (availabilities && availabilities.length > 0) {
+                  const availability = availabilities[0];
+                  return availability.bookableAvailability > 0;
+                }
+                return false;
+              }),
+              catchError(() => of(false))
+            )
+            .subscribe({
+              next: (hasAvailability) => {
+                this.hasFlightlessAvailability = hasAvailability;
+              },
+              error: () => {
+                this.hasFlightlessAvailability = false;
+              }
+            });
+        } else {
+          // Si no hay pack "sin vuelos", verificar usando departureActivityPackId como fallback
+          // Esto puede ser necesario si "sin vuelos" no aparece como un pack separado
+          if (this.departureActivityPackId) {
+            this.activityPackAvailabilityService
+              .getByActivityPackAndDeparture(this.departureActivityPackId, departureId)
+              .pipe(
+                map((availabilities) => {
+                  if (availabilities && availabilities.length > 0) {
+                    const availability = availabilities[0];
+                    return availability.bookableAvailability > 0;
+                  }
+                  return false;
+                }),
+                catchError(() => of(false))
+              )
+              .subscribe({
+                next: (hasAvailability) => {
+                  this.hasFlightlessAvailability = hasAvailability;
+                },
+                error: () => {
+                  this.hasFlightlessAvailability = false;
+                }
+              });
+          } else {
+            // Si no hay pack "sin vuelos" ni departureActivityPackId, asumir que hay disponibilidad
+            // para no bloquear el botón innecesariamente
+            this.hasFlightlessAvailability = true;
+          }
+        }
+
+        // Verificar disponibilidad real para cada pack usando el endpoint
+        const availabilityChecks = flights.map((pack) =>
+          this.activityPackAvailabilityService
+            .getByActivityPackAndDeparture(pack.id, departureId)
+            .pipe(
+              map((availabilities) => {
+                // Si hay disponibilidad y bookableAvailability > 0, hay vuelos disponibles
+                if (availabilities && availabilities.length > 0) {
+                  const availability = availabilities[0];
+                  return availability.bookableAvailability > 0;
+                }
+                return false;
+              }),
+              catchError(() => {
+                // Si hay error, asumir que no hay disponibilidad
+                return of(false);
+              })
+            )
+        );
+
+        // Verificar si hay al menos un pack con disponibilidad > 0
+        if (availabilityChecks.length === 0) {
+          this.hasAvailableFlights = false;
+          return;
+        }
+
+        forkJoin(availabilityChecks).subscribe({
+          next: (results) => {
+            this.hasAvailableFlights = results.some((hasAvailability) => hasAvailability);
+            
+            // Filtrar "sin vuelos" o "pack sin vuelos" de la lista de vuelos disponibles
+            this.availableFlights = this.availableFlights.filter((pack) => {
               const name = pack.name?.toLowerCase() || '';
               const description = pack.description?.toLowerCase() || '';
-
-              // Verificar que SÍ sea una opción sin vuelos
-              const isFlightlessOption =
-                name.includes('sin vuelos') ||
+              const code = pack.code?.toLowerCase() || '';
+              
+              // Excluir si contiene cualquier variante de "sin vuelos"
+              const hasSinVuelos = 
+                name.includes('sin vuelos') || 
                 description.includes('sin vuelos') ||
-                name.includes('pack sin vuelos') ||
-                description.includes('pack sin vuelos');
-
-              return isFlightlessOption;
+                name.includes('pack sin vuelos') || 
+                description.includes('pack sin vuelos') ||
+                code.includes('sin vuelos');
+              
+              return !hasSinVuelos;
             });
-
-          console.log(
-            'Vuelos disponibles en el sistema:',
-            this.hasAvailableFlights
-          );
-        },
-        error: (error) => {
-          console.error('Error al verificar disponibilidad de vuelos:', error);
-          this.hasAvailableFlights = false;
-          this.availableFlights = [];
-        },
-      });
+          },
+          error: () => {
+            this.hasAvailableFlights = false;
+          },
+        });
+      },
+      error: () => {
+        this.hasAvailableFlights = false;
+        this.hasFlightlessAvailability = false;
+        this.availableFlights = [];
+      },
     });
   }
 
   // OPTIMIZADO: Método para verificar si podemos inicializar el resumen
   private checkAndInitializeSummary(): void {
-    // ✅ NUEVO: No sobrescribir el summary si ya tiene contenido
-    if (this.summary.length > 0) {
-      console.log(
-        '🔄 Summary ya tiene contenido, no sobrescribiendo:',
-        this.summary.length,
-        'elementos'
-      );
-      return;
-    }
-
-    // Verificar si tenemos todo lo necesario para inicializar
-    const hasPrices = Object.keys(this.pricesByAgeGroup).length > 0;
-    const hasTravelers = Object.keys(this.ageGroupCounts).length > 0;
-
-    console.log('🔄 checkAndInitializeSummary - Estado:', {
-      hasPrices,
-      hasTravelers: !!hasTravelers,
-      summaryLength: this.summary.length,
-    });
-
-    if (hasPrices && hasTravelers) {
-      this.updateOrderSummary(this.ageGroupCounts);
-    } else if (hasPrices && this.totalPassengers > 0) {
-      // Si no tenemos travelers específicos, usar los de la reserva
-      const fallbackCounts = this.buildFallbackAgeGroupCounts(
-        this.totalPassengers
-      );
-      this.updateOrderSummary(fallbackCounts);
-    }
+    // El summary se actualiza automáticamente mediante el componente summary-table
+    // Solo disparamos el trigger de actualización
+    this.triggerSummaryRefresh();
   }
 
   // NUEVO: Método para forzar la actualización del summary cuando se cargan datos de habitaciones
   private forceSummaryUpdate(): void {
-    // ✅ NUEVO: No sobrescribir el summary si ya tiene contenido
-    if (this.summary.length > 0) {
-      console.log(
-        '🔄 forceSummaryUpdate: Summary ya tiene contenido, no sobrescribiendo:',
-        this.summary.length,
-        'elementos'
-      );
-      return;
-    }
-
-    if (Object.keys(this.pricesByAgeGroup).length > 0) {
-      const counts =
-        Object.keys(this.ageGroupCounts).length > 0
-          ? this.ageGroupCounts
-          : this.buildFallbackAgeGroupCounts(this.totalPassengers);
-      this.updateOrderSummary(counts);
-    }
+    // El summary se actualiza automáticamente mediante el componente summary-table
+    this.triggerSummaryRefresh();
   }
   // Método para actualizar el resumen del pedido
   updateOrderSummary(ageGroupCounts: { [ageGroupId: number]: number }): void {
-    console.log(
-      '🔄 updateOrderSummary llamado con ageGroupCounts:',
-      ageGroupCounts
-    );
-    console.log('📊 selectedFlight actual:', this.selectedFlight);
-    console.log('💰 flightPrice actual:', this.flightPrice);
-
     this.summary = [];
 
     // Plan básico por grupo de edad (dinámico)
@@ -1392,13 +1202,13 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       }
     });
 
-    // ✅ CORREGIDO: Manejo mejorado de vuelos
+    // CORREGIDO: Manejo mejorado de vuelos
     if (this.selectedFlight) {
       // Verificar si es una opción "Sin Vuelos"
       const isNoFlightOption = this.isNoFlightOption(this.selectedFlight);
 
       if (isNoFlightOption) {
-        // ✅ CASO "Sin Vuelos": Agregar al resumen con precio 0 y texto "incluido"
+        // CASO "Sin Vuelos": Agregar al resumen con precio 0 y texto "incluido"
         const totalTravelers = Object.values(ageGroupCounts).reduce(
           (a, b) => a + b,
           0
@@ -1410,10 +1220,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           description: 'Sin Vuelos',
         };
         this.summary.push(noFlightItem);
-
-        console.log(
-          '🚫 Agregando "Sin Vuelos" al resumen con precio 0 (incluido)'
-        );
       } else if (this.flightPrice > 0) {
         // Vuelo con precio: agregar normalmente
         const totalTravelers = Object.values(ageGroupCounts).reduce(
@@ -1429,14 +1235,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           } - ${this.selectedFlight.flights[0]?.arrivalCity || ''}`,
         };
         this.summary.push(flightItem);
-
-        console.log(
-          '✈️ Agregando vuelo al resumen con precio:',
-          this.flightPrice
-        );
       }
     } else {
-      // ✅ CASO: No hay vuelo seleccionado (estado inicial o después de recarga)
+      // CASO: No hay vuelo seleccionado (estado inicial o después de recarga)
       const totalTravelers = Object.values(ageGroupCounts).reduce(
         (a, b) => a + b,
         0
@@ -1448,10 +1249,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         description: 'Sin Vuelos',
       };
       this.summary.push(noFlightItem);
-
-      console.log(
-        '🚫 No hay vuelo seleccionado - agregando "Sin Vuelos" al resumen'
-      );
     }
 
     // Habitaciones seleccionadas
@@ -1515,7 +1312,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       });
     }
 
-    // ✅ SEGURO SELECCIONADO (solo desde BD)
+    // SEGURO SELECCIONADO (solo desde BD)
     if (this.selectedInsurance) {
       const totalTravelers = Object.values(ageGroupCounts).reduce(
         (a, b) => a + b,
@@ -1545,26 +1342,19 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     // Actualizar totales en la reserva (solo localmente, no en BD)
     this.updateReservationTotalAmount();
 
-    // ✅ NUEVO: Log del resumen final para debugging
-    console.log('📋 Resumen final del pedido:', this.summary);
-    console.log('📊 Cantidad de elementos en el resumen:', this.summary.length);
-    console.log('💰 Subtotal calculado:', this.subtotal);
-    console.log('💰 Total calculado:', this.totalAmountCalculated);
-
-    // ✅ NUEVO: Log específico para verificar "Sin Vuelos"
+    // NUEVO: Log específico para verificar "Sin Vuelos"
     const hasNoFlight = this.summary.some(
       (item) => item.description === 'Sin Vuelos'
     );
-    console.log('🚫 ¿Tiene "Sin Vuelos" en el resumen?', hasNoFlight);
 
-    // ✅ NUEVO: Persistir el resumen en localStorage para mantener consistencia
+    // NUEVO: Persistir el resumen en localStorage para mantener consistencia
     this.persistSummaryToLocalStorage();
 
     // Forzar detección de cambios
     this.cdr.detectChanges();
   }
 
-  // ✅ NUEVO: Método para verificar si un vuelo es la opción "Sin Vuelos"
+  // NUEVO: Método para verificar si un vuelo es la opción "Sin Vuelos"
   private isNoFlightOption(flight: IFlightPackDTO): boolean {
     if (!flight) return false;
 
@@ -1582,7 +1372,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     );
   }
 
-  // ✅ NUEVO: Método para persistir el resumen en localStorage
+  // NUEVO: Método para persistir el resumen en localStorage
   private persistSummaryToLocalStorage(): void {
     if (this.reservationId) {
       const summaryData = {
@@ -1598,17 +1388,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           `checkout_summary_${this.reservationId}`,
           JSON.stringify(summaryData)
         );
-        console.log('💾 Resumen persistido en localStorage:', summaryData);
       } catch (error) {
-        console.warn(
-          '⚠️ No se pudo persistir el resumen en localStorage:',
-          error
-        );
       }
     }
   }
 
-  // ✅ NUEVO: Método para recuperar el resumen desde localStorage
+  // NUEVO: Método para recuperar el resumen desde localStorage
   private restoreSummaryFromLocalStorage(): void {
     if (this.reservationId) {
       try {
@@ -1626,22 +1411,12 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             this.summary = summaryData.summary || [];
             this.subtotal = summaryData.subtotal || 0;
             this.totalAmountCalculated = summaryData.total || 0;
-
-            console.log(
-              '🔄 Resumen restaurado desde localStorage:',
-              summaryData
-            );
             this.cdr.detectChanges();
           } else {
-            console.log('⏰ Datos del resumen expirados, no se restauran');
             localStorage.removeItem(`checkout_summary_${this.reservationId}`);
           }
         }
       } catch (error) {
-        console.warn(
-          '⚠️ Error al restaurar resumen desde localStorage:',
-          error
-        );
         localStorage.removeItem(`checkout_summary_${this.reservationId}`);
       }
     }
@@ -1660,11 +1435,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     // MODIFICADO: No calcular total en frontend, usar el que viene del backend
     // El totalAmountCalculated se actualizará desde el backend cuando se recargue el resumen
-    console.log(
-      '📊 Total calculado en frontend (solo para referencia):',
-      this.subtotal
-    );
-    console.log('📊 Total real debe venir del backend:', this.totalAmount);
   }
 
   // Método para actualizar totalAmount en la reserva
@@ -1674,16 +1444,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     }
 
     // MODIFICADO: No sobrescribir el totalAmount del backend
-    // El total debe venir del backend, no calcularse en el frontend
-    console.log(
-      '📊 Total del backend (reservationData):',
-      this.reservationData.totalAmount
-    );
-    console.log(
-      '📊 Total local (no debe sobrescribir al backend):',
-      this.totalAmountCalculated
-    );
-
     // Solo actualizar la variable local para mantener consistencia, pero no sobrescribir el backend
     this.totalAmount = this.reservationData.totalAmount;
     this.totalAmountCalculated = this.reservationData.totalAmount;
@@ -1691,57 +1451,29 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
   // Método para guardar actividades seleccionadas (CON SOPORTE COMPLETO PARA PACKS)
   async saveActivitiesAssignments(): Promise<boolean> {
-    console.log('=== INICIO saveActivitiesAssignments ===');
-
     if (
       !this.reservationId ||
       !this.selectedActivities ||
       this.selectedActivities.length === 0
     ) {
-      console.log('No hay actividades para guardar, retornando true');
-      console.log('reservationId:', this.reservationId);
-      console.log('selectedActivities:', this.selectedActivities);
-      console.log(
-        'selectedActivities.length:',
-        this.selectedActivities?.length
-      );
       return true; // Si no hay actividades seleccionadas, consideramos exitoso
     }
 
     try {
       // Verificar que tenemos el componente travelerSelector con datos
       if (!this.travelerSelector) {
-        console.error('No se encontró el componente travelerSelector');
         throw new Error('No se encontró información de viajeros');
       }
 
       // Obtener los travelers desde el componente travelerSelector
-      const existingTravelers = this.travelerSelector.existingTravelers || [];
+      const existingTravelers = this.travelerSelector.travelers || [];
 
       if (existingTravelers.length === 0) {
-        console.error('No se encontraron viajeros para esta reserva');
-        console.log(
-          'travelerSelector.existingTravelers:',
-          this.travelerSelector.existingTravelers
-        );
         throw new Error('No se encontraron viajeros para esta reserva');
       }
 
-      console.log(
-        `Guardando actividades para ${existingTravelers.length} viajeros`
-      );
-      console.log(
-        'Viajeros encontrados:',
-        existingTravelers.map((t) => ({
-          id: t.id,
-          name: (t as any).name || 'Sin nombre',
-        }))
-      );
-
       // Limpiar actividades y packs existentes para esta reserva
-      console.log('Limpiando actividades existentes...');
       await this.clearExistingActivitiesAndPacks(existingTravelers);
-      console.log('Actividades existentes limpiadas');
 
       // Separar actividades individuales y packs
       const individualActivities = this.selectedActivities.filter(
@@ -1750,12 +1482,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       const activityPacks = this.selectedActivities.filter(
         (activity) => activity.type === 'pack'
       );
-
-      console.log(
-        `Actividades individuales: ${individualActivities.length}, Packs: ${activityPacks.length}`
-      );
-      console.log('Actividades individuales:', individualActivities);
-      console.log('Packs de actividades:', activityPacks);
 
       const createPromises: Promise<any>[] = [];
 
@@ -1768,33 +1494,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             activityId: activity.id,
           };
 
-          console.log(
-            `Creando asignación de actividad ${activity.id} para viajero ${traveler.id}:`,
-            activityAssignment
-          );
-
           const createPromise = new Promise((resolve, reject) => {
             this.reservationTravelerActivityService
               .create(activityAssignment)
               .subscribe({
                 next: (result) => {
-                  console.log(
-                    `Actividad ${activity.id} asignada al viajero ${traveler.id} exitosamente:`,
-                    result
-                  );
                   resolve(result);
                 },
                 error: (error) => {
-                  console.error(
-                    `Error al asignar actividad ${activity.id} al viajero ${traveler.id}:`,
-                    error
-                  );
-                  console.error('Detalles del error:', {
-                    status: error?.status,
-                    message: error?.message,
-                    error: error?.error,
-                    stack: error?.stack,
-                  });
                   reject(error);
                 },
               });
@@ -1813,33 +1520,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             activityPackId: pack.id,
           };
 
-          console.log(
-            `Creando asignación de pack ${pack.id} para viajero ${traveler.id}:`,
-            packAssignment
-          );
-
           const createPromise = new Promise((resolve, reject) => {
             this.reservationTravelerActivityPackService
               .create(packAssignment)
               .subscribe({
                 next: (result) => {
-                  console.log(
-                    `Pack ${pack.id} asignado al viajero ${traveler.id} exitosamente:`,
-                    result
-                  );
                   resolve(result);
                 },
                 error: (error) => {
-                  console.error(
-                    `Error al asignar pack ${pack.id} al viajero ${traveler.id}:`,
-                    error
-                  );
-                  console.error('Detalles del error:', {
-                    status: error?.status,
-                    message: error?.message,
-                    error: error?.error,
-                    stack: error?.stack,
-                  });
                   reject(error);
                 },
               });
@@ -1851,9 +1539,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
       // Ejecutar todas las operaciones de creación
       if (createPromises.length > 0) {
-        console.log(
-          `Ejecutando ${createPromises.length} operaciones de creación...`
-        );
         try {
           // Usar Promise.allSettled para manejar mejor los errores y asegurar que todas las operaciones se completen
           const results = await Promise.allSettled(createPromises);
@@ -1866,13 +1551,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             (result) => result.status === 'rejected'
           );
 
-          console.log(
-            `Operaciones completadas: ${successful.length} exitosas, ${failed.length} fallidas`
-          );
-
           // Si hay operaciones fallidas, mostrar detalles y fallar
           if (failed.length > 0) {
-            console.error('Operaciones fallidas:', failed);
             const errorMessages = failed.map((result, index) => {
               const reason =
                 result.status === 'rejected'
@@ -1896,27 +1576,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
               `Se esperaban ${createPromises.length} operaciones exitosas, pero solo se completaron ${successful.length}`
             );
           }
-
-          console.log('Todas las actividades se guardaron exitosamente');
         } catch (error) {
-          console.error(
-            'Error durante la ejecución de operaciones de creación:',
-            error
-          );
           throw error; // Re-lanzar el error para que sea capturado por el catch externo
         }
       } else {
-        console.log('No hay actividades para crear');
       }
 
-      console.log('=== FIN saveActivitiesAssignments (EXITOSO) ===');
       return true;
     } catch (error) {
-      console.log('=== ERROR en saveActivitiesAssignments ===');
-      console.error('Error completo:', error);
-      console.error('Stack trace:', (error as any)?.stack);
-      console.error('Mensaje del error:', (error as any)?.message);
-
       this.messageService.add({
         severity: 'error',
         summary: 'Error al guardar actividades',
@@ -1932,11 +1599,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   private async clearExistingActivitiesAndPacks(
     existingTravelers: any[]
   ): Promise<void> {
-    console.log(`=== INICIO clearExistingActivitiesAndPacks ===`);
-    console.log(
-      `Limpiando actividades existentes para ${existingTravelers.length} viajeros`
-    );
-
     const deletePromises: Promise<any>[] = [];
     let totalActivitiesFound = 0;
     let totalPacksFound = 0;
@@ -1945,8 +1607,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     for (const traveler of existingTravelers) {
       try {
-        console.log(`Procesando viajero ${traveler.id}...`);
-
         // Obtener y eliminar actividades individuales existentes
         const existingActivities = await new Promise<any[]>(
           (resolve, reject) => {
@@ -1954,22 +1614,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
               .getByReservationTraveler(traveler.id)
               .subscribe({
                 next: (activities) => {
-                  console.log(
-                    `Viajero ${traveler.id} tiene ${activities.length} actividades individuales`
-                  );
                   totalActivitiesFound += activities.length;
                   resolve(activities);
                 },
                 error: (error) => {
-                  console.warn(
-                    `Error al obtener actividades para viajero ${traveler.id}:`,
-                    error
-                  );
-                  console.warn('Detalles del error:', {
-                    status: (error as any)?.status,
-                    message: (error as any)?.message,
-                    error: (error as any)?.error,
-                  });
                   resolve([]); // Continuar con lista vacía
                 },
               });
@@ -1978,30 +1626,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
         existingActivities.forEach((activity) => {
           const deletePromise = new Promise((resolve, reject) => {
-            console.log(
-              `Eliminando actividad ${activity.id} del viajero ${traveler.id}...`
-            );
             this.reservationTravelerActivityService
               .delete(activity.id)
               .subscribe({
                 next: (result) => {
-                  console.log(
-                    `Actividad ${activity.id} eliminada del viajero ${traveler.id} exitosamente:`,
-                    result
-                  );
                   totalActivitiesDeleted++;
                   resolve(result);
                 },
                 error: (error) => {
-                  console.warn(
-                    `Error al eliminar actividad ${activity.id} del viajero ${traveler.id}:`,
-                    error
-                  );
-                  console.warn('Detalles del error:', {
-                    status: (error as any)?.status,
-                    message: (error as any)?.message,
-                    error: (error as any)?.error,
-                  });
                   resolve(false); // Continuar aunque falle la eliminación
                 },
               });
@@ -2015,22 +1647,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             .getByReservationTraveler(traveler.id)
             .subscribe({
               next: (packs) => {
-                console.log(
-                  `Viajero ${traveler.id} tiene ${packs.length} packs de actividades`
-                );
                 totalPacksFound += packs.length;
                 resolve(packs);
               },
               error: (error) => {
-                console.warn(
-                  `Error al obtener packs para viajero ${traveler.id}:`,
-                  error
-                );
-                console.warn('Detalles del error:', {
-                  status: (error as any)?.status,
-                  message: (error as any)?.message,
-                  error: (error as any)?.error,
-                });
                 resolve([]); // Continuar con lista vacía
               },
             });
@@ -2038,30 +1658,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
         existingPacks.forEach((pack) => {
           const deletePromise = new Promise((resolve, reject) => {
-            console.log(
-              `Eliminando pack ${pack.id} del viajero ${traveler.id}...`
-            );
             this.reservationTravelerActivityPackService
               .delete(pack.id)
               .subscribe({
                 next: (result) => {
-                  console.log(
-                    `Pack ${pack.id} eliminado del viajero ${traveler.id} exitosamente:`,
-                    result
-                  );
                   totalPacksDeleted++;
                   resolve(result);
                 },
                 error: (error) => {
-                  console.warn(
-                    `Error al eliminar pack ${pack.id} del viajero ${traveler.id}:`,
-                    error
-                  );
-                  console.warn('Detalles del error:', {
-                    status: (error as any)?.status,
-                    message: (error as any)?.message,
-                    error: (error as any)?.error,
-                  });
                   resolve(false); // Continuar aunque falle la eliminación
                 },
               });
@@ -2069,35 +1673,18 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           deletePromises.push(deletePromise);
         });
       } catch (error) {
-        console.warn(`Error al procesar viajero ${traveler.id}:`, error);
         // Continuar con el siguiente viajero
       }
     }
 
     // Esperar a que se completen todas las eliminaciones
     if (deletePromises.length > 0) {
-      console.log(
-        `Esperando a que se completen ${deletePromises.length} eliminaciones...`
-      );
       try {
         await Promise.all(deletePromises);
-        console.log('Todas las eliminaciones se completaron');
       } catch (error) {
-        console.warn(
-          'Algunas eliminaciones fallaron, pero continuando:',
-          error
-        );
       }
     } else {
-      console.log('No hay elementos para eliminar');
     }
-
-    console.log(`=== RESUMEN clearExistingActivitiesAndPacks ===`);
-    console.log(`Total actividades encontradas: ${totalActivitiesFound}`);
-    console.log(`Total packs encontrados: ${totalPacksFound}`);
-    console.log(`Total actividades eliminadas: ${totalActivitiesDeleted}`);
-    console.log(`Total packs eliminados: ${totalPacksDeleted}`);
-    console.log(`=== FIN clearExistingActivitiesAndPacks ===`);
   }
 
   // Método auxiliar para limpiar actividades existentes
@@ -2133,10 +1720,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           deletePromises.push(deletePromise);
         });
       } catch (error) {
-        console.warn(
-          `Error al obtener actividades para el viajero ${traveler.id}:`,
-          error
-        );
       }
     }
 
@@ -2259,70 +1842,44 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Inicializa el componente info-travelers cuando se activa su step
    */
   private initializeInfoTravelersComponent(): void {
-    console.log('🔄 Intentando inicializar componente info-travelers...');
-
     // Verificar que tengamos todos los datos necesarios
     if (!this.infoTravelers) {
-      console.log('⚠️ Componente info-travelers no disponible');
       return;
     }
 
     if (!this.departureId || !this.reservationId) {
-      console.log('⚠️ Faltan datos necesarios:', {
-        departureId: this.departureId,
-        reservationId: this.reservationId,
-      });
       return;
     }
-
-    console.log('✅ Datos disponibles, verificando estado del componente...');
 
     // Verificar si el componente ya tiene datos cargados
     if (
       !this.infoTravelers.travelers ||
       this.infoTravelers.travelers.length === 0
     ) {
-      console.log(
-        '📋 Componente info-travelers sin datos, forzando recarga...'
-      );
-
       // Usar un pequeño delay para asegurar que el componente esté completamente renderizado
       setTimeout(() => {
         try {
           this.infoTravelers.reloadData();
-          console.log('✅ Recarga de datos iniciada');
         } catch (error) {
-          console.error('❌ Error al recargar datos:', error);
         }
       }, 200);
-    } else {
-      console.log('✅ Componente info-travelers ya tiene datos cargados:', {
-        travelersCount: this.infoTravelers.travelers.length,
-      });
     }
   }
 
   /**
    * Inicializa componentes de personalización
    */
-  private initializePersonalizationComponents(): void {
-    console.log('🎨 Inicializando componentes de personalización...');
-  }
+  private initializePersonalizationComponents(): void {}
 
   /**
-   * Inicializa componente de gestión de vuelos
    */
-  private initializeFlightManagementComponent(): void {
-    // Lógica para componente de vuelos si es necesaria
-    console.log('✈️ Inicializando componente de gestión de vuelos...');
-  }
+  private initializeFlightManagementComponent(): void {}
 
   /**
    * Inicializa componente de pago
    */
   private initializePaymentComponent(): void {
     // Lógica para componente de pago si es necesaria
-    console.log('💳 Inicializando componente de pago...');
   }
 
   // Método para actualizar la URL cuando cambia el step
@@ -2334,85 +1891,14 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         queryParamsHandling: 'merge',
       });
     } else {
-      console.error('Invalid step value:', step);
     }
   }
 
   // Método auxiliar para logging detallado
-  private logComponentState(): void {
-    console.log('=== ESTADO DE COMPONENTES ===');
-    console.log('travelerSelector:', {
-      available: !!this.travelerSelector,
-      hasUnsavedChanges: this.travelerSelector?.hasUnsavedChanges,
-      travelersNumbers: this.travelerSelector?.ageGroupCounts,
-      existingTravelers: this.travelerSelector?.existingTravelers?.length || 0,
-    });
-    console.log('roomSelector:', {
-      available: !!this.roomSelector,
-      selectedRooms: this.roomSelector?.selectedRooms,
-      allRoomsAvailability:
-        this.roomSelector?.allRoomsAvailability?.length || 0,
-    });
-    console.log('insuranceSelector:', {
-      available: !!this.insuranceSelector,
-      selectedInsurance: !!this.insuranceSelector?.selectedInsurance,
-    });
-    console.log('infoTravelers:', {
-      available: !!this.infoTravelers,
-    });
-    console.log('reservationData:', {
-      id: this.reservationId,
-      totalPassengers: this.totalPassengers,
-      totalAmount: this.totalAmount,
-      totalAmountCalculated: this.totalAmountCalculated,
-    });
-    console.log('selectedActivities:', {
-      count: this.selectedActivities?.length || 0,
-      activities: this.selectedActivities,
-    });
-    console.log('=============================');
-  }
-
-  // Método para guardar todos los datos de los viajeros
-  private async saveTravelersData(): Promise<boolean> {
-    console.log('=== DEBUG: saveTravelersData iniciado ===');
-
-    if (!this.infoTravelers) {
-      console.log('No hay componente infoTravelers, retornando true');
-      return true; // Si no hay componente, no hay nada que guardar
-    }
-
-    try {
-      console.log('Validando campos obligatorios...');
-      // Validar que todos los campos obligatorios estén completados
-      if (!this.infoTravelers.validateFormAndShowToast()) {
-        console.log('Validación falló, retornando false');
-        // El toast ya se mostró automáticamente en validateFormAndShowToast()
-        return false; // No continuar si hay campos faltantes
-      }
-
-      console.log('Validación exitosa, guardando datos...');
-
-      // Llamar al método saveAllTravelersData del componente hijo y esperar a que se complete
-      await this.infoTravelers.saveAllTravelersData();
-      console.log('Datos guardados exitosamente, retornando true');
-      return true;
-    } catch (error) {
-      console.error('Error en saveTravelersData:', error);
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error al guardar',
-        detail: 'Error al guardar los datos de los viajeros',
-        life: 5000,
-      });
-      return false;
-    }
-  }
+  private logComponentState(): void {}
 
   // NUEVO: Método para guardar todos los datos del paso 0 (personaliza tu viaje)
   private async saveStep0Data(): Promise<boolean> {
-    console.log('=== DEBUG: saveStep0Data iniciado ===');
-
     try {
       // Verificar que los componentes necesarios estén disponibles
       if (
@@ -2421,12 +1907,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         !this.insuranceSelector ||
         !this.activitiesOptionals
       ) {
-        console.error('Componentes requeridos no están disponibles:', {
-          travelerSelector: !!this.travelerSelector,
-          roomSelector: !!this.roomSelector,
-          insuranceSelector: !!this.insuranceSelector,
-          activitiesOptionals: !!this.activitiesOptionals,
-        });
         this.messageService.add({
           severity: 'error',
           summary: 'Error de inicialización',
@@ -2437,20 +1917,9 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         return false;
       }
 
-      console.log('Guardando datos del paso 0 (personaliza tu viaje)...');
+      // Los travelers se guardan automáticamente al hacer cambios, no hay pendientes
 
-      // 1. Guardar cambios de travelers si hay pendientes
-      if (this.travelerSelector.hasUnsavedChanges) {
-        console.log('Guardando cambios de travelers...');
-        const travelersSaved =
-          await this.travelerSelector.saveTravelersChanges();
-        if (!travelersSaved) {
-          console.log('Error al guardar travelers, retornando false');
-          return false;
-        }
-      }
-
-      // 2. Verificar habitaciones seleccionadas
+      // 1. Verificar habitaciones seleccionadas
       const hasSelectedRooms = Object.values(
         this.roomSelector.selectedRooms
       ).some((qty: number) => qty > 0);
@@ -2462,77 +1931,26 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             'Por favor, selecciona al menos una habitación antes de continuar.',
           life: 5000,
         });
-        console.log('No hay habitaciones seleccionadas, retornando false');
         return false;
       }
 
-        // 3. Validar que las habitaciones seleccionadas puedan acomodar a todos los pasajeros
-        const currentTravelers = this.ageGroupCounts;
-        const totalPassengers = Object.values(currentTravelers).reduce(
-          (a, b) => a + b,
-          0
-        );
-
-      console.log(`Total de pasajeros: ${totalPassengers}`);
-
-      // Calcular la capacidad total de las habitaciones seleccionadas
-      let totalCapacity = 0;
-      Object.entries(this.roomSelector.selectedRooms).forEach(([tkId, qty]) => {
-        if (qty > 0) {
-          const room = this.roomSelector.allRoomsAvailability.find(
-            (r) => r.tkId === tkId
-          );
-          if (room) {
-            const roomCapacity = room.isShared ? 1 : room.capacity || 1;
-            totalCapacity += roomCapacity * qty;
-            console.log(
-              `Habitación ${tkId}: capacidad ${roomCapacity}, cantidad ${qty}, subtotal ${
-                roomCapacity * qty
-              }`
-            );
-          }
-        }
-      });
-
-      console.log(`Capacidad total de habitaciones: ${totalCapacity}`);
-
-      // Validar que la capacidad sea suficiente
-      if (totalCapacity < totalPassengers) {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Capacidad insuficiente',
-          detail: `Las habitaciones seleccionadas tienen capacidad para ${totalCapacity} personas, pero tienes ${totalPassengers} viajeros. Por favor, selecciona más habitaciones o habitaciones de mayor capacidad.`,
-          life: 7000,
-        });
-        return false;
-      }
-
-      // 4. Recargar travelers después de guardar cambios
-      console.log('Recargando travelers...');
+      // 3. Recargar travelers después de guardar cambios
       await this.roomSelector.loadExistingTravelers();
       this.insuranceSelector.loadExistingTravelers();
 
-      // 5. Actualizar el número de pasajeros total y recalcular resumen
-      this.totalPassengers = totalPassengers;
-      this.updateOrderSummary(currentTravelers);
+      // 4. Actualizar el resumen
+      this.triggerSummaryRefresh();
       await new Promise((resolve) => setTimeout(resolve, 300));
 
       // 6. Guardar asignaciones de habitaciones y actividades EN PARALELO (SIN seguros)
-      console.log('Guardando asignaciones en paralelo (sin seguros)...');
 
       const [roomsSaved, activitiesSaved] = await Promise.allSettled([
         this.roomSelector.saveRoomAssignments(),
         this.saveActivitiesAssignments(),
       ]);
 
-      console.log('Resultados de las operaciones:', {
-        rooms: roomsSaved,
-        activities: activitiesSaved,
-      });
-
       // Verificar que las operaciones fueron exitosas
       if (roomsSaved.status === 'rejected') {
-        console.error('Error al guardar habitaciones:', roomsSaved.reason);
         this.messageService.add({
           severity: 'error',
           summary: 'Error al guardar habitaciones',
@@ -2544,7 +1962,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       }
 
       if (activitiesSaved.status === 'rejected') {
-        console.error('Error al guardar actividades:', activitiesSaved.reason);
         this.messageService.add({
           severity: 'error',
           summary: 'Error al guardar actividades',
@@ -2574,7 +1991,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
       // 7. Actualizar datos de la reserva
       if (this.reservationId && this.reservationData) {
-        console.log('Actualizando datos de la reserva...');
         const reservationUpdateData = {
           ...this.reservationData,
           totalPassengers: this.totalPassengers,
@@ -2586,10 +2002,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             .update(this.reservationId!, reservationUpdateData)
             .subscribe({
               next: (response) => {
-                console.log(
-                  'Respuesta del servicio de actualización:',
-                  response
-                );
                 let isSuccess = false;
 
                 if (typeof response === 'boolean') {
@@ -2605,28 +2017,10 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
                 }
 
                 if (isSuccess) {
-                  console.log(
-                    'Actualización exitosa, actualizando datos locales...'
-                  );
                   this.reservationData.totalPassengers = this.totalPassengers;
-
-                  this.messageService.add({
-                    severity: 'success',
-                    summary: 'Guardado exitoso',
-                    detail: `Datos guardados correctamente para ${
-                      this.totalPassengers
-                    } viajeros con ${
-                      this.selectedActivities?.length || 0
-                    } actividades.`,
-                    life: 3000,
-                  });
 
                   resolve(response);
                 } else {
-                  console.error(
-                    'La actualización no fue exitosa. Respuesta:',
-                    response
-                  );
                   reject(
                     new Error(
                       `Error al actualizar la reserva. Respuesta del servicio: ${JSON.stringify(
@@ -2637,10 +2031,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
                 }
               },
               error: (error) => {
-                console.error(
-                  'Error en la llamada al servicio de actualización:',
-                  error
-                );
                 reject(
                   new Error(
                     `Error al actualizar la reserva: ${
@@ -2653,10 +2043,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         });
       }
 
-      console.log('=== DEBUG: saveStep0Data completado exitosamente ===');
       return true;
     } catch (error) {
-      console.error('Error en saveStep0Data:', error);
       this.messageService.add({
         severity: 'error',
         summary: 'Error inesperado',
@@ -2669,13 +2057,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   }
 
   async nextStepWithValidation(targetStep: number): Promise<void> {
-    console.log(
-      '🔄 nextStepWithValidation llamado para targetStep:',
-      targetStep
-    );
-    console.log('🔍 Estado actual - isStandaloneMode:', this.isStandaloneMode);
-    console.log('🔍 Estado actual - isAuthenticated:', this.isAuthenticated);
-
     // NUEVO: Activar loading para el paso 0
     if (targetStep === 1) {
       this.isStep0Saving = true;
@@ -2684,41 +2065,41 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     try {
       // ✅ NUEVO: En modo standalone, omitir validación de autenticación
       if (this.isStandaloneMode) {
-        console.log(
-          '🔓 Modo standalone: omitiendo validación de autenticación para step',
-          targetStep
-        );
         await this.performStepValidation(targetStep);
         return;
       }
 
       // Verificar autenticación para pasos que la requieren (solo en modo normal)
       if (targetStep >= 2) {
-        console.log('🔒 Modo normal: verificando autenticación para step >= 2');
-        return new Promise((resolve) => {
-          this.authService.isLoggedIn().subscribe(async (isLoggedIn) => {
-            console.log('🔍 Resultado de isLoggedIn():', isLoggedIn);
-            if (!isLoggedIn) {
-              // Usuario no está logueado, mostrar modal
-              console.log('❌ Usuario no logueado - mostrando modal de login');
-              sessionStorage.setItem('redirectUrl', window.location.pathname);
-              this.loginDialogVisible = true;
-              resolve();
-              return;
+        // ✅ MEJORADO: El servicio ahora espera automáticamente a que termine la verificación inicial
+        const isLoggedIn = await new Promise<boolean>((resolve) => {
+          const subscription = this.authService.isLoggedIn().subscribe({
+            next: (loggedIn) => {
+              resolve(loggedIn);
+              subscription.unsubscribe();
+            },
+            error: (error) => {
+              // En caso de error, asumir que no está logueado por seguridad
+              resolve(false);
+              subscription.unsubscribe();
             }
-            // Usuario está logueado, actualizar variable local y continuar con la validación normal
-            console.log('✅ Usuario logueado - continuando con validación');
-            this.isAuthenticated = true;
-            await this.performStepValidation(targetStep);
-            resolve();
           });
         });
+
+        if (!isLoggedIn) {
+          // Usuario no está logueado, mostrar modal
+          sessionStorage.setItem('redirectUrl', window.location.pathname);
+          this.loginDialogVisible = true;
+          return;
+        }
+        
+        // Usuario está logueado, actualizar variable local y continuar con la validación normal
+        this.isAuthenticated = true;
+        await this.performStepValidation(targetStep);
+        return;
       }
 
       // Para el paso 0 (personalizar viaje) y paso 1 (vuelos), no se requiere autenticación
-      console.log(
-        'ℹ️ Step < 2, no requiere autenticación - continuando directamente'
-      );
       await this.performStepValidation(targetStep);
     } finally {
       // NUEVO: Desactivar loading para el paso 0
@@ -2729,11 +2110,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private async performStepValidation(targetStep: number): Promise<void> {
-    console.log(
-      '=== DEBUG: performStepValidation iniciado para targetStep:',
-      targetStep
-    );
-
     // Log del estado inicial de los componentes
     this.logComponentState();
 
@@ -2744,11 +2120,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         !this.roomSelector ||
         !this.insuranceSelector
       ) {
-        console.error('Componentes requeridos no están disponibles:', {
-          travelerSelector: !!this.travelerSelector,
-          roomSelector: !!this.roomSelector,
-          insuranceSelector: !!this.insuranceSelector,
-        });
         this.messageService.add({
           severity: 'error',
           summary: 'Error de inicialización',
@@ -2762,25 +2133,15 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
 
     // NUEVO: Guardar datos del paso 0 (personaliza tu viaje) antes de continuar al paso 1
     if (targetStep === 1) {
-      console.log('Validando paso 0 (personaliza tu viaje)...');
       const step0Saved = await this.saveStep0Data();
       if (!step0Saved) {
-        console.log(
-          'Error al guardar datos del paso 0, NO continuando al siguiente paso'
-        );
         return; // No continuar si no se pudieron guardar los datos
       }
-      console.log(
-        'Datos del paso 0 guardados exitosamente, continuando al siguiente paso'
-      );
     }
 
-    // Guardar datos de viajeros antes de continuar al paso de pago (targetStep === 3)
+    // Validar datos de viajeros antes de continuar al paso de pago (targetStep === 3)
     if (targetStep === 3) {
-      console.log('Validando paso 3 (info-travelers)...');
-
       if (!this.infoTravelers) {
-        console.error('Componente infoTravelers no está disponible');
         this.messageService.add({
           severity: 'error',
           summary: 'Error de inicialización',
@@ -2791,17 +2152,22 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         return;
       }
 
-      const saved = await this.saveTravelersData();
-      console.log('Resultado de saveTravelersData:', saved);
-      if (!saved) {
-        console.log('Validación falló, NO continuando al siguiente paso');
-        return; // No continuar si no se pudieron guardar los datos
+      // ✅ NUEVO: Validar que todos los viajeros estén listos para continuar
+      const allTravelersReady = await this.infoTravelers.canContinueToNextStep();
+
+      if (!allTravelersReady) {
+        // ❌ Algunos viajeros no están listos
+        
+        // Mostrar error específico indicando qué viajeros faltan
+        this.infoTravelers.showValidationError();
+        
+        return; // No continuar al siguiente paso
       }
-      console.log('Validación exitosa, continuando al siguiente paso');
+
+      // ✅ Todos los viajeros están listos
     }
 
     // Navegar al siguiente paso
-    console.log('Navegando al siguiente paso:', targetStep);
     this.onActiveIndexChange(targetStep);
   }
 
@@ -2831,40 +2197,53 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       .subscribe();
   }
 
+  // Bandera para evitar múltiples actualizaciones de userId
+  private isUpdatingUserId: boolean = false;
+
   /**
    * Verifica si el userId está vacío y el usuario está logueado, y actualiza la reservación si es necesario
    */
   private checkAndUpdateUserId(reservation: any): void {
+    
     // Verificar si el userId está vacío
-    if (!reservation.userId) {
+    if (!reservation.userId && !this.isUpdatingUserId) {
+      this.isUpdatingUserId = true;
+      
       this.authService.getCognitoId().subscribe({
         next: (cognitoId) => {
+          
           if (cognitoId) {
             // Buscar el usuario por Cognito ID para obtener su ID en la base de datos
             this.usersNetService.getUsersByCognitoId(cognitoId).subscribe({
               next: (users) => {
+                
                 if (users && users.length > 0) {
                   const userId = users[0].id;
+                  
                   this.isAuthenticated = true;
                   // Actualizar la reservación con el userId correcto
                   this.updateReservationUserId(userId);
                 } else {
+                  this.isUpdatingUserId = false;
                 }
               },
               error: (error) => {
-                console.error(
-                  '❌ Error buscando usuario por Cognito ID:',
-                  error
-                );
+                this.isUpdatingUserId = false;
               },
             });
           } else {
+            this.isUpdatingUserId = false;
           }
         },
         error: (error) => {
-          console.error('❌ Error obteniendo Cognito ID:', error);
+          this.isUpdatingUserId = false;
         },
       });
+    } else {
+      if (reservation.userId) {
+      }
+      if (this.isUpdatingUserId) {
+      }
     }
   }
 
@@ -2872,10 +2251,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * Actualiza el userId de la reservación
    */
   private updateReservationUserId(userId: number): void {
+    
     if (!this.reservationId || !this.reservationData) {
-      console.error(
-        '❌ No se puede actualizar userId: reservationId o reservationData no disponibles'
-      );
       return;
     }
 
@@ -2885,11 +2262,16 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       updatedAt: new Date().toISOString(),
     };
 
+
     this.reservationService.update(this.reservationId, updateData).subscribe({
       next: (success) => {
+        
         if (success) {
           // Actualizar los datos locales
+          const previousUserId = this.reservationData.userId;
           this.reservationData.userId = userId;
+          this.userIdForCoupon = userId;
+          
 
           this.messageService.add({
             severity: 'success',
@@ -2898,23 +2280,21 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
             life: 3000,
           });
         } else {
-          console.error('❌ Error al actualizar userId en la reservación');
         }
+        this.isUpdatingUserId = false;
       },
       error: (error) => {
-        console.error(
-          '❌ Error al actualizar userId en la reservación:',
-          error
-        );
         this.messageService.add({
           severity: 'error',
           summary: 'Error al actualizar',
           detail: 'No se pudo asociar la reservación con tu cuenta de usuario.',
           life: 5000,
         });
+        this.isUpdatingUserId = false;
       },
     });
   }
+
 
   // Métodos para autenticación
   async checkAuthAndContinue(
@@ -2924,10 +2304,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   ): Promise<void> {
     // ✅ NUEVO: En modo standalone, proceder directamente sin verificar autenticación
     if (this.isStandaloneMode) {
-      console.log(
-        '🔓 Modo standalone: procediendo sin verificar autenticación'
-      );
-
       if (useFlightless) {
         // Lógica para continuar sin vuelos - guardar como vuelo seleccionado
         await this.handleFlightlessSelection();
@@ -2939,29 +2315,40 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
-    // Lógica normal para modo no-standalone
-    this.authService.isLoggedIn().subscribe(async (isLoggedIn) => {
-      if (isLoggedIn) {
-        // Usuario está logueado, proceder normalmente
-        if (useFlightless) {
-          // Lógica para continuar sin vuelos - guardar como vuelo seleccionado
-          await this.handleFlightlessSelection();
-          await this.nextStepWithValidation(nextStep);
-        } else {
-          // Lógica normal
-          await this.nextStepWithValidation(nextStep);
+    // ✅ MEJORADO: El servicio ahora espera automáticamente a que termine la verificación inicial
+    const isLoggedIn = await new Promise<boolean>((resolve) => {
+      const subscription = this.authService.isLoggedIn().subscribe({
+        next: (loggedIn) => {
+          resolve(loggedIn);
+          subscription.unsubscribe();
+        },
+        error: (error) => {
+          resolve(false);
+          subscription.unsubscribe();
         }
-        // Solo llamar al callback si la validación fue exitosa
-        // La validación se maneja dentro de nextStepWithValidation
-      } else {
-        // Usuario no está logueado, mostrar modal
-        // Guardar la URL actual con el step en sessionStorage
-        const currentUrl = window.location.pathname;
-        const redirectUrl = `${currentUrl}?step=${this.activeIndex}`;
-        sessionStorage.setItem('redirectUrl', redirectUrl);
-        this.loginDialogVisible = true;
-      }
+      });
     });
+
+    if (isLoggedIn) {
+      // Usuario está logueado, proceder normalmente
+      if (useFlightless) {
+        // Lógica para continuar sin vuelos - guardar como vuelo seleccionado
+        await this.handleFlightlessSelection();
+        await this.nextStepWithValidation(nextStep);
+      } else {
+        // Lógica normal
+        await this.nextStepWithValidation(nextStep);
+      }
+      // Solo llamar al callback si la validación fue exitosa
+      // La validación se maneja dentro de nextStepWithValidation
+    } else {
+      // Usuario no está logueado, mostrar modal
+      // Guardar la URL actual con el step en sessionStorage
+      const currentUrl = window.location.pathname;
+      const redirectUrl = `${currentUrl}?step=${this.activeIndex}`;
+      sessionStorage.setItem('redirectUrl', redirectUrl);
+      this.loginDialogVisible = true;
+    }
   }
 
   /**
@@ -2969,125 +2356,29 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    */
   private async handleFlightlessSelection(): Promise<void> {
     try {
-      // ✅ NUEVO: Activar estado de procesamiento
       this.isFlightlessProcessing = true;
       this.flightlessProcessingMessage = 'Procesando selección sin vuelos...';
-      console.log('🚀 Iniciando handleFlightlessSelection...');
-      console.log('🕐 Timestamp:', new Date().toISOString());
-      console.log(
-        '📊 Estado actual - hasAvailableFlights:',
-        this.hasAvailableFlights
-      );
-      console.log('📦 availableFlights:', this.availableFlights);
-      console.log(
-        '📊 selectedFlight actual antes de la selección:',
-        this.selectedFlight
-      );
 
-      // Buscar el paquete de vuelos real que corresponde a "sin vuelos"
-      if (this.hasAvailableFlights && this.availableFlights) {
-        console.log(
-          '🔍 Buscando paquete sin vuelos en',
-          this.availableFlights.length,
-          'paquetes disponibles...'
-        );
+      if (this.flightlessPack) {
+        if (this.flightManagement && this.reservationId) {
+          this.flightlessProcessingMessage =
+            'Guardando asignaciones sin vuelos...';
 
-        const flightlessPack = this.availableFlights.find(
-          (pack: IFlightPackDTO) => {
-            const name = pack.name?.toLowerCase() || '';
-            const description = pack.description?.toLowerCase() || '';
-            const isFlightless =
-              name.includes('sin vuelos') ||
-              description.includes('sin vuelos') ||
-              name.includes('pack sin vuelos') ||
-              description.includes('pack sin vuelos');
+          await this.flightManagement.defaultFlightsComponent.selectSinVuelos();
 
-            console.log(
-              `🔍 Evaluando paquete ${pack.id} - name: "${name}", description: "${description}", isFlightless: ${isFlightless}`
-            );
-
-            return isFlightless;
-          }
-        );
-
-        if (flightlessPack) {
-          console.log('✅ Paquete sin vuelos encontrado:', flightlessPack);
-          console.log('🆔 ID del paquete:', flightlessPack.id);
-          console.log('📝 Nombre del paquete:', flightlessPack.name);
-          console.log(
-            '📄 Descripción del paquete:',
-            flightlessPack.description
-          );
-
-          // ✅ NUEVO: Usar la lógica simplificada del componente default-flights y ESPERAR
-          if (this.flightManagement && this.reservationId) {
-            console.log(
-              '🔄 Usando lógica simplificada del componente default-flights...'
-            );
-
-            // ✅ NUEVO: Actualizar mensaje de procesamiento
-            this.flightlessProcessingMessage =
-              'Guardando asignaciones sin vuelos...';
-
-            // ✅ NUEVO: Llamar al método del componente default-flights para asignar "sin vuelos" y ESPERAR
-            await this.flightManagement.defaultFlightsComponent.saveFlightAssignmentsForAllTravelers(
-              0,
-              true
-            );
-
-            console.log('✅ Asignaciones sin vuelos guardadas exitosamente');
-
-            // ✅ NUEVO: Continuar con la selección de "Sin Vuelos" y ESPERAR
-            await this.continueWithFlightlessSelection(flightlessPack);
-          } else {
-            console.log(
-              '⚠️ No se puede acceder al componente default-flights, continuando directamente...'
-            );
-            await this.continueWithFlightlessSelection(flightlessPack);
-          }
+          await this.continueWithFlightlessSelection(this.flightlessPack);
         } else {
-          console.error('❌ No se encontró paquete sin vuelos disponible');
-          console.log(
-            '🔍 Paquetes revisados:',
-            this.availableFlights.map((p) => ({
-              id: p.id,
-              name: p.name,
-              description: p.description,
-            }))
-          );
-
-          // ✅ NUEVO: Mostrar error y desactivar procesamiento
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'No se encontró la opción sin vuelos disponible',
-            life: 5000,
-          });
+          await this.continueWithFlightlessSelection(this.flightlessPack);
         }
       } else {
-        console.error('❌ No hay vuelos disponibles o no se han cargado');
-        console.log('📊 hasAvailableFlights:', this.hasAvailableFlights);
-        console.log(
-          '📦 availableFlights length:',
-          this.availableFlights?.length || 0
-        );
-
-        // ✅ NUEVO: Mostrar error y desactivar procesamiento
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
-          detail: 'No hay vuelos disponibles en el sistema',
+          detail: 'No se encontró la opción sin vuelos disponible',
           life: 5000,
         });
       }
     } catch (error) {
-      console.error('💥 Error al manejar selección sin vuelos:', error);
-      console.error(
-        '💥 Stack trace:',
-        error instanceof Error ? error.stack : 'No stack trace available'
-      );
-
-      // ✅ NUEVO: Mostrar error y desactivar procesamiento
       this.messageService.add({
         severity: 'error',
         summary: 'Error',
@@ -3096,10 +2387,8 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         life: 5000,
       });
     } finally {
-      // ✅ NUEVO: Desactivar estado de procesamiento
       this.isFlightlessProcessing = false;
       this.flightlessProcessingMessage = '';
-      console.log('✅ Procesamiento de sin vuelos completado');
     }
   }
 
@@ -3109,18 +2398,11 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   private async continueWithFlightlessSelection(
     flightlessPack: IFlightPackDTO
   ): Promise<void> {
-    console.log('🔄 Continuando con selección de "Sin Vuelos"');
-    console.log('📦 Paquete sin vuelos:', flightlessPack);
-
     // ✅ NUEVO: Actualizar mensaje de procesamiento
     this.flightlessProcessingMessage = 'Actualizando resumen y datos...';
 
     // Actualizar el selectedFlight
     this.selectedFlight = flightlessPack;
-    console.log(
-      '✅ selectedFlight actualizado con el paquete sin vuelos:',
-      this.selectedFlight
-    );
 
     // Llamar a onFlightSelectionChange para actualizar el resumen
     this.onFlightSelectionChange({
@@ -3132,28 +2414,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     this.flightlessProcessingMessage = 'Recalculando precios...';
 
     // Actualizar el resumen
-    if (this.travelerSelector && Object.keys(this.ageGroupCounts).length > 0) {
-      this.updateOrderSummary(this.ageGroupCounts);
-    } else {
-      const basicTravelers = this.buildFallbackAgeGroupCounts(
-        this.totalPassengers
-      );
-      this.updateOrderSummary(basicTravelers);
-    }
-
-    // ✅ NUEVO: Mostrar mensaje de éxito
-    this.messageService.add({
-      severity: 'success',
-      summary: 'Sin vuelos seleccionado',
-      detail:
-        'La opción sin vuelos ha sido seleccionada y guardada correctamente. Ahora puedes continuar al siguiente paso.',
-      life: 5000,
-    });
-
-    // ✅ NUEVO: NO cambiar automáticamente de paso - el usuario debe hacer clic en "Continuar"
-    console.log(
-      '✅ Selección sin vuelos completada. El usuario debe hacer clic en "Continuar" para avanzar.'
-    );
+    this.triggerSummaryRefresh();
   }
 
   closeLoginModal(): void {
@@ -3186,7 +2447,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     } else {
       this.reservationStatusService.getByCode('BUDGET').subscribe({
         next: (reservationStatus) => {
-          if (reservationStatus) {
+          if (reservationStatus && reservationStatus.length > 0) {
             this.reservationService
               .updateStatus(this.reservationId!, reservationStatus[0].id)
               .subscribe({
@@ -3194,7 +2455,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
                   if (success) {
                     // Disparar evento add_to_wishlist
                     this.trackAddToWishlist();
-                    
+
                     this.messageService.add({
                       severity: 'success',
                       summary: 'Presupuesto guardado',
@@ -3211,10 +2472,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
                   }
                 },
                 error: (error) => {
-                  console.error(
-                    'Error al actualizar el estado de la reservación:',
-                    error
-                  );
                 },
                 complete: () => {
                   this.loadReservationData(this.reservationId!);
@@ -3225,7 +2482,6 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
           }
         },
         error: (error) => {
-          console.error('Error al obtener el estado de la reservación:', error);
         },
       });
     }
@@ -3260,12 +2516,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     if (this.reservationId) {
       try {
         localStorage.removeItem(`checkout_summary_${this.reservationId}`);
-        console.log(
-          '🗑️ Resumen del localStorage eliminado para reservación:',
-          this.reservationId
-        );
       } catch (error) {
-        console.warn('⚠️ Error al limpiar resumen del localStorage:', error);
       }
     }
   }
@@ -3273,19 +2524,23 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
   // ✅ NUEVO: Método para limpiar localStorage cuando se complete el checkout
   public onCheckoutComplete(): void {
     this.clearSummaryFromLocalStorage();
-    console.log('✅ Checkout completado, resumen del localStorage limpiado');
   }
 
   // ✅ NUEVO: Método para limpiar localStorage cuando se cancele el checkout
   public onCheckoutCancel(): void {
     this.clearSummaryFromLocalStorage();
-    console.log('❌ Checkout cancelado, resumen del localStorage limpiado');
   }
 
   /**
    * ✅ NUEVO: Método para obtener el tooltip del botón Continuar
    */
   public getContinueButtonTooltip(): string {
+    if (this.selectedFlight && this.isNoFlightOption(this.selectedFlight) && !this.hasFlightlessAvailability) {
+      return 'Esta opción no tiene disponibilidad';
+    }
+    if (this.isFlightProcessing) {
+      return 'Procesando selección de vuelo...';
+    }
     if (this.isFlightlessProcessing) {
       return 'Espera a que se complete el procesamiento de sin vuelos';
     }
@@ -3300,12 +2555,7 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
    * @param stepNumber Número del step al que navegar
    */
   public onNavigateToStep(stepNumber: number): void {
-    console.log(`🔄 Navegando al step ${stepNumber} desde payment-management`);
-
     if (stepNumber === 1) {
-      // Navegar al step 1 (selección de vuelos)
-      console.log('📍 Navegando a selección de vuelos (step 1)');
-
       // Cambiar al step 1
       this.onActiveIndexChange(1);
 
@@ -3321,22 +2571,19 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
       // Opcional: Limpiar estado relacionado con vuelos si es necesario
       this.clearFlightSelectionState();
     } else {
-      console.log(`⚠️ Step ${stepNumber} no manejado específicamente`);
       // Para otros steps, usar la navegación estándar
       this.onActiveIndexChange(stepNumber);
     }
   }
 
   /**
-   * Maneja el cambio de descuento por puntos
-   * @param discount Cantidad del descuento en euros
+   * Maneja el cambio de total desde el summary-table
+   * @param newTotal Nuevo total calculado
    */
-  onPointsDiscountChange(discount: number): void {
-    console.log('💰 Descuento por puntos actualizado:', discount);
-    this.pointsDiscount = discount;
-    
-    // Actualizar el resumen del pedido para reflejar el descuento
-    this.forceSummaryUpdate();
+  onTotalChanged(newTotal: number): void {
+    this.totalAmountCalculated = newTotal;
+    this.cdr.detectChanges();
+    this.isFlightProcessing = false;
   }
 
   /**
@@ -3347,493 +2594,1127 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     this.trackAddPaymentInfo(paymentOption);
   }
 
+
   /**
    * ✅ NUEVO: Limpia el estado relacionado con la selección de vuelos
    */
   private clearFlightSelectionState(): void {
-    console.log('🧹 Limpiando estado de selección de vuelos...');
-
     // Resetear vuelo seleccionado
     this.selectedFlight = null;
     this.flightPrice = 0;
 
     // Actualizar el resumen sin vuelos
-    if (this.travelerSelector && Object.keys(this.ageGroupCounts).length > 0) {
-      this.updateOrderSummary(this.ageGroupCounts);
-    }
-
-    console.log('✅ Estado de vuelos limpiado');
+    this.triggerSummaryRefresh();
   }
 
   /**
    * Disparar evento view_cart cuando se visualiza el checkout paso 1
    */
   private trackViewCart(): void {
-    if (!this.reservationData) return;
-
-    const tourData = this.reservationData.tour || {};
+    if (!this.reservationData || !this.tourId) return;
     
-    this.analyticsService.viewCart(
-      'EUR',
-      this.totalAmountCalculated || this.totalAmount || 0,
-      {
-        item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
-        item_name: this.tourName || tourData.name || '',
-        coupon: '',
-        discount: 0,
-        index: 0,
-        item_brand: 'Different Roads',
-        item_category: tourData.destination?.continent || '',
-        item_category2: tourData.destination?.country || '',
-        item_category3: tourData.marketingSection?.marketingSeasonTag || '',
-        item_category4: tourData.monthTags?.join(', ') || '',
-        item_category5: tourData.tourType || '',
-        item_list_id: 'checkout',
-        item_list_name: 'Carrito de compra',
-        item_variant: `${tourData.tkId || tourData.id} - ${this.selectedFlight?.name || 'Sin vuelo'}`,
-        price: this.totalAmountCalculated || this.totalAmount || 0,
-        quantity: 1,
-        puntuacion: tourData.rating?.toString() || '',
-        duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
-        start_date: this.departureDate || '',
-        end_date: this.returnDate || '',
-        pasajeros_adultos: this.totalPassengers?.toString() || '0',
-        pasajeros_niños: '0'
-      },
-      this.getUserData()
+    const state = window.history.state;
+    const itemListId = state?.['listId'] || state?.['list_id'] || '';
+    const itemListName = state?.['listName'] || state?.['list_name'] || '';
+    
+    // Obtener todos los datos completos del tour dinámicamente
+    this.getCompleteTourDataForEcommerce(this.tourId).pipe(
+      switchMap((tourDataForEcommerce: TourDataForEcommerce) => {
+        // Actualizar con datos adicionales del contexto
+        const additionalData = this.prepareTourDataForEcommerce();
+        tourDataForEcommerce.flightCity = additionalData.flightCity || tourDataForEcommerce.flightCity;
+        tourDataForEcommerce.activitiesText = additionalData.activitiesText || tourDataForEcommerce.activitiesText;
+        tourDataForEcommerce.selectedInsurance = additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
+        tourDataForEcommerce.totalPassengers = additionalData.totalPassengers || tourDataForEcommerce.totalPassengers;
+        tourDataForEcommerce.childrenCount = additionalData.childrenCount || tourDataForEcommerce.childrenCount;
+        tourDataForEcommerce.departureDate = additionalData.departureDate || tourDataForEcommerce.departureDate;
+        tourDataForEcommerce.returnDate = additionalData.returnDate || tourDataForEcommerce.returnDate;
+        tourDataForEcommerce.price = additionalData.price || tourDataForEcommerce.price;
+        
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          this.getTourItemId()
+        ).pipe(
+          switchMap((item) => {
+            return this.analyticsService.getCurrentUserData().pipe(
+              map((userData) => ({ item, userData }))
+            );
+          })
+        );
+      }),
+      catchError((error) => {
+        // Fallback con datos básicos
+        const tourDataForEcommerce = this.prepareTourDataForEcommerce();
+        // Usar el ID del tour desde tourDataForEcommerce
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          map((item) => ({ item, userData: this.getUserData() }))
+        );
+      })
+    ).subscribe(({ item, userData }) => {
+      this.analyticsService.viewCart(
+        'EUR',
+        this.totalAmountCalculated || this.totalAmount || 0,
+        item,
+        userData
+      );
+    });
+  }
+
+  /**
+   * Obtener el ID del tour desde múltiples fuentes
+   * Prioridad: tourData.id (de BD) > reservationData.tour.id > tourId > tkId
+   */
+  private getTourItemId(): string {
+    const tourData = this.reservationData?.tour || {};
+    return this.tourData?.id?.toString() || 
+           tourData.id?.toString() || 
+           this.tourId?.toString() || 
+           tourData.tkId?.toString() || 
+           '';
+  }
+
+  /**
+   * Obtiene el conteo de adultos y niños desde los viajeros de la reservación
+   */
+  private getPassengersCount(): Observable<{ adults: string; children: string }> {
+    if (!this.reservationId) {
+      return of({ adults: '0', children: '0' });
+    }
+
+    return forkJoin({
+      travelers: this.reservationTravelerService.getAll({ reservationId: this.reservationId }),
+      ageGroups: this.ageGroupService.getAll()
+    }).pipe(
+      map(({ travelers, ageGroups }) => {
+        let adultsCount = 0;
+        let childrenCount = 0;
+
+        travelers.forEach(traveler => {
+          const ageGroup = ageGroups.find(group => group.id === traveler.ageGroupId);
+          if (ageGroup) {
+            // Si upperLimitAge es null o undefined, es adulto
+            // Si upperLimitAge <= 15, es niño
+            // Si upperLimitAge > 15, es adulto
+            if (ageGroup.upperLimitAge === null || ageGroup.upperLimitAge === undefined) {
+              adultsCount++;
+            } else if (ageGroup.upperLimitAge <= 15) {
+              childrenCount++;
+            } else {
+              adultsCount++;
+            }
+          } else {
+            // Si no se encuentra el grupo de edad, asumir adulto
+            adultsCount++;
+          }
+        });
+
+        return {
+          adults: adultsCount.toString(),
+          children: childrenCount.toString()
+        };
+      }),
+      catchError(() => of({ adults: '0', children: '0' }))
     );
   }
+
+  /**
+   * Calcular el número de pasajeros niños (menores de edad) dinámicamente
+   * NOTA: Simplificado para independencia de componentes
+   */
+  private getChildrenPassengersCount(): string {
+    // Retornar 0 ya que cada componente maneja sus propios datos
+    return '0';
+  }
+
+  /**
+   * Obtiene todos los datos completos del tour desde los servicios adicionales para analytics
+   */
+  private getCompleteTourDataForEcommerce(tourId: number): Observable<TourDataForEcommerce> {
+    const itineraryFilters: ItineraryFilters = {
+      tourId: tourId,
+      isVisibleOnWeb: true,
+      isBookable: true,
+    };
+
+    return this.itineraryService.getAll(itineraryFilters, false).pipe(
+      concatMap((itineraries) => {
+        if (itineraries.length === 0) {
+          return forkJoin({
+            tour: this.tourService.getById(tourId, false),
+            rating: this.reviewsService.getAverageRating({ tourId: tourId }).pipe(
+              map((ratingResponse) => {
+                const avgRating = ratingResponse?.averageRating;
+                return avgRating && avgRating > 0 ? avgRating : null;
+              }),
+              catchError(() => of(null))
+            )
+          }).pipe(
+            map(({ tour, rating }) => ({
+              id: tourId,
+              tkId: tour.tkId ?? undefined,
+              name: tour.name ?? undefined,
+              destination: { continent: undefined, country: undefined },
+              days: undefined,
+              nights: undefined,
+              rating: rating !== null ? rating : undefined,
+              monthTags: undefined,
+              tourType: tour.tripTypeId === 1 ? 'FIT' : 'Grupos',
+              price: tour.minPrice ?? undefined
+            } as TourDataForEcommerce))
+          );
+        }
+
+        // Obtener días de itinerario del primer itinerario disponible
+        const itineraryDaysRequest = this.itineraryDayService
+          .getAll({ itineraryId: itineraries[0].id })
+          .pipe(catchError(() => of([] as IItineraryDayResponse[])));
+
+        // Obtener continent y country
+        const locationRequest = forkJoin({
+          countryLocations: this.tourLocationService.getByTourAndType(tourId, 'COUNTRY').pipe(
+            map((response) => Array.isArray(response) ? response : response ? [response] : []),
+            catchError(() => of([] as ITourLocationResponse[]))
+          ),
+          continentLocations: this.tourLocationService.getByTourAndType(tourId, 'CONTINENT').pipe(
+            map((response) => Array.isArray(response) ? response : response ? [response] : []),
+            catchError(() => of([] as ITourLocationResponse[]))
+          )
+        }).pipe(
+          switchMap(({ countryLocations, continentLocations }) => {
+            const locationIds = [
+              ...countryLocations.map(tl => tl.locationId),
+              ...continentLocations.map(tl => tl.locationId)
+            ].filter(id => id !== undefined && id !== null);
+            
+            if (locationIds.length === 0) {
+              return of({ continent: '', country: '' });
+            }
+            
+            return this.locationNetService.getLocationsByIds(locationIds).pipe(
+              map((locations: Location[]) => {
+                const countries = countryLocations
+                  .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+                  .map(tl => locations.find(l => l.id === tl.locationId)?.name)
+                  .filter(name => name) as string[];
+                
+                const continents = continentLocations
+                  .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+                  .map(tl => locations.find(l => l.id === tl.locationId)?.name)
+                  .filter(name => name) as string[];
+                
+                return {
+                  continent: continents.join(', ') || '',
+                  country: countries.join(', ') || ''
+                };
+              }),
+              catchError(() => of({ continent: '', country: '' }))
+            );
+          })
+        );
+
+        return forkJoin({
+          itineraryDays: itineraryDaysRequest,
+          locationData: locationRequest,
+          monthTags: this.tourService
+            .getDepartureMonths(tourId, true)
+            .pipe(catchError(() => of([] as number[]))),
+          tour: this.tourService.getById(tourId, false),
+          rating: this.reviewsService.getAverageRating({ tourId: tourId }).pipe(
+            map((ratingResponse) => {
+              const avgRating = ratingResponse?.averageRating;
+              return avgRating && avgRating > 0 ? avgRating : null;
+            }),
+            catchError(() => of(null))
+          )
+        }).pipe(
+          map(({ itineraryDays, locationData, monthTags, tour, rating }) => {
+            const days = itineraryDays.length;
+            const nights = days > 0 ? days - 1 : 0;
+            const tourType = tour.tripTypeId === 1 ? 'FIT' : 'Grupos';
+
+            const availableMonths: string[] = Array.isArray(monthTags)
+              ? this.tourService.mapDepartureMonthNumbersToNames(
+                  monthTags as number[]
+                )
+              : [];
+
+            return {
+              id: tourId,
+              tkId: tour.tkId ?? undefined,
+              name: tour.name ?? undefined,
+              destination: {
+                continent: locationData.continent || undefined,
+                country: locationData.country || undefined
+              },
+              days: days > 0 ? days : undefined,
+              nights: nights > 0 ? nights : undefined,
+              rating: rating !== null ? rating : undefined,
+              monthTags: availableMonths.length > 0 ? availableMonths : undefined,
+              tourType: tourType,
+              flightCity: 'Sin vuelo',
+              price: tour.minPrice ?? undefined
+            } as TourDataForEcommerce;
+          }),
+          catchError(() => of({
+            id: tourId,
+            days: undefined,
+            nights: undefined,
+            destination: { continent: undefined, country: undefined },
+            monthTags: undefined,
+            tourType: undefined
+          } as TourDataForEcommerce))
+        );
+      }),
+      catchError(() => of({
+        id: tourId,
+        days: undefined,
+        nights: undefined,
+        destination: { continent: undefined, country: undefined },
+        monthTags: undefined,
+        tourType: undefined
+      } as TourDataForEcommerce))
+    );
+  }
+
+  /**
+   * Obtiene el nombre del seguro seleccionado
+   */
+  private getInsuranceName(): string {
+    // Usar el seguro del componente hijo si está disponible, o el del componente padre
+    const insuranceName = this.insuranceSelector?.selectedInsurance?.name || 
+           this.selectedInsurance?.name || 
+           this.reservationData?.insurance?.name || 
+           '';
+
+    if (insuranceName && insuranceName.length > 0) {
+      sessionStorage.setItem('checkout_selectedInsurance', insuranceName);
+    } else {
+      sessionStorage.removeItem('checkout_selectedInsurance');
+    }
+
+    return insuranceName;
+  }
+
+  /**
+   * Obtiene las actividades asignadas desde los viajeros de la reservación
+   */
+  private getActivitiesFromTravelers(): Observable<string> {
+    if (!this.reservationId || !this.itineraryId) {
+      return of('');
+    }
+
+    // Obtener todos los viajeros de la reservación
+    return this.reservationTravelerService.getAll({ reservationId: this.reservationId }).pipe(
+      switchMap((travelers) => {
+        if (!travelers || travelers.length === 0) {
+          return of('');
+        }
+
+        // Obtener todas las actividades asignadas (individuales y packs) de todos los viajeros
+        const activityRequests = travelers.map(traveler =>
+          forkJoin({
+            activities: this.reservationTravelerActivityService.getByReservationTraveler(traveler.id).pipe(
+              catchError(() => of([]))
+            ),
+            activityPacks: this.reservationTravelerActivityPackService.getByReservationTraveler(traveler.id).pipe(
+              catchError(() => of([]))
+            )
+          })
+        );
+
+        return forkJoin(activityRequests).pipe(
+          switchMap((results) => {
+            // Recopilar todos los IDs únicos de actividades y packs
+            const activityIds = new Set<number>();
+            const packIds = new Set<number>();
+
+            results.forEach(result => {
+              result.activities.forEach(activity => {
+                if (activity.activityId) {
+                  activityIds.add(activity.activityId);
+                }
+              });
+              result.activityPacks.forEach(pack => {
+                if (pack.activityPackId) {
+                  packIds.add(pack.activityPackId);
+                }
+              });
+            });
+
+            if (activityIds.size === 0 && packIds.size === 0) {
+              return of('');
+            }
+
+            // Obtener todas las actividades disponibles del itinerario
+            return this.activityService.getForItineraryWithPacks(
+              this.itineraryId!,
+              this.departureId || undefined,
+              undefined,
+              true, // isVisibleOnWeb
+              true  // onlyOpt
+            ).pipe(
+              map((allActivities: IActivityResponse[]) => {
+                // Filtrar actividades asignadas
+                const assignedActivities = allActivities.filter(activity => {
+                  if (activity.type === 'act') {
+                    return activityIds.has(activity.id);
+                  } else if (activity.type === 'pack') {
+                    return packIds.has(activity.id);
+                  }
+                  return false;
+                });
+
+                // Formatear nombres de actividades
+                const activityNames = assignedActivities
+                  .map(activity => activity.name)
+                  .filter(name => name && name.trim().length > 0);
+
+                return activityNames.join(', ');
+              }),
+              catchError(() => of(''))
+            );
+          })
+        );
+      }),
+      catchError(() => of(''))
+    );
+  }
+
+  /**
+   * Helper para preparar datos del tour para analytics
+   */
+  private prepareTourDataForEcommerce(additionalData?: {
+    activitiesText?: string;
+    selectedInsurance?: string;
+    flightCity?: string;
+  }): TourDataForEcommerce {
+    const tourData = this.reservationData?.tour || {};
+    
+    // Obtener actividades seleccionadas
+    // Si no se proporciona en additionalData, intentar desde selectedActivities o desde viajeros
+    const activitiesText = additionalData?.activitiesText ||
+      (this.selectedActivities && this.selectedActivities.length > 0
+        ? this.selectedActivities.map((a) => a.description || a.name).join(', ')
+        : '');
+
+    // Obtener seguro seleccionado
+    const selectedInsurance = additionalData?.selectedInsurance ||
+      this.reservationData?.insurance?.name || '';
+
+    // Obtener ciudad de vuelo
+    const flightCity = additionalData?.flightCity ||
+      this.selectedFlight?.name || 'Sin vuelo';
+
+    // Calcular pasajeros niños
+    const childrenCount = this.getChildrenPassengersCount();
+
+    return {
+      id: this.tourId || tourData.id,
+      tkId: tourData.tkId,
+      name: this.tourName || tourData.name,
+      destination: {
+        continent: tourData.destination?.continent,
+        country: tourData.destination?.country
+      },
+      days: tourData.days,
+      nights: tourData.nights,
+      rating: tourData.rating,
+      monthTags: tourData.monthTags,
+      tourType: tourData.tourType,
+      flightCity: flightCity,
+      activitiesText: activitiesText,
+      selectedInsurance: selectedInsurance,
+      childrenCount: childrenCount,
+      totalPassengers: this.totalPassengers,
+      departureDate: this.departureDate,
+      returnDate: this.returnDate,
+      price: this.totalAmountCalculated || this.totalAmount || 0
+    };
+  }
+
+  /**
+   * Helper para construir y disparar eventos de analytics con el item correcto
+   */
+  private buildAndDispatchEvent(
+    eventHandler: (item: EcommerceItem, userData: any) => void,
+    itemListId: string,
+    itemListName: string,
+    tourDataForEcommerce: TourDataForEcommerce
+  ): void {
+    // Usar el ID del tour desde tourDataForEcommerce
+    const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+    
+    this.analyticsService.buildEcommerceItemFromTourData(
+      tourDataForEcommerce,
+      itemListId,
+      itemListName,
+      itemId
+    ).pipe(
+      switchMap((item) => {
+        return this.analyticsService.getCurrentUserData().pipe(
+          map((userData) => ({ item, userData }))
+        );
+      }),
+      catchError((error) => {
+        // Usar el ID del tour desde tourDataForEcommerce
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          map((item) => ({ item, userData: this.getUserData() }))
+        );
+      })
+    ).subscribe(({ item, userData }) => {
+      eventHandler(item, userData);
+    });
+  }
+
 
   /**
    * Disparar evento begin_checkout cuando el usuario continúa del paso 1
    */
   private trackBeginCheckout(): void {
-    if (!this.reservationData) return;
-
-    const tourData = this.reservationData.tour || {};
+    if (!this.reservationData || !this.tourId || !this.reservationId) return;
     
-    // Obtener actividades seleccionadas
-    const activitiesText = this.selectedActivities && this.selectedActivities.length > 0
-      ? this.selectedActivities.map(a => a.description || a.name).join(', ')
-      : '';
+    // Usar los valores guardados al cargar el componente
+    const itemListId = this.savedItemListId;
+    const itemListName = this.savedItemListName;
     
-    // Obtener seguro seleccionado
-    const selectedInsurance = this.reservationData.insurance?.name || '';
-    
-    this.analyticsService.beginCheckout(
-      {
-        currency: 'EUR',
-        value: this.totalAmountCalculated || this.totalAmount || 0,
-        coupon: this.reservationData.coupon?.code || '',
-        items: [{
-          item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
-          item_name: this.tourName || tourData.name || '',
-          coupon: '',
-          discount: 0,
-          index: 0,
-          item_brand: 'Different Roads',
-          item_category: tourData.destination?.continent || '',
-          item_category2: tourData.destination?.country || '',
-          item_category3: tourData.marketingSection?.marketingSeasonTag || '',
-          item_category4: tourData.monthTags?.join(', ') || '',
-          item_category5: tourData.tourType || '',
-          item_list_id: 'checkout',
-          item_list_name: 'Carrito de compra',
-          item_variant: `${tourData.tkId || tourData.id} - ${this.selectedFlight?.name || 'Sin vuelo'}`,
-          price: this.totalAmountCalculated || this.totalAmount || 0,
-          quantity: 1,
-          puntuacion: tourData.rating?.toString() || '',
-          duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
-          start_date: this.departureDate || '',
-          end_date: this.returnDate || '',
-          pasajeros_adultos: this.totalPassengers?.toString() || '0',
-          pasajeros_niños: '0',
-          actividades: activitiesText,
-          seguros: selectedInsurance
-        }]
-      },
-      this.getUserData()
-    );
+    // Obtener todos los datos completos del tour dinámicamente, incluyendo actividades y pasajeros desde viajeros
+    forkJoin({
+      tourData: this.getCompleteTourDataForEcommerce(this.tourId),
+      activitiesText: this.getActivitiesFromTravelers(),
+      passengersCount: this.getPassengersCount(),
+      summary: this.reservationService.getSummary(this.reservationId).pipe(catchError(() => of(null)))
+    }).pipe(
+      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount, summary }) => {
+        // Actualizar con datos adicionales del contexto
+        const additionalData = this.prepareTourDataForEcommerce();
+        
+        // Obtener datos del summary cuando sea posible (prioridad: summary > métodos actuales > additionalData)
+        const summaryFlight = this.analyticsService.extractFlightFromSummary(summary, this.reservationData, this.selectedFlight);
+        const summaryActivities = this.analyticsService.extractActivitiesFromSummary(summary);
+        const storedInsurance = sessionStorage.getItem('checkout_selectedInsurance') || '';
+        const summaryInsurance = this.analyticsService.extractInsuranceFromSummary(summary, this.reservationData, storedInsurance);
+        
+        tourDataForEcommerce.flightCity = summaryFlight || additionalData.flightCity || tourDataForEcommerce.flightCity || 'Sin vuelo';
+        // Usar actividades del summary, luego desde viajeros, o fallback a additionalData
+        tourDataForEcommerce.activitiesText = summaryActivities || activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
+        // Usar seguro del summary, luego del componente o del contexto
+        tourDataForEcommerce.selectedInsurance = summaryInsurance || this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
+        // Usar conteo de pasajeros desde viajeros
+        tourDataForEcommerce.totalPassengers = parseInt(passengersCount.adults) + parseInt(passengersCount.children);
+        tourDataForEcommerce.childrenCount = passengersCount.children;
+        tourDataForEcommerce.departureDate = additionalData.departureDate || tourDataForEcommerce.departureDate;
+        tourDataForEcommerce.returnDate = additionalData.returnDate || tourDataForEcommerce.returnDate;
+        tourDataForEcommerce.price = additionalData.price || tourDataForEcommerce.price;
+        
+        // Usar el ID del tour desde tourDataForEcommerce
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          switchMap((item) => {
+            return this.analyticsService.getCurrentUserData().pipe(
+              map((userData) => ({ item, userData }))
+            );
+          })
+        );
+      }),
+      catchError((error) => {
+        // Fallback con datos básicos
+        const tourDataForEcommerce = this.prepareTourDataForEcommerce();
+        // Usar el ID del tour desde tourDataForEcommerce
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          map((item) => ({ item, userData: this.getUserData() }))
+        );
+      })
+    ).subscribe(({ item, userData }) => {
+      // El item ya tiene item_list_id e item_list_name desde buildEcommerceItemFromTourData
+      // No necesitamos actualizarlo, solo pasarlo directamente como en view_cart
+      this.analyticsService.beginCheckout(
+        {
+          currency: 'EUR',
+          value: this.totalAmountCalculated || this.totalAmount || 0,
+          coupon: this.reservationData.coupon?.code || '',
+          items: [item]
+        },
+        userData
+      );
+    });
   }
 
   /**
    * Disparar evento view_flights_info cuando se visualiza el paso de vuelos
    */
   private trackViewFlightsInfo(): void {
-    if (!this.reservationData) return;
-
-    const tourData = this.reservationData.tour || {};
+    if (!this.reservationData || !this.tourId || !this.reservationId) return;
     
-    // Obtener actividades seleccionadas
-    const activitiesText = this.selectedActivities && this.selectedActivities.length > 0
-      ? this.selectedActivities.map(a => a.description || a.name).join(', ')
-      : '';
+    // Usar los valores guardados al cargar el componente
+    const itemListId = this.savedItemListId;
+    const itemListName = this.savedItemListName;
     
-    // Obtener seguro seleccionado
-    const selectedInsurance = this.reservationData.insurance?.name || '';
-    
-    this.analyticsService.viewFlightsInfo(
-      {
-        currency: 'EUR',
-        value: this.totalAmountCalculated || this.totalAmount || 0,
-        coupon: this.reservationData.coupon?.code || '',
-        items: [{
-          item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
-          item_name: this.tourName || tourData.name || '',
-          coupon: '',
-          discount: 0,
-          index: 0,
-          item_brand: 'Different Roads',
-          item_category: tourData.destination?.continent || '',
-          item_category2: tourData.destination?.country || '',
-          item_category3: tourData.marketingSection?.marketingSeasonTag || '',
-          item_category4: tourData.monthTags?.join(', ') || '',
-          item_category5: tourData.tourType || '',
-          item_list_id: 'checkout',
-          item_list_name: 'Carrito de compra',
-          item_variant: `${tourData.tkId || tourData.id} - ${this.selectedFlight?.name || 'Sin vuelo'}`,
-          price: this.totalAmountCalculated || this.totalAmount || 0,
-          quantity: 1,
-          puntuacion: tourData.rating?.toString() || '',
-          duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
-          start_date: this.departureDate || '',
-          end_date: this.returnDate || '',
-          pasajeros_adultos: this.totalPassengers?.toString() || '0',
-          pasajeros_niños: '0',
-          actividades: activitiesText,
-          seguros: selectedInsurance
-        }]
-      },
-      this.getUserData()
-    );
+    // Obtener todos los datos completos del tour dinámicamente, incluyendo actividades y pasajeros desde viajeros
+    forkJoin({
+      tourData: this.getCompleteTourDataForEcommerce(this.tourId),
+      activitiesText: this.getActivitiesFromTravelers(),
+      passengersCount: this.getPassengersCount(),
+      summary: this.reservationService.getSummary(this.reservationId).pipe(catchError(() => of(null)))
+    }).pipe(
+      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount, summary }) => {
+        // Actualizar con datos adicionales del contexto
+        const additionalData = this.prepareTourDataForEcommerce();
+        
+        // Obtener datos del summary cuando sea posible (prioridad: summary > métodos actuales > additionalData)
+        const summaryFlight = this.analyticsService.extractFlightFromSummary(summary, this.reservationData, this.selectedFlight);
+        const summaryActivities = this.analyticsService.extractActivitiesFromSummary(summary);
+        const storedInsurance = sessionStorage.getItem('checkout_selectedInsurance') || '';
+        const summaryInsurance = this.analyticsService.extractInsuranceFromSummary(summary, this.reservationData, storedInsurance);
+        
+        tourDataForEcommerce.flightCity = summaryFlight || additionalData.flightCity || tourDataForEcommerce.flightCity || 'Sin vuelo';
+        // Usar actividades del summary, luego desde viajeros, o fallback a additionalData
+        tourDataForEcommerce.activitiesText = summaryActivities || activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
+        // Usar seguro del summary, luego del componente o del contexto
+        tourDataForEcommerce.selectedInsurance = summaryInsurance || this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
+        // Usar conteo de pasajeros desde viajeros
+        tourDataForEcommerce.totalPassengers = parseInt(passengersCount.adults) + parseInt(passengersCount.children);
+        tourDataForEcommerce.childrenCount = passengersCount.children;
+        tourDataForEcommerce.departureDate = additionalData.departureDate || tourDataForEcommerce.departureDate;
+        tourDataForEcommerce.returnDate = additionalData.returnDate || tourDataForEcommerce.returnDate;
+        tourDataForEcommerce.price = additionalData.price || tourDataForEcommerce.price;
+        
+        // Usar el ID del tour desde tourDataForEcommerce
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          switchMap((item) => {
+            return this.analyticsService.getCurrentUserData().pipe(
+              map((userData) => ({ item, userData }))
+            );
+          })
+        );
+      }),
+      catchError((error) => {
+        // Fallback con datos básicos
+        const tourDataForEcommerce = this.prepareTourDataForEcommerce();
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          map((item) => ({ item, userData: this.getUserData() }))
+        );
+      })
+    ).subscribe(({ item, userData }) => {
+      // El item ya tiene item_list_id e item_list_name desde buildEcommerceItemFromTourData
+      // No necesitamos actualizarlo, solo pasarlo directamente como en view_cart
+      this.analyticsService.viewFlightsInfo(
+        {
+          currency: 'EUR',
+          value: this.totalAmountCalculated || this.totalAmount || 0,
+          coupon: this.reservationData.coupon?.code || '',
+          items: [item]
+        },
+        userData
+      );
+    });
   }
 
   /**
    * Disparar evento add_flights_info cuando el usuario selecciona vuelo y continúa
    */
   private trackAddFlightsInfo(): void {
-    if (!this.reservationData) return;
-
-    const tourData = this.reservationData.tour || {};
+    if (!this.reservationData || !this.tourId || !this.reservationId) return;
     
-    // Obtener actividades seleccionadas
-    const activitiesText = this.selectedActivities && this.selectedActivities.length > 0
-      ? this.selectedActivities.map(a => a.description || a.name).join(', ')
-      : '';
+    // Usar los valores guardados al cargar el componente
+    const itemListId = this.savedItemListId;
+    const itemListName = this.savedItemListName;
     
-    // Obtener seguro seleccionado
-    const selectedInsurance = this.reservationData.insurance?.name || '';
-    
-    // Obtener ciudad de vuelo seleccionado
-    const flightCity = this.selectedFlight?.name || 'Sin vuelo';
-    
-    this.analyticsService.addFlightsInfo(
-      {
-        currency: 'EUR',
-        value: this.totalAmountCalculated || this.totalAmount || 0,
-        coupon: this.reservationData.coupon?.code || '',
-        items: [{
-          item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
-          item_name: this.tourName || tourData.name || '',
-          coupon: '',
-          discount: 0,
-          index: 0,
-          item_brand: 'Different Roads',
-          item_category: tourData.destination?.continent || '',
-          item_category2: tourData.destination?.country || '',
-          item_category3: tourData.marketingSection?.marketingSeasonTag || '',
-          item_category4: tourData.monthTags?.join(', ') || '',
-          item_category5: tourData.tourType || '',
-          item_list_id: 'checkout',
-          item_list_name: 'Carrito de compra',
-          item_variant: `${tourData.tkId || tourData.id} - ${flightCity}`,
-          price: this.totalAmountCalculated || this.totalAmount || 0,
-          quantity: 1,
-          puntuacion: tourData.rating?.toString() || '',
-          duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
-          start_date: this.departureDate || '',
-          end_date: this.returnDate || '',
-          pasajeros_adultos: this.totalPassengers?.toString() || '0',
-          pasajeros_niños: '0',
-          actividades: activitiesText,
-          seguros: selectedInsurance,
-          vuelo: flightCity
-        }]
-      },
-      this.getUserData()
-    );
+    // Obtener todos los datos completos del tour dinámicamente, incluyendo actividades y pasajeros desde viajeros
+    forkJoin({
+      tourData: this.getCompleteTourDataForEcommerce(this.tourId),
+      activitiesText: this.getActivitiesFromTravelers(),
+      passengersCount: this.getPassengersCount(),
+      summary: this.reservationService.getSummary(this.reservationId).pipe(catchError(() => of(null)))
+    }).pipe(
+      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount, summary }) => {
+        // Actualizar con datos adicionales del contexto
+        const additionalData = this.prepareTourDataForEcommerce();
+        
+        // Obtener datos del summary cuando sea posible (prioridad: summary > métodos actuales > additionalData)
+        const summaryFlight = this.analyticsService.extractFlightFromSummary(summary, this.reservationData, this.selectedFlight);
+        const summaryActivities = this.analyticsService.extractActivitiesFromSummary(summary);
+        const storedInsurance = sessionStorage.getItem('checkout_selectedInsurance') || '';
+        const summaryInsurance = this.analyticsService.extractInsuranceFromSummary(summary, this.reservationData, storedInsurance);
+        
+        tourDataForEcommerce.flightCity = summaryFlight || additionalData.flightCity || tourDataForEcommerce.flightCity || 'Sin vuelo';
+        // Usar actividades del summary, luego desde viajeros, o fallback a additionalData
+        tourDataForEcommerce.activitiesText = summaryActivities || activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
+        // Usar seguro del summary, luego del componente o del contexto
+        tourDataForEcommerce.selectedInsurance = summaryInsurance || this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
+        // Usar conteo de pasajeros desde viajeros
+        tourDataForEcommerce.totalPassengers = parseInt(passengersCount.adults) + parseInt(passengersCount.children);
+        tourDataForEcommerce.childrenCount = passengersCount.children;
+        tourDataForEcommerce.departureDate = additionalData.departureDate || tourDataForEcommerce.departureDate;
+        tourDataForEcommerce.returnDate = additionalData.returnDate || tourDataForEcommerce.returnDate;
+        tourDataForEcommerce.price = additionalData.price || tourDataForEcommerce.price;
+        
+        // Usar el ID del tour desde tourDataForEcommerce
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          switchMap((item) => {
+            return this.analyticsService.getCurrentUserData().pipe(
+              map((userData) => ({ item, userData }))
+            );
+          })
+        );
+      }),
+      catchError((error) => {
+        // Fallback con datos básicos
+        const tourDataForEcommerce = this.prepareTourDataForEcommerce();
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          map((item) => ({ item, userData: this.getUserData() }))
+        );
+      })
+    ).subscribe(({ item, userData }) => {
+      // El item ya tiene item_list_id e item_list_name desde buildEcommerceItemFromTourData
+      // No necesitamos actualizarlo, solo pasarlo directamente como en view_cart
+      this.analyticsService.addFlightsInfo(
+        {
+          currency: 'EUR',
+          value: this.totalAmountCalculated || this.totalAmount || 0,
+          coupon: this.reservationData.coupon?.code || '',
+          items: [item]
+        },
+        userData
+      );
+    });
   }
 
   /**
    * Disparar evento view_personal_info cuando se visualiza el paso de datos de pasajeros
    */
   private trackViewPersonalInfo(): void {
-    if (!this.reservationData) return;
-
-    const tourData = this.reservationData.tour || {};
+    if (!this.reservationData || !this.tourId || !this.reservationId) return;
     
-    // Obtener actividades seleccionadas
-    const activitiesText = this.selectedActivities && this.selectedActivities.length > 0
-      ? this.selectedActivities.map(a => a.description || a.name).join(', ')
-      : '';
+    // Usar los valores guardados al cargar el componente
+    const itemListId = this.savedItemListId;
+    const itemListName = this.savedItemListName;
     
-    // Obtener seguro seleccionado
-    const selectedInsurance = this.reservationData.insurance?.name || '';
-    
-    // Obtener ciudad de vuelo seleccionado
-    const flightCity = this.selectedFlight?.name || 'Sin vuelo';
-    
-    this.analyticsService.viewPersonalInfo(
-      {
-        currency: 'EUR',
-        value: this.totalAmountCalculated || this.totalAmount || 0,
-        coupon: this.reservationData.coupon?.code || '',
-        items: [{
-          item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
-          item_name: this.tourName || tourData.name || '',
-          coupon: '',
-          discount: 0,
-          index: 0,
-          item_brand: 'Different Roads',
-          item_category: tourData.destination?.continent || '',
-          item_category2: tourData.destination?.country || '',
-          item_category3: tourData.marketingSection?.marketingSeasonTag || '',
-          item_category4: tourData.monthTags?.join(', ') || '',
-          item_category5: tourData.tourType || '',
-          item_list_id: 'checkout',
-          item_list_name: 'Carrito de compra',
-          item_variant: `${tourData.tkId || tourData.id} - ${flightCity}`,
-          price: this.totalAmountCalculated || this.totalAmount || 0,
-          quantity: 1,
-          puntuacion: tourData.rating?.toString() || '',
-          duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
-          start_date: this.departureDate || '',
-          end_date: this.returnDate || '',
-          pasajeros_adultos: this.totalPassengers?.toString() || '0',
-          pasajeros_niños: '0',
-          actividades: activitiesText,
-          seguros: selectedInsurance,
-          vuelo: flightCity
-        }]
-      },
-      this.getUserData()
-    );
+    // Obtener todos los datos completos del tour dinámicamente, incluyendo actividades y pasajeros desde viajeros
+    forkJoin({
+      tourData: this.getCompleteTourDataForEcommerce(this.tourId),
+      activitiesText: this.getActivitiesFromTravelers(),
+      passengersCount: this.getPassengersCount(),
+      summary: this.reservationService.getSummary(this.reservationId).pipe(catchError(() => of(null)))
+    }).pipe(
+      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount, summary }) => {
+        // Actualizar con datos adicionales del contexto
+        const additionalData = this.prepareTourDataForEcommerce();
+        
+        // Obtener datos del summary cuando sea posible (prioridad: summary > métodos actuales > additionalData)
+        const summaryFlight = this.analyticsService.extractFlightFromSummary(summary, this.reservationData, this.selectedFlight);
+        const summaryActivities = this.analyticsService.extractActivitiesFromSummary(summary);
+        const storedInsurance = sessionStorage.getItem('checkout_selectedInsurance') || '';
+        const summaryInsurance = this.analyticsService.extractInsuranceFromSummary(summary, this.reservationData, storedInsurance);
+        
+        tourDataForEcommerce.flightCity = summaryFlight || additionalData.flightCity || tourDataForEcommerce.flightCity || 'Sin vuelo';
+        // Usar actividades del summary, luego desde viajeros, o fallback a additionalData
+        tourDataForEcommerce.activitiesText = summaryActivities || activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
+        // Usar seguro del summary, luego del componente o del contexto
+        tourDataForEcommerce.selectedInsurance = summaryInsurance || this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
+        // Usar conteo de pasajeros desde viajeros
+        tourDataForEcommerce.totalPassengers = parseInt(passengersCount.adults) + parseInt(passengersCount.children);
+        tourDataForEcommerce.childrenCount = passengersCount.children;
+        tourDataForEcommerce.departureDate = additionalData.departureDate || tourDataForEcommerce.departureDate;
+        tourDataForEcommerce.returnDate = additionalData.returnDate || tourDataForEcommerce.returnDate;
+        tourDataForEcommerce.price = additionalData.price || tourDataForEcommerce.price;
+        
+        // Usar el ID del tour desde tourDataForEcommerce
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          switchMap((item) => {
+            return this.analyticsService.getCurrentUserData().pipe(
+              map((userData) => ({ item, userData }))
+            );
+          })
+        );
+      }),
+      catchError((error) => {
+        // Fallback con datos básicos
+        const tourDataForEcommerce = this.prepareTourDataForEcommerce();
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          map((item) => ({ item, userData: this.getUserData() }))
+        );
+      })
+    ).subscribe(({ item, userData }) => {
+      // El item ya tiene item_list_id e item_list_name desde buildEcommerceItemFromTourData
+      // No necesitamos actualizarlo, solo pasarlo directamente como en view_cart
+      this.analyticsService.viewPersonalInfo(
+        {
+          currency: 'EUR',
+          value: this.totalAmountCalculated || this.totalAmount || 0,
+          coupon: this.reservationData.coupon?.code || '',
+          items: [item]
+        },
+        userData
+      );
+    });
   }
 
   /**
    * Disparar evento add_payment_info cuando el usuario selecciona método de pago
    */
   private trackAddPaymentInfo(paymentOption?: any): void {
-    if (!this.reservationData) return;
-
-    const tourData = this.reservationData.tour || {};
+    if (!this.reservationData || !this.tourId || !this.reservationId) return;
     
-    // Obtener actividades seleccionadas
-    const activitiesText = this.selectedActivities && this.selectedActivities.length > 0
-      ? this.selectedActivities.map(a => a.description || a.name).join(', ')
-      : '';
+    // Usar los valores guardados al cargar el componente
+    const itemListId = this.savedItemListId;
+    const itemListName = this.savedItemListName;
     
-    // Obtener seguro seleccionado
-    const selectedInsurance = this.reservationData.insurance?.name || '';
-    
-    // Obtener ciudad de vuelo seleccionado
-    const flightCity = this.selectedFlight?.name || 'Sin vuelo';
-    
-    // Obtener método de pago seleccionado
+    // Obtener método de pago seleccionado (dinámico)
     let paymentType = 'completo, transferencia'; // Valor por defecto
-    
+
     if (paymentOption) {
-      const method = paymentOption.method === 'creditCard' ? 'tarjeta' : 'transferencia';
+      const method =
+        paymentOption.method === 'creditCard' ? 'tarjeta' : 'transferencia';
       const type = paymentOption.type === 'deposit' ? 'depósito' : 'completo';
       paymentType = `${type}, ${method}`;
     }
     
-    this.analyticsService.addPaymentInfo(
-      {
-        currency: 'EUR',
-        value: this.totalAmountCalculated || this.totalAmount || 0,
-        coupon: this.reservationData.coupon?.code || '',
-        payment_type: paymentType,
-        items: [{
-          item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
-          item_name: this.tourName || tourData.name || '',
-          coupon: '',
-          discount: 0,
-          index: 0,
-          item_brand: 'Different Roads',
-          item_category: tourData.destination?.continent || '',
-          item_category2: tourData.destination?.country || '',
-          item_category3: tourData.marketingSection?.marketingSeasonTag || '',
-          item_category4: tourData.monthTags?.join(', ') || '',
-          item_category5: tourData.tourType || '',
-          item_list_id: 'checkout',
-          item_list_name: 'Carrito de compra',
-          item_variant: `${tourData.tkId || tourData.id} - ${flightCity}`,
-          price: this.totalAmountCalculated || this.totalAmount || 0,
-          quantity: 1,
-          puntuacion: tourData.rating?.toString() || '',
-          duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
-          start_date: this.departureDate || '',
-          end_date: this.returnDate || '',
-          pasajeros_adultos: this.totalPassengers?.toString() || '0',
-          pasajeros_niños: '0',
-          actividades: activitiesText,
-          seguros: selectedInsurance,
-          vuelo: flightCity
-        }]
-      },
-      this.getUserData()
-    );
+    // Obtener todos los datos completos del tour dinámicamente, incluyendo actividades y pasajeros desde viajeros
+    forkJoin({
+      tourData: this.getCompleteTourDataForEcommerce(this.tourId),
+      activitiesText: this.getActivitiesFromTravelers(),
+      passengersCount: this.getPassengersCount(),
+      summary: this.reservationService.getSummary(this.reservationId).pipe(catchError(() => of(null)))
+    }).pipe(
+      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount, summary }) => {
+        // Actualizar con datos adicionales del contexto
+        const additionalData = this.prepareTourDataForEcommerce();
+        
+        // Obtener datos del summary cuando sea posible (prioridad: summary > métodos actuales > additionalData)
+        const summaryFlight = this.analyticsService.extractFlightFromSummary(summary, this.reservationData, this.selectedFlight);
+        const summaryActivities = this.analyticsService.extractActivitiesFromSummary(summary);
+        const storedInsurance = sessionStorage.getItem('checkout_selectedInsurance') || '';
+        const summaryInsurance = this.analyticsService.extractInsuranceFromSummary(summary, this.reservationData, storedInsurance);
+        
+        tourDataForEcommerce.flightCity = summaryFlight || additionalData.flightCity || tourDataForEcommerce.flightCity || 'Sin vuelo';
+        // Usar actividades del summary, luego desde viajeros, o fallback a additionalData
+        tourDataForEcommerce.activitiesText = summaryActivities || activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
+        // Usar seguro del summary, luego del componente o del contexto
+        tourDataForEcommerce.selectedInsurance = summaryInsurance || this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
+        // Usar conteo de pasajeros desde viajeros
+        tourDataForEcommerce.totalPassengers = parseInt(passengersCount.adults) + parseInt(passengersCount.children);
+        tourDataForEcommerce.childrenCount = passengersCount.children;
+        tourDataForEcommerce.departureDate = additionalData.departureDate || tourDataForEcommerce.departureDate;
+        tourDataForEcommerce.returnDate = additionalData.returnDate || tourDataForEcommerce.returnDate;
+        tourDataForEcommerce.price = additionalData.price || tourDataForEcommerce.price;
+        
+        // Usar el ID del tour desde tourDataForEcommerce
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          switchMap((item) => {
+            return this.analyticsService.getCurrentUserData().pipe(
+              map((userData) => ({ item, userData }))
+            );
+          })
+        );
+      }),
+      catchError((error) => {
+        // Fallback con datos básicos
+        const tourDataForEcommerce = this.prepareTourDataForEcommerce();
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          map((item) => ({ item, userData: this.getUserData() }))
+        );
+      })
+    ).subscribe(({ item, userData }) => {
+      // El item ya tiene item_list_id e item_list_name desde buildEcommerceItemFromTourData
+      // No necesitamos actualizarlo, solo pasarlo directamente como en view_cart
+      this.analyticsService.addPaymentInfo(
+        {
+          currency: 'EUR',
+          value: this.totalAmountCalculated || this.totalAmount || 0,
+          coupon: this.reservationData.coupon?.code || '',
+          payment_type: paymentType,
+          items: [item]
+        },
+        userData
+      );
+    });
   }
 
   /**
    * Disparar evento view_payment_info cuando el usuario visualiza el paso de pago
    */
   private trackViewPaymentInfo(): void {
-    if (!this.reservationData) return;
-
-    const tourData = this.reservationData.tour || {};
+    if (!this.reservationData || !this.tourId || !this.reservationId) return;
     
-    // Obtener actividades seleccionadas
-    const activitiesText = this.selectedActivities && this.selectedActivities.length > 0
-      ? this.selectedActivities.map(a => a.description || a.name).join(', ')
-      : '';
+    // Usar los valores guardados al cargar el componente
+    const itemListId = this.savedItemListId;
+    const itemListName = this.savedItemListName;
     
-    // Obtener seguro seleccionado
-    const selectedInsurance = this.reservationData.insurance?.name || '';
-    
-    // Obtener ciudad de vuelo seleccionado
-    const flightCity = this.selectedFlight?.name || 'Sin vuelo';
-    
-    this.analyticsService.viewPaymentInfo(
-      {
-        currency: 'EUR',
-        value: this.totalAmountCalculated || this.totalAmount || 0,
-        coupon: this.reservationData.coupon?.code || '',
-        items: [{
-          item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
-          item_name: this.tourName || tourData.name || '',
-          coupon: '',
-          discount: 0,
-          index: 0,
-          item_brand: 'Different Roads',
-          item_category: tourData.destination?.continent || '',
-          item_category2: tourData.destination?.country || '',
-          item_category3: tourData.marketingSection?.marketingSeasonTag || '',
-          item_category4: tourData.monthTags?.join(', ') || '',
-          item_category5: tourData.tourType || '',
-          item_list_id: 'checkout',
-          item_list_name: 'Carrito de compra',
-          item_variant: `${tourData.tkId || tourData.id} - ${flightCity}`,
-          price: this.totalAmountCalculated || this.totalAmount || 0,
-          quantity: 1,
-          puntuacion: tourData.rating?.toString() || '',
-          duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
-          start_date: this.departureDate || '',
-          end_date: this.returnDate || '',
-          pasajeros_adultos: this.totalPassengers?.toString() || '0',
-          pasajeros_niños: '0',
-          actividades: activitiesText,
-          seguros: selectedInsurance,
-          vuelo: flightCity
-        }]
-      },
-      this.getUserData()
-    );
+    // Obtener todos los datos completos del tour dinámicamente, incluyendo actividades y pasajeros desde viajeros
+    forkJoin({
+      tourData: this.getCompleteTourDataForEcommerce(this.tourId),
+      activitiesText: this.getActivitiesFromTravelers(),
+      passengersCount: this.getPassengersCount(),
+      summary: this.reservationService.getSummary(this.reservationId).pipe(catchError(() => of(null)))
+    }).pipe(
+      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount, summary }) => {
+        // Actualizar con datos adicionales del contexto
+        const additionalData = this.prepareTourDataForEcommerce();
+        
+        // Obtener datos del summary cuando sea posible (prioridad: summary > métodos actuales > additionalData)
+        const summaryFlight = this.analyticsService.extractFlightFromSummary(summary, this.reservationData, this.selectedFlight);
+        const summaryActivities = this.analyticsService.extractActivitiesFromSummary(summary);
+        const storedInsurance = sessionStorage.getItem('checkout_selectedInsurance') || '';
+        const summaryInsurance = this.analyticsService.extractInsuranceFromSummary(summary, this.reservationData, storedInsurance);
+        
+        tourDataForEcommerce.flightCity = summaryFlight || additionalData.flightCity || tourDataForEcommerce.flightCity || 'Sin vuelo';
+        // Usar actividades del summary, luego desde viajeros, o fallback a additionalData
+        tourDataForEcommerce.activitiesText = summaryActivities || activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
+        // Usar seguro del summary, luego del componente o del contexto
+        tourDataForEcommerce.selectedInsurance = summaryInsurance || this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
+        // Usar conteo de pasajeros desde viajeros
+        tourDataForEcommerce.totalPassengers = parseInt(passengersCount.adults) + parseInt(passengersCount.children);
+        tourDataForEcommerce.childrenCount = passengersCount.children;
+        tourDataForEcommerce.departureDate = additionalData.departureDate || tourDataForEcommerce.departureDate;
+        tourDataForEcommerce.returnDate = additionalData.returnDate || tourDataForEcommerce.returnDate;
+        tourDataForEcommerce.price = additionalData.price || tourDataForEcommerce.price;
+        
+        // Usar el ID del tour desde tourDataForEcommerce
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          switchMap((item) => {
+            return this.analyticsService.getCurrentUserData().pipe(
+              map((userData) => ({ item, userData }))
+            );
+          })
+        );
+      }),
+      catchError((error) => {
+        // Fallback con datos básicos
+        const tourDataForEcommerce = this.prepareTourDataForEcommerce();
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          map((item) => ({ item, userData: this.getUserData() }))
+        );
+      })
+    ).subscribe(({ item, userData }) => {
+      // El item ya tiene item_list_id e item_list_name desde buildEcommerceItemFromTourData
+      // No necesitamos actualizarlo, solo pasarlo directamente como en view_cart
+      this.analyticsService.viewPaymentInfo(
+        {
+          currency: 'EUR',
+          value: this.totalAmountCalculated || this.totalAmount || 0,
+          coupon: this.reservationData.coupon?.code || '',
+          items: [item]
+        },
+        userData
+      );
+    });
   }
 
   /**
    * Disparar evento add_personal_info cuando el usuario completa datos de pasajeros
    */
   private trackAddPersonalInfo(): void {
-    if (!this.reservationData) return;
-
-    const tourData = this.reservationData.tour || {};
+    if (!this.reservationData || !this.tourId || !this.reservationId) return;
     
-    // Obtener actividades seleccionadas
-    const activitiesText = this.selectedActivities && this.selectedActivities.length > 0
-      ? this.selectedActivities.map(a => a.description || a.name).join(', ')
-      : '';
+    // Usar los valores guardados al cargar el componente
+    const itemListId = this.savedItemListId;
+    const itemListName = this.savedItemListName;
     
-    // Obtener seguro seleccionado
-    const selectedInsurance = this.reservationData.insurance?.name || '';
-    
-    // Obtener ciudad de vuelo seleccionado
-    const flightCity = this.selectedFlight?.name || 'Sin vuelo';
-    
-    this.analyticsService.addPersonalInfo(
-      {
-        currency: 'EUR',
-        value: this.totalAmountCalculated || this.totalAmount || 0,
-        coupon: this.reservationData.coupon?.code || '',
-        items: [{
-          item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
-          item_name: this.tourName || tourData.name || '',
-          coupon: '',
-          discount: 0,
-          index: 0,
-          item_brand: 'Different Roads',
-          item_category: tourData.destination?.continent || '',
-          item_category2: tourData.destination?.country || '',
-          item_category3: tourData.marketingSection?.marketingSeasonTag || '',
-          item_category4: tourData.monthTags?.join(', ') || '',
-          item_category5: tourData.tourType || '',
-          item_list_id: 'checkout',
-          item_list_name: 'Carrito de compra',
-          item_variant: `${tourData.tkId || tourData.id} - ${flightCity}`,
-          price: this.totalAmountCalculated || this.totalAmount || 0,
-          quantity: 1,
-          puntuacion: tourData.rating?.toString() || '',
-          duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
-          start_date: this.departureDate || '',
-          end_date: this.returnDate || '',
-          pasajeros_adultos: this.totalPassengers?.toString() || '0',
-          pasajeros_niños: '0',
-          actividades: activitiesText,
-          seguros: selectedInsurance,
-          vuelo: flightCity
-        }]
-      },
-      this.getUserData()
-    );
+    // Obtener todos los datos completos del tour dinámicamente, incluyendo actividades y pasajeros desde viajeros
+    forkJoin({
+      tourData: this.getCompleteTourDataForEcommerce(this.tourId),
+      activitiesText: this.getActivitiesFromTravelers(),
+      passengersCount: this.getPassengersCount(),
+      summary: this.reservationService.getSummary(this.reservationId).pipe(catchError(() => of(null)))
+    }).pipe(
+      switchMap(({ tourData: tourDataForEcommerce, activitiesText, passengersCount, summary }) => {
+        // Actualizar con datos adicionales del contexto
+        const additionalData = this.prepareTourDataForEcommerce();
+        
+        // Obtener datos del summary cuando sea posible (prioridad: summary > métodos actuales > additionalData)
+        const summaryFlight = this.analyticsService.extractFlightFromSummary(summary, this.reservationData, this.selectedFlight);
+        const summaryActivities = this.analyticsService.extractActivitiesFromSummary(summary);
+        const storedInsurance = sessionStorage.getItem('checkout_selectedInsurance') || '';
+        const summaryInsurance = this.analyticsService.extractInsuranceFromSummary(summary, this.reservationData, storedInsurance);
+        
+        tourDataForEcommerce.flightCity = summaryFlight || additionalData.flightCity || tourDataForEcommerce.flightCity || 'Sin vuelo';
+        // Usar actividades del summary, luego desde viajeros, o fallback a additionalData
+        tourDataForEcommerce.activitiesText = summaryActivities || activitiesText || additionalData.activitiesText || tourDataForEcommerce.activitiesText;
+        // Usar seguro del summary, luego del componente o del contexto
+        tourDataForEcommerce.selectedInsurance = summaryInsurance || this.getInsuranceName() || additionalData.selectedInsurance || tourDataForEcommerce.selectedInsurance;
+        // Usar conteo de pasajeros desde viajeros
+        tourDataForEcommerce.totalPassengers = parseInt(passengersCount.adults) + parseInt(passengersCount.children);
+        tourDataForEcommerce.childrenCount = passengersCount.children;
+        tourDataForEcommerce.departureDate = additionalData.departureDate || tourDataForEcommerce.departureDate;
+        tourDataForEcommerce.returnDate = additionalData.returnDate || tourDataForEcommerce.returnDate;
+        tourDataForEcommerce.price = additionalData.price || tourDataForEcommerce.price;
+        
+        // Usar el ID del tour desde tourDataForEcommerce
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          switchMap((item) => {
+            return this.analyticsService.getCurrentUserData().pipe(
+              map((userData) => ({ item, userData }))
+            );
+          })
+        );
+      }),
+      catchError((error) => {
+        // Fallback con datos básicos
+        const tourDataForEcommerce = this.prepareTourDataForEcommerce();
+        const itemId = tourDataForEcommerce.tkId?.toString() || tourDataForEcommerce.id?.toString() || '';
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId,
+          itemListName,
+          itemId
+        ).pipe(
+          map((item) => ({ item, userData: this.getUserData() }))
+        );
+      })
+    ).subscribe(({ item, userData }) => {
+      // El item ya tiene item_list_id e item_list_name desde buildEcommerceItemFromTourData
+      // No necesitamos actualizarlo, solo pasarlo directamente como en view_cart
+      this.analyticsService.addPersonalInfo(
+        {
+          currency: 'EUR',
+          value: this.totalAmountCalculated || this.totalAmount || 0,
+          coupon: this.reservationData.coupon?.code || '',
+          items: [item]
+        },
+        userData
+      );
+    });
   }
 
   /**
    * Disparar evento add_to_wishlist cuando se guarda presupuesto desde checkout
    */
   private trackAddToWishlist(): void {
-    if (!this.reservationData) return;
+    if (!this.reservationData) {
+      return;
+    }
 
-    const tourData = this.reservationData.tour || {};
+    // Obtener item_list_id y item_list_name dinámicamente desde query params
+    const queryParams = this.route.snapshot.queryParams;
+    const itemListId = queryParams['listId'] || 'saved_budgets';
+    const itemListName = queryParams['listName'] || 'Presupuestos guardados';
     
-    this.analyticsService.addToWishlist(
-      'saved_budgets',
-      'Presupuestos guardados',
-      {
-        item_id: tourData.tkId?.toString() || tourData.id?.toString() || '',
-        item_name: this.tourName || tourData.name || '',
-        coupon: '',
-        discount: 0,
-        index: 0,
-        item_brand: 'Different Roads',
-        item_category: tourData.destination?.continent || '',
-        item_category2: tourData.destination?.country || '',
-        item_category3: tourData.marketingSection?.marketingSeasonTag || '',
-        item_category4: tourData.monthTags?.join(', ') || '',
-        item_category5: tourData.tourType || '',
-        item_list_id: 'saved_budgets',
-        item_list_name: 'Presupuestos guardados',
-        item_variant: '',
-        price: this.totalAmountCalculated || 0,
-        quantity: 1,
-        puntuacion: tourData.rating?.toString() || '',
-        duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
-        start_date: this.departureDate || '',
-        end_date: this.returnDate || '',
-        pasajeros_adultos: this.totalPassengers?.toString() || '0',
-        pasajeros_niños: '0'
+    const tourDataForEcommerce = this.prepareTourDataForEcommerce();
+    
+    this.buildAndDispatchEvent(
+      (item, userData) => {
+        // Ajustar item_category4 a minúsculas como estaba antes
+        const adjustedItem = {
+          ...item,
+          item_category4: item.item_category4?.toLowerCase() || '',
+          index: 1,
+          item_list_id: typeof itemListId === 'number' ? itemListId.toString() : itemListId,
+          item_variant: '',
+          price: this.totalAmountCalculated || 0,
+          pasajeros_niños: '0'
+        };
+        
+        this.analyticsService.addToWishlist(
+          itemListId,
+          itemListName,
+          adjustedItem,
+          userData
+        );
       },
-      this.getUserData()
+      typeof itemListId === 'number' ? itemListId.toString() : itemListId,
+      itemListName,
+      tourDataForEcommerce
     );
   }
 

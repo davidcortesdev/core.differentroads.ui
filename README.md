@@ -2,6 +2,7 @@
 
 Este proyecto fue generado con [Angular CLI](https://github.com/angular/angular-cli) versión 19.0.6.
 
+
 ## Estado de las Pipelines
 
 ### Develop
@@ -11,7 +12,7 @@ Este proyecto fue generado con [Angular CLI](https://github.com/angular/angular-
 [![Azure Static Web Apps CI/CD - pre](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/azure-static-web-apps-lemon-flower-089308810.yml/badge.svg)](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/azure-static-web-apps-lemon-flower-089308810.yml)
 
 ### Main
-[![Azure Static Web Apps CI/CD - main](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/azure-static-web-apps-zealous-plant-0f9892a10.yml/badge.svg)](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/azure-static-web-apps-zealous-plant-0f9892a10.yml)
+[![Azure Static Web Apps CI/CD - main](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/azure-static-web-apps-yellow-ocean-0a4252903.yml/badge.svg)](https://github.com/Different-Roads/core.differentroads.ui/actions/workflows/azure-static-web-apps-yellow-ocean-0a4252903.yml)
 
 ## Estructura del Proyecto
 
@@ -40,6 +41,18 @@ src/
 - [Comunicación Padre-Hijo](./readme/info_padre_hijo.md): Guía sobre cómo pasar información entre componentes padre e hijo
 - [Flujo de trabajo con Git](https://github.com/Different-Roads/core.differentroads.help/blob/main/git/flujo_ramas.md)
 - [Inicio de sesion con google](./readme/login_google.md)
+
+## Requisitos Previos
+
+Antes de comenzar, asegúrate de tener instaladas las siguientes versiones:
+
+- **Node.js**: Versión 22 LTS
+  - Descarga desde: [nodejs.org](https://nodejs.org/)
+  - Verifica la instalación: `node --version`
+
+- **Angular CLI**: Versión 19
+  - Instalación global: `npm install -g @angular/cli@19`
+  - Verifica la instalación: `ng version`
 
 ## Configuración del Entorno de Desarrollo
 

@@ -27,9 +27,11 @@
 
       <form
         *ngIf="!isConfirming"
+        id="dr-signup-form"
         (ngSubmit)="onSubmit()"
         class="form-login"
         [formGroup]="signUpForm"
+        data-hs-attribute="signup-form"
       >
         <!-- Campo de nombre -->
         <div class="input-group mt-4">
@@ -79,17 +81,33 @@
           </small>
         </div>
 
-        <!-- Campo de teléfono -->
+        <!-- Campo de teléfono con prefijo -->
         <div class="input-group mt-4 col-span-2">
-          <input
-            type="tel"
-            id="phone"
-            pInputText
-            formControlName="phone"
-            placeholder="Teléfono"
-            class="input-field"
-            [ngClass]="{ 'p-invalid': signUpForm.get('phone')?.errors }"
-          />
+          <div class="phone-row">
+            <app-phone-prefix-select
+              [(ngModel)]="selectedPhonePrefix"
+              [ngModelOptions]="{standalone: true}"
+              [phonePrefixOptions]="phonePrefixOptions"
+              [placeholder]="'Seleccione prefijo'"
+              [showClear]="true"
+              [filter]="true"
+              [styleClass]="'prefix-select'"
+              [errorClass]="signUpForm.get('phonePrefix')?.errors && signUpForm.get('phonePrefix')?.touched ? 'p-invalid' : ''"
+              (prefixChange)="onPhonePrefixChange($event)"
+            ></app-phone-prefix-select>
+            <input
+              type="tel"
+              id="phone"
+              pInputText
+              formControlName="phone"
+              placeholder="Teléfono"
+              class="input-field phone-input"
+              [ngClass]="{ 'p-invalid': signUpForm.get('phone')?.errors }"
+            />
+          </div>
+          <small *ngIf="signUpForm.get('phonePrefix')?.errors && signUpForm.get('phonePrefix')?.touched" class="p-error">
+            {{ getErrorMessage('phonePrefix', signUpForm.get('phonePrefix')?.errors) }}
+          </small>
           <small *ngIf="signUpForm.get('phone')?.errors" class="p-error">
             {{ getErrorMessage('phone', signUpForm.get('phone')?.errors) }}
           </small>
@@ -120,18 +138,25 @@
             [feedback]="false"
             placeholder="Confirmar Contraseña"
             class="input-field"
-            [ngClass]="{ 'p-invalid': signUpForm.get('confirmPassword')?.errors }"
+            [ngClass]="{ 'p-invalid': signUpForm.get('confirmPassword')?.errors && (signUpForm.get('confirmPassword')?.touched || signUpForm.get('password')?.touched) }"
           ></p-password>
-          <small *ngIf="signUpForm.get('confirmPassword')?.errors" class="p-error">
+          <small *ngIf="signUpForm.get('confirmPassword')?.errors && (signUpForm.get('confirmPassword')?.touched || signUpForm.get('password')?.touched)" class="p-error">
             {{ getErrorMessage('confirmPassword', signUpForm.get('confirmPassword')?.errors) }}
           </small>
         </div>
 
-        <!-- Mensaje de error general -->
-        <div class="input-group mt-4 col-span-2">
-          <small *ngIf="errorMessage" class="p-error">
-            {{ errorMessage }}
-          </small>
+        <!-- Checkbox de política de privacidad -->
+        <div class="input-group mt-4 col-span-2 privacy-policy-container">
+          <div class="privacy-policy-wrapper">
+            <p-checkbox
+              formControlName="acceptPrivacyPolicy"
+              inputId="acceptPrivacyPolicy"
+              [binary]="true"
+            ></p-checkbox>
+            <label for="acceptPrivacyPolicy" class="privacy-policy-label">
+              Acepto la <a href="/pages/politica-de-privacidad" target="_blank" class="privacy-policy-link">política de privacidad</a>
+            </label>
+          </div>
         </div>
 
         <!-- Botón de registro -->

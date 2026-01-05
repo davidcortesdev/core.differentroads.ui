@@ -12,10 +12,15 @@ export interface Payment {
   vouchers?: IPaymentVoucher[];
   createdAt: string;
   updatedAt: string;
+  notes?: string;
+  paymentMethodId?: number;
+  paymentStatusId?: number; // NUEVO: Para el dropdown de estados en ATC
+  id?: number; // ID numérico del pago para navegación
 }
 
 export interface IPaymentVoucher {
   fileUrl: string;
+  fileName?: string; // Nombre del archivo original
   metadata: any;
   uploadDate: Date;
   reviewStatus: VoucherReviewStatus;

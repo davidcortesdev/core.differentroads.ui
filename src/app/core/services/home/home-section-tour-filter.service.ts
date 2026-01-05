@@ -96,10 +96,12 @@ export class HomeSectionTourFilterService {
   /**
    * Obtiene todos los filtros de tours de sección de inicio según los criterios de filtrado.
    * @param filters Filtros para aplicar en la búsqueda.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de filtros de tours de sección de inicio.
    */
   getAll(
-    filters?: HomeSectionTourFilterFilters
+    filters?: HomeSectionTourFilterFilters,
+    signal?: AbortSignal
   ): Observable<IHomeSectionTourFilterResponse[]> {
     let params = new HttpParams();
 
@@ -115,9 +117,16 @@ export class HomeSectionTourFilterService {
       });
     }
 
-    return this.http.get<IHomeSectionTourFilterResponse[]>(this.API_URL, {
-      params,
-    });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IHomeSectionTourFilterResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -136,11 +145,22 @@ export class HomeSectionTourFilterService {
   /**
    * Obtiene un filtro de tours de sección de inicio específico por su ID.
    * @param id ID del filtro de tours de sección de inicio.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns El filtro de tours de sección de inicio encontrado.
    */
-  getById(id: number): Observable<IHomeSectionTourFilterResponse> {
+  getById(id: number, signal?: AbortSignal): Observable<IHomeSectionTourFilterResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
     return this.http.get<IHomeSectionTourFilterResponse>(
-      `${this.API_URL}/${id}`
+      `${this.API_URL}/${id}`,
+      options
     );
   }
 
@@ -176,11 +196,13 @@ export class HomeSectionTourFilterService {
    * Obtiene filtros por ID de configuración de sección.
    * @param homeSectionConfigurationId ID de la configuración de sección.
    * @param isActive Filtrar solo filtros activos (opcional).
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de filtros de la configuración de sección.
    */
   getByConfiguration(
     homeSectionConfigurationId: number,
-    isActive?: boolean
+    isActive?: boolean,
+    signal?: AbortSignal
   ): Observable<IHomeSectionTourFilterResponse[]> {
     const filters: HomeSectionTourFilterFilters = {
       homeSectionConfigurationId: homeSectionConfigurationId,
@@ -190,7 +212,7 @@ export class HomeSectionTourFilterService {
       filters.isActive = isActive;
     }
 
-    return this.getAll(filters);
+    return this.getAll(filters, signal);
   }
 
   /**
@@ -226,13 +248,15 @@ export class HomeSectionTourFilterService {
    * Obtiene filtros ordenados por displayOrder.
    * @param homeSectionConfigurationId ID de la configuración de sección.
    * @param isActive Filtrar solo filtros activos (opcional).
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de filtros ordenados por displayOrder.
    */
   getByConfigurationOrdered(
     homeSectionConfigurationId: number,
-    isActive: boolean = true
+    isActive: boolean = true,
+    signal?: AbortSignal
   ): Observable<IHomeSectionTourFilterResponse[]> {
-    return this.getByConfiguration(homeSectionConfigurationId, isActive);
+    return this.getByConfiguration(homeSectionConfigurationId, isActive, signal);
   }
 
   /**
@@ -381,7 +405,6 @@ export class HomeSectionTourFilterService {
     try {
       return JSON.parse(specificTourIds);
     } catch (error) {
-      console.error('Error al parsear specificTourIds:', error);
       return [];
     }
   }

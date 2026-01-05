@@ -1,7 +1,5 @@
 $primary: var(--background-azul);
 $accent: #f67362;
-$light: #f5f5f5;
-$border: #ddd;
 
 * {
   --p-radiobutton-border-color: var(--background-azul);
@@ -14,25 +12,12 @@ $border: #ddd;
   --p-panel-color: var(--background-azul);
 }
 
-%flex-c {
-  display: flex;
-  align-items: center;
-}
-
-%small {
-  font-size: 0.8rem;
-  color: $primary;
-}
-
-%shadow {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-}
-
 ::ng-deep {
   .p-panel {
     margin: 0 0 20px 0;
-    @extend %shadow;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    
     .p-panel-header {
       padding: 1rem;
     }
@@ -54,142 +39,252 @@ $border: #ddd;
 }
 
 .travel-type {
-  @extend %flex-c;
-  margin: 10px 0;
-  padding-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin: 1rem 0;
+  padding-bottom: 1rem;
   border-bottom: 1px solid #eee;
+  
   .radio {
-    @extend %flex-c;
-    margin-right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    
     label {
-      margin-left: 8px;
       font-size: 0.9rem;
+      cursor: pointer;
     }
   }
 }
 
-.flt-details {
-  .row {
-    @extend %flex-c;
-    margin-bottom: 15px;
-    .label {
-      width: 70px;
-      font-weight: 600;
-      font-size: 0.9rem;
-      margin-bottom: 5px;
-      display: block;
+.flight-form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
 
-      .from {
-        color: $primary;
-        @extend %small;
-      }
-    }
-
-    .input {
-      flex: 1;
-      margin-left: 20px;
-      &.origin {
-        i {
-          position: absolute;
-          left: 10px;
-          top: 50%;
-          transform: translateY(-50%) rotate(45deg);
-          color: #999;
-          z-index: 1;
-        }
-        .change {
-          position: absolute;
-          right: 10px;
-          top: 50%;
-          transform: translateY(-50%);
-          font-size: 0.8rem;
-          color: $accent;
-          text-decoration: none;
-          z-index: 2;
-        }
-      }
-
-      .dest-lbl {
-        color: $primary;
-        @extend %small;
-        margin-bottom: 5px;
-      }
-    }
-
-    .date {
-      width: 150px;
-      margin-left: 10px;
-      .date-lbl {
-        color: $primary;
-        @extend %small;
-        margin-bottom: 5px;
-      }
-      .static-field {
-        color: $primary;
-      }
-    }
+.flight-row {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr auto;
+  gap: 1rem;
+  align-items: start;
+  
+  @media (max-width: 1024px) {
+    grid-template-columns: auto 1fr;
+    gap: 1rem;
+  }
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
   }
 }
 
-.search-opts {
-  @extend %flex-c;
-  justify-content: space-between;
-  .sort,
-  .filter {
-    @extend %flex-c;
-    gap: 10px;
-    ::ng-deep .p-dropdown {
-      min-width: 120px;
-      .p-dropdown-label {
-        font-size: 0.9rem;
-        padding: 0.5rem 1rem;
-      }
+.row-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-top: 0.75rem;
+  min-width: 80px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: $primary;
+  
+  .from-label {
+    font-size: 0.8rem;
+    font-weight: normal;
+    color: $primary;
+    opacity: 0.8;
+  }
+  
+  @media (max-width: 1024px) {
+    grid-column: 1 / -1;
+    padding-top: 0;
+  }
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  
+  label {
+    font-size: 0.85rem;
+    color: $primary;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    
+    .info-icon {
+      color: #6c757d;
+      font-size: 0.75rem;
+      cursor: help;
     }
   }
-
-  .btn-search ::ng-deep .p-button.p-button-danger {
-    background: $accent;
-    border-color: $accent;
-    font-weight: 600;
-    padding: 0.5rem 2rem;
+  
+  // Estilos para campos estáticos
+  .static-field {
+    padding: 0.5rem 0.75rem;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
     border-radius: 4px;
+    color: $primary;
+    min-height: 2.5rem;
+    display: flex;
+    align-items: center;
+    word-break: break-word;
+    line-height: 1.5;
+    font-size: 0.9rem;
   }
 }
 
+// Icono de avión en campo origen
+.origin-field {
+  position: relative;
+  
+  .plane-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%) rotate(45deg);
+    color: #999;
+    z-index: 1;
+    pointer-events: none;
+  }
+  
+  ::ng-deep .p-autocomplete {
+    .p-autocomplete-input {
+      padding-left: 2.5rem;
+    }
+  }
+}
+
+// Mensajes informativos y de error
+.field-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-top: 0.25rem;
+  
+  i {
+    font-size: 0.85rem;
+    color: $primary;
+    margin-top: 0.1rem;
+    flex-shrink: 0;
+  }
+  
+  span {
+    line-height: 1.4;
+  }
+}
+
+// Usar clases nativas de PrimeNG para errores
+::ng-deep {
+  .p-invalid {
+    .p-autocomplete-input,
+    .p-inputtext {
+      border-color: #dc3545;
+    }
+  }
+  
+  .p-autocomplete {
+    width: 100%;
+    
+    .p-autocomplete-panel {
+      .p-autocomplete-items {
+        .city-item,
+        .selected-city {
+          padding: 0.5rem 0.75rem;
+          word-break: break-word;
+          line-height: 1.5;
+        }
+      }
+    }
+  }
+  
+  .p-datepicker {
+    width: 100%;
+  }
+}
+
+// Campo de fecha con ancho fijo
+.date-field-group {
+  min-width: 260px;
+  max-width: 260px;
+  
+  @media (max-width: 1024px) {
+    grid-column: 1 / -1;
+    min-width: 100%;
+    max-width: 100%;
+  }
+}
+
+.search-button-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+  
+  @media (max-width: 768px) {
+    justify-content: stretch;
+    
+    ::ng-deep .p-button {
+      width: 100%;
+    }
+  }
+}
+
+// Responsive mejorado
+@media (max-width: 1024px) {
+  .flight-row {
+    .field-group {
+      grid-column: 2;
+    }
+    
+    .date-field-group {
+      grid-column: 1 / -1;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .flight-row {
+    grid-template-columns: 1fr;
+    
+    .row-label {
+      grid-column: 1;
+    }
+    
+    .field-group {
+      grid-column: 1;
+    }
+    
+    .date-field-group {
+      grid-column: 1;
+    }
+  }
+  
+  .travel-type {
+    flex-wrap: wrap;
+  }
+}
+
+// Estilos para resultados y otros estados
 .loading {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 40px 0;
+  
   .msg {
     margin-top: 20px;
     color: $primary;
-  }
-}
-
-.loading-cities {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 20px 0;
-  margin: 20px 0;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #e9ecef;
-  
-  .msg {
-    margin-top: 15px;
-    color: $primary;
-    font-size: 0.9rem;
-    text-align: center;
-  }
-  
-  .p-progressspinner {
-    .p-progressspinner-circle {
-      stroke: $primary;
-    }
   }
 }
 
@@ -217,182 +312,6 @@ $border: #ddd;
   }
 }
 
-@media (max-width: 767px) {
-  .travel-type {
-    display: flex;
-    justify-content: space-between;
-  }
-  .flt-details {
-    .row {
-      .input {
-        margin-left: 0px;
-      }
-      &:first-child {
-        display: block;
-        .label {
-          width: 30%;
-          display: inline-block;
-          vertical-align: middle;
-        }
-        .input.origin {
-          width: 70%;
-          display: inline-block;
-          vertical-align: middle;
-        }
-        .input.destination,
-        .date {
-          margin-top: 10px;
-        }
-        .input.destination {
-          width: 50%;
-          display: inline-block;
-        }
-        .date {
-          width: 50%;
-          display: inline-block;
-          margin-left: 0;
-        }
-      }
-      &:nth-child(2) {
-        display: block;
-        .label {
-          width: 30%;
-          display: inline-block;
-          vertical-align: middle;
-          margin-bottom: 0;
-        }
-
-        .input.origin {
-          width: 70%;
-          display: inline-block;
-          vertical-align: middle;
-          margin-bottom: 10px;
-        }
-
-        .input.destination {
-          width: 50%;
-          display: inline-block;
-        }
-        .date {
-          width: 50%;
-          display: inline-block;
-          margin-left: 0;
-        }
-      }
-    }
-  }
-  .search-opts {
-    flex-direction: column;
-    .sort {
-      width: 100%;
-      margin-bottom: 10px;
-    }
-    .btn-search {
-      width: 100%;
-      display: flex;
-      justify-content: center;
-
-      ::ng-deep .p-button {
-        width: auto;
-        min-width: 150px;
-      }
-    }
-  }
-}
-
-@media (min-width: 768px) and (max-width: 1024px) {
-  .flt-details {
-    .row {
-      &:first-child {
-        display: block;
-        .label {
-          display: inline-block;
-          vertical-align: middle;
-        }
-        .input.origin {
-          width: 75%;
-          display: inline-block;
-          vertical-align: middle;
-          margin-bottom: 15px;
-        }
-        .input.destination {
-          display: inline-block;
-          vertical-align: top;
-          margin-left: 20%;
-        }
-        .date {
-          display: inline-block;
-          margin-left: 22%;
-        }
-      }
-    }
-  }
-}
-
-.flight-results {
-  margin-top: 2rem;
-  
-  h3 {
-    color: #333;
-    margin-bottom: 1rem;
-    font-size: 1.5rem;
-  }
-}
-
-.sort-controls {
-  margin-bottom: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  
-  label {
-    font-weight: 600;
-    color: #555;
-  }
-  
-  p-dropdown {
-    min-width: 200px;
-  }
-  
-  .loading-details {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: #666;
-    font-size: 0.9rem;
-    
-    .pi-spinner {
-      color: #007bff;
-    }
-  }
-}
-
-.flight-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.no-results {
-  text-align: center;
-  padding: 2rem;
-  color: #666;
-  font-style: italic;
-}
-
-.error-message {
-  background-color: #fee;
-  border: 1px solid #fcc;
-  color: #c33;
-  padding: 1rem;
-  border-radius: 4px;
-  margin-top: 1rem;
-  
-  p {
-    margin: 0;
-  }
-}
-
 .error-message-panel {
   margin-bottom: 1rem;
   
@@ -414,162 +333,12 @@ $border: #ddd;
   }
 }
 
-.warning-message-panel {
-  margin-bottom: 1rem;
+.flight-results {
+  margin-top: 2rem;
   
-  .msg {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    
-    i {
-      color: #ffc107;
-      font-size: 1.2rem;
-    }
-    
-    h3 {
-      margin: 0;
-      color: #856404;
-      font-size: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      
-      .amadeus-info-icon {
-        color: #6c757d;
-        font-size: 0.9rem;
-        cursor: help;
-        transition: color 0.2s ease;
-        
-        &:hover {
-          color: #495057;
-        }
-      }
-    }
-    
-    .warnings-container {
-      margin-top: 0.5rem;
-      
-      .warning-item {
-        background-color: #fff3cd;
-        border: 1px solid #ffeaa7;
-        border-radius: 4px;
-        padding: 0.75rem;
-        margin-bottom: 0.5rem;
-        
-        &:last-child {
-          margin-bottom: 0;
-        }
-        
-        .warning-header {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          margin-bottom: 0.5rem;
-          
-          .warning-title {
-            font-weight: 600;
-            color: #856404;
-            font-size: 0.9rem;
-          }
-          
-          .warning-status {
-            color: #6c757d;
-            font-size: 0.8rem;
-            background-color: #e9ecef;
-            padding: 0.2rem 0.4rem;
-            border-radius: 3px;
-          }
-        }
-        
-        .warning-detail {
-          color: #856404;
-          font-size: 0.9rem;
-          margin-bottom: 0.25rem;
-        }
-        
-        .warning-code {
-          color: #6c757d;
-          font-size: 0.8rem;
-          font-family: monospace;
-        }
-      }
-    }
-  }
-}
-
-.meta-info-panel {
-  margin-bottom: 1rem;
-  
-  .msg {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    
-    i {
-      color: #17a2b8;
-      font-size: 1.2rem;
-    }
-    
-    h3 {
-      margin: 0;
-      color: #0c5460;
-      font-size: 1rem;
-    }
-    
-    .meta-container {
-      margin-top: 0.5rem;
-      
-      .meta-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.5rem;
-        background-color: #d1ecf1;
-        border: 1px solid #bee5eb;
-        border-radius: 4px;
-        margin-bottom: 0.25rem;
-        
-        &:last-child {
-          margin-bottom: 0;
-        }
-        
-        .meta-label {
-          color: #0c5460;
-          font-size: 0.9rem;
-          font-weight: 500;
-        }
-        
-        .meta-value {
-          color: #0c5460;
-          font-size: 0.9rem;
-          font-weight: 600;
-          background-color: #fff;
-          padding: 0.2rem 0.5rem;
-          border-radius: 3px;
-          border: 1px solid #bee5eb;
-        }
-      }
-    }
-  }
-}
-
-.no-search {
-  .msg {
-    text-align: center;
-  }
-}
-
-// Estilos para el botón de vuelo seleccionado
-::ng-deep {
-  .selected-flight-button {
-    background-color: var(--p-primary-color) !important;
-    color: white !important;
-    border-color: var(--p-primary-color) !important;
-    
-    &:hover {
-      background-color: var(--p-primary-color) !important;
-      opacity: 0.9;
-    }
+  h3 {
+    color: #333;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
   }
 }

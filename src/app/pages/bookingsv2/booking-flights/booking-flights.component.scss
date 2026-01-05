@@ -6,6 +6,7 @@
         --p-panel-header-color: var(--background-azul);
         display: flex;
         flex-direction: row;
+        align-items: stretch; /* Hace que ambos contenedores tengan la misma altura */
         gap: 20px;
         margin: 0.75rem;
         margin-top: -10px;
@@ -90,35 +91,48 @@
         width: 50%;
         display: flex;
         flex-direction: column;
+        /* Estilos iguales al panel izquierdo */
+        border: 1px solid #eaeaea;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        background-color: #ffffff; /* Fondo blanco */
+        padding: 0; /* Sin padding para que el panel interno controle el espacio */
+        justify-content: center; /* Centra verticalmente el panel interno */
+        align-items: stretch; /* Hace que el panel interno ocupe todo el ancho */
+        min-height: 100%; /* Asegura que ocupe toda la altura disponible */
 
         /* Media query para dispositivos móviles */
         @media (max-width: 768px) {
             width: 100%;
+            border-radius: 8px;
         }
 
         .p-panel {
-            border: 1px solid #eaeaea;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-            height: 100%; /* Asegura que el panel ocupe toda la altura disponible */
+            border: none; /* Sin borde porque el contenedor padre ya lo tiene */
+            border-radius: 0; /* Sin border-radius porque el contenedor padre ya lo tiene */
+            box-shadow: none; /* Sin sombra porque el contenedor padre ya la tiene */
+            background-color: transparent; /* Fondo transparente */
+            transition: none; /* Sin transición */
+            flex: 1; /* Ocupa toda la altura disponible */
             display: flex;
             flex-direction: column;
+            width: 100%; /* Ocupa todo el ancho disponible */
+            min-height: 0; /* Permite que flexbox controle la altura */
 
             /* Ajustes para móvil */
             @media (max-width: 768px) {
-                border-radius: 8px;
                 margin: 0;
             }
 
             &:hover {
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+                box-shadow: none; /* Sin sombra en hover */
             }
 
             .p-panel-header {
                 padding: 1rem;
                 font-weight: 600;
                 border-bottom: 1px solid #eaeaea;
+                flex-shrink: 0; /* No se comprime */
 
                 /* Ajustes para móvil */
                 @media (max-width: 768px) {
@@ -128,9 +142,11 @@
 
             .p-panel-content {
                 padding: 1rem;
-                flex: 1; /* Hace que el contenido ocupe todo el espacio disponible */
                 display: flex;
                 flex-direction: column;
+                flex: 1; /* Ocupa todo el espacio disponible */
+                justify-content: center; /* Centra el contenido verticalmente */
+                min-height: 0; /* Permite que flexbox controle la altura */
 
                 /* Ajustes para móvil */
                 @media (max-width: 768px) {
@@ -144,11 +160,12 @@
     .identifiers-content {
         display: flex;
         flex-direction: column;
-        gap: 4px;
-        flex: 1; /* Ocupa todo el espacio disponible */
+        gap: 8px; /* Aumentado el gap para mejor espaciado */
+        width: 100%; /* Ocupa todo el ancho disponible */
 
         @media (max-width: 768px) {
             padding: 0 4px;
+            gap: 6px;
         }
     }
 
@@ -171,30 +188,36 @@
     }
 
     .flight-type-header {
-        margin-top: 10px;
-        padding-bottom: 6px;
+        margin-top: 16px; /* Aumentado para mejor espaciado */
+        margin-bottom: 8px; /* Agregado margin-bottom */
+        padding-bottom: 8px; /* Aumentado padding */
         font-weight: 600;
         color: var(--p-primary-color);
         border-bottom: 1px solid #e0e0e0;
 
+        &:first-child {
+            margin-top: 0; /* El primer header no tiene margin-top */
+        }
+
         @media (max-width: 768px) {
             color: #ff5252;
             margin-top: 12px;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
     }
 
     .segment-identifier {
-        margin-left: 4px;
-        padding: 6px 8px;
+        margin-left: 0; /* Removido margin-left para mejor alineación */
+        padding: 10px 12px; /* Aumentado padding para mejor espaciado */
         background-color: #dbcccc36;
         border-radius: 6px;
-        margin-bottom: 6px;
+        margin-bottom: 8px; /* Aumentado margin-bottom */
         border-left: 3px solid var(--p-primary-color);
 
         @media (max-width: 768px) {
             border-left: 3px solid #ff5252;
             margin-bottom: 8px;
+            padding: 8px 10px;
         }
     }
 

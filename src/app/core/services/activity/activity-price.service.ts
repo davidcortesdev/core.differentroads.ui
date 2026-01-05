@@ -74,9 +74,10 @@ export class ActivityPriceService {
   /**
    * Obtiene todos los precios de actividad disponibles, con filtros opcionales.
    * @param filters Filtros para aplicar en la búsqueda.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de precios de actividad.
    */
-  getAll(filters?: ActivityPriceFilters): Observable<IActivityPriceResponse[]> {
+  getAll(filters?: ActivityPriceFilters, signal?: AbortSignal): Observable<IActivityPriceResponse[]> {
     let params = new HttpParams();
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
@@ -91,7 +92,15 @@ export class ActivityPriceService {
         }
       });
     }
-    return this.http.get<IActivityPriceResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<IActivityPriceResponse[]>(this.API_URL, options);
   }
 
   /**

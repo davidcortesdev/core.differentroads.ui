@@ -18,12 +18,11 @@ export class DiscountsService {
   selectedDiscounts$ = this.selectedDiscountsSubject.asObservable();
 
   constructor() {
-    console.log('DiscountsService initialized');
+
   }
 
   // Actualiza los descuentos seleccionados
   updateSelectedDiscounts(discounts: Discount[]): void {
-    console.log('DiscountsService: updateSelectedDiscounts', discounts);
 
     this.selectedDiscountsSubject.next(discounts);
   }

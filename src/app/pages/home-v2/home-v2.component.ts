@@ -1,15 +1,23 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, forkJoin, of, Observable, switchMap, map, catchError, take } from 'rxjs';
 
-// SOLO servicios de configuración del home
-import {
-  HomeSectionService,
-  IHomeSectionResponse,
-} from '../../core/services/home/home-section.service';
-import {
-  HomeSectionConfigurationService,
-  IHomeSectionConfigurationResponse,
-} from '../../core/services/home/home-section-configuration.service';
+import { HomeSectionConfigurationService, IHomeSectionConfigurationResponse, } from '../../core/services/home/home-section-configuration.service';
+import { HomeSectionTourFilterService, IHomeSectionTourFilterResponse } from '../../core/services/home/home-section-tour-filter.service';
+import { Title } from '@angular/platform-browser';
+import { AuthenticateService } from '../../core/services/auth/auth-service.service';
+import { UsersNetService } from '../../core/services/users/usersNet.service';
+import { TourTagService } from '../../core/services/tag/tour-tag.service';
+import { TagService } from '../../core/services/tag/tag.service';
+import { TripTypeService } from '../../core/services/trip-type/trip-type.service';
+import { TourLocationService } from '../../core/services/tour/tour-location.service';
+import { TourService, Tour as TourNetTour } from '../../core/services/tour/tour.service';
+import { CMSTourService, ICMSTourResponse } from '../../core/services/cms/cms-tour.service';
+import { AnalyticsService } from '../../core/services/analytics/analytics.service';
+import { TourDataV2 } from '../../shared/components/tour-card-v2/tour-card-v2.model';
+import { DepartureService, IDepartureResponse } from '../../core/services/departure/departure.service';
+import { ItineraryService, IItineraryResponse, ItineraryFilters } from '../../core/services/itinerary/itinerary.service';
+import { ItineraryDayService, IItineraryDayResponse } from '../../core/services/itinerary/itinerary-day/itinerary-day.service';
+import { LocationNetService, Location } from '../../core/services/locations/locationNet.service';
 
 @Component({
   selector: 'app-home-v2',
@@ -26,36 +34,132 @@ export class HomeV2Component implements OnInit, OnDestroy {
   hasError = false;
 
   private destroy$ = new Subject<void>();
+  private abortController = new AbortController();
 
   constructor(
-    private homeSectionService: HomeSectionService,
-    private homeSectionConfigurationService: HomeSectionConfigurationService
+    private titleService: Title,
+    private homeSectionConfigurationService: HomeSectionConfigurationService,
+    private homeSectionTourFilterService: HomeSectionTourFilterService,
+    private authService: AuthenticateService,
+    private usersNetService: UsersNetService,
+    private tourTagService: TourTagService,
+    private tagService: TagService,
+    private tripTypeService: TripTypeService,
+    private tourLocationService: TourLocationService,
+    private tourService: TourService,
+    private cmsTourService: CMSTourService,
+    private analyticsService: AnalyticsService,
+    private departureService: DepartureService,
+    private itineraryService: ItineraryService,
+    private itineraryDayService: ItineraryDayService,
+    private locationNetService: LocationNetService
   ) {}
 
-  ngOnInit() {
+  async ngOnInit() {
+    
+    this.titleService.setTitle('Different Roads - Viajes y Experiencias Únicas');
     this.loadAllHomeSections();
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const state = urlParams.get('state');
+    
+    if (code && state) {
+      await this.handleOAuthCallback();
+    }
   }
 
   ngOnDestroy() {
+    this.abortController.abort();
     this.destroy$.next();
     this.destroy$.complete();
   }
 
+  private async handleOAuthCallback(): Promise<void> {
+    try {
+      // Procesar la autenticación
+      await this.authService.handleAuthRedirect();
+      
+      // Obtener atributos del usuario
+      this.authService.getUserAttributes().subscribe({
+        next: async (attributes) => {
+          const username = this.authService.getCurrentUsername();
+          const cognitoId = attributes.sub;
+          const email = attributes.email;
+          
+          if (!cognitoId || !email) {
+            return;
+          }
+          
+          // Buscar por Cognito ID
+          this.usersNetService.getUsersByCognitoId(cognitoId).subscribe({
+            next: (users) => {
+              if (users && users.length > 0) {
+                // Limpiar URL y navegar
+                this.cleanUrlAndNavigate();
+              } else {
+                // Buscar por email
+                this.usersNetService.getUsersByEmail(email).subscribe({
+                  next: (usersByEmail) => {
+                    if (usersByEmail && usersByEmail.length > 0) {
+                      // Actualizar con Cognito ID
+                      this.usersNetService.updateUser(usersByEmail[0].id, {
+                        cognitoId: cognitoId,
+                        name: usersByEmail[0].name ?? '',
+                        email: usersByEmail[0].email ?? ''
+                      }).subscribe(() => {
+                        this.cleanUrlAndNavigate();
+                      });
+                    } else {
+                      // Crear usuario
+                      this.usersNetService.createUser({
+                        cognitoId: cognitoId,
+                        name: email,
+                        email: email,
+                        hasWebAccess: true,
+                        hasMiddleAccess: false
+                      }).subscribe(() => {
+                        this.cleanUrlAndNavigate();
+                      });
+                    }
+                  }
+                });
+              }
+            }
+          });
+        },
+        error: (error) => {
+        }
+      });
+    } catch (error) {
+    }
+  }
+
+  private cleanUrlAndNavigate(): void {
+    // Limpiar URL (quitar code y state)
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
   private loadAllHomeSections(): void {
     this.isLoading = true;
     this.hasError = false;
 
+    // Limpiar tracking previo al cargar nuevas secciones
+    this.analyticsService.clearTrackedListIds();
+
     // Cargar todas las configuraciones activas ordenadas
     this.homeSectionConfigurationService
-      .getActiveOrdered()
-      .pipe(takeUntil(this.destroy$))
+      .getActiveOrdered(this.abortController.signal)
+      .pipe(
+        take(1), // Solo tomar el primer valor para evitar múltiples emisiones
+        takeUntil(this.destroy$)
+      )
       .subscribe({
         next: (configurations) => {
           this.distributeConfigurationsBySection(configurations);
           this.isLoading = false;
+          // Los eventos view_item_list se dispararán cuando cada lista aparezca en pantalla
+          // mediante Intersection Observer en los componentes hijos
         },
         error: (error) => {
-          console.error('Error loading home configurations:', error);
           this.hasError = true;
           this.isLoading = false;
         },
@@ -119,4 +223,402 @@ export class HomeV2Component implements OnInit, OnDestroy {
     };
     return sectionNames[sectionId] || 'Sección desconocida';
   }
+
+  /**
+   * Carga los tours de una sección específica
+   */
+  private loadToursForSection(
+    config: IHomeSectionConfigurationResponse
+  ): Observable<TourDataV2[]> {
+    // Obtener los filtros de la configuración
+    return this.homeSectionTourFilterService
+      .getByConfigurationOrdered(config.id, true, this.abortController.signal)
+      .pipe(
+        switchMap((filters) => {
+          if (filters.length === 0) {
+            return of([]);
+          }
+          // Obtener los IDs de tours de todos los filtros
+          return this.getTourIdsFromFilters(filters).pipe(
+            switchMap((tourIds) => {
+              if (tourIds.length === 0) {
+                return of([]);
+              }
+              // Limitar por maxToursToShow si está definido
+              const limitedTourIds = config.maxToursToShow
+                ? tourIds.slice(0, config.maxToursToShow)
+                : tourIds;
+              // Cargar los tours completos
+              return this.loadToursFromIds(limitedTourIds);
+            })
+          );
+        }),
+        catchError((error) => {
+          return of([]);
+        })
+      );
+  }
+
+  /**
+   * Obtiene los IDs de tours desde los filtros
+   */
+  private getTourIdsFromFilters(
+    filters: IHomeSectionTourFilterResponse[]
+  ): Observable<number[]> {
+    const filterObservables = filters.map((filter) =>
+      this.getTourIdsFromFilter(filter)
+    );
+
+    return forkJoin(filterObservables).pipe(
+      map((tourIdArrays: number[][]) => {
+        const allTourIds = tourIdArrays.flat();
+        return [...new Set(allTourIds)]; // Eliminar duplicados
+      }),
+      catchError((error) => {
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Obtiene los IDs de tours de un filtro específico
+   */
+  private getTourIdsFromFilter(
+    filter: IHomeSectionTourFilterResponse
+  ): Observable<number[]> {
+    switch (filter.filterType) {
+      case 'tag':
+        return this.tourTagService.getToursByTags([filter.tagId!], this.abortController.signal).pipe(
+          catchError((error) => {
+            return of([]);
+          })
+        );
+
+      case 'location':
+        return this.tourLocationService.getToursByLocations([filter.locationId!], this.abortController.signal).pipe(
+          catchError((error) => {
+            return of([]);
+          })
+        );
+
+      case 'specific_tours':
+        try {
+          const tourIds = this.homeSectionTourFilterService.parseSpecificTourIds(
+            filter.specificTourIds!
+          );
+          return of(tourIds);
+        } catch (error) {
+          return of([]);
+        }
+
+      default:
+        return of([]);
+    }
+  }
+
+  /**
+   * Carga los tours completos desde sus IDs
+   * Usa forkJoin para cargar todos en paralelo (mejor para analytics)
+   */
+  private loadToursFromIds(tourIds: number[]): Observable<TourDataV2[]> {
+    if (tourIds.length === 0) {
+      return of([]);
+    }
+
+    // Crear observables para cada tour
+    const tourObservables = tourIds.map((id) => {
+      return this.tourService.getById(id, true, this.abortController.signal).pipe(
+        switchMap((tourData) => {
+          // Obtener tripType si existe tripTypeId
+          const tripTypeObservable = tourData.tripTypeId
+            ? this.tripTypeService.getById(tourData.tripTypeId, this.abortController.signal).pipe(
+                map((tripType) => [tripType.name]),
+                catchError(() => of([]))
+              )
+            : of([]);
+
+          return forkJoin({
+            tourData: of(tourData),
+            cmsData: this.cmsTourService.getAllTours({ tourId: id }, this.abortController.signal),
+            additionalData: this.getAdditionalTourData(id),
+            tripType: tripTypeObservable
+          });
+        }),
+        catchError((error: Error) => {
+          return of(null);
+        }),
+        map(
+          (
+            combinedData: {
+              tourData: TourNetTour;
+              cmsData: ICMSTourResponse[];
+              additionalData: {
+                departures: IDepartureResponse[];
+                tags: string[];
+                itineraryDays: IItineraryDayResponse[];
+                continent?: string;
+                country?: string;
+              };
+              tripType: string[];
+            } | null
+          ): TourDataV2 | null => {
+            if (!combinedData) return null;
+
+            const tour = combinedData.tourData;
+            const cmsArray = combinedData.cmsData;
+            const cms = cmsArray && cmsArray.length > 0 ? cmsArray[0] : null;
+            const additional = combinedData.additionalData;
+
+            let tourPrice = tour.minPrice || 0;
+
+            const availableMonths: string[] = [];
+            const departureDates: string[] = [];
+            let nextDepartureDate: string | undefined;
+
+            if (additional.departures && additional.departures.length > 0) {
+              const sortedDepartures = additional.departures
+                .filter((departure) => departure.departureDate)
+                .sort(
+                  (a, b) =>
+                    new Date(a.departureDate!).getTime() -
+                    new Date(b.departureDate!).getTime()
+                );
+
+              sortedDepartures.forEach((departure: IDepartureResponse) => {
+                if (departure.departureDate) {
+                  const date = new Date(departure.departureDate);
+                  const month = date
+                    .toLocaleDateString('es-ES', { month: 'short' })
+                    .toUpperCase();
+                  if (!availableMonths.includes(month)) {
+                    availableMonths.push(month);
+                  }
+                  departureDates.push(departure.departureDate);
+                }
+              });
+
+              const today = new Date();
+              const futureDepartures = sortedDepartures.filter(
+                (departure) =>
+                  departure.departureDate &&
+                  new Date(departure.departureDate) >= today
+              );
+
+              if (futureDepartures.length > 0) {
+                nextDepartureDate = futureDepartures[0].departureDate!;
+              }
+            }
+
+            // El tag viene como array de strings, tomar el primero
+            const tourTag =
+              additional.tags && additional.tags.length > 0 && typeof additional.tags[0] === 'string'
+                ? additional.tags[0]
+                : '';
+
+            const itineraryDaysCount = additional.itineraryDays
+              ? additional.itineraryDays.length
+              : 0;
+
+            const countryName = tour.name
+              ? tour.name.split(':')[0].trim()
+              : '';
+            const itineraryDaysText =
+              itineraryDaysCount > 0 && countryName
+                ? `${countryName}: en ${itineraryDaysCount} días`
+                : '';
+
+            const imageUrl = cms?.imageUrl || '';
+
+            // El rating ahora se obtiene desde TourReview en los componentes de tarjetas (tour-card-header-v2)
+            // No se carga aquí para evitar llamadas innecesarias a average-rating
+
+            return {
+              id: tour.id,
+              imageUrl: imageUrl,
+              title: tour.name || '',
+              description: '',
+              rating: undefined,
+              tag: tourTag,
+              price: tourPrice,
+              availableMonths: availableMonths,
+              nextDepartureDate: nextDepartureDate,
+              itineraryDaysCount: itineraryDaysCount,
+              itineraryDaysText: itineraryDaysText,
+              isByDr: tour.productStyleId === 1,
+              webSlug:
+                tour.slug ||
+                tour.name?.toLowerCase().replace(/\s+/g, '-') ||
+                '',
+              tripType: combinedData.tripType || [],
+              externalID: tour.tkId || '',
+              continent: additional.continent || '',
+              country: additional.country || '',
+              productStyleId: tour.productStyleId,
+            };
+          }
+        )
+      );
+    });
+
+    // Cargar todos los tours en paralelo y filtrar los null
+    return forkJoin(tourObservables).pipe(
+      map((tours: (TourDataV2 | null)[]) => {
+        return tours.filter((tour): tour is TourDataV2 => tour !== null);
+      }),
+      catchError((error) => {
+        return of([]);
+      }),
+      takeUntil(this.destroy$)
+    );
+  }
+
+  /**
+   * Obtiene datos adicionales del tour (fechas, tags, días)
+   */
+  private getAdditionalTourData(tourId: number): Observable<{
+    departures: IDepartureResponse[];
+    tags: string[];
+    itineraryDays: IItineraryDayResponse[];
+    continent?: string;
+    country?: string;
+  }> {
+    const itineraryFilters: ItineraryFilters = {
+      tourId: tourId,
+      isVisibleOnWeb: true,
+      isBookable: true,
+    };
+
+    return this.itineraryService.getAll(itineraryFilters, false, this.abortController.signal).pipe(
+      switchMap((itineraries: IItineraryResponse[]) => {
+        if (itineraries.length === 0) {
+          return of({
+            departures: [],
+            tags: [],
+            itineraryDays: [],
+          });
+        }
+
+        const departureRequests = itineraries.map((itinerary) =>
+          this.departureService.getByItinerary(itinerary.id, false, this.abortController.signal).pipe(
+            catchError(() => of([]))
+          )
+        );
+
+        return forkJoin(departureRequests).pipe(
+          switchMap((departureArrays: IDepartureResponse[][]) => {
+            const allDepartures = departureArrays.flat();
+
+            const itineraryDaysRequest =
+              itineraries.length > 0
+                ? this.itineraryDayService
+                    .getAll({ itineraryId: itineraries[0].id }, this.abortController.signal)
+                    .pipe(catchError(() => of([])))
+                : of([]);
+
+            const tagRequest = this.tourTagService
+              .getByTourAndType(tourId, 'VISIBLE', this.abortController.signal)
+              .pipe(
+                switchMap((tourTags) => {
+                  if (tourTags.length > 0 && tourTags[0]?.tagId && tourTags[0].tagId > 0) {
+                    const firstTagId = tourTags[0].tagId;
+                    return this.tagService.getById(firstTagId, this.abortController.signal).pipe(
+                      map((tag) => tag?.name && tag.name.trim().length > 0 ? [tag.name.trim()] : []),
+                      catchError(() => of([]))
+                    );
+                  }
+                  return of([]);
+                }),
+                catchError(() => of([]))
+              );
+
+            // Obtener continent y country usando TourLocationService
+            const countryLocationRequest = this.tourLocationService
+              .getByTourAndType(tourId, 'COUNTRY', this.abortController.signal)
+              .pipe(
+                map((response) => Array.isArray(response) ? response : response ? [response] : []),
+                catchError(() => of([]))
+              );
+
+            const continentLocationRequest = this.tourLocationService
+              .getByTourAndType(tourId, 'CONTINENT', this.abortController.signal)
+              .pipe(
+                map((response) => Array.isArray(response) ? response : response ? [response] : []),
+                catchError(() => of([]))
+              );
+
+            return forkJoin([tagRequest, itineraryDaysRequest, countryLocationRequest, continentLocationRequest]).pipe(
+              switchMap(([tags, itineraryDays, countryLocations, continentLocations]) => {
+                const validCountryLocations = countryLocations.filter(
+                  (loc: any) => loc && loc.id && loc.locationId
+                );
+                const validContinentLocations = continentLocations.filter(
+                  (loc: any) => loc && loc.id && loc.locationId
+                );
+
+                const allLocationIds = [
+                  ...validCountryLocations.map((tl: any) => tl.locationId),
+                  ...validContinentLocations.map((tl: any) => tl.locationId),
+                ];
+                const uniqueLocationIds = [...new Set(allLocationIds)];
+
+                if (uniqueLocationIds.length === 0) {
+                  return of({
+                    departures: allDepartures,
+                    tags: tags as string[],
+                    itineraryDays: itineraryDays as IItineraryDayResponse[],
+                    continent: '',
+                    country: '',
+                  });
+                }
+
+                return this.locationNetService.getLocationsByIds(uniqueLocationIds, this.abortController.signal).pipe(
+                  map((locations: Location[]) => {
+                    const locationsMap = new Map<number, Location>();
+                    locations.forEach((location) => {
+                      locationsMap.set(location.id, location);
+                    });
+
+                    const countries = validCountryLocations
+                      .sort((a: any, b: any) => a.displayOrder - b.displayOrder)
+                      .map((tl: any) => locationsMap.get(tl.locationId)?.name)
+                      .filter((name) => name) as string[];
+
+                    const continents = validContinentLocations
+                      .sort((a: any, b: any) => a.displayOrder - b.displayOrder)
+                      .map((tl: any) => locationsMap.get(tl.locationId)?.name)
+                      .filter((name) => name) as string[];
+
+                    return {
+                      departures: allDepartures,
+                      tags: tags as string[],
+                      itineraryDays: itineraryDays as IItineraryDayResponse[],
+                      continent: continents.join(', ') || '',
+                      country: countries.join(', ') || '',
+                    };
+                  }),
+                  catchError(() => {
+                    return of({
+                      departures: allDepartures,
+                      tags: tags as string[],
+                      itineraryDays: itineraryDays as IItineraryDayResponse[],
+                      continent: '',
+                      country: '',
+                    });
+                  })
+                );
+              })
+            );
+          })
+        );
+      }),
+      catchError(() => {
+        return of({
+          departures: [],
+          tags: [],
+          itineraryDays: [],
+        });
+      })
+    );
+  }
+
 }

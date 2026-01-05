@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
   HomeSectionService,
@@ -30,7 +30,7 @@ interface CommunityHero {
   templateUrl: './community-hero-v2.component.html',
   styleUrl: './community-hero-v2.component.scss',
 })
-export class CommunityHeroV2Component implements OnInit {
+export class CommunityHeroV2Component implements OnInit, OnDestroy {
   data: CommunityHero = {
     title: 'Titular para sección comunidad',
     googleRating: 4.5,
@@ -43,6 +43,7 @@ export class CommunityHeroV2Component implements OnInit {
   };
   loading = true;
   error: string | null = null;
+  private abortController = new AbortController();
 
   constructor(
     private sanitizer: DomSanitizer,
@@ -55,13 +56,17 @@ export class CommunityHeroV2Component implements OnInit {
     this.loadCommunityHeroData();
   }
 
+  ngOnDestroy(): void {
+    this.abortController.abort();
+  }
+
   get sanitizedContent(): SafeHtml {
     return this.sanitizer.bypassSecurityTrustHtml(this.data.featured.content);
   }
 
   private loadCommunityHeroData() {
     // First, get the community section (TRAVELER_SECTION)
-    this.homeSectionService.getAll({ code: 'TRAVELER_SECTION' }).subscribe({
+    this.homeSectionService.getAll({ code: 'TRAVELER_SECTION' }, this.abortController.signal).subscribe({
       next: (sections: IHomeSectionResponse[]) => {
         if (sections.length > 0) {
           const communitySection = sections[0];
@@ -72,7 +77,6 @@ export class CommunityHeroV2Component implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error loading community section:', error);
         this.error = 'Error loading community section';
         this.loading = false;
       },
@@ -81,7 +85,7 @@ export class CommunityHeroV2Component implements OnInit {
 
   private loadSectionConfigurations(sectionId: number) {
     this.homeSectionConfigurationService
-      .getBySectionType(sectionId, true)
+      .getBySectionType(sectionId, true, this.abortController.signal)
       .subscribe({
         next: (configurations: IHomeSectionConfigurationResponse[]) => {
           if (configurations.length > 0) {
@@ -100,7 +104,6 @@ export class CommunityHeroV2Component implements OnInit {
           }
         },
         error: (error) => {
-          console.error('Error loading section configurations:', error);
           this.error = 'Error loading section configurations';
           this.loading = false;
         },
@@ -109,7 +112,7 @@ export class CommunityHeroV2Component implements OnInit {
 
   private loadFeaturedImages(configurationId: number) {
     this.homeSectionCardService
-      .getByConfiguration(configurationId, true)
+      .getByConfiguration(configurationId, true, this.abortController.signal)
       .subscribe({
         next: (cards: IHomeSectionCardResponse[]) => {
           // Get featured cards for images
@@ -140,7 +143,6 @@ export class CommunityHeroV2Component implements OnInit {
           this.loading = false;
         },
         error: (error) => {
-          console.error('Error loading featured images:', error);
           this.error = 'Error loading featured images';
           this.loading = false;
         },

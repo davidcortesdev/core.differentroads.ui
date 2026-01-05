@@ -30,9 +30,6 @@ export class SortByPipe implements PipeTransform {
    * @returns The sorted array
    */
   transform(array: any[], path: string, descending: boolean = false): any[] {
-    //console.log('Entrada del pipe:', array);
-    //console.log('Path a ordenar:', path);
-
     if (!Array.isArray(array) || !path) {
       return array;
     }
@@ -44,18 +41,11 @@ export class SortByPipe implements PipeTransform {
     });
 
     if (!propertyExists && array.length > 0) {
-      console.warn(
-        `SortByPipe: Property '${path}' not found in any array item. Check if the property name is correct.`
-      );
     }
 
     const sortedArray = [...array].sort((a, b) => {
       const aValue = path.split('.').reduce((obj, key) => obj?.[key], a);
       const bValue = path.split('.').reduce((obj, key) => obj?.[key], b);
-
-      //console.log('Comparando valores:');
-      //console.log('A:', aValue, 'Type:', a.type);
-      //console.log('B:', bValue, 'Type:', b.type);
 
       if (aValue === bValue) return 0;
       if (aValue === undefined) return 1;
@@ -67,13 +57,10 @@ export class SortByPipe implements PipeTransform {
       if (descending) {
         result = -result;
       }
-      
-      //console.log('Resultado de la comparación:', result);
 
       return result;
     });
 
-    //console.log('Lista ordenada:', sortedArray);
     return sortedArray;
   }
 }

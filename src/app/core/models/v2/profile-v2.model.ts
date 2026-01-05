@@ -14,6 +14,7 @@ export interface BookingItem {
     _id?: string; // For budgets compatibility
     creationDate: Date;
     status: string;
+    reservationStatusId?: number; // ID del estado de reserva para lógica de negocio
     departureDate: Date;
     image: string;
     passengers?: number;
@@ -27,28 +28,25 @@ export interface BookingItem {
     code?: string; // For bookings compatibility
   }
 
-
 export interface PersonalInfo {
     id?: string;
+    cognitoId?:number;
     nombre?: string;
     apellido?: string;
     avatarUrl?: string;
     email?: string;
     telefono?: string;
+    phonePrefix?: string;
     dni?: string;
-    nacionalidad?: string;
-    pasaporte?: string;
-    fechaExpedicionPasaporte?: string;
-    fechaVencimientoPasaporte?: string;
-    sexo?: string;
-    fechaNacimiento?: string;
+    direccion?: string;
     ciudad?: string;
     codigoPostal?: string;
-    fechaExpedicionDni?: string;
-    fechaCaducidadDni?: string;
-    paisExpedicion?: string;
+    pais?: string;
+    fechaNacimiento?: string;
+    fechaExpiracionDni?: string;
+    sexo?: string;
+    notas?: string;
   }
-
 
 // Interfaces para la respuesta de la API
 export interface ReservationResponse {

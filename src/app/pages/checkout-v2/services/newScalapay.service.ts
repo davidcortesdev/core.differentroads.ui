@@ -1,7 +1,6 @@
 import { Injectable } from "@angular/core";
 import { environment } from "../../../../environments/environment";
 import { HttpClient, HttpParams } from "@angular/common/http";
-import { IFlightPackDTO } from "./flightsNet.service";
 import { Observable } from "rxjs";
 import { ScalapayAmount } from "../../../core/models/scalapay/ScalapayAmount";
 
@@ -27,9 +26,12 @@ export class NewScalapayService {
 
     constructor(private http: HttpClient) {}
 
-    createOrder(reservationId: number, baseUrl: string): Observable<IScalapayOrderResponse> {
-        const params = new HttpParams()
-            .set('reservationId', reservationId)
+    createOrder(reservationId: number, baseUrl: string, amount?: number): Observable<IScalapayOrderResponse> {
+        let params = new HttpParams();
+        if (amount) {
+            params = params.set('amount', amount.toString());
+        }
+        params = params.set('reservationId', reservationId)
             .set('baseUrl', baseUrl);
         return this.http.post<IScalapayOrderResponse>(`${this.API_URL}/create-order`, {}, { params });
     }

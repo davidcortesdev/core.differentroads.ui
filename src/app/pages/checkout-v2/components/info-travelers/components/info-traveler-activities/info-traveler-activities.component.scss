@@ -1,0 +1,26 @@
+.traveler-activities {
+  margin: 15px 0;
+  h5 { 
+    margin: 0 0 10px 0; 
+    font-size: 14px; 
+    font-weight: 600; 
+    color: var(--background-azul); 
+  }
+  .activities-list .activity-item {
+    display: flex !important; 
+    justify-content: space-between !important; 
+    align-items: center !important; 
+    padding: 8px 0 !important; 
+    border-bottom: 1px solid #f0f0f0;
+    &:last-child { border-bottom: none; }
+    .activity-info {
+      flex: 1;
+    }
+    p-toggleSwitch { 
+      flex-shrink: 0; 
+      margin-left: 15px; 
+    }
+  }
+}
+
+

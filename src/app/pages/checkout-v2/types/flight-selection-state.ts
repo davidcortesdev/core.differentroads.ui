@@ -1,4 +1,4 @@
-import { IFlightPackDTO } from '../../../core/services/flight-search.service';
+import { IFlightPackDTO } from '../../../core/services/flight/flight-search.service';
 
 // Interfaz para el estado de selección de vuelos
 export interface FlightSelectionState {

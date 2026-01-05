@@ -15,9 +15,7 @@ import { IReservationTravelerResponse } from '../../../../../../core/services/re
 import { IAgeGroupResponse } from '../../../../../../core/services/agegroup/age-group.service';
 import { 
   ReservationTravelerAccommodationService,
-  IReservationTravelerAccommodationResponse,
-  ReservationTravelerAccommodationCreate
-} from '../../../../../../core/services/reservation/reservation-traveler-accommodation.service';
+  IReservationTravelerAccommodationResponse} from '../../../../../../core/services/reservation/reservation-traveler-accommodation.service';
 import {
   DepartureAccommodationService,
   IDepartureAccommodationResponse
@@ -35,7 +33,7 @@ export class InfoTravelersRoomComponent implements OnInit, OnChanges, OnDestroy 
   @Input() reservationId: number | null = null;
   @Input() departureId: number | null = null; // NUEVO: ID del departure para obtener habitaciones
 
-  @Output() roomAssignmentsChange = new EventEmitter<{ [travelerId: number]: number }>();
+  @Output() dataUpdated = new EventEmitter<void>();
 
   // Propiedades para gestión de habitaciones
   roomAssignments: { [travelerId: number]: number } = {}; // travelerId -> roomId
@@ -188,7 +186,7 @@ export class InfoTravelersRoomComponent implements OnInit, OnChanges, OnDestroy 
     }
     
     // Emitir evento para notificar al componente padre (sin guardar automáticamente)
-    this.roomAssignmentsChange.emit(this.roomAssignments);
+    this.dataUpdated.emit();
   }
 
   /**
@@ -430,7 +428,6 @@ export class InfoTravelersRoomComponent implements OnInit, OnChanges, OnDestroy 
           this.loading = false;
         },
         error: (error) => {
-          console.error('Error al cargar asignaciones de habitaciones:', error);
           this.loading = false;
           this.messageService.add({
             severity: 'error',
@@ -532,7 +529,7 @@ export class InfoTravelersRoomComponent implements OnInit, OnChanges, OnDestroy 
           });
 
           // Emitir evento para notificar al componente padre
-          this.roomAssignmentsChange.emit(this.roomAssignments);
+          this.dataUpdated.emit();
         },
         error: (error) => {
           this.saving = false;

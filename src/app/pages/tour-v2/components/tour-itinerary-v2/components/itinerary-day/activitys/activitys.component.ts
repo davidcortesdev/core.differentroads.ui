@@ -2,6 +2,7 @@ import {
   Component,
   Input,
   OnInit,
+  OnDestroy,
   OnChanges,
   SimpleChanges,
   Output,
@@ -23,9 +24,8 @@ import {
   AgeGroupService,
   IAgeGroupResponse,
 } from '../../../../../../../core/services/agegroup/age-group.service';
-import { catchError, map, of, forkJoin } from 'rxjs';
+import { catchError, map, of } from 'rxjs';
 import { ActivityHighlight } from '../../../../../../../shared/components/activity-card/activity-card.component';
-import { environment } from '../../../../../../../../environments/environment';
 
 // Interface para el formato de precio siguiendo el ejemplo
 interface PriceData {
@@ -45,7 +45,7 @@ interface ActivityWithPrice extends IActivityResponse {
   templateUrl: './activitys.component.html',
   styleUrl: './activitys.component.scss',
 })
-export class ActivitysComponent implements OnInit, OnChanges {
+export class ActivitysComponent implements OnInit, OnDestroy, OnChanges {
   @Input() itineraryId: number | undefined;
   @Input() itineraryDayId: number | undefined;
   @Input() departureId: number | undefined;
@@ -62,6 +62,7 @@ export class ActivitysComponent implements OnInit, OnChanges {
   
   // Cache de grupos de edad
   private ageGroupsCache: IAgeGroupResponse[] = [];
+  private abortController = new AbortController();
 
   constructor(
     private activityService: ActivityService,
@@ -93,17 +94,20 @@ export class ActivitysComponent implements OnInit, OnChanges {
     }
   }
 
+  ngOnDestroy(): void {
+    this.abortController.abort();
+  }
+
   /**
    * Carga los grupos de edad desde el servicio
    */
   private loadAgeGroups(): void {
-    this.ageGroupService.getAll().subscribe({
+    this.ageGroupService.getAll(undefined, this.abortController.signal).subscribe({
       next: (ageGroups) => {
         this.ageGroupsCache = ageGroups;
         this.loadDataWithFilters();
       },
       error: (error) => {
-        console.error('Error loading age groups:', error);
         // Continuar sin grupos de edad, usar valores por defecto
         this.loadDataWithFilters();
       }
@@ -126,11 +130,12 @@ export class ActivitysComponent implements OnInit, OnChanges {
         this.itineraryId,
         this.departureId,
         this.itineraryDayId,
-        true // isVisibleOnWeb = true
+        true, // isVisibleOnWeb = true
+        undefined, // onlyOpt
+        this.abortController.signal
       )
       .pipe(
         catchError((err) => {
-          console.error('Error al cargar actividades:', err);
           this.error =
             'Error al cargar las actividades. Por favor intente nuevamente.';
           return of([]);
@@ -175,14 +180,10 @@ export class ActivitysComponent implements OnInit, OnChanges {
         .getAll({
           ActivityId: [activity.id],
           DepartureId: this.departureId,
-        })
+        }, this.abortController.signal)
         .pipe(
           map((prices) => (prices.length > 0 ? prices : [])),
           catchError((error) => {
-            console.error(
-              `Error loading price for activity ${activity.id}:`,
-              error
-            );
             return of([]);
           })
         )
@@ -205,14 +206,10 @@ export class ActivitysComponent implements OnInit, OnChanges {
         .getAll({
           activityPackId: activity.id,
           departureId: this.departureId,
-        })
+        }, this.abortController.signal)
         .pipe(
           map((prices) => (prices.length > 0 ? prices : [])),
           catchError((error) => {
-            console.error(
-              `Error loading price for pack ${activity.id}:`,
-              error
-            );
             return of([]);
           })
         )

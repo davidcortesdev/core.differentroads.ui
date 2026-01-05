@@ -2,6 +2,7 @@ import {
   Component,
   Input,
   OnInit,
+  OnDestroy,
   ViewChildren,
   QueryList,
   OnChanges,
@@ -9,7 +10,7 @@ import {
   Output,
   EventEmitter,
 } from '@angular/core';
-import { forkJoin, of, Observable } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
 import { catchError, map, finalize } from 'rxjs/operators';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Panel } from 'primeng/panel';
@@ -18,8 +19,6 @@ import { ActivityHighlight } from '../../../../../../shared/components/activity-
 // Importar servicios para itinerary, itinerary days y CMS
 import {
   ItineraryService,
-  IItineraryResponse,
-  ItineraryFilters,
 } from '../../../../../../core/services/itinerary/itinerary.service';
 import {
   ItineraryDayService,
@@ -59,7 +58,7 @@ interface ProcessedItineraryDay {
   templateUrl: './itinerary-day.component.html',
   styleUrl: './itinerary-day.component.scss',
 })
-export class ItineraryDayComponent implements OnInit, OnChanges {
+export class ItineraryDayComponent implements OnInit, OnChanges, OnDestroy {
   @Input() tourId: number | undefined;
   @Input() itineraryId: number | undefined;
   @Input() departureId: number | undefined; // NUEVO: Recibir el departure ID seleccionado
@@ -83,6 +82,7 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
 
   // Map para optimización de búsquedas O(1)
   private daysCMSMap = new Map<number, IItineraryDayCMSResponse>();
+  private abortController = new AbortController();
 
   constructor(
     private itineraryService: ItineraryService,
@@ -117,6 +117,10 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
     }
   }
 
+  ngOnDestroy(): void {
+    this.abortController.abort();
+  }
+
   // NUEVO: Manejar selección de actividad y reenviar al padre
   onActivitySelected(activityHighlight: ActivityHighlight): void {
     this.activitySelected.emit(activityHighlight);
@@ -126,7 +130,6 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
     if (this.itineraryId) {
       this.loadItineraryDaysData([this.itineraryId]);
     } else {
-      console.warn('⚠️ No se proporcionó itineraryId específico');
       this.loading = false;
       this.clearData();
     }
@@ -149,12 +152,8 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
 
     // Crear observables para cada itineraryId y combinar los resultados
     const itineraryDaysObservables = itineraryIds.map((itineraryId) =>
-      this.itineraryDayService.getAll({ itineraryId }).pipe(
+      this.itineraryDayService.getAll({ itineraryId }, this.abortController.signal).pipe(
         catchError((error) => {
-          console.error(
-            `❌ Error loading days for itinerary ${itineraryId}:`,
-            error
-          );
           return of([]);
         })
       )
@@ -165,7 +164,6 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
       .pipe(
         map((daysArrays) => daysArrays.flat()), // Aplanar el array de arrays
         catchError((error) => {
-          console.error('❌ Error loading itinerary days:', error);
           return of([]);
         })
       )
@@ -189,9 +187,8 @@ export class ItineraryDayComponent implements OnInit, OnChanges {
 
     // Crear observables para obtener CMS de cada día
     const itineraryDaysCMSObservables = dayIds.map((dayId) =>
-      this.itineraryDayCMSService.getAll({ itineraryDayId: dayId }).pipe(
+      this.itineraryDayCMSService.getAll({ itineraryDayId: dayId }, this.abortController.signal).pipe(
         catchError((error) => {
-          console.error(`❌ Error loading CMS for day ${dayId}:`, error);
           return of([]);
         })
       )

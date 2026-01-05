@@ -1,11 +1,40 @@
 <div class="tour-header">
   <!-- Tour Information Section -->
   <div class="tour-info">
-    <h1>Detalles del Tour: {{ tour.name || '' }}</h1>
+    <!-- Rating y Reviews Section - Solo visible cuando NO está scrolled -->
+    <div class="tour-rating" *ngIf="averageRating !== null || reviewCount > 0">
+      <p-rating
+        [ngModel]="averageRating || 0"
+        [readonly]="true"
+        [stars]="5"
+        [cancel]="false">
+        <ng-template #onicon>
+          <i class="pi pi-star-fill" style="color: #e85d4c !important;"></i>
+        </ng-template>
+        <ng-template #officon>
+          <i class="pi pi-star" style="color: #e85d4c !important;"></i>
+        </ng-template>
+      </p-rating>
+      <span class="rating-number" *ngIf="averageRating !== null">{{ averageRating }}</span>
+      <span class="reviews-count" *ngIf="reviewCount > 0" (click)="scrollToReviews()">{{ getFormattedReviewCount() }}</span>
+    </div>
+    
+    <h1 class="tour-title">
+      <span class="title-prefix">{{ getTitlePrefix() }}</span>
+      <span class="title-text">{{ getTitleWithoutPrefix() }}</span>
+    </h1>
             
     <!-- ✅ NUEVA SECCIÓN: Mostrar país debajo del nombre con evento de clic -->
     <div class="tour-location" *ngIf="country">
       <span class="country" (click)="onCountryClick($event, country)" style="cursor: pointer;">{{ country }}</span>
+      <p-tag
+        *ngFor="let tripType of (tourTripTypesLocal.length > 0 ? tourTripTypesLocal : (tourTripTypes || []))"
+        [value]="tripType.name"
+        [style.background-color]="tripType.color || '#D3D3D3'"
+        [style.color]="'black'"
+        [style.border]="'none'"
+        class="trip-type-tag">
+      </p-tag>
     </div>
   </div>
           
@@ -13,30 +42,38 @@
   <div class="tour-actions">
     <!-- Tour Details -->
     <div class="tour-details">
-      <!-- ✅ CAMBIAR: Mostrar Total en lugar de Código -->
-      <div class="detail-item" *ngIf="hasPrice">
-        <span class="label">Desde</span>
-        <span class="value">{{ formattedPrice }}</span>
+      <!-- ✅ Mostrar spinner mientras se cargan todos los datos -->
+      <div class="detail-item" *ngIf="!isHeaderDataReady" style="display: flex; align-items: center; gap: 10px;">
+        <p-progressSpinner [style]="{ width: '20px', height: '20px' }" styleClass="header-loading-spinner"></p-progressSpinner>
       </div>
-            
-      <!-- ✅ CORREGIDO: Mostrar vuelos con formato condicional -->
-      <div class="detail-item">
-        <span class="value val">{{ formattedFlights }}</span>
-      </div>
-            
-      <!-- ✅ CORREGIDO: Mostrar fecha formateada con tipo Single si aplica -->
-      <div class="detail-item" *ngIf="selectedDeparture && formattedDepartureWithType">
-        <span class="value val">{{ formattedDepartureWithType }}</span>
-      </div>
+      
+      <!-- ✅ Mostrar datos cuando estén listos -->
+      <ng-container *ngIf="isHeaderDataReady">
+        <!-- ✅ CAMBIAR: Mostrar Total en lugar de Código -->
+        <div class="detail-item" *ngIf="hasPrice">
+          <span class="label">Desde</span>
+          <span class="value">{{ formattedPrice }}</span>
+        </div>
+              
+        <!-- ✅ CORREGIDO: Mostrar vuelos con formato condicional -->
+        <div class="detail-item">
+          <span class="value val">{{ formattedFlights }}</span>
+        </div>
+              
+        <!-- ✅ CORREGIDO: Mostrar fecha formateada con tipo Single si aplica -->
+        <div class="detail-item" *ngIf="selectedDeparture && formattedDepartureWithType">
+          <span class="value val">{{ formattedDepartureWithType }}</span>
+        </div>
 
-      <!-- ✅ NUEVO: Mostrar estado de actividades opcionales -->
-      <div class="detail-item activities-status" *ngIf="shouldShowActivitiesStatus">
-        <span class="value val activities-label"
-              [class.with-activities]="hasAddedActivities"
-              [class.without-activities]="!hasAddedActivities">
-          {{ activitiesStatusText }}
-        </span>
-      </div>
+        <!-- ✅ NUEVO: Mostrar estado de actividades opcionales -->
+        <div class="detail-item activities-status" *ngIf="shouldShowActivitiesStatus">
+          <span class="value val activities-label"
+                [class.with-activities]="hasAddedActivities"
+                [class.without-activities]="!hasAddedActivities">
+            {{ activitiesStatusText }}
+          </span>
+        </div>
+      </ng-container>
             
       <!-- ✅ MANTENER: Solo mostrar código si NO hay precio -->
       <!-- <div class="detail-item" *ngIf="tour.tkId">
@@ -55,9 +92,9 @@
         label="Reservar mi tour"
         styleClass="p-button-rounded"
         (onClick)="onBookingClick()"
-        [pTooltip]="preview ? 'No es posible reservar un tour en modo preview' : ''"
+        [pTooltip]="getBookingTooltip()"
         [tooltipPosition]="'top'"
-        [disabled]="preview">
+        [disabled]="preview || !hasSelectedDate || !isDepartureBookable || isStandaloneMode">
       </p-button>
     </div>
   </div>

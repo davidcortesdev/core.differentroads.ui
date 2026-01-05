@@ -11,6 +11,10 @@ import {
   IActivityPriceResponse,
 } from '../../../core/services/activity/activity-price.service';
 import {
+  ActivityPackPriceService,
+  IActivityPackPriceResponse,
+} from '../../../core/services/activity/activity-pack-price.service';
+import {
   ReservationTravelerActivityService,
   IReservationTravelerActivityResponse,
 } from '../../../core/services/reservation/reservation-traveler-activity.service';
@@ -36,7 +40,6 @@ import {
 } from '../../../core/services/agegroup/age-group.service';
 import {
   DepartureService,
-  IDepartureResponse,
 } from '../../../core/services/departure/departure.service';
 
 // Interface para el formato de precio esperado
@@ -69,6 +72,8 @@ interface ActivityWithPrice extends IActivityResponse {
 export class BookingActivitiesV2Component implements OnInit {
   @Input() periodId!: string;
   @Input() reservationId!: number;
+  @Input() statusCode: string = '';
+  @Output() dataUpdated = new EventEmitter<void>();
 
   // Estado del componente
   availableActivities: ActivityWithPrice[] = [];
@@ -86,6 +91,7 @@ export class BookingActivitiesV2Component implements OnInit {
     private messageService: MessageService,
     private activityService: ActivityService,
     private activityPriceService: ActivityPriceService,
+    private activityPackPriceService: ActivityPackPriceService,
     private reservationTravelerActivityService: ReservationTravelerActivityService,
     private reservationTravelerActivityPackService: ReservationTravelerActivityPackService,
     private reservationTravelerService: ReservationTravelerService,
@@ -109,6 +115,10 @@ export class BookingActivitiesV2Component implements OnInit {
         this.initializeComponent();
       },
     });
+  }
+
+  get isCancelled(): boolean {
+    return ['CANCELLED','SUSPENDED','EXPIRED','DELETED'].includes(this.statusCode);
   }
 
   private initializeComponent(): void {
@@ -171,26 +181,61 @@ export class BookingActivitiesV2Component implements OnInit {
   }
 
   private loadPricesForActivities(): void {
-    const pricePromises = this.availableActivities.map((activity) =>
-      this.activityPriceService
-        .getAll({ ActivityId: [activity.id] })
-        .pipe(
-          catchError(() => of([])),
-          map((prices: IActivityPriceResponse[]) => ({
-            activityId: activity.id,
-            prices: prices.map((price) => ({
-              age_group_name: this.getAgeGroupName(price.ageGroupId),
-              value: price.basePrice,
-              currency: 'EUR', // Usar currencyId para obtener la moneda real si es necesario
-            })),
-          }))
-        )
-        .toPromise()
-    );
+    if (!this.periodId) return;
+    const departureId = parseInt(this.periodId);
+
+    const pricePromises = this.availableActivities.map((activity) => {
+      // 🔥 CORREGIDO: Manejar precios según el tipo de actividad
+      if (activity.type === 'act') {
+        // Para actividades individuales, usar ActivityPriceService
+        return this.activityPriceService
+          .getAll({ 
+            ActivityId: [activity.id],
+            DepartureId: departureId
+          })
+          .pipe(
+            catchError(() => of([])),
+            map((prices: IActivityPriceResponse[]) => ({
+              activityId: activity.id,
+              prices: prices.map((price) => ({
+                age_group_name: this.getAgeGroupName(price.ageGroupId),
+                value: price.campaignPrice || price.basePrice,
+                currency: 'EUR',
+              })),
+            }))
+          )
+          .toPromise();
+      } else if (activity.type === 'pack') {
+        // 🔥 NUEVO: Para paquetes de actividades, usar ActivityPackPriceService
+        return this.activityPackPriceService
+          .getAll({ 
+            activityPackId: activity.id,
+            departureId: departureId
+          })
+          .pipe(
+            catchError(() => of([])),
+            map((prices: IActivityPackPriceResponse[]) => ({
+              activityId: activity.id,
+              prices: prices.map((price) => ({
+                age_group_name: this.getAgeGroupName(price.ageGroupId),
+                value: price.campaignPrice || price.basePrice,
+                currency: 'EUR',
+              })),
+            }))
+          )
+          .toPromise();
+      }
+      
+      // Fallback para tipos desconocidos
+      return Promise.resolve({
+        activityId: activity.id,
+        prices: []
+      });
+    });
 
     Promise.all(pricePromises).then((results: any[]) => {
       results.forEach((result) => {
-    const activity = this.availableActivities.find(
+        const activity = this.availableActivities.find(
           (a) => a.id === result.activityId
         );
         if (activity) {
@@ -208,7 +253,6 @@ export class BookingActivitiesV2Component implements OnInit {
   private loadActivitiesByTraveler(): void {
     if (!this.reservationId || this.activitiesByTravelerLoaded) return;
 
-
     this.reservationTravelerService
       .getByReservation(this.reservationId)
       .subscribe({
@@ -218,13 +262,11 @@ export class BookingActivitiesV2Component implements OnInit {
           let processedTravelers = 0;
 
           travelers.forEach((traveler) => {
-            
             forkJoin({
               activities: this.reservationTravelerActivityService.getByReservationTraveler(traveler.id),
               activityPacks: this.reservationTravelerActivityPackService.getByReservationTraveler(traveler.id),
             }).subscribe({
               next: (result) => {
-                
                 this.travelerActivities[traveler.id] = result.activities;
                 this.travelerActivityPacks[traveler.id] = result.activityPacks;
 
@@ -241,7 +283,6 @@ export class BookingActivitiesV2Component implements OnInit {
                 if (processedTravelers === travelers.length) {
                   this.markAssignedActivitiesAsAdded(assignedActivities);
                   this.activitiesByTravelerLoaded = true;
-                  // Cargar nombres de viajeros después de cargar actividades
                   this.loadTravelerNames();
                 }
               },
@@ -251,7 +292,6 @@ export class BookingActivitiesV2Component implements OnInit {
                 if (processedTravelers === travelers.length) {
                   this.markAssignedActivitiesAsAdded(assignedActivities);
                   this.activitiesByTravelerLoaded = true;
-                  // Cargar nombres de viajeros después de cargar actividades
                   this.loadTravelerNames();
                 }
               },
@@ -277,14 +317,10 @@ export class BookingActivitiesV2Component implements OnInit {
   }
 
   private loadTravelerNames(): void {
-    
     this.travelers.forEach((traveler) => {
-      
       this.reservationTravelerFieldService.getByReservationTraveler(traveler.id).subscribe({
         next: (travelerFields: IReservationTravelerFieldResponse[]) => {
-          
           if (travelerFields.length > 0) {
-            // Obtener los IDs de los campos para obtener sus nombres
             const fieldIds = [...new Set(travelerFields.map((field: IReservationTravelerFieldResponse) => field.reservationFieldId))];
             
             const fieldObservables = fieldIds.map(fieldId => 
@@ -293,14 +329,11 @@ export class BookingActivitiesV2Component implements OnInit {
 
             forkJoin(fieldObservables).subscribe({
               next: (fields: IReservationFieldResponse[]) => {
-                
-                // Crear un mapa de fieldId -> fieldName
                 const fieldMap = new Map<number, string>();
                 fields.forEach(field => {
                   fieldMap.set(field.id, field.name);
                 });
 
-                // Buscar nombre y apellido
                 let name = '';
                 let surname = '';
 
@@ -317,10 +350,8 @@ export class BookingActivitiesV2Component implements OnInit {
                   }
                 });
 
-                // Crear el nombre completo
                 const fullName = [name, surname].filter(Boolean).join(' ');
                 this.travelerNames[traveler.id] = fullName || `Viajero ${traveler.travelerNumber}`;
-                
               }
             });
           } else {
@@ -349,12 +380,12 @@ export class BookingActivitiesV2Component implements OnInit {
         const ageGroup = this.getAgeGroupName(traveler.ageGroupId);
         const price = this.getPriceForTraveler(activity, ageGroup);
 
-          return {
+        return {
           id: traveler.id,
-            selected: true,
-            ageGroup,
-            price,
-          };
+          selected: false,
+          ageGroup,
+          price,
+        };
       });
     }
   }
@@ -381,48 +412,67 @@ export class BookingActivitiesV2Component implements OnInit {
 
     this.isLoading = true;
 
-    // Aquí implementarías la lógica para guardar las actividades seleccionadas
-    // Por ahora solo simulamos el guardado
-    setTimeout(() => {
-      this.isLoading = false;
-      activity.showPassengers = false;
-      activity.isIncluded = true;
-      
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Éxito',
-        detail: 'Actividades guardadas correctamente',
+    const savePromises = selectedTravelers.map((traveler) => {
+      if (activity.type === 'act') {
+        const createData = {
+          id: 0,
+          reservationTravelerId: traveler.id,
+          activityId: activityId
+        };
+        return firstValueFrom(this.reservationTravelerActivityService.create(createData));
+      } else if (activity.type === 'pack') {
+        const createData = {
+          id: 0,
+          reservationTravelerId: traveler.id,
+          activityPackId: activityId
+        };
+        return firstValueFrom(this.reservationTravelerActivityPackService.create(createData));
+      }
+      return Promise.resolve(null);
+    });
+
+    Promise.all(savePromises)
+      .then(() => {
+        this.isLoading = false;
+        activity.showPassengers = false;
+        activity.addedManually = false;
+        
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Éxito',
+          detail: `Actividad "${activity.name}" agregada correctamente a ${selectedTravelers.length} viajero(s)`,
+          life: 3000,
+        });
+        
+        this.emitDataUpdated();
+      })
+      .catch((error) => {
+        this.isLoading = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No se pudieron guardar las actividades',
+          life: 3000,
+        });
       });
-    }, 1000);
   }
 
   getTravelerNameById(travelerId: number): string {
     return this.travelerNames[travelerId] || `Viajero ${travelerId}`;
   }
 
-  /**
-   * Verifica si un viajero tiene una actividad específica asignada
-   */
   hasTravelerActivity(travelerId: number, activityId: number): boolean {
-    // Verificar actividades individuales
     const hasIndividualActivity = this.travelerActivities[travelerId]?.some(
       activity => activity.activityId === activityId
     );
 
-    // Verificar paquetes de actividades
     const hasPackActivity = this.travelerActivityPacks[travelerId]?.some(
       pack => pack.activityPackId === activityId
     );
 
-    const result = hasIndividualActivity || hasPackActivity || false;
-    
-
-    return result;
+    return hasIndividualActivity || hasPackActivity || false;
   }
 
-  /**
-   * Verifica si algún viajero tiene una actividad específica asignada
-   */
   hasAnyTravelerWithActivity(activityId: number): boolean {
     return this.travelers.some(traveler => 
       this.hasTravelerActivity(traveler.id, activityId)
@@ -434,16 +484,10 @@ export class BookingActivitiesV2Component implements OnInit {
     return activity?.name || 'Actividad desconocida';
   }
 
-  /**
-   * Verifica si una actividad está agregada (al menos un viajero la tiene)
-   */
   isActivityAdded(activity: ActivityWithPrice): boolean {
     return this.hasAnyTravelerWithActivity(activity.id);
   }
 
-  /**
-   * Verifica si TODOS los viajeros tienen la actividad
-   */
   isAllTravelersHaveActivity(activity: ActivityWithPrice): boolean {
     return this.travelers.length > 0 && 
            this.travelers.every(traveler => 
@@ -451,16 +495,10 @@ export class BookingActivitiesV2Component implements OnInit {
            );
   }
 
-  /**
-   * Maneja el toggle de agregar/eliminar actividad para TODOS los viajeros
-   */
   toggleActivityForAllTravelers(activity: ActivityWithPrice): void {
-    
     if (this.isAllTravelersHaveActivity(activity)) {
-      // Si todos la tienen, eliminar de todos los viajeros
       this.removeActivityFromAllTravelers(activity);
     } else {
-      // Si no todos la tienen, agregar a todos los viajeros
       this.addActivityToAllTravelers(activity);
     }
   }
@@ -475,21 +513,16 @@ export class BookingActivitiesV2Component implements OnInit {
     }
   }
 
-  /**
-   * Agrega una actividad a un viajero
-   */
   private addActivityToTraveler(travelerId: number, activityId: number): void {
     const activity = this.availableActivities.find(a => a.id === activityId);
     if (!activity) return;
 
     if (activity.type === 'act') {
-      // Agregar actividad individual
       const createData = {
         id: 0,
         reservationTravelerId: travelerId,
         activityId: activityId
       };
-      
       
       this.reservationTravelerActivityService.create(createData).subscribe({
         next: (response) => {
@@ -499,25 +532,23 @@ export class BookingActivitiesV2Component implements OnInit {
             detail: `La actividad "${activity.name}" ha sido agregada correctamente`,
             life: 3000,
           });
-          this.reloadParentComponent();
-      },
-      error: (error) => {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
+          this.emitDataUpdated();
+        },
+        error: (error) => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
             detail: 'No se pudo agregar la actividad',
-          life: 3000,
-        });
+            life: 3000,
+          });
         }
       });
     } else if (activity.type === 'pack') {
-      // Agregar paquete de actividades
       const createData = {
         id: 0,
         reservationTravelerId: travelerId,
         activityPackId: activityId
       };
-      
       
       this.reservationTravelerActivityPackService.create(createData).subscribe({
         next: (response) => {
@@ -527,7 +558,7 @@ export class BookingActivitiesV2Component implements OnInit {
             detail: `El paquete "${activity.name}" ha sido agregado correctamente`,
             life: 3000,
           });
-          this.reloadParentComponent();
+          this.emitDataUpdated();
         },
         error: (error) => {
           this.messageService.add({
@@ -541,15 +572,11 @@ export class BookingActivitiesV2Component implements OnInit {
     }
   }
 
-  /**
-   * Remueve una actividad de un viajero
-   */
   private removeActivityFromTraveler(travelerId: number, activityId: number): void {
     const activity = this.availableActivities.find(a => a.id === activityId);
     if (!activity) return;
 
     if (activity.type === 'act') {
-      // Buscar la actividad individual asignada
       const travelerActivity = this.travelerActivities[travelerId]?.find(
         ta => ta.activityId === activityId
       );
@@ -563,7 +590,7 @@ export class BookingActivitiesV2Component implements OnInit {
               detail: `La actividad "${activity.name}" ha sido removida correctamente`,
               life: 3000,
             });
-            this.reloadParentComponent();
+            this.emitDataUpdated();
           },
           error: (error) => {
             this.messageService.add({
@@ -576,7 +603,6 @@ export class BookingActivitiesV2Component implements OnInit {
         });
       }
     } else if (activity.type === 'pack') {
-      // Buscar el paquete de actividades asignado
       const travelerActivityPack = this.travelerActivityPacks[travelerId]?.find(
         tap => tap.activityPackId === activityId
       );
@@ -590,7 +616,7 @@ export class BookingActivitiesV2Component implements OnInit {
               detail: `El paquete "${activity.name}" ha sido removido correctamente`,
               life: 3000,
             });
-            this.reloadParentComponent();
+            this.emitDataUpdated();
           },
           error: (error) => {
             this.messageService.add({
@@ -605,16 +631,11 @@ export class BookingActivitiesV2Component implements OnInit {
     }
   }
 
-  /**
-   * Agrega una actividad a todos los viajeros
-   */
   private addActivityToAllTravelers(activity: ActivityWithPrice): void {
-    
     this.reservationTravelerService
       .getByReservation(this.reservationId)
       .subscribe({
         next: (travelers) => {
-          
           if (travelers.length === 0) {
             this.messageService.add({
               severity: 'warn',
@@ -656,7 +677,7 @@ export class BookingActivitiesV2Component implements OnInit {
                 detail: `La actividad "${activity.name}" ha sido agregada correctamente`,
                 life: 3000,
               });
-              this.reloadParentComponent();
+              this.emitDataUpdated();
             })
             .catch((error) => {
               this.messageService.add({
@@ -678,16 +699,11 @@ export class BookingActivitiesV2Component implements OnInit {
       });
   }
 
-  /**
-   * Remueve una actividad de todos los viajeros
-   */
   private removeActivityFromAllTravelers(activity: ActivityWithPrice): void {
-    
     this.reservationTravelerService
       .getByReservation(this.reservationId)
       .subscribe({
         next: (travelers) => {
-          
           if (travelers.length === 0) {
             this.messageService.add({
               severity: 'warn',
@@ -755,7 +771,7 @@ export class BookingActivitiesV2Component implements OnInit {
                 detail: `La actividad "${activity.name}" ha sido removida correctamente`,
                 life: 3000,
               });
-              this.reloadParentComponent();
+              this.emitDataUpdated();
             })
             .catch((error) => {
               this.messageService.add({
@@ -777,67 +793,56 @@ export class BookingActivitiesV2Component implements OnInit {
       });
   }
 
-  /**
-   * Recarga la página completa
-   */
-  private reloadParentComponent(): void {
-    
-    // Recargar la página completa para asegurar que todos los datos estén actualizados
-    window.location.reload();
+  private emitDataUpdated(): void {
+    this.dataUpdated.emit();
+    this.reloadComponentData();
   }
 
-  /**
-   * Determina si se debe mostrar el precio de la actividad
-   * Mostrar cuando hay al menos un precio mayor a 0
-   */
+  private reloadComponentData(): void {
+    this.activitiesByTravelerLoaded = false;
+    this.travelerActivities = {};
+    this.travelerActivityPacks = {};
+    this.travelerNames = {};
+    
+    if (this.reservationId) {
+      this.loadActivitiesByTraveler();
+    }
+  }
+
   shouldShowPrice(activity: ActivityWithPrice): boolean {
     if (!activity.priceData || activity.priceData.length === 0) {
       return false;
     }
 
-    // Obtener el precio mayor
     const maxPrice = Math.max(...activity.priceData.map(p => p.value));
     
-    // Si el precio mayor es 0, no mostrar
     if (maxPrice === 0) {
-    return false;
+      return false;
     }
 
     return true;
   }
 
-  /**
-   * Obtiene el precio de la actividad para mostrar
-   */
   getActivityPrice(activity: ActivityWithPrice): number {
     if (!activity.priceData || activity.priceData.length === 0) {
       return 0;
     }
 
-    // Obtener el precio mayor
     return Math.max(...activity.priceData.map(p => p.value));
   }
 
-  /**
-   * Obtiene la imagen de la actividad
-   */
   getActivityImage(activity: ActivityWithPrice): string {
     if (activity.imageUrl) {
       return activity.imageUrl;
     }
     
-    // Si no hay imagen, mostrar el alt o el nombre de la actividad
-    const altText = activity.imageAlt || activity.name || 'Actividad sin imagen';
-    return `https://via.placeholder.com/400x200/cccccc/666666?text=${encodeURIComponent(altText)}`;
+    return 'https://picsum.photos/400/200';
   }
 
-  // Método para sanitizar y limpiar la descripción si contiene etiquetas HTML
   getSafeDescription(description: string | null): SafeHtml {
     if (!description) return '';
 
-    // Si hay etiquetas HTML visibles como texto, reemplazarlas
     if (description.includes('<p') || description.includes('&lt;p')) {
-      // Remover etiquetas visibles como texto
       const cleaned = description
         .replace(/&lt;/g, '<')
         .replace(/&gt;/g, '>')
@@ -847,7 +852,6 @@ export class BookingActivitiesV2Component implements OnInit {
       return this.sanitizer.bypassSecurityTrustHtml(cleaned);
     }
 
-    // Si no hay etiquetas HTML, devolver el texto tal como está
     return this.sanitizer.bypassSecurityTrustHtml(description);
   }
 }

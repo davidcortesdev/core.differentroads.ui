@@ -57,9 +57,10 @@ export class DepartureHotelService {
   /**
    * Obtiene todas las asignaciones de hoteles según los criterios de filtrado.
    * @param filters Filtros para aplicar en la búsqueda.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de asignaciones de hoteles.
    */
-  getAll(filters?: DepartureHotelFilters): Observable<IDepartureHotelResponse[]> {
+  getAll(filters?: DepartureHotelFilters, signal?: AbortSignal): Observable<IDepartureHotelResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -74,7 +75,16 @@ export class DepartureHotelService {
       });
     }
 
-    return this.http.get<IDepartureHotelResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IDepartureHotelResponse[]>(this.API_URL, options);
   }
 
   /**

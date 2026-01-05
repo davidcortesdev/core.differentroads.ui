@@ -64,6 +64,6 @@
     },
     "breakCircularDependency": true,
     "dependsOn": [],
-    "oAuthMetadata": "{\"AllowedOAuthFlows\":[\"code\"],\"AllowedOAuthScopes\":[\"phone\",\"email\",\"openid\",\"profile\",\"aws.cognito.signin.user.admin\"],\"CallbackURLs\":[\"http://localhost:3000/es/\",\"https://new.staging.differentroads.es/es/\",\"http://localhost:3000/es/\"],\"LogoutURLs\":[\"https://new.staging.differentroads.es/\",\"http://localhost:3000/es/\"]}"
+    "oAuthMetadata": "{\"AllowedOAuthFlows\":[\"code\"],\"AllowedOAuthScopes\":[\"phone\",\"email\",\"openid\",\"profile\",\"aws.cognito.signin.user.admin\"],\"CallbackURLs\":[\"http://localhost:4200/\",\"https://ui-dev.differentroads.es/\",\"https://ui-pre.differentroads.es/\",\"https://ui.differentroads.es/\",\"https://www.differentroads.es/\",\"https://differentroads.es\"],\"LogoutURLs\":[\"http://localhost:4200/\",\"https://ui-dev.differentroads.es/\",\"https://ui-pre.differentroads.es/\",\"https://ui.differentroads.es/\",\"https://www.differentroads.es/\",\"https://differentroads.es\"]}"
   }
 }

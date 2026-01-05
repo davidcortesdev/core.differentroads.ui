@@ -6,7 +6,7 @@
           <!-- Tarjetas de viajes (3 por fila) -->
           <div *ngFor="let travel of row" class="travel-card">
             <p-card styleClass="travel-card-panel">
-              <ng-template pTemplate="header">
+              <ng-template #header>
                 <div class="travel-header">
                   <i class="pi pi-plane"></i>
                   <span class="travel-type">{{getTravelTypeLabel(travel.travelType)}}</span>
@@ -127,7 +127,7 @@
                 </form>
               </div>
               
-              <ng-template pTemplate="footer">
+              <ng-template #footer>
                 <div class="travel-footer">
                   <!-- Botón de editar en modo visualización (alineado a la derecha) -->
                   <div *ngIf="!isEditing(travel.id)" class="view-button">

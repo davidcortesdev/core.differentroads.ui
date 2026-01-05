@@ -1,0 +1,35 @@
+# robots.txt para Different Roads
+# Permite indexación de contenido público y bloquea áreas privadas
+
+User-agent: *
+Allow: /
+Allow: /tours
+Allow: /tour/
+Allow: /destino/
+Allow: /pages/
+Allow: /landing/
+Allow: /collection/
+Allow: /blog/
+Allow: /press/
+
+# Bloquear áreas privadas y administrativas
+Disallow: /login
+Disallow: /sign-up
+Disallow: /forget-password
+Disallow: /profile
+Disallow: /checkout/
+Disallow: /reservation/
+Disallow: /bookings/
+Disallow: /standalone/
+Disallow: /reviews/
+Disallow: /tour/*/preview
+Disallow: /tour/*/completa-tus-datos/
+
+# Bloquear archivos y recursos técnicos
+Disallow: /api/
+Disallow: /*.json$
+Disallow: /*?*
+
+# Sitemap
+Sitemap: https://www.differentroads.es/sitemap.xml
+

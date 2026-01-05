@@ -9,18 +9,6 @@ $spacing-sm: 0.5rem;
 $spacing-md: 1rem;
 
 // Mixins
-@mixin responsive-font($mobile, $tablet, $desktop) {
-    font-size: $desktop;
-
-    @media screen and (max-width: $breakpoint-tablet) {
-        font-size: $tablet;
-    }
-
-    @media screen and (max-width: $breakpoint-mobile) {
-        font-size: $mobile;
-    }
-}
-
 @mixin tablet {
     @media screen and (max-width: $breakpoint-tablet) {
         @content;
@@ -33,30 +21,84 @@ $spacing-md: 1rem;
     }
 }
 
-:root {
-    --tour-card-border-radius-lg: 1rem;
-    --tour-card-spacing-md: 1rem;
-}
-
 // Componente principal
 .tour-card {
-    ::ng-deep {
-        .p-card {
-            background: transparent !important;
-        }
+    box-sizing: border-box;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 400px !important;
+    min-height: 400px !important;
+    max-height: 400px !important;
+    padding: 0;
+    margin: 0;
+    // Evitar que las tarjetas capturen scroll innecesario
+    touch-action: pan-y;
+    flex-shrink: 1;
+    flex-grow: 0;
+
+
+    @include tablet {
+        width: auto !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        height: 400px !important;
+        min-height: 400px !important;
+        max-height: 400px !important;
     }
-    padding: var(--tour-card-spacing-sm, 0.5rem);
-    height: 100%;
+
+    @include mobile {
+        width: auto !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        height: 400px !important;
+        min-height: 400px !important;
+        max-height: 400px !important;
+    }
 
     // Estilos para el wrapper
     ::ng-deep .tour-card-wrapper {
+        box-sizing: border-box;
+        width: 100% !important;
+        height: 100% !important;
+        
         .p-card {
-            border-radius: $border-radius-lg;
-            height: 100%;
+            box-sizing: border-box;
+            width: 100% !important;
+            height: 100% !important;
             display: flex;
             flex-direction: column;
             overflow: hidden;
             background: transparent !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        .p-card-body {
+            box-sizing: border-box;
+            padding: 0 !important;
+            margin: 0 !important;
+            display: flex;
+            flex-direction: column;
+            width: 100% !important;
+            height: 100% !important;
+            overflow: hidden;
+            flex: 1 1 auto;
+            min-height: 0;
+            max-height: 100%;
+        }
+
+        .p-card-content {
+            box-sizing: border-box;
+            padding: 0 !important;
+            margin: 0 !important;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            flex: 1 1 auto;
+            min-height: 0;
+            max-height: 100%;
+            overflow: hidden;
         }
     }
 
@@ -64,13 +106,73 @@ $spacing-md: 1rem;
     &.isLarge ::ng-deep .tour-card-wrapper {
         .p-card {
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+    }
 
-            .p-card-body {
-                padding: 10px;
+    // Skeleton loader - tonos grises
+    .tour-card-skeleton {
+        width: 100%;
+        height: 400px;
+        display: flex;
+        flex-direction: column;
+        border-radius: $border-radius-lg;
+        overflow: hidden;
+        background: #f5f5f5;
+
+        .skeleton-header {
+            flex-shrink: 0;
+            height: 240px;
+            background: #e0e0e0;
+            border-radius: $border-radius-lg $border-radius-lg 0 0;
+            overflow: hidden;
+        }
+
+        .skeleton-content {
+            flex: 1;
+            padding: 1rem;
+            background: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-radius: 0 0 $border-radius-lg $border-radius-lg;
+            min-height: 160px;
+
+            .skeleton-footer-content {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-end;
+                margin-top: auto;
+                gap: 0.75rem;
+
+                .skeleton-price {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.25rem;
+                }
             }
 
-            .p-card-content {
-                padding: 0;
+            // Estilos para p-skeleton dentro del skeleton - tonos grises más claros
+            ::ng-deep {
+                p-skeleton {
+                    background: #e8e8e8 !important;
+                    border-radius: 4px;
+                    
+                    .p-skeleton {
+                        background: #e8e8e8 !important;
+                    }
+                }
+            }
+        }
+
+        @include mobile {
+            border-radius: $border-radius-md;
+
+            .skeleton-header {
+                border-radius: $border-radius-md $border-radius-md 0 0;
+            }
+
+            .skeleton-content {
+                border-radius: 0 0 $border-radius-md $border-radius-md;
             }
         }
     }

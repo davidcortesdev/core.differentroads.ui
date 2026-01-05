@@ -2,11 +2,10 @@ import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
 import {
   FileUploadService,
   CloudinaryResponse,
-} from '../../../core/services/file-upload.service';
+} from '../../../core/services/media/file-upload.service';
 import { MessageService } from 'primeng/api';
 import { catchError, finalize, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
-import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-upload-button',

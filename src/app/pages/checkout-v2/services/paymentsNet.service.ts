@@ -53,6 +53,7 @@ export interface IPaymentStatusResponse {
   code: string;
   name: string;
   description: string;
+  color?: string;
 }
 
 export interface IPaymentSummaryResponse {
@@ -61,6 +62,31 @@ export interface IPaymentSummaryResponse {
   totalPending: number;
   totalAmount: number;
   paymentPercentage: number;
+}
+
+export interface IProformaSummaryItem {
+  itemId: number;
+  description: string;
+  amount: number;
+  quantity: number;
+  total: number;
+  itemType: string;
+  included: boolean;
+  ageGroupId: number;
+  margin: number;
+  taxes: number;
+  commissionPercentage: number | null;
+}
+
+export interface IProformaSummaryResponse {
+  id: number;
+  tkId: string;
+  totalPassengers: number;
+  totalAmount: number;
+  totalMargin: number;
+  netAmount: number;
+  items: IProformaSummaryItem[];
+  createdAt?: string;
 }
 
 export class PaymentStatusFilter {
@@ -120,6 +146,7 @@ export class PaymentsNetService {
       params.paymentStatusId = filter.paymentStatusId.toString();
     if (filter.paymentDate)
       params.paymentDate = filter.paymentDate.toISOString();
+    params.useExactMatchForStrings = false;
     return this.http.get<IPaymentResponse[]>(
       `${this.API_URL}/ReservationPayment`,
       { params }
@@ -143,6 +170,14 @@ export class PaymentsNetService {
   ): Observable<IPaymentSummaryResponse> {
     return this.http.get<IPaymentSummaryResponse>(
       `${this.API_URL}/ReservationPayment/summary/${reservationId}`
+    );
+  }
+
+  getProformaSummary(
+    reservationId: number
+  ): Observable<IProformaSummaryResponse> {
+    return this.http.get<IProformaSummaryResponse>(
+      `${this.API_URL}/Reservation/${reservationId}/proforma-summary`
     );
   }
 }

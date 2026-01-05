@@ -63,7 +63,7 @@ export class HomeSectionService {
    * @param filters Filtros para aplicar en la búsqueda.
    * @returns Lista de secciones de inicio.
    */
-  getAll(filters?: HomeSectionFilters): Observable<IHomeSectionResponse[]> {
+  getAll(filters?: HomeSectionFilters, signal?: AbortSignal): Observable<IHomeSectionResponse[]> {
     let params = new HttpParams();
 
     // Agregar parámetros de filtro si se proporcionan
@@ -78,7 +78,15 @@ export class HomeSectionService {
       });
     }
 
-    return this.http.get<IHomeSectionResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IHomeSectionResponse[]>(this.API_URL, options);
   }
 
   /**

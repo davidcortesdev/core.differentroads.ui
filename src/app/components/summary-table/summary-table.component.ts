@@ -1,11 +1,9 @@
-import { Component, Input, OnInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { MessageModule } from 'primeng/message';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
 import { PointsV2Service } from '../../core/services/v2/points-v2.service';
 import { ReservationService, IReservationSummaryResponse } from '../../core/services/reservation/reservation.service';
 import { MessageService } from 'primeng/api';
-import { Subject, EMPTY } from 'rxjs';
-import { takeUntil, catchError } from 'rxjs/operators';
+import { Subject, EMPTY, timer, of, throwError } from 'rxjs';
+import { takeUntil, catchError, switchMap, tap, retry, delay, retryWhen, take, concatMap } from 'rxjs/operators';
 
 export interface SummaryItem {
   description?: string;
@@ -56,11 +54,22 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
   @Input() selectedFlight: any = null;
   @Input() pointsDiscount: number = 0;
 
+  // NUEVO: Output para emitir cambios en el total
+  @Output() totalChanged = new EventEmitter<number>();
+
   // NUEVO: Propiedades para gestión de datos
   private destroy$: Subject<void> = new Subject<void>();
   loading: boolean = false;
   error: boolean = false;
   reservationSummary: IReservationSummaryResponse | undefined;
+  private retryAttempts: number = 0;
+  private readonly MAX_RETRY_ATTEMPTS: number = 5;
+  private readonly RETRY_DELAY: number = 1000; // 1 segundo
+  private isRetrying: boolean = false;
+  // NUEVO: Subject para gestionar las peticiones de carga con switchMap
+  private loadSummary$: Subject<number> = new Subject<number>();
+  // NUEVO: Flag para rastrear si es la primera carga
+  private isFirstLoad: boolean = true;
 
   // NUEVO: Inyectar servicios necesarios
   constructor(
@@ -70,12 +79,80 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
   ) {}
 
   ngOnInit(): void {
+    // Configurar el stream de carga con switchMap para cancelar automáticamente peticiones anteriores
+    this.loadSummary$
+      .pipe(
+        // switchMap cancela automáticamente la petición anterior cuando llega una nueva
+        switchMap((reservationId: number) => {
+          if (!reservationId) {
+            return EMPTY;
+          }
+
+          // Solo mostrar spinner en la primera carga
+          if (this.isFirstLoad) {
+            this.loading = true;
+          }
+          this.error = false;
+          this.retryAttempts = 0;
+          this.isRetrying = false;
+
+          return this.reservationService.getSummary(reservationId).pipe(
+            retryWhen(errors =>
+              errors.pipe(
+                concatMap((err, index) => {
+                  this.retryAttempts = index + 1;
+                  if (this.retryAttempts >= this.MAX_RETRY_ATTEMPTS) {
+                    this.error = true;
+                    // Solo ocultar spinner si estaba visible (primera carga)
+                    if (this.isFirstLoad) {
+                      this.loading = false;
+                    }
+                    this.isRetrying = false;
+                    return throwError(() => err);
+                  }
+                  this.isRetrying = true;
+
+                  return timer(this.RETRY_DELAY);
+                })
+              )
+            ),
+            catchError((err) => {
+              this.error = true;
+              // Solo ocultar spinner si estaba visible (primera carga)
+              if (this.isFirstLoad) {
+                this.loading = false;
+              }
+              this.isRetrying = false;
+              return EMPTY;
+            })
+          );
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe({
+        next: (summary: IReservationSummaryResponse) => {
+          this.reservationSummary = summary;
+          this.updateSummaryData(summary);
+          // Ocultar spinner solo si era la primera carga
+          if (this.isFirstLoad) {
+            this.loading = false;
+            this.isFirstLoad = false; // Marcar que ya no es la primera carga
+          }
+          this.error = false;
+          this.retryAttempts = 0;
+          this.isRetrying = false;
+        },
+      });
+
+    // Cargar inicialmente si hay reservationId
     if (this.reservationId) {
       this.loadReservationSummary();
     }
   }
 
   ngOnDestroy(): void {
+    // Completar el Subject para cancelar cualquier petición en curso
+    this.loadSummary$.complete();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -83,6 +160,8 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
   // NUEVO: Escuchar cambios en refreshTrigger
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['reservationId'] && this.reservationId) {
+      // Si cambia el reservationId, resetear el flag de primera carga
+      this.isFirstLoad = true;
       this.loadReservationSummary();
     }
     
@@ -99,43 +178,37 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
   // NUEVO: Cargar información del backend
   private loadReservationSummary(): void {
     if (!this.reservationId) return;
-
-    this.loading = true;
-    this.error = false;
-
-    this.reservationService
-      .getSummary(this.reservationId)
-      .pipe(
-        takeUntil(this.destroy$),
-        catchError((err) => {
-          this.error = true;
-          this.loading = false;
-          console.error('Error fetching reservation summary:', err);
-          return EMPTY;
-        })
-      )
-      .subscribe({
-        next: (summary: IReservationSummaryResponse) => {
-          this.reservationSummary = summary;
-          this.updateSummaryData(summary);
-          this.loading = false;
-        },
-      });
+    // Emitir al Subject - switchMap cancelará automáticamente la petición anterior
+    this.loadSummary$.next(this.reservationId);
   }
 
   // NUEVO: Transformar datos del backend al formato del componente
   private updateSummaryData(summary: IReservationSummaryResponse): void {
-    this.summary = summary.items?.map(item => ({
-      description: item.description,
-      qty: item.quantity,
-      value: item.amount,
-      isDiscount: item.description?.toLowerCase().includes('descuento') || false,
-      // NUEVO: Agregar flag para identificar seguros básicos incluidos
-      isBasicInsuranceIncluded: 
-        item.description?.toLowerCase().includes('seguro básico') &&
-        item.amount === 0 &&
-        item.included === true
-    })) || [];
+    this.summary = summary.items
+      ?.map(item => ({
+        description: item.description || undefined,
+        qty: item.quantity,
+        value: item.amount,
+        isDiscount: item.description?.toLowerCase().includes('descuento') || false,
+        // NUEVO: Agregar flag para identificar seguros básicos incluidos
+        isBasicInsuranceIncluded: 
+          item.description?.toLowerCase().includes('seguro básico') &&
+          item.amount === 0 &&
+          item.included === true
+      }))
+      // Filtrar items con cantidad 0 (excepto seguros básicos incluidos y descuentos)
+      .filter(item => {
+        // Mantener seguros básicos incluidos aunque tengan cantidad 0
+        if (item.isBasicInsuranceIncluded) {
+          return true;
+        }
+        // Mantener descuentos aunque tengan valores especiales
+        if (item.isDiscount) {
+          return true;
+        }
+        // Filtrar items con cantidad 0 o menor
+        return item.qty && item.qty > 0;
+      }) || [];
 
     // Agregar descuento por puntos si existe
     if (this.pointsDiscount > 0) {
@@ -147,14 +220,18 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
       });
     }
 
-    // Usar el totalAmount que viene del backend y restar el descuento de puntos
+    // Usar el totalAmount que viene del backend y restar los descuentos
     this.subtotal = summary.totalAmount;
     this.total = summary.totalAmount - this.pointsDiscount;
+
+    // Emitir el cambio de total para que el componente padre pueda actualizarse
+    this.totalChanged.emit(this.total);
   }
 
   // NUEVO: Método para recargar información
   refreshSummary(): void {
     if (this.reservationId) {
+      // Emitir al Subject - switchMap cancelará automáticamente la petición anterior
       this.loadReservationSummary();
     }
   }
@@ -162,9 +239,7 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
   // NUEVO: Actualizar descuento por puntos
   private updatePointsDiscount(): void {
     if (!this.reservationSummary) return;
-    
-    console.log('💰 Actualizando descuento por puntos:', this.pointsDiscount);
-    
+
     // Filtrar descuentos de puntos existentes
     this.summary = this.summary.filter(item => 
       !item.description?.toLowerCase().includes('descuento por puntos')
@@ -182,6 +257,8 @@ export class SummaryTableComponent implements OnInit, OnDestroy, OnChanges {
     
     // Recalcular total
     this.total = this.reservationSummary.totalAmount - this.pointsDiscount;
+    // Emitir el cambio de total por actualización de descuento
+    this.totalChanged.emit(this.total);
   }
 
   getDescription(item: any): string {

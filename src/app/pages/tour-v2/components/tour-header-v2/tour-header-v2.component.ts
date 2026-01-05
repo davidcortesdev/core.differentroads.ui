@@ -13,9 +13,9 @@ import {
   SimpleChanges,
 } from '@angular/core';
 import {
-  TourNetService,
+  TourService,
   Tour,
-} from '../../../../core/services/tourNet.service';
+} from '../../../../core/services/tour/tour.service';
 import {
   TourLocationService,
   ITourLocationResponse,
@@ -28,6 +28,8 @@ import {
   ReservationService,
   ReservationCreate,
   IReservationResponse,
+  ReservationCompleteCreate,
+  IReservationTravelerData,
 } from '../../../../core/services/reservation/reservation.service';
 import {
   ReservationTravelerService,
@@ -42,14 +44,24 @@ import {
   ReservationTravelerActivityPackService,
   ReservationTravelerActivityPackCreate,
 } from '../../../../core/services/reservation/reservation-traveler-activity-pack.service';
-import { Subscription, forkJoin, of, Observable } from 'rxjs';
-import { catchError, map, switchMap } from 'rxjs/operators';
-import { Router } from '@angular/router';
+import { Subscription, forkJoin, of, Observable, Subject } from 'rxjs';
+import { catchError, map, switchMap, concatMap, takeUntil, finalize } from 'rxjs/operators';
+import { TourTagService } from '../../../../core/services/tag/tour-tag.service';
+import { TagService } from '../../../../core/services/tag/tag.service';
+import { ItineraryService, ItineraryFilters } from '../../../../core/services/itinerary/itinerary.service';
+import { ItineraryDayService, IItineraryDayResponse } from '../../../../core/services/itinerary/itinerary-day/itinerary-day.service';
+import { DepartureService, IDepartureResponse } from '../../../../core/services/departure/departure.service';
+import { TourDataForEcommerce } from '../../../../core/services/analytics/analytics.service';
+import { Router, ActivatedRoute } from '@angular/router';
 import { ActivityHighlight } from '../../../../shared/components/activity-card/activity-card.component';
 import { environment } from '../../../../../environments/environment';
-import { AuthenticateService } from '../../../../core/services/auth-service.service';
-import { UsersNetService } from '../../../../core/services/usersNet.service';
-import { AnalyticsService } from '../../../../core/services/analytics.service';
+import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
+import { UsersNetService } from '../../../../core/services/users/usersNet.service';
+import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
+import { ReservationStatusService } from '../../../../core/services/reservation/reservation-status.service';
+import { ReviewsService } from '../../../../core/services/reviews/reviews.service';
+import { TripTypeService, ITripTypeResponse } from '../../../../core/services/trip-type/trip-type.service';
+import { TourReviewService } from '../../../../core/services/reviews/tour-review.service';
 
 // ✅ INTERFACES para tipado fuerte
 interface PassengersData {
@@ -98,6 +110,7 @@ export class TourHeaderV2Component
   @Input() tourId: number | undefined;
   @Input() totalPrice: number = 0;
   @Input() selectedCity: string = '';
+  @Input() citiesLoading: boolean = false;
   @Input() selectedDeparture: any = null;
   @Input() totalPassengers: number = 1;
   @Input() selectedActivities: ActivityHighlight[] = [];
@@ -120,6 +133,20 @@ export class TourHeaderV2Component
   };
   @Input() preview: boolean = false;
   @Input() selectedActivityPackId: number | null = null;
+  @Input() tourTripTypes?: {
+    name: string;
+    code: string;
+    color: string;
+    abbreviation: string;
+  }[];
+  // Trip types obtenidos directamente en el componente
+  tourTripTypesLocal: {
+    name: string;
+    code: string;
+    color: string;
+    abbreviation: string;
+  }[] = [];
+  isLoadingTripTypes = false;
   // Tour data
   tour: Partial<Tour> = {};
 
@@ -131,12 +158,26 @@ export class TourHeaderV2Component
   private isScrolled = false;
   private headerHeight = 0;
   private subscriptions = new Subscription();
+  // Cancellation token independiente para la petición de trip types
+  private tripTypesDestroy$ = new Subject<void>();
+  // AbortController compartido para cancelar peticiones HTTP
+  private abortController = new AbortController();
 
   // Estado para controlar el proceso de reservación
   isCreatingReservation = false;
 
+  // Propiedad para detectar modo standalone
+  isStandaloneMode: boolean = false;
+
+  // Propiedades para rating y reviews
+  averageRating: number | null = null;
+  reviewCount: number = 0;
+  isLoadingRating: boolean = false;
+
+  private lastLoadedTourId: number | undefined = undefined;
+
   constructor(
-    private tourNetService: TourNetService,
+    private tourService: TourService,
     private tourLocationService: TourLocationService,
     private locationNetService: LocationNetService,
     private reservationService: ReservationService,
@@ -144,30 +185,45 @@ export class TourHeaderV2Component
     private reservationTravelerActivityService: ReservationTravelerActivityService,
     // ✅ SOLO AGREGANDO: Servicio para paquetes
     private reservationTravelerActivityPackService: ReservationTravelerActivityPackService,
+    private tourTagService: TourTagService,
+    private tagService: TagService,
+    private itineraryService: ItineraryService,
+    private itineraryDayService: ItineraryDayService,
+    private departureService: DepartureService,
     private el: ElementRef,
     private renderer: Renderer2,
     private router: Router,
+    private route: ActivatedRoute,
     private authService: AuthenticateService,
     private usersNetService: UsersNetService,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private reservationStatusService: ReservationStatusService,
+    private reviewsService: ReviewsService,
+    private tripTypeService: TripTypeService,
+    private tourReviewService: TourReviewService
   ) {}
 
   ngOnInit() {
+    // Resetear el flag al inicializar para evitar estados bloqueados
+    this.isCreatingReservation = false;
+    // Detectar si estamos en modo standalone
+    this.detectStandaloneMode();
     if (this.tourId) {
       this.loadTourData(this.tourId);
+      // Cargar trip types usando el nuevo endpoint
+      this.loadTripTypes(this.tourId);
+      // NO cargar rating aquí - se carga en ngOnChanges para evitar duplicados
+      // this.loadRatingAndReviewCount(this.tourId);
     }
   }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['tourId'] && changes['tourId'].currentValue) {
       this.loadTourData(changes['tourId'].currentValue);
-    }
-    if (changes['selectedActivityPackId']) {
-      console.log('🎯 ===== ACTIVITY PACK ID RECIBIDO EN TOUR HEADER =====');
-      console.log(
-        '📦 NUEVO ID:',
-        changes['selectedActivityPackId'].currentValue
-      );
+      // Cargar trip types usando el nuevo endpoint
+      this.loadTripTypes(changes['tourId'].currentValue);
+      // Cargar rating y reviews
+      this.loadRatingAndReviewCount(changes['tourId'].currentValue);
     }
   }
 
@@ -176,6 +232,11 @@ export class TourHeaderV2Component
   }
 
   ngOnDestroy() {
+    // Cancelar todas las peticiones HTTP pendientes
+    this.abortController.abort();
+    // Cancelar petición de trip types
+    this.tripTypesDestroy$.next();
+    this.tripTypesDestroy$.complete();
     this.subscriptions.unsubscribe();
   }
 
@@ -210,6 +271,54 @@ export class TourHeaderV2Component
       this.selectedDeparture &&
       this.selectedDeparture.departureDate
     );
+  }
+
+  // ✅ GETTER: Verificar si hay fecha seleccionada
+  get hasSelectedDate(): boolean {
+    return !!(
+      this.selectedDeparture &&
+      this.selectedDeparture.departureDate
+    );
+  }
+
+  // ✅ GETTER: Verificar si todos los datos del header están listos
+  get isHeaderDataReady(): boolean {
+    // Verificar que las ciudades ya no están cargando
+    if (this.citiesLoading) {
+      return false;
+    }
+    
+    // Verificar que hay ciudad seleccionada
+    if (!this.selectedCity || this.selectedCity.trim() === '') {
+      return false;
+    }
+    
+    // Verificar que hay departure seleccionado con fecha
+    if (!this.selectedDeparture || !this.selectedDeparture.departureDate) {
+      return false;
+    }
+    
+    // Verificar que el precio se ha establecido (puede ser 0, pero debe haberse establecido)
+    // Si totalPrice es 0 pero citiesLoading es false y hay ciudad, significa que ya se procesó
+    // Por lo tanto, consideramos que está listo si citiesLoading es false
+    
+    return true;
+  }
+
+  // ✅ GETTER: Verificar si el departure seleccionado es reservable
+  get isDepartureBookable(): boolean {
+    if (!this.selectedDeparture) {
+      return false;
+    }
+    
+    // Verificar isBookable del departure
+    // Si isBookable es explícitamente false, no es reservable
+    if (this.selectedDeparture.isBookable === false) {
+      return false;
+    }
+    
+    // Si isBookable es true o undefined, es reservable
+    return true;
   }
 
   // ✅ GETTER dinámico para texto de actividades
@@ -308,17 +417,229 @@ export class TourHeaderV2Component
     }
   }
 
-  private loadTourData(tourId: number) {
+  // Detectar si estamos en modo standalone
+  private detectStandaloneMode(): void {
+    // Verificar si la URL contiene 'standalone'
+    const currentPath = window.location.pathname;
+    this.isStandaloneMode = currentPath.includes('/standalone/');
+  }
+
+  // Cargar rating promedio y conteo de reviews desde TourReview con ReviewTypeId = 1 (GENERAL)
+  private loadRatingAndReviewCount(tourId: number): void {
+    if (!tourId) return;
+    
+    // Evitar llamadas duplicadas para el mismo tourId
+    if (this.lastLoadedTourId === tourId) {
+      return;
+    }
+    this.lastLoadedTourId = tourId;
+
+    this.isLoadingRating = true;
+
+    // Usar TourReviewService con ReviewTypeId = 1 (GENERAL) directamente
+    const filters = {
+      tourId: [tourId],
+      reviewTypeId: [1], // ID 1 para tipo GENERAL
+      isActive: true
+    };
+
     this.subscriptions.add(
-      this.tourNetService.getTourById(tourId).subscribe({
-        next: (tourData) => {
-          this.tour = { ...tourData };
-          this.loadCountryAndContinent(tourId);
+      this.tourReviewService.getAverageRating(filters, this.abortController.signal).pipe(
+        catchError((error) => {
+          this.averageRating = null;
+          this.reviewCount = 0;
+          this.isLoadingRating = false;
+          return of({ averageRating: 0, totalReviews: 0 });
+        })
+      ).subscribe({
+        next: (ratingResponse) => {
+          if (ratingResponse) {
+            this.averageRating = ratingResponse.averageRating > 0 
+              ? Math.round(ratingResponse.averageRating * 10) / 10 
+              : null;
+            this.reviewCount = ratingResponse.totalReviews || 0;
+          } else {
+            this.averageRating = null;
+            this.reviewCount = 0;
+          }
+          this.isLoadingRating = false;
         },
         error: (error) => {
-          console.error('Error cargando tour:', error);
-        },
+          this.averageRating = null;
+          this.reviewCount = 0;
+          this.isLoadingRating = false;
+        }
       })
+    );
+  }
+
+  // Formatear el número de reviews
+  getFormattedReviewCount(): string {
+    if (this.reviewCount === 0) return '';
+    return `${this.reviewCount} ${this.reviewCount === 1 ? 'Review' : 'Reviews'}`;
+  }
+
+  // Extraer el prefijo del título (todo antes del último ":")
+  getTitlePrefix(): string {
+    const tourName = this.tour.name || '';
+    const lastColonIndex = tourName.lastIndexOf(':');
+    
+    if (lastColonIndex === -1) {
+      return 'Detalles del Tour: ';
+    }
+    
+    return tourName.substring(0, lastColonIndex + 1) + ' ';
+  }
+
+  // Extraer el título sin prefijo (todo después del último ":")
+  getTitleWithoutPrefix(): string {
+    const tourName = this.tour.name || '';
+    const lastColonIndex = tourName.lastIndexOf(':');
+    
+    if (lastColonIndex === -1) {
+      return tourName;
+    }
+    
+    return tourName.substring(lastColonIndex + 1).trim();
+  }
+
+  // Hacer scroll a la sección de reviews usando el ID, teniendo en cuenta el header flotante
+  scrollToReviews(): void {
+    const reviewsSection = document.getElementById('tour-reviews');
+    if (reviewsSection) {
+      // Obtener la altura del header flotante (si está fijo)
+      const headerElement = this.el.nativeElement.querySelector('.tour-header');
+      const headerHeight = headerElement ? headerElement.offsetHeight : 0;
+      
+      // Calcular la posición del elemento menos la altura del header
+      const elementPosition = reviewsSection.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerHeight - 150; // 100px de margen adicional para mejor visibilidad
+      
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  }
+
+  // Obtener tooltip para el botón de reservar
+  getBookingTooltip(): string {
+    if (this.preview) {
+      return 'No es posible reservar un tour en modo preview';
+    }
+    if (this.isStandaloneMode) {
+      return 'Botón deshabilitado, reserva desde la lista de tours.';
+    }
+    if (!this.hasSelectedDate) {
+      return 'Debes seleccionar una fecha de salida para poder reservar';
+    }
+    if (!this.isDepartureBookable) {
+      return 'Esta salida no tiene disponibilidad';
+    }
+    return '';
+  }
+
+  /**
+   * Carga los tipos de viaje usando el nuevo endpoint /api/Tour/{id}/triptype-ids
+   * Esta petición es independiente y tiene su propio cancellation token
+   * @param tourId ID del tour
+   */
+  private loadTripTypes(tourId: number): void {
+    if (!tourId) return;
+
+    this.isLoadingTripTypes = true;
+
+    // Petición independiente con su propio cancellation token
+    this.tourService
+      .getTripTypeIds(tourId, !this.preview, this.abortController.signal)
+      .pipe(
+        takeUntil(this.tripTypesDestroy$),
+        catchError((error) => {
+          return of([]);
+        })
+      )
+      .subscribe((tripTypeIds: number[]) => {
+        if (tripTypeIds.length === 0) {
+          this.isLoadingTripTypes = false;
+          return;
+        }
+
+        // Obtener todos los trip types usando la lista de IDs directamente
+        // Crear peticiones para cada ID y combinarlas
+        const tripTypeRequests = tripTypeIds.map((id) =>
+          this.tripTypeService.getById(id, this.abortController.signal).pipe(
+            takeUntil(this.tripTypesDestroy$),
+            catchError((error) => {
+              return of(null);
+            })
+          )
+        );
+
+        forkJoin(tripTypeRequests)
+          .pipe(
+            takeUntil(this.tripTypesDestroy$),
+            catchError((error) => {
+              return of([]);
+            }),
+            finalize(() => {
+              this.isLoadingTripTypes = false;
+            })
+          )
+          .subscribe((tripTypes: (ITripTypeResponse | null)[]) => {
+            // Filtrar nulls y mapear a el formato esperado
+            const validTripTypes = tripTypes.filter(
+              (tt): tt is ITripTypeResponse => tt !== null
+            );
+
+            const mappedTripTypes = validTripTypes.map((tripType) => ({
+              name: tripType.name,
+              code: tripType.code,
+              color: tripType.color || '#D3D3D3', // Gris clarito si el color es null
+              abbreviation: tripType.abbreviation || tripType.name.charAt(0).toUpperCase(),
+            }));
+
+            // Actualizar trip types locales
+            this.tourTripTypesLocal = mappedTripTypes;
+          });
+      });
+  }
+
+  private loadTourData(tourId: number) {
+    
+    // ✅ LÓGICA: Si es preview, buscar tours no visibles también
+    const filterByVisible = !this.preview;
+    
+    this.subscriptions.add(
+      this.tourService.getById(tourId, filterByVisible, this.abortController.signal).pipe(
+        switchMap((tourData) => {
+          this.tour = { ...tourData };
+          this.loadCountryAndContinent(tourId);
+          
+          // Obtener el primer tag visible del tour
+          return this.tourTagService.getByTourAndType(tourId, 'VISIBLE', this.abortController.signal).pipe(
+            switchMap((tourTags) => {
+              if (tourTags.length > 0 && tourTags[0]?.tagId && tourTags[0].tagId > 0) {
+                const firstTagId = tourTags[0].tagId;
+                return this.tagService.getById(firstTagId, this.abortController.signal).pipe(
+                  map((tag) => tag?.name || null),
+                  catchError(() => of(null))
+                );
+              }
+              return of(null);
+            }),
+            catchError(() => of(null)),
+            map((tagName) => {
+              if (tagName && tagName.trim().length > 0) {
+                (this.tour as any).tag = tagName.trim();
+              }
+              return tourData;
+            })
+          );
+        }),
+        catchError((error) => {
+          return of(null);
+        })
+      ).subscribe()
     );
   }
 
@@ -555,17 +876,10 @@ export class TourHeaderV2Component
             const exists = existingActivities.some(
               (existing) => existing.activityId === parseInt(activity.id)
             );
-            if (exists) {
-              console.log('⚠️ Booking - Actividad ya existe para el viajero:', {
-                travelerId,
-                activityId: activity.id,
-                activityTitle: activity.title,
-              });
-            }
+
             return exists;
           }),
           catchError((error) => {
-            console.error('❌ Error verificando actividad existente:', error);
             return of(false); // En caso de error, permitir crear
           })
         );
@@ -578,17 +892,10 @@ export class TourHeaderV2Component
             const exists = existingPacks.some(
               (existing) => existing.activityPackId === parseInt(activity.id)
             );
-            if (exists) {
-              console.log('⚠️ Booking - Paquete ya existe para el viajero:', {
-                travelerId,
-                activityPackId: activity.id,
-                activityTitle: activity.title,
-              });
-            }
+
             return exists;
           }),
           catchError((error) => {
-            console.error('❌ Error verificando paquete existente:', error);
             return of(false); // En caso de error, permitir crear
           })
         );
@@ -605,11 +912,6 @@ export class TourHeaderV2Component
     const validation = this.validateActivity(activity);
 
     if (!validation.isValid) {
-      console.error(
-        '❌ Booking - Actividad inválida:',
-        validation.error,
-        activity
-      );
       return of({
         success: false,
         activity: activity,
@@ -619,11 +921,6 @@ export class TourHeaderV2Component
 
     // ✅ VALIDACIÓN ADICIONAL: Verificar que no sea un paquete
     if (activity.type !== 'act') {
-      console.error(
-        '❌ Booking - Error de tipo: Se intentó crear actividad individual con tipo incorrecto:',
-        activity.type,
-        activity
-      );
       return of({
         success: false,
         activity: activity,
@@ -635,11 +932,7 @@ export class TourHeaderV2Component
     return this.checkExistingActivity(travelerId, activity).pipe(
       switchMap((exists) => {
         if (exists) {
-          console.log('⚠️ Booking - Omitiendo actividad duplicada:', {
-            travelerId,
-            activityId: activity.id,
-            activityTitle: activity.title,
-          });
+
           return of({
             success: true,
             activity: activity,
@@ -657,15 +950,7 @@ export class TourHeaderV2Component
           .create(travelerActivityData)
           .pipe(
             map((result) => {
-              console.log(
-                '✅ Booking - Actividad individual creada exitosamente:',
-                {
-                  travelerId,
-                  activityId: activity.id,
-                  activityTitle: activity.title,
-                  result,
-                }
-              );
+
               return {
                 success: true,
                 activity: activity,
@@ -673,15 +958,6 @@ export class TourHeaderV2Component
               };
             }),
             catchError((error) => {
-              console.error(
-                '❌ Booking - Error creando actividad individual:',
-                {
-                  travelerId,
-                  activityId: activity.id,
-                  activityTitle: activity.title,
-                  error: error,
-                }
-              );
 
               return of({
                 success: false,
@@ -702,11 +978,6 @@ export class TourHeaderV2Component
     const validation = this.validateActivity(activity);
 
     if (!validation.isValid) {
-      console.error(
-        '❌ Booking - Paquete inválido:',
-        validation.error,
-        activity
-      );
       return of({
         success: false,
         activity: activity,
@@ -716,11 +987,6 @@ export class TourHeaderV2Component
 
     // ✅ VALIDACIÓN ADICIONAL: Verificar que sea un paquete
     if (activity.type !== 'pack') {
-      console.error(
-        '❌ Booking - Error de tipo: Se intentó crear paquete con tipo incorrecto:',
-        activity.type,
-        activity
-      );
       return of({
         success: false,
         activity: activity,
@@ -732,11 +998,7 @@ export class TourHeaderV2Component
     return this.checkExistingActivity(travelerId, activity).pipe(
       switchMap((exists) => {
         if (exists) {
-          console.log('⚠️ Booking - Omitiendo paquete duplicado:', {
-            travelerId,
-            activityPackId: activity.id,
-            activityTitle: activity.title,
-          });
+
           return of({
             success: true,
             activity: activity,
@@ -755,15 +1017,7 @@ export class TourHeaderV2Component
           .create(travelerActivityPackData)
           .pipe(
             map((result) => {
-              console.log(
-                '✅ Booking - Paquete de actividades creado exitosamente:',
-                {
-                  travelerId,
-                  activityPackId: activity.id,
-                  activityTitle: activity.title,
-                  result,
-                }
-              );
+
               return {
                 success: true,
                 activity: activity,
@@ -771,16 +1025,6 @@ export class TourHeaderV2Component
               };
             }),
             catchError((error) => {
-              console.error(
-                '❌ Booking - Error creando paquete de actividades:',
-                {
-                  travelerId,
-                  activityPackId: activity.id,
-                  activityTitle: activity.title,
-                  error: error,
-                }
-              );
-
               return of({
                 success: false,
                 activity: activity,
@@ -832,10 +1076,6 @@ export class TourHeaderV2Component
         isFromDeparture: true,
       });
 
-      console.log('🎯 Agregando paquete automático del departure:', {
-        activityPackId: departureActivityPackId,
-        isFromDeparture: true,
-      });
     }
 
     if (allActivitiesToProcess.length === 0) {
@@ -870,35 +1110,29 @@ export class TourHeaderV2Component
         const successful = results.filter((r) => r.success).length;
         const failed = results.filter((r) => !r.success).length;
 
-        // ✅ LOGGING MEJORADO para debugging
-        console.log('🎯 Resultados de creación de actividades/paquetes:', {
-          total: results.length,
-          successful,
-          failed,
-          departurePackId: departureActivityPackId,
-          manualActivities: addedActivities.length,
-          details: results.map((r) => ({
-            type: r.activity.type,
-            id: r.activity.id,
-            title: r.activity.title,
-            success: r.success,
-            error: r.error,
-            isFromDeparture: allActivitiesToProcess.find(
-              (p) => p.activity.id === r.activity.id
-            )?.isFromDeparture,
-          })),
-        });
-
         return { successful, failed, details: results };
       }),
       catchError((error) => {
-        console.error('💥 Booking - Error fatal en procesamiento:', error);
         throw error;
       })
     );
   }
 
   onBookingClick(): void {
+    // Bloquear desde modo standalone
+    if (this.isStandaloneMode) {
+      return;
+    }
+
+    // Bloquear desde checkout: este botón solo debe funcionar en la página del tour
+    const currentUrl = this.router.url || window.location.pathname || '';
+    if (currentUrl.startsWith('/checkout')) {
+      return;
+    }
+
+    // Disparar evento add_to_cart incluso si no hay fecha seleccionada
+    this.trackAddToCart();
+
     if (!this.selectedDeparture || !this.selectedDeparture.id) {
       alert('Por favor, selecciona una fecha de salida antes de continuar.');
       return;
@@ -915,33 +1149,13 @@ export class TourHeaderV2Component
       (this.selectedActivityPackId && this.selectedActivityPackId > 0)
     ) {
       const activitySummary = this.getActivitySummary();
-      console.log(
-        '🎯 Resumen de actividades antes de reservar:',
-        activitySummary
-      );
 
-      // ✅ LOG ADICIONAL para mostrar qué se va a procesar
-      console.log('📋 Detalle de elementos a procesar:', {
-        manualActivities: this.addedActivities.map((a) => ({
-          id: a.id,
-          title: a.title,
-          type: a.type,
-          price: a.price,
-        })),
-        departurePack: this.selectedActivityPackId
-          ? {
-              id: this.selectedActivityPackId,
-              title: 'Paquete automático del departure',
-              type: 'pack',
-              price: 0,
-            }
-          : null,
-        totalElements:
-          activitySummary.totalActivities + activitySummary.totalPacks,
-      });
     }
 
-    this.isCreatingReservation = true;
+    // Evitar clicks repetidos solo mientras se está creando la reserva
+    if (this.isCreatingReservation) {
+      return;
+    }
 
     // Obtener el ID del usuario logueado
     this.authService.getCognitoId().subscribe({
@@ -959,7 +1173,7 @@ export class TourHeaderV2Component
               this.createReservation(userId);
             },
             error: (error) => {
-              console.error('Error buscando usuario por Cognito ID:', error);
+              // El flag se manejará dentro de createReservation
               this.createReservation(null); // Usar null en caso de error
             },
           });
@@ -968,10 +1182,237 @@ export class TourHeaderV2Component
         }
       },
       error: (error) => {
-        console.error('Error obteniendo Cognito ID:', error);
+        // El flag se manejará dentro de createReservation
         this.createReservation(null); // Usar null en caso de error
       },
     });
+  }
+
+  /**
+   * Disparar evento add_to_cart cuando el usuario hace clic en "Reservar mi tour"
+   */
+  private trackAddToCart(): void {
+    if (!this.tour || !this.tour.id) return;
+
+    // Obtener contexto de navegación desde el state del router (sin modificar URL)
+    const state = window.history.state;
+    const itemListId = state?.['listId'] || '';
+    const itemListName = state?.['listName'] || '';
+
+    // Obtener todos los datos completos del tour usando buildEcommerceItemFromTourData
+    this.getCompleteTourDataForAddToCart(this.tour.id).pipe(
+      switchMap((tourDataForEcommerce: TourDataForEcommerce) => {
+        // Actualizar con datos del departure seleccionado y pasajeros
+        if (this.selectedDeparture) {
+          tourDataForEcommerce.departureDate = this.selectedDeparture.departureDate || undefined;
+          tourDataForEcommerce.returnDate = this.selectedDeparture.returnDate || undefined;
+          tourDataForEcommerce.price = this.selectedDeparture.price || tourDataForEcommerce.price;
+          tourDataForEcommerce.flightCity = this.selectedDeparture.city || 'Sin vuelo';
+        }
+        if (this.passengersData) {
+          tourDataForEcommerce.totalPassengers = this.passengersData.adults || undefined;
+          tourDataForEcommerce.childrenCount = ((this.passengersData.children || 0) + (this.passengersData.babies || 0)).toString() || undefined;
+        }
+        // Obtener actividades seleccionadas
+        if (this.addedActivities && this.addedActivities.length > 0) {
+          tourDataForEcommerce.activitiesText = this.addedActivities.map(a => a.title || '').filter(t => t).join(', ') || undefined;
+        }
+
+        return this.analyticsService.buildEcommerceItemFromTourData(
+          tourDataForEcommerce,
+          itemListId || 'tour_detail',
+          itemListName || 'Detalle de Tour',
+          this.tour.id?.toString()
+        ).pipe(
+          switchMap((item) => {
+            // Actualizar item_variant con ciudad del departure
+            const itemVariant = this.selectedDeparture?.city 
+              ? `${tourDataForEcommerce.tkId || this.tour.id} - ${this.selectedDeparture.city}`
+              : item.item_variant;
+            
+            const adjustedItem = {
+              ...item,
+              item_variant: itemVariant,
+              price: this.selectedDeparture?.price || tourDataForEcommerce.price || item.price || 0
+            };
+
+            return this.analyticsService.getCurrentUserData().pipe(
+              map((userData) => ({ item: adjustedItem, userData }))
+            );
+          }),
+          catchError(() => {
+            // Si falla getCurrentUserData, usar el item sin userData
+            return this.analyticsService.buildEcommerceItemFromTourData(
+              tourDataForEcommerce,
+              itemListId || 'tour_detail',
+              itemListName || 'Detalle de Tour',
+              this.tour.id?.toString()
+            ).pipe(
+              map((item) => {
+                const itemVariant = this.selectedDeparture?.city 
+                  ? `${tourDataForEcommerce.tkId || this.tour.id} - ${this.selectedDeparture.city}`
+                  : item.item_variant;
+                return { 
+                  item: {
+                    ...item,
+                    item_variant: itemVariant,
+                    price: this.selectedDeparture?.price || tourDataForEcommerce.price || item.price || 0
+                  }, 
+                  userData: undefined 
+                };
+              })
+            );
+          })
+        );
+      }),
+      catchError((error) => {
+        return of(null);
+      })
+    ).subscribe((result) => {
+      if (result && result.item) {
+        const price = this.selectedDeparture?.price || this.tour.minPrice || 0;
+        this.analyticsService.addToCart(
+          'EUR',
+          price,
+          result.item,
+          result.userData
+        );
+      }
+    });
+  }
+
+  /**
+   * Obtiene todos los datos completos del tour desde los servicios adicionales para add_to_cart
+   */
+  private getCompleteTourDataForAddToCart(tourId: number): Observable<TourDataForEcommerce> {
+    const itineraryFilters: ItineraryFilters = {
+      tourId: tourId,
+      isVisibleOnWeb: true,
+      isBookable: true,
+    };
+
+    return this.itineraryService.getAll(itineraryFilters, false, this.abortController.signal).pipe(
+      concatMap((itineraries) => {
+        if (itineraries.length === 0) {
+          return this.tourService.getById(tourId, false, this.abortController.signal).pipe(
+            map((tour) => ({
+              id: tourId,
+              tkId: tour.tkId ?? undefined,
+              name: tour.name ?? undefined,
+              destination: { continent: undefined, country: undefined },
+              days: undefined,
+              nights: undefined,
+              rating: undefined, // Ya no se obtiene de reviewsService, se obtiene de TourReview
+              monthTags: undefined,
+              tourType: tour.tripTypeId === 1 ? 'FIT' : 'Grupos',
+              price: tour.minPrice ?? undefined
+            } as TourDataForEcommerce))
+          );
+        }
+
+        // Obtener días de itinerario del primer itinerario disponible
+        const itineraryDaysRequest = this.itineraryDayService
+          .getAll({ itineraryId: itineraries[0].id }, this.abortController.signal)
+          .pipe(catchError(() => of([] as IItineraryDayResponse[])));
+
+        // Obtener continent y country
+        const locationRequest = forkJoin({
+          countryLocations: this.tourLocationService.getByTourAndType(tourId, 'COUNTRY', this.abortController.signal).pipe(
+            map((response) => Array.isArray(response) ? response : response ? [response] : []),
+            catchError(() => of([] as ITourLocationResponse[]))
+          ),
+          continentLocations: this.tourLocationService.getByTourAndType(tourId, 'CONTINENT', this.abortController.signal).pipe(
+            map((response) => Array.isArray(response) ? response : response ? [response] : []),
+            catchError(() => of([] as ITourLocationResponse[]))
+          )
+        }).pipe(
+          switchMap(({ countryLocations, continentLocations }) => {
+            const locationIds = [
+              ...countryLocations.map(tl => tl.locationId),
+              ...continentLocations.map(tl => tl.locationId)
+            ].filter(id => id !== undefined && id !== null);
+            
+            if (locationIds.length === 0) {
+              return of({ continent: '', country: '' });
+            }
+            
+            return this.locationNetService.getLocationsByIds(locationIds, this.abortController.signal).pipe(
+              map((locations: Location[]) => {
+                const countries = countryLocations
+                  .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+                  .map(tl => locations.find(l => l.id === tl.locationId)?.name)
+                  .filter(name => name) as string[];
+                
+                const continents = continentLocations
+                  .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+                  .map(tl => locations.find(l => l.id === tl.locationId)?.name)
+                  .filter(name => name) as string[];
+                
+                return {
+                  continent: continents.join(', ') || '',
+                  country: countries.join(', ') || ''
+                };
+              }),
+              catchError(() => of({ continent: '', country: '' }))
+            );
+          })
+        );
+
+        return forkJoin({
+          itineraryDays: itineraryDaysRequest,
+          locationData: locationRequest,
+          monthTags: this.tourService
+            .getDepartureMonths(tourId, true, this.abortController.signal)
+            .pipe(catchError(() => of([] as number[]))),
+          tour: this.tourService.getById(tourId, false, this.abortController.signal)
+        }).pipe(
+          map(({ itineraryDays, locationData, monthTags, tour }) => {
+            const days = itineraryDays.length;
+            const nights = days > 0 ? days - 1 : 0;
+            const tourType = tour.tripTypeId === 1 ? 'FIT' : 'Grupos';
+
+            const availableMonths: string[] = Array.isArray(monthTags)
+              ? this.tourService.mapDepartureMonthNumbersToNames(
+                  monthTags as number[]
+                )
+              : [];
+
+            return {
+              id: tourId,
+              tkId: tour.tkId ?? undefined,
+              name: tour.name ?? undefined,
+              destination: {
+                continent: locationData.continent || undefined,
+                country: locationData.country || undefined
+              },
+              days: days > 0 ? days : undefined,
+              nights: nights > 0 ? nights : undefined,
+              rating: undefined, // Ya no se obtiene de reviewsService, se obtiene de TourReview
+              monthTags: availableMonths.length > 0 ? availableMonths : undefined,
+              tourType: tourType,
+              flightCity: 'Sin vuelo',
+              price: tour.minPrice ?? undefined
+            } as TourDataForEcommerce;
+          }),
+          catchError(() => of({
+            id: tourId,
+            days: undefined,
+            nights: undefined,
+            destination: { continent: undefined, country: undefined },
+            monthTags: undefined,
+            tourType: undefined
+          } as TourDataForEcommerce))
+        );
+      }),
+      catchError(() => of({
+        id: tourId,
+        days: undefined,
+        nights: undefined,
+        destination: { continent: undefined, country: undefined },
+        monthTags: undefined,
+        tourType: undefined
+      } as TourDataForEcommerce))
+    );
   }
 
   // ✅ MÉTODO NUEVO: Obtener resumen de actividades seleccionadas
@@ -1013,220 +1454,195 @@ export class TourHeaderV2Component
     };
   }
 
-  private createReservation(userId: number | null): void {
-    const reservationData: ReservationCreate = {
-      id: 0,
-      tkId: '',
-      reservationStatusId: 1,
-      retailerId: environment.retaileriddefault,
-      tourId: this.tourId!,
-      departureId: this.selectedDeparture.id,
-      userId: userId, // Usar el ID del usuario logueado o null
-      totalPassengers: this.totalPassengers || 1,
-      totalAmount: this.totalPriceWithActivities || 0,
-      budgetAt: '',
-      cartAt: new Date().toISOString(),
-      abandonedAt: '',
-      reservedAt: '',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+  // ✅ MÉTODO NUEVO: Preparar datos de viajeros para createComplete
+  private prepareTravelersData(): IReservationTravelerData[] {
+    const travelersData: IReservationTravelerData[] = [];
+    let travelerNumber = 1;
 
-    this.subscriptions.add(
-      this.reservationService
-        .create(reservationData)
-        .pipe(
-          switchMap((createdReservation: IReservationResponse) => {
-            const travelerObservables = [];
-            let travelerNumber = 1;
+    // Validar que existan los age groups necesarios
+    if (this.passengersData.adults > 0 && !this.ageGroupCategories.adults.id) {
+      throw new Error('Age group for adults not found');
+    }
+    if (this.passengersData.children > 0 && !this.ageGroupCategories.children.id) {
+      throw new Error('Age group for children not found');
+    }
+    if (this.passengersData.babies > 0 && !this.ageGroupCategories.babies.id) {
+      throw new Error('Age group for babies not found');
+    }
 
-            // Crear travelers para adultos
-            for (let i = 0; i < this.passengersData.adults; i++) {
-              const isLeadTraveler = travelerNumber === 1;
+    // Crear viajeros para adultos
+    for (let i = 0; i < this.passengersData.adults; i++) {
+      const isLeadTraveler = travelerNumber === 1;
+      travelersData.push({
+        ageGroupId: this.ageGroupCategories.adults.id!,
+        isLeadTraveler: isLeadTraveler,
+        tkId: null,
+      });
+      travelerNumber++;
+    }
 
-              if (!this.ageGroupCategories.adults.id) {
-                console.error('❌ No se encontró age group para adultos');
-                alert(
-                  'Error: No se pudo determinar el grupo de edad para adultos.'
-                );
-                this.isCreatingReservation = false;
-                throw new Error('Age group for adults not found');
-              }
+    // Crear viajeros para niños
+    for (let i = 0; i < this.passengersData.children; i++) {
+      travelersData.push({
+        ageGroupId: this.ageGroupCategories.children.id!,
+        isLeadTraveler: false,
+        tkId: null,
+      });
+      travelerNumber++;
+    }
 
-              const travelerData: ReservationTravelerCreate = {
-                reservationId: createdReservation.id,
-                travelerNumber: travelerNumber,
-                isLeadTraveler: isLeadTraveler,
-                tkId: '',
-                ageGroupId: this.ageGroupCategories.adults.id,
-              };
+    // Crear viajeros para bebés
+    for (let i = 0; i < this.passengersData.babies; i++) {
+      travelersData.push({
+        ageGroupId: this.ageGroupCategories.babies.id!,
+        isLeadTraveler: false,
+        tkId: null,
+      });
+      travelerNumber++;
+    }
 
-              travelerObservables.push(
-                this.reservationTravelerService.create(travelerData)
-              );
-              travelerNumber++;
-            }
-
-            // Crear travelers para niños
-            for (let i = 0; i < this.passengersData.children; i++) {
-              if (!this.ageGroupCategories.children.id) {
-                console.error('❌ No se encontró age group para niños');
-                alert(
-                  'Error: No se pudo determinar el grupo de edad para niños.'
-                );
-                this.isCreatingReservation = false;
-                throw new Error('Age group for children not found');
-              }
-
-              const travelerData: ReservationTravelerCreate = {
-                reservationId: createdReservation.id,
-                travelerNumber: travelerNumber,
-                isLeadTraveler: false,
-                tkId: '',
-                ageGroupId: this.ageGroupCategories.children.id,
-              };
-
-              travelerObservables.push(
-                this.reservationTravelerService.create(travelerData)
-              );
-              travelerNumber++;
-            }
-
-            // Crear travelers para bebés
-            for (let i = 0; i < this.passengersData.babies; i++) {
-              if (!this.ageGroupCategories.babies.id) {
-                console.error('❌ No se encontró age group para bebés');
-                alert(
-                  'Error: No se pudo determinar el grupo de edad para bebés.'
-                );
-                this.isCreatingReservation = false;
-                throw new Error('Age group for babies not found');
-              }
-
-              const travelerData: ReservationTravelerCreate = {
-                reservationId: createdReservation.id,
-                travelerNumber: travelerNumber,
-                isLeadTraveler: false,
-                tkId: '',
-                ageGroupId: this.ageGroupCategories.babies.id,
-              };
-
-              travelerObservables.push(
-                this.reservationTravelerService.create(travelerData)
-              );
-              travelerNumber++;
-            }
-
-            if (travelerObservables.length === 0) {
-              throw new Error('No travelers to create');
-            }
-
-            return forkJoin(travelerObservables).pipe(
-              map((createdTravelers) => {
-                return {
-                  reservation: createdReservation,
-                  travelers: createdTravelers,
-                };
-              })
-            );
-          }),
-          // ✅ USAR MÉTODO MODIFICADO para servicios separados
-          switchMap(({ reservation, travelers }) => {
-            return this.processActivitiesForTravelers(travelers).pipe(
-              map((activityResults) => ({
-                reservation,
-                travelers,
-                activityResults,
-              }))
-            );
-          })
-        )
-        .subscribe({
-          next: ({ reservation, travelers, activityResults }) => {
-            // ✅ NAVEGAR DIRECTAMENTE AL CHECKOUT sin mostrar alerts
-            console.log('✅ Reservación creada exitosamente:', {
-              reservationId: reservation.id,
-              travelersCount: travelers.length,
-              activitiesSuccessful: activityResults.successful,
-              activitiesFailed: activityResults.failed,
-            });
-
-            // Disparar evento add_to_cart
-            this.trackAddToCart(reservation);
-
-            this.router.navigate(['/checkout-v2', reservation.id]);
-          },
-          error: (error) => {
-            console.error('💥 Booking - Error fatal en el proceso:', {
-              error: error,
-              errorMessage: error.message,
-              errorStatus: error.status,
-            });
-
-            let errorMessage =
-              'Error al crear la reservación. Por favor, inténtalo de nuevo.';
-
-            // ✅ MENSAJES DE ERROR MÁS ESPECÍFICOS
-            if (error.status === 500) {
-              errorMessage =
-                'Error interno del servidor. Por favor, contacta al soporte técnico.';
-            } else if (error.status === 400) {
-              errorMessage =
-                'Datos inválidos. Por favor, verifica la información e inténtalo de nuevo.';
-            } else if (error.status === 404) {
-              errorMessage =
-                'Recurso no encontrado. Por favor, verifica que el tour y la fecha seleccionada sean válidos.';
-            } else if (error.status === 0 || !error.status) {
-              errorMessage =
-                'Sin conexión al servidor. Por favor, verifica tu conexión a internet.';
-            }
-
-            alert(errorMessage);
-          },
-          complete: () => {
-            this.isCreatingReservation = false;
-          },
-        })
-    );
+    return travelersData;
   }
 
-  /**
-   * Disparar evento add_to_cart cuando se añade un tour al carrito
-   */
-  private trackAddToCart(reservation: IReservationResponse): void {
-    if (!this.tour) return;
+  // ✅ MÉTODO NUEVO: Preparar datos de actividades para createComplete
+  private prepareActivitiesData(): {
+    activityIds: number[];
+    activityPackIds: number[];
+  } {
+    const activityIds: number[] = [];
+    const activityPackIds: number[] = [];
 
-    const tourData = this.tour as any;
-    
-    this.analyticsService.addToCart(
-      'EUR',
-      this.totalPriceWithActivities || this.totalPrice || 0,
-      {
-        item_id: tourData.tkId?.toString() || this.tour.id?.toString() || '',
-        item_name: this.tour.name || '',
-        coupon: '',
-        discount: 0,
-        index: 0,
-        item_brand: 'Different Roads',
-        item_category: tourData.destination?.continent || '',
-        item_category2: tourData.destination?.country || '',
-        item_category3: tourData.marketingSection?.marketingSeasonTag || '',
-        item_category4: tourData.monthTags?.join(', ') || '',
-        item_category5: tourData.tourType || '',
-        item_list_id: 'tour_detail',
-        item_list_name: 'Ficha de tour',
-        item_variant: `${tourData.tkId || this.tour.id} - ${this.selectedCity || 'Sin vuelo'}`,
-        price: this.totalPriceWithActivities || this.totalPrice || 0,
-        quantity: 1,
-        puntuacion: tourData.rating?.toString() || '',
-        duracion: tourData.days ? `${tourData.days} días, ${tourData.nights || tourData.days - 1} noches` : '',
-        start_date: this.selectedDeparture?.departureDate || '',
-        end_date: this.selectedDeparture?.returnDate || '',
-        pasajeros_adultos: this.passengersData?.adults?.toString() || '0',
-        pasajeros_niños: ((this.passengersData?.children || 0) + (this.passengersData?.babies || 0)).toString()
-      },
-      this.getUserData()
-    );
+    // Procesar actividades seleccionadas manualmente
+    this.addedActivities.forEach((activity) => {
+      const activityId = parseInt(activity.id);
+      if (!isNaN(activityId) && activityId > 0) {
+        if (activity.type === 'act') {
+          activityIds.push(activityId);
+        } else if (activity.type === 'pack') {
+          activityPackIds.push(activityId);
+        }
+      }
+    });
+
+    // Procesar paquete automático del departure
+    if (this.selectedActivityPackId && this.selectedActivityPackId > 0) {
+      activityPackIds.push(this.selectedActivityPackId);
+    }
+
+    return { activityIds, activityPackIds };
+  }
+
+  private createReservation(userId: number | null): void {
+    // Defensa en profundidad: nunca crear desde checkout, aunque alguien llame directo
+    const currentUrl = this.router.url || window.location.pathname || '';
+    if (currentUrl.startsWith('/checkout')) {
+      return;
+    }
+
+    // Reentrada: si ya estamos creando, salir
+    if (this.isCreatingReservation) {
+      return;
+    }
+    this.isCreatingReservation = true;
+    try {
+      // ✅ OBTENER ID DEL ESTADO DRAFT DINÁMICAMENTE
+      this.reservationStatusService.getByCode('DRAFT').subscribe({
+        next: (draftStatuses) => {
+          if (!draftStatuses || draftStatuses.length === 0) {
+            throw new Error('DRAFT status not found');
+          }
+
+          const draftStatusId = draftStatuses[0].id;
+
+          // ✅ PREPARAR DATOS DE LA RESERVA
+          const reservationData: ReservationCreate = {
+            tkId: '',
+            reservationStatusId: draftStatusId, // ✅ USAR ID DINÁMICO DE DRAFT
+            retailerId: environment.retaileriddefault,
+            tourId: this.tourId!,
+            departureId: this.selectedDeparture.id,
+            userId: userId,
+            totalPassengers: this.totalPassengers || 1,
+            totalAmount: this.totalPriceWithActivities || 0,
+          };
+
+          // ✅ PREPARAR DATOS DE VIAJEROS
+          const travelersData: IReservationTravelerData[] = this.prepareTravelersData();
+
+          // ✅ PREPARAR ACTIVIDADES Y PAQUETES
+          const { activityIds, activityPackIds } = this.prepareActivitiesData();
+
+          // ✅ CREAR RESERVA COMPLETA
+          const completeData: ReservationCompleteCreate = {
+            reservation: reservationData,
+            travelers: travelersData,
+            activityIds: activityIds.length > 0 ? activityIds : null,
+            activityPackIds: activityPackIds.length > 0 ? activityPackIds : null,
+          };
+
+          this.subscriptions.add(
+            this.reservationService.createComplete(completeData).subscribe({
+              next: (createdReservation: IReservationResponse) => {
+
+                // Obtener contexto de la lista desde el state del router y pasarlo al checkout
+                const state = window.history.state;
+                const listId = state?.['listId'] || '';
+                const listName = state?.['listName'] || '';
+                
+                // Navegar al checkout pasando los datos por state (sin modificar URL)
+                this.router.navigate(['/checkout', createdReservation.id], {
+                  state: {
+                    listId: listId,
+                    listName: listName
+                  }
+                });
+              },
+              error: (error) => {
+
+                let errorMessage =
+                  'Error al crear la reservación. Por favor, inténtalo de nuevo.';
+
+                // ✅ MENSAJES DE ERROR MÁS ESPECÍFICOS
+                if (error.status === 500) {
+                  errorMessage =
+                    'Error interno del servidor. Por favor, contacta al soporte técnico.';
+                } else if (error.status === 400) {
+                  errorMessage =
+                    'Datos inválidos. Por favor, verifica la información e inténtalo de nuevo.';
+                } else if (error.status === 404) {
+                  errorMessage =
+                    'Recurso no encontrado. Por favor, verifica que el tour y la fecha seleccionada sean válidos.';
+                } else if (error.status === 0 || !error.status) {
+                  errorMessage =
+                    'Sin conexión al servidor. Por favor, verifica tu conexión a internet.';
+                }
+
+                alert(errorMessage);
+              },
+              complete: () => {
+                this.isCreatingReservation = false;
+              },
+            })
+          );
+        },
+        error: (error) => {
+          this.isCreatingReservation = false;
+          alert('Error al obtener el estado de reservación. Por favor, inténtalo de nuevo.');
+        }
+      });
+    } catch (error) {
+      this.isCreatingReservation = false;
+      
+      let errorMessage = 'Error al preparar los datos de la reservación.';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Age group')) {
+          errorMessage = 'Error: No se pudo determinar el grupo de edad. Por favor, verifica la información e inténtalo de nuevo.';
+        }
+      }
+      
+      alert(errorMessage);
+    }
   }
 
   /**

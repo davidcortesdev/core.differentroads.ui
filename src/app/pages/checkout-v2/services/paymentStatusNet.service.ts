@@ -8,12 +8,14 @@ export interface IPaymentStatusResponse {
     code: string;
     name: string;
     description: string;
+    color?: string;
 }
 
 export interface IPaymentStatusCreate {
     code: string;
     name: string;
     description: string;
+    color?: string;
 }
 
 export interface IPaymentStatusUpdate {
@@ -21,6 +23,7 @@ export interface IPaymentStatusUpdate {
     code?: string;
     name?: string;
     description?: string;
+    color?: string;
 }
 
 export interface PaymentStatusFilter {

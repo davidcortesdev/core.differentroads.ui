@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { ConfirmationCodeComponent } from './confirmation-code.component';
-import { AuthenticateService } from '../../../core/services/auth-service.service';
+import { AuthenticateService } from '../../../core/services/auth/auth-service.service';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 

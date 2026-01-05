@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { Subject, forkJoin, of } from 'rxjs';
 import { takeUntil, catchError, map, switchMap } from 'rxjs/operators';
+import { MessageService } from 'primeng/api';
 
 // Importar servicios necesarios
 import {
@@ -25,6 +26,9 @@ import {
   TripTypeService,
   ITripTypeResponse,
 } from '../../../../../../core/services/trip-type/trip-type.service';
+import {
+  DocumentServicev2,
+} from '../../../../../../core/services/v2/document.service';
 
 // Interface simplificada para departure con name
 interface IDepartureResponseExtended extends IDepartureResponse {
@@ -51,6 +55,7 @@ interface DateOption {
   itineraryName: string;
   tripType: string;
   tripTypeId: number;
+  tripTypeData?: ITripTypeResponse;
   departure: IDepartureResponseExtended;
   itinerary: IItineraryResponse;
 }
@@ -95,10 +100,12 @@ export class SelectorItineraryComponent
 
   // Control de destrucción del componente
   private destroy$ = new Subject<void>();
+  private abortController = new AbortController();
 
   // Estados del componente
   loading: boolean = true;
   error: string | undefined;
+  downloading: boolean = false;
 
   // Datos principales con tipado fuerte
   itinerariesWithDepartures: ItineraryWithDepartures[] = [];
@@ -112,22 +119,22 @@ export class SelectorItineraryComponent
   constructor(
     private itineraryService: ItineraryService,
     private departureService: DepartureService,
-    private tripTypeService: TripTypeService
+    private tripTypeService: TripTypeService,
+    private documentService: DocumentServicev2,
+    private messageService: MessageService
   ) {}
 
   ngOnInit(): void {
     if (this.tourId) {
       this.loadSelectorData(this.tourId);
     } else {
-      console.warn(
-        '⚠️ No se proporcionó tourId para el selector de itinerarios'
-      );
       this.loading = false;
       this.error = 'ID del tour no proporcionado';
     }
   }
 
   ngOnDestroy(): void {
+    this.abortController.abort();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -150,6 +157,10 @@ export class SelectorItineraryComponent
   ): void {
     if (!this.dateOptions || this.dateOptions.length === 0) return;
 
+    // Guardar el ID anterior para detectar cambios reales
+    const previousSelectedId =
+      this.selectedDeparture?.departure?.id ?? null;
+
     // Buscar la opción que corresponde al departure seleccionado en el padre
     const matchingOption = this.dateOptions.find(
       (option) => option.value === departureFromParent.id
@@ -158,7 +169,21 @@ export class SelectorItineraryComponent
     if (matchingOption) {
       this.selectedDeparture = matchingOption;
       this.selectedValue = matchingOption.value; // ✅ CRÍTICO: Actualizar selectedValue
-      // No emitir evento aquí para evitar bucle infinito
+
+      /**
+       * Importante:
+       * - Si el cambio viene del propio selector (usuario cambia el dropdown),
+       *   ya se ha emitido el evento en onDepartureChange y posteriormente el
+       *   padre nos reenviará el mismo departure → previousSelectedId === matchingOption.value
+       *   ⇒ NO volvemos a emitir para evitar bucles.
+       * - Si el cambio viene de la tabla de departures (Componente de abajo),
+       *   el padre actualiza selectedDepartureFromParent con un ID distinto al actual
+       *   ⇒ previousSelectedId !== matchingOption.value
+       *   ⇒ emitimos el evento para que el itinerario (días) se refresque.
+       */
+      if (previousSelectedId !== matchingOption.value) {
+        this.emitDepartureSelected();
+      }
     } else if (!this.selectedDeparture && this.dateOptions.length > 0) {
       // ✅ FALLBACK: Si no encuentra coincidencia, seleccionar el primero
       this.selectedDeparture = this.dateOptions[0];
@@ -180,7 +205,6 @@ export class SelectorItineraryComponent
       .pipe(
         takeUntil(this.destroy$),
         catchError((error) => {
-          console.error('❌ Error loading trip types:', error);
           return of([]);
         }),
         switchMap((tripTypes) => {
@@ -201,15 +225,11 @@ export class SelectorItineraryComponent
           setTimeout(() => {
             if (this.selectedDeparture && !this.selectedValue) {
               this.selectedValue = this.selectedDeparture.value;
-              console.log(
-                '🔧 Corrección aplicada - selectedValue:',
-                this.selectedValue
-              );
+
             }
           }, 100);
         },
         error: (error) => {
-          console.error('❌ Error cargando datos del selector:', error);
           this.error = 'Error al cargar los datos del selector';
           this.loading = false;
         },
@@ -243,7 +263,7 @@ export class SelectorItineraryComponent
       };
     }
 
-    return this.itineraryService.getAll(itineraryFilters, this.preview).pipe(
+    return this.itineraryService.getAll(itineraryFilters, this.preview, this.abortController.signal).pipe(
       map((itineraries) => {
         return itineraries.filter(
           (itinerary) => itinerary.tkId && itinerary.tkId.trim() !== ''
@@ -261,7 +281,6 @@ export class SelectorItineraryComponent
         return forkJoin(itineraryDeparturesObservables);
       }),
       catchError((error) => {
-        console.error('❌ Error loading itineraries:', error);
         return of([]);
       })
     );
@@ -271,12 +290,16 @@ export class SelectorItineraryComponent
    * Cargar departures para un itinerario específico
    */
   private loadDeparturesForItinerary(itinerary: IItineraryResponse) {
-    return this.departureService.getByItinerary(itinerary.id, this.preview).pipe(
+    return this.departureService.getByItinerary(itinerary.id, this.preview, this.abortController.signal).pipe(
       map((departures) => {
-        const departuresData: DepartureData[] = departures.map((departure) => ({
-          departure,
-          tripType: this.tripTypesMap.get(departure.tripTypeId ?? 0),
-        }));
+        const departuresData: DepartureData[] = departures.map((departure) => {
+          const tripTypeId = departure.tripTypeId ?? 0;
+          const tripType = tripTypeId > 0 ? this.tripTypesMap.get(tripTypeId) : undefined;
+          return {
+            departure,
+            tripType: tripType,
+          };
+        });
 
         // Ordenar departures por fecha de salida (orden cronológico)
         const sortedDepartures = departuresData.sort((a, b) => {
@@ -293,10 +316,6 @@ export class SelectorItineraryComponent
         return itineraryWithDepartures;
       }),
       catchError((error) => {
-        console.error(
-          `❌ Error loading departures for itinerary ${itinerary.id}:`,
-          error
-        );
 
         const itineraryWithDepartures: ItineraryWithDepartures = {
           itinerary,
@@ -316,6 +335,13 @@ export class SelectorItineraryComponent
 
     this.itinerariesWithDepartures.forEach((itineraryData) => {
       itineraryData.departures.forEach((departureData) => {
+        const tripTypeId = departureData.departure.tripTypeId ?? 0;
+        // Asegurar que tenemos el tripType, si no está en departureData, obtenerlo del mapa
+        const tripTypeData = departureData.tripType || (tripTypeId > 0 ? this.tripTypesMap.get(tripTypeId) : undefined);
+        
+        // Debug: verificar que tripTypeData se asigne correctamente
+        if (!tripTypeData && tripTypeId > 0) {
+        }
 
         const option: DateOption = {
           label: this.formatDate(departureData.departure?.departureDate ?? ''), // Solo la fecha en el dropdown
@@ -324,10 +350,9 @@ export class SelectorItineraryComponent
           departureName: departureData.departure.name || 'Sin nombre',
           itineraryName:
             itineraryData.itinerary.name || 'Itinerario sin nombre',
-          tripType: this.getTripTypeFirstLetter(
-            departureData.departure.tripTypeId
-           ?? 0),
-          tripTypeId: departureData.departure.tripTypeId ?? 0,
+          tripType: this.getTripTypeFirstLetter(tripTypeId),
+          tripTypeId: tripTypeId,
+          tripTypeData: tripTypeData,
           departure: departureData.departure,
           itinerary: itineraryData.itinerary,
         };
@@ -446,6 +471,81 @@ export class SelectorItineraryComponent
       this.selectedValue = null;
       this.loadSelectorData(this.tourId);
     }
+  }
+
+  /**
+   * Descargar itinerario
+   */
+  onDownloadItinerary(): void {
+    if (!this.selectedDeparture) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Advertencia',
+        detail: 'Por favor selecciona una fecha de salida',
+        life: 3000,
+      });
+      return;
+    }
+
+    const itineraryId = this.selectedDeparture.itinerary.id;
+    if (!itineraryId) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se pudo obtener el ID del itinerario',
+        life: 3000,
+      });
+      return;
+    }
+
+    this.downloading = true;
+
+    this.documentService
+      .downloadItinerary(itineraryId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (result) => {
+          this.downloading = false;
+          this.handleDownloadSuccess(result.blob, result.fileName);
+        },
+        error: (error) => {
+          this.downloading = false;
+          this.handleDownloadError(error);
+        },
+      });
+  }
+
+  /**
+   * Maneja el éxito de la descarga
+   */
+  private handleDownloadSuccess(blob: Blob, fileName: string): void {
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Éxito',
+      detail: 'Itinerario descargado exitosamente',
+      life: 3000,
+    });
+  }
+
+  /**
+   * Maneja errores de descarga
+   */
+  private handleDownloadError(error: unknown): void {
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'No se pudo descargar el itinerario. Por favor, inténtalo de nuevo.',
+      life: 3000,
+    });
   }
 
   /**

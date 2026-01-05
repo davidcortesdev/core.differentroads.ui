@@ -1,0 +1,42 @@
+{
+  "version": "1",
+  "function": {
+    "name": "userMigrationLambda",
+    "runtime": "nodejs18.x",
+    "handler": "index.handler",
+    "description": "Lambda function para migración Just-In-Time de usuarios de Cognito del pool antiguo al nuevo",
+    "timeout": 60,
+    "memorySize": 256,
+    "environmentVariables": {
+      "OLD_USER_POOL_ID": "eu-west-1_JrNbjdsBH",
+      "OLD_USER_POOL_REGION": "eu-west-1",
+      "NEW_USER_POOL_ID": "us-east-2_KSSmf3Tt7",
+      "NEW_USER_POOL_REGION": "us-east-2",
+      "OLD_USER_POOL_CLIENT_ID": "6gr3oir2ssd16a31doih8sqg7u"
+    },
+    "policies": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "cognito-idp:AdminGetUser",
+          "cognito-idp:AdminInitiateAuth",
+          "cognito-idp:AdminCreateUser",
+          "cognito-idp:AdminSetUserPassword"
+        ],
+        "Resource": [
+          "arn:aws:cognito-idp:eu-west-1:*:userpool/eu-west-1_JrNbjdsBH",
+          "arn:aws:cognito-idp:us-east-2:*:userpool/us-east-2_KSSmf3Tt7"
+        ]
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ],
+        "Resource": "arn:aws:logs:*:*:*"
+      }
+    ]
+  }
+}

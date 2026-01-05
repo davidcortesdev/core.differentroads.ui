@@ -97,7 +97,6 @@ export class RetailerService {
       }
     }).pipe(
       catchError(error => {
-        console.error('Error al obtener los retailers:', error);
         return throwError(() => error);
       })
     );
@@ -115,7 +114,6 @@ export class RetailerService {
       }
     }).pipe(
       catchError(error => {
-        console.error(`Error al obtener el retailer con ID ${id}:`, error);
         return throwError(() => error);
       })
     );
@@ -134,7 +132,6 @@ export class RetailerService {
       }
     }).pipe(
       catchError(error => {
-        console.error('Error al crear el retailer:', error);
         return throwError(() => error);
       })
     );
@@ -154,7 +151,6 @@ export class RetailerService {
       }
     }).pipe(
       catchError(error => {
-        console.error(`Error al actualizar el retailer con ID ${id}:`, error);
         return throwError(() => error);
       })
     );
@@ -172,7 +168,6 @@ export class RetailerService {
       }
     }).pipe(
       catchError(error => {
-        console.error(`Error al eliminar el retailer con ID ${id}:`, error);
         return throwError(() => error);
       })
     );
@@ -194,7 +189,6 @@ export class RetailerService {
         return retailers.length > 0 ? retailers[0] : null;
       }),
       catchError(error => {
-        console.error(`Error al obtener el retailer con código ${code}:`, error);
         return throwError(() => error);
       })
     );
@@ -216,7 +210,6 @@ export class RetailerService {
         return retailers.length > 0 ? retailers[0] : null;
       }),
       catchError(error => {
-        console.error(`Error al obtener el retailer con TK ID ${tkId}:`, error);
         return throwError(() => error);
       })
     );

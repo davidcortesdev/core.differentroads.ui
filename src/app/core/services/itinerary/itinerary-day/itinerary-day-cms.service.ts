@@ -41,7 +41,6 @@ export interface IItineraryDayCMSResponse {
   updatedAt?: string | null;
 }
 
-
 /**
  * Filtros disponibles para consultar entradas CMS.
  */
@@ -60,27 +59,36 @@ export class ItineraryDayCMSService {
 
   constructor(private http: HttpClient) {}
 
-  
 /**
-   * Obtiene todas las entradas CMS de días de itinerario, con opción de aplicar filtros.
-   * @param filters Filtros opcionales para la búsqueda.
-   */
-  getAll(filters?: ItineraryDayCMSFilters): Observable<IItineraryDayCMSResponse[]> {
-      let params = new HttpParams();
+   * Obtiene todas las entradas CMS de días de itinerario, con opción de aplicar filtros.
+   * @param filters Filtros opcionales para la búsqueda.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
+   */
+  getAll(filters?: ItineraryDayCMSFilters, signal?: AbortSignal): Observable<IItineraryDayCMSResponse[]> {
+    let params = new HttpParams();
   
-      if (filters) {
-        Object.entries(filters).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) {
-            params = params.set(
-              key.charAt(0).toUpperCase() + key.slice(1),
-              value.toString()
-            );
-          }
-        });
-      }
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          params = params.set(
+            key.charAt(0).toUpperCase() + key.slice(1),
+            value.toString()
+          );
+        }
+      });
+    }
   
-      return this.http.get<IItineraryDayCMSResponse[]>(this.API_URL, { params });
-    }  
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+  
+    return this.http.get<IItineraryDayCMSResponse[]>(this.API_URL, options);
+  }
 
   /**
    * Obtiene una entrada CMS específica por su ID.

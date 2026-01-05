@@ -30,33 +30,17 @@ export interface ITourTagResponse {
  */
 export interface TourTagFilters {
   id?: number;
-  tourId?: number;
-  tagId?: number;
+  tourId?: number[];
+  tagId?: number[];
   tourTagRelationTypeId?: number;
-  displayOrder?: number;
+  useExactMatchForStrings?: boolean;
 }
 
 /**
- * Interfaz para la respuesta de tours por tipo de etiqueta.
+ * Interfaz para la respuesta de tags con tours.
  */
-export interface ToursByTagTypeResponse {
-  id: number;
-  name: string;
-  description?: string;
-  tagTypeId: number;
-  tagTypeName: string;
-  tourCount: number;
-  tours?: TourSummary[];
-}
-
-/**
- * Interfaz para resumen de tour.
- */
-export interface TourSummary {
-  id: number;
-  name: string;
-  code?: string;
-  isActive: boolean;
+export interface TagWithToursResponse {
+  tagId: number;
 }
 
 @Injectable({
@@ -70,24 +54,40 @@ export class TourTagService {
   /**
    * Obtiene todas las relaciones entre tours y etiquetas según los criterios de filtrado.
    * @param filters Filtros para aplicar en la búsqueda.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de relaciones tour-etiqueta.
    */
-  getAll(filters?: TourTagFilters): Observable<ITourTagResponse[]> {
+  getAll(filters?: TourTagFilters, signal?: AbortSignal): Observable<ITourTagResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
-          params = params.set(
-            key.charAt(0).toUpperCase() + key.slice(1),
-            value.toString()
-          );
+          const capitalizedKey = key.charAt(0).toUpperCase() + key.slice(1);
+          
+          // Manejar arrays (tourId y tagId)
+          if (Array.isArray(value)) {
+            value.forEach((item) => {
+              params = params.append(capitalizedKey, item.toString());
+            });
+          } else {
+            params = params.set(capitalizedKey, value.toString());
+          }
         }
       });
     }
 
-    return this.http.get<ITourTagResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<ITourTagResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -104,10 +104,20 @@ export class TourTagService {
   /**
    * Obtiene una relación específica por su ID.
    * @param id ID de la relación.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns La relación encontrada.
    */
-  getById(id: number): Observable<ITourTagResponse> {
-    return this.http.get<ITourTagResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<ITourTagResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<ITourTagResponse>(`${this.API_URL}/${id}`, options);
   }
 
   /**
@@ -135,34 +145,57 @@ export class TourTagService {
    * Obtiene relaciones tour-etiqueta por ID del tour y código de tipo de relación.
    * @param tourId ID del tour.
    * @param typeCode Código de tipo de relación.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de relaciones que coinciden con los criterios.
    */
   getByTourAndType(
     tourId: number,
-    typeCode: string
+    typeCode: string,
+    signal?: AbortSignal
   ): Observable<ITourTagResponse[]> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
     return this.http.get<ITourTagResponse[]>(
-      `${this.API_URL}/bytourandtype/${tourId}/${typeCode}`
+      `${this.API_URL}/bytourandtype/${tourId}/${typeCode}`,
+      options
     );
   }
 
   /**
-   * Obtiene todos los tours relacionados con etiquetas de un tipo específico.
-   * @param tagTypeId ID del tipo de etiqueta.
-   * @returns Lista de tours agrupados por etiquetas del tipo especificado.
+   * Obtiene todos los tags relacionados con tours visibles a partir del ID de una categoría de tag.
+   * @param tagCategoryId ID de la categoría de tag
+   * @returns Lista de tags con tours
    */
-  getToursByTagType(tagTypeId: number): Observable<ToursByTagTypeResponse[]> {
-    return this.http.get<ToursByTagTypeResponse[]>(
-      `${this.API_URL}/tours-by-tagtype/${tagTypeId}`
+  getTagsWithTours(tagCategoryId: number, signal?: AbortSignal): Observable<TagWithToursResponse[]> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<TagWithToursResponse[]>(
+      `${this.API_URL}/tags-with-tours/${tagCategoryId}`,
+      options
     );
   }
 
   /**
    * Obtiene todos los IDs de tours relacionados con una o más etiquetas específicas.
    * @param tagIds Lista de IDs de etiquetas
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de IDs de tours
    */
-  getToursByTags(tagIds: number[]): Observable<number[]> {
+  getToursByTags(tagIds: number[], signal?: AbortSignal): Observable<number[]> {
     let params = new HttpParams();
     
     // Agregar cada tagId como parámetro de consulta
@@ -170,6 +203,15 @@ export class TourTagService {
       params = params.append('tagIds', id.toString());
     });
 
-    return this.http.get<number[]>(`${this.API_URL}/tours-by-tags`, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<number[]>(`${this.API_URL}/tours-by-tags`, options);
   }
 }

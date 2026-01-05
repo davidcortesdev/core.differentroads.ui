@@ -4,10 +4,9 @@
     <div class="payment-column-left">
       <p-panel header="Resumen del viaje">
         <app-summary-table
-          [summary]="tripItems"
-          [descriptionField]="'description'"
-          [qtyField]="'quantity'"
-          [valueField]="'unitPrice'"
+          [reservationId]="bookingID"
+          [refreshTrigger]="refreshTrigger"
+          [isAuthenticated]="false"
           [showPointsSection]="false"
           [showTotalSection]="false"
           [showFlightSection]="false"
@@ -23,99 +22,188 @@
     <!-- Información de pagos (columna derecha) -->
     <div class="payment-column-right">
       <p-panel header="Pagos">
-        <div class="payment-info">
-          <!-- Fila unificada de información de pagos y botones (para desktop) -->
-          <div class="payment-unified-row">
-            <div class="payment-info-columns">
-              <div class="payment-column">
-                <span class="label">Precio total</span>
-                <span class="amount total">{{
-                  formatCurrency(paymentInfo.totalPrice)
-                }}</span>
-              </div>
-              <div class="payment-column">
-                <span class="label">Pendiente</span>
-                <span class="amount pending">{{
-                  formatCurrency(paymentInfo.pendingAmount)
-                }}</span>
-              </div>
-              <div class="payment-column">
-                <span class="label">Pagado</span>
-                <span class="amount paid">{{
-                  formatCurrency(paymentInfo.paidAmount)
-                }}</span>
-              </div>
-            </div>
-            <div class="payment-buttons" *ngIf="paymentInfo.pendingAmount > 0">
-              <p-button
-                label="Realizar pago"
-                icon="pi pi-dollar"
-                styleClass="p-button-success"
-                (onClick)="navigateToPayment()"
-              ></p-button>
-            </div>
-          </div>
-        </div>
+        <app-booking-payments-header
+          [paymentInfo]="paymentInfo"
+          [isAgency]="isAgency"
+          [grossPaymentInfo]="grossPaymentInfo"
+          [netPaymentInfo]="netPaymentInfo"
+          [loadingProforma]="loadingProforma"
+          [isCancelled]="isCancelled"
+          (addPayment)="navigateToPayment()"
+          (couponClick)="openCouponModal()"
+        ></app-booking-payments-header>
 
         <p-divider></p-divider>
 
         <!-- Contenedor de columnas para pagos y historial -->
         <div class="payment-columns-container">
-          <!-- Próximos pagos -->
-          <!--   <p-panel
-            header="Próximo pago"
-            [styleClass]="
-              deadlines && deadlines.length > 0 ? '' : 'empty-panel'
-            "
-          >
-            <div
-              *ngFor="let payment of deadlines"
-              class="upcoming-payment-item"
-            >
-              <span class="date">{{ payment.date }}</span>
-              <span class="amount">{{ payment.amount | currencyFormat }}</span>
-            </div>
-            <div
-              *ngIf="!deadlines || deadlines.length === 0"
-              class="empty-message"
-            >
-              No hay pagos programados
-            </div>
-          </p-panel> -->
 
-          <!-- Historial de pagos -->
           <p-panel
             header="Historial de pago"
             [styleClass]="
               paymentHistory && paymentHistory.length > 0 ? '' : 'empty-panel'
             "
           >
-            <div *ngFor="let item of paymentHistory" class="history-item">
-              <span class="date">{{ item.createdAt | date }}</span>
-              <span class="status">
-                <span class="status-text">
-                  {{ getStatusText(item.status) }}
-                </span>
-                <button
-                  *ngIf="
-                    isTO &&
-                    item.status === 'PENDING_REVIEW' &&
-                    item?.vouchers?.length
-                  "
-                  type="button"
-                  class="p-button p-component p-button-text"
-                  (click)="showReviewModal(item)"
-                >
-                  Ver
-                </button>
-              </span>
-              <span class="amount">{{ item.amount | currencyFormat }}</span>
+            <!-- Loading state -->
+            <div *ngIf="isLoadingPayments" class="loading-container">
+              <p-progressSpinner></p-progressSpinner>
             </div>
-            <div
-              *ngIf="!paymentHistory || paymentHistory.length === 0"
-              class="empty-message"
-            >
-              No hay ningun pago registrado
+
+            <!-- Payment history list -->
+            <div *ngIf="!isLoadingPayments">
+              <div *ngFor="let item of paymentHistory" class="history-item">
+                <div class="history-item-content">
+                  <!-- Columna 1: Método de pago -->
+                  <div class="history-column method-column">
+                    <span class="method" *ngIf="item.method">
+                      <i class="pi pi-credit-card"></i> {{ item.method }}
+                    </span>
+                  </div>
+
+                  <!-- Columna 2: Importe -->
+                  <div class="history-column amount-column">
+                    <span class="amount">{{ item.amount | currencyFormat }}</span>
+                  </div>
+
+                  <!-- Columna 3: Estado -->
+                  <div class="history-column status-column">
+                    <span class="status-text">
+                      <p-tag 
+                        [value]="getPaymentStatusDisplayName(item)" 
+                        [severity]="getPaymentStatusColor(item) ? undefined : 'info'"
+                        [style.background-color]="getPaymentStatusColor(item) || undefined"
+                        [style.color]="getPaymentStatusColor(item) ? '#fff' : undefined"
+                        [style.border]="getPaymentStatusColor(item) ? 'none' : undefined"
+                      ></p-tag>
+                    </span>
+                  </div>
+
+                  <!-- Columna 4: Botón justificante -->
+                  <div class="history-column notes-column">
+                    <div class="notes-content">
+                      <!-- Botón para subir justificante si es transferencia -->
+                      <span class="upload-voucher-action" *ngIf="isTransfer(item)">
+                        <input
+                          type="file"
+                          [id]="'file-input-' + (item.id || item.publicID)"
+                          accept="image/*,.pdf"
+                          style="display: none;"
+                          (change)="onVoucherFileSelect($event, item)"
+                          [disabled]="isUploadingVoucher[item.id || item.publicID]"
+                        />
+                        <p-button
+                          [label]="getUploadVoucherButtonLabel(item)"
+                          icon="pi pi-upload"
+                          severity="warning"
+                          size="small"
+                          [disabled]="isUploadingVoucher[item.id || item.publicID]"
+                          (onClick)="triggerFileInput(item)"
+                          [pTooltip]="getUploadVoucherButtonLabel(item)"
+                        ></p-button>
+                        <p-progressSpinner
+                          *ngIf="isUploadingVoucher[item.id || item.publicID]"
+                          styleClass="upload-spinner"
+                          [style]="{ width: '20px', height: '20px' }"
+                        ></p-progressSpinner>
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Columna 5: Fecha del pago -->
+                  <div class="history-column date-column">
+                    <span class="date">{{ item.createdAt | date : 'dd/MM/yyyy' }}</span>
+                  </div>
+
+                  <!-- Columna 6: Acciones ATC -->
+                  <div class="history-column actions-column">
+                    <div class="actions-container">
+                      <!-- Acciones de ATC -->
+                      <span class="actions" *ngIf="isATC">
+                        <p-dropdown
+                          [options]="paymentStatuses"
+                          [(ngModel)]="selectedStatusByPaymentId[item.publicID]"
+                          optionLabel="name"
+                          optionValue="id"
+                          [placeholder]="getPaymentStatusDisplayName(item)"
+                          [style]="{ minWidth: '200px' }"
+                          [disabled]="loadingStatuses || paymentStatuses.length === 0 || isChanging[item.publicID]"
+                          appendTo="body"
+                        ></p-dropdown>
+                        <button
+                          pButton
+                          label="Aceptar"
+                          class="status-change-btn"
+                          [disabled]="isChangeDisabled(item)"
+                          [loading]="isChanging[item.publicID]"
+                          (click)="onChangeStatusClick(item)"
+                        ></button>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div
+                *ngIf="!paymentHistory || paymentHistory.length === 0"
+                class="empty-message"
+              >
+                No hay ningun pago registrado
+              </div>
+            </div>
+          </p-panel>
+
+          <!-- Historial de recibos -->
+          <p-panel
+            header="Justificantes de Pago"
+            [styleClass]="getPaymentVouchers().length > 0 ? '' : 'empty-panel'"
+          >
+            <!-- Loading state -->
+            <div *ngIf="isLoadingPayments" class="loading-container">
+              <p-progressSpinner></p-progressSpinner>
+            </div>
+
+            <!-- Lista de justificantes -->
+            <div *ngIf="!isLoadingPayments">
+              <div *ngIf="getPaymentVouchers().length > 0" class="vouchers-list">
+                <div *ngFor="let voucher of getPaymentVouchers(); let i = index" class="voucher-item">
+                  <div class="voucher-info">
+                    <i class="pi pi-file-pdf" style="margin-right: 8px; color: #f05a4c; font-size: 1.5rem;"></i>
+                    <div class="voucher-details">
+                      <span class="voucher-name">{{ voucher.fileName || ('Justificante ' + (i + 1)) }}</span>
+                      <span class="voucher-date">{{ formatVoucherDate(voucher.uploadDate) }}</span>
+                    </div>
+                  </div>
+                  <div class="voucher-actions">
+                    <p-button
+                      label="Ver"
+                      icon="pi pi-external-link"
+                      severity="info"
+                      size="small"
+                      [text]="true"
+                      (onClick)="viewVoucher(voucher)"
+                      pTooltip="Ver justificante"
+                    ></p-button>
+                    <p-button
+                      icon="pi pi-trash"
+                      severity="danger"
+                      size="small"
+                      [disabled]="isDeletingVoucher[voucher.id]"
+                      (onClick)="deleteVoucher(voucher)"
+                      pTooltip="Eliminar justificante"
+                    ></p-button>
+                    <p-progressSpinner
+                      *ngIf="isDeletingVoucher[voucher.id]"
+                      styleClass="delete-spinner"
+                      [style]="{ width: '16px', height: '16px' }"
+                    ></p-progressSpinner>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Mensaje cuando no hay justificantes -->
+              <div *ngIf="getPaymentVouchers().length === 0" class="empty-message">
+                <i class="pi pi-info-circle" style="margin-right: 8px;"></i>
+                No hay justificantes de pago adjuntos
+              </div>
             </div>
           </p-panel>
         </div>
@@ -211,3 +299,19 @@
     </p-button>
   </div>
 </p-dialog>
+
+<!-- NUEVO: Modal para añadir pago -->
+<app-add-payment-modal
+  [(visible)]="displayAddPaymentModal"
+  [paymentInfo]="paymentInfo"
+  [reservationId]="reservationId"
+  [isTO]="isTO"
+  (paymentProcessed)="onPaymentProcessed($event)">
+</app-add-payment-modal>
+
+<!-- Modal para aplicar cupón -->
+<app-apply-coupon-modal
+  [(visible)]="displayCouponModal"
+  [reservationId]="reservationId"
+  (couponApplied)="onCouponApplied()">
+</app-apply-coupon-modal>

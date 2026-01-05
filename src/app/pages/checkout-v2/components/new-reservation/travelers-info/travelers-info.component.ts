@@ -6,8 +6,7 @@ import {
   OnChanges,
   SimpleChanges,
 } from '@angular/core';
-import { forkJoin, of } from 'rxjs';
-import { map, switchMap, catchError } from 'rxjs/operators';
+import { forkJoin } from 'rxjs';
 
 // Importaciones de servicios
 import {
@@ -24,11 +23,9 @@ import {
 } from '../../../../../core/services/reservation/reservation-traveler-accommodation.service';
 import {
   DepartureAccommodationTypeService,
-  IDepartureAccommodationTypeResponse,
 } from '../../../../../core/services/departure/departure-accommodation-type.service';
 import {
   DepartureAccommodationService,
-  IDepartureAccommodationResponse,
 } from '../../../../../core/services/departure/departure-accommodation.service';
 
 // Interfaces
@@ -105,7 +102,6 @@ export class TravelersInfoComponent implements OnInit, OnChanges {
 
   private loadData(): void {
     if (!this.reservationId) {
-      console.warn('No reservation ID provided to travelers-info component');
       return;
     }
 
@@ -114,17 +110,15 @@ export class TravelersInfoComponent implements OnInit, OnChanges {
   }
 
   private loadTravelers(): void {
-    console.log('Cargando travelers para reservation ID:', this.reservationId);
 
     this.reservationTravelerService
       .getByReservation(this.reservationId)
       .subscribe({
         next: (travelers) => {
-          console.log('Travelers obtenidos:', travelers);
+
           this.loadTravelersFields(travelers);
         },
         error: (error) => {
-          console.error('Error loading travelers:', error);
           this.loading = false;
         },
       });
@@ -153,11 +147,6 @@ export class TravelersInfoComponent implements OnInit, OnChanges {
       accommodations: forkJoin(travelerAccommodationRequests),
     }).subscribe({
       next: (results) => {
-        console.log('Campos de todos los travelers:', results.fields);
-        console.log(
-          'Acomodaciones de todos los travelers:',
-          results.accommodations
-        );
 
         // Combinar travelers con sus campos y acomodaciones
         const travelersWithFields: TravelerWithFields[] = travelers.map(
@@ -170,7 +159,6 @@ export class TravelersInfoComponent implements OnInit, OnChanges {
 
         // Procesar datos para el template
         this.travelers = this.processTravelersData(travelersWithFields);
-        console.log('Travelers procesados:', this.travelers);
 
         this.loading = false;
 
@@ -180,7 +168,6 @@ export class TravelersInfoComponent implements OnInit, OnChanges {
         }, 100);
       },
       error: (error) => {
-        console.error('Error loading travelers data:', error);
         this.loading = false;
       },
     });
@@ -242,7 +229,6 @@ export class TravelersInfoComponent implements OnInit, OnChanges {
       );
       processed.room = roomName;
     } catch (error) {
-      console.error('Error getting accommodation name:', error);
       processed.room = `Acomodación ID: ${accommodations[0].departureAccommodationId}`;
     }
   }
@@ -290,7 +276,6 @@ export class TravelersInfoComponent implements OnInit, OnChanges {
 
       return accommodationInfo.name;
     } catch (error) {
-      console.error('Error fetching accommodation details:', error);
       return `Acomodación ID: ${departureAccommodationId}`;
     }
   }
@@ -314,7 +299,6 @@ export class TravelersInfoComponent implements OnInit, OnChanges {
             const roomName = await this.getAccommodationName(accommodationId);
             this.travelers[index].room = roomName;
           } catch (error) {
-            console.error('Error updating accommodation name:', error);
           }
         }
       }

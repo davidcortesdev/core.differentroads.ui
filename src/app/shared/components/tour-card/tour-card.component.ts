@@ -1,10 +1,11 @@
 import { Component, Input, ChangeDetectionStrategy, OnInit, AfterViewInit, Inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { DOCUMENT } from '@angular/common';
-import { AnalyticsService } from '../../../core/services/analytics.service';
-import { AuthenticateService } from '../../../core/services/auth-service.service';
+import { AnalyticsService } from '../../../core/services/analytics/analytics.service';
+import { AuthenticateService } from '../../../core/services/auth/auth-service.service';
 
 interface TourData {
+  id?: number; // ID real de base de datos
   imageUrl: string;
   title: string;
   rating: number;
@@ -48,7 +49,6 @@ export class TourCardComponent implements OnInit, AfterViewInit {
 
   monthlyPrice = 0;
   scalapayWidgetId = '';
-  private originalConsoleWarn: any = null;
   constructor(
     private router: Router,
     @Inject(DOCUMENT) private document: Document,
@@ -59,13 +59,11 @@ export class TourCardComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
     // Validación más robusta
     if (!this.tourData) {
-      console.error('TourData no proporcionado al componente TourCardComponent');
       return;
     }
   
     // Validate that externalID exists and is not undefined or empty
     if (!this.tourData.externalID?.trim()) {
-      console.warn('Missing or invalid externalID:', this.tourData);
     }
   
     // Pre-calculate monthly price to avoid recalculation in template
@@ -76,19 +74,13 @@ export class TourCardComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     if (this.showScalapayPrice) {
-      // Suprimir warnings específicos de Scalapay en la consola
-      this.suppressScalapayWarnings();
-     
       // Cargar el script de Scalapay
       this.loadScalapayScript();
     }
   }
 
   ngOnDestroy(): void {
-    // Restaurar la función original de console.warn
-    if (this.originalConsoleWarn) {
-      console.warn = this.originalConsoleWarn;
-    }
+    // Cleanup si es necesario
   }
 
   handleTourClick(): void {
@@ -98,7 +90,7 @@ export class TourCardComponent implements OnInit, AfterViewInit {
         this.itemListId,
         this.itemListName,
         {
-          item_id: this.tourData.externalID?.toString() || '',
+          item_id: this.tourData.id?.toString() || this.tourData.externalID?.toString() || '',
           item_name: this.tourData.title || '',
           coupon: '',
           discount: 0,
@@ -114,7 +106,7 @@ export class TourCardComponent implements OnInit, AfterViewInit {
           item_variant: '',
           price: this.tourData.price || 0,
           quantity: 1,
-          puntuacion: this.tourData.rating?.toString() || '',
+          puntuacion: this.analyticsService.formatRating(this.tourData.rating, ''),
           duracion: (this.tourData as any).days ? `${(this.tourData as any).days} días, ${(this.tourData as any).nights || (this.tourData as any).days - 1} noches` : ''
         },
         this.getUserData()
@@ -142,30 +134,11 @@ export class TourCardComponent implements OnInit, AfterViewInit {
     return this.tourData.price / 4;
   }
 
-  private suppressScalapayWarnings(): void {
-    // Guardar la función original para restaurarla más tarde
-    this.originalConsoleWarn = console.warn;
-   
-    // Reemplazar console.warn con una versión filtrada
-    console.warn = (...args: any[]) => {
-      // Verificar si el mensaje contiene el texto específico que queremos suprimir
-      if (args[0] && typeof args[0] === 'string' &&
-         (args[0].includes('scalapay widget: travel date not found') ||
-          args[0].includes('scalapay-widget'))) {
-        return; // Suprimir este warning específico
-      }
-     
-      // Para cualquier otro warning, usar la función original
-      this.originalConsoleWarn.apply(console, args);
-    };
-  }
- 
   private loadScalapayScript(): void {
     // // Verificar si el script ya está cargado
     // const scriptExists = !!this.document.querySelector('script[src*="scalapay-widget-loader.js"]');
    
     // if (!scriptExists) {
-    //   console.log('Cargando script de Scalapay...');
      
     //   // Crear el script
     //   const script = this.document.createElement('script');
@@ -177,9 +150,6 @@ export class TourCardComponent implements OnInit, AfterViewInit {
     //     this.configureScalapayWidget();
     //   };
      
-    //   script.onerror = (error) => {
-    //     console.error('Error al cargar script de Scalapay:', error);
-    //   };
      
     //   // Añadir el script al head
     //   this.document.head.appendChild(script);
@@ -218,7 +188,6 @@ export class TourCardComponent implements OnInit, AfterViewInit {
       window.dispatchEvent(new CustomEvent('scalapay-widget-reload'));
  
     } catch (error) {
-      console.error('Error al configurar Scalapay:', error);
     }
   }
 }

@@ -1,10 +1,12 @@
 export const environment = {
+  // Entorno
   production: true,
-  apiUrl: 'https://api.differentroads.co/prod/v3',
-  dataApiUrl: 'https://api.differentroads.es/prod/data',
 
+  // Cognito
   cognitoUserPoolId: 'us-east-2_KSSmf3Tt7',
   cognitoAppClientId: '216668bnnnnfvo2aq4ijs12mga',
+
+  // Redsys
   redsysUrl: 'https://sis.redsys.es/sis/realizarPago',
   redsysFuc: '355960907',
   redsysClaveComercio: 'GFxyQ+7SuRWSA/GWaB55hOFwqr8ujxPn',
@@ -12,9 +14,10 @@ export const environment = {
     'https://qt4uw3rgx6.execute-api.us-east-2.amazonaws.com/prod/redsys/notify',
   redsysMerchantTerminal: '2',
 
+  // Google Maps
   googleMapsApiKey: 'AIzaSyB6sxlxeTVlRllpGPyDPbKmaZPQJsb8YAs',
-  notificationsApiUrl: 'https://api.differentroads.co/release/v3/notification',
 
+  // Cloudinary
   cloudinary: {
     uploadPreset: 'dr_uploads',
     cloudName: 'dxp2hxees',
@@ -22,19 +25,30 @@ export const environment = {
     apiKey: '197192715793311',
   },
 
-  reviewsApiUrl: 'https://reviews.differentroads.es/api',
-  toursApiUrl: 'https://tour.differentroads.es/api',
-  travelersApiUrl: 'https://travelers.differentroads.es/api',
+  // APIs - ordenadas alfabéticamente
+  amadeusApiUrl: 'https://amadeus.differentroads.es/api',
+  cmsApiUrl: 'https://cms.differentroads.es/api',
+  documentationApiUrl: 'https://documentation.differentroads.es/api',
   hotelsApiUrl: 'https://hotels.differentroads.es/api',
   locationsApiUrl: 'https://locations.differentroads.es/api',
-  cmsApiUrl: 'https://cms.differentroads.es/api',
-  masterdataApiUrl:'https://masterdata.differentroads.es/api',
-  reservationsApiUrl: 'https://reservations.differentroads.es/api',
-  amadeusApiUrl: 'https://amadeus.differentroads.es/api',
-  usersApiUrl: 'https://auth.differentroads.es/api',
+  masterdataApiUrl: 'https://masterdata.differentroads.es/api',
   redsysApiUrl: 'https://redsys.differentroads.es/api',
-  tourknifeApiUrl: 'https://tourknife.differentroads.es/api',
+  reservationsApiUrl: 'https://reservations.differentroads.es/api',
+  reviewsApiUrl: 'https://reviews.differentroads.es/api',
   scalapayApiUrl: 'https://scalapay.differentroads.es/api',
-  scalapayApiKey: 'qhtfs87hjnc12kkos',
+  tourknifeApiUrl: 'https://tourknife.differentroads.es/api',
+  toursApiUrl: 'https://tour.differentroads.es/api',
+  travelersApiUrl: 'https://travelers.differentroads.es/api',
+  usersApiUrl: 'https://auth.differentroads.es/api',
+
+  // Scalapay
+  scalapayApiKey: 'sp_08656f49d95dc0c40773a9a49eb956f5f76fa0d7187fae07cb64400a63d3802a',
+  scalapayEnvironment: 'production',
+  scalapayMerchantToken: '1M2BNSNFC',
+  // Configuración general
   retaileriddefault: 7,
+
+  // URLs externas
+  tourOperationUrl: 'https://touroperacion.differentroads.es',
+  tkwebUrl:'https://tws.tourknife.com/',
 };

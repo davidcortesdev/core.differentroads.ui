@@ -3,19 +3,59 @@
     <!-- Desktop: estructura original -->
     <!-- Móvil/Tablet: Primera fila con icono alineado a la izquierda y texto centrado -->
     <div class="booking-info-row">
-      <button pButton icon="pi pi-arrow-left" class="p-button-text p-button-rounded back-button" (click)="goBack()"></button>
+      <button 
+        *ngIf="!isStandaloneMode"
+        pButton 
+        icon="pi pi-arrow-left" 
+        class="p-button-text p-button-rounded back-button" 
+        (click)="goBack()">
+      </button>
       
       <div class="booking-code">
         <span class="booking-number">
-          {{ bookingReference === '000000' || bookingReference === '' ? bookingCode : bookingCode + ' - ' + bookingReference }}
+          <ng-container *ngIf="hasTkId; else simpleBookingCode">
+            <span class="booking-id">
+              <span class="booking-id-label">Reserva: </span>
+              <span class="booking-id-value">{{ bookingCode }}</span>
+            </span>
+            <span class="tk-id-separator"> - </span>
+            <span class="tk-id-container">
+              <span class="tk-id-label">TK ID: </span>
+              <!-- TK ID como enlace si es ATC -->
+              <ng-container *ngIf="isTkLinkEnabled; else plainTkId">
+                <a 
+                  [href]="generateTkLink()" 
+                  target="_blank"
+                  class="tk-id-link"
+                  rel="noopener noreferrer"
+                  title="Abrir en TourKnow">
+                  <span class="tk-id-value">{{ bookingReference }}</span>
+                  <i class="pi pi-external-link tk-external-icon"></i>
+                </a>
+              </ng-container>
+              <!-- TK ID sin enlace -->
+              <ng-template #plainTkId>
+                <span class="tk-id-value">{{ bookingReference }}</span>
+              </ng-template>
+            </span>
+          </ng-container>
+          <ng-template #simpleBookingCode>
+            {{ bookingCode }}
+          </ng-template>
         </span>        
         <p-tag value="{{ status }}" severity="info" [rounded]="true"></p-tag>
       </div>
     </div>
     
     <!-- Móvil/Tablet: Segunda fila: botón de cancelar -->
-    <button pButton label="Cancelar reserva" icon="pi pi-times-circle"
+    <button pButton 
+            [label]="cancelButtonLabel" 
+            [icon]="isCancelled ? 'pi pi-ban' : 'pi pi-times-circle'"
             class="p-button-outlined p-button-rounded cancel-button"
+            [disabled]="cancelButtonDisabled"
+            [pTooltip]="cancelButtonTooltip"
+            tooltipPosition="top"
+            [disabled]="isCancelButtonDisabled"
             (click)="onCancelBooking()"></button>
   </div>
 </p-panel>

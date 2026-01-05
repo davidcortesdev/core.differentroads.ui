@@ -101,10 +101,6 @@ export class TourInformationContentService {
           };
         }),
         catchError((error) => {
-          console.error(
-            `Error fetching tour information content with ID ${id}:`,
-            error
-          );
           // Return a default content object on error
           return of({
             id: id,
@@ -130,15 +126,12 @@ export class TourInformationContentService {
       tourId: tourId,
     };
 
-    console.log('Buscando contenido de información para tour ID:', tourId);
-
     return this.getTourInformationContent(filter).pipe(
       map((content) => {
-        console.log('Respuesta de contenido de información:', content);
+
         return content;
       }),
       catchError((error) => {
-        console.error('Error al buscar contenido de información:', error);
         return of([]);
       })
     );
@@ -156,24 +149,12 @@ export class TourInformationContentService {
       tourInformationSectionId: sectionId,
     };
 
-    console.log(
-      'Buscando contenido de información para sección ID:',
-      sectionId
-    );
-
     return this.getTourInformationContent(filter).pipe(
       map((content) => {
-        console.log(
-          'Respuesta de contenido de información por sección:',
-          content
-        );
+
         return content;
       }),
       catchError((error) => {
-        console.error(
-          'Error al buscar contenido de información por sección:',
-          error
-        );
         return of([]);
       })
     );
@@ -195,7 +176,6 @@ export class TourInformationContentService {
       })
       .pipe(
         catchError((error) => {
-          console.error('Error creating tour information content:', error);
           throw error;
         })
       );
@@ -220,10 +200,6 @@ export class TourInformationContentService {
       })
       .pipe(
         catchError((error) => {
-          console.error(
-            `Error updating tour information content with ID ${id}:`,
-            error
-          );
           return of(null);
         })
       );
@@ -244,10 +220,6 @@ export class TourInformationContentService {
       })
       .pipe(
         catchError((error) => {
-          console.error(
-            `Error deleting tour information content with ID ${id}:`,
-            error
-          );
           return of(null);
         })
       );

@@ -3,7 +3,7 @@ import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Observable, throwError } from "rxjs";
 import { catchError } from "rxjs/operators";
 import { environment } from "../../../../environments/environment";
-import { IAgeGroupPriceDTO, IFlightResponse } from "../flight-search.service";
+import { IAgeGroupPriceDTO, IFlightResponse } from "./flight-search.service";
  
 export interface IFlightPackDTO {
     id: number;
@@ -37,7 +37,6 @@ export class ReservationFlightService {
         return this.http.get<IFlightPackDTO | IFlightPackDTO[]>(`${this.API_URL}/${reservationId}`, { headers })
             .pipe(
                 catchError(error => {
-                    console.error('Error al obtener flight pack:', error);
                     return throwError(() => error);
                 })
             );

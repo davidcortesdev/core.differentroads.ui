@@ -25,7 +25,6 @@ export class LocationAirportNetService {
         return this.http.get<LocationAirport[]>(`${this.apiUrl}/locationairport`, { params })
             .pipe(
                 catchError(error => {
-                    console.error('Error obteniendo aeropuertos:', error);
                     return of([]);
                 })
             );
@@ -36,7 +35,6 @@ export class LocationAirportNetService {
         return this.http.get<LocationAirport>(`${this.apiUrl}/locationairport/${id}`)
             .pipe(
                 catchError(error => {
-                    console.error(`Error obteniendo aeropuerto con ID ${id}:`, error);
                     return of({} as LocationAirport);
                 })
             );
@@ -47,7 +45,6 @@ export class LocationAirportNetService {
         return this.http.post<LocationAirport>(`${this.apiUrl}/locationairport`, airport)
             .pipe(
                 catchError(error => {
-                    console.error('Error creando aeropuerto:', error);
                     return of({} as LocationAirport);
                 })
             );
@@ -58,7 +55,6 @@ export class LocationAirportNetService {
         return this.http.put<LocationAirport>(`${this.apiUrl}/locationairport/${id}`, airport)
             .pipe(
                 catchError(error => {
-                    console.error(`Error actualizando aeropuerto con ID ${id}:`, error);
                     return of({} as LocationAirport);
                 })
             );
@@ -69,7 +65,6 @@ export class LocationAirportNetService {
         return this.http.delete<{ success: boolean; error?: any }>(`${this.apiUrl}/locationairport/${id}`)
             .pipe(
                 catchError(error => {
-                    console.error(`Error eliminando aeropuerto con ID ${id}:`, error);
                     return of({ success: false, error });
                 })
             );
@@ -81,7 +76,6 @@ export class LocationAirportNetService {
         return this.http.get<FuzzyLocationAirportResponse[]>(`${this.apiUrl}/locationairport/search`, { params })
             .pipe(
                 catchError(error => {
-                    console.error('Error buscando aeropuertos (fuzzy):', error);
                     return of([]);
                 })
             );
@@ -101,7 +95,6 @@ export class LocationAirportNetService {
         return this.http.get<LocationAirport[]>(`${this.apiUrl}/locationairport`, { params })
             .pipe(
                 catchError(error => {
-                    console.error('Error obteniendo aeropuertos por IDs:', error);
                     return of([]);
                 })
             );

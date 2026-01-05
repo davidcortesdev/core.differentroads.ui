@@ -1,12 +1,11 @@
 import { Injectable } from '@angular/core';
-import { BookingItem } from '../../models/v2/profile-v2.model';
+import { BookingItem, PersonalInfo } from '../../models/v2/profile-v2.model';
 import { ReservationResponse } from '../../models/v2/profile-v2.model';
 import { TourV2 } from './tours-v2.service';
-import { OrderV2 } from './orders-v2.service';
 import { ICMSTourResponse } from '../cms/cms-tour.service';
 
 /**
- * Servicio para mapear datos de APIs a BookingItem V2
+ * Servicio para mapear datos de APIs a modelos V2
  * Transforma respuestas de API al formato que necesita el componente
  */
 @Injectable({
@@ -22,25 +21,43 @@ export class DataMappingV2Service {
    * @param tour - Información del tour (opcional)
    * @param listType - Tipo de lista para configurar campos específicos
    * @param cmsTour - Información del tour CMS con imagen (opcional)
+   * @param departureDate - Fecha de salida del departure (opcional, si se proporciona se usa en lugar de extraerla)
    * @returns BookingItem V2
    */
   mapReservationToBookingItem(
     reservation: ReservationResponse, 
     tour: TourV2 | null = null,
-    listType: 'active-bookings' | 'travel-history' | 'recent-budgets' = 'active-bookings',
-    cmsTour: ICMSTourResponse | null = null
+    listType: 'active-bookings' | 'pending-bookings' | 'travel-history' | 'recent-budgets' = 'active-bookings',
+    cmsTour: ICMSTourResponse | null = null,
+    departureDate?: string | null
   ): BookingItem {
-    // Usar tkId si existe, sino usar el id de la reserva
-    const reservationNumber = reservation.tkId || reservation.id.toString();
+    // Usar siempre el id de la reserva (no tkId)
+    const reservationNumber = reservation.id.toString();
+    
+    // Determinar la fecha de salida: usar la proporcionada, o extraerla de la reserva
+    let finalDepartureDate: Date;
+    if (departureDate) {
+      // Validar que la fecha proporcionada sea válida
+      const parsedDate = this.parseValidDate(departureDate);
+      if (parsedDate) {
+        finalDepartureDate = parsedDate;
+      } else {
+        // Si la fecha proporcionada es inválida, usar el método de extracción como fallback
+        finalDepartureDate = this.extractReservationDepartureDate(reservation);
+      }
+    } else {
+      finalDepartureDate = this.extractReservationDepartureDate(reservation);
+    }
     
     const bookingItem: BookingItem = {
       id: reservation.id.toString(),
       title: tour?.name || `Reserva ${reservationNumber}`,
       number: reservationNumber,
       reservationNumber: reservationNumber,
-      creationDate: new Date(reservation.createdAt),
+      creationDate: this.parseValidDate(reservation.createdAt) || new Date(),
       status: this.mapReservationStatus(reservation.reservationStatusId),
-      departureDate: this.extractReservationDepartureDate(reservation),
+      reservationStatusId: reservation.reservationStatusId,
+      departureDate: finalDepartureDate,
       image: this.getImageFromCMS(cmsTour) || this.getDefaultImage(),
       passengers: reservation.totalPassengers,
       price: reservation.totalAmount,
@@ -61,69 +78,37 @@ export class DataMappingV2Service {
   }
 
   /**
-   * Mapea una orden (presupuesto) con información de tour a BookingItem V2
-   * @param order - Datos de orden de la API
-   * @param tour - Información del tour (opcional)
-   * @param cmsTour - Información del tour CMS con imagen (opcional)
-   * @returns BookingItem V2
-   */
-  mapOrderToBookingItem(order: OrderV2, tour: TourV2 | null = null, cmsTour: ICMSTourResponse | null = null): BookingItem {
-    return {
-      id: order._id,
-      title: tour?.name || `Presupuesto ${order.ID}`,
-      number: order.ID,
-      budgetNumber: order.ID,
-      ID: order.ID,
-      _id: order._id,
-      creationDate: order.createdAt ? new Date(order.createdAt) : new Date(),
-      status: this.mapOrderStatus(order.status),
-      departureDate: this.extractOrderDepartureDate(order),
-      image: this.getImageFromCMS(cmsTour) || this.getDefaultImage(),
-      passengers: order.travelers?.length || 1,
-      price: order.price || 0,
-      tourID: order.periodID,
-      code: order.ID,
-      summary: order.summary,
-      imageLoading: false,
-      imageLoaded: true
-    };
-  }
-
-  /**
    * Mapea múltiples reservas con tours a array de BookingItem V2
    * @param reservations - Array de reservas
    * @param tours - Array de tours correspondientes
    * @param listType - Tipo de lista
    * @param cmsTours - Array de tours CMS con imágenes (opcional)
-   * @returns Array de BookingItem V2
+   * @param departureDates - Array de fechas de salida correspondientes (opcional)
+   * @returns Array de BookingItem V2 ordenado por fecha de creación (más recientes primero)
    */
   mapReservationsToBookingItems(
     reservations: ReservationResponse[],
     tours: (TourV2 | null)[],
-    listType: 'active-bookings' | 'travel-history' | 'recent-budgets' = 'active-bookings',
-    cmsTours: (ICMSTourResponse | null)[] = []
+    listType: 'active-bookings' | 'pending-bookings' | 'travel-history' | 'recent-budgets' = 'active-bookings',
+    cmsTours: (ICMSTourResponse | null)[] = [],
+    departureDates?: (string | null | undefined)[]
   ): BookingItem[] {
-    return reservations.map((reservation, index) => 
+    const bookingItems = reservations.map((reservation, index) => 
       this.mapReservationToBookingItem(
         reservation, 
         tours[index] || null, 
         listType,
-        cmsTours[index] || null
+        cmsTours[index] || null,
+        departureDates && departureDates[index] !== undefined ? departureDates[index] : undefined
       )
     );
-  }
 
-  /**
-   * Mapea múltiples órdenes con tours a array de BookingItem V2
-   * @param orders - Array de órdenes
-   * @param tours - Array de tours correspondientes
-   * @param cmsTours - Array de tours CMS con imágenes (opcional)
-   * @returns Array de BookingItem V2
-   */
-  mapOrdersToBookingItems(orders: OrderV2[], tours: (TourV2 | null)[], cmsTours: (ICMSTourResponse | null)[] = []): BookingItem[] {
-    return orders.map((order, index) => 
-      this.mapOrderToBookingItem(order, tours[index] || null, cmsTours[index] || null)
-    );
+    // Ordenar por fecha de creación (más recientes primero)
+    return bookingItems.sort((a, b) => {
+      const dateA = new Date(a.creationDate).getTime();
+      const dateB = new Date(b.creationDate).getTime();
+      return dateB - dateA; // Orden descendente (más recientes primero)
+    });
   }
 
   /**
@@ -144,11 +129,20 @@ export class DataMappingV2Service {
    */
   private mapReservationStatus(statusId: number): string {
     const statusMap: Record<number, string> = {
-      0: 'Budget',
-      1: 'Booked',
-      2: 'RQ',
-      3: 'Completed',
-      4: 'Cancelled'
+      1: 'Borrador',
+      2: 'Carrito en proceso',
+      3: 'Presupuesto generado',
+      4: 'Reserva pendiente de confirmación',
+      5: 'Reserva registrada sin pagos',
+      6: 'Reserva confirmada con pagos parciales',
+      7: 'Reserva pagada completamente',
+      8: 'Reserva cancelada',
+      9: 'Carrito abandonado sin conversión',
+      10: 'Error técnico',
+      11: 'Reserva pendiente de confirmación',
+      12: 'Reserva eliminada',
+      13: 'Reserva expirada',
+      14: 'Reserva suspendida'
     };
     return statusMap[statusId] || 'Unknown';
   }
@@ -165,31 +159,62 @@ export class DataMappingV2Service {
   }
 
   /**
-   * Extrae la fecha de salida de una reserva
+   * Valida y crea un objeto Date desde un string, retornando null si la fecha es inválida
+   * @param dateString - String de fecha a validar
+   * @returns Date válida o null si es inválida
    */
-  private extractReservationDepartureDate(reservation: ReservationResponse): Date {
-    // Prioridad: reservedAt > budgetAt > cartAt > createdAt + 30 días
-    if (reservation.reservedAt && reservation.reservedAt !== 'null') {
-      return new Date(reservation.reservedAt);
+  private parseValidDate(dateString: string | null | undefined): Date | null {
+    if (!dateString || dateString === 'null' || dateString.trim() === '') {
+      return null;
     }
-    if (reservation.budgetAt && reservation.budgetAt !== 'null') {
-      return new Date(reservation.budgetAt);
+    
+    const date = new Date(dateString);
+    // Verificar si la fecha es válida
+    if (isNaN(date.getTime())) {
+      return null;
     }
-    if (reservation.cartAt && reservation.cartAt !== 'null') {
-      return new Date(reservation.cartAt);
-    }
-    // Fallback: fecha de creación + 30 días
-    return new Date(new Date(reservation.createdAt).getTime() + 30 * 24 * 60 * 60 * 1000);
+    
+    return date;
   }
 
   /**
-   * Extrae la fecha de salida de una orden
+   * Extrae la fecha de salida de una reserva
+   * Prioridad: departure.departureDate > reservedAt > budgetAt > cartAt > createdAt + 30 días
    */
-  private extractOrderDepartureDate(order: OrderV2): Date {
-    // Para órdenes, usar fecha de creación + 30 días como fallback
-    if (order.createdAt) {
-      return new Date(new Date(order.createdAt).getTime() + 30 * 24 * 60 * 60 * 1000);
+  private extractReservationDepartureDate(reservation: ReservationResponse | any): Date {
+    // Intentar obtener la fecha de salida desde el departure si está disponible en la respuesta
+    // (la API puede incluir el objeto departure completo en algunos casos)
+    if (reservation.departure?.departureDate) {
+      const parsedDate = this.parseValidDate(reservation.departure.departureDate);
+      if (parsedDate) {
+        return parsedDate;
+      }
     }
+    
+    // Si no está disponible el departure, usar fechas de la reserva como fallback
+    // Prioridad: reservedAt > budgetAt > cartAt > createdAt + 30 días
+    const reservedAtDate = this.parseValidDate(reservation.reservedAt);
+    if (reservedAtDate) {
+      return reservedAtDate;
+    }
+    
+    const budgetAtDate = this.parseValidDate(reservation.budgetAt);
+    if (budgetAtDate) {
+      return budgetAtDate;
+    }
+    
+    const cartAtDate = this.parseValidDate(reservation.cartAt);
+    if (cartAtDate) {
+      return cartAtDate;
+    }
+    
+    // Fallback: fecha de creación + 30 días (validar que createdAt sea válido)
+    const createdAtDate = this.parseValidDate(reservation.createdAt);
+    if (createdAtDate) {
+      return new Date(createdAtDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+    }
+    
+    // Último fallback: fecha actual + 30 días si createdAt también es inválido
     return new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
   }
 
@@ -225,7 +250,7 @@ export class DataMappingV2Service {
       title: this.extractBookingTitle(apiResponse),
       number: apiResponse.number || apiResponse.reservation_number || apiResponse.id.toString(),
       reservationNumber: apiResponse.reservation_number || apiResponse.number,
-      creationDate: apiResponse.created_at ? new Date(apiResponse.created_at) : new Date(),
+      creationDate: this.parseValidDate(apiResponse.created_at) || new Date(),
       status: this.mapBookingStatus(apiResponse.status),
       departureDate: this.extractDepartureDate(apiResponse),
       image: this.extractBookingImage(apiResponse),
@@ -235,7 +260,6 @@ export class DataMappingV2Service {
     };
   }
 
-
   private extractBookingTitle(apiResponse: any): string {
     if (apiResponse.tour?.name) return apiResponse.tour.name;
     if (apiResponse.title) return apiResponse.title;
@@ -244,9 +268,16 @@ export class DataMappingV2Service {
   }
 
   private extractDepartureDate(apiResponse: any): Date {
-    if (apiResponse.departure_date) return new Date(apiResponse.departure_date);
-    if (apiResponse.start_date) return new Date(apiResponse.start_date);
-    if (apiResponse.tour?.departure_date) return new Date(apiResponse.tour.departure_date);
+    const departureDate = this.parseValidDate(apiResponse.departure_date);
+    if (departureDate) return departureDate;
+    
+    const startDate = this.parseValidDate(apiResponse.start_date);
+    if (startDate) return startDate;
+    
+    const tourDepartureDate = this.parseValidDate(apiResponse.tour?.departure_date);
+    if (tourDepartureDate) return tourDepartureDate;
+    
+    // Fallback: fecha actual + 30 días
     return new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
   }
 
@@ -275,5 +306,152 @@ export class DataMappingV2Service {
       'Budget': 'Budget'
     };
     return statusMap[status] || 'pending';
+  }
+
+  // ===== MÉTODOS DE MAPEO PARA DATOS DE USUARIO =====
+
+  /**
+   * Combina los datos del usuario con los campos adicionales
+   * @param user - Datos básicos del usuario
+   * @param userFields - Campos disponibles
+   * @param userFieldValues - Valores de campos del usuario
+   * @returns PersonalInfo combinado
+   */
+  combineUserData(user: any, userFields: any[], userFieldValues: any[]): PersonalInfo {
+    // Crear un mapa de valores de campos para acceso rápido
+    const fieldValueMap = new Map();
+    userFieldValues.forEach(fieldValue => {
+      fieldValueMap.set(fieldValue.fieldId, fieldValue.value);
+    });
+
+    // Crear un mapa de campos para obtener nombres
+    const fieldMap = new Map();
+    userFields.forEach(field => {
+      fieldMap.set(field.id, field.name);
+    });
+
+    // Combinar datos básicos del usuario con campos adicionales
+    const combinedData: PersonalInfo = {
+      id: user.id,
+      nombre: user.nombre || user.firstName || user.name || '',
+      apellido: user.apellido || user.lastName || '',
+      email: user.email || '',
+      telefono: user.telefono || user.phone || '',
+      avatarUrl: user.avatarUrl || user.avatar || '',
+      // Campos adicionales que se mapearán desde userFieldValues
+      dni: '',
+      direccion: '',
+      ciudad: '',
+      codigoPostal: '',
+      pais: '',
+      fechaNacimiento: '',
+      fechaExpiracionDni: '',
+      notas: ''
+    };
+
+    // Agregar campos adicionales desde userFieldValues
+    userFieldValues.forEach(fieldValue => {
+      const fieldName = fieldMap.get(fieldValue.userFieldId);
+      
+      if (fieldName && fieldValue.value) {
+        // Mapear nombres de campos a propiedades de PersonalInfo según la API
+        switch (fieldName) {
+          case 'Imagen de Perfil':
+            combinedData.avatarUrl = fieldValue.value;
+            break;
+          case 'Teléfono':
+            combinedData.telefono = fieldValue.value;
+            break;
+          case 'Prefijo telefónico':
+            combinedData.phonePrefix = fieldValue.value;
+            break;
+          case 'Fecha de nacimiento':
+            // Convertir de YYYY-MM-DD (API) a DD/MM/YYYY (visualización)
+            if (fieldValue.value && fieldValue.value.includes('-')) {
+              const [year, month, day] = fieldValue.value.split('-');
+              combinedData.fechaNacimiento = `${day}/${month}/${year}`;
+            } else {
+              combinedData.fechaNacimiento = fieldValue.value;
+            }
+            break;
+          case 'DNI/NIE':
+            combinedData.dni = fieldValue.value;
+            break;
+          case 'Fecha expiración DNI':
+            // Convertir de YYYY-MM-DD (API) a DD/MM/YYYY (visualización)
+            if (fieldValue.value && fieldValue.value.includes('-')) {
+              const [year, month, day] = fieldValue.value.split('-');
+              combinedData.fechaExpiracionDni = `${day}/${month}/${year}`;
+            } else {
+              combinedData.fechaExpiracionDni = fieldValue.value;
+            }
+            break;
+          case 'Dirección':
+            combinedData.direccion = fieldValue.value;
+            break;
+          case 'Ciudad':
+            combinedData.ciudad = fieldValue.value;
+            break;
+          case 'Código Postal':
+            combinedData.codigoPostal = fieldValue.value;
+            break;
+          case 'País':
+            combinedData.pais = fieldValue.value;
+            break;
+          case 'Notas':
+            combinedData.notas = fieldValue.value;
+            break;
+          case 'Sexo':
+            combinedData.sexo = fieldValue.value;
+            break;
+        }
+      }
+    });
+
+    return combinedData;
+  }
+
+  /**
+   * Prepara los valores de campos para guardar
+   * @param userId - ID del usuario
+   * @param userData - Datos del usuario
+   * @param userFields - Campos disponibles
+   * @returns Array de valores de campos
+   */
+  prepareFieldValues(userId: string, userData: PersonalInfo, userFields: any[]): any[] {
+    const fieldValues: any[] = [];
+    
+    // Mapear campos de PersonalInfo a userFieldValues
+    const fieldMappings = [
+      { fieldName: 'image', value: userData.avatarUrl },
+      { fieldName: 'dni', value: userData.dni },
+      { fieldName: 'nacionalidad', value: userData.pais },
+      { fieldName: 'telefono', value: userData.telefono },
+      { fieldName: 'phonePrefix', value: userData.phonePrefix },
+      { fieldName: 'ciudad', value: userData.ciudad },
+      { fieldName: 'codigo_postal', value: userData.codigoPostal },
+      { fieldName: 'fecha_nacimiento', value: userData.fechaNacimiento },
+      { fieldName: 'sexo', value: userData.sexo },
+    ];
+
+    fieldMappings.forEach(mapping => {
+      if (mapping.value) {
+        // Buscar el campo correspondiente
+        const field = userFields.find(f => 
+          f.name.toLowerCase() === mapping.fieldName.toLowerCase() ||
+          f.name.toLowerCase() === mapping.fieldName.replace('_', ' ').toLowerCase()
+        );
+        
+        if (field) {
+          fieldValues.push({
+            userId: userId,
+            fieldId: field.id,
+            value: mapping.value
+          });
+        }
+      }
+    });
+
+    return fieldValues;
   }
 }

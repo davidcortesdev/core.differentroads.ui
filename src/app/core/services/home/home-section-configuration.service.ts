@@ -38,6 +38,8 @@ export interface IHomeSectionConfigurationResponse {
   homeSectionId: number;
   title?: string;
   content?: string;
+  theme?: string;
+  themeId?: number;
   displayOrder: number;
   isActive: boolean;
   showMonthTags?: boolean;
@@ -54,6 +56,7 @@ export interface HomeSectionConfigurationFilters {
   homeSectionId?: number;
   title?: string;
   content?: string;
+  theme?: string;
   displayOrder?: number;
   isActive?: boolean;
   showMonthTags?: boolean;
@@ -73,10 +76,12 @@ export class HomeSectionConfigurationService {
   /**
    * Obtiene todas las configuraciones de sección de inicio según los criterios de filtrado.
    * @param filters Filtros para aplicar en la búsqueda.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de configuraciones de sección de inicio.
    */
   getAll(
-    filters?: HomeSectionConfigurationFilters
+    filters?: HomeSectionConfigurationFilters,
+    signal?: AbortSignal
   ): Observable<IHomeSectionConfigurationResponse[]> {
     let params = new HttpParams();
 
@@ -92,9 +97,16 @@ export class HomeSectionConfigurationService {
       });
     }
 
-    return this.http.get<IHomeSectionConfigurationResponse[]>(this.API_URL, {
-      params,
-    });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IHomeSectionConfigurationResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -117,11 +129,22 @@ export class HomeSectionConfigurationService {
   /**
    * Obtiene una configuración de sección de inicio específica por su ID.
    * @param id ID de la configuración de sección de inicio.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns La configuración de sección de inicio encontrada.
    */
-  getById(id: number): Observable<IHomeSectionConfigurationResponse> {
+  getById(id: number, signal?: AbortSignal): Observable<IHomeSectionConfigurationResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
     return this.http.get<IHomeSectionConfigurationResponse>(
-      `${this.API_URL}/${id}`
+      `${this.API_URL}/${id}`,
+      options
     );
   }
 
@@ -157,11 +180,13 @@ export class HomeSectionConfigurationService {
    * Obtiene configuraciones por tipo de sección.
    * @param homeSectionId ID del tipo de sección.
    * @param isActive Filtrar solo configuraciones activas (opcional).
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de configuraciones del tipo de sección.
    */
   getBySectionType(
     homeSectionId: number,
-    isActive?: boolean
+    isActive?: boolean,
+    signal?: AbortSignal
   ): Observable<IHomeSectionConfigurationResponse[]> {
     const filters: HomeSectionConfigurationFilters = {
       homeSectionId: homeSectionId,
@@ -171,32 +196,36 @@ export class HomeSectionConfigurationService {
       filters.isActive = isActive;
     }
 
-    return this.getAll(filters);
+    return this.getAll(filters, signal);
   }
 
   /**
    * Obtiene solo las configuraciones activas.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de configuraciones activas.
    */
-  getActive(): Observable<IHomeSectionConfigurationResponse[]> {
-    return this.getAll({ isActive: true });
+  getActive(signal?: AbortSignal): Observable<IHomeSectionConfigurationResponse[]> {
+    return this.getAll({ isActive: true }, signal);
   }
 
   /**
    * Obtiene configuraciones activas ordenadas por displayOrder.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de configuraciones activas ordenadas.
    */
-  getActiveOrdered(): Observable<IHomeSectionConfigurationResponse[]> {
-    return this.getActive();
+  getActiveOrdered(signal?: AbortSignal): Observable<IHomeSectionConfigurationResponse[]> {
+    return this.getActive(signal);
   }
 
   /**
    * Obtiene configuraciones que muestran etiquetas de mes.
    * @param isActive Filtrar solo configuraciones activas (opcional).
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de configuraciones que muestran etiquetas de mes.
    */
   getWithMonthTags(
-    isActive: boolean = true
+    isActive: boolean = true,
+    signal?: AbortSignal
   ): Observable<IHomeSectionConfigurationResponse[]> {
     const filters: HomeSectionConfigurationFilters = {
       showMonthTags: true,
@@ -206,31 +235,35 @@ export class HomeSectionConfigurationService {
       filters.isActive = isActive;
     }
 
-    return this.getAll(filters);
+    return this.getAll(filters, signal);
   }
 
   /**
    * Obtiene configuraciones de carrusel de tours (con maxToursToShow definido).
    * @param isActive Filtrar solo configuraciones activas (opcional).
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de configuraciones de carrusel de tours.
    */
   getTourCarousels(
-    isActive: boolean = true
+    isActive: boolean = true,
+    signal?: AbortSignal
   ): Observable<IHomeSectionConfigurationResponse[]> {
     // Nota: Para este filtro necesitaríamos una consulta más específica en el backend
     // Por ahora, obtenemos todas y filtramos en el cliente
-    return this.getAll({ isActive: isActive });
+    return this.getAll({ isActive: isActive }, signal);
   }
 
   /**
    * Obtiene configuraciones por orden de visualización.
    * @param displayOrder Orden de visualización específico.
    * @param isActive Filtrar solo configuraciones activas (opcional).
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de configuraciones con el orden especificado.
    */
   getByDisplayOrder(
     displayOrder: number,
-    isActive: boolean = true
+    isActive: boolean = true,
+    signal?: AbortSignal
   ): Observable<IHomeSectionConfigurationResponse[]> {
     const filters: HomeSectionConfigurationFilters = {
       displayOrder: displayOrder,
@@ -240,43 +273,47 @@ export class HomeSectionConfigurationService {
       filters.isActive = isActive;
     }
 
-    return this.getAll(filters);
+    return this.getAll(filters, signal);
   }
 
   /**
    * Obtiene la configuración de banner principal (típicamente displayOrder = 1).
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Configuración del banner principal.
    */
-  getBannerConfiguration(): Observable<IHomeSectionConfigurationResponse[]> {
-    return this.getBySectionType(1, true); // HomeSectionId 1 = BANNER
+  getBannerConfiguration(signal?: AbortSignal): Observable<IHomeSectionConfigurationResponse[]> {
+    return this.getBySectionType(1, true, signal); // HomeSectionId 1 = BANNER
   }
 
   /**
    * Obtiene configuraciones de carrusel de tours (típicamente HomeSectionId = 2).
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de configuraciones de carrusel de tours.
    */
-  getTourCarouselConfigurations(): Observable<
+  getTourCarouselConfigurations(signal?: AbortSignal): Observable<
     IHomeSectionConfigurationResponse[]
   > {
-    return this.getBySectionType(2, true); // HomeSectionId 2 = TOUR_CARROUSEL
+    return this.getBySectionType(2, true, signal); // HomeSectionId 2 = TOUR_CARROUSEL
   }
 
   /**
    * Obtiene configuraciones de lista de tours en cuadrícula (típicamente HomeSectionId = 3).
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de configuraciones de lista de tours en cuadrícula.
    */
-  getTourGridConfigurations(): Observable<IHomeSectionConfigurationResponse[]> {
-    return this.getBySectionType(3, true); // HomeSectionId 3 = TOUR_GRID
+  getTourGridConfigurations(signal?: AbortSignal): Observable<IHomeSectionConfigurationResponse[]> {
+    return this.getBySectionType(3, true, signal); // HomeSectionId 3 = TOUR_GRID
   }
 
   /**
    * Obtiene configuraciones de sección de viajeros (típicamente HomeSectionId = 6).
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de configuraciones de sección de viajeros.
    */
-  getTravelerSectionConfigurations(): Observable<
+  getTravelerSectionConfigurations(signal?: AbortSignal): Observable<
     IHomeSectionConfigurationResponse[]
   > {
-    return this.getBySectionType(6, true); // HomeSectionId 6 = TRAVELER_SECTION
+    return this.getBySectionType(6, true, signal); // HomeSectionId 6 = TRAVELER_SECTION
   }
 
   /**

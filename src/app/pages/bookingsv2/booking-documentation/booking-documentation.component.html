@@ -1,87 +1,83 @@
 <div class="container">
   <div class="docs-container">
     <p-panel header="Documentación">
+      <div *ngIf="documentsLoading" class="loading-container">
+        <p-progressSpinner></p-progressSpinner>
+        <p>Cargando documentos...</p>
+      </div>
+
       <p-table
-        #dt
-        [value]="latestDocuments"
+        *ngIf="!documentsLoading"
+        [value]="apiDocuments"
         responsiveLayout="scroll"
-        dataKey="_id"
-        [expandedRowKeys]="expandedRowKeys"
-        [expandableRows]="showExpandControls"
-        (onRowExpand)="onRowExpand($event)"
-        (onRowCollapse)="onRowCollapse($event)"
+        dataKey="id"
       >
         <ng-template #header>
           <tr>
-            <th *ngIf="showExpandControls" style="width: 3rem"></th>
             <th>Documento</th>
+            <th>Tipo</th>
             <th>Fecha de creación</th>
-            <th style="width: 5rem"></th>
+            <th>Tamaño</th>
+            <th style="width: 5rem">Acciones</th>
           </tr>
         </ng-template>
 
-        <ng-template #body let-document let-expanded="expanded">
+        <ng-template #body let-documentReservation>
           <tr>
-            <td *ngIf="showExpandControls">
-              <button
-                type="button"
-                pButton
-                [pRowToggler]="document"
-                [disabled]="getPreviousVersions(document.type).length === 0"
-                [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
-                class="p-button-text p-button-rounded p-button-plain"
-              ></button>
-            </td>
-            <td>{{ document.fileData.display_name }}</td>
-            <td>{{ document.createdAt | date : "short" }}</td>
             <td>
-              <a
-                [href]="document.fileData.secure_url"
-                target="_blank"
-                rel="noopener noreferrer"
+              <span
+                [pTooltip]="
+                  documentReservation.document?.fileName &&
+                  documentReservation.document.fileName.length > 25
+                    ? documentReservation.document.fileName
+                    : ''
+                "
+                tooltipPosition="top"
               >
-                <p-button icon="pi pi-download" severity="secondary" rounded />
-              </a>
+                {{ truncateFileName(documentReservation.document?.fileName) }}
+              </span>
+            </td>
+            <td>
+              <p-tag
+                [value]="
+                  getDocumentTypeText(
+                    documentReservation.document?.documentTypeId
+                  )
+                "
+                severity="info"
+              >
+              </p-tag>
+            </td>
+            <td>{{ formatDocumentDate(documentReservation.createdAt) }}</td>
+            <td>
+              {{
+                documentReservation.document
+                  ? (documentReservation.document.fileSize / 1024).toFixed(1) +
+                    " KB"
+                  : "N/A"
+              }}
+            </td>
+            <td>
+              <p-button
+                icon="pi pi-download"
+                severity="secondary"
+                rounded
+                [disabled]="
+                  downloadLoading[documentReservation.document?.id] ||
+                  !documentReservation.document?.fileName
+                "
+                [loading]="downloadLoading[documentReservation.document?.id]"
+                (click)="downloadDocument(documentReservation)"
+                pTooltip="Descargar documento"
+              >
+              </p-button>
             </td>
           </tr>
         </ng-template>
 
-        <ng-template #expandedrow let-document>
+        <ng-template #emptymessage>
           <tr>
-            <td colspan="4">
-              <div
-                *ngIf="
-                  showExpandControls &&
-                  getPreviousVersions(document.type).length > 0
-                "
-                class="versions-container"
-              >
-                <p-table
-                  [value]="getPreviousVersions(document.type)"
-                  responsiveLayout="scroll"
-                >
-                  <ng-template #body let-prev>
-                    <tr>
-                      <td>
-                        <a
-                          [href]="prev.fileData.secure_url"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {{ prev.createdAt | date : "short" }} -
-                          {{ prev.fileData.display_name }}
-                        </a>
-                      </td>
-                    </tr>
-                  </ng-template>
-                  <ng-template #emptymessage>
-                    <tr>
-                      <td colspan="3">No hay versiones anteriores.</td>
-                    </tr>
-                  </ng-template>
-                </p-table>
-              </div>
-            </td>
+            <td colspan="5">No hay documentos disponibles.</td>
           </tr>
         </ng-template>
       </p-table>
@@ -90,42 +86,252 @@
 
   <div class="not-container">
     <p-panel header="Notificaciones">
+      <div *ngIf="notificationsLoading" class="loading-container">
+        <p-progressSpinner></p-progressSpinner>
+        <p>Cargando notificaciones...</p>
+      </div>
+
       <p-table
-        #dt
-        [value]="notificationLogs"
+        *ngIf="!notificationsLoading"
+        [value]="apiNotifications"
         responsiveLayout="scroll"
-        dataKey="_id"
+        dataKey="id"
       >
-        <ng-template pTemplate="header">
+        <ng-template #header>
           <tr>
             <th>Tipo</th>
-            <!--             <th>Destinatario</th> -->
+            <th>Email</th>
+            <th>Estado</th>
+            <th>Fecha de creación</th>
             <th>Fecha de envío</th>
-            <!--             <th>Estado</th>
- -->
+            <th style="width: 5rem">Acciones</th>
           </tr>
         </ng-template>
 
-        <ng-template pTemplate="body" let-log>
+        <ng-template #body let-notification>
           <tr>
-            <td>{{ log.name }}</td>
-            <!-- <td>{{ log.recipient }}</td> -->
-            <td>{{ log.createdAt | date : "short" }}</td>
-            <!--             <td>{{ log.status }}</td>
- -->
+            <td>
+              {{ getNotificationTypeText(notification.notificationTypeId) }}
+            </td>
+            <td>
+              {{ notification.recipientEmail || "N/A" }}
+            </td>
+            <td>
+              <p-tag
+                [value]="
+                  getNotificationStatusText(notification.notificationStatusId)
+                "
+                [severity]="
+                  getNotificationStatusColor(notification.notificationStatusId)
+                "
+              >
+              </p-tag>
+            </td>
+            <td>{{ formatNotificationDate(notification.createdAt) }}</td>
+            <td>{{ formatNotificationDate(notification.sentAt) }}</td>
+            <td>
+              <p-button
+                icon="pi pi-eye"
+                severity="secondary"
+                rounded
+                [disabled]="!notification.content"
+                (click)="openNotificationContentModal(notification.content)"
+                pTooltip="Ver contenido"
+              >
+              </p-button>
+            </td>
           </tr>
         </ng-template>
 
-        <ng-template pTemplate="emptymessage">
+        <ng-template #emptymessage>
           <tr>
-            <td colspan="4">No hay notificaciones registradas.</td>
+            <td colspan="6">No hay notificaciones registradas.</td>
           </tr>
         </ng-template>
       </p-table>
     </p-panel>
   </div>
 
-  <div class="notes-container">
+  <div class="tklogs-container" *ngIf="isAtc">
+    <p-panel header="Logs de Comunicación con TK">
+      <div class="tklogs-header">
+        <p-button
+          *ngIf="!showTkLogsTable && !tkLogsLoading && tkLogs.length > 0"
+          label="Ver Logs"
+          icon="pi pi-eye"
+          size="small"
+          severity="secondary"
+          (onClick)="showTkLogsTable = true"
+        ></p-button>
+        <p-button
+          *ngIf="showTkLogsTable"
+          label="Ocultar Logs"
+          icon="pi pi-eye-slash"
+          size="small"
+          severity="secondary"
+          (onClick)="showTkLogsTable = false"
+        ></p-button>
+      </div>
+
+      <!-- Loading indicator for TKLogs -->
+      <div *ngIf="tkLogsLoading" class="loading-container">
+        <p-progressSpinner></p-progressSpinner>
+        <p>Cargando logs de TK...</p>
+      </div>
+
+      <!-- No logs message -->
+      <div
+        *ngIf="!tkLogsLoading && tkLogs.length === 0"
+        class="no-logs-message"
+      >
+        <i class="pi pi-info-circle"></i>
+        <p>No hay logs de comunicación con TK para esta reserva</p>
+      </div>
+
+      <!-- TKLogs Table -->
+      <div
+        *ngIf="showTkLogsTable && !tkLogsLoading && tkLogs.length > 0"
+        class="tklogs-table-container"
+      >
+        <p-table
+          [value]="tkLogs"
+          [tableStyle]="{ 'min-width': '50rem' }"
+          styleClass="p-datatable-sm"
+          responsiveLayout="scroll"
+          [paginator]="true"
+          [rows]="5"
+          [rowsPerPageOptions]="[5, 10, 20]"
+          currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} logs"
+          appendTo="body"
+        >
+          <!-- Table header -->
+          <ng-template #header>
+            <tr>
+              <th style="width: 4rem">Estado</th>
+              <th style="width: 8rem">Fecha Envío</th>
+              <th style="width: 4rem">HTTP Status</th>
+              <th style="width: 10rem">Contenido Enviado</th>
+              <th style="width: 10rem">Contenido Respuesta</th>
+              <th style="width: 20rem">Error TK</th>
+              <th style="width: 15rem">Notas</th>
+            </tr>
+          </ng-template>
+
+          <!-- Table body -->
+          <ng-template #body let-log>
+            <tr>
+              <!-- Estado con icono y color -->
+              <td>
+                <div class="flex align-items-center gap-2">
+                  <i
+                    [class]="getLogIcon(getLogSeverity(log))"
+                    [ngClass]="getLogClass(getLogSeverity(log))"
+                  ></i>
+                  <span [ngClass]="getLogClass(getLogSeverity(log))">
+                    {{ getLogSeverity(log) | titlecase }}
+                  </span>
+                </div>
+              </td>
+
+              <!-- Fecha de envío -->
+              <td>
+                <span [title]="log.sentAt">
+                  {{ formatDate(log.sentAt) }}
+                </span>
+              </td>
+
+              <!-- Código de estado HTTP -->
+              <td>
+                <p-tag
+                  [value]="log.httpStatusCode?.toString() || '-'"
+                  [severity]="
+                    log.httpStatusCode >= 400
+                      ? 'danger'
+                      : log.httpStatusCode >= 200 && log.httpStatusCode < 300
+                      ? 'success'
+                      : 'warn'
+                  "
+                ></p-tag>
+              </td>
+
+              <!-- Contenido enviado -->
+              <td>
+                <span [title]="log.sentContent" class="sent-content">
+                  {{ formatSentContent(log.sentContent) }}
+                </span>
+              </td>
+
+              <!-- Contenido de respuesta -->
+              <td>
+                <span [title]="log.responseContent" class="response-content">
+                  {{ formatResponseContent(log.responseContent) }}
+                </span>
+              </td>
+
+              <!-- Error TK -->
+              <td>
+                <div
+                  *ngIf="log.tkErrorCode || log.tkErrorMessage; else noError"
+                  class="tk-error"
+                >
+                  <div *ngIf="log.tkErrorCode" class="error-code">
+                    <p-tag
+                      [value]="log.tkErrorCode"
+                      severity="danger"
+                      styleClass="error-tag"
+                    ></p-tag>
+                  </div>
+                  <div *ngIf="log.tkErrorMessage" class="error-message">
+                    <span
+                      [pTooltip]="getFullErrorMessage(log)"
+                      tooltipPosition="top"
+                      [escape]="false"
+                      [showDelay]="300"
+                      [hideDelay]="100"
+                    >
+                      {{ log.tkErrorMessage }}
+                    </span>
+                  </div>
+                </div>
+                <ng-template #noError>
+                  <span class="text-muted">-</span>
+                </ng-template>
+              </td>
+
+              <!-- Notas -->
+              <td>
+                <div *ngIf="log.notes; else noNotes" class="notes-content">
+                  <span
+                    [pTooltip]="log.notes"
+                    tooltipPosition="top"
+                    [escape]="false"
+                    [showDelay]="300"
+                    [hideDelay]="100"
+                  >
+                    {{ log.notes }}
+                  </span>
+                </div>
+                <ng-template #noNotes>
+                  <span class="text-muted">-</span>
+                </ng-template>
+              </td>
+            </tr>
+          </ng-template>
+
+          <!-- Empty message -->
+          <ng-template #emptymessage>
+            <tr>
+              <td colspan="7" class="text-center">
+                No se encontraron logs de TK
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </p-panel>
+  </div>
+
+  <!-- <div class="notes-container">
     <p-panel header="Notas">
       <p-table
         #dt
@@ -139,29 +345,19 @@
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} notas"
         [rowHover]="true"
         styleClass="p-datatable-gridlines p-datatable-sm"
-        [globalFilterFields]="['message', 'category', 'type']"
+        [globalFilterFields]="['message', 'type']"
       >
-        <ng-template pTemplate="header">
+        <ng-template #header>
           <tr>
             <th pSortableColumn="createdAt">
               Fecha de creación <p-sortIcon field="createdAt"></p-sortIcon>
             </th>
             <th>Mensaje</th>
-            <th>
-              Estado
-              <p-columnFilter
-                field="type"
-                matchMode="equals"
-                display="menu"
-                [showOperator]="false"
-                [filterOptions]="typeOptions"
-              ></p-columnFilter>
-            </th>
-            <th></th>
+            <th>Estado</th>
           </tr>
         </ng-template>
 
-        <ng-template pTemplate="body" let-note>
+        <ng-template #body let-note>
           <tr>
             <td>{{ note.createdAt | date : "short" }}</td>
             <td pTooltip="{{ note.message }}" tooltipPosition="top">
@@ -176,12 +372,35 @@
           </tr>
         </ng-template>
 
-        <ng-template pTemplate="emptymessage">
+        <ng-template #emptymessage>
           <tr>
-            <td colspan="4">No hay notas registradas.</td>
+            <td colspan="3">No hay notas registradas.</td>
           </tr>
         </ng-template>
       </p-table>
     </p-panel>
-  </div>
+  </div> -->
+
+  <!-- Modal para ver el contenido de la notificación -->
+  <p-dialog
+    [(visible)]="showNotificationContentModal"
+    [modal]="true"
+    [breakpoints]="{ '1199px': '95vw', '575px': '98vw' }"
+    [style]="{ width: '90vw', height: '90vh' }"
+    [draggable]="false"
+    [resizable]="true"
+    [closeOnEscape]="true"
+    [dismissableMask]="true"
+    (onHide)="closeNotificationContentModal()"
+    header="Contenido de la Notificación"
+  >
+    <div class="notification-content-container" style="width: 100%; height: 100%; overflow: hidden;">
+      <iframe
+        [src]="notificationContentUrl"
+        style="width: 100%; height: 100%; border: none;"
+        title="Contenido de la notificación"
+        sandbox="allow-same-origin allow-scripts"
+      ></iframe>
+    </div>
+  </p-dialog>
 </div>

@@ -156,10 +156,8 @@ export class TourInfoAccordionV2Component
           // Forzar detección de cambios
           this.cdr.detectChanges();
 
-          console.log('Tarjetas de información cargadas:', this.infoCards);
         },
         error: (error) => {
-          console.error('Error al cargar la información del tour:', error);
         },
       });
   }

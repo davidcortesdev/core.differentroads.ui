@@ -1,4 +1,21 @@
-<div class="card-footer">
+<div class="card-footer"
+     [class.theme-light]="theme === 'light'"
+     [class.theme-dark]="theme === 'dark'">
+  <!-- Bloque de texto principal (título + descripción) en el footer -->
+  <div class="main-info">
+    <h3 class="tour-title">
+      <ng-container *ngIf="isLoadingLocation; else locationContent">
+        Destino
+      </ng-container>
+      <ng-template #locationContent>
+        {{ locationName || tourData.title }}
+      </ng-template>
+    </h3>
+    <p class="tour-description" *ngIf="tourData.title">
+      {{ tourData.title }}
+    </p>
+  </div>
+
   <div class="price-content">
     <div class="price-section">
       <div class="price-info">
@@ -19,40 +36,10 @@
         <p-button
           type="button"
           label="Ver tour"
-          class="p-button-rounded buttonVertour"
-          [rounded]="true"
+          class="buttonVertour"
           (onClick)="handleTourClick()"
         ></p-button>
       </div>
-    </div>
-    <ng-container *ngIf="showScalapayPrice">
-      <div class="priceScalapay">
-        <div class="widget" #widgetContainer>
-          <span class="amount" id="amount" style="display: none;">{{ tourData.price }}</span>
-          
-          <scalapay-widget
-          merchant-token="9MFV6DMBA" 
-          amount-selectors='["#amount"]' 
-          channel="travel"
-          type="product"
-          environment="integration"
-          locale="es"
-          currency-display="symbol"
-          hide-installments="true"
-          alignment="left"
-          >
-          </scalapay-widget>
-        </div>
-      </div>
-    </ng-container>
-    <div class="months" *ngIf="tourData.availableMonths?.length">
-      <p-tag
-        *ngFor="let month of tourData.availableMonths"
-        class="month"
-        severity="info"
-      >
-        {{ month }}
-      </p-tag>
     </div>
   </div>
 </div>

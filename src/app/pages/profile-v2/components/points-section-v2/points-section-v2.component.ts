@@ -1,7 +1,7 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { MembershipCard, PointsRecord, TravelerCategory, TravelerPointsSummary } from '../../../../core/models/v2/profile-v2.model';
 import { PointsV2Service } from '../../../../core/services/v2/points-v2.service';
-
+import { BookingsServiceV2 } from '../../../../core/services/v2/bookings-v2.service';
 
 @Component({
   selector: 'app-points-section-v2',
@@ -9,7 +9,7 @@ import { PointsV2Service } from '../../../../core/services/v2/points-v2.service'
   templateUrl: './points-section-v2.component.html',
   styleUrls: ['./points-section-v2.component.scss'],
 })
-export class PointsSectionV2Component implements OnInit {
+export class PointsSectionV2Component implements OnInit, OnChanges {
   @Input() userId: string = '';
   
   points: PointsRecord[] = [];
@@ -22,63 +22,153 @@ export class PointsSectionV2Component implements OnInit {
   isLoading: boolean = true;
 
   constructor(
-    private pointsService: PointsV2Service
+    private pointsService: PointsV2Service,
+    private bookingsService: BookingsServiceV2
   ) {
     this.points = [];
   }
 
   ngOnInit(): void {
-    this.generateMockData();
+    if (this.userId) {
+      this.loadData();
+    }
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['userId'] && changes['userId'].currentValue) {
+      this.loadData();
+    }
+  }
 
-  private generateMockData(): void {
+  /**
+   * Método público para recargar los datos desde componentes externos
+   */
+  public reloadData(): void {
+    this.loadData();
+  }
+
+  private loadData(): void {
     this.isLoading = true;
     
-    // Simular carga de datos
-    setTimeout(() => {
-      this.points = this.pointsService.generateMockPoints(this.userId);
-      this.totalPoints = this.pointsService.calculateTotalPoints(this.points);
-      this.currentTrips = this.pointsService.generateMockTripsCount(this.userId);
-      
-      // Determinar categoría basada en viajes
-      this.currentCategory = this.pointsService.determineCategoryByTrips(this.currentTrips);
-      
-      // Generar tarjetas con la categoría actual
-      this.membershipCards = this.pointsService.generateMockMembershipCards(this.currentCategory);
-      
-      // Generar resumen de puntos
-      this.generatePointsSummary();
-      
-      this.isLoading = false;
-    }, 1000);
+    // Cargar todos los datos desde la API
+    this.pointsService.getLoyaltyBalanceFromAPI(this.userId).subscribe({
+      next: (balance) => {
+        // Cargar tarjetas de membresía
+        this.pointsService.getMembershipCardsFromAPI().subscribe({
+          next: (cards) => {
+            this.membershipCards = cards;
+            
+            // Cargar transacciones de puntos
+            this.pointsService.getLoyaltyTransactionsFromAPI(this.userId).subscribe({
+              next: (transactions) => {
+                // Cargar tipos de transacciones
+                this.pointsService.getLoyaltyTransactionTypesFromAPI().subscribe({
+                  next: (transactionTypes) => {
+                    // Cargar historial de viajes completados
+                    this.bookingsService.getTravelHistory(parseInt(this.userId)).subscribe({
+                      next: (travelHistory) => {
+                        // Procesar datos de la API
+                        this.processApiData(balance, transactions, transactionTypes, travelHistory);
+                        this.isLoading = false;
+                      },
+                      error: (error) => {
+                        this.processApiData(balance, transactions, transactionTypes, []);
+                        this.isLoading = false;
+                      }
+                    });
+                  },
+                  error: (error) => {
+                    this.processApiData(balance, transactions, [], []);
+                    this.isLoading = false;
+                  }
+                });
+              },
+              error: (error) => {
+                this.processApiData(balance, [], [], []);
+                this.isLoading = false;
+              }
+            });
+          },
+          error: (error) => {
+            this.processApiData(balance, [], [], []);
+            this.isLoading = false;
+          }
+        });
+      },
+      error: (error) => {
+        this.isLoading = false;
+      }
+    });
   }
 
-  private generatePointsSummary(): void {
-    const incomePoints = this.points
-      .filter(p => p.type === 'income')
-      .reduce((total, point) => total + point.points, 0);
+  private processApiData(balance: any, transactions: any[], transactionTypes: any[], travelHistory: any[]): void {
+    // Procesar saldo de puntos
+    this.totalPoints = balance?.pointsAvailable || balance?.totalPoints || balance?.balance || 0;
+
+    // Procesar transacciones
+    let mappedTransactions = transactions && transactions.length > 0 
+      ? this.mapApiTransactionsToPoints(transactions) 
+      : [];
+
+    // Ordenar por fecha descendente (más recientes primero)
+    this.points = mappedTransactions.sort((a, b) => {
+      const dateA = a.date ? a.date.getTime() : 0;
+      const dateB = b.date ? b.date.getTime() : 0;
+      return dateB - dateA;
+    });
+
+    // Procesar historial de viajes
+    this.currentTrips = travelHistory && travelHistory.length > 0 
+      ? this.calculateCompletedTrips(travelHistory) 
+      : 0;
     
-    const usedPoints = this.points
-      .filter(p => p.type === 'redemption')
-      .reduce((total, point) => total + point.points, 0);
+    // Determinar categoría basada en viajes reales
+    this.currentCategory = this.pointsService.determineCategoryByTrips(this.currentTrips);
+    
+    // Marcar la categoría actual en las tarjetas
+    this.updateCurrentCategoryInCards();
+  }
 
-    // Asegurarnos de que currentTrips esté disponible
-    const currentTrips = this.currentTrips;
-    const currentCategory = this.currentCategory;
-    const nextCategory = this.getNextCategory();
-    const pointsToNextCategory = this.calculatePointsToNextCategory();
+  private calculateCompletedTrips(travelHistory: any[]): number {
+    // Contar solo viajes completados (status 7 = PAID)
+    return travelHistory.filter(trip => trip.reservationStatusId === 7).length;
+  }
 
-    this.pointsSummary = {
-      travelerId: this.userId,
-      currentCategory: currentCategory,
-      totalPoints: incomePoints,
-      availablePoints: incomePoints - usedPoints,
-      usedPoints: usedPoints,
-      categoryStartDate: new Date('2024-01-01'), // Mock date
-      nextCategory: nextCategory,
-      pointsToNextCategory: pointsToNextCategory
-    };
+  private mapApiTransactionsToPoints(transactions: any[]): PointsRecord[] {
+    return transactions.map(transaction => {
+      // Determinar el tipo basado en transactionTypeId (1=EARNED, 2=REDEEMED)
+      const isEarned = transaction.transactionTypeId === 1 || 
+                       transaction.type === 'EARNED' || 
+                       transaction.type === 'ACCRUAL' ||
+                       transaction.points > 0;
+      
+      return {
+        booking: transaction.referenceId || transaction.bookingId || transaction.booking || 'N/A',
+        category: transaction.category || transaction.referenceType || 'General',
+        concept: transaction.comment || transaction.concept || transaction.description || 'Sin concepto',
+        tour: transaction.tourName || transaction.tour || transaction.comment || 'Tour no especificado',
+        points: Math.abs(transaction.points || 0),
+        type: isEarned ? 'acumular' : 'canjear',
+        amount: transaction.amountBase || transaction.amount || 0,
+        date: new Date(transaction.transactionDate || transaction.date || transaction.createdAt),
+        status: transaction.status || 'Confirmed'
+      };
+    });
+  }
+
+  private updateCurrentCategoryInCards(): void {
+    this.membershipCards = this.membershipCards.map(card => {
+      // Verificar si la categoría está desbloqueada basándose en viajes completados
+      const isUnlocked = this.currentTrips >= (card.minTrips || 0);
+      const isCurrent = card.category === this.currentCategory;
+      
+      return {
+        ...card,
+        unlocked: isUnlocked,
+        isCurrent: isCurrent,
+        type: isCurrent ? 'Tu categoría actual' : 'Categoría de viajero'
+      };
+    });
   }
 
   getNextCategory(): TravelerCategory | undefined {
@@ -106,7 +196,6 @@ export class PointsSectionV2Component implements OnInit {
         return undefined;
     }
   }  
-
 
   getCardClass(card: MembershipCard): string {
     return this.pointsService.getCardClass(card);
@@ -141,7 +230,7 @@ export class PointsSectionV2Component implements OnInit {
     return this.pointsService.getCategoryBadgeClass(category);
   }
 
-  // ===== MÉTODOS PARA HISTORIAL (E4-02) =====
+  // ===== MÉTODOS PARA HISTORIAL =====
   getFormattedDate(date: Date | undefined): string {
     if (!date) return 'N/A';
     return new Date(date).toLocaleDateString('es-ES', {
@@ -161,35 +250,6 @@ export class PointsSectionV2Component implements OnInit {
 
   getActionClass(type: string): string {
     return type === 'acumular' ? 'action-income' : 'action-redemption';
-  }
-
-  // ===== MÉTODOS PARA BENEFICIOS (E4-03) =====
-  getMaxDiscountForCurrentCategory(): number {
-    return this.pointsService.getMaxDiscountForCategory(this.currentCategory);
-  }
-
-  getNextCategoryFromSummary(): TravelerCategory | undefined {
-    return this.pointsSummary?.nextCategory;
-  }
-
-  getProgressText(): string {
-    const nextCategory = this.getNextCategory();
-    if (!nextCategory) return 'Categoría máxima alcanzada';
-    
-    const tripsNeeded = this.pointsSummary?.pointsToNextCategory || 0;
-    const nextCategoryName = this.getCategoryDisplayName(nextCategory);
-    
-    return `Faltan ${tripsNeeded} viajes para ${nextCategoryName}`;
-  }
-
-  getProgressPercentage(): number {
-    if (!this.pointsSummary?.nextCategory) return 100;
-    
-    const currentTrips = this.currentTrips;
-    const tripsNeeded = this.pointsSummary.pointsToNextCategory || 0;
-    const totalTrips = currentTrips + tripsNeeded;
-    
-    return totalTrips > 0 ? (currentTrips / totalTrips) * 100 : 0;
   }
 
   // ===== MÉTODOS PARA TARJETAS DE CATEGORÍA =====

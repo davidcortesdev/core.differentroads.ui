@@ -13,7 +13,6 @@ import { Subject, takeUntil } from 'rxjs';
 // Servicios de Home
 import {
   HomeSectionConfigurationService,
-  IHomeSectionConfigurationResponse,
 } from '../../../../core/services/home/home-section-configuration.service';
 import {
   HomeSectionImageService,
@@ -46,6 +45,7 @@ export class HighlightSectionV2Component implements OnInit, OnDestroy {
   protected isActive = false;
 
   private destroy$ = new Subject<void>();
+  private abortController = new AbortController();
 
   constructor(
     private readonly sanitizer: DomSanitizer,
@@ -60,6 +60,7 @@ export class HighlightSectionV2Component implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.abortController.abort();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -83,7 +84,7 @@ export class HighlightSectionV2Component implements OnInit, OnDestroy {
 
     // Si no, cargar la primera configuración activa del tipo de sección especificado
     this.homeSectionConfigurationService
-      .getBySectionType(this.sectionType, true)
+      .getBySectionType(this.sectionType, true, this.abortController.signal)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (configurations) => {
@@ -100,17 +101,9 @@ export class HighlightSectionV2Component implements OnInit, OnDestroy {
             }
             this.loadSpecificConfiguration(targetConfig.id);
           } else {
-            console.warn(
-              '⚠️ HighlightSectionV2 - No configurations found for section type:',
-              this.sectionType
-            );
           }
         },
         error: (error) => {
-          console.error(
-            '❌ HighlightSectionV2 - Error loading highlight configurations:',
-            error
-          );
         },
       });
   }
@@ -118,7 +111,7 @@ export class HighlightSectionV2Component implements OnInit, OnDestroy {
   private loadSpecificConfiguration(configId: number): void {
     // Cargar la configuración específica
     this.homeSectionConfigurationService
-      .getById(configId)
+      .getById(configId, this.abortController.signal)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (configuration) => {
@@ -132,24 +125,16 @@ export class HighlightSectionV2Component implements OnInit, OnDestroy {
             // Cargar imagen destacada (que incluye título y descripción)
             this.loadSectionImage(configId);
           } else {
-            console.warn(
-              '⚠️ HighlightSectionV2 - Configuration is not active:',
-              configId
-            );
           }
         },
         error: (error) => {
-          console.error(
-            '❌ HighlightSectionV2 - Error loading configuration:',
-            error
-          );
         },
       });
   }
 
   private loadSectionImage(configId: number): void {
     this.homeSectionImageService
-      .getByConfigurationOrdered(configId, true)
+      .getByConfigurationOrdered(configId, true, this.abortController.signal)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (images) => {
@@ -166,10 +151,6 @@ export class HighlightSectionV2Component implements OnInit, OnDestroy {
           }
         },
         error: (error) => {
-          console.error(
-            '❌ HighlightSectionV2 - Error loading section image:',
-            error
-          );
           this.image = null;
         },
       });

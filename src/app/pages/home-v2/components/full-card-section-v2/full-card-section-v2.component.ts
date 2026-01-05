@@ -1,6 +1,7 @@
 import {
   Component,
   OnInit,
+  OnDestroy,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
 } from '@angular/core';
@@ -25,10 +26,12 @@ interface Card {
   styleUrls: ['./full-card-section-v2.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class FullCardSectionV2Component implements OnInit {
+export class FullCardSectionV2Component implements OnInit, OnDestroy {
   cards: Card[] = [];
   sectionTitle: string = '';
   sectionDescription: string = '';
+
+  private abortController = new AbortController();
 
   constructor(
     private sanitizer: DomSanitizer,
@@ -41,6 +44,10 @@ export class FullCardSectionV2Component implements OnInit {
 
   ngOnInit(): void {
     this.loadFullScreenCards();
+  }
+
+  ngOnDestroy(): void {
+    this.abortController.abort();
   }
 
   protected sanitizeHtml(html: string): SafeHtml {
@@ -59,7 +66,7 @@ export class FullCardSectionV2Component implements OnInit {
   private loadFullScreenCards(): void {
     // 1. Obtener la sección con code 'FULLSCREEN_CARDS'
     this.homeSectionService
-      .getAll({ code: 'FULLSCREEN_CARDS', isActive: true })
+      .getAll({ code: 'FULLSCREEN_CARDS', isActive: true }, this.abortController.signal)
       .subscribe({
         next: (sections) => {
           if (sections.length > 0) {
@@ -67,7 +74,7 @@ export class FullCardSectionV2Component implements OnInit {
 
             // 2. Obtener las configuraciones de esta sección
             this.homeSectionConfigurationService
-              .getBySectionType(fullScreenSection.id, true)
+              .getBySectionType(fullScreenSection.id, true, this.abortController.signal)
               .subscribe({
                 next: (configurations) => {
                   if (configurations.length > 0) {
@@ -79,21 +86,15 @@ export class FullCardSectionV2Component implements OnInit {
                     // 3. Obtener todas las cards de todas las configuraciones
                     this.loadAllCardsFromConfigurations(configurations);
                   } else {
-                    console.error(
-                      'No configuration found for FULLSCREEN_CARDS section'
-                    );
                   }
                 },
                 error: (error) => {
-                  console.error('Error loading configuration:', error);
                 },
               });
           } else {
-            console.error('No FULLSCREEN_CARDS section found');
           }
         },
         error: (error) => {
-          console.error('Error loading FULLSCREEN_CARDS section:', error);
         },
       });
   }
@@ -105,7 +106,7 @@ export class FullCardSectionV2Component implements OnInit {
 
     configurations.forEach((configuration) => {
       this.homeSectionCardService
-        .getByConfiguration(configuration.id, true)
+        .getByConfiguration(configuration.id, true, this.abortController.signal)
         .subscribe({
           next: (cards) => {
             // Mapear las cards de esta configuración
@@ -130,10 +131,6 @@ export class FullCardSectionV2Component implements OnInit {
             }
           },
           error: (error) => {
-            console.error(
-              `Error loading cards for configuration ${configuration.id}:`,
-              error
-            );
             completedRequests++;
 
             // Si hemos completado todas las peticiones (incluso con errores), actualizar

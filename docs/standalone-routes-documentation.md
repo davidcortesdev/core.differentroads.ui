@@ -9,6 +9,7 @@ Este documento describe la implementación de rutas standalone que permiten acce
 ### Rutas Standalone (Sin Header/Footer)
 - `/standalone/checkout` - Checkout sin ID de reserva
 - `/standalone/checkout/:reservationId` - Checkout con ID de reserva específico
+- `/standalone/bookingsv2/:id` - Detalle de reserva sin layout
 
 ### Rutas Principales (Con Header/Footer)
 - Todas las demás rutas mantienen el header y footer normal
@@ -62,6 +63,7 @@ const routes: Routes = [
     children: [
       { path: 'checkout', component: CheckoutV2Component },
       { path: 'checkout/:reservationId', component: CheckoutV2Component },
+      { path: 'bookingsv2/:id', component: Bookingsv2Component },
     ],
   },
   // Rutas principales (con header y footer)
@@ -94,7 +96,7 @@ AppComponent
 └── router-outlet
     └── StandaloneComponent
         └── router-outlet
-            └── CheckoutV2Component
+            └── CheckoutV2Component / Bookingsv2Component
 ```
 
 ### Rutas Principales
@@ -134,9 +136,27 @@ this.router.navigate(['/checkout-v2', reservationId]);
 <a [routerLink]="['/checkout-v2', reservationId]">Checkout con ID</a>
 ```
 
+#### Acceder a Bookingsv2 Standalone
+```typescript
+// Navegación programática
+this.router.navigate(['/standalone/bookingsv2', bookingId]);
+
+// En templates
+<a [routerLink]="['/standalone/bookingsv2', bookingId]">Booking Standalone</a>
+```
+
+#### Acceder a Bookingsv2 Normal
+```typescript
+// Navegación programática
+this.router.navigate(['/bookingsv2', bookingId]);
+
+// En templates
+<a [routerLink]="['/bookingsv2', bookingId]">Booking Normal</a>
+```
+
 ### Para Integraciones Externas
 
-#### Iframe
+#### Iframe - Checkout
 ```html
 <iframe 
   src="https://tu-dominio.com/standalone/checkout/123"
@@ -146,12 +166,30 @@ this.router.navigate(['/checkout-v2', reservationId]);
 </iframe>
 ```
 
+#### Iframe - Detalle de Reserva
+```html
+<iframe 
+  src="https://tu-dominio.com/standalone/bookingsv2/456"
+  width="100%" 
+  height="800px"
+  frameborder="0">
+</iframe>
+```
+
 #### Popup/Modal
 ```javascript
+// Checkout
 window.open(
   'https://tu-dominio.com/standalone/checkout/123',
   'checkout',
   'width=800,height=600,scrollbars=yes,resizable=yes'
+);
+
+// Detalle de reserva
+window.open(
+  'https://tu-dominio.com/standalone/bookingsv2/456',
+  'booking',
+  'width=900,height=700,scrollbars=yes,resizable=yes'
 );
 ```
 
@@ -195,10 +233,12 @@ window.open(
 #### Con Header y Footer
 - `http://localhost:4200/checkout-v2`
 - `http://localhost:4200/checkout-v2/123`
+- `http://localhost:4200/bookingsv2/123`
 
 #### Sin Header y Footer
 - `http://localhost:4200/standalone/checkout`
 - `http://localhost:4200/standalone/checkout/123`
+- `http://localhost:4200/standalone/bookingsv2/123`
 
 ### Verificaciones
 - [x] Las rutas standalone no muestran header ni footer

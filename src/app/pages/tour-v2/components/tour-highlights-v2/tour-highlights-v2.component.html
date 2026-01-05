@@ -21,13 +21,13 @@
     [showIndicators]="true"
     class="custom-carousel"
   >
-    <ng-template let-highlight pTemplate="item">
+    <ng-template let-highlight #item>
       <p-card
         styleClass="highlight-card"
         [style]="cardStyle"
         (click)="openFullHighlight(highlight)"
       >
-        <ng-template pTemplate="header">
+        <ng-template #header>
           <div class="card-header">
             <img [src]="highlight.image" [alt]="highlight.title" loading="lazy" />
             <span class="status-badge" [class.optional]="highlight.optional">
@@ -35,7 +35,7 @@
             </span>
           </div>
         </ng-template>
-        <ng-template pTemplate="content">
+        <ng-template #content>
           <h3 [title]="highlight.title">{{ highlight.title }}</h3>
           <!-- Aplicar clase condicional para mostrar puntos suspensivos -->
           <div

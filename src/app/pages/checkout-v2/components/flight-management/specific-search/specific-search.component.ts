@@ -1,26 +1,46 @@
 import { Component, EventEmitter, Input, OnInit, Output, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { forkJoin, of, Subject, Observable } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
-import { ITempFlightOffer } from '../../../../../core/models/amadeus/flight.types';
+import { takeUntil, catchError, switchMap, map } from 'rxjs/operators';
 import { FlightSegment, Flight } from '../../../../../core/models/tours/flight.model';
-import { AmadeusService } from '../../../../../core/services/amadeus.service';
 import { TextsService } from '../../../../../core/services/checkout/texts.service';
 import { TravelersService } from '../../../../../core/services/checkout/travelers.service';
 import { DepartureConsolidadorSearchLocationService, ConsolidadorSearchLocationWithSourceResponse } from '../../../../../core/services/departure/departure-consolidador-search-location.service';
+import { DepartureConsolidadorTourAirportService, DepartureConsolidadorTourAirportResponse } from '../../../../../core/services/departure/departure-consolidador-tour-airport.service';
 import { DepartureService, DepartureAirportTimesResponse } from '../../../../../core/services/departure/departure.service';
 import { LocationAirportNetService } from '../../../../../core/services/locations/locationAirportNet.service';
 import { LocationNetService } from '../../../../../core/services/locations/locationNet.service';
-import { FlightSearchService, FlightSearchRequest, IFlightPackDTO, IFlightDetailDTO, IFlightSearchResultDTO, IFlightSearchWarning, IFlightSearchMeta } from '../../../../../core/services/flight-search.service';
+import { LocationAirport, Location } from '../../../../../core/models/location/location.model';
+import { FlightSearchService, FlightSearchRequest, IFlightPackDTO, IFlightDetailDTO, IFlightSearchResultDTO, IFlightSearchWarning, IFlightSearchMeta } from '../../../../../core/services/flight/flight-search.service';
 import { IFlightPackDTO as IFlightsNetFlightPackDTO } from '../../../services/flightsNet.service';
 import { ReservationTravelerService, IReservationTravelerResponse } from '../../../../../core/services/reservation/reservation-traveler.service';
 import { ReservationTravelerActivityPackService, IReservationTravelerActivityPackResponse } from '../../../../../core/services/reservation/reservation-traveler-activity-pack.service';
 import { FlightSelectionState } from '../../../types/flight-selection-state';
-import { AirportCityCacheService } from '../../../../../core/services/airport-city-cache.service';
+import { AirportCityCacheService } from '../../../../../core/services/locations/airport-city-cache.service';
 
 interface Ciudad {
   nombre: string;
   codigo: string;
+}
+
+// Constantes para tipos de fuente de aeropuertos
+enum AirportSourceType {
+  DEFAULT = 'Default',
+  TOUR_AIRPORT = 'TourAirport',
+  LOCATION = 'Location'
+}
+
+// Constantes para tipos de fuente de vuelos
+enum FlightSourceType {
+  AMADEUS = 'amadeus'
+}
+
+// Constantes para tipos de vuelo (flightTypeId)
+enum FlightTypeId {
+  IDA_NEW = 0,        // IDA en el nuevo sistema
+  VUELTA_NEW = 1,     // VUELTA en el nuevo sistema
+  IDA_LEGACY = 4,     // IDA en el sistema legacy
+  VUELTA_LEGACY = 5   // VUELTA en el sistema legacy
 }
 
 @Component({
@@ -41,6 +61,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   @Input() flights: Flight[] = [];
   @Input() departureId: number | null = null;
   @Input() reservationId: number | null = null;
+  @Input() tourId: number | null = null; // ✅ NUEVO: Necesario para obtener aeropuertos permitidos
   @Input() departureActivityPackId: number | null = null; // ✅ NUEVO: ID del paquete del departure
   @Input() selectedFlightFromParent: IFlightPackDTO | null = null; // Nuevo input para sincronización con el padre
 
@@ -50,11 +71,20 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   equipajeMano = false;
   equipajeBodega = false;
   tourOrigenConstante: Ciudad = { nombre: '', codigo: '' };
-  tourDestinoConstante: Ciudad = { nombre: 'Madrid', codigo: 'MAD' };
+  tourDestinoConstante: Ciudad = { nombre: '', codigo: '' }; // ✅ CORREGIDO: Ya no está hardcodeado, se llena desde la API
   fechaIdaConstante = '';
   fechaRegresoConstante = '';
   horaIdaConstante = '';
   horaRegresoConstante = '';
+  
+  // Límites para fecha/hora de ida (llegada al aeropuerto)
+  maxFechaIda: Date | null = null;
+  maxHoraIda: string | null = null;
+  
+  // Límites para fecha/hora de vuelta (salida del aeropuerto)
+  minFechaVuelta: Date | null = null;
+  minHoraVuelta: string | null = null;
+  
   filteredCities: Ciudad[] = [];
   combinedCities: { nombre: string; codigo: string; source: string; id: number }[] = [];
   readonly aerolineas: Ciudad[] = [
@@ -68,7 +98,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     { label: '2+ Escalas', value: 'multiples' },
   ];
   readonly aerolineaOptions = this.aerolineas.map((a) => ({ label: a.nombre, value: a.codigo }));
-  flightOffers: ITempFlightOffer[] = [];
   isLoading = false;
   isLoadingDetails = false;
   searchPerformed = false;
@@ -102,10 +131,10 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
 
   constructor(
     private readonly fb: FormBuilder,
-    private readonly amadeusService: AmadeusService,
     private readonly travelersService: TravelersService,
     private readonly textsService: TextsService,
     private readonly departureConsolidadorSearchLocationService: DepartureConsolidadorSearchLocationService,
+    private readonly departureConsolidadorTourAirportService: DepartureConsolidadorTourAirportService,
     private readonly departureService: DepartureService,
     private readonly locationAirportNetService: LocationAirportNetService,
     private readonly locationNetService: LocationNetService,
@@ -133,12 +162,13 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    console.log('ngOnChanges - specific-search:', changes);
-    if (changes['departureId'] && changes['departureId'].currentValue && 
-        changes['departureId'].currentValue !== changes['departureId'].previousValue) {
-      console.log('🔄 Recargando datos de specific-search');
+    if ((changes['departureId'] && changes['departureId'].currentValue && 
+        changes['departureId'].currentValue !== changes['departureId'].previousValue) ||
+        (changes['tourId'] && changes['tourId'].currentValue !== changes['tourId'].previousValue)) {
+      if (this.departureId) {
       this.loadCombinedCities();
       this.loadAirportTimes();
+      }
     }
 
     // Nuevo: Actualizar selectedFlight cuando cambie desde el padre
@@ -147,16 +177,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       changes['selectedFlightFromParent'].currentValue !==
         changes['selectedFlightFromParent'].previousValue
     ) {
-      console.log('🔄 selectedFlightFromParent cambió');
-      console.log(
-        '📊 Valor anterior:',
-        changes['selectedFlightFromParent'].previousValue
-      );
-      console.log(
-        '📊 Valor actual:',
-        changes['selectedFlightFromParent'].currentValue
-      );
-      console.log('🔄 Actualizando selectedFlight interno...');
 
       this.selectedFlight = changes['selectedFlightFromParent'].currentValue;
 
@@ -166,39 +186,16 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         this.selectedFlight &&
         this.reservationId
       ) {
-        console.log(
-          '💾 Guardando asignaciones para vuelo seleccionado desde padre...'
-        );
-        console.log('🎯 Vuelo seleccionado:', this.selectedFlight);
-        console.log('🆔 reservationId:', this.reservationId);
-        console.log('📍 Origen: default-flights (padre)');
 
         this.saveFlightAssignments()
           .then((success) => {
             if (success) {
-              console.log('✅ Asignaciones guardadas exitosamente desde padre');
+
             } else {
-              console.error('❌ Error al guardar asignaciones desde padre');
             }
           })
           .catch((error) => {
-            console.error(
-              '💥 Error al guardar asignaciones desde padre:',
-              error
-            );
           });
-      } else {
-        if (this.isInternalSelection) {
-          console.log(
-            '⚠️ No se guardan asignaciones - es una selección interna'
-          );
-        } else {
-          console.log(
-            '⚠️ No se puede guardar - selectedFlight o reservationId faltan'
-          );
-          console.log('📊 selectedFlight:', this.selectedFlight);
-          console.log('🆔 reservationId:', this.reservationId);
-        }
       }
 
       // Resetear la bandera después de procesar el cambio
@@ -218,7 +215,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
 
   private createFlightForm(): FormGroup {
     return this.fb.group({
-      origen: [null],
+      origen: [null, Validators.required],
+      destinoVuelta: [null], // ✅ NUEVO: Campo para destino de vuelta en ida y vuelta
       tipoViaje: [this.tipoViaje],
       equipajeMano: [this.equipajeMano],
       equipajeBodega: [this.equipajeBodega],
@@ -227,6 +225,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       infants: [0],
       aerolinea: [null],
       escala: [null],
+      fechaHoraIda: [null, [this.validateFechaHoraIda, this.validateRequiredFechaHoraIda]],
+      fechaHoraVuelta: [null, [this.validateFechaHoraVuelta, this.validateRequiredFechaHoraVuelta]],
     });
   }
 
@@ -240,7 +240,42 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   private initFormListeners(): void {
     this.flightForm.get('tipoViaje')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((value) => {
       this.tipoViaje = value;
+        
+        // Actualizar validaciones requeridas según el tipo de viaje
+        const fechaHoraIdaControl = this.flightForm.get('fechaHoraIda');
+        const fechaHoraVueltaControl = this.flightForm.get('fechaHoraVuelta');
+        
+        if (fechaHoraIdaControl) {
+          fechaHoraIdaControl.updateValueAndValidity();
+        }
+        if (fechaHoraVueltaControl) {
+          fechaHoraVueltaControl.updateValueAndValidity();
+        }
+        
+        // Limpiar fecha/hora de vuelta si el tipo de viaje es "Solo ida"
+        // Hacerlo ANTES de actualizar validaciones para evitar validar campos que no deberían existir
+        if (value === 'Ida') {
+          this.flightForm.get('fechaHoraVuelta')?.setValue(null, { emitEvent: false });
+          this.flightForm.get('destinoVuelta')?.setValue(null, { emitEvent: false });
+        }
+        
+        // Limpiar fecha/hora de ida si el tipo de viaje es "Solo vuelta"
+        if (value === 'Vuelta') {
+          this.flightForm.get('fechaHoraIda')?.setValue(null, { emitEvent: false });
+          this.flightForm.get('destinoVuelta')?.setValue(null, { emitEvent: false });
+        }
+        
+        if (value === 'IdaVuelta' && this.flightForm.get('origen')?.value) {
+          this.flightForm.get('destinoVuelta')?.setValue(this.flightForm.get('origen')?.value);
+        }
+      });
+    
+    this.flightForm.get('origen')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((value) => {
+      if (this.tipoViaje === 'IdaVuelta' && value) {
+        this.flightForm.get('destinoVuelta')?.setValue(value);
+      }
     });
+    
     this.flightForm.get('equipajeMano')?.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((value) => {
       this.equipajeMano = value;
     });
@@ -262,47 +297,188 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   private loadCombinedCities(): void {
-    this.departureConsolidadorSearchLocationService.getCombinedLocations(this.departureId!)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (data: ConsolidadorSearchLocationWithSourceResponse[]) => {
-          const locationIds = data.filter(item => typeof item.locationId === 'number').map(item => item.locationId as number);
-          const airportIds = data.filter(item => typeof item.locationAirportId === 'number').map(item => item.locationAirportId as number);
+    if (!this.departureId) {
+      this.combinedCities = [];
+      return;
+    }
+
+    // Obtener aeropuertos por defecto (IsDefaultConsolidator=true) desde la API de Locations
+    const defaultAirports$ = this.locationAirportNetService.getAirports({ IsDefaultConsolidator: true }).pipe(
+      map((airports: LocationAirport[]) => {
+        return airports.filter(airport => airport.isDefaultConsolidator === true);
+      }),
+      catchError(error => {
+        return of([]);
+      })
+    );
+
+    // Obtener ubicaciones configuradas en el consolidador (Tour + Departure)
+    const configuredLocations$ = this.departureConsolidadorSearchLocationService.getCombinedLocations(this.departureId!).pipe(
+      catchError(error => {
+        return of([]);
+      })
+    );
+    
+    // También obtener las localizaciones directamente del departure (por si el combined no las incluye)
+    const departureLocations$ = this.departureConsolidadorSearchLocationService.getDepartureLocations(this.departureId!).pipe(
+      catchError(error => {
+        return of([]);
+      })
+    );
+
+    // Obtener aeropuertos del tour configurados en el consolidador
+    const tourAirports$ = this.departureConsolidadorTourAirportService.getTourAirports(this.departureId!).pipe(
+      catchError(error => {
+        return of([]);
+      })
+    );
+
+    // Combinar todas las fuentes
           forkJoin({
+      defaultAirports: defaultAirports$,
+      configuredLocations: configuredLocations$,
+      departureLocations: departureLocations$,
+      tourAirports: tourAirports$
+    }).pipe(
+      takeUntil(this.destroy$),
+      switchMap(({ defaultAirports, configuredLocations, departureLocations, tourAirports }) => {
+        // Combinar configuredLocations y departureLocations, eliminando duplicados por ID
+        const allLocationsMap = new Map<number, ConsolidadorSearchLocationWithSourceResponse>();
+        [...configuredLocations, ...departureLocations].forEach(loc => {
+          if (!allLocationsMap.has(loc.id)) {
+            allLocationsMap.set(loc.id, loc);
+          }
+        });
+        const allConfiguredLocations = Array.from(allLocationsMap.values());
+
+        // Obtener IDs de aeropuertos del tour (solo los incluidos)
+        const tourAirportIds = tourAirports
+          .filter((airport: DepartureConsolidadorTourAirportResponse) => airport.isIncluded === true)
+          .map((airport: DepartureConsolidadorTourAirportResponse) => airport.locationAirportId);
+
+        // Obtener detalles de las ubicaciones configuradas (usando todas las localizaciones combinadas)
+        const locationIds = allConfiguredLocations.filter(item => typeof item.locationId === 'number').map(item => item.locationId as number);
+        const configuredAirportIds = allConfiguredLocations.filter(item => typeof item.locationAirportId === 'number').map(item => item.locationAirportId as number);
+        
+        // TODO: Obtener todos los aeropuertos asociados a las localizaciones configuradas
+        // Para cada locationId, obtener sus aeropuertos usando el filtro LocationId
+        // COMENTADO TEMPORALMENTE - Hay un problema en el backend que no devuelve las localizaciones configuradas
+        // const locationAirportsRequests = locationIds.map(locationId => 
+        //   this.locationAirportNetService.getAirports({ LocationId: locationId }).pipe(
+        //     catchError(error => {
+        //       return of([]);
+        //     })
+        //   )
+        // );
+        
+        // Combinar todos los IDs de aeropuertos (configurados + tour) sin duplicados
+        const allAirportIds = [...new Set([...configuredAirportIds, ...tourAirportIds])];
+        
+        return forkJoin({
             locations: locationIds.length ? this.locationNetService.getLocationsByIds(locationIds) : of([]),
-            airports: airportIds.length ? this.locationAirportNetService.getAirportsByIds(airportIds) : of([])
-          }).pipe(takeUntil(this.destroy$)).subscribe(({ locations, airports }) => {
-            const locationMap = new Map(locations.map((l: any) => [l.id, l]));
-            const airportMap = new Map(airports.map((a: any) => [a.id, a]));
-            this.combinedCities = data.map(item => {
-              if (item.locationId && locationMap.has(item.locationId)) {
-                const loc = locationMap.get(item.locationId);
-                return {
-                  nombre: loc && loc.name ? loc.name : '',
-                  codigo: loc && loc.iataCode ? String(loc.iataCode) : (loc && loc.code ? String(loc.code) : ''),
-                  source: item.source,
-                  id: item.id
-                };
-              } else if (item.locationAirportId && airportMap.has(item.locationAirportId)) {
-                const airport = airportMap.get(item.locationAirportId);
-                return {
-                  nombre: airport && airport.name ? airport.name : '',
-                  codigo: airport && airport.iata ? String(airport.iata) : '',
-                  source: item.source,
-                  id: item.id
-                };
-              } else {
-                return {
-                  nombre: '',
-                  codigo: '',
-                  source: item.source,
-                  id: item.id
-                };
+          airports: allAirportIds.length ? this.locationAirportNetService.getAirportsByIds(allAirportIds) : of([]),
+          // locationAirports: locationAirportsRequests.length > 0 ? forkJoin(locationAirportsRequests) : of([])
+          locationAirports: of([]) // COMENTADO TEMPORALMENTE
+        }).pipe(
+          map(configuredLocationsDetails => {
+            // Crear mapa con aeropuertos por defecto
+            // La API ya debe devolver solo los que tienen IsDefaultConsolidator=true
+            const citiesMap = new Map<string, { nombre: string; codigo: string; source: string; id: number }>();
+            defaultAirports.forEach((airport: LocationAirport) => {
+              if (airport.iata && airport.name) {
+                const key = airport.iata.toUpperCase();
+                citiesMap.set(key, {
+                  nombre: airport.name,
+                  codigo: airport.iata,
+                  source: AirportSourceType.DEFAULT,
+                  id: airport.id
+                });
               }
             });
-          });
-        },
-        error: () => {
+
+            // Agregar ubicaciones configuradas al mapa
+            const locationMap = new Map(configuredLocationsDetails.locations.map((l: Location) => [l.id, l]));
+            const airportMap = new Map(configuredLocationsDetails.airports.map((a: LocationAirport) => [a.id, a]));
+            
+            // TODO: Agregar aeropuertos asociados a las localizaciones configuradas
+            // COMENTADO TEMPORALMENTE - Hay un problema en el backend que no devuelve las localizaciones configuradas
+            // locationAirports es un array de arrays (cada elemento es un array de aeropuertos para cada locationId)
+            // const locationAirportsArray = configuredLocationsDetails.locationAirports || [];
+            // if (Array.isArray(locationAirportsArray) && locationAirportsArray.length > 0) {
+            //   locationAirportsArray.forEach((airportsForLocation: any[]) => {
+            //     if (Array.isArray(airportsForLocation)) {
+            //       airportsForLocation.forEach((airport: any) => {
+            //         if (airport.iata && airport.name) {
+            //           const key = airport.iata.toUpperCase();
+            //           if (!citiesMap.has(key)) {
+            //             citiesMap.set(key, {
+            //               nombre: airport.name,
+            //               codigo: airport.iata,
+            //               source: AirportSourceType.LOCATION,
+            //               id: airport.id
+            //             });
+            //           }
+            //         }
+            //       });
+            //     }
+            //   });
+            // }
+
+            // Agregar ubicaciones configuradas (search locations) - usar allConfiguredLocations
+            allConfiguredLocations.forEach(item => {
+              if (item.locationId && locationMap.has(item.locationId)) {
+                const loc = locationMap.get(item.locationId);
+                const codigo = loc && loc.iataCode ? String(loc.iataCode) : (loc && loc.code ? String(loc.code) : '');
+                if (codigo) {
+                  const key = codigo.toUpperCase();
+                  citiesMap.set(key, {
+                  nombre: loc && loc.name ? loc.name : '',
+                    codigo: codigo,
+                  source: item.source,
+                  id: item.id
+                  });
+                }
+              } else if (item.locationAirportId && airportMap.has(item.locationAirportId)) {
+                const airport = airportMap.get(item.locationAirportId);
+                if (airport && airport.iata) {
+                  const key = airport.iata.toUpperCase();
+                  citiesMap.set(key, {
+                    nombre: airport.name ? airport.name : '',
+                    codigo: airport.iata,
+                  source: item.source,
+                  id: item.id
+                  });
+                }
+              }
+            });
+
+            // Agregar aeropuertos del tour configurados (solo los incluidos)
+            tourAirports
+              .filter((airport: DepartureConsolidadorTourAirportResponse) => airport.isIncluded === true)
+              .forEach((tourAirport: DepartureConsolidadorTourAirportResponse) => {
+                if (airportMap.has(tourAirport.locationAirportId)) {
+                  const airport = airportMap.get(tourAirport.locationAirportId);
+                  if (airport && airport.iata) {
+                    const key = airport.iata.toUpperCase();
+                    citiesMap.set(key, {
+                      nombre: airport.name ? airport.name : '',
+                      codigo: airport.iata,
+                      source: AirportSourceType.TOUR_AIRPORT,
+                      id: tourAirport.id
+                    });
+                  }
+                }
+              });
+
+            return { defaultAirports, configuredLocationsDetails, citiesMap };
+          })
+        );
+      })
+    ).subscribe({
+      next: ({ citiesMap }) => {
+        this.combinedCities = Array.from(citiesMap.values());
+      },
+      error: (error) => {
           this.combinedCities = [];
         }
       });
@@ -351,17 +527,46 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
               };
             }
           }
+          
+          // Configurar límites y valores por defecto para fecha/hora de IDA (llegada)
           if (data.maxArrivalDateAtAirport) {
             this.fechaIdaConstante = data.maxArrivalDateAtAirport || '';
             this.horaIdaConstante = data.maxArrivalTimeAtAirport || '';
+            
+            // Convertir string a Date para el límite máximo
+            const maxDateIda = new Date(data.maxArrivalDateAtAirport);
+            if (!isNaN(maxDateIda.getTime())) {
+              this.maxFechaIda = maxDateIda;
+              this.maxHoraIda = data.maxArrivalTimeAtAirport || null;
+              
+              // Precargar el valor por defecto en el formulario (combinar fecha y hora)
+              const fechaHoraIda = this.combineDateAndTime(maxDateIda, data.maxArrivalTimeAtAirport);
+              this.flightForm.patchValue({
+                fechaHoraIda: fechaHoraIda
+              });
+            }
           }
+          
+          // Configurar límites y valores por defecto para fecha/hora de VUELTA (salida)
           if (data.minDepartureDateFromAirport) {
             this.fechaRegresoConstante = data.minDepartureDateFromAirport || '';
             this.horaRegresoConstante = data.minDepartureTimeFromAirport || '';
+            
+            // Convertir string a Date para el límite mínimo
+            const minDateVuelta = new Date(data.minDepartureDateFromAirport);
+            if (!isNaN(minDateVuelta.getTime())) {
+              this.minFechaVuelta = minDateVuelta;
+              this.minHoraVuelta = data.minDepartureTimeFromAirport || null;
+              
+              // Precargar el valor por defecto en el formulario (combinar fecha y hora)
+              const fechaHoraVuelta = this.combineDateAndTime(minDateVuelta, data.minDepartureTimeFromAirport);
+              this.flightForm.patchValue({
+                fechaHoraVuelta: fechaHoraVuelta
+              });
+            }
           }
         },
         error: (err) => {
-          console.error('Error obteniendo datos de aeropuerto:', err);
         }
       });
   }
@@ -369,13 +574,28 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   // --- Métodos públicos y de lógica de negocio ---
 
   buscar() {
+    // Marcar todos los campos como touched para mostrar errores
+    this.flightForm.markAllAsTouched();
+    
+    // Verificar si el formulario es válido
+    if (this.flightForm.invalid) {
+      this.errorMessage = 'Por favor, completa todos los campos requeridos';
+      // Limpiar resultados anteriores para evitar que se muestre el mensaje de carga de ciudades
+      this.flightOffersRaw = [];
+      this.adaptedFlightPacks = [];
+      this.searchPerformed = false;
+      // Limpiar el caché de ciudades para evitar estados inconsistentes
+      this.airportCityCacheService.clearCache();
+      return;
+    }
+    
     this.searchPerformed = true;
+    this.errorMessage = ''; // Limpiar mensaje de error anterior
     this.searchFlights();
   }
 
   searchFlights() {
     if (!this.departureId || !this.reservationId) {
-      console.error('Faltan departureId o reservationId');
       return;
     }
 
@@ -391,24 +611,85 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
 
     const formValue = this.flightForm.value;
     const tipoViaje = formValue.tipoViaje;
-    const originCode = formValue.origen?.codigo || null;
-    const destinationCode = formValue.origen?.codigo || null;
+    
+    // ✅ CORREGIDO: Determinar códigos según el tipo de viaje
+    let originCode: string | null = null;
+    let destinationCode: string | null = null;
+    
+    if (tipoViaje === 'Ida') {
+      originCode = formValue.origen?.codigo || null;
+      destinationCode = this.tourOrigenConstante.codigo || null;
+    } else if (tipoViaje === 'Vuelta') {
+      originCode = this.tourDestinoConstante.codigo || null;
+      destinationCode = formValue.origen?.codigo || null;
+    } else if (tipoViaje === 'IdaVuelta') {
+      originCode = formValue.origen?.codigo || null;
+      destinationCode = formValue.destinoVuelta?.codigo || formValue.origen?.codigo || null;
+    }
+    
+    // Obtener fechas/horas seleccionadas y formatearlas
+    // Solo incluir fecha/hora de vuelta si el tipo de viaje requiere vuelta
+    const fechaHoraIda = formValue.fechaHoraIda;
+    const fechaHoraVuelta = (tipoViaje === 'Vuelta' || tipoViaje === 'IdaVuelta') ? formValue.fechaHoraVuelta : null;
+    
+    const fechaIdaFormatted = fechaHoraIda ? this.formatDateForAPI(fechaHoraIda) : null;
+    const horaIdaFormatted = fechaHoraIda ? this.formatTimeForAPI(fechaHoraIda) : null;
+    const fechaVueltaFormatted = fechaHoraVuelta ? this.formatDateForAPI(fechaHoraVuelta) : null;
+    const horaVueltaFormatted = fechaHoraVuelta ? this.formatTimeForAPI(fechaHoraVuelta) : null;
+    
+    // Validar fechas/horas antes de enviar la petición (usando valores formateados para evitar problemas de zona horaria)
+    const validationError = this.validateFlightDatesBeforeSearch(tipoViaje, fechaHoraIda, fechaHoraVuelta, fechaIdaFormatted, horaIdaFormatted, fechaVueltaFormatted, horaVueltaFormatted);
+    if (validationError) {
+      this.isLoading = false;
+      this.errorMessage = validationError;
+      // Limpiar resultados anteriores para evitar que se muestre el mensaje de carga de ciudades
+      this.flightOffersRaw = [];
+      this.adaptedFlightPacks = [];
+      this.searchPerformed = false;
+      // Limpiar el caché de ciudades para evitar estados inconsistentes
+      this.airportCityCacheService.clearCache();
+      return;
+    }
 
     const request: FlightSearchRequest = {
       departureId: this.departureId!,
       reservationId: this.reservationId || 0,
       tipoViaje: tipoViaje,
       iataOrigen: originCode,
-      iataDestino: destinationCode
+      iataDestino: destinationCode,
+      fechaIda: fechaIdaFormatted,
+      horaIda: horaIdaFormatted,
+      // Solo incluir fecha/hora de vuelta si el tipo de viaje requiere vuelta
+      fechaVuelta: (tipoViaje === 'Vuelta' || tipoViaje === 'IdaVuelta') ? fechaVueltaFormatted : null,
+      horaVuelta: (tipoViaje === 'Vuelta' || tipoViaje === 'IdaVuelta') ? horaVueltaFormatted : null
     };
     
-    // Pasar autoSearch=false para evitar llamadas automáticas que causen bucles
     this.flightSearchService.searchFlights(request, false).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response: IFlightSearchResultDTO) => {
         this.isLoading = false;
-        
-        // Extraer los flightPacks de la nueva respuesta
         this.flightOffersRaw = response.flightPacks || [];
+        
+        // Ordenar vuelos dentro de cada paquete ANTES de adaptar
+        // Esto asegura que IDA aparezca antes que VUELTA
+        this.flightOffersRaw.forEach(flightPack => {
+          if (flightPack.flights && flightPack.flights.length > 0) {
+            const isIda = (flightTypeId: number): boolean => {
+              return flightTypeId === FlightTypeId.IDA_NEW || flightTypeId === FlightTypeId.IDA_LEGACY;
+            };
+            
+            flightPack.flights.sort((a, b) => {
+              const idA = a.flightTypeId ?? 0;
+              const idB = b.flightTypeId ?? 0;
+              const aIsIda = isIda(idA);
+              const bIsIda = isIda(idB);
+              
+              if (aIsIda && !bIsIda) return -1;
+              if (!aIsIda && bIsIda) return 1;
+              
+              return idA - idB;
+            });
+          }
+        });
         
         // Procesar warnings y meta información
         this.hasSearchWarnings = response.hasWarnings || false;
@@ -420,7 +701,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
             const warningsArray = JSON.parse(response.warningsJson);
             this.searchWarnings = Array.isArray(warningsArray) ? warningsArray : [];
           } catch (error) {
-            console.warn('Error al parsear warnings JSON:', error);
             this.searchWarnings = [];
           }
         } else {
@@ -432,7 +712,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
           try {
             this.searchMeta = JSON.parse(response.metaJson);
           } catch (error) {
-            console.warn('Error al parsear meta JSON:', error);
             this.searchMeta = null;
           }
         } else {
@@ -441,19 +720,12 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         
         // Log de información de la búsqueda
         if (this.hasSearchWarnings && this.searchWarnings.length > 0) {
-          console.warn('⚠️ La búsqueda tiene warnings:', this.searchWarnings);
           this.searchWarnings.forEach(warning => {
-            console.warn(`  - ${warning.title}: ${warning.detail} (Status: ${warning.status}, Code: ${warning.code})`);
           });
-        }
-        if (this.isEmptySearchResult) {
-          console.log('ℹ️ La búsqueda no retornó resultados');
-        }
-        if (this.searchMeta) {
-          console.log('📊 Meta información de búsqueda:', this.searchMeta);
         }
         
         // Transformar los datos directamente aquí para evitar recreaciones constantes
+        // El ordenamiento se hace dentro de adaptFlightPackForFlightItem también
         this.adaptedFlightPacks = this.flightOffersRaw.map(flightPack => this.adaptFlightPackForFlightItem(flightPack));
         
         // Precargar nombres de ciudades para todos los aeropuertos
@@ -468,7 +740,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         this.transformedFlights = [];
         this.filteredFlightsChange.emit([]);
         this.errorMessage = 'Ocurrió un error al buscar vuelos. Por favor, inténtalo de nuevo.';
-        console.error('Error al buscar vuelos:', err);
       },
     });
   }
@@ -477,7 +748,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     const city = this.filteredCities.find(
       (c) => c.nombre.toLowerCase() === cityName.toLowerCase()
     );
-    return city ? city.codigo : 'MAD';
+    // ✅ CORREGIDO: Ya no hay valor hardcodeado, retorna vacío si no se encuentra
+    return city ? city.codigo : '';
   }
 
   filterOffers() {
@@ -497,7 +769,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       this.displayFlights();
     } else {
       // Si las ciudades no están cargadas, esperar a que se completen
-      console.log('⏳ Esperando a que se carguen las ciudades antes de mostrar vuelos...');
+
       this.preloadAllAirportCities().then(() => {
         this.displayFlights();
       });
@@ -508,13 +780,33 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
    * Método privado para mostrar los vuelos una vez que las ciudades están cargadas
    */
   private displayFlights(): void {
+    // Asegurar que los vuelos estén ordenados antes de adaptar
+    this.flightOffersRaw.forEach(flightPack => {
+      if (flightPack.flights && flightPack.flights.length > 0) {
+        const isIda = (flightTypeId: number): boolean => {
+          return flightTypeId === FlightTypeId.IDA_NEW || flightTypeId === FlightTypeId.IDA_LEGACY;
+        };
+        
+        flightPack.flights.sort((a, b) => {
+          const idA = a.flightTypeId ?? 0;
+          const idB = b.flightTypeId ?? 0;
+          const aIsIda = isIda(idA);
+          const bIsIda = isIda(idB);
+          
+          if (aIsIda && !bIsIda) return -1;
+          if (!aIsIda && bIsIda) return 1;
+          
+          return idA - idB;
+        });
+      }
+    });
+    
     // Actualizar adaptedFlightPacks para mantener sincronización
     this.adaptedFlightPacks = this.flightOffersRaw.map(flightPack => this.adaptFlightPackForFlightItem(flightPack));
     
     this.transformedFlights = this.transformOffersToFlightFormat(this.flightOffersRaw);
     this.filteredFlightsChange.emit(this.transformedFlights);
-    
-    console.log('✅ Vuelos mostrados con nombres de ciudades cargados');
+
   }
 
   // Método para obtener detalles de un vuelo específico cuando sea necesario
@@ -557,7 +849,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       },
       error: (err) => {
         this.isLoadingDetails = false;
-        console.error('Error al cargar detalles de vuelos:', err);
         // Si falla la carga de detalles, mostrar todos los vuelos
         this.filterOffers();
       }
@@ -572,13 +863,36 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     this.flightOffersRaw = this.flightOffersRaw.filter((flightPack) => {
       if (!flightPack.flights || flightPack.flights.length === 0) return false;
       
-      // Buscar el primer vuelo de ida (flightTypeId === 4)
-      const outboundFlight = flightPack.flights.find(f => f.flightTypeId === 4);
+      // Buscar el primer vuelo de ida
+      const outboundFlight = flightPack.flights.find(f => 
+        f.flightTypeId === FlightTypeId.IDA_NEW || f.flightTypeId === FlightTypeId.IDA_LEGACY
+      );
       if (!outboundFlight) return false;
       
       // Por ahora, mostrar todos los vuelos ya que los detalles se cargan internamente
       // en cada flight-item cuando useNewService="true"
       return true;
+    });
+    
+    // Asegurar ordenamiento de vuelos dentro de cada paquete
+    this.flightOffersRaw.forEach(flightPack => {
+      if (flightPack.flights && flightPack.flights.length > 0) {
+        const isIda = (flightTypeId: number): boolean => {
+          return flightTypeId === FlightTypeId.IDA_NEW || flightTypeId === FlightTypeId.IDA_LEGACY;
+        };
+        
+        flightPack.flights.sort((a, b) => {
+          const idA = a.flightTypeId ?? 0;
+          const idB = b.flightTypeId ?? 0;
+          const aIsIda = isIda(idA);
+          const bIsIda = isIda(idB);
+          
+          if (aIsIda && !bIsIda) return -1;
+          if (!aIsIda && bIsIda) return 1;
+          
+          return idA - idB;
+        });
+      }
     });
     
     this.sortFlights(this.selectedSortOption);
@@ -588,7 +902,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       this.displayFlights();
     } else {
       // Si las ciudades no están cargadas, esperar a que se completen
-      console.log('⏳ Esperando a que se carguen las ciudades antes de mostrar vuelos filtrados...');
+
       this.preloadAllAirportCities().then(() => {
         this.displayFlights();
       });
@@ -632,7 +946,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         this.displayFlights();
       } else {
         // Si las ciudades no están cargadas, esperar a que se completen
-        console.log('⏳ Esperando a que se carguen las ciudades antes de mostrar vuelos ordenados...');
+
         this.preloadAllAirportCities().then(() => {
           this.displayFlights();
         });
@@ -658,8 +972,12 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
 
   transformOffersToFlightFormat(offers: IFlightPackDTO[]): Flight[] {
     return offers.map((flightPack) => {
-      const outboundFlight = flightPack.flights?.find(f => f.flightTypeId === 4); // IDA
-      const inboundFlight = flightPack.flights?.find(f => f.flightTypeId === 5); // VUELTA
+      const outboundFlight = flightPack.flights?.find(f => 
+        f.flightTypeId === FlightTypeId.IDA_NEW || f.flightTypeId === FlightTypeId.IDA_LEGACY
+      );
+      const inboundFlight = flightPack.flights?.find(f => 
+        f.flightTypeId === FlightTypeId.VUELTA_NEW || f.flightTypeId === FlightTypeId.VUELTA_LEGACY
+      );
 
       // Crear segmentos básicos basados en la información disponible
       const outboundSegments: FlightSegment[] = outboundFlight ? [{
@@ -749,7 +1067,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
             },
         price: flightPack.ageGroupPrices?.[0]?.price || 0,
         priceData: priceData,
-        source: 'amadeus',
+        source: FlightSourceType.AMADEUS,
       };
 
       return flight;
@@ -760,7 +1078,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     const city = this.filteredCities.find(
       (c) => c.nombre.toLowerCase() === cityName.toLowerCase()
     );
-    return city ? city.codigo : 'MAD';
+    // ✅ CORREGIDO: Ya no hay valor hardcodeado, retorna vacío si no se encuentra
+    return city ? city.codigo : '';
   }
 
   /**
@@ -857,43 +1176,18 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     return code;
   }
 
-  hasHandBaggage(offer: ITempFlightOffer): boolean {
-    return offer.offerData.travelerPricings.some((tp: any) =>
-      tp.fareDetailsBySegment.some(
-        (seg: any) =>
-          seg.includedCabinBags && seg.includedCabinBags.quantity > 0
-      )
-    );
-  }
-
-  hasCheckedBaggage(offer: ITempFlightOffer): boolean {
-    return offer.offerData.travelerPricings.some((tp: any) =>
-      tp.fareDetailsBySegment.some(
-        (seg: any) =>
-          seg.includedCheckedBags && seg.includedCheckedBags.quantity > 0
-      )
-    );
-  }
-
   selectFlight(flightPack: any): void {
-    console.log('🎯 selectFlight llamado desde HTML');
-    console.log('📦 flightPack recibido:', flightPack);
-    console.log('🔄 flightOffersRaw disponible:', this.flightOffersRaw?.length || 0);
-    
+
     // Convertir de vuelta al formato del FlightSearchService si es necesario
     if (flightPack && typeof flightPack === 'object') {
       // Buscar el vuelo original en flightOffersRaw
       const originalFlight = this.flightOffersRaw.find(f => f.id === flightPack.id);
       if (originalFlight) {
-        console.log('✅ Vuelo original encontrado, llamando a selectFlightFromFlightItem');
+
         this.selectFlightFromFlightItem(originalFlight);
       } else {
-        console.warn('⚠️ No se encontró el vuelo original para seleccionar');
-        console.log('🔍 flightPack.id buscado:', flightPack.id);
-        console.log('🔍 flightOffersRaw IDs disponibles:', this.flightOffersRaw.map(f => f.id));
       }
     } else {
-      console.warn('⚠️ flightPack inválido o nulo:', flightPack);
     }
   }
 
@@ -908,10 +1202,9 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       .subscribe({
         next: (travelers) => {
           this.travelers = travelers;
-          console.log('✅ Viajeros cargados:', travelers);
+
         },
         error: (error) => {
-          console.error('❌ Error al cargar viajeros:', error);
         },
       });
   }
@@ -925,30 +1218,24 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     // Por ahora, no hay un método directo para obtener el vuelo seleccionado
     // del FlightSearchService. La selección se maneja a través de la sincronización
     // con el componente padre via selectedFlightFromParent
-    console.log('ℹ️ Verificación de selección de vuelo delegada al componente padre');
+
   }
 
   // Método para seleccionar/deseleccionar vuelos (similar a default-flights)
   selectFlightFromFlightItem(flightPack: IFlightPackDTO): void {
-    console.log('🎯 selectFlightFromFlightItem llamado');
-    console.log('📦 flightPack:', flightPack);
-    console.log('🔄 selectedFlight actual:', this.selectedFlight);
-    console.log('🕐 Timestamp:', new Date().toISOString());
-    console.log('📍 Origen: specific-search (interno)');
 
     if (this.selectedFlight === flightPack) {
       // Deseleccionar vuelo
-      console.log('🔄 Deseleccionando vuelo actual');
+
       this.selectedFlight = null;
       
       // Deseleccionar usando el FlightSearchService
       if (this.reservationId) {
         this.flightSearchService.unselectAllFlights(this.reservationId).subscribe({
           next: () => {
-            console.log('✅ Vuelo deseleccionado exitosamente en el servicio');
+
           },
           error: (error) => {
-            console.error('❌ Error al deseleccionar vuelo en el servicio:', error);
           }
         });
       }
@@ -966,7 +1253,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       });
     } else {
       // Seleccionar nuevo vuelo
-      console.log('✅ Seleccionando nuevo vuelo');
+
       this.selectedFlight = flightPack;
       
       const basePrice =
@@ -975,10 +1262,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         )?.price || 0;
       const totalTravelers = this.travelers.length;
       const totalPrice = totalTravelers > 0 ? basePrice * totalTravelers : 0;
-
-      console.log('💰 Precio base:', basePrice);
-      console.log('👥 Total de viajeros:', totalTravelers);
-      console.log('💰 Precio total:', totalPrice);
 
       // Emitir eventos
       this.specificFlightSelected.emit({
@@ -994,7 +1277,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       });
 
       // Buscar el flightPack "sin vuelos" y asignarlo a todos los viajeros
-      console.log('💾 Buscando flightPack "sin vuelos" para asignar...');
+
       this.findAndAssignNoFlightOption();
     }
   }
@@ -1005,17 +1288,14 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
    * por lo que emitimos un evento para que el componente padre (flight-management) lo maneje
    */
   private async findAndAssignNoFlightOption(): Promise<void> {
-    console.log('🔍 findAndAssignNoFlightOption llamado');
-    console.log('📊 selectedFlight:', this.selectedFlight);
-    console.log('🆔 reservationId:', this.reservationId);
 
     if (!this.reservationId) {
-      console.log('❌ No hay reservationId, no se puede asignar');
+
       return;
     }
 
     if (!this.selectedFlight) {
-      console.log('❌ No hay vuelo seleccionado, no se puede proceder');
+
       return;
     }
 
@@ -1027,11 +1307,10 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
             .getAll({ reservationId: this.reservationId! })
             .subscribe({
               next: (travelers) => {
-                console.log('✅ Viajeros obtenidos:', travelers);
+
                 resolve(travelers);
               },
               error: (error) => {
-                console.error('❌ Error al obtener viajeros:', error);
                 reject(error);
               },
             });
@@ -1039,14 +1318,13 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       );
 
       if (travelers.length === 0) {
-        console.log('⚠️ No hay viajeros para asignar');
+
         return;
       }
 
       // ✅ CORRECCIÓN: En specific-search no tenemos acceso a flightPacks "sin vuelos"
       // Por lo tanto, emitimos un evento para que el componente padre lo maneje
-      console.log('🔄 Emitiendo evento para que el componente padre maneje la asignación "sin vuelos"');
-      
+
       // Emitir evento específico para que el padre sepa que debe asignar "sin vuelos"
       this.specificFlightSelected.emit({
         selectedFlight: this.selectedFlight,
@@ -1056,51 +1334,40 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
 
       // Llamar a select de specific-search para guardar la selección
       if (this.reservationId && this.selectedFlight) {
-        console.log('🔄 Llamando a select de specific-search...');
+
         this.flightSearchService.selectFlight(this.reservationId, this.selectedFlight.id).subscribe({
           next: () => {
-            console.log('✅ Vuelo seleccionado en specific-search exitosamente');
+
           },
           error: (error) => {
-            console.error('❌ Error al seleccionar vuelo en specific-search:', error);
           },
         });
       }
 
-      console.log('✅ Proceso completado - evento emitido para asignación "sin vuelos"');
     } catch (error) {
-      console.error('💥 Error en findAndAssignNoFlightOption:', error);
     }
   }
 
   // Método para guardar asignaciones de vuelos (similar a default-flights)
   async saveFlightAssignments(): Promise<boolean> {
-    console.log('🔍 saveFlightAssignments llamado');
-    console.log('📊 selectedFlight:', this.selectedFlight);
-    console.log('🆔 reservationId:', this.reservationId);
-    console.log('🕐 Timestamp:', new Date().toISOString());
 
     if (!this.selectedFlight || !this.reservationId) {
-      console.log(
-        '❌ No se puede guardar - selectedFlight o reservationId faltan'
-      );
+
       return true;
     }
 
     try {
-      console.log('👥 Obteniendo viajeros...');
+
       const travelers = await new Promise<IReservationTravelerResponse[]>(
         (resolve, reject) => {
           this.reservationTravelerService
             .getAll({ reservationId: this.reservationId! })
             .subscribe({
               next: (travelers) => {
-                console.log('✅ Viajeros obtenidos:', travelers);
-                console.log('👥 Cantidad de viajeros:', travelers.length);
+
                 resolve(travelers);
               },
               error: (error) => {
-                console.error('❌ Error al obtener viajeros:', error);
                 reject(error);
               },
             });
@@ -1108,21 +1375,14 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       );
 
       if (travelers.length === 0) {
-        console.log('⚠️ No hay viajeros para asignar');
+
         return true;
       }
 
       const activityPackId = this.selectedFlight.id;
-      console.log('🎯 ID del paquete de actividad a asignar:', activityPackId);
-
-      console.log(
-        '📝 Procesando asignaciones para',
-        travelers.length,
-        'viajeros...'
-      );
 
       // ✅ MODIFICADO: Solo actualizar asignaciones existentes del departure, NUNCA crear nuevas
-      console.log('🔍 Verificando asignaciones existentes del departure...');
+
       const existingAssignmentsPromises = travelers.map((traveler) => {
         return new Promise<{
           traveler: IReservationTravelerResponse;
@@ -1142,25 +1402,12 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
                   (a, b) => b.id - a.id
                 );
 
-                console.log(
-                  `🔍 Viajero ${traveler.id}: ${departureAssignments.length} asignaciones del departure encontradas`
-                );
-                console.log(
-                  `🔍 IDs de asignaciones del departure: ${departureAssignments
-                    .map((a) => a.id)
-                    .join(', ')}`
-                );
-
                 resolve({
                   traveler,
                   existingAssignments: sortedAssignments,
                 });
               },
               error: (error) => {
-                console.error(
-                  `❌ Error al obtener asignaciones para viajero ${traveler.id}:`,
-                  error
-                );
                 reject(error);
               },
             });
@@ -1177,9 +1424,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       );
 
       if (hasExistingDepartureAssignments) {
-        console.log(
-          '🔄 Se encontraron asignaciones del departure existentes, actualizando el más reciente...'
-        );
 
         const updatePromises = existingAssignmentsResults.map((result) => {
           return new Promise<boolean>((resolve, reject) => {
@@ -1188,12 +1432,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
             if (existingAssignments.length > 0) {
               // Siempre usar la primera asignación (la más reciente por ID)
               const mostRecentAssignment = existingAssignments[0];
-              console.log(
-                `🔄 Actualizando asignación del departure más reciente ${mostRecentAssignment.id} para viajero ${traveler.id}`
-              );
-              console.log(
-                `🔄 ID anterior: ${mostRecentAssignment.activityPackId} -> Nuevo ID: ${activityPackId}`
-              );
 
               const updateData = {
                 id: mostRecentAssignment.id,
@@ -1207,64 +1445,39 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
                 .subscribe({
                   next: (updated: boolean) => {
                     if (updated) {
-                      console.log(
-                        `✅ Asignación del departure ${mostRecentAssignment.id} actualizada para viajero ${traveler.id}`
-                      );
-                      console.log(
-                        `✅ Cambio: departure ${mostRecentAssignment.activityPackId} -> vuelo ${activityPackId}`
-                      );
+
                     } else {
-                      console.error(
-                        `❌ Error al actualizar asignación del departure ${mostRecentAssignment.id} para viajero ${traveler.id}`
-                      );
                     }
                     resolve(updated);
                   },
                   error: (error: any) => {
-                    console.error(
-                      `❌ Error al actualizar asignación del departure para viajero ${traveler.id}:`,
-                      error
-                    );
                     reject(error);
                   },
                 });
             } else {
               // ✅ MODIFICADO: NO crear nuevas asignaciones, solo log
-              console.log(
-                `⚠️ Viajero ${traveler.id} no tiene asignaciones del departure existentes. NO se creará nueva asignación.`
-              );
+
               resolve(true); // Resolver como éxito sin crear nada
             }
           });
         });
 
         await Promise.all(updatePromises);
-        console.log(
-          '✅ Todas las asignaciones del departure actualizadas exitosamente'
-        );
+
       } else {
         // ✅ MODIFICADO: NO crear nuevas asignaciones si no existen
-        console.log(
-          '⚠️ No se encontraron asignaciones del departure existentes. NO se crearán nuevas asignaciones.'
-        );
-        console.log(
-          'ℹ️ Las asignaciones deben existir previamente en la BD para ser actualizadas.'
-        );
-      }
 
-      console.log('⏳ Proceso de asignaciones completado');
-      console.log('✅ Todas las asignaciones del departure procesadas exitosamente');
+      }
 
       // ✅ NUEVO: Marcar "Sin Vuelos" en default-flights después de guardar
       if (this.reservationId) {
         // En lugar de crear asignaciones duplicadas, solo emitir el evento
         // El componente padre se encargará de marcar "Sin Vuelos" en default-flights
-        console.log('✅ Vuelo de specific-search guardado, se emitirá evento para marcar "Sin Vuelos" en default-flights');
+
       }
 
       return true;
     } catch (error) {
-      console.error('💥 Error en saveFlightAssignments:', error);
       return false;
     }
   }
@@ -1276,23 +1489,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   // Adaptador para convertir IFlightPackDTO del FlightSearchService al formato esperado por app-flight-item
   adaptFlightPackForFlightItem(flightPack: IFlightPackDTO): IFlightsNetFlightPackDTO {
     // Crear nuevo objeto adaptado
-    const adaptedObject: IFlightsNetFlightPackDTO = {
-      id: flightPack.id,
-      code: flightPack.code || '',
-      name: flightPack.name || '',
-      description: flightPack.description || '',
-      tkId: typeof flightPack.tkId === 'string' ? parseInt(flightPack.tkId) || 0 : (flightPack.tkId || 0),
-      itineraryId: flightPack.itineraryId,
-      isOptional: flightPack.isOptional,
-      imageUrl: flightPack.imageUrl || '',
-      imageAlt: flightPack.imageAlt || '',
-      isVisibleOnWeb: flightPack.isVisibleOnWeb,
-      ageGroupPrices: flightPack.ageGroupPrices?.map(price => ({
-        price: price.price || 0,
-        ageGroupId: price.ageGroupId || 0,
-        ageGroupName: price.ageGroupName || 'Adultos'
-      })) || [],
-      flights: flightPack.flights?.map(flight => ({
+    const adaptedFlights = (flightPack.flights?.map(flight => ({
         id: flight.id,
         tkId: flight.tkId || '',
         name: flight.name || '',
@@ -1312,7 +1509,42 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         arrivalTime: flight.arrivalTime || '',
         departureCity: this.airportCityCacheService.getCityNameFromCache(flight.departureIATACode) || flight.departureCity || '',
         arrivalCity: this.airportCityCacheService.getCityNameFromCache(flight.arrivalIATACode) || flight.arrivalCity || ''
-      })) || []
+    })) || []);
+
+    // Ordenar vuelos por flightTypeId para asegurar que IDA aparezca antes que VUELTA
+    const isIda = (flightTypeId: number): boolean => {
+      return flightTypeId === FlightTypeId.IDA_NEW || flightTypeId === FlightTypeId.IDA_LEGACY;
+    };
+    
+    adaptedFlights.sort((a, b) => {
+      const idA = a.flightTypeId ?? 0;
+      const idB = b.flightTypeId ?? 0;
+      const aIsIda = isIda(idA);
+      const bIsIda = isIda(idB);
+      
+      if (aIsIda && !bIsIda) return -1;
+      if (!aIsIda && bIsIda) return 1;
+      
+      return idA - idB;
+    });
+
+    const adaptedObject: IFlightsNetFlightPackDTO = {
+      id: flightPack.id,
+      code: flightPack.code || '',
+      name: flightPack.name || '',
+      description: flightPack.description || '',
+      tkId: typeof flightPack.tkId === 'string' ? parseInt(flightPack.tkId) || 0 : (flightPack.tkId || 0),
+      itineraryId: flightPack.itineraryId,
+      isOptional: flightPack.isOptional,
+      imageUrl: flightPack.imageUrl || '',
+      imageAlt: flightPack.imageAlt || '',
+      isVisibleOnWeb: flightPack.isVisibleOnWeb,
+      ageGroupPrices: flightPack.ageGroupPrices?.map(price => ({
+        price: price.price || 0,
+        ageGroupId: price.ageGroupId || 0,
+        ageGroupName: price.ageGroupName || 'Adultos'
+      })) || [],
+      flights: adaptedFlights
     };
 
     return adaptedObject;
@@ -1366,5 +1598,288 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     this.searchMeta = null;
     this.hasSearchWarnings = false;
     this.isEmptySearchResult = false;
+  }
+
+  /**
+   * Formatea una fecha Date a string en formato YYYY-MM-DD para la API
+   * @param date Fecha a formatear
+   * @returns String en formato YYYY-MM-DD o null si la fecha no es válida
+   */
+  private formatDateForAPI(date: Date | string | null): string | null {
+    if (!date) return null;
+    
+    try {
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      if (isNaN(dateObj.getTime())) return null;
+      
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      
+      return `${year}-${month}-${day}`;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Formatea la hora de un Date a string en formato HH:mm para la API
+   * @param date Fecha con hora a formatear
+   * @returns String en formato HH:mm o null si la fecha no es válida
+   */
+  private formatTimeForAPI(date: Date | string | null): string | null {
+    if (!date) return null;
+    
+    try {
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      if (isNaN(dateObj.getTime())) return null;
+      
+      const hours = String(dateObj.getHours()).padStart(2, '0');
+      const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+      
+      return `${hours}:${minutes}`;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Formatea una hora string (HH:MM:SS o HH:MM) a formato HH:MM para mostrar en mensajes
+   * @param timeString Hora en formato HH:MM:SS o HH:MM
+   * @returns String en formato HH:MM o null si la hora no es válida
+   */
+  private formatTimeForDisplay(timeString: string | null | undefined): string | null {
+    if (!timeString) return null;
+    
+    try {
+      // Si tiene formato HH:MM:SS, tomar solo HH:MM
+      if (timeString.length >= 5 && timeString.indexOf(':') !== -1) {
+        const parts = timeString.split(':');
+        if (parts.length >= 2) {
+          const hours = parts[0].padStart(2, '0');
+          const minutes = parts[1].padStart(2, '0');
+          return `${hours}:${minutes}`;
+        }
+      }
+      return timeString;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Combina una fecha Date con una hora en formato string (HH:mm) en un Date completo
+   * @param date Fecha base
+   * @param timeString Hora en formato HH:mm
+   * @returns Date combinado o null si hay error
+   */
+  private combineDateAndTime(date: Date | null, timeString: string | null): Date | null {
+    if (!date || !timeString) return date;
+    
+    try {
+      const [hours, minutes] = timeString.split(':').map(Number);
+      if (isNaN(hours) || isNaN(minutes)) return date;
+      
+      const combinedDate = new Date(date);
+      combinedDate.setHours(hours, minutes, 0, 0);
+      return combinedDate;
+    } catch {
+      return date;
+    }
+  }
+
+  /**
+   * Validador personalizado para fecha/hora de ida
+   * Valida que la fecha/hora seleccionada no exceda el límite máximo configurado
+   */
+  private validateFechaHoraIda = (control: AbstractControl): ValidationErrors | null => {
+    const fechaHora = control.value;
+    if (!fechaHora || !this.maxFechaIda) {
+      return null;
+    }
+
+    try {
+      const selectedDate = new Date(fechaHora);
+      const maxDate = new Date(this.maxFechaIda);
+
+      // Si hay hora máxima configurada, incluirla en la comparación
+      if (this.maxHoraIda) {
+        const [maxHours, maxMinutes] = this.maxHoraIda.split(':').map(Number);
+        if (!isNaN(maxHours) && !isNaN(maxMinutes)) {
+          maxDate.setHours(maxHours, maxMinutes, 59, 999);
+        }
+      } else {
+        maxDate.setHours(23, 59, 59, 999);
+      }
+
+      if (selectedDate > maxDate) {
+        return { fechaHoraIdaExceedsMax: true };
+      }
+
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
+  /**
+   * Validador personalizado para fecha/hora de vuelta
+   * Valida que la fecha/hora seleccionada no sea anterior al límite mínimo configurado
+   */
+  private validateFechaHoraVuelta = (control: AbstractControl): ValidationErrors | null => {
+    const fechaHora = control.value;
+    if (!fechaHora || !this.minFechaVuelta) {
+      return null;
+    }
+
+    try {
+      const selectedDate = new Date(fechaHora);
+      const minDate = new Date(this.minFechaVuelta);
+
+      // Si hay hora mínima configurada, incluirla en la comparación
+      if (this.minHoraVuelta) {
+        const [minHours, minMinutes] = this.minHoraVuelta.split(':').map(Number);
+        if (!isNaN(minHours) && !isNaN(minMinutes)) {
+          minDate.setHours(minHours, minMinutes, 0, 0);
+        }
+      } else {
+        minDate.setHours(0, 0, 0, 0);
+      }
+
+      if (selectedDate < minDate) {
+        return { fechaHoraVueltaBeforeMin: true };
+      }
+
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
+  /**
+   * Validador requerido condicional para fecha/hora de ida
+   * El campo es requerido si el tipo de viaje es 'Ida' o 'IdaVuelta'
+   */
+  private validateRequiredFechaHoraIda = (control: AbstractControl): ValidationErrors | null => {
+    const tipoViaje = this.flightForm?.get('tipoViaje')?.value;
+    const fechaHora = control.value;
+    
+    if ((tipoViaje === 'Ida' || tipoViaje === 'IdaVuelta') && !fechaHora) {
+      return { required: true };
+    }
+    
+    return null;
+  };
+
+  /**
+   * Validador requerido condicional para fecha/hora de vuelta
+   * El campo es requerido si el tipo de viaje es 'Vuelta' o 'IdaVuelta'
+   */
+  private validateRequiredFechaHoraVuelta = (control: AbstractControl): ValidationErrors | null => {
+    const tipoViaje = this.flightForm?.get('tipoViaje')?.value;
+    const fechaHora = control.value;
+    
+    if ((tipoViaje === 'Vuelta' || tipoViaje === 'IdaVuelta') && !fechaHora) {
+      return { required: true };
+    }
+    
+    return null;
+  };
+
+  /**
+   * Método helper para verificar si el campo de fecha/hora de ida es requerido
+   */
+  isFechaHoraIdaRequired(): boolean {
+    const tipoViaje = this.flightForm?.get('tipoViaje')?.value;
+    return tipoViaje === 'Ida' || tipoViaje === 'IdaVuelta';
+  }
+
+  /**
+   * Método helper para verificar si el campo de fecha/hora de vuelta es requerido
+   */
+  isFechaHoraVueltaRequired(): boolean {
+    const tipoViaje = this.flightForm?.get('tipoViaje')?.value;
+    return tipoViaje === 'Vuelta' || tipoViaje === 'IdaVuelta';
+  }
+
+  /**
+   * Método helper para verificar si el campo origen es requerido
+   */
+  isOrigenRequired(): boolean {
+    return true; // Siempre requerido
+  }
+
+  /**
+   * Valida las fechas/horas antes de enviar la petición de búsqueda
+   * Retorna un mensaje de error en español si hay problemas, o null si todo está bien
+   */
+  private validateFlightDatesBeforeSearch(
+    tipoViaje: 'Ida' | 'Vuelta' | 'IdaVuelta',
+    fechaHoraIda: Date | null,
+    fechaHoraVuelta: Date | null,
+    fechaIdaFormatted: string | null,
+    horaIdaFormatted: string | null,
+    fechaVueltaFormatted: string | null,
+    horaVueltaFormatted: string | null
+  ): string | null {
+    const errors: string[] = [];
+
+    // Validar fecha/hora de ida (llegada al aeropuerto) usando comparación de strings
+    if (tipoViaje === 'Ida' || tipoViaje === 'IdaVuelta') {
+      if (fechaIdaFormatted && horaIdaFormatted) {
+        // Intentar validar si hay límites disponibles
+        const hasStringLimit = !!(this.fechaIdaConstante && this.fechaIdaConstante.trim() !== '');
+        
+        if (!hasStringLimit) {
+          // Si no hay límites configurados, no validamos (el backend lo hará)
+        } else {
+          try {
+            const maxFechaStr = this.fechaIdaConstante;
+            const maxHoraStr = this.formatTimeForDisplay(this.horaIdaConstante) || '23:59';
+            
+            // Comparar directamente usando strings (YYYY-MM-DD y HH:mm)
+            // Esto evita problemas de zona horaria
+            if (fechaIdaFormatted > maxFechaStr || 
+                (fechaIdaFormatted === maxFechaStr && horaIdaFormatted > maxHoraStr)) {
+              errors.push(
+                `La fecha/hora de ida (${fechaIdaFormatted} ${horaIdaFormatted}) excede el límite máximo permitido (${maxFechaStr} ${maxHoraStr}).`
+              );
+            }
+          } catch (error) {
+            errors.push('Error al validar la fecha de ida.');
+          }
+        }
+      }
+    }
+
+    // Validar fecha/hora de vuelta (salida del aeropuerto) usando comparación de strings
+    if (tipoViaje === 'Vuelta' || tipoViaje === 'IdaVuelta') {
+      if (fechaVueltaFormatted && horaVueltaFormatted) {
+        // Intentar validar si hay límites disponibles
+        const hasStringLimit = !!(this.fechaRegresoConstante && this.fechaRegresoConstante.trim() !== '');
+        
+        if (!hasStringLimit) {
+          // Si no hay límites configurados, no validamos (el backend lo hará)
+        } else {
+          try {
+            const minFechaStr = this.fechaRegresoConstante;
+            const minHoraStr = this.formatTimeForDisplay(this.horaRegresoConstante) || '00:00';
+            
+            // Comparar directamente usando strings (YYYY-MM-DD y HH:mm)
+            // Esto evita problemas de zona horaria
+            if (fechaVueltaFormatted < minFechaStr || 
+                (fechaVueltaFormatted === minFechaStr && horaVueltaFormatted < minHoraStr)) {
+              errors.push(
+                `La fecha/hora de vuelta (${fechaVueltaFormatted} ${horaVueltaFormatted}) es anterior al límite mínimo permitido (${minFechaStr} ${minHoraStr}).`
+              );
+            }
+          } catch (error) {
+            errors.push('Error al validar la fecha de vuelta.');
+          }
+        }
+      }
+    }
+
+    return errors.length > 0 ? errors.join(' ') : null;
   }
 }

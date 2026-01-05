@@ -130,10 +130,20 @@ export class HotelService {
   /**
    * Obtiene un hotel específico por su ID.
    * @param id ID del hotel.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns El hotel encontrado.
    */
-  getById(id: number): Observable<IHotelResponse> {
-    return this.http.get<IHotelResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<IHotelResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IHotelResponse>(`${this.API_URL}/${id}`, options);
   }
 
   /**

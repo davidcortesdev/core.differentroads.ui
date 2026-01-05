@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, AfterViewInit, ViewChild, ElementRef, HostListener, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   TourService,
@@ -94,6 +94,18 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
 
   private destroy$ = new Subject<void>();
   protected carouselConfig = CAROUSEL_CONFIG;
+  
+  // Propiedad para mostrar/ocultar navegadores según el tamaño de pantalla
+  protected showNavigators: boolean = true;
+
+  // Listener para actualizar showNavigators cuando cambie el tamaño de la ventana
+  @HostListener('window:resize')
+  onResize(): void {
+    if (typeof window !== 'undefined') {
+      // Ocultar navegadores en pantallas muy pequeñas (<= 350px)
+      this.showNavigators = window.innerWidth > 350;
+    }
+  }
 
   // Intersection Observer para detectar cuando el carrusel aparece en pantalla
   @ViewChild('tourCarouselContainer', { static: false }) tourCarouselContainer!: ElementRef;
@@ -135,6 +147,11 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
       numVisible: 1,
       numScroll: 1,
     },
+    {
+      breakpoint: '320px', // <=320px (pantallas muy pequeñas)
+      numVisible: 1,
+      numScroll: 1,
+    },
   ];
 
   constructor(
@@ -160,6 +177,11 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
   ) { }
 
   ngOnInit(): void {
+    // Inicializar valor de showNavigators según el tamaño actual de la ventana
+    if (typeof window !== 'undefined') {
+      this.showNavigators = window.innerWidth > 320;
+    }
+    
     // Inicializar AbortController para trip types
     this.tripTypesAbortController = new AbortController();
     

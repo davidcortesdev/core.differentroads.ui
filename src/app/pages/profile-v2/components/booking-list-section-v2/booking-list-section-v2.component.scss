@@ -198,41 +198,19 @@ $orange-red: #f66b5b;
                             font-weight: 600;
                             text-transform: capitalize;
                             white-space: nowrap;
+                            background-color: color-mix(in srgb, var(--primary-color-500) 75%, white);
+                            color: var(--primary-color-500);
 
-                            // Status color classes
-                            &.status-active {
-                                background-color: #d1fae5;
-                                color: #065f46;
-                            }
-
-                            &.status-pending {
-                                background-color: #fef3c7;
-                                color: #92400e;
-                            }
-
-                            &.status-completed {
-                                background-color: #dbeafe;
-                                color: #1e40af;
-                            }
-
-                            &.status-cancelled {
-                                background-color: #fee2e2;
-                                color: #991b1b;
-                            }
-
-                            &.status-draft {
-                                background-color: #f3f4f6;
-                                color: #374151;
-                            }
-
-                            &.status-cart {
-                                background-color: #e0e7ff;
-                                color: #3730a3;
-                            }
-
+                            // Todos los estados usan el mismo color con transparencia
+                            &.status-active,
+                            &.status-pending,
+                            &.status-completed,
+                            &.status-cancelled,
+                            &.status-draft,
+                            &.status-cart,
                             &.status-default {
-                                background-color: #f3f4f6;
-                                color: #6b7280;
+                                background-color: var(--surface-color-300);
+                                color: #000000;
                             }
                         }
                     }

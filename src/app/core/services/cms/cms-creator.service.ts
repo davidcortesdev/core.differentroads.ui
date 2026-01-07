@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
@@ -39,12 +39,26 @@ export class CMSCreatorService {
 
   constructor(private http: HttpClient) {}
 
-  getAll(): Observable<ICMSCreatorResponse[]> {
-    return this.http.get<ICMSCreatorResponse[]>(this.API_URL);
+  getAll(signal?: AbortSignal): Observable<ICMSCreatorResponse[]> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<ICMSCreatorResponse[]>(this.API_URL, options);
   }
 
-  getById(id: number): Observable<ICMSCreatorResponse> {
-    return this.http.get<ICMSCreatorResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<ICMSCreatorResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<ICMSCreatorResponse>(`${this.API_URL}/${id}`, options);
   }
 
   create(data: CMSCreatorCreate): Observable<ICMSCreatorResponse> {

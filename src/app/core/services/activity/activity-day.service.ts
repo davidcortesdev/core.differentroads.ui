@@ -74,7 +74,7 @@ export class ActivityItineraryDayService {
    * @param filters Filtros para aplicar en la búsqueda.
    * @returns Lista de días de itinerario de actividad.
    */
-  getAll(filter?: ActivityItineraryDayFilters): Observable<IActivityItineraryDayResponse[]> {
+  getAll(filter?: ActivityItineraryDayFilters, signal?: AbortSignal): Observable<IActivityItineraryDayResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -89,7 +89,15 @@ export class ActivityItineraryDayService {
       });
     }
 
-    return this.http.get<IActivityItineraryDayResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IActivityItineraryDayResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -97,8 +105,15 @@ export class ActivityItineraryDayService {
    * @param id ID del día de itinerario de actividad.
    * @returns Día de itinerario de actividad correspondiente.
    */
-  getById(id: number): Observable<IActivityItineraryDayResponse> {
-    return this.http.get<IActivityItineraryDayResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<IActivityItineraryDayResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<IActivityItineraryDayResponse>(`${this.API_URL}/${id}`, options);
   }
 
   /**
@@ -106,8 +121,8 @@ export class ActivityItineraryDayService {
    * @param itineraryId ID del itinerario.
    * @returns Lista de días del itinerario.
    */
-  getByItineraryId(itineraryId: number): Observable<IActivityItineraryDayResponse[]> {
-    return this.getAll({ itineraryId });
+  getByItineraryId(itineraryId: number, signal?: AbortSignal): Observable<IActivityItineraryDayResponse[]> {
+    return this.getAll({ itineraryId }, signal);
   }
 
   /**
@@ -115,8 +130,8 @@ export class ActivityItineraryDayService {
    * @param tkId Código SK del día de itinerario.
    * @returns Días de itinerario correspondientes.
    */
-  getBytkId(tkId: string): Observable<IActivityItineraryDayResponse[]> {
-    return this.getAll({ tkId });
+  getBytkId(tkId: string, signal?: AbortSignal): Observable<IActivityItineraryDayResponse[]> {
+    return this.getAll({ tkId }, signal);
   }
 
   /**
@@ -124,8 +139,8 @@ export class ActivityItineraryDayService {
    * @param itineraryId ID del itinerario.
    * @returns Lista de días opcionales del itinerario.
    */
-  getOptionalByItineraryId(itineraryId: number): Observable<IActivityItineraryDayResponse[]> {
-    return this.getAll({ itineraryId, isOptional: true });
+  getOptionalByItineraryId(itineraryId: number, signal?: AbortSignal): Observable<IActivityItineraryDayResponse[]> {
+    return this.getAll({ itineraryId, isOptional: true }, signal);
   }
 
   /**
@@ -133,8 +148,8 @@ export class ActivityItineraryDayService {
    * @param itineraryId ID del itinerario.
    * @returns Lista de días obligatorios del itinerario.
    */
-  getRequiredByItineraryId(itineraryId: number): Observable<IActivityItineraryDayResponse[]> {
-    return this.getAll({ itineraryId, isOptional: false });
+  getRequiredByItineraryId(itineraryId: number, signal?: AbortSignal): Observable<IActivityItineraryDayResponse[]> {
+    return this.getAll({ itineraryId, isOptional: false }, signal);
   }
 
   /**
@@ -199,13 +214,20 @@ export class ActivityItineraryDayService {
    * @param itineraryId ID del itinerario.
    * @returns Objeto con días opcionales y obligatorios.
    */
-  getGroupedByOptional(itineraryId: number): Observable<{
+  getGroupedByOptional(itineraryId: number, signal?: AbortSignal): Observable<{
     optional: IActivityItineraryDayResponse[];
     required: IActivityItineraryDayResponse[];
   }> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
     return this.http.get<{
       optional: IActivityItineraryDayResponse[];
       required: IActivityItineraryDayResponse[];
-    }>(`${this.API_URL}/itinerary/${itineraryId}/grouped-by-optional`);
+    }>(`${this.API_URL}/itinerary/${itineraryId}/grouped-by-optional`, options);
   }
 }

@@ -79,7 +79,7 @@ export class DeparturePriceSupplementService {
    * @param filters Filtros para aplicar en la búsqueda.
    * @returns Lista de suplementos de precio de departure.
    */
-  getAll(filters?: DeparturePriceSupplementFilters): Observable<IDeparturePriceSupplementResponse[]> {
+  getAll(filters?: DeparturePriceSupplementFilters, signal?: AbortSignal): Observable<IDeparturePriceSupplementResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -94,7 +94,15 @@ export class DeparturePriceSupplementService {
       });
     }
 
-    return this.http.get<IDeparturePriceSupplementResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IDeparturePriceSupplementResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -113,8 +121,15 @@ export class DeparturePriceSupplementService {
    * @param id ID del suplemento de precio de departure.
    * @returns El suplemento de precio de departure encontrado.
    */
-  getById(id: number): Observable<IDeparturePriceSupplementResponse> {
-    return this.http.get<IDeparturePriceSupplementResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<IDeparturePriceSupplementResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<IDeparturePriceSupplementResponse>(`${this.API_URL}/${id}`, options);
   }
 
   /**
@@ -143,12 +158,20 @@ export class DeparturePriceSupplementService {
    * @param departureId ID del departure.
    * @returns Lista de suplementos de precio del departure.
    */
-  getByDeparture(departureId: number): Observable<IDeparturePriceSupplementResponse[]> {
+  getByDeparture(departureId: number, signal?: AbortSignal): Observable<IDeparturePriceSupplementResponse[]> {
     const params = new HttpParams()
       .set('DepartureId', departureId.toString())
       .set('useExactMatchForStrings', 'false');
     
-    return this.http.get<IDeparturePriceSupplementResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IDeparturePriceSupplementResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -156,12 +179,20 @@ export class DeparturePriceSupplementService {
    * @param campaignId ID de la campaign.
    * @returns Lista de suplementos de precio de la campaign.
    */
-  getByCampaign(campaignId: number): Observable<IDeparturePriceSupplementResponse[]> {
+  getByCampaign(campaignId: number, signal?: AbortSignal): Observable<IDeparturePriceSupplementResponse[]> {
     const params = new HttpParams()
       .set('CampaignId', campaignId.toString())
       .set('useExactMatchForStrings', 'false');
     
-    return this.http.get<IDeparturePriceSupplementResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IDeparturePriceSupplementResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -169,12 +200,20 @@ export class DeparturePriceSupplementService {
    * @param retailerId ID del retailer.
    * @returns Lista de suplementos de precio del retailer.
    */
-  getByRetailer(retailerId: number): Observable<IDeparturePriceSupplementResponse[]> {
+  getByRetailer(retailerId: number, signal?: AbortSignal): Observable<IDeparturePriceSupplementResponse[]> {
     const params = new HttpParams()
       .set('RetailerId', retailerId.toString())
       .set('useExactMatchForStrings', 'false');
     
-    return this.http.get<IDeparturePriceSupplementResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IDeparturePriceSupplementResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -182,12 +221,20 @@ export class DeparturePriceSupplementService {
    * @param ageGroupId ID del age group.
    * @returns Lista de suplementos de precio del age group.
    */
-  getByAgeGroup(ageGroupId: number): Observable<IDeparturePriceSupplementResponse[]> {
+  getByAgeGroup(ageGroupId: number, signal?: AbortSignal): Observable<IDeparturePriceSupplementResponse[]> {
     const params = new HttpParams()
       .set('AgeGroupId', ageGroupId.toString())
       .set('useExactMatchForStrings', 'false');
     
-    return this.http.get<IDeparturePriceSupplementResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IDeparturePriceSupplementResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -195,12 +242,20 @@ export class DeparturePriceSupplementService {
    * @param priceCategoryId ID de la price category.
    * @returns Lista de suplementos de precio de la price category.
    */
-  getByPriceCategory(priceCategoryId: number): Observable<IDeparturePriceSupplementResponse[]> {
+  getByPriceCategory(priceCategoryId: number, signal?: AbortSignal): Observable<IDeparturePriceSupplementResponse[]> {
     const params = new HttpParams()
       .set('PriceCategoryId', priceCategoryId.toString())
       .set('useExactMatchForStrings', 'false');
     
-    return this.http.get<IDeparturePriceSupplementResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IDeparturePriceSupplementResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -208,12 +263,20 @@ export class DeparturePriceSupplementService {
    * @param priceRateId ID del price rate.
    * @returns Lista de suplementos de precio del price rate.
    */
-  getByPriceRate(priceRateId: number): Observable<IDeparturePriceSupplementResponse[]> {
+  getByPriceRate(priceRateId: number, signal?: AbortSignal): Observable<IDeparturePriceSupplementResponse[]> {
     const params = new HttpParams()
       .set('PriceRateId', priceRateId.toString())
       .set('useExactMatchForStrings', 'false');
     
-    return this.http.get<IDeparturePriceSupplementResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IDeparturePriceSupplementResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -221,12 +284,20 @@ export class DeparturePriceSupplementService {
    * @param currencyId ID de la currency.
    * @returns Lista de suplementos de precio de la currency.
    */
-  getByCurrency(currencyId: number): Observable<IDeparturePriceSupplementResponse[]> {
+  getByCurrency(currencyId: number, signal?: AbortSignal): Observable<IDeparturePriceSupplementResponse[]> {
     const params = new HttpParams()
       .set('CurrencyId', currencyId.toString())
       .set('useExactMatchForStrings', 'false');
     
-    return this.http.get<IDeparturePriceSupplementResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IDeparturePriceSupplementResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -239,7 +310,8 @@ export class DeparturePriceSupplementService {
   getByDepartureCampaignRetailer(
     departureId: number, 
     campaignId: number, 
-    retailerId: number
+    retailerId: number,
+    signal?: AbortSignal
   ): Observable<IDeparturePriceSupplementResponse[]> {
     const params = new HttpParams()
       .set('DepartureId', departureId.toString())
@@ -247,7 +319,15 @@ export class DeparturePriceSupplementService {
       .set('RetailerId', retailerId.toString())
       .set('useExactMatchForStrings', 'false');
     
-    return this.http.get<IDeparturePriceSupplementResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IDeparturePriceSupplementResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -262,7 +342,8 @@ export class DeparturePriceSupplementService {
     departureId: number,
     ageGroupId: number,
     priceCategoryId: number,
-    currencyId: number
+    currencyId: number,
+    signal?: AbortSignal
   ): Observable<IDeparturePriceSupplementResponse[]> {
     const params = new HttpParams()
       .set('DepartureId', departureId.toString())
@@ -271,6 +352,14 @@ export class DeparturePriceSupplementService {
       .set('CurrencyId', currencyId.toString())
       .set('useExactMatchForStrings', 'false');
     
-    return this.http.get<IDeparturePriceSupplementResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IDeparturePriceSupplementResponse[]>(this.API_URL, options);
   }
 }

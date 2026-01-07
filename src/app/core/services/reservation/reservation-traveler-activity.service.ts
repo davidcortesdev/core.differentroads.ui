@@ -44,7 +44,8 @@ export class ReservationTravelerActivityService {
    * @returns Lista de actividades de viajeros de reservaciones.
    */
   getAll(
-    filters?: ReservationTravelerActivityFilters
+    filters?: ReservationTravelerActivityFilters,
+    signal?: AbortSignal
   ): Observable<IReservationTravelerActivityResponse[]> {
     let params = new HttpParams();
 
@@ -60,9 +61,15 @@ export class ReservationTravelerActivityService {
       });
     }
 
-    return this.http.get<IReservationTravelerActivityResponse[]>(this.API_URL, {
-      params,
-    });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationTravelerActivityResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -87,9 +94,17 @@ export class ReservationTravelerActivityService {
    * @param id ID de la actividad de viajero de reservación.
    * @returns La actividad de viajero de reservación encontrada.
    */
-  getById(id: number): Observable<IReservationTravelerActivityResponse> {
+  getById(id: number, signal?: AbortSignal): Observable<IReservationTravelerActivityResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
     return this.http.get<IReservationTravelerActivityResponse>(
-      `${this.API_URL}/${id}`
+      `${this.API_URL}/${id}`,
+      options
     );
   }
 
@@ -123,15 +138,22 @@ export class ReservationTravelerActivityService {
    * @returns Lista de actividades del viajero de reservación.
    */
   getByReservationTraveler(
-    reservationTravelerId: number
+    reservationTravelerId: number,
+    signal?: AbortSignal
   ): Observable<IReservationTravelerActivityResponse[]> {
     const params = new HttpParams()
       .set('ReservationTravelerId', reservationTravelerId.toString())
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<IReservationTravelerActivityResponse[]>(this.API_URL, {
-      params,
-    });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationTravelerActivityResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -140,14 +162,21 @@ export class ReservationTravelerActivityService {
    * @returns Lista de viajeros de reservación asociados a la actividad.
    */
   getByActivity(
-    activityId: number
+    activityId: number,
+    signal?: AbortSignal
   ): Observable<IReservationTravelerActivityResponse[]> {
     const params = new HttpParams()
       .set('ActivityId', activityId.toString())
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<IReservationTravelerActivityResponse[]>(this.API_URL, {
-      params,
-    });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationTravelerActivityResponse[]>(this.API_URL, options);
   }
 }

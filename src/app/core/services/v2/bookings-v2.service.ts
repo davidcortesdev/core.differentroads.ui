@@ -37,12 +37,20 @@ export class BookingsServiceV2 {
    * @param userId - ID del usuario
    * @returns Observable de array de ReservationResponse
    */
-  getReservationsByUser(userId: number): Observable<ReservationResponse[]> {
+  getReservationsByUser(userId: number, signal?: AbortSignal): Observable<ReservationResponse[]> {
     const params = new HttpParams()
       .set('UserId', userId.toString())
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<ReservationResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<ReservationResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -50,12 +58,20 @@ export class BookingsServiceV2 {
    * @param userId - ID del usuario
    * @returns Observable de array de ReservationResponse
    */
-  getActiveBookings(userId: number): Observable<ReservationResponse[]> {
+  getActiveBookings(userId: number, signal?: AbortSignal): Observable<ReservationResponse[]> {
     const params = new HttpParams()
       .set('UserId', userId.toString())
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<ReservationResponse[]>(this.API_URL, { params }).pipe(
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<ReservationResponse[]>(this.API_URL, options).pipe(
       map((reservations: ReservationResponse[]) => {
         // Activas: 4 (RQ), 5 (BOOKED), 6 (CONFIRMED), 11 (PREBOOKED)
         const filtered = reservations.filter(reservation => 
@@ -73,12 +89,20 @@ export class BookingsServiceV2 {
   /**
    * Obtiene reservas pendientes (estados 1: DRAFT y 2: CART)
    */
-  getPendingBookings(userId: number): Observable<ReservationResponse[]> {
+  getPendingBookings(userId: number, signal?: AbortSignal): Observable<ReservationResponse[]> {
     const params = new HttpParams()
       .set('UserId', userId.toString())
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<ReservationResponse[]>(this.API_URL, { params }).pipe(
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<ReservationResponse[]>(this.API_URL, options).pipe(
       map((reservations: ReservationResponse[]) =>
         reservations.filter(reservation => 
           reservation.reservationStatusId === 1 || reservation.reservationStatusId === 2
@@ -92,12 +116,20 @@ export class BookingsServiceV2 {
    * @param userId - ID del usuario
    * @returns Observable de array de ReservationResponse
    */
-  getTravelHistory(userId: number): Observable<ReservationResponse[]> {
+  getTravelHistory(userId: number, signal?: AbortSignal): Observable<ReservationResponse[]> {
     const params = new HttpParams()
       .set('UserId', userId.toString())
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<ReservationResponse[]>(this.API_URL, { params }).pipe(
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<ReservationResponse[]>(this.API_URL, options).pipe(
       // Filtrar solo historial (status 7 = PAID, 8 = CANCELLED)
       map((reservations: ReservationResponse[]) => {
 
@@ -115,12 +147,20 @@ export class BookingsServiceV2 {
    * @param userId - ID del usuario
    * @returns Observable de array de ReservationResponse
    */
-  getRecentBudgets(userId: number): Observable<ReservationResponse[]> {
+  getRecentBudgets(userId: number, signal?: AbortSignal): Observable<ReservationResponse[]> {
     const params = new HttpParams()
       .set('UserId', userId.toString())
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<ReservationResponse[]>(this.API_URL, { params }).pipe(
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<ReservationResponse[]>(this.API_URL, options).pipe(
       // Filtrar solo presupuestos (status 3 = BUDGET)
       map((reservations: ReservationResponse[]) => 
         reservations.filter(reservation => 
@@ -135,12 +175,20 @@ export class BookingsServiceV2 {
    * @param reservationId - ID de la reserva
    * @returns Observable de ReservationResponse
    */
-  getReservationDetails(reservationId: number): Observable<ReservationResponse> {
+  getReservationDetails(reservationId: number, signal?: AbortSignal): Observable<ReservationResponse> {
     const params = new HttpParams()
       .set('Id', reservationId.toString())
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<ReservationResponse[]>(this.API_URL, { params }).pipe(
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<ReservationResponse[]>(this.API_URL, options).pipe(
       map((reservations: ReservationResponse[]) => {
         if (reservations && reservations.length > 0) {
           return reservations[0];

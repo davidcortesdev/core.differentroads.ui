@@ -35,7 +35,8 @@ export class TourInformationContentService {
    * @returns Observable of TourInformationContent array
    */
   getTourInformationContent(
-    filter?: TourInformationContentFilter
+    filter?: TourInformationContentFilter,
+    signal?: AbortSignal
   ): Observable<TourInformationContent[]> {
     let params = new HttpParams();
 
@@ -51,12 +52,21 @@ export class TourInformationContentService {
       });
     }
 
-    return this.http.get<TourInformationContent[]>(this.API_URL, {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      headers?: { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = {
       params,
       headers: {
         Accept: 'text/plain',
       },
-    });
+    };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<TourInformationContent[]>(this.API_URL, options);
   }
 
   /**
@@ -65,17 +75,27 @@ export class TourInformationContentService {
    * @returns Observable of TourInformationContent
    */
   getTourInformationContentById(
-    id: number
+    id: number,
+    signal?: AbortSignal
   ): Observable<TourInformationContent> {
     let params = new HttpParams().set('Id', id.toString());
 
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      headers?: { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = {
+      params,
+      headers: {
+        Accept: 'text/plain',
+      },
+    };
+    if (signal) {
+      options.signal = signal;
+    }
+
     return this.http
-      .get<TourInformationContent>(this.API_URL, {
-        params,
-        headers: {
-          Accept: 'text/plain',
-        },
-      })
+      .get<TourInformationContent>(this.API_URL, options)
       .pipe(
         map((response) => {
           // Check if response is an array and take the first item
@@ -120,13 +140,14 @@ export class TourInformationContentService {
    * @returns Observable of TourInformationContent array
    */
   getTourInformationContentByTourId(
-    tourId: number
+    tourId: number,
+    signal?: AbortSignal
   ): Observable<TourInformationContent[]> {
     const filter: TourInformationContentFilter = {
       tourId: tourId,
     };
 
-    return this.getTourInformationContent(filter).pipe(
+    return this.getTourInformationContent(filter, signal).pipe(
       map((content) => {
 
         return content;
@@ -143,13 +164,14 @@ export class TourInformationContentService {
    * @returns Observable of TourInformationContent array
    */
   getTourInformationContentBySectionId(
-    sectionId: number
+    sectionId: number,
+    signal?: AbortSignal
   ): Observable<TourInformationContent[]> {
     const filter: TourInformationContentFilter = {
       tourInformationSectionId: sectionId,
     };
 
-    return this.getTourInformationContent(filter).pipe(
+    return this.getTourInformationContent(filter, signal).pipe(
       map((content) => {
 
         return content;

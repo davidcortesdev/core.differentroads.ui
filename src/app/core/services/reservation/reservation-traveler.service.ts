@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, forkJoin } from 'rxjs';
 import { map, switchMap, catchError, retry, delay } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
 import { environment } from '../../../../environments/environment';
@@ -57,7 +57,8 @@ export class ReservationTravelerService {
    * @returns Lista de viajeros de reservaciones.
    */
   getAll(
-    filters?: ReservationTravelerFilters
+    filters?: ReservationTravelerFilters,
+    signal?: AbortSignal
   ): Observable<IReservationTravelerResponse[]> {
     let params = new HttpParams();
 
@@ -73,25 +74,40 @@ export class ReservationTravelerService {
       });
     }
 
-    return this.http.get<IReservationTravelerResponse[]>(this.API_URL, {
-      params,
-    });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationTravelerResponse[]>(this.API_URL, options);
   }
 
   /**
    * Crea un nuevo viajero de reservación con número de viajero auto-incrementable.
    * @param data Datos para crear el viajero de reservación.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns El viajero de reservación creado.
    */
   create(
-    data: ReservationTravelerCreate
+    data: ReservationTravelerCreate,
+    signal?: AbortSignal
   ): Observable<IReservationTravelerResponse> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = {
+      headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
+    };
+    if (signal) {
+      options.signal = signal;
+    }
     return this.http.post<IReservationTravelerResponse>(
       `${this.API_URL}`,
       data,
-      {
-        headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
-      }
+      options
     );
   }
 
@@ -107,9 +123,10 @@ export class ReservationTravelerService {
     reservationId: number,
     isLeadTraveler: boolean = false,
     tkId: string = '',
-    ageGroupId: number = 0
+    ageGroupId: number = 0,
+    signal?: AbortSignal
   ): Observable<IReservationTravelerResponse> {
-    return this.getNextTravelerNumber(reservationId).pipe(
+    return this.getNextTravelerNumber(reservationId, signal).pipe(
       switchMap((nextNumber) => {
         const data: ReservationTravelerCreate = {
           reservationId,
@@ -118,7 +135,7 @@ export class ReservationTravelerService {
           tkId,
           ageGroupId,
         };
-        return this.create(data);
+        return this.create(data, signal);
       })
     );
   }
@@ -128,20 +145,35 @@ export class ReservationTravelerService {
    * @param id ID del viajero de reservación.
    * @returns El viajero de reservación encontrado.
    */
-  getById(id: number): Observable<IReservationTravelerResponse> {
-    return this.http.get<IReservationTravelerResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<IReservationTravelerResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<IReservationTravelerResponse>(`${this.API_URL}/${id}`, options);
   }
 
   /**
    * Actualiza un viajero de reservación existente.
    * @param id ID del viajero de reservación a actualizar.
    * @param data Datos actualizados.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Resultado de la operación.
    */
-  update(id: number, data: ReservationTravelerUpdate): Observable<boolean> {
-    return this.http.put<boolean>(`${this.API_URL}/${id}`, data, {
+  update(id: number, data: ReservationTravelerUpdate, signal?: AbortSignal): Observable<boolean> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = {
       headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
-    });
+    };
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.put<boolean>(`${this.API_URL}/${id}`, data, options);
   }
 
   /**
@@ -163,15 +195,22 @@ export class ReservationTravelerService {
    * @returns Lista de viajeros de la reservación.
    */
   getByReservation(
-    reservationId: number
+    reservationId: number,
+    signal?: AbortSignal
   ): Observable<IReservationTravelerResponse[]> {
     const params = new HttpParams()
       .set('ReservationId', reservationId.toString())
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<IReservationTravelerResponse[]>(this.API_URL, {
-      params,
-    });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationTravelerResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -180,15 +219,24 @@ export class ReservationTravelerService {
    * @returns El viajero principal de la reservación.
    */
   getLeadTraveler(
-    reservationId: number
+    reservationId: number,
+    signal?: AbortSignal
   ): Observable<IReservationTravelerResponse | null> {
     const params = new HttpParams()
       .set('ReservationId', reservationId.toString())
       .set('IsLeadTraveler', 'true')
       .set('useExactMatchForStrings', 'false');
 
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
     return this.http
-      .get<IReservationTravelerResponse[]>(this.API_URL, { params })
+      .get<IReservationTravelerResponse[]>(this.API_URL, options)
       .pipe(map((travelers) => (travelers.length > 0 ? travelers[0] : null)));
   }
 
@@ -197,8 +245,8 @@ export class ReservationTravelerService {
    * @param reservationId ID de la reservación.
    * @returns El siguiente número de viajero disponible.
    */
-  getNextTravelerNumber(reservationId: number): Observable<number> {
-    return this.getByReservation(reservationId).pipe(
+  getNextTravelerNumber(reservationId: number, signal?: AbortSignal): Observable<number> {
+    return this.getByReservation(reservationId, signal).pipe(
       map((travelers) => {
         if (travelers.length === 0) {
           return 1; // Primer viajero
@@ -218,8 +266,8 @@ export class ReservationTravelerService {
    * @param reservationId ID de la reservación.
    * @returns Número total de viajeros en la reservación.
    */
-  getTravelerCount(reservationId: number): Observable<number> {
-    return this.getByReservation(reservationId).pipe(
+  getTravelerCount(reservationId: number, signal?: AbortSignal): Observable<number> {
+    return this.getByReservation(reservationId, signal).pipe(
       map((travelers) => travelers.length)
     );
   }
@@ -229,8 +277,8 @@ export class ReservationTravelerService {
    * @param reservationId ID de la reservación.
    * @returns True si existe un viajero principal, false si no.
    */
-  hasLeadTraveler(reservationId: number): Observable<boolean> {
-    return this.getLeadTraveler(reservationId).pipe(
+  hasLeadTraveler(reservationId: number, signal?: AbortSignal): Observable<boolean> {
+    return this.getLeadTraveler(reservationId, signal).pipe(
       map((leadTraveler) => leadTraveler !== null)
     );
   }
@@ -243,21 +291,26 @@ export class ReservationTravelerService {
    */
   setLeadTraveler(
     reservationId: number,
-    travelerId: number
+    travelerId: number,
+    signal?: AbortSignal
   ): Observable<boolean> {
-    return this.getByReservation(reservationId).pipe(
+    return this.getByReservation(reservationId, signal).pipe(
       switchMap((travelers) => {
+        if (travelers.length === 0) {
+          return of(true);
+        }
+
         // Crear array de observables para actualizar todos los viajeros
         const updateObservables = travelers.map((traveler) => {
           const updatedTraveler: ReservationTravelerUpdate = {
             ...traveler,
             isLeadTraveler: traveler.id === travelerId,
           };
-          return this.update(traveler.id, updatedTraveler);
+          return this.update(traveler.id, updatedTraveler, signal);
         });
 
         // Ejecutar todas las actualizaciones
-        return Promise.all(updateObservables);
+        return forkJoin(updateObservables);
       }),
       map(() => true) // Simplificar el resultado
     );
@@ -268,9 +321,13 @@ export class ReservationTravelerService {
    * @param reservationId ID de la reservación.
    * @returns Resultado de la operación.
    */
-  reorderTravelerNumbers(reservationId: number): Observable<boolean> {
-    return this.getByReservation(reservationId).pipe(
+  reorderTravelerNumbers(reservationId: number, signal?: AbortSignal): Observable<boolean> {
+    return this.getByReservation(reservationId, signal).pipe(
       switchMap((travelers) => {
+        if (travelers.length === 0) {
+          return of(true);
+        }
+
         // Ordenar por número de viajero actual
         const sortedTravelers = travelers.sort(
           (a, b) => a.travelerNumber - b.travelerNumber
@@ -282,10 +339,10 @@ export class ReservationTravelerService {
             ...traveler,
             travelerNumber: index + 1,
           };
-          return this.update(traveler.id, updatedTraveler);
+          return this.update(traveler.id, updatedTraveler, signal);
         });
 
-        return Promise.all(updateObservables);
+        return forkJoin(updateObservables);
       }),
       map(() => true) // Simplificar el resultado
     );
@@ -297,9 +354,10 @@ export class ReservationTravelerService {
    * @returns Lista de viajeros ordenada por número de viajero.
    */
   getByReservationOrdered(
-    reservationId: number
+    reservationId: number,
+    signal?: AbortSignal
   ): Observable<IReservationTravelerResponse[]> {
-    return this.getByReservation(reservationId).pipe(
+    return this.getByReservation(reservationId, signal).pipe(
       map((travelers) =>
         travelers.sort((a, b) => a.travelerNumber - b.travelerNumber)
       )
@@ -314,15 +372,24 @@ export class ReservationTravelerService {
    */
   getFirstTravelerByAgeGroup(
     reservationId: number,
-    ageGroupId: number
+    ageGroupId: number,
+    signal?: AbortSignal
   ): Observable<IReservationTravelerResponse | null> {
     const params = new HttpParams()
       .set('ReservationId', reservationId.toString())
       .set('AgeGroupId', ageGroupId.toString())
       .set('useExactMatchForStrings', 'false');
 
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
     return this.http
-      .get<IReservationTravelerResponse[]>(this.API_URL, { params })
+      .get<IReservationTravelerResponse[]>(this.API_URL, options)
       .pipe(
         map((travelers) => {
           // Ordenar por travelerNumber y tomar el primero

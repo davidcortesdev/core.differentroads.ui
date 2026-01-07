@@ -42,7 +42,7 @@ export class DiscountCodeService {
    * @param filters Filtros para aplicar en la búsqueda.
    * @returns Lista de códigos de descuento.
    */
-  getAll(filters?: DiscountCodeFilters): Observable<IDiscountCodeResponse[]> {
+  getAll(filters?: DiscountCodeFilters, signal?: AbortSignal): Observable<IDiscountCodeResponse[]> {
     let params = new HttpParams();
 
     if (filters) {
@@ -56,7 +56,15 @@ export class DiscountCodeService {
       });
     }
 
-    return this.http.get<IDiscountCodeResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IDiscountCodeResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -64,9 +72,16 @@ export class DiscountCodeService {
    * @param code Código del descuento a buscar.
    * @returns El código de descuento encontrado o null si no existe.
    */
-  getByCode(code: string): Observable<IDiscountCodeResponse[]> {
+  getByCode(code: string, signal?: AbortSignal): Observable<IDiscountCodeResponse[]> {
     const params = new HttpParams().set('code', code);
-    return this.http.get<IDiscountCodeResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<IDiscountCodeResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -74,8 +89,15 @@ export class DiscountCodeService {
    * @param id ID del código de descuento.
    * @returns El código de descuento encontrado.
    */
-  getById(id: number): Observable<IDiscountCodeResponse> {
-    return this.http.get<IDiscountCodeResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<IDiscountCodeResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<IDiscountCodeResponse>(`${this.API_URL}/${id}`, options);
   }
 }
 

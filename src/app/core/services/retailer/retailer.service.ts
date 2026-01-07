@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Observable, catchError, throwError, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
@@ -77,7 +77,7 @@ export class RetailerService {
    * @param filter Filter criteria for retailers
    * @returns Observable of Retailer array
    */
-  getRetailers(filter?: RetailerFilter): Observable<Retailer[]> {
+  getRetailers(filter?: RetailerFilter, signal?: AbortSignal): Observable<Retailer[]> {
     let params = new HttpParams();
     
     if (filter) {
@@ -90,12 +90,21 @@ export class RetailerService {
       });
     }
 
-    return this.http.get<Retailer[]>(this.API_URL, {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      headers?: { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = {
       params,
       headers: {
         'Accept': 'text/plain'
       }
-    }).pipe(
+    };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<Retailer[]>(this.API_URL, options).pipe(
       catchError(error => {
         return throwError(() => error);
       })
@@ -107,12 +116,20 @@ export class RetailerService {
    * @param id Retailer ID
    * @returns Observable of Retailer
    */
-  getRetailerById(id: number): Observable<Retailer> {
-    return this.http.get<Retailer>(`${this.API_URL}/${id}`, {
+  getRetailerById(id: number, signal?: AbortSignal): Observable<Retailer> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      headers?: { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = {
       headers: {
         'Accept': 'text/plain'
       }
-    }).pipe(
+    };
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<Retailer>(`${this.API_URL}/${id}`, options).pipe(
       catchError(error => {
         return throwError(() => error);
       })
@@ -122,15 +139,23 @@ export class RetailerService {
   /**
    * Create a new retailer
    * @param retailerData Retailer creation data
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable of created Retailer
    */
-  createRetailer(retailerData: CreateRetailerRequest): Observable<Retailer> {
-    return this.http.post<Retailer>(this.API_URL, retailerData, {
+  createRetailer(retailerData: CreateRetailerRequest, signal?: AbortSignal): Observable<Retailer> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'text/plain'
       }
-    }).pipe(
+    };
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.post<Retailer>(this.API_URL, retailerData, options).pipe(
       catchError(error => {
         return throwError(() => error);
       })
@@ -141,15 +166,23 @@ export class RetailerService {
    * Update an existing retailer
    * @param id Retailer ID to update
    * @param retailerData Retailer update data
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable of updated Retailer
    */
-  updateRetailer(id: number, retailerData: UpdateRetailerRequest): Observable<Retailer> {
-    return this.http.put<Retailer>(`${this.API_URL}/${id}`, retailerData, {
+  updateRetailer(id: number, retailerData: UpdateRetailerRequest, signal?: AbortSignal): Observable<Retailer> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'text/plain'
       }
-    }).pipe(
+    };
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.put<Retailer>(`${this.API_URL}/${id}`, retailerData, options).pipe(
       catchError(error => {
         return throwError(() => error);
       })
@@ -178,13 +211,13 @@ export class RetailerService {
    * @param code Retailer code
    * @returns Observable of Retailer
    */
-  getRetailerByCode(code: string): Observable<Retailer | null> {
+  getRetailerByCode(code: string, signal?: AbortSignal): Observable<Retailer | null> {
     const filter: RetailerFilter = {
       code: code,
       useExactMatchForStrings: true
     };
 
-    return this.getRetailers(filter).pipe(
+    return this.getRetailers(filter, signal).pipe(
       map(retailers => {
         return retailers.length > 0 ? retailers[0] : null;
       }),
@@ -199,13 +232,13 @@ export class RetailerService {
    * @param tkId TK identifier
    * @returns Observable of Retailer
    */
-  getRetailerByTKId(tkId: string): Observable<Retailer | null> {
+  getRetailerByTKId(tkId: string, signal?: AbortSignal): Observable<Retailer | null> {
     const filter: RetailerFilter = {
       tkId: tkId,
       useExactMatchForStrings: true
     };
 
-    return this.getRetailers(filter).pipe(
+    return this.getRetailers(filter, signal).pipe(
       map(retailers => {
         return retailers.length > 0 ? retailers[0] : null;
       }),
@@ -221,13 +254,13 @@ export class RetailerService {
    * @param useExactMatch Whether to use exact matching for city name
    * @returns Observable of Retailer array
    */
-  getRetailersByCity(city: string, useExactMatch: boolean = false): Observable<Retailer[]> {
+  getRetailersByCity(city: string, useExactMatch: boolean = false, signal?: AbortSignal): Observable<Retailer[]> {
     const filter: RetailerFilter = {
       city: city,
       useExactMatchForStrings: useExactMatch
     };
 
-    return this.getRetailers(filter);
+    return this.getRetailers(filter, signal);
   }
 
   /**
@@ -235,12 +268,12 @@ export class RetailerService {
    * @param provinceId Province ID
    * @returns Observable of Retailer array
    */
-  getRetailersByProvince(provinceId: number): Observable<Retailer[]> {
+  getRetailersByProvince(provinceId: number, signal?: AbortSignal): Observable<Retailer[]> {
     const filter: RetailerFilter = {
       provinceId: provinceId
     };
 
-    return this.getRetailers(filter);
+    return this.getRetailers(filter, signal);
   }
 
   /**
@@ -248,12 +281,12 @@ export class RetailerService {
    * @param paymentTypeId Payment type ID
    * @returns Observable of Retailer array
    */
-  getRetailersByPaymentType(paymentTypeId: number): Observable<Retailer[]> {
+  getRetailersByPaymentType(paymentTypeId: number, signal?: AbortSignal): Observable<Retailer[]> {
     const filter: RetailerFilter = {
       paymentTypeId: paymentTypeId
     };
 
-    return this.getRetailers(filter);
+    return this.getRetailers(filter, signal);
   }
 
   /**
@@ -261,21 +294,21 @@ export class RetailerService {
    * @param name Partial name to search for
    * @returns Observable of Retailer array
    */
-  searchRetailersByName(name: string): Observable<Retailer[]> {
+  searchRetailersByName(name: string, signal?: AbortSignal): Observable<Retailer[]> {
     const filter: RetailerFilter = {
       name: name,
       useExactMatchForStrings: false
     };
 
-    return this.getRetailers(filter);
+    return this.getRetailers(filter, signal);
   }
 
   /**
    * Get the default retailer (from environment configuration)
    * @returns Observable of Retailer
    */
-  getDefaultRetailer(): Observable<Retailer> {
+  getDefaultRetailer(signal?: AbortSignal): Observable<Retailer> {
     const defaultId = environment.retaileriddefault || 7;
-    return this.getRetailerById(defaultId);
+    return this.getRetailerById(defaultId, signal);
   }
 }

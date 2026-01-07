@@ -40,7 +40,7 @@ export class CMSLandingService {
     name?: string;
     visibleWeb?: boolean;
     versionActiva?: number;
-  }): Observable<ICMSLandingResponse[]> {
+  }, signal?: AbortSignal): Observable<ICMSLandingResponse[]> {
     let httpParams = new HttpParams();
     
     if (params) {
@@ -51,11 +51,26 @@ export class CMSLandingService {
       if (params.versionActiva !== undefined) httpParams = httpParams.set('VersionActiva', params.versionActiva.toString());
     }
 
-    return this.http.get<ICMSLandingResponse[]>(this.API_URL, { params: httpParams });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params: httpParams };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<ICMSLandingResponse[]>(this.API_URL, options);
   }
 
-  getLandingById(id: number): Observable<ICMSLandingResponse> {
-    return this.http.get<ICMSLandingResponse>(`${this.API_URL}/${id}`);
+  getLandingById(id: number, signal?: AbortSignal): Observable<ICMSLandingResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<ICMSLandingResponse>(`${this.API_URL}/${id}`, options);
   }
 
   createLanding(landingData: CMSLandingCreate): Observable<ICMSLandingResponse> {

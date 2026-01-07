@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
@@ -49,16 +49,25 @@ export class InvoiceProcessService {
   /**
    * Obtiene el invoiceId asociado a una reserva
    * @param reservationId ID de la reserva
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con el invoiceId
    */
-  getInvoiceByReservation(reservationId: number): Observable<number> {
+  getInvoiceByReservation(reservationId: number, signal?: AbortSignal): Observable<number> {
     const url = `${this.baseUrl}/InvoiceProcess/reservation/${reservationId}`;
     
     const headers = new HttpHeaders({
       'accept': 'application/json'
     });
 
-    return this.http.get<InvoiceByReservationResponse>(url, { headers }).pipe(
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = { headers };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<InvoiceByReservationResponse>(url, options).pipe(
       map(response => response.invoiceId)
     );
   }
@@ -141,16 +150,33 @@ export class InvoiceProcessService {
   /**
    * Descarga el documento de factura por invoiceId
    * @param invoiceId ID de la factura
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con el blob y nombre del archivo
    */
-  downloadDocument(invoiceId: number): Observable<InvoiceDocumentDownloadResult> {
+  downloadDocument(invoiceId: number, signal?: AbortSignal): Observable<InvoiceDocumentDownloadResult> {
     const url = `${this.baseUrl}/InvoiceProcess/${invoiceId}/document/download`;
     
     const headers = new HttpHeaders({
       'accept': 'application/octet-stream'
     });
 
-    return this.http.get(url, { headers, responseType: 'blob' }).pipe(
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      observe?: 'body';
+      params?: HttpParams | { [param: string]: any };
+      reportProgress?: boolean;
+      responseType: 'blob';
+      withCredentials?: boolean;
+      signal?: AbortSignal;
+    } = {
+      headers,
+      responseType: 'blob',
+    };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return (this.http.get(url, options) as unknown as Observable<Blob>).pipe(
       map((blob) => ({
         blob: blob,
         fileName: `Factura_${invoiceId}.pdf`,
@@ -162,17 +188,26 @@ export class InvoiceProcessService {
    * Descarga el documento de factura por reservationId
    * Primero obtiene la información del documento y luego lo descarga usando filePath
    * @param reservationId ID de la reserva
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con el blob y nombre del archivo
    */
-  downloadDocumentByReservation(reservationId: number): Observable<InvoiceDocumentDownloadResult> {
+  downloadDocumentByReservation(reservationId: number, signal?: AbortSignal): Observable<InvoiceDocumentDownloadResult> {
     const url = `${this.baseUrl}/InvoiceProcess/reservation/${reservationId}/document`;
     
-    // Primero obtener la información del documento
-    return this.http.get<InvoiceDocumentInfo>(url, {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = {
       headers: new HttpHeaders({
         'accept': 'application/json'
       })
-    }).pipe(
+    };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    // Primero obtener la información del documento
+    return this.http.get<InvoiceDocumentInfo>(url, options).pipe(
       switchMap((documentInfo) => {
         if (!documentInfo || !documentInfo.filePath) {
           throw new Error('No se pudo obtener la ruta del documento');
@@ -183,12 +218,25 @@ export class InvoiceProcessService {
         const params = new URLSearchParams();
         params.set('filepath', documentInfo.filePath);
 
-        return this.http.get(`${downloadUrl}?${params.toString()}`, {
+        const downloadOptions: {
+          headers?: HttpHeaders | { [header: string]: string | string[] };
+          observe?: 'body';
+          params?: HttpParams | { [param: string]: any };
+          reportProgress?: boolean;
+          responseType: 'blob';
+          withCredentials?: boolean;
+          signal?: AbortSignal;
+        } = {
           headers: new HttpHeaders({
             'accept': 'application/octet-stream'
           }),
           responseType: 'blob'
-        }).pipe(
+        };
+        if (signal) {
+          downloadOptions.signal = signal;
+        }
+
+        return (this.http.get(`${downloadUrl}?${params.toString()}`, downloadOptions) as unknown as Observable<Blob>).pipe(
           map((blob) => ({
             blob: blob,
             fileName: documentInfo.fileName || `Factura_${reservationId}.pdf`,

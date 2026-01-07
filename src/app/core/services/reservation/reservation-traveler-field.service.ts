@@ -48,7 +48,8 @@ export class ReservationTravelerFieldService {
    * @returns Lista de campos de viajero.
    */
   getAll(
-    filters?: ReservationTravelerFieldFilters
+    filters?: ReservationTravelerFieldFilters,
+    signal?: AbortSignal
   ): Observable<IReservationTravelerFieldResponse[]> {
     let params = new HttpParams();
 
@@ -64,9 +65,15 @@ export class ReservationTravelerFieldService {
       });
     }
 
-    return this.http.get<IReservationTravelerFieldResponse[]>(this.API_URL, {
-      params,
-    });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationTravelerFieldResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -91,9 +98,17 @@ export class ReservationTravelerFieldService {
    * @param id ID del campo de viajero.
    * @returns El campo de viajero encontrado.
    */
-  getById(id: number): Observable<IReservationTravelerFieldResponse> {
+  getById(id: number, signal?: AbortSignal): Observable<IReservationTravelerFieldResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
     return this.http.get<IReservationTravelerFieldResponse>(
-      `${this.API_URL}/${id}`
+      `${this.API_URL}/${id}`,
+      options
     );
   }
 
@@ -127,15 +142,22 @@ export class ReservationTravelerFieldService {
    * @returns Lista de campos del viajero.
    */
   getByReservationTraveler(
-    reservationTravelerId: number
+    reservationTravelerId: number,
+    signal?: AbortSignal
   ): Observable<IReservationTravelerFieldResponse[]> {
     const params = new HttpParams()
       .set('ReservationTravelerId', reservationTravelerId.toString())
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<IReservationTravelerFieldResponse[]>(this.API_URL, {
-      params,
-    });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationTravelerFieldResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -144,15 +166,22 @@ export class ReservationTravelerFieldService {
    * @returns Lista de campos con el ID especificado.
    */
   getByReservationField(
-    reservationFieldId: number
+    reservationFieldId: number,
+    signal?: AbortSignal
   ): Observable<IReservationTravelerFieldResponse[]> {
     const params = new HttpParams()
       .set('ReservationFieldId', reservationFieldId.toString())
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<IReservationTravelerFieldResponse[]>(this.API_URL, {
-      params,
-    });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationTravelerFieldResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -160,13 +189,19 @@ export class ReservationTravelerFieldService {
    * @param value Valor a buscar.
    * @returns Lista de campos con el valor especificado.
    */
-  getByValue(value: string): Observable<IReservationTravelerFieldResponse[]> {
+  getByValue(value: string, signal?: AbortSignal): Observable<IReservationTravelerFieldResponse[]> {
     const params = new HttpParams()
       .set('Value', value)
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<IReservationTravelerFieldResponse[]>(this.API_URL, {
-      params,
-    });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationTravelerFieldResponse[]>(this.API_URL, options);
   }
 }

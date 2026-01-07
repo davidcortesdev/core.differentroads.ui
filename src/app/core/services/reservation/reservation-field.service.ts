@@ -61,7 +61,8 @@ export class ReservationFieldService {
    * @returns Lista de campos de reservación.
    */
   getAll(
-    filters?: ReservationFieldFilters
+    filters?: ReservationFieldFilters,
+    signal?: AbortSignal
   ): Observable<IReservationFieldResponse[]> {
     let params = new HttpParams();
 
@@ -77,18 +78,34 @@ export class ReservationFieldService {
       });
     }
 
-    return this.http.get<IReservationFieldResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationFieldResponse[]>(this.API_URL, options);
   }
 
   /**
    * Crea un nuevo campo de reservación.
    * @param data Datos para crear el campo de reservación.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns El campo de reservación creado.
    */
-  create(data: ReservationFieldCreate): Observable<IReservationFieldResponse> {
-    return this.http.post<IReservationFieldResponse>(`${this.API_URL}`, data, {
+  create(data: ReservationFieldCreate, signal?: AbortSignal): Observable<IReservationFieldResponse> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = {
       headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
-    });
+    };
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.post<IReservationFieldResponse>(`${this.API_URL}`, data, options);
   }
 
   /**
@@ -96,8 +113,15 @@ export class ReservationFieldService {
    * @param id ID del campo de reservación.
    * @returns El campo de reservación encontrado.
    */
-  getById(id: number): Observable<IReservationFieldResponse> {
-    return this.http.get<IReservationFieldResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<IReservationFieldResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<IReservationFieldResponse>(`${this.API_URL}/${id}`, options);
   }
 
   /**
@@ -126,12 +150,20 @@ export class ReservationFieldService {
    * @param code Código del campo de reservación.
    * @returns Lista de campos de reservación con el código especificado.
    */
-  getByCode(code: string): Observable<IReservationFieldResponse[]> {
+  getByCode(code: string, signal?: AbortSignal): Observable<IReservationFieldResponse[]> {
     const params = new HttpParams()
       .set('Code', code)
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<IReservationFieldResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationFieldResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -139,12 +171,20 @@ export class ReservationFieldService {
    * @param name Nombre del campo de reservación.
    * @returns Lista de campos de reservación con el nombre especificado.
    */
-  getByName(name: string): Observable<IReservationFieldResponse[]> {
+  getByName(name: string, signal?: AbortSignal): Observable<IReservationFieldResponse[]> {
     const params = new HttpParams()
       .set('Name', name)
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<IReservationFieldResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationFieldResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -152,12 +192,20 @@ export class ReservationFieldService {
    * @param fieldType Tipo de campo.
    * @returns Lista de campos de reservación del tipo especificado.
    */
-  getByFieldType(fieldType: string): Observable<IReservationFieldResponse[]> {
+  getByFieldType(fieldType: string, signal?: AbortSignal): Observable<IReservationFieldResponse[]> {
     const params = new HttpParams()
       .set('FieldType', fieldType)
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<IReservationFieldResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationFieldResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -165,20 +213,28 @@ export class ReservationFieldService {
    * @param tkId Token ID del campo.
    * @returns Lista de campos de reservación con el tkId especificado.
    */
-  getByTkId(tkId: string): Observable<IReservationFieldResponse[]> {
+  getByTkId(tkId: string, signal?: AbortSignal): Observable<IReservationFieldResponse[]> {
     const params = new HttpParams()
       .set('TkId', tkId)
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<IReservationFieldResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationFieldResponse[]>(this.API_URL, options);
   }
 
   /**
    * Obtiene campos de reservación ordenados por displayOrder.
    * @returns Lista de campos de reservación ordenada por orden de visualización.
    */
-  getAllOrdered(): Observable<IReservationFieldResponse[]> {
-    return this.getAll().pipe(
+  getAllOrdered(signal?: AbortSignal): Observable<IReservationFieldResponse[]> {
+    return this.getAll(undefined, signal).pipe(
       map((fields) => fields.sort((a, b) => a.displayOrder - b.displayOrder))
     );
   }
@@ -189,9 +245,10 @@ export class ReservationFieldService {
    * @returns Lista de campos de reservación del tipo especificado ordenada por displayOrder.
    */
   getByFieldTypeOrdered(
-    fieldType: string
+    fieldType: string,
+    signal?: AbortSignal
   ): Observable<IReservationFieldResponse[]> {
-    return this.getByFieldType(fieldType).pipe(
+    return this.getByFieldType(fieldType, signal).pipe(
       map((fields) => fields.sort((a, b) => a.displayOrder - b.displayOrder))
     );
   }
@@ -200,8 +257,8 @@ export class ReservationFieldService {
    * Obtiene el siguiente orden de visualización disponible.
    * @returns El siguiente número de orden de visualización disponible.
    */
-  getNextDisplayOrder(): Observable<number> {
-    return this.getAll().pipe(
+  getNextDisplayOrder(signal?: AbortSignal): Observable<number> {
+    return this.getAll(undefined, signal).pipe(
       map((fields) => {
         if (fields.length === 0) {
           return 1;
@@ -218,8 +275,8 @@ export class ReservationFieldService {
    * @param excludeId ID a excluir de la verificación (para actualizaciones).
    * @returns True si el código existe, false si no.
    */
-  codeExists(code: string, excludeId?: number): Observable<boolean> {
-    return this.getByCode(code).pipe(
+  codeExists(code: string, excludeId?: number, signal?: AbortSignal): Observable<boolean> {
+    return this.getByCode(code, signal).pipe(
       map((fields) => {
         const filteredFields = excludeId
           ? fields.filter((field) => field.id !== excludeId)
@@ -233,10 +290,10 @@ export class ReservationFieldService {
    * Obtiene campos de reservación agrupados por tipo de campo.
    * @returns Objeto con los campos agrupados por fieldType.
    */
-  getAllGroupedByFieldType(): Observable<{
+  getAllGroupedByFieldType(signal?: AbortSignal): Observable<{
     [fieldType: string]: IReservationFieldResponse[];
   }> {
-    return this.getAll().pipe(
+    return this.getAll(undefined, signal).pipe(
       map((fields) => {
         const grouped: { [fieldType: string]: IReservationFieldResponse[] } =
           {};
@@ -262,8 +319,8 @@ export class ReservationFieldService {
    * Obtiene campos de texto (input, textarea, etc.).
    * @returns Lista de campos de tipo texto.
    */
-  getTextFields(): Observable<IReservationFieldResponse[]> {
-    return this.getAll().pipe(
+  getTextFields(signal?: AbortSignal): Observable<IReservationFieldResponse[]> {
+    return this.getAll(undefined, signal).pipe(
       map((fields) =>
         fields.filter((field) =>
           ['text', 'textarea', 'email', 'password', 'tel'].includes(
@@ -278,8 +335,8 @@ export class ReservationFieldService {
    * Obtiene campos de selección (select, radio, checkbox).
    * @returns Lista de campos de tipo selección.
    */
-  getSelectionFields(): Observable<IReservationFieldResponse[]> {
-    return this.getAll().pipe(
+  getSelectionFields(signal?: AbortSignal): Observable<IReservationFieldResponse[]> {
+    return this.getAll(undefined, signal).pipe(
       map((fields) =>
         fields.filter((field) =>
           ['select', 'radio', 'checkbox'].includes(
@@ -294,8 +351,8 @@ export class ReservationFieldService {
    * Obtiene campos de fecha.
    * @returns Lista de campos de tipo fecha.
    */
-  getDateFields(): Observable<IReservationFieldResponse[]> {
-    return this.getAll().pipe(
+  getDateFields(signal?: AbortSignal): Observable<IReservationFieldResponse[]> {
+    return this.getAll(undefined, signal).pipe(
       map((fields) =>
         fields.filter((field) =>
           ['date', 'datetime', 'time'].includes(field.fieldType.toLowerCase())
@@ -308,8 +365,8 @@ export class ReservationFieldService {
    * Obtiene el conteo total de campos por tipo.
    * @returns Objeto con el conteo de campos por tipo.
    */
-  getFieldCountByType(): Observable<{ [fieldType: string]: number }> {
-    return this.getAll().pipe(
+  getFieldCountByType(signal?: AbortSignal): Observable<{ [fieldType: string]: number }> {
+    return this.getAll(undefined, signal).pipe(
       map((fields) => {
         const counts: { [fieldType: string]: number } = {};
 
@@ -328,9 +385,10 @@ export class ReservationFieldService {
    * @returns Lista de campos que contienen el término en su descripción.
    */
   searchByDescription(
-    searchTerm: string
+    searchTerm: string,
+    signal?: AbortSignal
   ): Observable<IReservationFieldResponse[]> {
-    return this.getAll().pipe(
+    return this.getAll(undefined, signal).pipe(
       map((fields) =>
         fields.filter((field) =>
           field.description.toLowerCase().includes(searchTerm.toLowerCase())
@@ -344,8 +402,8 @@ export class ReservationFieldService {
    * @param code Código del campo.
    * @returns El campo encontrado o null si no existe.
    */
-  getByCodeSingle(code: string): Observable<IReservationFieldResponse | null> {
-    return this.getByCode(code).pipe(
+  getByCodeSingle(code: string, signal?: AbortSignal): Observable<IReservationFieldResponse | null> {
+    return this.getByCode(code, signal).pipe(
       map((fields) => (fields.length > 0 ? fields[0] : null))
     );
   }

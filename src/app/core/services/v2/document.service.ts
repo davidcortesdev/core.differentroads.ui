@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, switchMap } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 
 export type DocumentType = 'BUDGET' | 'RESERVATION_VOUCHER';
@@ -43,11 +43,13 @@ export class DocumentServicev2 {
    * Obtiene toda la información del documento
    * @param reservationId ID de la reserva
    * @param documentType Tipo de documento (BUDGET, RESERVATION_VOUCHER)
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con toda la información del documento
    */
   getDocumentInfo(
     reservationId: number,
-    documentType: DocumentType
+    documentType: DocumentType,
+    signal?: AbortSignal
   ): Observable<DocumentInfo> {
     const url = `${this.baseUrl}/DocumentProcess/GetDocument/Reservation/${reservationId}/DocumentType/${documentType}`;
 
@@ -55,20 +57,30 @@ export class DocumentServicev2 {
       accept: 'application/json',
     });
 
-    return this.http.get<DocumentInfo>(url, { headers });
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = { headers };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<DocumentInfo>(url, options);
   }
 
   /**
    * Obtiene la ruta del último documento generado o lo genera si no existe
    * @param reservationId ID de la reserva
    * @param documentType Tipo de documento (BUDGET, RESERVATION_VOUCHER)
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con la ruta del documento
    */
   getDocumentPath(
     reservationId: number,
-    documentType: DocumentType
+    documentType: DocumentType,
+    signal?: AbortSignal
   ): Observable<string> {
-    return this.getDocumentInfo(reservationId, documentType).pipe(
+    return this.getDocumentInfo(reservationId, documentType, signal).pipe(
       map((documentInfo) => {
         if (documentInfo && documentInfo.filePath) {
           return documentInfo.filePath;
@@ -82,11 +94,13 @@ export class DocumentServicev2 {
    * Obtiene el documento como blob para descarga
    * @param fileName Nombre del archivo
    * @param folder Carpeta donde está almacenado el documento
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con el blob del documento
    */
   getDocument(
     fileName: string,
-    folder: string = 'documents/budget/'
+    folder: string = 'documents/budget/',
+    signal?: AbortSignal
   ): Observable<Blob> {
     const url = `${this.baseUrl}/File/Get`;
 
@@ -99,80 +113,97 @@ export class DocumentServicev2 {
     const params = new URLSearchParams();
     params.set('filepath', filepath);
 
-    return this.http.get(`${url}?${params.toString()}`, {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      observe?: 'body';
+      params?: HttpParams | { [param: string]: any };
+      reportProgress?: boolean;
+      responseType: 'blob';
+      withCredentials?: boolean;
+      signal?: AbortSignal;
+    } = {
       headers,
       responseType: 'blob',
-    });
+    };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get(`${url}?${params.toString()}`, options);
   }
 
   /**
    * Obtiene o genera un presupuesto y lo descarga
    * @param reservationId ID de la reserva
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con el blob del presupuesto
    */
-  getBudgetDocument(reservationId: number): Observable<Blob> {
-    return new Observable((observer) => {
-      // Primero obtener la ruta del documento
-      this.getDocumentPath(reservationId, 'BUDGET').subscribe({
-        next: (documentPath) => {
-          // La ruta ya viene completa desde el endpoint, usar directamente
-          const url = `${this.baseUrl}/File/Get`;
+  getBudgetDocument(reservationId: number, signal?: AbortSignal): Observable<Blob> {
+    return this.getDocumentPath(reservationId, 'BUDGET', signal).pipe(
+      switchMap((documentPath) => {
+        const url = `${this.baseUrl}/File/Get`;
+        const headers = new HttpHeaders({
+          accept: 'application/octet-stream',
+        });
+        const params = new URLSearchParams();
+        params.set('filepath', documentPath);
 
-          const headers = new HttpHeaders({
-            accept: 'application/octet-stream',
-          });
+        const options: {
+          headers?: HttpHeaders | { [header: string]: string | string[] };
+          observe?: 'body';
+          params?: HttpParams | { [param: string]: any };
+          reportProgress?: boolean;
+          responseType: 'blob';
+          withCredentials?: boolean;
+          signal?: AbortSignal;
+        } = {
+          headers,
+          responseType: 'blob',
+        };
+        if (signal) {
+          options.signal = signal;
+        }
 
-          const params = new URLSearchParams();
-          params.set('filepath', documentPath);
-
-          this.http
-            .get(`${url}?${params.toString()}`, {
-              headers,
-              responseType: 'blob',
-            })
-            .subscribe({
-              next: (blob) => observer.next(blob),
-              error: (error) => observer.error(error),
-            });
-        },
-        error: (error) => observer.error(error),
-      });
-    });
+        return (this.http.get(`${url}?${params.toString()}`, options) as unknown as Observable<Blob>);
+      })
+    );
   }
 
   /**
    * Obtiene o genera un voucher de reserva y lo descarga
    * @param reservationId ID de la reserva
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con el blob del voucher
    */
-  getReservationVoucherDocument(reservationId: number): Observable<Blob> {
-    return new Observable((observer) => {
-      // Primero obtener la ruta del documento
-      this.getDocumentPath(reservationId, 'RESERVATION_VOUCHER').subscribe({
-        next: (documentPath) => {
-          // La ruta ya viene completa desde el endpoint, usar directamente
-          const url = `${this.baseUrl}/File/Get`;
+  getReservationVoucherDocument(reservationId: number, signal?: AbortSignal): Observable<Blob> {
+    return this.getDocumentPath(reservationId, 'RESERVATION_VOUCHER', signal).pipe(
+      switchMap((documentPath) => {
+        const url = `${this.baseUrl}/File/Get`;
+        const headers = new HttpHeaders({
+          accept: 'application/octet-stream',
+        });
+        const params = new URLSearchParams();
+        params.set('filepath', documentPath);
 
-          const headers = new HttpHeaders({
-            accept: 'application/octet-stream',
-          });
+        const options: {
+          headers?: HttpHeaders | { [header: string]: string | string[] };
+          observe?: 'body';
+          params?: HttpParams | { [param: string]: any };
+          reportProgress?: boolean;
+          responseType: 'blob';
+          withCredentials?: boolean;
+          signal?: AbortSignal;
+        } = {
+          headers,
+          responseType: 'blob',
+        };
+        if (signal) {
+          options.signal = signal;
+        }
 
-          const params = new URLSearchParams();
-          params.set('filepath', documentPath);
-
-          this.http
-            .get(`${url}?${params.toString()}`, {
-              headers,
-              responseType: 'blob',
-            })
-            .subscribe({
-              next: (blob) => observer.next(blob),
-              error: (error) => observer.error(error),
-            });
-        },
-        error: (error) => observer.error(error),
-      });
-    });
+        return (this.http.get(`${url}?${params.toString()}`, options) as unknown as Observable<Blob>);
+      })
+    );
   }
 
   /**
@@ -207,11 +238,13 @@ export class DocumentServicev2 {
    * Obtiene información de un documento por código (método genérico)
    * @param reservationId ID de la reserva
    * @param documentCode Código del documento (puede ser cualquier string)
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con la información del documento
    */
   getDocumentInfoByCode(
     reservationId: number,
-    documentCode: string
+    documentCode: string,
+    signal?: AbortSignal
   ): Observable<DocumentInfo> {
     const url = `${this.baseUrl}/DocumentProcess/GetDocument/Reservation/${reservationId}/DocumentType/${documentCode}`;
 
@@ -219,7 +252,15 @@ export class DocumentServicev2 {
       accept: 'application/json',
     });
 
-    return this.http.get<DocumentInfo>(url, { headers });
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = { headers };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<DocumentInfo>(url, options);
   }
 
   /**
@@ -227,11 +268,13 @@ export class DocumentServicev2 {
    * Llama directamente al endpoint que devuelve el documento
    * @param reservationId ID de la reserva
    * @param documentCode Código del documento
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con el blob y el nombre del archivo
    */
   downloadDocumentByCode(
     reservationId: number,
-    documentCode: string
+    documentCode: string,
+    signal?: AbortSignal
   ): Observable<DocumentDownloadResult> {
     const url = `${this.baseUrl}/DocumentProcess/GetDocument/Reservation/${reservationId}/DocumentType/${documentCode}/document`;
 
@@ -239,7 +282,23 @@ export class DocumentServicev2 {
       accept: 'application/octet-stream',
     });
 
-    return this.http.get(url, { headers, responseType: 'blob' }).pipe(
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      observe?: 'body';
+      params?: HttpParams | { [param: string]: any };
+      reportProgress?: boolean;
+      responseType: 'blob';
+      withCredentials?: boolean;
+      signal?: AbortSignal;
+    } = {
+      headers,
+      responseType: 'blob',
+    };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return (this.http.get(url, options) as unknown as Observable<Blob>).pipe(
       map((blob) => ({
         blob: blob,
         fileName: `${documentCode}_${reservationId}.pdf`,
@@ -250,9 +309,10 @@ export class DocumentServicev2 {
   /**
    * Obtiene información de un documento de itinerario
    * @param itineraryId ID del itinerario
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con la información del documento
    */
-  getItineraryDocumentInfo(itineraryId: number): Observable<DocumentInfo> {
+  getItineraryDocumentInfo(itineraryId: number, signal?: AbortSignal): Observable<DocumentInfo> {
     const documentTypeCode = 'ITINERARY';
     const url = `${this.baseUrl}/DocumentProcess/GetDocument/Itinerary/${itineraryId}/DocumentType/${documentTypeCode}`;
 
@@ -260,52 +320,63 @@ export class DocumentServicev2 {
       accept: 'application/json',
     });
 
-    return this.http.get<DocumentInfo>(url, { headers });
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = { headers };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<DocumentInfo>(url, options);
   }
 
   /**
    * Descarga un itinerario por ID
    * Primero obtiene la ruta del documento y luego lo descarga
    * @param itineraryId ID del itinerario
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con el blob y el nombre del archivo
    */
-  downloadItinerary(itineraryId: number): Observable<DocumentDownloadResult> {
-    return new Observable((observer) => {
-      // Primero obtener la información del documento (incluye la ruta)
-      this.getItineraryDocumentInfo(itineraryId).subscribe({
-        next: (documentInfo) => {
-          if (!documentInfo || !documentInfo.filePath) {
-            observer.error(new Error('No se pudo obtener la ruta del documento'));
-            return;
-          }
+  downloadItinerary(itineraryId: number, signal?: AbortSignal): Observable<DocumentDownloadResult> {
+    return this.getItineraryDocumentInfo(itineraryId, signal).pipe(
+      switchMap((documentInfo) => {
+        if (!documentInfo || !documentInfo.filePath) {
+          throw new Error('No se pudo obtener la ruta del documento');
+        }
 
-          // Descargar el archivo usando la ruta obtenida
-          const url = `${this.baseUrl}/File/Get`;
-          const headers = new HttpHeaders({
-            accept: 'application/octet-stream',
-          });
+        // Descargar el archivo usando la ruta obtenida
+        const url = `${this.baseUrl}/File/Get`;
+        const headers = new HttpHeaders({
+          accept: 'application/octet-stream',
+        });
 
-          const params = new URLSearchParams();
-          params.set('filepath', documentInfo.filePath);
+        const params = new URLSearchParams();
+        params.set('filepath', documentInfo.filePath);
 
-          this.http
-            .get(`${url}?${params.toString()}`, {
-              headers,
-              responseType: 'blob',
-            })
-            .subscribe({
-              next: (blob) => {
-                observer.next({
-                  blob: blob,
-                  fileName: documentInfo.fileName || `itinerary_${itineraryId}.pdf`,
-                });
-                observer.complete();
-              },
-              error: (error) => observer.error(error),
-            });
-        },
-        error: (error) => observer.error(error),
-      });
-    });
+        const options: {
+          headers?: HttpHeaders | { [header: string]: string | string[] };
+          observe?: 'body';
+          params?: HttpParams | { [param: string]: any };
+          reportProgress?: boolean;
+          responseType: 'blob';
+          withCredentials?: boolean;
+          signal?: AbortSignal;
+        } = {
+          headers,
+          responseType: 'blob',
+        };
+        if (signal) {
+          options.signal = signal;
+        }
+
+        return (this.http.get(`${url}?${params.toString()}`, options) as unknown as Observable<Blob>).pipe(
+          map((blob) => ({
+            blob: blob,
+            fileName: documentInfo.fileName || `itinerary_${itineraryId}.pdf`,
+          }))
+        );
+      })
+    );
   }
 }

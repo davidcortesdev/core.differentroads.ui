@@ -450,7 +450,32 @@ export class AuthenticateService {
         },
         onFailure: (err: any) => {
 
-          reject(err);
+          const message =
+            typeof err?.message === 'string' ? err.message : '';
+          const name = err?.name || '';
+          const isUnverifiedError =
+            name === 'InvalidParameterException' &&
+            message.includes('no registered/verified email') ||
+            message.includes('verified email or phone_number');
+          if (isUnverifiedError) {
+            this.resendConfirmationCode(username)
+              .then(() => {
+                reject({
+                  code: 'UNCONFIRMED',
+                  message:
+                    'Tu email no está verificado. Hemos reenviado el código de confirmación para que puedas verificarlo.',
+                });
+              })
+              .catch(() => {
+                reject({
+                  code: 'UNCONFIRMED',
+                  message:
+                    'Tu email no está verificado. Intenta verificar tu cuenta desde el correo de confirmación.',
+                });
+              });
+          } else {
+            reject(err);
+          }
         },
       });
     });

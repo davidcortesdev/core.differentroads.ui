@@ -48,7 +48,11 @@ import { Subscription, forkJoin, of, Observable, Subject } from 'rxjs';
 import { catchError, map, switchMap, concatMap, takeUntil, finalize } from 'rxjs/operators';
 import { TourTagService } from '../../../../core/services/tag/tour-tag.service';
 import { TagService } from '../../../../core/services/tag/tag.service';
-import { ItineraryService, ItineraryFilters } from '../../../../core/services/itinerary/itinerary.service';
+import {
+  ItineraryService,
+  ItineraryFilters,
+  IItineraryResponse,
+} from '../../../../core/services/itinerary/itinerary.service';
 import { ItineraryDayService, IItineraryDayResponse } from '../../../../core/services/itinerary/itinerary-day/itinerary-day.service';
 import { DepartureService, IDepartureResponse } from '../../../../core/services/departure/departure.service';
 import { TourDataForEcommerce } from '../../../../core/services/analytics/analytics.service';
@@ -150,6 +154,9 @@ export class TourHeaderV2Component
   // Tour data
   tour: Partial<Tour> = {};
 
+  // Itinerary data
+  itineraryDetails: IItineraryResponse | null = null;
+
   // Información geográfica
   country: string = '';
   continent: string = '';
@@ -224,6 +231,11 @@ export class TourHeaderV2Component
       this.loadTripTypes(changes['tourId'].currentValue);
       // Cargar rating y reviews
       this.loadRatingAndReviewCount(changes['tourId'].currentValue);
+    }
+    
+    // Cargar itinerario cuando cambia el departure seleccionado
+    if (changes['selectedDeparture']) {
+      this.handleDepartureChange(changes['selectedDeparture'].currentValue);
     }
   }
 
@@ -318,6 +330,26 @@ export class TourHeaderV2Component
     }
     
     // Si isBookable es true o undefined, es reservable
+    return true;
+  }
+
+  // ✅ GETTER: Verificar si tour, itinerario y departure son todos reservables
+  get isFullyBookable(): boolean {
+    // Validar tour
+    if (!this.tour || this.tour.isBookable !== true) {
+      return false;
+    }
+    
+    // Validar itinerario
+    if (!this.itineraryDetails || this.itineraryDetails.isBookable !== true) {
+      return false;
+    }
+    
+    // Validar departure
+    if (!this.isDepartureBookable) {
+      return false;
+    }
+    
     return true;
   }
 
@@ -533,9 +565,18 @@ export class TourHeaderV2Component
     if (!this.hasSelectedDate) {
       return 'Debes seleccionar una fecha de salida para poder reservar';
     }
+    
+    // Mensajes específicos según qué no es reservable
+    if (!this.tour || this.tour.isBookable !== true) {
+      return 'Este tour no está disponible para reservar';
+    }
+    if (!this.itineraryDetails || this.itineraryDetails.isBookable !== true) {
+      return 'Este itinerario no está disponible para reservar';
+    }
     if (!this.isDepartureBookable) {
       return 'Esta salida no tiene disponibilidad';
     }
+    
     return '';
   }
 
@@ -640,6 +681,45 @@ export class TourHeaderV2Component
           return of(null);
         })
       ).subscribe()
+    );
+  }
+
+  /**
+   * Maneja el cambio de departure seleccionado y carga el itinerario correspondiente
+   */
+  private handleDepartureChange(departure: any): void {
+    if (!departure || !departure.id) {
+      this.itineraryDetails = null;
+      return;
+    }
+
+    // Obtener el departure completo para acceder al itineraryId
+    this.subscriptions.add(
+      this.departureService.getById(departure.id, this.preview, this.abortController.signal).pipe(
+        switchMap((departureData) => {
+          if (!departureData || !departureData.itineraryId) {
+            this.itineraryDetails = null;
+            return of(null);
+          }
+
+          // Cargar el itinerario usando el itineraryId del departure
+          return this.itineraryService.getById(
+            departureData.itineraryId,
+            this.abortController.signal
+          ).pipe(
+            catchError(() => {
+              this.itineraryDetails = null;
+              return of(null);
+            })
+          );
+        }),
+        catchError(() => {
+          this.itineraryDetails = null;
+          return of(null);
+        })
+      ).subscribe((itinerary) => {
+        this.itineraryDetails = itinerary;
+      })
     );
   }
 
@@ -1543,6 +1623,26 @@ export class TourHeaderV2Component
     if (this.isCreatingReservation) {
       return;
     }
+
+    // ✅ VALIDACIÓN COMPLETA: Verificar que tour, itinerario y departure sean reservables
+    if (!this.isFullyBookable) {
+      this.isCreatingReservation = false;
+      let errorMessage = 'No se puede reservar: ';
+      
+      if (!this.tour || this.tour.isBookable !== true) {
+        errorMessage += 'el tour no está disponible para reservar.';
+      } else if (!this.itineraryDetails || this.itineraryDetails.isBookable !== true) {
+        errorMessage += 'el itinerario no está disponible para reservar.';
+      } else if (!this.isDepartureBookable) {
+        errorMessage += 'la salida no tiene disponibilidad.';
+      } else {
+        errorMessage += 'uno o más elementos no están disponibles para reservar.';
+      }
+      
+      alert(errorMessage);
+      return;
+    }
+
     this.isCreatingReservation = true;
     try {
       // ✅ OBTENER ID DEL ESTADO DRAFT DINÁMICAMENTE

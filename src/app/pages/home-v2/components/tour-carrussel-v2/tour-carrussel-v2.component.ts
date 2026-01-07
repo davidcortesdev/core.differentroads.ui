@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, AfterViewInit, ViewChild, ElementRef, HostListener, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   TourService,
@@ -94,6 +94,19 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
 
   private destroy$ = new Subject<void>();
   protected carouselConfig = CAROUSEL_CONFIG;
+  
+  // Propiedad para mostrar/ocultar navegadores según el tamaño de pantalla
+  // Visibles solo por encima de 1390px
+  protected showNavigators: boolean = true;
+
+  // Listener para actualizar showNavigators cuando cambie el tamaño de la ventana
+  @HostListener('window:resize')
+  onResize(): void {
+    if (typeof window !== 'undefined') {
+      // Ocultar navegadores en pantallas <= 1390px
+      this.showNavigators = window.innerWidth > 1390;
+    }
+  }
 
   // Intersection Observer para detectar cuando el carrusel aparece en pantalla
   @ViewChild('tourCarouselContainer', { static: false }) tourCarouselContainer!: ElementRef;
@@ -118,20 +131,10 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
   private touchCancelHandler: ((event: Event) => void) | null = null;
 
   // PrimeNG v19: breakpoints apply when viewport <= breakpoint (max-width)
-  // Por defecto (sin breakpoint aplicado) se usan 3 cards visibles.
+  // Por defecto (sin breakpoint aplicado, >1024px) se usan 3 cards visibles.
   responsiveOptions = [
     {
-      breakpoint: '1650px', // >=1025px y <=1600px
-      numVisible: 3,
-      numScroll: 1,
-    },
-    {
-      breakpoint: '1390px',
-      numVisible: 2,
-      numScroll: 1,
-    },
-    {
-      breakpoint: '1024px', // <=1024px (tablet)
+      breakpoint: '1024px', // Desde 1024px hacia abajo: 2 tarjetas
       numVisible: 2,
       numScroll: 1,
     },
@@ -142,6 +145,11 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
     },
     {
       breakpoint: '560px', // <=560px (mobile)
+      numVisible: 1,
+      numScroll: 1,
+    },
+    {
+      breakpoint: '320px', // <=320px (pantallas muy pequeñas)
       numVisible: 1,
       numScroll: 1,
     },
@@ -170,6 +178,11 @@ export class TourCarrusselV2Component implements OnInit, OnDestroy, AfterViewIni
   ) { }
 
   ngOnInit(): void {
+    // Inicializar valor de showNavigators según el tamaño actual de la ventana
+    if (typeof window !== 'undefined') {
+      this.showNavigators = window.innerWidth > 1390;
+    }
+    
     // Inicializar AbortController para trip types
     this.tripTypesAbortController = new AbortController();
     

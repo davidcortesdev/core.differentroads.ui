@@ -55,7 +55,7 @@ export class DepartureAccommodationTypeService {
    * @param filters Filtros para aplicar en la búsqueda.
    * @returns Lista de tipos de alojamiento.
    */
-  getAll(filters?: DepartureAccommodationTypeFilters): Observable<IDepartureAccommodationTypeResponse[]> {
+  getAll(filters?: DepartureAccommodationTypeFilters, signal?: AbortSignal): Observable<IDepartureAccommodationTypeResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -70,7 +70,15 @@ export class DepartureAccommodationTypeService {
       });
     }
 
-    return this.http.get<IDepartureAccommodationTypeResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IDepartureAccommodationTypeResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -89,8 +97,15 @@ export class DepartureAccommodationTypeService {
    * @param id ID del tipo de alojamiento.
    * @returns El tipo de alojamiento encontrado.
    */
-  getById(id: number): Observable<IDepartureAccommodationTypeResponse> {
-    return this.http.get<IDepartureAccommodationTypeResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<IDepartureAccommodationTypeResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<IDepartureAccommodationTypeResponse>(`${this.API_URL}/${id}`, options);
   }
 
   /**
@@ -119,11 +134,19 @@ export class DepartureAccommodationTypeService {
    * @param code Código del tipo de alojamiento.
    * @returns Lista de tipos de alojamiento que coinciden con el código.
    */
-  getByCode(code: string): Observable<IDepartureAccommodationTypeResponse[]> {
+  getByCode(code: string, signal?: AbortSignal): Observable<IDepartureAccommodationTypeResponse[]> {
     const params = new HttpParams()
       .set('Code', code)
       .set('useExactMatchForStrings', 'false');
     
-    return this.http.get<IDepartureAccommodationTypeResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IDepartureAccommodationTypeResponse[]>(this.API_URL, options);
   }
 }

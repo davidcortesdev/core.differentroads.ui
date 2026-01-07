@@ -28,13 +28,21 @@ export class ReservationFlightService {
  
     constructor(private http: HttpClient) {}
   
-    getSelectedFlightPack(reservationId: number): Observable<IFlightPackDTO | IFlightPackDTO[]> {
+    getSelectedFlightPack(reservationId: number, signal?: AbortSignal): Observable<IFlightPackDTO | IFlightPackDTO[]> {
         const headers = new HttpHeaders({
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         });
         
-        return this.http.get<IFlightPackDTO | IFlightPackDTO[]>(`${this.API_URL}/${reservationId}`, { headers })
+        const options: {
+            headers?: HttpHeaders | { [header: string]: string | string[] };
+            signal?: AbortSignal;
+        } = { headers };
+        if (signal) {
+            options.signal = signal;
+        }
+        
+        return this.http.get<IFlightPackDTO | IFlightPackDTO[]>(`${this.API_URL}/${reservationId}`, options)
             .pipe(
                 catchError(error => {
                     return throwError(() => error);

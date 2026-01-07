@@ -13,7 +13,7 @@ export class LocationAirportNetService {
     constructor(private http: HttpClient) { }
 
     // Obtener aeropuertos con filtros
-    getAirports(filters?: any): Observable<LocationAirport[]> {
+    getAirports(filters?: any, signal?: AbortSignal): Observable<LocationAirport[]> {
         let params = new HttpParams();
         if (filters) {
             Object.keys(filters).forEach(key => {
@@ -22,7 +22,14 @@ export class LocationAirportNetService {
                 }
             });
         }
-        return this.http.get<LocationAirport[]>(`${this.apiUrl}/locationairport`, { params })
+        const options: {
+            params?: HttpParams | { [param: string]: any };
+            signal?: AbortSignal;
+        } = { params };
+        if (signal) {
+            options.signal = signal;
+        }
+        return this.http.get<LocationAirport[]>(`${this.apiUrl}/locationairport`, options)
             .pipe(
                 catchError(error => {
                     return of([]);
@@ -31,8 +38,15 @@ export class LocationAirportNetService {
     }
 
     // Obtener aeropuerto por ID
-    getAirportById(id: number): Observable<LocationAirport> {
-        return this.http.get<LocationAirport>(`${this.apiUrl}/locationairport/${id}`)
+    getAirportById(id: number, signal?: AbortSignal): Observable<LocationAirport> {
+        const options: {
+            params?: HttpParams | { [param: string]: any };
+            signal?: AbortSignal;
+        } = {};
+        if (signal) {
+            options.signal = signal;
+        }
+        return this.http.get<LocationAirport>(`${this.apiUrl}/locationairport/${id}`, options)
             .pipe(
                 catchError(error => {
                     return of({} as LocationAirport);
@@ -71,9 +85,16 @@ export class LocationAirportNetService {
     }
 
     // Búsqueda fuzzy de aeropuertos
-    searchAirports(query: string, limit: number = 20): Observable<FuzzyLocationAirportResponse[]> {
+    searchAirports(query: string, limit: number = 20, signal?: AbortSignal): Observable<FuzzyLocationAirportResponse[]> {
         let params = new HttpParams().set('q', query).set('limit', limit.toString());
-        return this.http.get<FuzzyLocationAirportResponse[]>(`${this.apiUrl}/locationairport/search`, { params })
+        const options: {
+            params?: HttpParams | { [param: string]: any };
+            signal?: AbortSignal;
+        } = { params };
+        if (signal) {
+            options.signal = signal;
+        }
+        return this.http.get<FuzzyLocationAirportResponse[]>(`${this.apiUrl}/locationairport/search`, options)
             .pipe(
                 catchError(error => {
                     return of([]);
@@ -82,7 +103,7 @@ export class LocationAirportNetService {
     }
 
     // Método para obtener múltiples aeropuertos por IDs
-    getAirportsByIds(ids: number[]): Observable<LocationAirport[]> {
+    getAirportsByIds(ids: number[], signal?: AbortSignal): Observable<LocationAirport[]> {
         if (!ids || ids.length === 0) {
             return of([]);
         }
@@ -92,7 +113,15 @@ export class LocationAirportNetService {
             params = params.append('Id', id.toString());
         });
 
-        return this.http.get<LocationAirport[]>(`${this.apiUrl}/locationairport`, { params })
+        const options: {
+            params?: HttpParams | { [param: string]: any };
+            signal?: AbortSignal;
+        } = { params };
+        if (signal) {
+            options.signal = signal;
+        }
+
+        return this.http.get<LocationAirport[]>(`${this.apiUrl}/locationairport`, options)
             .pipe(
                 catchError(error => {
                     return of([]);

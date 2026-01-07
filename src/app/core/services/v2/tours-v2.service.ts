@@ -37,7 +37,7 @@ export class ToursServiceV2 {
    * @param filter - Criterios de filtro para tours
    * @returns Observable de array de TourV2
    */
-  getTours(filter?: TourFilterV2): Observable<TourV2[]> {
+  getTours(filter?: TourFilterV2, signal?: AbortSignal): Observable<TourV2[]> {
     let params = new HttpParams();
     
     if (filter) {
@@ -54,12 +54,21 @@ export class ToursServiceV2 {
       });
     }
 
-    return this.http.get<TourV2[]>(this.API_URL, {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      headers?: { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = {
       params,
       headers: {
         'Accept': 'text/plain'
       }
-    });
+    };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<TourV2[]>(this.API_URL, options);
   }
 
   /**
@@ -68,17 +77,26 @@ export class ToursServiceV2 {
    * @param filterByVisible - Filtrar por tours visibles
    * @returns Observable de TourV2
    */
-  getTourById(id: number | string, filterByVisible: boolean = false): Observable<TourV2> {
+  getTourById(id: number | string, filterByVisible: boolean = false, signal?: AbortSignal): Observable<TourV2> {
     let params = new HttpParams()
       .set('Id', id.toString())
       .set('FilterByVisible', filterByVisible.toString());
 
-    return this.http.get<any>(this.API_URL, {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      headers?: { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = {
       params,
       headers: {
         'Accept': 'application/json'
       }
-    }).pipe(
+    };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<any>(this.API_URL, options).pipe(
       map(response => {
         // Si la respuesta es un array, tomar el primer elemento
         if (Array.isArray(response) && response.length > 0) {
@@ -106,13 +124,13 @@ export class ToursServiceV2 {
    * @param ids - Array de IDs de tours
    * @returns Observable de array de TourV2
    */
-  getToursByIds(ids: number[]): Observable<TourV2[]> {
+  getToursByIds(ids: number[], signal?: AbortSignal): Observable<TourV2[]> {
     if (!ids || ids.length === 0) {
       return of([]);
     }
 
     const requests = ids.map(id => 
-      this.getTourById(id, false).pipe(
+      this.getTourById(id, false, signal).pipe(
         catchError(err => {
           return of(undefined);
         })
@@ -136,12 +154,12 @@ export class ToursServiceV2 {
    * @param tkId - Identificador TK
    * @returns Observable de ID del tour
    */
-  getTourIdByTKId(tkId: string): Observable<number> {
+  getTourIdByTKId(tkId: string, signal?: AbortSignal): Observable<number> {
     const filter: TourFilterV2 = {
       tkId: tkId,
     };
 
-    return this.getTours(filter).pipe(
+    return this.getTours(filter, signal).pipe(
       map(tours => {
         if (tours.length > 0) {
           return tours[0].id;

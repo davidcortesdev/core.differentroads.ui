@@ -49,7 +49,7 @@ export class TourLocationTypeService {
    * @param filters Filtros para aplicar en la búsqueda.
    * @returns Lista de tipos de ubicación de tour.
    */
-   getAll(filter?: TourLocationTypeFilters): Observable<ITourLocationTypeResponse[]> {
+   getAll(filter?: TourLocationTypeFilters, signal?: AbortSignal): Observable<ITourLocationTypeResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -64,11 +64,26 @@ export class TourLocationTypeService {
       });
     }
 
-    return this.http.get<ITourLocationTypeResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<ITourLocationTypeResponse[]>(this.API_URL, options);
   }
 
-  getById(id: number): Observable<ITourLocationTypeResponse> {
-    return this.http.get<ITourLocationTypeResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<ITourLocationTypeResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<ITourLocationTypeResponse>(`${this.API_URL}/${id}`, options);
   }
 
   create(data: TourLocationTypeCreate): Observable<ITourLocationTypeResponse> {

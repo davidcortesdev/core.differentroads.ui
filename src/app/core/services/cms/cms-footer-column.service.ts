@@ -33,7 +33,8 @@ export class CMSFooterColumnService {
   constructor(private http: HttpClient) {}
 
   getAllFooterColumns(
-    params?: FooterColumnFilters
+    params?: FooterColumnFilters,
+    signal?: AbortSignal
   ): Observable<IFooterColumnResponse[]> {
     let httpParams = new HttpParams();
 
@@ -50,12 +51,25 @@ export class CMSFooterColumnService {
         httpParams = httpParams.set('isActive', params.isActive.toString());
     }
 
-    return this.http.get<IFooterColumnResponse[]>(this.API_URL, {
-      params: httpParams,
-    });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params: httpParams };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IFooterColumnResponse[]>(this.API_URL, options);
   }
 
-  getFooterColumnById(id: number): Observable<IFooterColumnResponse> {
-    return this.http.get<IFooterColumnResponse>(`${this.API_URL}/${id}`);
+  getFooterColumnById(id: number, signal?: AbortSignal): Observable<IFooterColumnResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<IFooterColumnResponse>(`${this.API_URL}/${id}`, options);
   }
 }

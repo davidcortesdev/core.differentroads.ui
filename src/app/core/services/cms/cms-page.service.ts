@@ -40,7 +40,7 @@ export class CMSPageService {
     name?: string;
     visibleWeb?: boolean;
     versionActiva?: number;
-  }): Observable<ICMSPageResponse[]> {
+  }, signal?: AbortSignal): Observable<ICMSPageResponse[]> {
     let httpParams = new HttpParams();
     
     if (params) {
@@ -51,11 +51,26 @@ export class CMSPageService {
       if (params.versionActiva !== undefined) httpParams = httpParams.set('VersionActiva', params.versionActiva.toString());
     }
 
-    return this.http.get<ICMSPageResponse[]>(this.API_URL, { params: httpParams });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params: httpParams };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<ICMSPageResponse[]>(this.API_URL, options);
   }
 
-  getPageById(id: number): Observable<ICMSPageResponse> {
-    return this.http.get<ICMSPageResponse>(`${this.API_URL}/${id}`);
+  getPageById(id: number, signal?: AbortSignal): Observable<ICMSPageResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<ICMSPageResponse>(`${this.API_URL}/${id}`, options);
   }
 
   createPage(pageData: CMSPageCreate): Observable<ICMSPageResponse> {

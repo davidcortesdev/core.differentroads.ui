@@ -54,7 +54,7 @@ export class TagCategoryService {
    * @param filters Filtros para aplicar en la búsqueda.
    * @returns Lista de categorías de etiquetas.
    */
-  getAll(filters?: TagCategoryFilters): Observable<ITagCategoryResponse[]> {
+  getAll(filters?: TagCategoryFilters, signal?: AbortSignal): Observable<ITagCategoryResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -69,7 +69,15 @@ export class TagCategoryService {
       });
     }
 
-    return this.http.get<ITagCategoryResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<ITagCategoryResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -77,8 +85,15 @@ export class TagCategoryService {
    * @param id ID de la categoría de etiqueta.
    * @returns Categoría de etiqueta específica.
    */
-  getById(id: number): Observable<ITagCategoryResponse> {
-    return this.http.get<ITagCategoryResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<ITagCategoryResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<ITagCategoryResponse>(`${this.API_URL}/${id}`, options);
   }
 
   /**

@@ -39,7 +39,7 @@ export class PhonePrefixService {
 
   constructor(private http: HttpClient) {}
 
-  getAll(filters?: PhonePrefixFilters): Observable<IPhonePrefixResponse[]> {
+  getAll(filters?: PhonePrefixFilters, signal?: AbortSignal): Observable<IPhonePrefixResponse[]> {
     let params = new HttpParams();
 
     if (filters) {
@@ -53,15 +53,30 @@ export class PhonePrefixService {
       });
     }
 
-    return this.http.get<IPhonePrefixResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IPhonePrefixResponse[]>(this.API_URL, options);
   }
 
-  getById(id: number): Observable<IPhonePrefixResponse> {
-    return this.http.get<IPhonePrefixResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<IPhonePrefixResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<IPhonePrefixResponse>(`${this.API_URL}/${id}`, options);
   }
 
-  getAllOrdered(): Observable<IPhonePrefixResponse[]> {
-    return this.getAll().pipe(
+  getAllOrdered(signal?: AbortSignal): Observable<IPhonePrefixResponse[]> {
+    return this.getAll(undefined, signal).pipe(
       map((prefixes) => prefixes.sort((a, b) => a.name.localeCompare(b.name)))
     );
   }

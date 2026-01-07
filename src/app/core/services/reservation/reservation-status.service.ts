@@ -42,7 +42,7 @@ export class ReservationStatusService {
    * @param filters Filtros para aplicar en la búsqueda.
    * @returns Lista de estados de reservación.
    */
-  getAll(filters?: ReservationStatusFilters): Observable<IReservationStatusResponse[]> {
+  getAll(filters?: ReservationStatusFilters, signal?: AbortSignal): Observable<IReservationStatusResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -57,7 +57,15 @@ export class ReservationStatusService {
       });
     }
 
-    return this.http.get<IReservationStatusResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationStatusResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -76,8 +84,15 @@ export class ReservationStatusService {
    * @param id ID del estado de reservación.
    * @returns El estado de reservación encontrado.
    */
-  getById(id: number): Observable<IReservationStatusResponse> {
-    return this.http.get<IReservationStatusResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<IReservationStatusResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<IReservationStatusResponse>(`${this.API_URL}/${id}`, options);
   }
 
   /**
@@ -106,12 +121,20 @@ export class ReservationStatusService {
    * @param code Código del estado de reservación.
    * @returns Lista de estados de reservación con el código especificado.
    */
-  getByCode(code: string): Observable<IReservationStatusResponse[]> {
+  getByCode(code: string, signal?: AbortSignal): Observable<IReservationStatusResponse[]> {
     const params = new HttpParams()
       .set('Code', code)
       .set('useExactMatchForStrings', 'true');
 
-    return this.http.get<IReservationStatusResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationStatusResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -119,11 +142,19 @@ export class ReservationStatusService {
    * @param name Nombre del estado de reservación.
    * @returns Lista de estados de reservación con el nombre especificado.
    */
-  getByName(name: string): Observable<IReservationStatusResponse[]> {
+  getByName(name: string, signal?: AbortSignal): Observable<IReservationStatusResponse[]> {
     const params = new HttpParams()
       .set('Name', name)
       .set('useExactMatchForStrings', 'false');
 
-    return this.http.get<IReservationStatusResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationStatusResponse[]>(this.API_URL, options);
   }
 }

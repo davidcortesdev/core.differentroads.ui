@@ -66,7 +66,7 @@ export class TourHighlightsService {
    * @param filters Filtros para aplicar en la búsqueda.
    * @returns Lista de puntos destacados.
    */
-  getAll(filter?: TourHighlightFilters): Observable<ITourHighlightResponse[]> {
+  getAll(filter?: TourHighlightFilters, signal?: AbortSignal): Observable<ITourHighlightResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -81,7 +81,15 @@ export class TourHighlightsService {
       });
     }
 
-    return this.http.get<ITourHighlightResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<ITourHighlightResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -89,8 +97,15 @@ export class TourHighlightsService {
    * @param id ID del punto destacado.
    * @returns Punto destacado correspondiente.
    */
-  getById(id: number): Observable<ITourHighlightResponse> {
-    return this.http.get<ITourHighlightResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<ITourHighlightResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<ITourHighlightResponse>(`${this.API_URL}/${id}`, options);
   }
 
   /**

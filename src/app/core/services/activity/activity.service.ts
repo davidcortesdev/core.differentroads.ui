@@ -110,7 +110,7 @@ export class ActivityService {
    * @param filters Filtros para aplicar en la búsqueda.
    * @returns Lista de actividades.
    */
-  getAll(filter?: ActivityFilters): Observable<IActivityResponse[]> {
+  getAll(filter?: ActivityFilters, signal?: AbortSignal): Observable<IActivityResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -125,7 +125,15 @@ export class ActivityService {
       });
     }
 
-    return this.http.get<IActivityResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IActivityResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -133,8 +141,15 @@ export class ActivityService {
    * @param id ID de la actividad.
    * @returns Actividad correspondiente.
    */
-  getById(id: number): Observable<IActivityResponse> {
-    return this.http.get<IActivityResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<IActivityResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<IActivityResponse>(`${this.API_URL}/${id}`, options);
   }
 
   /**
@@ -142,8 +157,8 @@ export class ActivityService {
    * @param itineraryId ID del itinerario.
    * @returns Lista de actividades del itinerario.
    */
-  getByItineraryId(itineraryId: number): Observable<IActivityResponse[]> {
-    return this.getAll({ itineraryId });
+  getByItineraryId(itineraryId: number, signal?: AbortSignal): Observable<IActivityResponse[]> {
+    return this.getAll({ itineraryId }, signal);
   }
 
   /**
@@ -204,7 +219,8 @@ export class ActivityService {
   getForItinerary(
     itineraryId: number,
     departureId?: number,
-    itineraryDayId?: number
+    itineraryDayId?: number,
+    signal?: AbortSignal
   ): Observable<IActivityResponse[]> {
     let params = new HttpParams()
       .set('itineraryId', itineraryId.toString())
@@ -215,9 +231,14 @@ export class ActivityService {
     if (itineraryDayId !== undefined) {
       params = params.set('itineraryDayId', itineraryDayId.toString());
     }
-    return this.http.get<IActivityResponse[]>(`${this.API_URL}/for-itinerary`, {
-      params,
-    });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<IActivityResponse[]>(`${this.API_URL}/for-itinerary`, options);
   }
 
   /**

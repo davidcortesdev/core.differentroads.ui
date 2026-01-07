@@ -24,6 +24,7 @@ export interface INotification {
   recipient: string | null;
   emailId: string | null;
   error: string | null;
+  attachmentUrl?: string | null; // URLs de archivos adjuntos (puede ser múltiple separado por comas, formato: "url|filename" o "url")
 }
 
 /**
@@ -77,6 +78,35 @@ export interface INotificationStatusResponse {
   isActive: boolean;
   createdAt: string;
   updatedAt: string | null;
+}
+
+/**
+ * Interfaz para la relación notificación-documento
+ */
+export interface INotificationDocument {
+  id: number;
+  notificationId: number;
+  documentId: number;
+  displayOrder: number;
+  createdAt: string;
+}
+
+/**
+ * Interfaz para la respuesta completa de documento
+ */
+export interface INotificationDocumentResponse extends INotificationDocument {
+  document?: {
+    id: number;
+    documentTypeId: number;
+    fileName: string;
+    filePath: string;
+    url: string;
+    mimeType: string;
+    fileSize: number;
+    uploadedAt: string;
+    createdAt: string;
+    updatedAt: string;
+  };
 }
 
 @Injectable({
@@ -237,5 +267,26 @@ export class NotificationService {
   getNotificationStatuses(): Observable<INotificationStatusResponse[]> {
     const url = `${environment.documentationApiUrl}/NotificationStatus`;
     return this.http.get<INotificationStatusResponse[]>(url);
+  }
+
+  /**
+   * Obtiene las relaciones notificación-documento por ID de notificación
+   * @param notificationId - ID de la notificación
+   * @returns Observable de array de INotificationDocument
+   */
+  getNotificationDocumentsByNotificationId(
+    notificationId: number
+  ): Observable<INotificationDocument[]> {
+    const url = `${environment.documentationApiUrl}/NotificationDocument/by-notification/${notificationId}`;
+    return this.http.get<INotificationDocument[]>(url);
+  }
+
+  /**
+   * Obtiene todas las relaciones notificación-documento
+   * @returns Observable de array de INotificationDocument
+   */
+  getNotificationDocuments(): Observable<INotificationDocument[]> {
+    const url = `${environment.documentationApiUrl}/NotificationDocument`;
+    return this.http.get<INotificationDocument[]>(url);
   }
 }

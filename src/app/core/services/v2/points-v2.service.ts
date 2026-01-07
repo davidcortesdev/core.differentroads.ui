@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { MessageService } from 'primeng/api';
 import { Observable, of, map, catchError } from 'rxjs';
@@ -364,12 +364,21 @@ export class PointsV2Service {
   /**
    * Obtiene el saldo de puntos desde la API
    * @param travelerId ID del viajero
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con el saldo de puntos
    */
-  getLoyaltyBalanceFromAPI(travelerId: string): Observable<any> {
+  getLoyaltyBalanceFromAPI(travelerId: string, signal?: AbortSignal): Observable<any> {
     const url = `${this.AUTH_API_URL}/LoyaltyBalance?userId=${travelerId}`;
     
-    return this.http.get<any>(url).pipe(
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    
+    return this.http.get<any>(url, options).pipe(
       map(balance => {
         // Si la API devuelve un array, tomar el primer elemento
         if (Array.isArray(balance) && balance.length > 0) {
@@ -386,12 +395,21 @@ export class PointsV2Service {
   /**
    * Obtiene las transacciones de puntos desde la API
    * @param travelerId ID del viajero
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con las transacciones
    */
-  getLoyaltyTransactionsFromAPI(travelerId: string): Observable<any[]> {
+  getLoyaltyTransactionsFromAPI(travelerId: string, signal?: AbortSignal): Observable<any[]> {
     const url = `${this.AUTH_API_URL}/LoyaltyTransaction?userId=${travelerId}`;
     
-    return this.http.get<any[]>(url).pipe(
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    
+    return this.http.get<any[]>(url, options).pipe(
       map(transactions => {
         // Si la API devuelve un objeto en lugar de array, convertirlo a array
         if (transactions && !Array.isArray(transactions)) {
@@ -407,10 +425,18 @@ export class PointsV2Service {
 
   /**
    * Obtiene los tipos de transacciones desde la API
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con los tipos de transacciones
    */
-  getLoyaltyTransactionTypesFromAPI(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.AUTH_API_URL}/LoyaltyTransactionType`).pipe(
+  getLoyaltyTransactionTypesFromAPI(signal?: AbortSignal): Observable<any[]> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<any[]>(`${this.AUTH_API_URL}/LoyaltyTransactionType`, options).pipe(
       catchError(error => {
         return of([]);
       })
@@ -419,10 +445,18 @@ export class PointsV2Service {
 
   /**
    * Obtiene las categorías de membresía desde la API
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con las tarjetas de membresía
    */
-  getMembershipCardsFromAPI(): Observable<MembershipCard[]> {
-    return this.http.get<any[]>(`${this.AUTH_API_URL}/LoyaltyProgramCategory`).pipe(
+  getMembershipCardsFromAPI(signal?: AbortSignal): Observable<MembershipCard[]> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<any[]>(`${this.AUTH_API_URL}/LoyaltyProgramCategory`, options).pipe(
       map(apiCategories => apiCategories.map(category => this.mapApiCategoryToMembershipCard(category))),
       catchError(error => {
         return of([]);
@@ -433,15 +467,23 @@ export class PointsV2Service {
   /**
    * Carga todos los datos de puntos desde la API
    * @param travelerId ID del viajero
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con todos los datos
    */
-  loadAllPointsDataFromAPI(travelerId: string): Observable<{
+  loadAllPointsDataFromAPI(travelerId: string, signal?: AbortSignal): Observable<{
     balance: any;
     transactions: any[];
     transactionTypes: any[];
     membershipCards: MembershipCard[];
   }> {
-    return this.http.get<any>(`${this.AUTH_API_URL}/LoyaltyBalance/${travelerId}`).pipe(
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<any>(`${this.AUTH_API_URL}/LoyaltyBalance/${travelerId}`, options).pipe(
       map(balance => ({
         balance,
         transactions: [], // Se puede implementar si hay endpoint específico

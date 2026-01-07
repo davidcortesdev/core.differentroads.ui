@@ -35,7 +35,8 @@ export class CMSFooterLinkService {
   constructor(private http: HttpClient) {}
 
   getAllFooterLinks(
-    params?: FooterLinkFilters
+    params?: FooterLinkFilters,
+    signal?: AbortSignal
   ): Observable<IFooterLinkResponse[]> {
     let httpParams = new HttpParams();
 
@@ -57,18 +58,32 @@ export class CMSFooterLinkService {
         httpParams = httpParams.set('isActive', params.isActive.toString());
     }
 
-    return this.http.get<IFooterLinkResponse[]>(this.API_URL, {
-      params: httpParams,
-    });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params: httpParams };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IFooterLinkResponse[]>(this.API_URL, options);
   }
 
-  getFooterLinkById(id: number): Observable<IFooterLinkResponse> {
-    return this.http.get<IFooterLinkResponse>(`${this.API_URL}/${id}`);
+  getFooterLinkById(id: number, signal?: AbortSignal): Observable<IFooterLinkResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<IFooterLinkResponse>(`${this.API_URL}/${id}`, options);
   }
 
   getFooterLinksByColumnId(
-    footerColumnId: number
+    footerColumnId: number,
+    signal?: AbortSignal
   ): Observable<IFooterLinkResponse[]> {
-    return this.getAllFooterLinks({ footerColumnId });
+    return this.getAllFooterLinks({ footerColumnId }, signal);
   }
 }

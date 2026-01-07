@@ -63,7 +63,7 @@ export class DepartureAccommodationService {
    * @param filters Filtros para aplicar en la búsqueda.
    * @returns Lista de departure accommodations.
    */
-  getAll(filters?: DepartureAccommodationFilters): Observable<IDepartureAccommodationResponse[]> {
+  getAll(filters?: DepartureAccommodationFilters, signal?: AbortSignal): Observable<IDepartureAccommodationResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -78,7 +78,15 @@ export class DepartureAccommodationService {
       });
     }
 
-    return this.http.get<IDepartureAccommodationResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IDepartureAccommodationResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -97,8 +105,15 @@ export class DepartureAccommodationService {
    * @param id ID de la departure accommodation.
    * @returns La departure accommodation encontrada.
    */
-  getById(id: number): Observable<IDepartureAccommodationResponse> {
-    return this.http.get<IDepartureAccommodationResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<IDepartureAccommodationResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<IDepartureAccommodationResponse>(`${this.API_URL}/${id}`, options);
   }
 
   /**
@@ -127,11 +142,19 @@ export class DepartureAccommodationService {
    * @param departureId ID del departure.
    * @returns Lista de accommodations del departure.
    */
-  getByDeparture(departureId: number): Observable<IDepartureAccommodationResponse[]> {
+  getByDeparture(departureId: number, signal?: AbortSignal): Observable<IDepartureAccommodationResponse[]> {
     const params = new HttpParams()
       .set('DepartureId', departureId.toString())
       .set('useExactMatchForStrings', 'false');
     
-    return this.http.get<IDepartureAccommodationResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IDepartureAccommodationResponse[]>(this.API_URL, options);
   }
 }

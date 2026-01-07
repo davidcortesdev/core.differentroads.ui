@@ -69,7 +69,7 @@ export class PersonalInfoV2Service {
    * @param filters - Criterios de filtro opcionales
    * @returns Observable con la lista de usuarios
    */
-  getUsers(filters?: any): Observable<PersonalInfo[]> {
+  getUsers(filters?: any, signal?: AbortSignal): Observable<PersonalInfo[]> {
     let params = new HttpParams();
     
     if (filters) {
@@ -80,10 +80,19 @@ export class PersonalInfoV2Service {
       });
     }
 
-    return this.http.get<PersonalInfo[]>(this.API_URL, { 
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = { 
       params, 
       ...this.httpOptions 
-    }).pipe(
+    };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<PersonalInfo[]>(this.API_URL, options).pipe(
       catchError(this.handleError)
     );
   }
@@ -93,8 +102,16 @@ export class PersonalInfoV2Service {
    * @param id - ID del usuario
    * @returns Observable con los datos del usuario
    */
-  getUserById(id: string): Observable<PersonalInfo> {
-    return this.http.get<PersonalInfo>(`${this.API_URL}/${id}`, this.httpOptions).pipe(
+  getUserById(id: string, signal?: AbortSignal): Observable<PersonalInfo> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = { ...this.httpOptions };
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<PersonalInfo>(`${this.API_URL}/${id}`, options).pipe(
       catchError(this.handleError)
     );
   }
@@ -102,10 +119,18 @@ export class PersonalInfoV2Service {
   /**
    * Crea un nuevo usuario
    * @param userData - Datos del usuario a crear
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con el usuario creado
    */
-  createUser(userData: PersonalInfo): Observable<PersonalInfo> {
-    return this.http.post<PersonalInfo>(this.API_URL, userData, this.httpOptions).pipe(
+  createUser(userData: PersonalInfo, signal?: AbortSignal): Observable<PersonalInfo> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = { ...this.httpOptions };
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.post<PersonalInfo>(this.API_URL, userData, options).pipe(
       catchError(this.handleError)
     );
   }
@@ -114,10 +139,18 @@ export class PersonalInfoV2Service {
    * Actualiza un usuario existente
    * @param id - ID del usuario a actualizar
    * @param userData - Datos actualizados del usuario
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con el usuario actualizado
    */
-  updateUser(id: string, userData: Partial<PersonalInfo>): Observable<PersonalInfo> {
-    return this.http.put<PersonalInfo>(`${this.API_URL}/${id}`, userData, this.httpOptions).pipe(
+  updateUser(id: string, userData: Partial<PersonalInfo>, signal?: AbortSignal): Observable<PersonalInfo> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = { ...this.httpOptions };
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.put<PersonalInfo>(`${this.API_URL}/${id}`, userData, options).pipe(
       catchError(this.handleError)
     );
   }
@@ -125,10 +158,22 @@ export class PersonalInfoV2Service {
   /**
    * Elimina un usuario
    * @param id - ID del usuario a eliminar
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con el resultado de la operación
    */
-  deleteUser(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.API_URL}/${id}`, this.httpOptions).pipe(
+  deleteUser(id: string, signal?: AbortSignal): Observable<void> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      observe?: 'body';
+      params?: HttpParams | { [param: string]: any };
+      reportProgress?: boolean;
+      withCredentials?: boolean;
+      signal?: AbortSignal;
+    } = { ...this.httpOptions };
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.delete<void>(`${this.API_URL}/${id}`, options).pipe(
       catchError(this.handleError)
     );
   }
@@ -138,16 +183,16 @@ export class PersonalInfoV2Service {
    * @param userId - ID del usuario
    * @returns Observable con los datos combinados del usuario
    */
-  getUserData(userId: string): Observable<PersonalInfo> {
+  getUserData(userId: string, signal?: AbortSignal): Observable<PersonalInfo> {
     if (!userId) {
       return throwError(() => new Error('ID de usuario requerido'));
     }
 
     // Hacer llamadas paralelas a las tres APIs
     return forkJoin({
-      user: this.getUserById(userId),
-      userFields: this.getUserFields(),
-      userFieldValues: this.getUserFieldValues(userId)
+      user: this.getUserById(userId, signal),
+      userFields: this.getUserFields(signal),
+      userFieldValues: this.getUserFieldValues(userId, signal)
     }).pipe(
       map(({ user, userFields, userFieldValues }) => {
         // Combinar los datos del usuario con los campos adicionales
@@ -163,8 +208,16 @@ export class PersonalInfoV2Service {
    * Obtiene los campos de usuario disponibles
    * @returns Observable con la lista de campos de usuario
    */
-  private getUserFields(): Observable<any[]> {
-    return this.http.get<any[]>(this.USER_FIELD_API_URL, this.httpOptions).pipe(
+  private getUserFields(signal?: AbortSignal): Observable<any[]> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = { ...this.httpOptions };
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<any[]>(this.USER_FIELD_API_URL, options).pipe(
       catchError((error) => {
         return of([]);
       })
@@ -176,12 +229,20 @@ export class PersonalInfoV2Service {
    * @param userId - ID del usuario
    * @returns Observable con los valores de campos del usuario
    */
-  private getUserFieldValues(userId: string): Observable<any[]> {
+  private getUserFieldValues(userId: string, signal?: AbortSignal): Observable<any[]> {
     const params = new HttpParams().set('userId', userId);
-    return this.http.get<any[]>(this.USER_FIELD_VALUE_API_URL, { 
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = { 
       params, 
       ...this.httpOptions 
-    }).pipe(
+    };
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<any[]>(this.USER_FIELD_VALUE_API_URL, options).pipe(
       catchError((error) => {
         return of([]);
       })
@@ -209,9 +270,9 @@ export class PersonalInfoV2Service {
    * @param userData - Datos del usuario
    * @returns Observable con el resultado de la operación
    */
-  private saveUserFieldValues(userId: string, userData: PersonalInfo): Observable<any> {
+  private saveUserFieldValues(userId: string, userData: PersonalInfo, signal?: AbortSignal): Observable<any> {
     // Obtener campos disponibles primero
-    return this.getUserFields().pipe(
+    return this.getUserFields(signal).pipe(
       switchMap((userFields) => {
         // Crear array de valores de campos a guardar
         const fieldValues = this.dataMappingService.prepareFieldValues(userId, userData, userFields);

@@ -41,7 +41,8 @@ export class ActivityAvailabilityService {
    * @returns Lista de disponibilidades de actividad.
    */
   getAll(
-    filters?: ActivityAvailabilityFilters
+    filters?: ActivityAvailabilityFilters,
+    signal?: AbortSignal
   ): Observable<IActivityAvailabilityResponse[]> {
     let params = new HttpParams();
 
@@ -57,9 +58,15 @@ export class ActivityAvailabilityService {
       });
     }
 
-    return this.http.get<IActivityAvailabilityResponse[]>(this.API_URL, {
-      params,
-    });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IActivityAvailabilityResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -70,13 +77,14 @@ export class ActivityAvailabilityService {
    */
   getByActivityAndDeparture(
     activityId: number,
-    departureId: number
+    departureId: number,
+    signal?: AbortSignal
   ): Observable<IActivityAvailabilityResponse[]> {
     const filters: ActivityAvailabilityFilters = {
       activityId,
       departureId,
     };
-    return this.getAll(filters);
+    return this.getAll(filters, signal);
   }
 
   /**
@@ -85,12 +93,13 @@ export class ActivityAvailabilityService {
    * @returns Lista de disponibilidades de la actividad.
    */
   getByActivity(
-    activityId: number
+    activityId: number,
+    signal?: AbortSignal
   ): Observable<IActivityAvailabilityResponse[]> {
     const filters: ActivityAvailabilityFilters = {
       activityId,
     };
-    return this.getAll(filters);
+    return this.getAll(filters, signal);
   }
 }
 

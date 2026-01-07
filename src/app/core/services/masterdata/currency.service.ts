@@ -22,17 +22,31 @@ export class CurrencyService {
   /**
    * Obtiene todas las currencies disponibles
    */
-  getAllCurrencies(): Observable<Currency[]> {
-    return this.http.get<Currency[]>(this.API_URL);
+  getAllCurrencies(signal?: AbortSignal): Observable<Currency[]> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<Currency[]>(this.API_URL, options);
   }
 
   /**
    * Obtiene una currency por su código
    * @param code Código de la currency (ej: 'EUR')
    */
-  getCurrencyByCode(code: string): Observable<Currency | null> {
+  getCurrencyByCode(code: string, signal?: AbortSignal): Observable<Currency | null> {
     const params = new HttpParams().set('filter[code]', code);
-    return this.http.get<Currency[]>(this.API_URL, { params }).pipe(
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<Currency[]>(this.API_URL, options).pipe(
       map(currencies => {
         if (currencies && currencies.length > 0) {
           return currencies[0];
@@ -46,8 +60,8 @@ export class CurrencyService {
    * Obtiene el ID de una currency por su código
    * @param code Código de la currency (ej: 'EUR')
    */
-  getCurrencyIdByCode(code: string): Observable<number | null> {
-    return this.getCurrencyByCode(code).pipe(
+  getCurrencyIdByCode(code: string, signal?: AbortSignal): Observable<number | null> {
+    return this.getCurrencyByCode(code, signal).pipe(
       map(currency => currency?.id || null)
     );
   }

@@ -44,7 +44,7 @@ export class ReservationTravelerAccommodationService {
    * @param filters Filtros para aplicar en la búsqueda.
    * @returns Lista de acomodaciones de viajeros de reservaciones.
    */
-  getAll(filters?: ReservationTravelerAccommodationFilters): Observable<IReservationTravelerAccommodationResponse[]> {
+  getAll(filters?: ReservationTravelerAccommodationFilters, signal?: AbortSignal): Observable<IReservationTravelerAccommodationResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -59,18 +59,34 @@ export class ReservationTravelerAccommodationService {
       });
     }
 
-    return this.http.get<IReservationTravelerAccommodationResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationTravelerAccommodationResponse[]>(this.API_URL, options);
   }
 
   /**
    * Crea una nueva acomodación de viajero de reservación.
    * @param data Datos para crear la acomodación de viajero de reservación.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns La acomodación de viajero de reservación creada.
    */
-  create(data: ReservationTravelerAccommodationCreate): Observable<IReservationTravelerAccommodationResponse> {
-    return this.http.post<IReservationTravelerAccommodationResponse>(`${this.API_URL}`, data, {
+  create(data: ReservationTravelerAccommodationCreate, signal?: AbortSignal): Observable<IReservationTravelerAccommodationResponse> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = {
       headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
-    });
+    };
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.post<IReservationTravelerAccommodationResponse>(`${this.API_URL}`, data, options);
   }
 
   /**
@@ -78,29 +94,56 @@ export class ReservationTravelerAccommodationService {
    * @param id ID de la acomodación de viajero de reservación.
    * @returns La acomodación de viajero de reservación encontrada.
    */
-  getById(id: number): Observable<IReservationTravelerAccommodationResponse> {
-    return this.http.get<IReservationTravelerAccommodationResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<IReservationTravelerAccommodationResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<IReservationTravelerAccommodationResponse>(`${this.API_URL}/${id}`, options);
   }
 
   /**
    * Actualiza una acomodación de viajero de reservación existente.
    * @param id ID de la acomodación de viajero de reservación a actualizar.
    * @param data Datos actualizados.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Resultado de la operación.
    */
-  update(id: number, data: ReservationTravelerAccommodationUpdate): Observable<boolean> {
-    return this.http.put<boolean>(`${this.API_URL}/${id}`, data, {
+  update(id: number, data: ReservationTravelerAccommodationUpdate, signal?: AbortSignal): Observable<boolean> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = {
       headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
-    });
+    };
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.put<boolean>(`${this.API_URL}/${id}`, data, options);
   }
 
   /**
    * Elimina una acomodación de viajero de reservación existente.
    * @param id ID de la acomodación de viajero de reservación a eliminar.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Resultado de la operación.
    */
-  delete(id: number): Observable<boolean> {
-    return this.http.delete<boolean>(`${this.API_URL}/${id}`);
+  delete(id: number, signal?: AbortSignal): Observable<boolean> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      observe?: 'body';
+      params?: HttpParams | { [param: string]: any };
+      reportProgress?: boolean;
+      withCredentials?: boolean;
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.delete<boolean>(`${this.API_URL}/${id}`, options);
   }
 
   /**
@@ -108,12 +151,20 @@ export class ReservationTravelerAccommodationService {
    * @param reservationTravelerId ID del viajero de reservación.
    * @returns Lista de acomodaciones del viajero de reservación.
    */
-  getByReservationTraveler(reservationTravelerId: number): Observable<IReservationTravelerAccommodationResponse[]> {
+  getByReservationTraveler(reservationTravelerId: number, signal?: AbortSignal): Observable<IReservationTravelerAccommodationResponse[]> {
     const params = new HttpParams()
       .set('ReservationTravelerId', reservationTravelerId.toString())
       .set('useExactMatchForStrings', 'false');
     
-    return this.http.get<IReservationTravelerAccommodationResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationTravelerAccommodationResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -121,12 +172,20 @@ export class ReservationTravelerAccommodationService {
    * @param departureAccommodationId ID de la acomodación de salida.
    * @returns Lista de acomodaciones de viajeros con esa acomodación de salida.
    */
-  getByDepartureAccommodation(departureAccommodationId: number): Observable<IReservationTravelerAccommodationResponse[]> {
+  getByDepartureAccommodation(departureAccommodationId: number, signal?: AbortSignal): Observable<IReservationTravelerAccommodationResponse[]> {
     const params = new HttpParams()
       .set('DepartureAccommodationId', departureAccommodationId.toString())
       .set('useExactMatchForStrings', 'false');
     
-    return this.http.get<IReservationTravelerAccommodationResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<IReservationTravelerAccommodationResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -134,8 +193,8 @@ export class ReservationTravelerAccommodationService {
    * @param reservationTravelerId ID del viajero de reservación.
    * @returns Número total de acomodaciones para el viajero de reservación.
    */
-  getAccommodationCount(reservationTravelerId: number): Observable<number> {
-    return this.getByReservationTraveler(reservationTravelerId).pipe(
+  getAccommodationCount(reservationTravelerId: number, signal?: AbortSignal): Observable<number> {
+    return this.getByReservationTraveler(reservationTravelerId, signal).pipe(
       map(accommodations => accommodations.length)
     );
   }
@@ -145,8 +204,8 @@ export class ReservationTravelerAccommodationService {
    * @param reservationTravelerId ID del viajero de reservación.
    * @returns True si tiene acomodaciones, false si no.
    */
-  hasAccommodations(reservationTravelerId: number): Observable<boolean> {
-    return this.getByReservationTraveler(reservationTravelerId).pipe(
+  hasAccommodations(reservationTravelerId: number, signal?: AbortSignal): Observable<boolean> {
+    return this.getByReservationTraveler(reservationTravelerId, signal).pipe(
       map(accommodations => accommodations.length > 0)
     );
   }
@@ -156,8 +215,8 @@ export class ReservationTravelerAccommodationService {
    * @param departureAccommodationId ID de la acomodación de salida.
    * @returns True si está siendo utilizada, false si no.
    */
-  isAccommodationInUse(departureAccommodationId: number): Observable<boolean> {
-    return this.getByDepartureAccommodation(departureAccommodationId).pipe(
+  isAccommodationInUse(departureAccommodationId: number, signal?: AbortSignal): Observable<boolean> {
+    return this.getByDepartureAccommodation(departureAccommodationId, signal).pipe(
       map(accommodations => accommodations.length > 0)
     );
   }
@@ -167,8 +226,8 @@ export class ReservationTravelerAccommodationService {
    * @param reservationTravelerId ID del viajero de reservación.
    * @returns Resultado de la operación.
    */
-  deleteByReservationTraveler(reservationTravelerId: number): Observable<boolean> {
-    return this.getByReservationTraveler(reservationTravelerId).pipe(
+  deleteByReservationTraveler(reservationTravelerId: number, signal?: AbortSignal): Observable<boolean> {
+    return this.getByReservationTraveler(reservationTravelerId, signal).pipe(
       switchMap(accommodations => {
         if (accommodations.length === 0) {
           return of(true);
@@ -176,7 +235,7 @@ export class ReservationTravelerAccommodationService {
 
         // Crear array de observables para eliminar todas las acomodaciones
         const deleteObservables = accommodations.map(accommodation => 
-          this.delete(accommodation.id)
+          this.delete(accommodation.id, signal)
         );
         
         // Ejecutar todas las eliminaciones usando forkJoin
@@ -190,11 +249,13 @@ export class ReservationTravelerAccommodationService {
    * Asigna múltiples acomodaciones a un viajero de reservación.
    * @param reservationTravelerId ID del viajero de reservación.
    * @param departureAccommodationIds Array de IDs de acomodaciones de salida.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Resultado de la operación.
    */
   assignMultipleAccommodations(
     reservationTravelerId: number, 
-    departureAccommodationIds: number[]
+    departureAccommodationIds: number[],
+    signal?: AbortSignal
   ): Observable<IReservationTravelerAccommodationResponse[]> {
     if (departureAccommodationIds.length === 0) {
       return of([]);
@@ -206,7 +267,7 @@ export class ReservationTravelerAccommodationService {
         reservationTravelerId,
         departureAccommodationId: accommodationId
       };
-      return this.create(data);
+      return this.create(data, signal);
     });
 
     return forkJoin(createObservables);

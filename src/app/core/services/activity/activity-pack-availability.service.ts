@@ -42,7 +42,8 @@ export class ActivityPackAvailabilityService {
    * @returns Lista de disponibilidades de activity pack.
    */
   getAll(
-    filters?: ActivityPackAvailabilityFilters
+    filters?: ActivityPackAvailabilityFilters,
+    signal?: AbortSignal
   ): Observable<IActivityPackAvailabilityResponse[]> {
     let params = new HttpParams();
 
@@ -56,10 +57,18 @@ export class ActivityPackAvailabilityService {
       });
     }
 
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
     return this.http
       .get<IActivityPackAvailabilityResponse | IActivityPackAvailabilityResponse[]>(
         this.API_URL,
-        { params }
+        options
       )
       .pipe(
         // Convertir objeto único a array si es necesario
@@ -90,13 +99,14 @@ export class ActivityPackAvailabilityService {
    */
   getByActivityPackAndDeparture(
     activityPackId: number,
-    departureId: number
+    departureId: number,
+    signal?: AbortSignal
   ): Observable<IActivityPackAvailabilityResponse[]> {
     const filters: ActivityPackAvailabilityFilters = {
       activityPackId,
       departureId,
     };
-    return this.getAll(filters);
+    return this.getAll(filters, signal);
   }
 
   /**
@@ -105,12 +115,13 @@ export class ActivityPackAvailabilityService {
    * @returns Lista de disponibilidades del activity pack.
    */
   getByActivityPack(
-    activityPackId: number
+    activityPackId: number,
+    signal?: AbortSignal
   ): Observable<IActivityPackAvailabilityResponse[]> {
     const filters: ActivityPackAvailabilityFilters = {
       activityPackId,
     };
-    return this.getAll(filters);
+    return this.getAll(filters, signal);
   }
 }
 

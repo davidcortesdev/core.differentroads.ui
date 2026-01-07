@@ -29,9 +29,10 @@ export class TravelersNetService {
   /**
    * Obtiene todos los viajeros según los criterios de filtrado.
    * @param filters Filtros para aplicar en la búsqueda.
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Lista de viajeros.
    */
-  getAll(filters?: TravelerFilter): Observable<Traveler[]> {
+  getAll(filters?: TravelerFilter, signal?: AbortSignal): Observable<Traveler[]> {
     let params = new HttpParams();
 
     if (filters) {
@@ -59,12 +60,20 @@ export class TravelersNetService {
       });
     }
 
-    return this.http.get<Traveler[]>(`${this.apiUrl}/travelers`, { params }).pipe(
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<Traveler[]>(`${this.apiUrl}/travelers`, options).pipe(
       catchError(error => {
         
         // Si hay múltiples IDs y falla, intentar método fallback
         if (filters?.id && Array.isArray(filters.id)) {
-          return this.getFallbackTravelers(filters.id);
+          return this.getFallbackTravelers(filters.id, signal);
         }
         
         return of([]);
@@ -75,7 +84,7 @@ export class TravelersNetService {
   /**
    * Fallback: obtener travelers usando múltiples llamadas individuales
    */
-  private getFallbackTravelers(ids: number[]): Observable<Traveler[]> {    
+  private getFallbackTravelers(ids: number[], signal?: AbortSignal): Observable<Traveler[]> {    
     if (ids.length === 0) {
       return of([]);
     }
@@ -84,7 +93,7 @@ export class TravelersNetService {
     const limitedIds = ids.slice(0, 10);
     
     const requests = limitedIds.map(id => 
-      this.getTravelerById(id).pipe(
+      this.getTravelerById(id, signal).pipe(
         catchError(error => {
           return of({ id, name: 'Usuario desconocido', email: '' } as Traveler);
         })
@@ -103,18 +112,27 @@ export class TravelersNetService {
   /**
    * Obtiene un viajero por su ID
    * @param id ID del viajero
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con los datos del viajero
    */
-  getTravelerById(id: number): Observable<Traveler> {
-    return this.http.get<Traveler>(`${this.apiUrl}/travelers/${id}`);
+  getTravelerById(id: number, signal?: AbortSignal): Observable<Traveler> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<Traveler>(`${this.apiUrl}/travelers/${id}`, options);
   }
 
   /**
    * Obtiene viajeros según un filtro
    * @param filter Filtro para buscar viajeros
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
    * @returns Observable con la lista de viajeros que coinciden con el filtro
    */
-  getTravelers(filter: TravelerFilter): Observable<Traveler[]> {
+  getTravelers(filter: TravelerFilter, signal?: AbortSignal): Observable<Traveler[]> {
     let params = new HttpParams();
     
     if (filter.email) {
@@ -127,7 +145,15 @@ export class TravelersNetService {
       params = params.set('code', filter.code);
     }
     
-    return this.http.get<Traveler[]>(`${this.apiUrl}/travelers`, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+    
+    return this.http.get<Traveler[]>(`${this.apiUrl}/travelers`, options);
   }
 
   /**

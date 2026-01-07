@@ -27,6 +27,7 @@
 
       <form
         *ngIf="!isConfirming"
+        id="dr-signup-form"
         (ngSubmit)="onSubmit()"
         class="form-login"
         [formGroup]="signUpForm"

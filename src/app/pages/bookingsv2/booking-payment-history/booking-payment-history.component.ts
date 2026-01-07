@@ -25,6 +25,7 @@ import { DepartureService, IDepartureResponse } from '../../../core/services/dep
 import { ReservationTravelerService, IReservationTravelerResponse } from '../../../core/services/reservation/reservation-traveler.service';
 import { ReservationTravelerActivityService, IReservationTravelerActivityResponse } from '../../../core/services/reservation/reservation-traveler-activity.service';
 import { ActivityService, IActivityResponse } from '../../../core/services/activity/activity.service';
+import { ReservationFlightService, IFlightPackDTO } from '../../../core/services/flight/reservationflight.service';
 import { switchMap, map, catchError, concatMap, takeUntil, finalize } from 'rxjs/operators';
 import { forkJoin, of, Observable, Subject } from 'rxjs';
 import { FileUploadService, CloudinaryResponse } from '../../../core/services/media/file-upload.service';
@@ -150,6 +151,7 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
     private reservationTravelerService: ReservationTravelerService,
     private reservationTravelerActivityService: ReservationTravelerActivityService,
     private activityService: ActivityService,
+    private reservationFlightService: ReservationFlightService,
     private fileUploadService: FileUploadService,
     private messageService: MessageService
   ) {
@@ -513,27 +515,72 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
             this.netPaymentInfo = null;
           }
 
-          // Intentar obtener departureDate desde reservationData.departure si está disponible
-          if (reservationData.departure?.departureDate) {
-            this.displayDepartureDate = reservationData.departure.departureDate;
-            return of(null); // Ya tenemos la fecha, no necesitamos obtener el departure
-          }
+          // Intentar obtener la fecha del flight asociado a la reserva
+          // La fecha correcta debe venir del endpoint flight de la API tour
+          return this.reservationFlightService.getSelectedFlightPack(this.reservationId).pipe(
+            map((flightPacks: IFlightPackDTO | IFlightPackDTO[]) => {
+              // Manejar tanto arrays como objetos individuales
+              let flightPackData: IFlightPackDTO | null = null;
+              
+              if (Array.isArray(flightPacks)) {
+                if (flightPacks.length > 0) {
+                  flightPackData = flightPacks[0];
+                }
+              } else if (flightPacks && typeof flightPacks === 'object') {
+                flightPackData = flightPacks as IFlightPackDTO;
+              }
 
-          // Si no está disponible en la reserva, obtener desde el departure service
-          if (reservation.departureId) {
-            return this.departureService.getById(reservation.departureId).pipe(
-              catchError((error) => {
+              if (flightPackData?.flights && flightPackData.flights.length > 0) {
+                // Buscar el flight de tipo "salida" (flightTypeId === 4)
+                const outboundFlight = flightPackData.flights.find(
+                  (f: any) => f.flightTypeId === 4
+                );
+                
+                if (outboundFlight?.departureDate) {
+                  return outboundFlight.departureDate;
+                }
+                
+                // Si no hay flight de salida, usar el primer flight disponible
+                if (flightPackData.flights[0]?.departureDate) {
+                  return flightPackData.flights[0].departureDate;
+                }
+              }
+              
+              return null;
+            }),
+            catchError((error) => {
+              // Si falla obtener el flight, retornar null para intentar con departure
+              return of(null);
+            }),
+            switchMap((flightDate: string | null) => {
+              if (flightDate) {
+                // Si tenemos la fecha del flight, usarla
+                this.displayDepartureDate = flightDate;
                 return of(null);
-              })
-            );
-          }
-
-          return of(null);
+              }
+              
+              // Fallback: intentar obtener desde reservationData.departure si está disponible
+              if (reservationData.departure?.departureDate) {
+                this.displayDepartureDate = reservationData.departure.departureDate;
+                return of(null);
+              }
+              
+              // Último fallback: obtener desde departure service
+              if (reservation.departureId) {
+                return this.departureService.getById(reservation.departureId).pipe(
+                  catchError(() => of(null))
+                );
+              }
+              
+              return of(null);
+            })
+          );
         })
       )
       .subscribe({
         next: (departure: IDepartureResponse | null) => {
-          if (departure?.departureDate) {
+          // Solo actualizar si no se obtuvo del flight y tenemos departure
+          if (!this.displayDepartureDate && departure?.departureDate) {
             this.displayDepartureDate = departure.departureDate;
           }
         },

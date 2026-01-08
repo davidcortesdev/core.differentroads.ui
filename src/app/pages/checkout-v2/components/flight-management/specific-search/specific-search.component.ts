@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, OnDestroy, OnChanges, SimpleChanges, ViewChild, ElementRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { forkJoin, of, Subject, Observable } from 'rxjs';
 import { takeUntil, catchError, switchMap, map } from 'rxjs/operators';
@@ -84,6 +84,12 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   // Límites para fecha/hora de vuelta (salida del aeropuerto)
   minFechaVuelta: Date | null = null;
   minHoraVuelta: string | null = null;
+  
+  // Fecha por defecto para mostrar en el calendario cuando está vacío
+  defaultDateFechaVuelta: Date | null = null;
+  
+  // Flag para rastrear si el valor temporal fue establecido para mostrar el mes correcto
+  private fechaVueltaTemporalEstablecida: boolean = false;
   
   // Rango de años para el navegador de años del datepicker de vuelta
   get yearRangeVuelta(): string {
@@ -594,6 +600,12 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
               this.minFechaVuelta = minDateVuelta;
               this.minHoraVuelta = data.minDepartureTimeFromAirport || null;
               
+              // Establecer la fecha por defecto para que el calendario muestre el mes correcto
+              if (this.minHoraVuelta) {
+                this.defaultDateFechaVuelta = this.combineDateAndTime(this.minFechaVuelta, this.minHoraVuelta);
+              } else {
+                this.defaultDateFechaVuelta = new Date(this.minFechaVuelta);
+              }
             }
           }
         },
@@ -699,6 +711,9 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       next: (response: IFlightSearchResultDTO) => {
         this.isLoading = false;
         this.flightOffersRaw = response.flightPacks || [];
+        
+        // Eliminar duplicados antes de procesar
+        this.flightOffersRaw = this.removeDuplicateFlightPacks(this.flightOffersRaw);
         
         // Ordenar vuelos dentro de cada paquete ANTES de adaptar
         // Esto asegura que IDA aparezca antes que VUELTA
@@ -998,6 +1013,30 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   // --- Utilidades privadas y helpers ---
+
+  /**
+   * Elimina paquetes de vuelos duplicados basándose en precio y vuelos idénticos
+   * Mantiene solo el primer paquete de cada grupo de duplicados
+   */
+  private removeDuplicateFlightPacks(flightPacks: IFlightPackDTO[]): IFlightPackDTO[] {
+    const seen = new Set<string>();
+    const uniquePacks: IFlightPackDTO[] = [];
+    
+    for (const pack of flightPacks) {
+      // Crear una clave única basada en precio y IDs de vuelos
+      const price = pack.ageGroupPrices?.[0]?.price || 0;
+      const flightIds = pack.flights?.map(f => f.id).sort().join(',') || '';
+      const key = `${price}_${flightIds}`;
+      
+      // Si no hemos visto esta combinación antes, agregarla
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniquePacks.push(pack);
+      }
+    }
+    
+    return uniquePacks;
+  }
 
   private getTimeFromDate(dateStr: string): string {
     try {
@@ -1878,6 +1917,44 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
    */
   private formatAirportNotAllowedMessage(errorMessage: string): string {
     return 'Los aeropuertos que seleccionaste no están permitidos para esta búsqueda. Por favor, selecciona otro aeropuerto.';
+  }
+
+  /**
+   * Maneja el evento cuando se muestra el datepicker de fecha de vuelta
+   * Establece temporalmente el valor a la fecha mínima solo para que el calendario muestre el mes correcto
+   */
+  onFechaVueltaPickerShow(): void {
+    const fechaHoraVueltaControl = this.flightForm.get('fechaHoraVuelta');
+    if (fechaHoraVueltaControl && !fechaHoraVueltaControl.value && this.defaultDateFechaVuelta) {
+      // Establecer temporalmente la fecha por defecto para que el calendario muestre el mes correcto
+      fechaHoraVueltaControl.setValue(this.defaultDateFechaVuelta, { emitEvent: false });
+      this.fechaVueltaTemporalEstablecida = true;
+    }
+  }
+
+  /**
+   * Maneja cuando el usuario selecciona una fecha en el datepicker
+   * Si había un valor temporal, ya no es temporal
+   */
+  onFechaVueltaSelect(): void {
+    this.fechaVueltaTemporalEstablecida = false;
+  }
+
+  /**
+   * Maneja el evento cuando se cierra el datepicker de fecha de vuelta
+   * Limpia el valor temporal si el usuario no seleccionó nada
+   */
+  onFechaVueltaPickerHide(): void {
+    const fechaHoraVueltaControl = this.flightForm.get('fechaHoraVuelta');
+    if (fechaHoraVueltaControl && this.fechaVueltaTemporalEstablecida) {
+      // Si el valor sigue siendo el mismo que establecimos temporalmente, limpiarlo
+      if (fechaHoraVueltaControl.value && 
+          this.defaultDateFechaVuelta &&
+          fechaHoraVueltaControl.value.getTime() === this.defaultDateFechaVuelta.getTime()) {
+        fechaHoraVueltaControl.setValue(null, { emitEvent: false });
+      }
+      this.fechaVueltaTemporalEstablecida = false;
+    }
   }
 
   /**

@@ -226,6 +226,9 @@
           [showButtonBar]="true"
           placeholder="Seleccionar fecha y hora"
           [ngClass]="{ 'p-invalid': flightForm.get('fechaHoraVuelta')?.invalid && flightForm.get('fechaHoraVuelta')?.touched }"
+          (onShow)="onFechaVueltaPickerShow()"
+          (onSelect)="onFechaVueltaSelect()"
+          (onClose)="onFechaVueltaPickerHide()"
         >
         </p-datepicker>
         <small class="p-error" *ngIf="flightForm.get('fechaHoraVuelta')?.invalid && flightForm.get('fechaHoraVuelta')?.touched">
@@ -315,6 +318,9 @@
           [showButtonBar]="true"
           placeholder="Seleccionar fecha y hora"
           [ngClass]="{ 'p-invalid': flightForm.get('fechaHoraVuelta')?.invalid && flightForm.get('fechaHoraVuelta')?.touched }"
+          (onShow)="onFechaVueltaPickerShow()"
+          (onSelect)="onFechaVueltaSelect()"
+          (onClose)="onFechaVueltaPickerHide()"
         >
         </p-datepicker>
         <small class="p-error" *ngIf="flightForm.get('fechaHoraVuelta')?.invalid && flightForm.get('fechaHoraVuelta')?.touched">

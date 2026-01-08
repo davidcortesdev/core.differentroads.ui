@@ -1,193 +1,181 @@
 $p: var(--p-primary-color);
 $a: var(--background-azul);
-$orange-red: #f66b5b;
 
 @mixin f($d: row, $j: flex-start, $a: stretch, $g: 0) {
     display: flex;
     flex-direction: $d;
     justify-content: $j;
     align-items: $a;
-    @if $g!=0 {
-        gap: $g;
-    }
+    @if $g != 0 { gap: $g; }
 }
+
 .active {
     --p-paginator-background: var(--background-azul-color-letra);
     margin: 0 15px;
+
     .header {
         @include f(row, space-between, center);
         padding: 1rem 0;
         cursor: pointer;
-        background: 0;
-        border: 0;
-        span {
-            font-size: 18px;
-            font-weight: 700;
-            color: $a;
-        }
+        span { font-size: 18px; font-weight: 700; color: $a; }
         .pi {
             font-size: 12px;
             font-weight: 700;
-            &.arrow-down {
-                color: $p;
-            }
-            &.arrow-up {
-                color: $a;
-            }
+            &.arrow-down { color: $p; }
+            &.arrow-up { color: $a; }
         }
     }
+
+    .loading, .empty {
+        @include f(row, center, center);
+        padding: 2rem 0;
+    }
+    .empty { font-style: italic; color: #666; }
+    .content.hidden { display: none; }
+
     .item {
         background: var(--background-azul-color-letra);
-        border-radius: 10px;
-        margin-bottom: 1rem;
-        padding: 0.6rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        padding: 1.25rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        &:hover { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); transform: translateY(-2px); }
         .item-content {
             display: grid;
-            grid-template-columns: 180px 0.9fr 140px 190px;
-            gap: 1rem;
-            align-items: center;
+            grid-template-columns: 220px minmax(0, 2.2fr);
+            gap: 1.5rem 2.5rem;
+            align-items: start;
         }
     }
-    .loading {
-        display: flex;
-        justify-content: center;
-        padding: 2rem 0;
-    }
-    .empty {
-        display: flex;
-        justify-content: center;
-        padding: 2rem 0;
-        font-style: italic;
-        color: #666;
-    }
-    .content.hidden {
-        display: none;
-    }
+
     .image {
         width: 100%;
-        max-width: 200px;
-        height: 100px;
+        height: 150px;
         overflow: hidden;
         border-radius: 10px;
-        background: #ccc;
-        img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 10px;
-        }
+        background: #e5e7eb;
+        img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
     }
-    .sect {
-        margin-top: 0;
-        @include f(column, center, stretch);
-        .title-section h2 {
-            margin: 0;
-            font-size: 16px;
-            font-weight: 700;
-            color: $a;
+
+    .main-content {
+        @include f(column, flex-start, stretch, 1rem);
+        flex: 1;
+        min-width: 0;
+        padding-right: 1rem;
+        .title-section h2 { margin: 0; font-size: 18px; font-weight: 700; color: $a; }
+        .highlighted-info {
+            @include f(row, flex-start, center, 1.5rem);
+            flex-wrap: wrap;
+            padding: 1.25rem 0;
+            border-top: 2px solid rgba(0, 0, 0, 0.05);
+            border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+            margin: 0.75rem 0 1rem;
+            .highlight-item {
+                @include f(row, flex-start, center, 0.75rem);
+                flex: 1;
+                min-width: 180px;
+                i { font-size: 24px; color: $p; flex-shrink: 0; }
+                .highlight-content {
+                    @include f(column, flex-start, flex-start, 0.25rem);
+                    .highlight-label {
+                        font-size: 11px;
+                        font-weight: 600;
+                        text-transform: uppercase;
+                        color: #6b7280;
+                    }
+                    .highlight-value { font-size: 20px; font-weight: 700; color: $a; }
+                }
+                &.departure-date {
+                    i, .highlight-value { color: $p; }
+                    .highlight-value { font-size: 22px; }
+                }
+                &.price {
+                    i, .highlight-value { color: #10b981; }
+                    .highlight-value { font-size: 22px; }
+                }
+                &.status-badge {
+                    align-items: flex-start;
+                    padding-top: 0.25rem;
+                    .status-content {
+                        @include f(column, flex-start, flex-start, 0.25rem);
+                        width: 100%;
+                        .status-label {
+                            font-size: 11px;
+                            font-weight: 600;
+                            text-transform: uppercase;
+                            color: #6b7280;
+                        }
+                        .status-value {
+                            display: inline-block;
+                            padding: 0.4rem 0.9rem;
+                            border-radius: 20px;
+                            font-size: 13px;
+                            font-weight: 600;
+                            text-transform: capitalize;
+                            background-color: var(--surface-color-300);
+                            color: #000;
+                        }
+                    }
+                }
+            }
         }
-        .cont {
-            display: grid;
-            margin-right: 37px;
-            .info-row {
-                @include f(row, space-between, center);
-                font-size: 12px;
-                .label {
-                    min-width: 80px;
+        .secondary-info {
+            @include f(row, flex-start, center, 2rem);
+            flex-wrap: wrap;
+            padding-top: 0.75rem;
+            margin-bottom: 0.5rem;
+            .info-item {
+                @include f(row, flex-start, center, 0.5rem);
+                font-size: 13px;
+                .info-label { color: #6b7280; font-weight: 500; }
+                .info-value {
                     color: $a;
-                }
-                .value {
-                    flex: 0.2;
-                    color: $a;
-                    text-align: right;
-                    padding-left: 10px;
-                }
-                .budget {
-                    font-weight: 700;
+                    font-weight: 600;
+                    i { font-size: 14px; margin-right: 0.25rem; color: $p; }
                 }
             }
         }
     }
-    .right {
-        margin-top: 2.5rem;
-        @include f(column, center, stretch, 0.5rem);
-        margin-left: -20px;
-        .departure-info {
-            span,
-            strong {
-                font-size: 16px;
-                color: $a;
-            }
-        }
-        .price {
-            margin-top: 5px;
-            @include f(row, flex-start, center, 1rem);
-            i,
-            span {
-                font-size: 16px;
-                color: $p;
-            }
-            .num-users {
-                background-color: $p;
-                color: #fff;
-                padding: 1px 6px;
-                border-radius: 5px;
-                font-size: 0.7em;
-                margin-right: 15px;
-            }
-            strong {
-                font-size: 16px;
-                color: $p;
-            }
-        }
-    }
+
     .buttons {
-        margin-top: 30px;
-        @include f(column, space-between, stretch, 0.5rem);
-        width: 100%;
-        .top-buttons {
-            @include f(column, flex-start, stretch, 0.5rem);
-            width: 100%;
-            justify-content: space-between;
-        }
-        .bottom-buttons {
-            @include f(column, flex-start, stretch, 0.4rem);
-            width: 100%;
+        grid-column: 2;
+        grid-row: 2;
+        @include f(row, flex-start, center, 0.75rem);
+        padding-top: 0.75rem;
+        flex-wrap: wrap;
+        .top-buttons, .bottom-buttons {
+            @include f(row, flex-start, center, 0.75rem);
+            flex-wrap: wrap;
         }
         .p-button-rounded {
-            width: 100%;
-            background-color: $orange-red !important;
+            min-width: 160px;
+            background-color: var(--primary-color-500) !important;
             color: white !important;
             border: none !important;
             border-radius: 20px !important;
             height: 40px !important;
+            font-weight: 600;
         }
     }
+
     ::ng-deep {
-        .p-dataview .p-dataview-content {
-            background: 0;
-            border: 0;
-            padding: 0;
-            border-radius: 8px;
-        }
+        .p-dataview .p-dataview-content { background: 0; border: 0; padding: 0; border-radius: 8px; }
         .p-button {
             border-radius: 20px !important;
-            height: 30px;
+            height: 36px;
             width: 100%;
-            font-size: 15px;
+            font-size: 14px;
+            font-weight: 500;
             &.p-button-outlined {
                 background-color: white !important;
                 color: $a !important;
                 border: 1.5px solid $a !important;
-                width: 100% !important;
             }
             &.sendbtn {
                 background-color: $a !important;
                 color: white !important;
                 border: 1.5px solid $a !important;
-                width: 100% !important;
             }
-            // Botón de descontar puntos
             &.p-button-success {
                 background-color: var(--secondary-color-500) !important;
                 color: white !important;
@@ -197,174 +185,87 @@ $orange-red: #f66b5b;
     }
 }
 
-@media screen and (max-width: 1366px) {
-    .active .item .item-content {
-        grid-template-columns: 150px 1fr 130px 230px;
-        gap: 0.75rem;
-        align-items: center;
-        .image {
-            margin-top: 0;
-            max-width: 150px;
-            height: 100px;
-        }
-        .cont {
-            margin-right: 15px;
-        }
-        .right {
-            margin-top: 4rem;
-            @include f(column, center, stretch, 0.5rem);
-            margin-left: -11px;
-            .departure-info span,
-            .departure-info strong,
-            .price i,
-            .price span,
-            .price strong {
-                font-size: 14px;
-            }
-        }
+@media screen and (min-width: 1600px) {
+    .active .item {
+        .item-content { grid-template-columns: 200px 1fr 200px; gap: 1.75rem 4rem; }
+        .image { height: 140px; grid-column: 1; }
+        .main-content { grid-column: 2; }
         .buttons {
-            gap: 0.5rem;
+            grid-column: 3;
+            grid-row: 1 / span 2;
+            @include f(column, center, stretch, 0.75rem);
             width: 100%;
-            margin-top: 50px;
-            .p-button-rounded {
-                height: 40px !important;
+            padding: 0;
+            .top-buttons, .bottom-buttons {
+                @include f(column, flex-start, stretch, 0.5rem);
+                width: 100%;
             }
+            .p-button, .p-button-rounded { width: 100%; min-width: 0; }
         }
     }
 }
 
-@media screen and (max-width: 1200px) and (min-width: 1025px) {
-    .active .item .item-content {
-        grid-template-columns: 150px 1fr 130px 230px;
-        .buttons {
-            .top-buttons {
-                flex-direction: column;
-                gap: 5px;
-                .p-button {
-                    width: 100% !important;
-                }
-                ::ng-deep .p-button-outlined,
-                ::ng-deep .sendbtn {
-                    width: 100% !important;
-                }
-            }
-            .p-button-rounded {
-                height: 40px !important;
-            }
-        }
-    }
-}
-@media screen and (max-width: 1024px) and (min-width: 769px) {
-    .active .item {
-        padding: 0.75rem;
-        .item-content {
-            grid-template-columns: 120px 1fr 1fr !important;
-            grid-template-rows: auto auto;
-            gap: 0.75rem !important;
-            align-items: start;
-            .image {
-                max-width: 120px !important;
-                height: 80px !important;
-                grid-row: 1;
-                grid-column: 1;
-            }
-            .sect {
-                grid-row: 1;
-                grid-column: 2;
-                padding-right: 0.5rem;
-                .title-section h2 {
-                    font-size: 14px;
-                    width: 200%;
-                }
-                .cont {
-                    margin-right: 10px;
-                    .info-row {
-                        font-size: 11px;
-                        .label {
-                            min-width: 70px;
-                        }
-                    }
-                }
-            }
-            .right {
-                grid-row: 1;
-                grid-column: 3;
-                font-size: 14px;
-                .departure-info span,
-                .departure-info strong,
-                .price i,
-                .price span,
-                .price strong {
-                    font-size: 14px;
-                }
-                .price {
-                    margin-top: 10px;
-                    gap: 0.5rem;
-                }
-            }
-            .buttons {
-                grid-row: 2;
-                grid-column: 1/-1;
-                margin: 0;
-                flex-direction: column;
-                gap: 0.5rem;
-                padding-top: 0.5rem;
-            }
-        }
-    }
-}
-@media screen and (max-width: 800px) and (min-width: 769px) {
-    .active .item .item-content {
-        .right {
-            gap: 0.5rem;
-            margin-left: -16px;
-            margin-top: 40px;
-        }
-        .image {
-            margin-top: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-    }
-}
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 1024px) {
     .active .item {
         padding: 1rem;
-        .item-content {
-            grid-template-columns: 1fr !important;
-            gap: 1rem !important;
-            .image {
-                max-width: 100% !important;
-                height: 180px !important;
+        .item-content { grid-template-columns: 1fr; gap: 1.25rem 0; }
+        .image { height: 190px; grid-column: 1; grid-row: 1; }
+        .main-content {
+            grid-column: 1;
+            grid-row: 2;
+            .highlighted-info .highlight-item {
+                min-width: 140px;
+                flex: 1 1 calc(50% - 0.5rem);
+                &.status-badge { flex: 1 1 100%; margin-top: 0.5rem; }
             }
-            .sect {
-                margin-top: 8px;
-                .cont .info-row {
-                    &:not(.status) {
-                        grid-template-columns: 1fr;
-                        gap: 0.5rem;
+        }
+        .buttons {
+            grid-column: 1;
+            grid-row: 3;
+            @include f(column, flex-start, stretch, 0.5rem);
+        }
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .active {
+        margin: 0 10px;
+        .item {
+            padding: 1.25rem;
+            .item-content { grid-template-columns: 1fr !important; gap: 1.5rem !important; }
+            .image { height: 200px !important; }
+            .main-content {
+                .highlighted-info {
+                    @include f(column, stretch, stretch, 1.25rem);
+                    .highlight-item {
+                        width: 100%;
+                        min-width: 100%;
+                        &.status-badge .status-content .status-value { font-size: 14px; padding: 0.5rem 1rem; }
                     }
-                    &.status {
-                        grid-template-columns: auto 1fr;
-                        .label {
-                            width: auto;
-                        }
+                }
+                .secondary-info {
+                    @include f(column, stretch, stretch, 0.875rem);
+                    .info-item {
+                        width: 100%;
+                        @include f(row, space-between, center, 0.5rem);
+                        padding: 0.625rem 0;
+                        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+                        &:last-child { border-bottom: none; }
                     }
                 }
             }
-            .right {
-                margin-top: -11px;
-                margin-left: 0;
-                gap: 0.5rem;
-                .price {
-                    margin-top: -10px;
-                    height: 36px;
-                }
-            }
-            .buttons {
-                margin-top: -10px;
-            }
+            .buttons .p-button-rounded { height: 44px !important; font-size: 15px; }
+        }
+    }
+    ::ng-deep .p-button { height: 40px !important; font-size: 14px; }
+}
+
+@media screen and (max-width: 480px) {
+    .active {
+        margin: 0 5px;
+        .item {
+            padding: 1rem;
+            .image { height: 180px !important; }
         }
     }
 }

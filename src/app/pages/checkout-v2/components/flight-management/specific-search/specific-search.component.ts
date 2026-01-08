@@ -326,10 +326,39 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       })
     );
 
-    // Obtener aeropuertos del tour configurados en el consolidador
-    const tourAirports$ = this.departureConsolidadorTourAirportService.getTourAirports(this.departureId!).pipe(
+    // ✅ MODIFICADO: Obtener aeropuertos del tour configurados en el consolidador
+    // Primero obtener los del departure
+    const departureTourAirports$ = this.departureConsolidadorTourAirportService.getTourAirports(this.departureId!).pipe(
       catchError(error => {
         return of([]);
+      })
+    );
+
+    // ✅ NUEVO: También intentar obtener los aeropuertos del tour por tourId (si está disponible)
+    const tourLevelAirports$ = this.tourId 
+      ? this.departureConsolidadorTourAirportService.getTourAirportsByTourId(this.tourId).pipe(
+          catchError(error => {
+            // Si el endpoint no existe, simplemente retornar array vacío
+            return of([]);
+          })
+        )
+      : of([]);
+
+    // Combinar ambas fuentes de aeropuertos del tour
+    const tourAirports$ = forkJoin({
+      departureTourAirports: departureTourAirports$,
+      tourLevelAirports: tourLevelAirports$
+    }).pipe(
+      map(({ departureTourAirports, tourLevelAirports }) => {
+        // Combinar ambas listas, dando prioridad a los del departure
+        const departureAirportIds = new Set(departureTourAirports.map(da => da.locationAirportId));
+        // Solo incluir aeropuertos del tour que no estén en departure
+        const uniqueTourAirports = tourLevelAirports.filter(ta => !departureAirportIds.has(ta.locationAirportId));
+        return [...departureTourAirports, ...uniqueTourAirports];
+      }),
+      catchError(error => {
+        // Si falla la combinación, solo retornar los del departure
+        return departureTourAirports$;
       })
     );
 
@@ -1870,11 +1899,11 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
             if (fechaVueltaFormatted < minFechaStr || 
                 (fechaVueltaFormatted === minFechaStr && horaVueltaFormatted < minHoraStr)) {
               errors.push(
-                `La fecha/hora de vuelta (${fechaVueltaFormatted} ${horaVueltaFormatted}) es anterior al límite mínimo permitido (${minFechaStr} ${minHoraStr}).`
+                `La fecha y hora de salida (${fechaVueltaFormatted} ${horaVueltaFormatted}) es anterior al límite mínimo permitido (${minFechaStr} ${minHoraStr}).`
               );
             }
           } catch (error) {
-            errors.push('Error al validar la fecha de vuelta.');
+            errors.push('Error al validar la fecha y hora de salida.');
           }
         }
       }

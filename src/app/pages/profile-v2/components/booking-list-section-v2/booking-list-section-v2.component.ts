@@ -1508,4 +1508,27 @@ export class BookingListSectionV2Component
     this.selectedBookingItem = item;
     this.pointsDiscountModalVisible = true;
   }
+
+  /**
+   * Retorna la clase CSS para el estado de la reserva
+   * @param status - Estado de la reserva
+   * @returns Clase CSS para el badge de estado
+   */
+  getStatusClass(status: string): string {
+    const statusLower = status?.toLowerCase() || '';
+    if (statusLower.includes('activa') || statusLower.includes('confirmada') || statusLower.includes('prebooked')) {
+      return 'status-active';
+    } else if (statusLower.includes('pendiente') || statusLower.includes('pending')) {
+      return 'status-pending';
+    } else if (statusLower.includes('completada') || statusLower.includes('completed')) {
+      return 'status-completed';
+    } else if (statusLower.includes('cancelada') || statusLower.includes('cancelled')) {
+      return 'status-cancelled';
+    } else if (statusLower.includes('borrador') || statusLower.includes('draft')) {
+      return 'status-draft';
+    } else if (statusLower.includes('carrito') || statusLower.includes('cart')) {
+      return 'status-cart';
+    }
+    return 'status-default';
+  }
 }

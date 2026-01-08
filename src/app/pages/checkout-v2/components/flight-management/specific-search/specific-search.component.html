@@ -217,12 +217,15 @@
           [showTime]="true"
           [hourFormat]="'24'"
           [minDate]="minFechaVuelta"
+          [monthNavigator]="true"
+          [yearNavigator]="true"
+          [yearRange]="yearRangeVuelta"
           [showIcon]="true"
           appendTo="body"
           dateFormat="dd/mm/yy"
           [showButtonBar]="true"
           placeholder="Seleccionar fecha y hora"
-          [styleClass]="flightForm.get('fechaHoraVuelta')?.invalid && flightForm.get('fechaHoraVuelta')?.touched ? 'p-invalid' : ''"
+          [ngClass]="{ 'p-invalid': flightForm.get('fechaHoraVuelta')?.invalid && flightForm.get('fechaHoraVuelta')?.touched }"
         >
         </p-datepicker>
         <small class="p-error" *ngIf="flightForm.get('fechaHoraVuelta')?.invalid && flightForm.get('fechaHoraVuelta')?.touched">
@@ -303,12 +306,15 @@
           [showTime]="true"
           [hourFormat]="'24'"
           [minDate]="minFechaVuelta"
+          [monthNavigator]="true"
+          [yearNavigator]="true"
+          [yearRange]="yearRangeVuelta"
           [showIcon]="true"
           appendTo="body"
           dateFormat="dd/mm/yy"
           [showButtonBar]="true"
           placeholder="Seleccionar fecha y hora"
-          [styleClass]="flightForm.get('fechaHoraVuelta')?.invalid && flightForm.get('fechaHoraVuelta')?.touched ? 'p-invalid' : ''"
+          [ngClass]="{ 'p-invalid': flightForm.get('fechaHoraVuelta')?.invalid && flightForm.get('fechaHoraVuelta')?.touched }"
         >
         </p-datepicker>
         <small class="p-error" *ngIf="flightForm.get('fechaHoraVuelta')?.invalid && flightForm.get('fechaHoraVuelta')?.touched">

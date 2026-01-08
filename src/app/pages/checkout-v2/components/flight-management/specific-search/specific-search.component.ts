@@ -85,6 +85,13 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   minFechaVuelta: Date | null = null;
   minHoraVuelta: string | null = null;
   
+  // Rango de años para el navegador de años del datepicker de vuelta
+  get yearRangeVuelta(): string {
+    const currentYear = new Date().getFullYear();
+    const maxYear = currentYear + 2; // Permitir hasta 2 años en el futuro
+    return `${currentYear}:${maxYear}`;
+  }
+  
   filteredCities: Ciudad[] = [];
   combinedCities: { nombre: string; codigo: string; source: string; id: number }[] = [];
   readonly aerolineas: Ciudad[] = [
@@ -587,11 +594,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
               this.minFechaVuelta = minDateVuelta;
               this.minHoraVuelta = data.minDepartureTimeFromAirport || null;
               
-              // Precargar el valor por defecto en el formulario (combinar fecha y hora)
-              const fechaHoraVuelta = this.combineDateAndTime(minDateVuelta, data.minDepartureTimeFromAirport);
-              this.flightForm.patchValue({
-                fechaHoraVuelta: fechaHoraVuelta
-              });
             }
           }
         },
@@ -768,7 +770,19 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         this.adaptedFlightPacks = [];
         this.transformedFlights = [];
         this.filteredFlightsChange.emit([]);
-        this.errorMessage = 'Ocurrió un error al buscar vuelos. Por favor, inténtalo de nuevo.';
+        
+        // Intentar extraer mensaje de error del backend
+        const errorMessage = this.extractErrorMessage(err);
+        
+        // Detectar si es un error de aeropuerto no permitido
+        if (this.isAirportNotAllowedError(errorMessage)) {
+          this.errorMessage = this.formatAirportNotAllowedMessage(errorMessage);
+        } else {
+          this.errorMessage = 'Ocurrió un error al buscar vuelos. Por favor, inténtalo de nuevo.';
+          if (errorMessage) {
+            this.errorMessage += ` ${errorMessage}`;
+          }
+        }
       },
     });
   }
@@ -1814,6 +1828,57 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     
     return null;
   };
+
+  /**
+   * Extrae el mensaje de error de la respuesta HTTP
+   */
+  private extractErrorMessage(error: any): string {
+    if (!error) return '';
+    
+    // Intentar obtener el mensaje desde error.error (común en Angular HttpClient)
+    if (error.error) {
+      // Si es un objeto con mensaje
+      if (typeof error.error === 'object') {
+        if (error.error.message) return error.error.message;
+        if (error.error.error) return error.error.error;
+        // Si tiene una propiedad que parezca un mensaje
+        const messageKeys = ['Message', 'message', 'Error', 'error', 'detail', 'Detail'];
+        for (const key of messageKeys) {
+          if (error.error[key]) return error.error[key];
+        }
+      }
+      // Si es un string directamente
+      if (typeof error.error === 'string') return error.error;
+    }
+    
+    // Intentar desde error.message
+    if (error.message) return error.message;
+    
+    // Intentar desde error.statusText
+    if (error.statusText) return error.statusText;
+    
+    return '';
+  }
+
+  /**
+   * Detecta si el error es de aeropuerto no permitido
+   */
+  private isAirportNotAllowedError(errorMessage: string): boolean {
+    if (!errorMessage) return false;
+    
+    const lowerMessage = errorMessage.toLowerCase();
+    return lowerMessage.includes('no están permitidos') || 
+           lowerMessage.includes('no estan permitidos') ||
+           lowerMessage.includes('no esta permitido') ||
+           lowerMessage.includes('no está permitido');
+  }
+
+  /**
+   * Formatea el mensaje de error de aeropuerto no permitido para mostrarlo al usuario
+   */
+  private formatAirportNotAllowedMessage(errorMessage: string): string {
+    return 'Los aeropuertos que seleccionaste no están permitidos para esta búsqueda. Por favor, selecciona otro aeropuerto.';
+  }
 
   /**
    * Método helper para verificar si el campo de fecha/hora de ida es requerido

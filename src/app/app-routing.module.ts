@@ -31,7 +31,7 @@ import { TourV2Component } from './pages/tour-v2/tour-v2.component';
 // PAGE COMPONENTS - CHECKOUT
 // ========================================
 import { CheckoutV2Component } from './pages/checkout-v2/checkout-v2.component';
-import { NewReservationComponent } from './pages/checkout-v2/components/new-reservation/new-reservation.component';
+import { ReservationInfoComponent } from './pages/checkout-v2/components/reservation-info/reservation-info.component';
 
 // ========================================
 // PAGE COMPONENTS - BOOKINGS
@@ -74,11 +74,11 @@ const routes: Routes = [
       { path: 'bookings/:id', component: Bookingsv2Component },
       {
         path: 'reservation/:reservationId/:paymentId',
-        component: NewReservationComponent,
+        component: ReservationInfoComponent,
       },
       {
         path: 'reservation/:reservationId',
-        component: NewReservationComponent,
+        component: ReservationInfoComponent,
       },
       { path: 'forget-password', component: ForgetPasswordComponent },
       // ========================================
@@ -132,12 +132,12 @@ const routes: Routes = [
       // Versión nueva con paymentId
       {
         path: 'reservation/:reservationId/:paymentId',
-        component: NewReservationComponent,
+        component: ReservationInfoComponent,
       },
       // Versión nueva sin paymentId (opcional)
       {
         path: 'reservation/:reservationId',
-        component: NewReservationComponent,
+        component: ReservationInfoComponent,
       },
 
       // ========================================

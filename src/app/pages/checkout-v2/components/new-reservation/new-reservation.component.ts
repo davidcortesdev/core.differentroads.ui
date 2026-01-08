@@ -1,5 +1,5 @@
 // new-reservation.component.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core';
 import {
   IReservationResponse,
   ReservationService,
@@ -21,7 +21,6 @@ import {
   FlightSearchService,
   IAmadeusFlightCreateOrderResponse,
 } from '../../../../core/services/flight/flight-search.service';
-import { AnalyticsService } from '../../../../core/services/analytics/analytics.service';
 import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
 import { PointsV2Service } from '../../../../core/services/v2/points-v2.service';
 import { Title } from '@angular/platform-browser';
@@ -47,10 +46,10 @@ interface BankInfo {
   ],
   providers: [MessageService],
 })
-export class NewReservationComponent implements OnInit {
-  // Propiedades principales
-  reservationId: number = 0;
-  paymentId: number | undefined = 0;
+export class NewReservationComponent implements OnInit, OnChanges {
+  // Propiedades principales - pueden venir como @Input() o desde la ruta
+  @Input() reservationId: number = 0;
+  @Input() paymentId: number | undefined = 0;
   reservation: IReservationResponse | undefined;
   payment: IPaymentResponse | undefined;
 
@@ -65,9 +64,6 @@ export class NewReservationComponent implements OnInit {
   paymentType: 'Transfer' | 'Scalapay' | 'RedSys' | null = null;
   paymentMethod: string = '';
   paymentStatus: string = '';
-
-  // Bandera para evitar disparar purchase múltiples veces
-  private purchaseEventFired: boolean = false;
 
   // IDs de estados de pago
   successId: number = 0;
@@ -139,8 +135,6 @@ export class NewReservationComponent implements OnInit {
     private reservationTravelerService: ReservationTravelerService,
     private reservationTravelerFieldService: ReservationTravelerFieldService,
     private flightSearchService: FlightSearchService,
-    // SERVICIOS PARA ANALYTICS
-    private analyticsService: AnalyticsService,
     private authService: AuthenticateService,
     // SERVICIO PARA PUNTOS
     private pointsService: PointsV2Service,
@@ -163,19 +157,37 @@ export class NewReservationComponent implements OnInit {
   ngOnInit(): void {
     this.titleService.setTitle('Reserva - Different Roads');
 
-    // Obtener parámetros de la ruta
-    this.route.params.subscribe((params) => {
-      this.reservationId = params['reservationId'];
-      this.paymentId = params['paymentId']
-        ? Number(params['paymentId'])
-        : undefined;
+    // Si no se recibieron como @Input(), leer desde la ruta (compatibilidad)
+    if (!this.reservationId) {
+      this.route.params.subscribe((params) => {
+        this.reservationId = params['reservationId']
+          ? Number(params['reservationId'])
+          : 0;
+        this.paymentId = params['paymentId']
+          ? Number(params['paymentId'])
+          : undefined;
 
-      // Validar si tiene paymentId válido
+        // Validar si tiene paymentId válido
+        this.hasPaymentId = !!this.paymentId && this.paymentId > 0;
+
+        // Iniciar carga de datos si se obtuvieron desde la ruta
+        if (this.reservationId) {
+          this.loadPaymentStatuses();
+        }
+      });
+    } else {
+      // Si se recibieron como @Input(), validar y cargar
       this.hasPaymentId = !!this.paymentId && this.paymentId > 0;
-    });
+      this.loadPaymentStatuses();
+    }
+  }
 
-    // Iniciar carga de datos
-    this.loadPaymentStatuses();
+  ngOnChanges(changes: SimpleChanges): void {
+    // Si cambian los inputs, actualizar y recargar
+    if (changes['reservationId'] && this.reservationId) {
+      this.hasPaymentId = !!this.paymentId && this.paymentId > 0;
+      this.loadPaymentStatuses();
+    }
   }
 
   /**
@@ -236,13 +248,6 @@ export class NewReservationComponent implements OnInit {
 
         // CARGAR NOMBRE DEL LEAD TRAVELER PARA EL SALUDO
         this.loadLeadTravelerName();
-
-        // Disparar evento purchase cuando se llega a la página de confirmación después del paso 4 del checkout
-        // Solo disparar una vez cuando se carga la página
-        if (!this.purchaseEventFired) {
-          this.trackPurchase();
-          this.purchaseEventFired = true;
-        }
 
         // Cargar información del pago
         this.loadPayment();
@@ -760,52 +765,6 @@ export class NewReservationComponent implements OnInit {
     this.error = true;
     this.loading = false;
     this.showMessage('error', 'Error', message);
-  }
-
-  /**
-   * Disparar evento purchase cuando se completa la compra
-   */
-  private trackPurchase(): void {
-    if (!this.reservation || !this.reservation.tourId) return;
-
-    const reservationData = this.reservation as any;
-    const tourId = this.reservation.tourId;
-
-    // Obtener información del pago
-    const paymentType = this.paymentType || 'completo, transferencia';
-    const transactionId =
-      this.payment?.transactionReference ||
-      this.payment?.id?.toString() ||
-      `#${this.reservationId}`;
-    const totalValue = this.reservation.totalAmount || 0;
-
-    // Usar el método centralizado del servicio que obtiene todos los datos dinámicamente
-    this.analyticsService.trackPurchaseFromReservation(
-      this.reservationId,
-      tourId,
-      {
-        transactionId: transactionId,
-        paymentType: paymentType,
-        totalValue: totalValue,
-        tax: 0.00, // Enviar tax como 0.00
-        shipping: 0.00, // Enviar shipping como 0.00
-        coupon: reservationData.coupon?.code || '',
-      }
-    );
-  }
-
-  /**
-   * Obtiene datos del usuario para analytics
-   */
-  private getUserData() {
-    if (this.authService.isAuthenticatedValue()) {
-      return this.analyticsService.getUserData(
-        this.authService.getUserEmailValue(),
-        undefined,
-        this.authService.getCognitoIdValue()
-      );
-    }
-    return undefined;
   }
 
   /**

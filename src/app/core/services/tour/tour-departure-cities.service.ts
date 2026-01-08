@@ -7,18 +7,21 @@ export interface TourDepartureCityCreate {
   name: string;
   activityId: number;
   activityPackId: number;
+  itineraryId: number;
 }
 
 export interface TourDepartureCityUpdate {
   name: string;
   activityId: number;
   activityPackId: number;
+  itineraryId: number;
 }
 
 export interface ITourDepartureCityResponse {
   name: string;
   activityId: number;
   activityPackId: number;
+  itineraryId: number;
 }
 
 /**
@@ -28,6 +31,7 @@ export interface TourDepartureCityFilters {
   name?: string;
   activityId?: number;
   activityPackId?: number;
+  itineraryId?: number;
 }
 
 @Injectable({

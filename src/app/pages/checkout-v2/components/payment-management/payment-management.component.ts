@@ -67,7 +67,7 @@ export class PaymentManagementComponent
   }
 
   @Input() reservationId!: number;
-  @Input() depositAmount: number = 200;
+  @Input() depositAmount: number = 299;
   @Input() paymentDeadline: string = '30 días antes del tour';
   @Input() departureDate: string = '';
   @Input() showTransfer25Option: boolean = false;

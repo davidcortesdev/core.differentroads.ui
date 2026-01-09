@@ -56,13 +56,13 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   @Output() specificFlightSelected = new EventEmitter<{
     selectedFlight: IFlightPackDTO | null;
     totalPrice: number;
-    shouldAssignNoFlight?: boolean; // ✅ NUEVO: Indicar si se debe asignar "sin vuelos"
+    shouldAssignNoFlight?: boolean; // Indicar si se debe asignar "sin vuelos"
   }>();
   @Input() flights: Flight[] = [];
   @Input() departureId: number | null = null;
   @Input() reservationId: number | null = null;
-  @Input() tourId: number | null = null; // ✅ NUEVO: Necesario para obtener aeropuertos permitidos
-  @Input() departureActivityPackId: number | null = null; // ✅ NUEVO: ID del paquete del departure
+  @Input() tourId: number | null = null; // Necesario para obtener aeropuertos permitidos
+  @Input() departureActivityPackId: number | null = null; // ID del paquete del departure
   @Input() selectedFlightFromParent: IFlightPackDTO | null = null; // Nuevo input para sincronización con el padre
 
   // Propiedades públicas
@@ -71,7 +71,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   equipajeMano = false;
   equipajeBodega = false;
   tourOrigenConstante: Ciudad = { nombre: '', codigo: '' };
-  tourDestinoConstante: Ciudad = { nombre: '', codigo: '' }; // ✅ CORREGIDO: Ya no está hardcodeado, se llena desde la API
+  tourDestinoConstante: Ciudad = { nombre: '', codigo: '' }; // Se llena desde la API
   fechaIdaConstante = '';
   fechaRegresoConstante = '';
   horaIdaConstante = '';
@@ -229,7 +229,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   private createFlightForm(): FormGroup {
     return this.fb.group({
       origen: [null, Validators.required],
-      destinoVuelta: [null], // ✅ NUEVO: Campo para destino de vuelta en ida y vuelta
+      destinoVuelta: [null], // Campo para destino de vuelta en ida y vuelta
       tipoViaje: [this.tipoViaje],
       equipajeMano: [this.equipajeMano],
       equipajeBodega: [this.equipajeBodega],
@@ -339,7 +339,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       })
     );
 
-    // ✅ MODIFICADO: Obtener aeropuertos del tour configurados en el consolidador
+    // Obtener aeropuertos del tour configurados en el consolidador
     // Primero obtener los del departure
     const departureTourAirports$ = this.departureConsolidadorTourAirportService.getTourAirports(this.departureId!).pipe(
       catchError(error => {
@@ -347,11 +347,11 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       })
     );
 
-    // ✅ NUEVO: También intentar obtener los aeropuertos del tour por tourId (si está disponible)
+    // Obtener los aeropuertos del tour por tourId (para combinarlos con los del departure)
     const tourLevelAirports$ = this.tourId 
       ? this.departureConsolidadorTourAirportService.getTourAirportsByTourId(this.tourId).pipe(
           catchError(error => {
-            // Si el endpoint no existe, simplemente retornar array vacío
+            // En caso de error, retornar array vacío para no bloquear la carga
             return of([]);
           })
         )
@@ -402,25 +402,13 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         const locationIds = allConfiguredLocations.filter(item => typeof item.locationId === 'number').map(item => item.locationId as number);
         const configuredAirportIds = allConfiguredLocations.filter(item => typeof item.locationAirportId === 'number').map(item => item.locationAirportId as number);
         
-        // TODO: Obtener todos los aeropuertos asociados a las localizaciones configuradas
-        // Para cada locationId, obtener sus aeropuertos usando el filtro LocationId
-        // COMENTADO TEMPORALMENTE - Hay un problema en el backend que no devuelve las localizaciones configuradas
-        // const locationAirportsRequests = locationIds.map(locationId => 
-        //   this.locationAirportNetService.getAirports({ LocationId: locationId }).pipe(
-        //     catchError(error => {
-        //       return of([]);
-        //     })
-        //   )
-        // );
-        
         // Combinar todos los IDs de aeropuertos (configurados + tour) sin duplicados
         const allAirportIds = [...new Set([...configuredAirportIds, ...tourAirportIds])];
         
         return forkJoin({
             locations: locationIds.length ? this.locationNetService.getLocationsByIds(locationIds) : of([]),
           airports: allAirportIds.length ? this.locationAirportNetService.getAirportsByIds(allAirportIds) : of([]),
-          // locationAirports: locationAirportsRequests.length > 0 ? forkJoin(locationAirportsRequests) : of([])
-          locationAirports: of([]) // COMENTADO TEMPORALMENTE
+          locationAirports: of([])
         }).pipe(
           map(configuredLocationsDetails => {
             // Crear mapa con aeropuertos por defecto
@@ -442,30 +430,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
             const locationMap = new Map(configuredLocationsDetails.locations.map((l: Location) => [l.id, l]));
             const airportMap = new Map(configuredLocationsDetails.airports.map((a: LocationAirport) => [a.id, a]));
             
-            // TODO: Agregar aeropuertos asociados a las localizaciones configuradas
-            // COMENTADO TEMPORALMENTE - Hay un problema en el backend que no devuelve las localizaciones configuradas
-            // locationAirports es un array de arrays (cada elemento es un array de aeropuertos para cada locationId)
-            // const locationAirportsArray = configuredLocationsDetails.locationAirports || [];
-            // if (Array.isArray(locationAirportsArray) && locationAirportsArray.length > 0) {
-            //   locationAirportsArray.forEach((airportsForLocation: any[]) => {
-            //     if (Array.isArray(airportsForLocation)) {
-            //       airportsForLocation.forEach((airport: any) => {
-            //         if (airport.iata && airport.name) {
-            //           const key = airport.iata.toUpperCase();
-            //           if (!citiesMap.has(key)) {
-            //             citiesMap.set(key, {
-            //               nombre: airport.name,
-            //               codigo: airport.iata,
-            //               source: AirportSourceType.LOCATION,
-            //               id: airport.id
-            //             });
-            //           }
-            //         }
-            //       });
-            //     }
-            //   });
-            // }
-
             // Agregar ubicaciones configuradas (search locations) - usar allConfiguredLocations
             allConfiguredLocations.forEach(item => {
               if (item.locationId && locationMap.has(item.locationId)) {
@@ -655,7 +619,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     const formValue = this.flightForm.value;
     const tipoViaje = formValue.tipoViaje;
     
-    // ✅ CORREGIDO: Determinar códigos según el tipo de viaje
+    // Determinar códigos según el tipo de viaje
     let originCode: string | null = null;
     let destinationCode: string | null = null;
     
@@ -806,7 +770,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     const city = this.filteredCities.find(
       (c) => c.nombre.toLowerCase() === cityName.toLowerCase()
     );
-    // ✅ CORREGIDO: Ya no hay valor hardcodeado, retorna vacío si no se encuentra
+    // Retorna vacío si no se encuentra la ciudad
     return city ? city.codigo : '';
   }
 
@@ -1160,7 +1124,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     const city = this.filteredCities.find(
       (c) => c.nombre.toLowerCase() === cityName.toLowerCase()
     );
-    // ✅ CORREGIDO: Ya no hay valor hardcodeado, retorna vacío si no se encuentra
+    // Retorna vacío si no se encuentra la ciudad
     return city ? city.codigo : '';
   }
 
@@ -1365,9 +1329,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
-   * ✅ MÉTODO CORREGIDO: Buscar el flightPack "sin vuelos" y asignarlo a todos los viajeros
-   * Nota: En specific-search no tenemos acceso directo a los flightPacks "sin vuelos",
-   * por lo que emitimos un evento para que el componente padre (flight-management) lo maneje
+   * Buscar el flightPack "sin vuelos" y asignarlo a todos los viajeros.
+   * Emite un evento para que el componente padre (flight-management) lo maneje.
    */
   private async findAndAssignNoFlightOption(): Promise<void> {
 
@@ -1404,14 +1367,14 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         return;
       }
 
-      // ✅ CORRECCIÓN: En specific-search no tenemos acceso a flightPacks "sin vuelos"
+      // En specific-search no tenemos acceso a flightPacks "sin vuelos"
       // Por lo tanto, emitimos un evento para que el componente padre lo maneje
 
       // Emitir evento específico para que el padre sepa que debe asignar "sin vuelos"
       this.specificFlightSelected.emit({
         selectedFlight: this.selectedFlight,
         totalPrice: this.selectedFlight.ageGroupPrices?.[0]?.price || 0,
-        shouldAssignNoFlight: true // ✅ NUEVO: Indicar que se debe asignar "sin vuelos"
+        shouldAssignNoFlight: true // Indicar que se debe asignar "sin vuelos"
       });
 
       // Llamar a select de specific-search para guardar la selección
@@ -1463,7 +1426,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
 
       const activityPackId = this.selectedFlight.id;
 
-      // ✅ MODIFICADO: Solo actualizar asignaciones existentes del departure, NUNCA crear nuevas
+      // Solo actualizar asignaciones existentes del departure, NUNCA crear nuevas
 
       const existingAssignmentsPromises = travelers.map((traveler) => {
         return new Promise<{
@@ -1474,7 +1437,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
             .getByReservationTraveler(traveler.id)
             .subscribe({
               next: (assignments) => {
-                // ✅ SOLO buscar asignaciones del departure (por departureActivityPackId)
+                // SOLO buscar asignaciones del departure (por departureActivityPackId)
                 const departureAssignments = assignments.filter(
                   (a) => a.activityPackId === this.departureActivityPackId
                 );
@@ -1500,7 +1463,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         existingAssignmentsPromises
       );
 
-      // ✅ MODIFICADO: SOLO actualizar registros existentes, NUNCA crear nuevos
+      // SOLO actualizar registros existentes, NUNCA crear nuevos
       const hasExistingDepartureAssignments = existingAssignmentsResults.some(
         (result) => result.existingAssignments.length > 0
       );
@@ -1537,7 +1500,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
                   },
                 });
             } else {
-              // ✅ MODIFICADO: NO crear nuevas asignaciones, solo log
+              // NO crear nuevas asignaciones
 
               resolve(true); // Resolver como éxito sin crear nada
             }
@@ -1547,11 +1510,11 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         await Promise.all(updatePromises);
 
       } else {
-        // ✅ MODIFICADO: NO crear nuevas asignaciones si no existen
+        // NO crear nuevas asignaciones si no existen
 
       }
 
-      // ✅ NUEVO: Marcar "Sin Vuelos" en default-flights después de guardar
+      // Marcar "Sin Vuelos" en default-flights después de guardar
       if (this.reservationId) {
         // En lugar de crear asignaciones duplicadas, solo emitir el evento
         // El componente padre se encargará de marcar "Sin Vuelos" en default-flights

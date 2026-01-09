@@ -29,12 +29,10 @@ export class DepartureConsolidadorTourAirportService {
   }
 
   /**
-   * ✅ NUEVO: Intenta obtener los aeropuertos del tour por tourId (para combinarlos con los del departure)
-   * Nota: Este endpoint puede no existir en el backend, en cuyo caso retornará un error que se manejará con catchError
+   * Obtiene los aeropuertos del tour configurados por tourId (para combinarlos con los del departure).
    * @param tourId ID del tour a consultar
    */
   getTourAirportsByTourId(tourId: number): Observable<DepartureConsolidadorTourAirportResponse[]> {
-    // Intentar usar el endpoint de TourConsolidadorTourAirport si existe
     const tourAirportUrl = `${environment.toursApiUrl}/TourConsolidadorTourAirport`;
     const params = new HttpParams().set('TourId', tourId.toString());
     return this.http.get<DepartureConsolidadorTourAirportResponse[]>(tourAirportUrl, { params });

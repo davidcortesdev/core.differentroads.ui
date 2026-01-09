@@ -128,7 +128,7 @@ export class ReviewSurveyComponent implements OnInit {
       if (params['periodTkId']) {
         this.periodExternalId = params['periodTkId'];
 
-        this.departureService.getAll({ tkId: this.periodExternalId }, this.abortController.signal).pipe(
+        this.departureService.getAll({ tkId: this.periodExternalId, filterByVisible: false }, this.abortController.signal).pipe(
           switchMap((departures: IDepartureResponse[]) => {
             if (departures && departures.length > 0) {
               const departure = departures[0];
@@ -137,14 +137,14 @@ export class ReviewSurveyComponent implements OnInit {
               this.tripInfo.date = departure.departureDate || 'Fecha no disponible';
               this.formattedDate = this.datePipe.transform(this.tripInfo.date, 'yyyy/MM/dd') || '';
 
-              return this.itineraryService.getById(departure.itineraryId, this.abortController.signal);
+              return this.itineraryService.getById(departure.itineraryId, this.abortController.signal, false);
             } else {
               throw new Error('No departures found');
             }
           }),
           switchMap((itinerary: IItineraryResponse) => {
             this.tripInfo.tourId = itinerary.tourId;
-            return this.tourService.getById(itinerary.tourId, true, this.abortController.signal);
+            return this.tourService.getById(itinerary.tourId, false, this.abortController.signal);
           }),
           catchError((error) => {
             this.setErrorTripInfo();

@@ -111,13 +111,16 @@ export class ItineraryService {
    * Obtiene un itinerario específico por su ID.
    * @param id ID del itinerario.
    * @param signal Signal de cancelación opcional para abortar la petición HTTP.
+   * @param filterByVisible Si es true, solo devuelve itinerarios visibles en web.
    * @returns Itinerario correspondiente.
    */
-  getById(id: number, signal?: AbortSignal): Observable<IItineraryResponse> {
+  getById(id: number, signal?: AbortSignal, filterByVisible: boolean = true): Observable<IItineraryResponse> {
+    let params = new HttpParams().set('FilterByVisible', filterByVisible.toString());
+
     const options: {
       params?: HttpParams | { [param: string]: any };
       signal?: AbortSignal;
-    } = {};
+    } = { params };
     
     if (signal) {
       options.signal = signal;

@@ -188,12 +188,12 @@
     },
     {
       "route": "/destino/republica-checa",
-      "redirect": "/destino/europa/suecia",
+      "redirect": "/destino/europa/republica-checa",
       "statusCode": 301
     },
     {
       "route": "/destino/portugal",
-      "redirect": "/destino/europa/republica-checa",
+      "redirect": "/destino/europa/portugal",
       "statusCode": 301
     },
     {
@@ -263,7 +263,7 @@
     },
     {
       "route": "/destino/india",
-      "redirect": "/destino/europa/hungria",
+      "redirect": "/destino/asia/india",
       "statusCode": 301
     },
     {

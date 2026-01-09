@@ -65,6 +65,7 @@ export interface DepartureFilters {
   arrivalDate?: string;
   departureStatusId?: number;
   tripTypeId?: number;
+  filterByVisible?: boolean;
 }
 
 export interface DepartureAirportTimesResponse {

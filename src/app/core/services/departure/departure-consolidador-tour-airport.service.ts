@@ -27,4 +27,14 @@ export class DepartureConsolidadorTourAirportService {
     const params = new HttpParams().set('DepartureId', departureId.toString());
     return this.http.get<DepartureConsolidadorTourAirportResponse[]>(this.baseUrl, { params });
   }
+
+  /**
+   * Obtiene los aeropuertos del tour configurados por tourId (para combinarlos con los del departure).
+   * @param tourId ID del tour a consultar
+   */
+  getTourAirportsByTourId(tourId: number): Observable<DepartureConsolidadorTourAirportResponse[]> {
+    const tourAirportUrl = `${environment.toursApiUrl}/TourConsolidadorTourAirport`;
+    const params = new HttpParams().set('TourId', tourId.toString());
+    return this.http.get<DepartureConsolidadorTourAirportResponse[]>(tourAirportUrl, { params });
+  }
 }

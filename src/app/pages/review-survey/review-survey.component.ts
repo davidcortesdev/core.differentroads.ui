@@ -137,7 +137,7 @@ export class ReviewSurveyComponent implements OnInit {
               this.tripInfo.date = departure.departureDate || 'Fecha no disponible';
               this.formattedDate = this.datePipe.transform(this.tripInfo.date, 'yyyy/MM/dd') || '';
 
-              return this.itineraryService.getById(departure.itineraryId, this.abortController.signal);
+              return this.itineraryService.getById(departure.itineraryId, this.abortController.signal, false);
             } else {
               throw new Error('No departures found');
             }

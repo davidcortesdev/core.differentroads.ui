@@ -160,7 +160,14 @@
               (incluye {{ depositAmount | currencyFormat }} depósito +
               {{ specificSearchFlightsCost | currencyFormat }} vuelos)
             </span>
+            <span
+              *ngIf="insurancePrice > 0"
+              class="insurance-info"
+            >
+           ( incluye {{ depositAmount | currencyFormat }} depósito + {{ insurancePrice | currencyFormat }} de seguros)
+            </span>
           </span>
+
           <span class="option-price">{{
             depositTotalAmount | currencyFormat
           }}</span>
@@ -501,3 +508,5 @@
     </ng-template>
   </p-dialog>
 </div>
+
+

@@ -22,7 +22,11 @@ import { PaymentStatusNetService } from '../../services/paymentStatusNet.service
 import { PaymentMethodNetService } from '../../services/paymentMethodNet.service';
 import { IFormData, NewRedsysService } from '../../services/newRedsys.service';
 import { ReservationStatusService } from '../../../../core/services/reservation/reservation-status.service';
-import { ReservationService } from '../../../../core/services/reservation/reservation.service';
+import { 
+  ReservationService,
+  IReservationSummaryResponse,
+  ReservationSummaryItem 
+} from '../../../../core/services/reservation/reservation.service';
 import { MessageService } from 'primeng/api';
 import { CurrencyService } from '../../../../core/services/masterdata/currency.service';
 import {
@@ -95,6 +99,10 @@ export class PaymentManagementComponent
   // Travelers count
   travelersCount: number = 1;
 
+  // Insurance price from reservation summary
+  insurancePrice: number = 0;
+  insuranceName: string = '';
+
   // Discount code
   discountCode: string = '';
   discountMessage: string = '';
@@ -136,9 +144,15 @@ export class PaymentManagementComponent
     this.loadPaymentIds();
     this.checkAmadeusFlightStatus();
     this.loadTravelersCount();
+    this.loadInsurancePrice();
   }
 
   ngOnChanges(): void {
+    // Si cambió el reservationId, recargar el precio del seguro
+    if (this.reservationId) {
+      this.loadInsurancePrice();
+    }
+
     // Si el depósito no está disponible pero está seleccionado, limpiar la selección
     if (this.paymentState.type === 'deposit' && !this.shouldShowDepositOption) {
       this.paymentState.type = null;
@@ -349,10 +363,19 @@ export class PaymentManagementComponent
 
   get depositTotalAmount(): number {
     const depositPerTraveler = this.depositAmount * this.travelersCount;
+    let total = depositPerTraveler;
+    
+    // Sumar el costo de vuelos específicos si aplica
     if (this.hasAmadeusFlight && this.hasSpecificSearchFlights) {
-      return depositPerTraveler + this.specificSearchFlightsCost;
+      total += this.specificSearchFlightsCost;
     }
-    return depositPerTraveler;
+    
+    // Sumar el precio del seguro si está seleccionado
+    if (this.insurancePrice > 0) {
+      total += this.insurancePrice;
+    }
+    
+    return total;
   }
 
   get shouldShowTransferOption(): boolean {
@@ -876,6 +899,98 @@ export class PaymentManagementComponent
 
   reloadReservationTotalAmount(): void {
     this.loadReservationTotalAmount();
+    this.loadInsurancePrice();
+  }
+
+  /**
+   * Carga el precio del seguro desde el resumen de la reserva
+   * Este método obtiene el precio total del seguro seleccionado desde el resumen
+   * para incluirlo en el cálculo del depósito mínimo
+   * Método público para poder ser llamado desde el componente padre si es necesario
+   */
+  loadInsurancePrice(): void {
+    if (!this.reservationId) {
+      this.insurancePrice = 0;
+      this.insuranceName = '';
+      return;
+    }
+
+    this.reservationService
+      .getSummary(this.reservationId)
+      .subscribe({
+        next: (summary: IReservationSummaryResponse) => {
+          const insuranceData = this.extractInsuranceDataFromSummary(summary);
+          this.insurancePrice = insuranceData.price;
+          this.insuranceName = insuranceData.name;
+        },
+        error: (error) => {
+          // En caso de error, establecer el precio del seguro en 0
+          this.insurancePrice = 0;
+          this.insuranceName = '';
+        },
+      });
+  }
+
+  /**
+   * Extrae el precio total y nombre del seguro desde el resumen de la reserva
+   * Identifica los items de tipo seguro y suma sus totales
+   * Retorna un objeto con el precio total y el nombre del seguro (o nombres si hay múltiples)
+   */
+  private extractInsuranceDataFromSummary(
+    summary: IReservationSummaryResponse
+  ): { price: number; name: string } {
+    if (!summary || !summary.items || summary.items.length === 0) {
+      return { price: 0, name: '' };
+    }
+
+    // Filtrar items que sean seguros
+    const insuranceItems = summary.items.filter((item) =>
+      this.isInsuranceSummaryItem(item)
+    );
+
+    if (insuranceItems.length === 0) {
+      return { price: 0, name: '' };
+    }
+
+    // Sumar el total de todos los seguros seleccionados
+    // Usar item.total que ya incluye cantidad * precio unitario
+    const totalPrice = insuranceItems.reduce(
+      (total, item) => total + (item.total || 0),
+      0
+    );
+
+    // Extraer nombres de los seguros, limpiando el prefijo "Seguro " si existe
+    const insuranceNames = insuranceItems
+      .map((item) => {
+        let name = item.description || '';
+        // Remover el prefijo "Seguro " si existe para mostrar solo el nombre
+        if (name.toLowerCase().startsWith('seguro ')) {
+          name = name.substring(7).trim();
+        }
+        return name;
+      })
+      .filter((name) => name.length > 0);
+
+    // Si hay múltiples seguros, unirlos con ", "
+    const insuranceName =
+      insuranceNames.length > 0 ? insuranceNames.join(', ') : '';
+
+    return { price: totalPrice, name: insuranceName };
+  }
+
+  /**
+   * Identifica si un item del resumen es un seguro
+   * Basado en itemType y description
+   */
+  private isInsuranceSummaryItem(item: ReservationSummaryItem): boolean {
+    const type = item.itemType?.toLowerCase() || '';
+    const description = item.description?.toLowerCase() || '';
+
+    return (
+      type.includes('insurance') ||
+      type.includes('seguro') ||
+      description.includes('seguro')
+    );
   }
 
   applyDiscount(): void {
@@ -963,6 +1078,9 @@ export class PaymentManagementComponent
         if (success) {
           this.discountMessage = 'Código de descuento aplicado correctamente';
           this.discountMessageSeverity = 'success';
+          // Recargar el precio del seguro después de aplicar el descuento
+          // ya que el resumen se actualiza y puede afectar el cálculo del depósito
+          this.loadInsurancePrice();
           this.discountApplied.emit();
         } else {
           this.discountMessage = 'No se pudo aplicar el código de descuento';

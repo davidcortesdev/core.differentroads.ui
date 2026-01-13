@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Subject, takeUntil, take } from 'rxjs';
+import { Subject, takeUntil, take, from, of } from 'rxjs';
+import { switchMap, catchError, map } from 'rxjs/operators';
 
 import { HomeSectionConfigurationService, IHomeSectionConfigurationResponse, } from '../../core/services/home/home-section-configuration.service';
 import { Title } from '@angular/platform-browser';
@@ -40,15 +41,15 @@ export class HomeV2Component implements OnInit, OnDestroy {
     private analyticsService: AnalyticsService
   ) {}
 
-  async ngOnInit() {
+  ngOnInit(): void {
     this.titleService.setTitle('Different Roads - Viajes y Experiencias Únicas');
     this.loadAllHomeSections();
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
     const state = urlParams.get('state');
     
-    if (code && state) {
-      await this.handleOAuthCallback();
+    if (code && state && code.length > 0 && state.length > 0) {
+      this.handleOAuthCallback();
     }
   }
 
@@ -58,81 +59,89 @@ export class HomeV2Component implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private async handleOAuthCallback(): Promise<void> {
-    try {
-      // Procesar la autenticación
-      await this.authService.handleAuthRedirect();
-      
-      // Obtener atributos del usuario
-      this.authService.getUserAttributes().subscribe({
-        next: async (attributes) => {
+  /**
+   * Maneja el callback de OAuth después de la autenticación.
+   * Busca o crea el usuario en la base de datos y limpia la URL.
+   * Usa operadores RxJS para evitar callbacks anidados y posibles memory leaks.
+   */
+  private handleOAuthCallback(): void {
+    from(this.authService.handleAuthRedirect())
+      .pipe(
+        switchMap(() => this.authService.getUserAttributes()),
+        switchMap(attributes => {
           const cognitoId = attributes.sub;
           const email = attributes.email;
           
           if (!cognitoId || !email) {
-            return;
+            console.warn('OAuth callback: Missing cognitoId or email');
+            return of(null);
           }
           
-          // Buscar por Cognito ID
-          this.usersNetService.getUsersByCognitoId(cognitoId).subscribe({
-            next: (users) => {
-              if (users && users.length > 0) {
-                // Limpiar URL y navegar
-                this.cleanUrlAndNavigate();
-              } else {
-                // Buscar por email
-                this.usersNetService.getUsersByEmail(email).subscribe({
-                  next: (usersByEmail) => {
-                    if (usersByEmail && usersByEmail.length > 0) {
-                      // Actualizar con Cognito ID
-                      this.usersNetService.updateUser(usersByEmail[0].id, {
-                        cognitoId: cognitoId,
-                        name: usersByEmail[0].name ?? '',
-                        email: usersByEmail[0].email ?? ''
-                      }).subscribe({
-                        next: () => {
-                          this.cleanUrlAndNavigate();
-                        },
-                        error: (error) => {
-                          console.error('Error updating user with Cognito ID:', error);
-                        }
-                      });
-                    } else {
-                      // Crear usuario
-                      this.usersNetService.createUser({
-                        cognitoId: cognitoId,
-                        name: email,
-                        email: email,
-                        hasWebAccess: true,
-                        hasMiddleAccess: false
-                      }).subscribe({
-                        next: () => {
-                          this.cleanUrlAndNavigate();
-                        },
-                        error: (error) => {
-                          console.error('Error creating new user:', error);
-                        }
-                      });
-                    }
-                  },
-                  error: (error) => {
-                    console.error('Error searching user by email:', error);
-                  }
-                });
+          // Buscar usuario por Cognito ID
+          return this.usersNetService.getUsersByCognitoId(cognitoId).pipe(
+            switchMap(users => {
+              if (users?.length > 0) {
+                // Usuario encontrado por Cognito ID
+                return of(users[0]);
               }
-            },
-            error: (error) => {
+              
+              // Si no existe por Cognito ID, buscar por email
+              return this.usersNetService.getUsersByEmail(email).pipe(
+                switchMap(usersByEmail => {
+                  if (usersByEmail?.length > 0) {
+                    // Actualizar usuario existente con Cognito ID
+                    return this.usersNetService.updateUser(usersByEmail[0].id, {
+                      cognitoId: cognitoId,
+                      name: usersByEmail[0].name ?? '',
+                      email: usersByEmail[0].email ?? ''
+                    }).pipe(
+                      map(() => usersByEmail[0]),
+                      catchError(error => {
+                        console.error('Error updating user with Cognito ID:', error);
+                        return of(null);
+                      })
+                    );
+                  }
+                  
+                  // Crear nuevo usuario
+                  return this.usersNetService.createUser({
+                    cognitoId: cognitoId,
+                    name: email,
+                    email: email,
+                    hasWebAccess: true,
+                    hasMiddleAccess: false
+                  }).pipe(
+                    catchError(error => {
+                      console.error('Error creating new user:', error);
+                      return of(null);
+                    })
+                  );
+                }),
+                catchError(error => {
+                  console.error('Error searching user by email:', error);
+                  return of(null);
+                })
+              );
+            }),
+            catchError(error => {
               console.error('Error searching user by Cognito ID:', error);
-            }
-          });
+              return of(null);
+            })
+          );
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe({
+        next: (user) => {
+          if (user) {
+            this.cleanUrlAndNavigate();
+          }
         },
         error: (error) => {
-          console.error('Error getting user attributes:', error);
+          console.error('Error in OAuth callback:', error);
+          // Opcional: mostrar notificación al usuario
         }
       });
-    } catch (error) {
-      console.error('Error in OAuth callback:', error);
-    }
   }
 
   private cleanUrlAndNavigate(): void {

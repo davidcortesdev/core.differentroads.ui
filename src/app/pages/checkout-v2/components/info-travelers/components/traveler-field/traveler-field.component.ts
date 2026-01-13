@@ -16,7 +16,7 @@ export class TravelerFieldComponent implements OnChanges {
   @Input() travelerForm!: FormGroup;
   @Input() isMandatory: boolean = false;
   @Input() sexOptions: Array<{ label: string; value: string }> = [];
-  @Input() countryOptions: Array<{ name: string; code: string; value: string }> = [];
+  @Input() countryOptions: Array<{ name: string; code: string }> = [];
   @Input() phonePrefixOptions: IPhonePrefixResponse[] = [];
   @Input() minDate: Date | null = null;
   @Input() maxDate: Date | null = null;

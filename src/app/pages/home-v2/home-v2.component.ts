@@ -2,7 +2,6 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subject, takeUntil, take } from 'rxjs';
 
 import { HomeSectionConfigurationService, IHomeSectionConfigurationResponse, } from '../../core/services/home/home-section-configuration.service';
-import { HomeSectionService, IHomeSectionResponse } from '../../core/services/home/home-section.service';
 import { Title } from '@angular/platform-browser';
 import { AuthenticateService } from '../../core/services/auth/auth-service.service';
 import { UsersNetService } from '../../core/services/users/usersNet.service';
@@ -32,14 +31,10 @@ export class HomeV2Component implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
   private abortController = new AbortController();
-  
-  // Cache de tipos de secciones del backend (opcional, para validación y nombres)
-  private homeSectionsMap: Map<number, IHomeSectionResponse> = new Map();
 
   constructor(
     private titleService: Title,
     private homeSectionConfigurationService: HomeSectionConfigurationService,
-    private homeSectionService: HomeSectionService,
     private authService: AuthenticateService,
     private usersNetService: UsersNetService,
     private analyticsService: AnalyticsService
@@ -47,10 +42,6 @@ export class HomeV2Component implements OnInit, OnDestroy {
 
   async ngOnInit() {
     this.titleService.setTitle('Different Roads - Viajes y Experiencias Únicas');
-    
-    // Cargar tipos de secciones desde el backend (opcional, para validación y nombres)
-    this.loadHomeSectionTypes();
-    
     this.loadAllHomeSections();
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
@@ -132,38 +123,6 @@ export class HomeV2Component implements OnInit, OnDestroy {
     window.history.replaceState({}, document.title, window.location.pathname);
   }
 
-  /**
-   * Carga los tipos de secciones desde el backend (opcional)
-   * Útil para validar que las secciones estén activas y obtener nombres dinámicos
-   */
-  private loadHomeSectionTypes(): void {
-    this.homeSectionService
-      .getAll({ isActive: true }, this.abortController.signal)
-      .pipe(
-        take(1),
-        takeUntil(this.destroy$)
-      )
-      .subscribe({
-        next: (sections) => {
-          sections.forEach(section => {
-            this.homeSectionsMap.set(section.id, section);
-          });
-        },
-        error: (error) => {
-          console.warn('No se pudieron cargar los tipos de secciones:', error);
-          // No es crítico, continuar sin validación
-        }
-      });
-  }
-
-  /**
-   * Valida si una sección está activa según el backend
-   */
-  private isSectionActive(homeSectionId: number): boolean {
-    const section = this.homeSectionsMap.get(homeSectionId);
-    return section?.isActive ?? true; // Por defecto true si no está en el cache
-  }
-
   private loadAllHomeSections(): void {
     this.isLoading = true;
     this.hasError = false;
@@ -219,36 +178,6 @@ export class HomeV2Component implements OnInit, OnDestroy {
       this.orderedConfigurations.filter(
         (config) => config.homeSectionId !== HomeSectionId.BANNER
       );
-  }
-
-  /**
-   * Obtiene el nombre de la sección desde el backend o fallback local
-   * @param sectionId ID de la sección
-   * @returns Nombre de la sección
-   */
-  getSectionName(sectionId: number): string {
-    // Intentar obtener desde el backend primero
-    const section = this.homeSectionsMap.get(sectionId);
-    if (section) {
-      return section.name;
-    }
-    
-    // Fallback a nombres hardcodeados si no hay cache del backend
-    const fallbackNames: { [key: number]: string } = {
-      [HomeSectionId.BANNER]: 'Banner',
-      [HomeSectionId.TOUR_CARROUSEL]: 'Carrusel de Tours',
-      [HomeSectionId.TOUR_GRID]: 'Lista de Tours en Cuadrícula',
-      [HomeSectionId.FULLSCREEN_CARDS]: 'Cards a Pantalla Completa',
-      [HomeSectionId.MIXED_SECTION]: 'Sección Mixta',
-      [HomeSectionId.TRAVELER_SECTION]: 'Sección de Viajeros',
-      [HomeSectionId.REVIEWS_SECTION]: 'Sección de Reviews',
-      [HomeSectionId.FEATURED_SECTION]: 'Sección Destacada',
-      [HomeSectionId.ARTICLES_SECTION]: 'Sección de Artículos',
-      [HomeSectionId.PARTNERS_CARROUSEL]: 'Carrusel de Colaboradores',
-      [HomeSectionId.ABOUT_US]: 'Sobre Nosotros',
-    };
-    
-    return fallbackNames[sectionId] || 'Sección desconocida';
   }
 
 }

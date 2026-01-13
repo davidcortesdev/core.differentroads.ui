@@ -7,6 +7,8 @@ import {
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Router } from '@angular/router';
+import { of } from 'rxjs';
+import { switchMap, map, catchError } from 'rxjs/operators';
 import { HomeSectionService } from '../../../../core/services/home/home-section.service';
 import { HomeSectionConfigurationService } from '../../../../core/services/home/home-section-configuration.service';
 import { HomeSectionCardService } from '../../../../core/services/home/home-section-card.service';
@@ -63,38 +65,64 @@ export class FullCardSectionV2Component implements OnInit, OnDestroy {
     return card.id;
   }
 
+  /**
+   * Carga las cards de pantalla completa.
+   * Obtiene la sección FULLSCREEN_CARDS, luego sus configuraciones y finalmente todas las cards.
+   */
   private loadFullScreenCards(): void {
-    // 1. Obtener la sección con code 'FULLSCREEN_CARDS'
     this.homeSectionService
       .getAll({ code: 'FULLSCREEN_CARDS', isActive: true }, this.abortController.signal)
+      .pipe(
+        switchMap((sections) => {
+          if (sections.length === 0) {
+            console.warn('FullCardSectionV2 - No FULLSCREEN_CARDS section found');
+            return of([]);
+          }
+
+          const fullScreenSection = sections[0];
+
+          // Obtener las configuraciones de esta sección
+          return this.homeSectionConfigurationService
+            .getBySectionType(fullScreenSection.id, true, this.abortController.signal)
+            .pipe(
+              map((configurations) => {
+                if (configurations.length === 0) {
+                  console.warn('FullCardSectionV2 - No configurations found for section');
+                  return [];
+                }
+
+                // Usar la primera configuración para título y descripción
+                const firstConfiguration = configurations[0];
+                this.sectionTitle = firstConfiguration.title || '';
+                this.sectionDescription = firstConfiguration.content || '';
+
+                return configurations;
+              }),
+              catchError((error) => {
+                console.error('FullCardSectionV2 - Error loading configurations:', error);
+                return of([]);
+              })
+            );
+        }),
+        catchError((error) => {
+          console.error('FullCardSectionV2 - Error loading FULLSCREEN_CARDS section:', error);
+          return of([]);
+        })
+      )
       .subscribe({
-        next: (sections) => {
-          if (sections.length > 0) {
-            const fullScreenSection = sections[0];
-
-            // 2. Obtener las configuraciones de esta sección
-            this.homeSectionConfigurationService
-              .getBySectionType(fullScreenSection.id, true, this.abortController.signal)
-              .subscribe({
-                next: (configurations) => {
-                  if (configurations.length > 0) {
-                    // Usar la primera configuración para título y descripción
-                    const firstConfiguration = configurations[0];
-                    this.sectionTitle = firstConfiguration.title || '';
-                    this.sectionDescription = firstConfiguration.content || '';
-
-                    // 3. Obtener todas las cards de todas las configuraciones
-                    this.loadAllCardsFromConfigurations(configurations);
-                  } else {
-                  }
-                },
-                error: (error) => {
-                },
-              });
+        next: (configurations) => {
+          if (configurations.length > 0) {
+            // Obtener todas las cards de todas las configuraciones
+            this.loadAllCardsFromConfigurations(configurations);
           } else {
+            this.cards = [];
+            this.cdr.markForCheck();
           }
         },
         error: (error) => {
+          console.error('FullCardSectionV2 - Error in loadFullScreenCards:', error);
+          this.cards = [];
+          this.cdr.markForCheck();
         },
       });
   }

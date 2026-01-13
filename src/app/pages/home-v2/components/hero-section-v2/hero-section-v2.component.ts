@@ -89,6 +89,10 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit, OnDestroy 
     private tourService: TourService
   ) { }
 
+  /**
+   * Inicializa el componente.
+   * Establece los valores iniciales y carga los datos necesarios.
+   */
   ngOnInit(): void {
     this.setInitialValues();
     this.loadBannerContent();
@@ -121,6 +125,10 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit, OnDestroy 
         this.sugerencias = Array.isArray(results) ? results : [];
       });
   }
+  /**
+   * Se ejecuta después de que la vista del componente ha sido inicializada.
+   * Reproduce el video si está disponible.
+   */
   ngAfterViewInit(): void {
     // Ensure video plays when view is initialized
     if (this.isVideo && this.bannerContent) {
@@ -128,6 +136,10 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit, OnDestroy 
     }
   }
 
+  /**
+   * Limpia los recursos del componente al destruirlo.
+   * Cancela las peticiones HTTP pendientes y completa las suscripciones.
+   */
   ngOnDestroy(): void {
     this.abortController.abort();
     this.destroy$.next();
@@ -231,22 +243,43 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit, OnDestroy 
       });
   }
 
-  getBannerUrl(): string | null {
+  /**
+   * Obtiene la URL del banner (video o imagen).
+   * @returns La URL del contenido del banner o null si no hay contenido.
+   */
+  get bannerUrl(): string | null {
     return this.bannerContent?.contentUrl || null;
   }
 
-  getBannerAltText(): string {
+  /**
+   * Obtiene el texto alternativo del banner.
+   * @returns El texto alternativo del banner o cadena vacía si no hay contenido.
+   */
+  get bannerAltText(): string {
     return this.bannerContent?.altText || '';
   }
 
+  /**
+   * Maneja el evento cuando el video ha sido cargado.
+   * Intenta reproducir el video automáticamente.
+   */
   onVideoLoaded(): void {
     this.playVideo();
   }
 
+  /**
+   * Maneja el evento cuando el video está listo para reproducirse.
+   * Intenta reproducir el video automáticamente.
+   */
   onVideoCanPlay(): void {
     this.playVideo();
   }
 
+  /**
+   * Intenta reproducir el video del banner.
+   * Silencia el video para permitir autoplay y maneja errores de reproducción.
+   * @private
+   */
   private playVideo(): void {
     if (this.videoElement && this.videoElement.nativeElement) {
       const video = this.videoElement.nativeElement;
@@ -260,12 +293,17 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit, OnDestroy 
           // Try to play again after a short delay
           setTimeout(() => {
             video.play().catch((retryError) => {
+              console.error('HeroSectionV2 - Error playing video after retry:', retryError);
             });
           }, 100);
         });
     }
   }
 
+  /**
+   * Carga la lista de países/destinos disponibles.
+   * @private
+   */
   private loadDestinations(): void {
     this.countriesService
       .getCountries(this.abortController.signal)
@@ -280,6 +318,11 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit, OnDestroy 
       });
   }
 
+  /**
+   * Carga los tipos de viaje disponibles.
+   * Si hay un tipo de viaje inicial, lo mapea al ID correspondiente.
+   * @private
+   */
   private loadTripTypes(): void {
     this.tripTypeService
       .getActiveTripTypes(this.abortController.signal)
@@ -299,6 +342,10 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit, OnDestroy 
       });
   }
 
+  /**
+   * Filtra los destinos según la consulta del usuario.
+   * @param event - Evento con la consulta de búsqueda
+   */
   filterDestinations(event: { query: string }): void {
     const query = event.query.toLowerCase().trim();
     this.filteredDestinations = this.destinations.filter(
@@ -308,6 +355,10 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit, OnDestroy 
     );
   }
 
+  /**
+   * Filtra los tipos de viaje según la consulta del usuario.
+   * @param event - Evento con la consulta de búsqueda
+   */
   filterTripTypes(event: { query: string }): void {
     const query = event.query.toLowerCase().trim();
     this.filteredTripTypes = this.tripTypes.filter(
@@ -317,6 +368,10 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit, OnDestroy 
     );
   }
 
+  /**
+   * Realiza la búsqueda de tours con los parámetros seleccionados.
+   * Valida las fechas antes de navegar y dispara eventos de analytics.
+   */
   searchTrips(): void {
     // Validar fechas antes de buscar
     if (this.rangeDates && this.rangeDates.length > 0 && !this.isValidDateRange()) {
@@ -432,6 +487,11 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit, OnDestroy 
     return maxDate;
   }
 
+  /**
+   * Establece los valores iniciales del componente basados en los inputs.
+   * Inicializa destino, fechas y tipo de viaje si están disponibles.
+   * @private
+   */
   private setInitialValues(): void {
     if (this.initialDestination) {
       this.selectedDestination = this.initialDestination.trim();

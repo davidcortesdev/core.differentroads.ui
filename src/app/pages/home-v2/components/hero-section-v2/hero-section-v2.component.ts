@@ -8,8 +8,8 @@ import {
   ElementRef,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { of } from 'rxjs';
-import { catchError, switchMap, map } from 'rxjs/operators';
+import { of, Subject } from 'rxjs';
+import { catchError, switchMap, map, takeUntil } from 'rxjs/operators';
 import {
   HomeSectionContentService,
   IHomeSectionContentResponse,
@@ -77,6 +77,7 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit, OnDestroy 
   tripTypes: ITripTypeResponse[] = [];
 
   private abortController = new AbortController();
+  private destroy$ = new Subject<void>();
 
   constructor(
     private router: Router,
@@ -112,7 +113,10 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit, OnDestroy 
     
     this.tourService
       .autocomplete({ searchText: normalized, maxResults: 8 })
-      .pipe(catchError(() => of([])))
+      .pipe(
+        catchError(() => of([])),
+        takeUntil(this.destroy$)
+      )
       .subscribe((results: UnifiedSearchResult[]) => {
         this.sugerencias = Array.isArray(results) ? results : [];
       });
@@ -126,6 +130,8 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit, OnDestroy 
 
   ngOnDestroy(): void {
     this.abortController.abort();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   /**
@@ -202,7 +208,8 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit, OnDestroy 
                 });
               })
             );
-        })
+        }),
+        takeUntil(this.destroy$)
       )
       .subscribe({
         next: (result) => {
@@ -260,28 +267,36 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit, OnDestroy 
   }
 
   private loadDestinations(): void {
-    this.countriesService.getCountries(this.abortController.signal).subscribe({
-      next: (countries) => {
-        this.destinations = countries;
-      },
-      error: (error) => {
-      },
-    });
+    this.countriesService
+      .getCountries(this.abortController.signal)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (countries) => {
+          this.destinations = countries;
+        },
+        error: (error) => {
+          console.error('HeroSectionV2 - Error loading destinations:', error);
+        },
+      });
   }
 
   private loadTripTypes(): void {
-    this.tripTypeService.getActiveTripTypes(this.abortController.signal).subscribe({
-      next: (tripTypes) => {
-        this.tripTypes = tripTypes;
-        // Si viene initialTripType (code), mapea a id
-        if (this.initialTripType && this.selectedTripTypeId == null) {
-          const match = this.tripTypes.find(t => t.code === this.initialTripType);
-          this.selectedTripTypeId = match ? match.id : null;
-        }
-      },
-      error: (error) => {
-      },
-    });
+    this.tripTypeService
+      .getActiveTripTypes(this.abortController.signal)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (tripTypes) => {
+          this.tripTypes = tripTypes;
+          // Si viene initialTripType (code), mapea a id
+          if (this.initialTripType && this.selectedTripTypeId == null) {
+            const match = this.tripTypes.find(t => t.code === this.initialTripType);
+            this.selectedTripTypeId = match ? match.id : null;
+          }
+        },
+        error: (error) => {
+          console.error('HeroSectionV2 - Error loading trip types:', error);
+        },
+      });
   }
 
   filterDestinations(event: { query: string }): void {
@@ -368,15 +383,23 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit, OnDestroy 
     const endDate = this.rangeDates?.[1] ? this.rangeDates[1].toISOString() : undefined;
     const tripTypeId = this.selectedTripTypeId !== null && this.selectedTripTypeId !== undefined ? this.selectedTripTypeId : undefined;
 
-    this.tourService.searchWithScore({
-      searchText: destinationText || undefined,
-      startDate,
-      endDate,
-      tripTypeId,
-      fuzzyThreshold: 0.7,
-      tagScoreThreshold: 0.7,
-      flexDays: this.dateFlexibility > 0 ? this.dateFlexibility : undefined,
-    }).subscribe({ next: () => { }, error: () => { } });
+    this.tourService
+      .searchWithScore({
+        searchText: destinationText || undefined,
+        startDate,
+        endDate,
+        tripTypeId,
+        fuzzyThreshold: 0.7,
+        tagScoreThreshold: 0.7,
+        flexDays: this.dateFlexibility > 0 ? this.dateFlexibility : undefined,
+      })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {},
+        error: (error) => {
+          console.error('HeroSectionV2 - Error in searchWithScore:', error);
+        },
+      });
   }
 
   /**
@@ -450,40 +473,44 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit, OnDestroy 
     }
 
     // Obtener datos completos del usuario si está logueado
-    this.analyticsService.getCurrentUserData().subscribe({
-      next: (userData) => {
-        this.analyticsService.search(
-          {
-            search_term: queryParams.destination || '',
-            start_date: queryParams.departureDate || '',
-            end_date: queryParams.returnDate || '',
-            trip_type: tripTypeName
-          },
-          userData
-        );
-      },
-      error: () => {
-        // Fallback si no se pueden obtener datos completos - incluir todos los campos según estructura requerida
-        const fallbackUserData = this.analyticsService.getUserData(
-          this.authService.getUserEmailValue(),
-          '',
-          this.authService.getCognitoIdValue()
-        ) || {
-          email_address: this.authService.getUserEmailValue() || '',
-          phone_number: '',
-          user_id: this.authService.getCognitoIdValue() || ''
-        };
-        this.analyticsService.search(
-          {
-            search_term: queryParams.destination || '',
-            start_date: queryParams.departureDate || '',
-            end_date: queryParams.returnDate || '',
-            trip_type: tripTypeName
-          },
-          fallbackUserData
-        );
-      }
-    });
+    this.analyticsService
+      .getCurrentUserData()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (userData) => {
+          this.analyticsService.search(
+            {
+              search_term: queryParams.destination || '',
+              start_date: queryParams.departureDate || '',
+              end_date: queryParams.returnDate || '',
+              trip_type: tripTypeName
+            },
+            userData
+          );
+        },
+        error: (error) => {
+          console.error('HeroSectionV2 - Error getting user data for analytics:', error);
+          // Fallback si no se pueden obtener datos completos - incluir todos los campos según estructura requerida
+          const fallbackUserData = this.analyticsService.getUserData(
+            this.authService.getUserEmailValue(),
+            '',
+            this.authService.getCognitoIdValue()
+          ) || {
+            email_address: this.authService.getUserEmailValue() || '',
+            phone_number: '',
+            user_id: this.authService.getCognitoIdValue() || ''
+          };
+          this.analyticsService.search(
+            {
+              search_term: queryParams.destination || '',
+              start_date: queryParams.departureDate || '',
+              end_date: queryParams.returnDate || '',
+              trip_type: tripTypeName
+            },
+            fallbackUserData
+          );
+        }
+      });
   }
 
   /**

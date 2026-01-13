@@ -17,6 +17,10 @@ export class HomeV2Component implements OnInit, OnDestroy {
   // Configuraciones ordenadas globalmente por displayOrder
   orderedConfigurations: IHomeSectionConfigurationResponse[] = [];
 
+  // Propiedades computadas para optimizar el template
+  bannerConfiguration: IHomeSectionConfigurationResponse | null = null;
+  orderedConfigurationsExcludingBanner: IHomeSectionConfigurationResponse[] = [];
+
   // Estado de carga
   isLoading = true;
   hasError = false;
@@ -150,21 +154,21 @@ export class HomeV2Component implements OnInit, OnDestroy {
     this.orderedConfigurations = configurations.sort(
       (a, b) => a.displayOrder - b.displayOrder
     );
+    
+    // Actualizar propiedades computadas
+    this.updateComputedProperties();
   }
 
-  // Método para obtener la configuración del banner (siempre la primera)
-  getBannerConfiguration(): IHomeSectionConfigurationResponse | null {
-    return (
-      this.orderedConfigurations.find((config) => config.homeSectionId === 1) ||
-      null
-    );
-  }
-
-  // Método para obtener configuraciones ordenadas excluyendo el banner
-  getOrderedConfigurationsExcludingBanner(): IHomeSectionConfigurationResponse[] {
-    return this.orderedConfigurations.filter(
-      (config) => config.homeSectionId !== 1
-    );
+  /**
+   * Actualiza las propiedades computadas basadas en orderedConfigurations
+   * Esto evita ejecutar find() y filter() en cada ciclo de detección de cambios
+   */
+  private updateComputedProperties(): void {
+    this.bannerConfiguration = 
+      this.orderedConfigurations.find((config) => config.homeSectionId === 1) || null;
+    
+    this.orderedConfigurationsExcludingBanner = 
+      this.orderedConfigurations.filter((config) => config.homeSectionId !== 1);
   }
 
   // Método para determinar qué componente renderizar según el homeSectionId

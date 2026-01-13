@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, switchMap, map } from 'rxjs/operators';
 import {
   HomeSectionContentService,
   IHomeSectionContentResponse,
@@ -128,48 +128,100 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit, OnDestroy 
     this.abortController.abort();
   }
 
+  /**
+   * Carga el contenido del banner (video o imagen).
+   * Intenta cargar videos primero, si no hay videos o hay error, carga imágenes como fallback.
+   */
   private loadBannerContent(): void {
-    // Assuming banner content has a specific configuration ID
-    // You may need to adjust this based on your actual configuration
-    this.homeSectionContentService.getVideos(true, this.abortController.signal).subscribe({
-      next: (videos) => {
-        if (videos && videos.length > 0) {
-          // Get the first video content
-          this.bannerContent = videos[0];
-          this.isVideo = true;
+    this.homeSectionContentService
+      .getVideos(true, this.abortController.signal)
+      .pipe(
+        switchMap((videos) => {
+          // Si hay videos, usar el primero
+          if (videos && videos.length > 0) {
+            return of({
+              content: videos[0],
+              isVideo: true,
+              isImage: false,
+            });
+          }
+          // Si no hay videos, intentar cargar imágenes
+          return this.homeSectionContentService
+            .getImages(true, this.abortController.signal)
+            .pipe(
+              map((images) => {
+                if (images && images.length > 0) {
+                  return {
+                    content: images[0],
+                    isVideo: false,
+                    isImage: true,
+                  };
+                }
+                // No hay imágenes ni videos
+                return {
+                  content: null,
+                  isVideo: false,
+                  isImage: false,
+                };
+              }),
+              catchError(() => {
+                // Error al cargar imágenes, retornar null
+                return of({
+                  content: null,
+                  isVideo: false,
+                  isImage: false,
+                });
+              })
+            );
+        }),
+        catchError(() => {
+          // Error al cargar videos, intentar cargar imágenes como fallback
+          return this.homeSectionContentService
+            .getImages(true, this.abortController.signal)
+            .pipe(
+              map((images) => {
+                if (images && images.length > 0) {
+                  return {
+                    content: images[0],
+                    isVideo: false,
+                    isImage: true,
+                  };
+                }
+                return {
+                  content: null,
+                  isVideo: false,
+                  isImage: false,
+                };
+              }),
+              catchError((imageError) => {
+                console.error('HeroSectionV2 - Error loading banner images:', imageError);
+                return of({
+                  content: null,
+                  isVideo: false,
+                  isImage: false,
+                });
+              })
+            );
+        })
+      )
+      .subscribe({
+        next: (result) => {
+          this.bannerContent = result.content;
+          this.isVideo = result.isVideo;
+          this.isImage = result.isImage;
+          
+          // Si es video, intentar reproducirlo después de un breve delay
+          if (result.isVideo && result.content) {
+            setTimeout(() => this.playVideo(), 100);
+          }
+        },
+        error: (error) => {
+          console.error('HeroSectionV2 - Error loading banner content:', error);
+          this.bannerContent = null;
+          this.isVideo = false;
           this.isImage = false;
-          // Trigger video play after content is set
-          setTimeout(() => this.playVideo(), 100);
-        } else {
-          // Fallback to images if no videos
-          this.homeSectionContentService.getImages(true, this.abortController.signal).subscribe({
-            next: (images) => {
-              if (images && images.length > 0) {
-                this.bannerContent = images[0];
-                this.isVideo = false;
-                this.isImage = true;
-              }
-            },
-            error: (error) => {
-            },
-          });
-        }
-      },
-      error: (error) => {
-        // Fallback to images on error
-        this.homeSectionContentService.getImages(true, this.abortController.signal).subscribe({
-          next: (images) => {
-            if (images && images.length > 0) {
-              this.bannerContent = images[0];
-              this.isVideo = false;
-              this.isImage = true;
-            }
-          },
-          error: (imageError) => {
-          },
-        });
-      },
-    });
+        },
+      });
   }
 
   getBannerUrl(): string | null {

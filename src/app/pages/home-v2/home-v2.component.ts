@@ -66,7 +66,6 @@ export class HomeV2Component implements OnInit, OnDestroy {
       // Obtener atributos del usuario
       this.authService.getUserAttributes().subscribe({
         next: async (attributes) => {
-          const username = this.authService.getCurrentUsername();
           const cognitoId = attributes.sub;
           const email = attributes.email;
           
@@ -90,8 +89,13 @@ export class HomeV2Component implements OnInit, OnDestroy {
                         cognitoId: cognitoId,
                         name: usersByEmail[0].name ?? '',
                         email: usersByEmail[0].email ?? ''
-                      }).subscribe(() => {
-                        this.cleanUrlAndNavigate();
+                      }).subscribe({
+                        next: () => {
+                          this.cleanUrlAndNavigate();
+                        },
+                        error: (error) => {
+                          console.error('Error updating user with Cognito ID:', error);
+                        }
                       });
                     } else {
                       // Crear usuario
@@ -101,20 +105,33 @@ export class HomeV2Component implements OnInit, OnDestroy {
                         email: email,
                         hasWebAccess: true,
                         hasMiddleAccess: false
-                      }).subscribe(() => {
-                        this.cleanUrlAndNavigate();
+                      }).subscribe({
+                        next: () => {
+                          this.cleanUrlAndNavigate();
+                        },
+                        error: (error) => {
+                          console.error('Error creating new user:', error);
+                        }
                       });
                     }
+                  },
+                  error: (error) => {
+                    console.error('Error searching user by email:', error);
                   }
                 });
               }
+            },
+            error: (error) => {
+              console.error('Error searching user by Cognito ID:', error);
             }
           });
         },
         error: (error) => {
+          console.error('Error getting user attributes:', error);
         }
       });
     } catch (error) {
+      console.error('Error in OAuth callback:', error);
     }
   }
 
@@ -139,23 +156,30 @@ export class HomeV2Component implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (configurations) => {
-          this.distributeConfigurationsBySection(configurations);
+          this.sortAndStoreConfigurations(configurations);
           this.isLoading = false;
           // Los eventos view_item_list se dispararán cuando cada lista aparezca en pantalla
           // mediante Intersection Observer en los componentes hijos
         },
         error: (error) => {
+          console.error('Error loading home sections:', error);
           this.hasError = true;
           this.isLoading = false;
         },
       });
   }
 
-  private distributeConfigurationsBySection(
+  /**
+   * Ordena las configuraciones por displayOrder y actualiza las propiedades computadas.
+   * Crea una copia del array antes de ordenar para evitar mutación in-place.
+   * 
+   * @param configurations - Array de configuraciones a ordenar y almacenar
+   */
+  private sortAndStoreConfigurations(
     configurations: IHomeSectionConfigurationResponse[]
   ): void {
-    // Ordenar configuraciones por displayOrder y almacenar globalmente
-    this.orderedConfigurations = configurations.sort(
+    // Crear copia antes de ordenar para evitar mutación del array original
+    this.orderedConfigurations = [...configurations].sort(
       (a, b) => a.displayOrder - b.displayOrder
     );
     

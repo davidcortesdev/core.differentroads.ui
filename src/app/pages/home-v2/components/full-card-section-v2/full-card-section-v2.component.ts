@@ -7,8 +7,8 @@ import {
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Router } from '@angular/router';
-import { of, forkJoin } from 'rxjs';
-import { switchMap, map, catchError } from 'rxjs/operators';
+import { of, forkJoin, Subject } from 'rxjs';
+import { switchMap, map, catchError, takeUntil } from 'rxjs/operators';
 import { HomeSectionService } from '../../../../core/services/home/home-section.service';
 import { HomeSectionConfigurationService } from '../../../../core/services/home/home-section-configuration.service';
 import {
@@ -37,6 +37,7 @@ export class FullCardSectionV2Component implements OnInit, OnDestroy {
   sectionDescription: string = '';
 
   private abortController = new AbortController();
+  private destroy$ = new Subject<void>();
 
   constructor(
     private sanitizer: DomSanitizer,
@@ -51,8 +52,14 @@ export class FullCardSectionV2Component implements OnInit, OnDestroy {
     this.loadFullScreenCards();
   }
 
+  /**
+   * Limpia los recursos del componente al destruirlo.
+   * Cancela las peticiones HTTP pendientes y completa las suscripciones.
+   */
   ngOnDestroy(): void {
     this.abortController.abort();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   protected sanitizeHtml(html: string): SafeHtml {
@@ -110,7 +117,8 @@ export class FullCardSectionV2Component implements OnInit, OnDestroy {
         catchError((error) => {
           console.error('FullCardSectionV2 - Error loading FULLSCREEN_CARDS section:', error);
           return of([]);
-        })
+        }),
+        takeUntil(this.destroy$)
       )
       .subscribe({
         next: (configurations) => {
@@ -166,7 +174,8 @@ export class FullCardSectionV2Component implements OnInit, OnDestroy {
         catchError((error) => {
           console.error('FullCardSectionV2 - Error in forkJoin loading cards:', error);
           return of([]);
-        })
+        }),
+        takeUntil(this.destroy$)
       )
       .subscribe({
         next: (allCards) => {

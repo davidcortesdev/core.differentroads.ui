@@ -57,6 +57,46 @@
             </div>
           </ng-container>
         </div>
+
+        <!-- NUEVO: Botón para emitir vuelo del consolidador (solo para ATC cuando está PAID) -->
+        <div class="flight-emission-section" *ngIf="shouldShowEmitButton">
+          <div class="emission-button-container">
+            <p-button
+              label="Emitir vuelo"
+              icon="pi pi-send"
+              (onClick)="checkAndBookAmadeusFlight()"
+              [disabled]="isEmitButtonDisabled"
+              [loading]="flightBookingLoading"
+              styleClass="emit-flight-button"
+            >
+            </p-button>
+            <span class="last-ticketing-date" *ngIf="lastTicketingDate">
+              Fecha límite: {{ formatLastTicketingDate() }}
+            </span>
+          </div>
+        </div>
+
+        <!-- NUEVO: Estado de carga durante la emisión -->
+        <div class="flight-booking-loading" *ngIf="flightBookingLoading">
+          <p-progressSpinner [style]="{ width: '30px', height: '30px' }"></p-progressSpinner>
+          <p>Procesando emisión de vuelo...</p>
+        </div>
+
+        <!-- NUEVO: Respuesta exitosa de la reserva -->
+        <div class="flight-booking-success" *ngIf="flightBookingResponse && !flightBookingError">
+          <div class="success-message">
+            <i class="pi pi-check-circle" style="color: var(--green-500); margin-right: 0.5rem"></i>
+            <span>Vuelo emitido correctamente</span>
+          </div>
+        </div>
+
+        <!-- NUEVO: Error en la reserva -->
+        <div class="flight-booking-error" *ngIf="flightBookingError && !flightBookingLoading">
+          <div class="error-message">
+            <i class="pi pi-exclamation-triangle" style="color: var(--red-500); margin-right: 0.5rem"></i>
+            <span>Error al emitir el vuelo. Por favor, contacta con soporte.</span>
+          </div>
+        </div>
       </ng-container>
       <!-- Plantilla para cuando no hay identificadores de vuelo -->
       <ng-template #noIdentifiers>

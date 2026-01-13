@@ -1113,7 +1113,32 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     const fieldDetails = this.getReservationFieldDetails(field.reservationFieldId);
     const isAmadeusMandatory = fieldDetails ? this.isFieldAmadeusMandatory(fieldDetails, isLeadTraveler) : false;
 
-    return isStandardMandatory || isAmadeusMandatory;
+    // Si hay vuelo del consolidador seleccionado:
+    // - Los campos requeridos por Amadeus son obligatorios
+    // - Los campos obligatorios por BD que NO son requeridos por Amadeus NO son obligatorios (para evitar conflictos)
+    // - Los campos obligatorios por BD que SÍ son requeridos por Amadeus son obligatorios
+    if (this.hasFlightSelected && this.amadeusBookingRequirements) {
+      // Si Amadeus lo requiere, es obligatorio
+      if (isAmadeusMandatory) {
+        return true;
+      }
+      // Si Amadeus NO lo requiere pero está marcado como obligatorio en BD, 
+      // verificar si es un campo "básico" que siempre debe ser obligatorio (nombre, apellidos, etc.)
+      if (isStandardMandatory && fieldDetails) {
+        const basicFields = ['name', 'surname', 'email', 'phone'];
+        // Si es un campo básico, mantenerlo como obligatorio
+        if (basicFields.includes(fieldDetails.code)) {
+          return true;
+        }
+        // Si no es un campo básico y Amadeus no lo requiere, no es obligatorio
+        return false;
+      }
+      // Si no es obligatorio por BD ni por Amadeus, no es obligatorio
+      return false;
+    } else {
+      // Sin vuelo del consolidador: usar lógica estándar (BD o Amadeus)
+      return isStandardMandatory || isAmadeusMandatory;
+    }
   }
 
   /**
@@ -1168,12 +1193,13 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     // Requisitos específicos por viajero
+    // NOTA: Amadeus usa travelerNumber (1, 2, 3...) no el ID real del viajero
     if (this.amadeusBookingRequirements.travelerRequirements && 
         this.amadeusBookingRequirements.travelerRequirements.length > 0 &&
         this.traveler) {
       
       const travelerRequirements = this.amadeusBookingRequirements.travelerRequirements.find(
-        req => String(req.travelerId) === String(this.traveler!.id)
+        req => String(req.travelerId) === String(this.traveler!.travelerNumber)
       );
 
       if (travelerRequirements) {
@@ -1303,7 +1329,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       }
       
       // Verificar si ya existe en departureReservationFields (por código)
-      const existingDepartureField = this.departureReservationFields.find(
+      const existingDepartureFieldIndex = this.departureReservationFields.findIndex(
         f => {
           const fieldDetails = this.getReservationFieldDetails(f.reservationFieldId);
           return fieldDetails?.code === fieldCode;
@@ -1311,7 +1337,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       );
 
       // Si el campo no está en departureReservationFields, agregarlo
-      if (!existingDepartureField) {
+      if (existingDepartureFieldIndex === -1) {
         // Crear departureReservationField usando el campo real de BD
         const departureField: IDepartureReservationFieldResponse = {
           id: temporaryFieldId--,
@@ -1323,6 +1349,13 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
 
         // Agregar a departureReservationFields
         this.departureReservationFields.push(departureField);
+      } else {
+        // Si el campo ya existe, actualizar su mandatoryTypeId a 2 (obligatorio) si es requerido por Amadeus
+        const existingDepartureField = this.departureReservationFields[existingDepartureFieldIndex];
+        if (existingDepartureField.mandatoryTypeId !== 2) {
+          // Actualizar a obligatorio cuando Amadeus lo requiere
+          existingDepartureField.mandatoryTypeId = 2;
+        }
       }
     });
     

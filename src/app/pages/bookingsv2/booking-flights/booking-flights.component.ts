@@ -7,6 +7,8 @@ import {
 } from '@angular/core';
 import { Flight } from '../../../core/models/tours/flight.model';
 import { ReservationFlightService, IFlightPackDTO } from '../../../core/services/flight/reservationflight.service';
+import { FlightSearchService, IAmadeusFlightCreateOrderResponse } from '../../../core/services/flight/flight-search.service';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-booking-flights-v2',
@@ -17,21 +19,46 @@ import { ReservationFlightService, IFlightPackDTO } from '../../../core/services
 export class BookingFlightsV2Component implements OnInit, OnChanges {
   @Input() reservationId!: number; // Recibe el ID de la reserva
   @Input() flight!: Flight; // Mantener para compatibilidad, pero ahora se llena desde el servicio
+  @Input() isATC: boolean = false; // NUEVO: Indicador si viene desde ATC
+  @Input() reservationStatusId: number = 0; // NUEVO: ID del estado de la reserva
 
   isLoading: boolean = false;
   flightPackData: IFlightPackDTO | null = null;
 
-  constructor(private reservationFlightService: ReservationFlightService) {}
+  // NUEVO: Estados de reserva de vuelos del consolidador (similar a new-reservation)
+  hasAmadeusFlight: boolean = false;
+  flightBookingLoading: boolean = false;
+  flightBookingError: boolean = false;
+  flightBookingResponse: IAmadeusFlightCreateOrderResponse | undefined;
+  lastTicketingDate: string | null = null; // NUEVO: Fecha límite para la emisión del vuelo
+
+  constructor(
+    private reservationFlightService: ReservationFlightService,
+    private flightSearchService: FlightSearchService,
+    private messageService: MessageService
+  ) {}
 
   ngOnInit(): void {
     if (this.reservationId) {
       this.loadFlightData();
+      // NUEVO: Si es ATC y está PAID, verificar si hay vuelo del consolidador
+      if (this.isATC && this.reservationStatusId === 7) {
+        this.checkConsolidatorFlight();
+      }
     }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['reservationId'] && changes['reservationId'].currentValue) {
       this.loadFlightData();
+    }
+    // NUEVO: Re-verificar vuelo del consolidador si cambian isATC o reservationStatusId
+    if ((changes['isATC'] || changes['reservationStatusId']) && this.reservationId) {
+      if (this.isATC && this.reservationStatusId === 7) {
+        this.checkConsolidatorFlight();
+      } else {
+        this.hasAmadeusFlight = false;
+      }
     }
   }
 
@@ -408,5 +435,165 @@ export class BookingFlightsV2Component implements OnInit, OnChanges {
 
   private validateFlightData(): void {
     // Método vaciado - los logs han sido removidos
+  }
+
+  /**
+   * NUEVO: Verifica si existe un vuelo del consolidador seleccionado (similar a new-reservation)
+   */
+  private checkConsolidatorFlight(): void {
+    if (!this.reservationId) {
+      return;
+    }
+
+    this.flightSearchService.getSelectionStatus(this.reservationId).subscribe({
+      next: (hasSelection: boolean) => {
+        this.hasAmadeusFlight = hasSelection;
+        // Si hay vuelo del consolidador, intentar obtener la fecha límite
+        if (hasSelection) {
+          this.loadLastTicketingDate();
+        }
+      },
+      error: (error) => {
+        this.hasAmadeusFlight = false;
+      }
+    });
+  }
+
+  /**
+   * NUEVO: Obtiene la fecha límite para la emisión del vuelo
+   * Por ahora, se obtiene desde booking requirements. Si no está disponible, se puede obtener desde otro endpoint.
+   */
+  private loadLastTicketingDate(): void {
+    if (!this.reservationId) {
+      return;
+    }
+
+    // Intentar obtener la fecha límite desde booking requirements
+    // Nota: Si la fecha límite no viene en booking requirements, se puede obtener desde otro endpoint
+    this.flightSearchService.getBookingRequirements(this.reservationId).subscribe({
+      next: (requirements) => {
+        // La fecha límite debería estar en algún campo de requirements o en el flightPackData
+        // Por ahora, se deja como null si no está disponible
+        // TODO: Obtener lastTicketingDate desde el endpoint adecuado cuando esté disponible
+      },
+      error: (error) => {
+        // Si no se puede obtener, dejar como null
+        this.lastTicketingDate = null;
+      }
+    });
+  }
+
+  /**
+   * NUEVO: Verifica y emite el vuelo del consolidador (similar a new-reservation)
+   */
+  public checkAndBookAmadeusFlight(): void {
+    if (!this.reservationId) {
+      return;
+    }
+
+    this.flightSearchService.getSelectionStatus(this.reservationId).subscribe({
+      next: (hasSelection: boolean) => {
+        this.hasAmadeusFlight = hasSelection;
+
+        if (hasSelection) {
+          this.bookAmadeusFlight();
+        } else {
+          this.messageService.add({
+            severity: 'warn',
+            summary: 'Atención',
+            detail: 'No hay vuelo del consolidador seleccionado para emitir.',
+            life: 5000,
+          });
+        }
+      },
+      error: (error) => {
+        this.flightBookingError = true;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Error al verificar el estado del vuelo del consolidador.',
+          life: 5000,
+        });
+      },
+    });
+  }
+
+  /**
+   * NUEVO: Realiza la reserva del vuelo Amadeus (similar a new-reservation)
+   */
+  private bookAmadeusFlight(): void {
+    if (!this.reservationId) {
+      return;
+    }
+
+    this.flightBookingLoading = true;
+    this.flightBookingError = false;
+
+    this.flightSearchService.bookFlight(this.reservationId).subscribe({
+      next: (response: IAmadeusFlightCreateOrderResponse) => {
+        this.flightBookingResponse = response;
+        this.flightBookingLoading = false;
+
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Vuelo reservado',
+          detail: 'El vuelo se ha reservado correctamente en Amadeus.',
+          life: 5000,
+        });
+
+        // Recargar los datos del vuelo para reflejar el cambio
+        this.loadFlightData();
+      },
+      error: (error) => {
+        this.flightBookingError = true;
+        this.flightBookingLoading = false;
+
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error en reserva de vuelo',
+          detail: 'No se pudo completar la reserva del vuelo. Contacta con soporte.',
+          life: 5000,
+        });
+      },
+    });
+  }
+
+  /**
+   * NUEVO: Determina si se debe mostrar el botón de emisión
+   */
+  get shouldShowEmitButton(): boolean {
+    return this.isATC && 
+           this.reservationStatusId === 7 && 
+           this.hasAmadeusFlight && 
+           !this.flightBookingResponse;
+  }
+
+  /**
+   * NUEVO: Determina si el botón de emisión está deshabilitado
+   */
+  get isEmitButtonDisabled(): boolean {
+    return this.flightBookingLoading || !this.hasAmadeusFlight;
+  }
+
+  /**
+   * NUEVO: Formatea la fecha límite para mostrar
+   */
+  formatLastTicketingDate(): string {
+    if (!this.lastTicketingDate) {
+      return '';
+    }
+
+    try {
+      const date = new Date(this.lastTicketingDate);
+      if (isNaN(date.getTime())) {
+        return '';
+      }
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    } catch (error) {
+      return '';
+    }
   }
 }

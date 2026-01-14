@@ -50,6 +50,7 @@ import { IBookingRequirements } from '../../../../../../core/services/flight/fli
 import { PersonalInfo } from '../../../../../../core/models/v2/profile-v2.model';
 import { CheckoutUserDataService } from '../../../../../../core/services/v2/checkout-user-data.service';
 import { PhonePrefixService, IPhonePrefixResponse } from '../../../../../../core/services/masterdata/phone-prefix.service';
+import { CountriesService } from '../../../../../../core/services/locations/countries.service';
 
 @Component({
   selector: 'app-info-traveler-form',
@@ -115,10 +116,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     { label: 'Femenino', value: 'F' }
   ];
 
-  countryOptions = [
-    { name: 'España', code: 'ES', value: 'ES' },
-    { name: 'Colombia', code: 'CO', value: 'CO' },
-  ];
+  countryOptions: Array<{ name: string; code: string }> = [];
 
   // Mensajes de error personalizados
   errorMessages: { [key: string]: { [key: string]: (params?: Record<string, unknown>) => string } } = {
@@ -174,17 +172,45 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     private messageService: MessageService,
     private fb: FormBuilder,
     private checkoutUserDataService: CheckoutUserDataService,
-    private phonePrefixService: PhonePrefixService
+    private phonePrefixService: PhonePrefixService,
+    private countriesService: CountriesService
   ) {
     this.travelerForm = this.fb.group({});
   }
 
   ngOnInit(): void {
+    // Cargar países
+    this.loadCountries();
+    
     if (this.departureId && this.reservationId && this.travelerId) {
       this.loadAllData();
     } else {
       this.error = 'No se proporcionaron todos los IDs necesarios';
     }
+  }
+
+  /**
+   * Carga la lista de países
+   */
+  private loadCountries(): void {
+    this.countriesService.getCountries().pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (countries) => {
+        // Convertir el formato de Country a el formato esperado por el select
+        this.countryOptions = countries.map(country => ({
+          name: country.name,
+          code: country.code
+        }));
+      },
+      error: (error) => {
+        // En caso de error, usar lista mínima
+        this.countryOptions = [
+          { name: 'España', code: 'ES' },
+          { name: 'Colombia', code: 'CO' },
+        ];
+      }
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -197,6 +223,20 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
         this.loading = false;
         this.error = null;
         this.loadAllData();
+      }
+    }
+
+    // Reaccionar a cambios en los requisitos de Amadeus
+    if (changes['amadeusBookingRequirements'] || changes['hasFlightSelected']) {
+      
+      // Agregar/actualizar campos dinámicos de Amadeus
+      if (this.traveler && this.departureId && this.reservationFields.length > 0) {
+        this.addAmadeusVirtualFields();
+      }
+      // Si el formulario ya está inicializado, actualizar las validaciones y controles
+      if (this.travelerForm && this.traveler && this.departureReservationFields.length > 0) {
+        this.updateValidationsForAmadeusRequirements();
+        this.addAmadeusFieldsToForm();
       }
     }
   }
@@ -266,6 +306,9 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
 
               // Ordenar los campos por displayOrder
               this.sortDepartureFieldsByDisplayOrder();
+
+              // Agregar campos dinámicos de Amadeus si hay requisitos
+              this.addAmadeusVirtualFields();
 
               // Cargar campos existentes del viajero
               this.loadExistingTravelerFields();
@@ -344,6 +387,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     // Limpiar formulario existente
     this.travelerForm = this.fb.group({});
 
+    
     // Agregar controles para todos los campos posibles
     this.departureReservationFields.forEach((field) => {
       const fieldDetails = this.getReservationFieldDetails(field.reservationFieldId);
@@ -1069,7 +1113,32 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     const fieldDetails = this.getReservationFieldDetails(field.reservationFieldId);
     const isAmadeusMandatory = fieldDetails ? this.isFieldAmadeusMandatory(fieldDetails, isLeadTraveler) : false;
 
-    return isStandardMandatory || isAmadeusMandatory;
+    // Si hay vuelo del consolidador seleccionado:
+    // - Los campos requeridos por Amadeus son obligatorios
+    // - Los campos obligatorios por BD que NO son requeridos por Amadeus NO son obligatorios (para evitar conflictos)
+    // - Los campos obligatorios por BD que SÍ son requeridos por Amadeus son obligatorios
+    if (this.hasFlightSelected && this.amadeusBookingRequirements) {
+      // Si Amadeus lo requiere, es obligatorio
+      if (isAmadeusMandatory) {
+        return true;
+      }
+      // Si Amadeus NO lo requiere pero está marcado como obligatorio en BD, 
+      // verificar si es un campo "básico" que siempre debe ser obligatorio (nombre, apellidos, etc.)
+      if (isStandardMandatory && fieldDetails) {
+        const basicFields = ['name', 'surname', 'email', 'phone'];
+        // Si es un campo básico, mantenerlo como obligatorio
+        if (basicFields.includes(fieldDetails.code)) {
+          return true;
+        }
+        // Si no es un campo básico y Amadeus no lo requiere, no es obligatorio
+        return false;
+      }
+      // Si no es obligatorio por BD ni por Amadeus, no es obligatorio
+      return false;
+    } else {
+      // Sin vuelo del consolidador: usar lógica estándar (BD o Amadeus)
+      return isStandardMandatory || isAmadeusMandatory;
+    }
   }
 
   /**
@@ -1124,12 +1193,13 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     // Requisitos específicos por viajero
+    // NOTA: Amadeus usa travelerNumber (1, 2, 3...) no el ID real del viajero
     if (this.amadeusBookingRequirements.travelerRequirements && 
         this.amadeusBookingRequirements.travelerRequirements.length > 0 &&
         this.traveler) {
       
       const travelerRequirements = this.amadeusBookingRequirements.travelerRequirements.find(
-        req => String(req.travelerId) === String(this.traveler!.id)
+        req => String(req.travelerId) === String(this.traveler!.travelerNumber)
       );
 
       if (travelerRequirements) {
@@ -1150,10 +1220,6 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
           return true;
         }
 
-        if (travelerRequirements.redressRequiredIfAny && fieldCode === 'redress_number') {
-          return true;
-        }
-
         if (travelerRequirements.airFranceDiscountRequired && 
             fieldCode === 'air_france_discount') {
           return true;
@@ -1171,6 +1237,174 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     return false;
+  }
+
+  /**
+   * Actualiza las validaciones de todos los campos cuando cambian los requisitos de Amadeus
+   */
+  private updateValidationsForAmadeusRequirements(): void {
+    if (!this.traveler || !this.departureReservationFields.length) {
+      return;
+    }
+
+    const isLeadTraveler = this.traveler.isLeadTraveler;
+
+    // Iterar sobre todos los campos y actualizar sus validaciones
+    this.departureReservationFields.forEach((field) => {
+      const fieldDetails = this.getReservationFieldDetails(field.reservationFieldId);
+      if (!fieldDetails) {
+        return;
+      }
+
+      const controlName = `${fieldDetails.code}_${this.traveler!.id}`;
+      const control = this.travelerForm.get(controlName);
+
+      if (control) {
+        // Recalcular las validaciones con los nuevos requisitos de Amadeus
+        const validators = this.getValidatorsForField(
+          fieldDetails,
+          field,
+          isLeadTraveler
+        );
+
+        // Actualizar los validators del control
+        control.setValidators(validators);
+        control.updateValueAndValidity({ emitEvent: false });
+      }
+    });
+  }
+
+  /**
+   * Agrega campos dinámicos de Amadeus a departureReservationFields basándose en los requisitos de reserva
+   * Solo agrega campos que existan en BD (reservationFields)
+   */
+  private addAmadeusVirtualFields(): void {
+    
+    if (!this.amadeusBookingRequirements || !this.hasFlightSelected || !this.traveler || !this.departureId) {
+      return;
+    }
+
+    // IDs negativos temporales para departureReservationFields dinámicos (empezando desde -1000 para evitar conflictos)
+    let temporaryFieldId = -1000;
+    const isLeadTraveler = this.traveler.isLeadTraveler;
+
+    // Array para almacenar los códigos de campos que necesitamos
+    const requiredFieldCodes = new Set<string>();
+
+    // Requisitos por viajero
+    // NOTA: Amadeus usa travelerNumber (1, 2, 3...) no el ID real del viajero
+    if (this.amadeusBookingRequirements.travelerRequirements) {
+      const travelerReq = this.amadeusBookingRequirements.travelerRequirements.find(
+        req => String(req.travelerId) === String(this.traveler!.travelerNumber)
+      );
+
+      if (travelerReq) {
+        if (travelerReq.genderRequired) requiredFieldCodes.add('sex');
+        if (travelerReq.documentRequired) requiredFieldCodes.add('national_id');
+        if (travelerReq.dateOfBirthRequired) requiredFieldCodes.add('birthdate');
+        if (travelerReq.documentIssuanceCityRequired) requiredFieldCodes.add('document_issuance_city');
+        if (travelerReq.residenceRequired) requiredFieldCodes.add('country');
+      }
+    }
+
+    // Requisitos generales (solo para lead traveler)
+    if (isLeadTraveler) {
+      if (this.amadeusBookingRequirements.emailAddressRequired) requiredFieldCodes.add('email');
+      if (this.amadeusBookingRequirements.mobilePhoneNumberRequired || this.amadeusBookingRequirements.phoneNumberRequired) {
+        requiredFieldCodes.add('phone');
+      }
+    }
+
+    // Guardar referencia a traveler para TypeScript (ya verificamos que no es null arriba)
+    const travelerForFields = this.traveler;
+    
+    // Para cada campo requerido por Amadeus, verificar si existe en BD y agregarlo dinámicamente
+    requiredFieldCodes.forEach(fieldCode => {
+      // Verificar si el campo ya existe en reservationFields (por código) - debe existir en BD
+      const existingField = this.reservationFields.find(f => f.code === fieldCode);
+      
+      // Si el campo no existe en BD, no lo agregamos (no se puede guardar)
+      if (!existingField) {
+        return; // Saltar este campo - no existe en BD
+      }
+      
+      // Verificar si ya existe en departureReservationFields (por código)
+      const existingDepartureFieldIndex = this.departureReservationFields.findIndex(
+        f => {
+          const fieldDetails = this.getReservationFieldDetails(f.reservationFieldId);
+          return fieldDetails?.code === fieldCode;
+        }
+      );
+
+      // Si el campo no está en departureReservationFields, agregarlo
+      if (existingDepartureFieldIndex === -1) {
+        // Crear departureReservationField usando el campo real de BD
+        const departureField: IDepartureReservationFieldResponse = {
+          id: temporaryFieldId--,
+          departureId: this.departureId!,
+          reservationFieldId: existingField.id,
+          mandatoryTypeId: 2, // Obligatorio
+          ageGroupId: travelerForFields.ageGroupId
+        };
+
+        // Agregar a departureReservationFields
+        this.departureReservationFields.push(departureField);
+      } else {
+        // Si el campo ya existe, actualizar su mandatoryTypeId a 2 (obligatorio) si es requerido por Amadeus
+        const existingDepartureField = this.departureReservationFields[existingDepartureFieldIndex];
+        if (existingDepartureField.mandatoryTypeId !== 2) {
+          // Actualizar a obligatorio cuando Amadeus lo requiere
+          existingDepartureField.mandatoryTypeId = 2;
+        }
+      }
+    });
+    
+  }
+
+  /**
+   * Agrega controles al formulario para campos dinámicos de Amadeus
+   */
+  private addAmadeusFieldsToForm(): void {
+    if (!this.traveler || !this.travelerForm) {
+      return;
+    }
+
+    // Guardar referencia a traveler para TypeScript
+    const travelerForForm = this.traveler;
+
+    // Iterar sobre los campos de Amadeus y agregar controles si no existen
+    this.departureReservationFields.forEach(field => {
+      const fieldDetails = this.getReservationFieldDetails(field.reservationFieldId);
+      
+      if (fieldDetails) {
+        const controlName = `${fieldDetails.code}_${travelerForForm.id}`;
+        
+        if (!this.travelerForm.get(controlName)) {
+          // Obtener validadores para el campo
+          const validators = this.getValidatorsForField(fieldDetails, field, travelerForForm.isLeadTraveler);
+          
+          // Obtener valor inicial (de datos existentes o del perfil del usuario)
+          let initialValue: any = null;
+          
+          // Intentar obtener valor existente
+          const existingField = this.existingTravelerFields.find(
+            ef => ef.reservationTravelerId === travelerForForm.id &&
+                  this.getReservationFieldDetails(ef.reservationFieldId)?.code === fieldDetails.code
+          );
+          
+          if (existingField) {
+            initialValue = existingField.value;
+          } else if (travelerForForm.isLeadTraveler && this.currentPersonalInfo) {
+            // Prellenar desde el perfil del usuario
+            initialValue = this.getUserDataForField(fieldDetails);
+          }
+
+          // Crear control
+          const control = this.fb.control(initialValue, validators);
+          this.travelerForm.addControl(controlName, control);
+        }
+      }
+    });
   }
 
   /**
@@ -1521,6 +1755,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
         const { fieldCode } = this.parseFieldName(controlName);
 
         if (fieldCode) {
+          // Buscar campo por código (puede ser virtual o real)
           const field = this.reservationFields.find((f) => f.code === fieldCode);
           if (field) {
             const fieldDetails = this.getReservationFieldDetails(field.id);
@@ -1542,11 +1777,10 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
               }
             }
 
-            // Obtener valor guardado en BD
+            // Obtener valor guardado en BD (buscar por ID del campo - ya filtramos virtuales arriba)
             const existingField = this.existingTravelerFields.find(
-              (ef) =>
-                ef.reservationTravelerId === this.traveler!.id &&
-                ef.reservationFieldId === field.id
+              (ef) => ef.reservationTravelerId === this.traveler!.id &&
+                       ef.reservationFieldId === field.id
             );
             const existingValue = existingField ? existingField.value : '';
 
@@ -1565,7 +1799,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
               const fieldData: ReservationTravelerFieldCreate = {
                 id: 0,
                 reservationTravelerId: this.traveler!.id,
-                reservationFieldId: field.id,
+                reservationFieldId: field.id, // ID del campo real (ya filtramos los virtuales)
                 value: currentValue,
               };
 
@@ -1795,8 +2029,8 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
         if (fieldCode) {
           const field = this.reservationFields.find((f) => f.code === fieldCode);
           
-          if (field) {
-            const fieldDetails = this.getReservationFieldDetails(field.id);
+        if (field) {
+          const fieldDetails = this.getReservationFieldDetails(field.id);
             
             // Obtener valor actual
             let currentValue = control.value?.toString() || '';
@@ -1851,18 +2085,21 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
    * 2. ✅ No debe haber cambios pendientes (todo debe estar guardado en BD)
    */
   isReadyToContinue(): boolean {
+    console.log('=== DEBUG isReadyToContinue: INICIO ===');
     if (!this.traveler) {
-
+      console.log('=== DEBUG isReadyToContinue: No hay traveler, retornando false ===');
       return false;
     }
 
     // 1. Verificar que no haya cambios pendientes (todo está guardado)
     if (this.hasPendingChanges()) {
-
+      console.log('=== DEBUG isReadyToContinue: Hay cambios pendientes, retornando false ===');
       return false;
     }
 
     // 2. Verificar que todos los campos OBLIGATORIOS sean válidos
+    console.log('=== DEBUG isReadyToContinue: Verificando campos obligatorios ===');
+    console.log('departureReservationFields.length:', this.departureReservationFields.length);
     const mandatoryFieldsInvalid: string[] = [];
     const mandatoryFieldsMissing: string[] = [];
 
@@ -1901,11 +2138,11 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
 
     // Log de campos obligatorios con problemas
     if (mandatoryFieldsInvalid.length > 0) {
-
+      console.log('=== DEBUG isReadyToContinue: Campos obligatorios INVÁLIDOS ===', mandatoryFieldsInvalid);
     }
     
     if (mandatoryFieldsMissing.length > 0) {
-
+      console.log('=== DEBUG isReadyToContinue: Campos obligatorios FALTANTES ===', mandatoryFieldsMissing);
     }
 
     // 3. Si hay algún campo obligatorio inválido o faltante, NO está listo

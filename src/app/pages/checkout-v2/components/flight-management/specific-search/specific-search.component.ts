@@ -429,7 +429,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
             // Agregar ubicaciones configuradas al mapa
             const locationMap = new Map(configuredLocationsDetails.locations.map((l: Location) => [l.id, l]));
             const airportMap = new Map(configuredLocationsDetails.airports.map((a: LocationAirport) => [a.id, a]));
-            
+
             // Agregar ubicaciones configuradas (search locations) - usar allConfiguredLocations
             allConfiguredLocations.forEach(item => {
               if (item.locationId && locationMap.has(item.locationId)) {
@@ -757,7 +757,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         if (this.isAirportNotAllowedError(errorMessage)) {
           this.errorMessage = this.formatAirportNotAllowedMessage(errorMessage);
         } else {
-          this.errorMessage = 'Ocurrió un error al buscar vuelos. Por favor, inténtalo de nuevo.';
+        this.errorMessage = 'Ocurrió un error al buscar vuelos. Por favor, inténtalo de nuevo.';
           if (errorMessage) {
             this.errorMessage += ` ${errorMessage}`;
           }

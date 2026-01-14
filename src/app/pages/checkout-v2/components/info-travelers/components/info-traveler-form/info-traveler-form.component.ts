@@ -1286,15 +1286,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
    * Solo agrega campos que existan en BD (reservationFields)
    */
   private addAmadeusVirtualFields(): void {
-    console.log('[DEBUG addAmadeusVirtualFields] INICIO');
-    console.log('[DEBUG addAmadeusVirtualFields] amadeusBookingRequirements:', !!this.amadeusBookingRequirements);
-    console.log('[DEBUG addAmadeusVirtualFields] hasFlightSelected:', this.hasFlightSelected);
-    console.log('[DEBUG addAmadeusVirtualFields] traveler:', !!this.traveler);
-    console.log('[DEBUG addAmadeusVirtualFields] departureId:', this.departureId);
-    console.log('[DEBUG addAmadeusVirtualFields] reservationFields.length:', this.reservationFields.length);
-    
     if (!this.amadeusBookingRequirements || !this.hasFlightSelected || !this.traveler || !this.departureId) {
-      console.log('[DEBUG addAmadeusVirtualFields] Condiciones no cumplidas, saliendo');
       return;
     }
 
@@ -1351,12 +1343,8 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       
       // Si el campo no existe en BD, no lo agregamos (no se puede guardar)
       if (!existingField) {
-        console.warn(`[DEBUG addAmadeusVirtualFields] Campo ${fieldCode} NO encontrado en reservationFields. Total de campos: ${this.reservationFields.length}`);
-        console.log(`[DEBUG addAmadeusVirtualFields] Campos disponibles:`, this.reservationFields.map(f => ({ id: f.id, code: f.code })));
         return; // Saltar este campo - no existe en BD
       }
-      
-      console.log(`[DEBUG addAmadeusVirtualFields] Campo ${fieldCode} encontrado en reservationFields con ID: ${existingField.id}`);
       
       // Verificar si ya existe en departureReservationFields (por código)
       const existingDepartureFieldIndex = this.departureReservationFields.findIndex(
@@ -1379,7 +1367,6 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
 
         // Agregar a departureReservationFields
         this.departureReservationFields.push(departureField);
-        console.log(`[DEBUG addAmadeusVirtualFields] Campo ${fieldCode} agregado a departureReservationFields con ReservationFieldId: ${existingField.id}`);
       } else {
         // Si el campo ya existe, actualizar su mandatoryTypeId a 2 (obligatorio) si es requerido por Amadeus
         const existingDepartureField = this.departureReservationFields[existingDepartureFieldIndex];
@@ -1919,24 +1906,10 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
               };
 
               formData.push(fieldData);
-              
-              // Log para debugging
-              if (isCriticalAmadeusField) {
-                console.log(`[DEBUG collectFormData] Guardando campo crítico Amadeus: ${fieldCode} = "${currentValue}" (existingValue: "${existingValue}")`);
-                console.log(`[DEBUG collectFormData] ReservationFieldId: ${field.id}, ReservationTravelerId: ${this.traveler!.id}`);
-              }
             } else if (!isValid && isUserModified && hasValue && isDifferent) {
-              // Campo inválido - no guardar pero loguear
-              if (isCriticalAmadeusField) {
-                console.warn(`[DEBUG collectFormData] Campo crítico Amadeus ${fieldCode} tiene valor pero es INVÁLIDO. Errores:`, control.errors);
-              }
+              // Campo inválido - no guardar
             } else if (this.isInitializing) {
               // Ignorar durante inicialización
-            } else {
-              // No se guarda - loguear solo si es crítico
-              if (isCriticalAmadeusField && hasValue) {
-                console.log(`[DEBUG collectFormData] Campo crítico Amadeus ${fieldCode} NO se guardará. hasValue: ${hasValue}, isValid: ${isValid}, isUserModified: ${isUserModified}, isDifferent: ${isDifferent}, shouldForceSave: ${shouldForceSave}`);
-              }
             }
           }
         }
@@ -2050,14 +2023,11 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
           };
 
           try {
-            console.log(`[DEBUG saveData] Actualizando campo ${fieldCode} (ReservationFieldId: ${fieldData.reservationFieldId}, ReservationTravelerId: ${fieldData.reservationTravelerId}) con valor: "${fieldData.value}"`);
             const result = await this.reservationTravelerFieldService
               .update(existingField.id, updateData)
               .toPromise();
-            console.log(`[DEBUG saveData] ✓ Campo ${fieldCode} actualizado exitosamente`);
             return result;
           } catch (error: any) {
-            console.error(`[DEBUG saveData] ✗ Error al actualizar campo ${fieldCode}:`, error);
             // Si falla la actualización, intentar crear (por si el registro fue eliminado)
             if (error?.status === 404 || error?.status === 400) {
               return await this.reservationTravelerFieldService
@@ -2158,7 +2128,6 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
           });
       }
     } catch (error) {
-      console.error('[saveData] Error al guardar campos:', error);
       throw error;
     } finally {
       this.savingData = false;
@@ -2326,7 +2295,6 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
 
     // Si hay cambios, guardar inmediatamente
     if (hasChanges) {
-      console.log('[DEBUG forceSaveCriticalAmadeusFields] Guardando campos críticos de Amadeus...');
       await this.saveData();
       // Esperar a que se complete el guardado y recargar campos existentes
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -2340,30 +2308,6 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
         
         if (updatedFields) {
           this.existingTravelerFields = updatedFields;
-          console.log('[DEBUG forceSaveCriticalAmadeusFields] Campos recargados después del guardado');
-          
-          // Verificar que los campos críticos se guardaron
-          criticalFields.forEach(fieldCode => {
-            const depField = this.departureReservationFields.find(
-              df => {
-                const fieldDetails = this.getReservationFieldDetails(df.reservationFieldId);
-                return fieldDetails?.code === fieldCode;
-              }
-            );
-            
-            if (depField) {
-              const savedField = this.existingTravelerFields.find(
-                ef => ef.reservationTravelerId === this.traveler!.id &&
-                     ef.reservationFieldId === depField.reservationFieldId
-              );
-              
-              if (savedField) {
-                console.log(`[DEBUG forceSaveCriticalAmadeusFields] ✓ Campo ${fieldCode} guardado correctamente: "${savedField.value}"`);
-              } else {
-                console.warn(`[DEBUG forceSaveCriticalAmadeusFields] ✗ Campo ${fieldCode} NO se encontró después del guardado`);
-              }
-            }
-          });
         }
       }
     }
@@ -2382,9 +2326,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
    * 2. No debe haber cambios pendientes (todo debe estar guardado en BD)
    */
   isReadyToContinue(): boolean {
-    console.log('=== DEBUG isReadyToContinue: INICIO ===');
     if (!this.traveler) {
-      console.log('=== DEBUG isReadyToContinue: No hay traveler, retornando false ===');
       return false;
     }
 
@@ -2433,7 +2375,6 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
             
             if (currentValue !== existingValue) {
               hasCriticalChanges = true;
-              console.log(`[DEBUG isReadyToContinue] Campo crítico ${fieldCode} tiene cambios: "${currentValue}" vs "${existingValue}"`);
             }
           }
         }
@@ -2441,7 +2382,6 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       
       // Si hay cambios en campos críticos, forzar guardado inmediato
       if (hasCriticalChanges) {
-        console.log('[DEBUG isReadyToContinue] Forzando guardado de campos críticos de Amadeus...');
         // Marcar todos los campos críticos como dirty para que se guarden
         criticalFields.forEach(fieldCode => {
           const controlName = `${fieldCode}_${this.traveler!.id}`;
@@ -2460,13 +2400,10 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
 
     // 1. Verificar que no haya cambios pendientes (todo está guardado)
     if (this.hasPendingChanges()) {
-      console.log('=== DEBUG isReadyToContinue: Hay cambios pendientes, retornando false ===');
       return false;
     }
 
     // 2. Verificar que todos los campos OBLIGATORIOS sean válidos
-    console.log('=== DEBUG isReadyToContinue: Verificando campos obligatorios ===');
-    console.log('departureReservationFields.length:', this.departureReservationFields.length);
     const mandatoryFieldsInvalid: string[] = [];
     const mandatoryFieldsMissing: string[] = [];
 
@@ -2503,14 +2440,6 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       }
     });
 
-    // Log de campos obligatorios con problemas
-    if (mandatoryFieldsInvalid.length > 0) {
-      console.log('=== DEBUG isReadyToContinue: Campos obligatorios INVÁLIDOS ===', mandatoryFieldsInvalid);
-    }
-    
-    if (mandatoryFieldsMissing.length > 0) {
-      console.log('=== DEBUG isReadyToContinue: Campos obligatorios FALTANTES ===', mandatoryFieldsMissing);
-    }
 
     // 3. Si hay algún campo obligatorio inválido o faltante, NO está listo
     if (mandatoryFieldsInvalid.length > 0 || mandatoryFieldsMissing.length > 0) {

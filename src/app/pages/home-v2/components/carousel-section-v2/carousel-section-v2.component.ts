@@ -115,10 +115,17 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
     private readonly cdr: ChangeDetectorRef
   ) {}
 
+  /**
+   * Inicializa el componente y carga la sección del carousel.
+   */
   ngOnInit(): void {
     this.loadCarouselSection();
   }
 
+  /**
+   * Limpia los recursos del componente al destruirlo.
+   * Cancela las peticiones HTTP pendientes y completa las suscripciones.
+   */
   ngOnDestroy(): void {
     this.abortController.abort();
     this.destroy$.next();
@@ -133,6 +140,12 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
     this.navigate(link);
   }
 
+  /**
+   * Carga la sección del carousel.
+   * Si se proporciona un configurationId, lo usa directamente.
+   * Si no, busca configuraciones por tipo de sección y displayOrder.
+   * @private
+   */
   private loadCarouselSection(): void {
     // Si se proporciona un configurationId específico, úsalo
     if (this.configurationId) {
@@ -159,7 +172,10 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
             }
             this.loadSpecificConfiguration(targetConfig.id);
           } else {
-            
+            console.warn(
+              'CarouselSectionV2 - No configurations found for section type:',
+              this.sectionType
+            );
           }
         },
         error: (error) => {
@@ -171,6 +187,12 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Carga una configuración específica por ID.
+   * Establece el título, estado activo, tema y carga contenido y cards si está activa.
+   * @param configId - ID de la configuración a cargar
+   * @private
+   */
   private loadSpecificConfiguration(configId: number): void {
     // Cargar la configuración específica
     this.homeSectionConfigurationService
@@ -209,6 +231,12 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Carga el tema de la sección y actualiza themeCode.
+   * Si el tema es DARK o LIGHT, lo aplica; de lo contrario usa LIGHT por defecto.
+   * @param themeId - ID del tema a cargar
+   * @private
+   */
   private loadTheme(themeId: number): void {
     this.homeSectionThemeService
       .getById(themeId, this.abortController.signal)
@@ -238,6 +266,12 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Carga el contenido de texto de la sección.
+   * Busca contenido de tipo 'text' y lo asigna a textContent.
+   * @param configId - ID de la configuración
+   * @private
+   */
   private loadSectionContent(configId: number): void {
     this.homeSectionContentService
       .getByConfigurationOrdered(configId, true, this.abortController.signal)
@@ -263,6 +297,11 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Carga las cards de la sección y las transforma al formato del carousel.
+   * @param configId - ID de la configuración
+   * @private
+   */
   private loadSectionCards(configId: number): void {
     this.homeSectionCardService
       .getByConfigurationOrdered(configId, true, this.abortController.signal)
@@ -283,6 +322,12 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Transforma las cards del backend al formato requerido por el carousel.
+   * @param homeCards - Cards del backend
+   * @returns Cards transformadas al formato CarouselCard
+   * @private
+   */
   private transformCardsToCarouselFormat(
     homeCards: IHomeSectionCardResponse[]
   ): CarouselCard[] {
@@ -299,6 +344,11 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
     }));
   }
 
+  /**
+   * Navega a una URL, manejando URLs externas e internas.
+   * @param url - URL a la que navegar
+   * @private
+   */
   private navigate(url: string): void {
     if (!url) return;
 
@@ -307,6 +357,12 @@ export class CarouselSectionV2Component implements OnInit, OnDestroy {
       : this.router.navigate([url]);
   }
 
+  /**
+   * Verifica si una URL es externa (http/https).
+   * @param url - URL a verificar
+   * @returns true si la URL es externa, false en caso contrario
+   * @private
+   */
   private isExternalUrl(url: string): boolean {
     return /^https?:\/\//.test(url);
   }

@@ -162,7 +162,7 @@ export class FlightStopsComponent implements OnInit {
     numScales = validSegments.length > 0 ? validSegments.length - 1 : 0;
     
     return numScales === 0
-      ? 'Directo'
+        ? 'Directo'
       : numScales === 1
       ? '1 escala'
       : numScales + ' escalas';

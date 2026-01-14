@@ -119,6 +119,8 @@ export class BookingFlightsV2Component implements OnInit, OnChanges {
 
   /**
    * Carga los datos de vuelos desde el servicio
+   * PRIORIDAD: Primero verifica si hay un vuelo del consolidador seleccionado,
+   * si no hay, lee desde reservationFlightService (vuelos legacy)
    */
   private loadFlightData(): void {
     if (!this.reservationId) {
@@ -127,6 +129,45 @@ export class BookingFlightsV2Component implements OnInit, OnChanges {
 
     this.isLoading = true;
 
+    // PASO 1: Verificar si hay un vuelo del consolidador seleccionado
+    this.flightSearchService.getSelectionStatus(this.reservationId).subscribe({
+      next: (hasConsolidatorFlight: boolean) => {
+        if (hasConsolidatorFlight) {
+          // Si hay vuelo del consolidador, obtenerlo desde Amadeus
+          this.flightSearchService.getConsolidatorSelected(this.reservationId).subscribe({
+            next: (consolidatorFlightPack: IFlightPackDTO | null) => {
+              if (consolidatorFlightPack) {
+                this.flightPackData = consolidatorFlightPack;
+                this.flight = this.mapFlightPackToFlight(this.flightPackData);
+                this.hasAmadeusFlight = true;
+              } else {
+                // Si no se pudo obtener, intentar con el método legacy
+                this.loadLegacyFlightData();
+              }
+              this.isLoading = false;
+            },
+            error: (error) => {
+              // Si hay error al obtener el vuelo del consolidador, intentar con el método legacy
+              this.loadLegacyFlightData();
+            }
+          });
+        } else {
+          // Si no hay vuelo del consolidador, usar el método legacy
+          this.hasAmadeusFlight = false;
+          this.loadLegacyFlightData();
+        }
+      },
+      error: (error) => {
+        // Si hay error al verificar el estado, intentar con el método legacy
+        this.loadLegacyFlightData();
+      }
+    });
+  }
+
+  /**
+   * Carga los datos de vuelos desde el servicio legacy (reservationFlightService)
+   */
+  private loadLegacyFlightData(): void {
     this.reservationFlightService.getSelectedFlightPack(this.reservationId)
       .subscribe({
         next: (flightPacks: IFlightPackDTO | IFlightPackDTO[]) => {
@@ -142,8 +183,15 @@ export class BookingFlightsV2Component implements OnInit, OnChanges {
           }
           
           if (flightPackData) {
-            this.flightPackData = flightPackData;
-            this.flight = this.mapFlightPackToFlight(this.flightPackData);
+            // Verificar si es "Pack sin vuelos" y no mostrarlo si hay vuelo del consolidador
+            const isSinVuelos = this.isSinVuelosPack(flightPackData);
+            if (isSinVuelos && this.hasAmadeusFlight) {
+              // Si hay vuelo del consolidador, no mostrar "Pack sin vuelos"
+              this.flight = this.createEmptyFlight();
+            } else {
+              this.flightPackData = flightPackData;
+              this.flight = this.mapFlightPackToFlight(this.flightPackData);
+            }
           } else {
             this.flight = this.createEmptyFlight();
           }
@@ -155,6 +203,24 @@ export class BookingFlightsV2Component implements OnInit, OnChanges {
           this.flight = this.createEmptyFlight();
         }
       });
+  }
+
+  /**
+   * Verifica si un flightPack es "Pack sin vuelos"
+   */
+  private isSinVuelosPack(flightPack: IFlightPackDTO): boolean {
+    if (!flightPack) return false;
+    
+    const name = flightPack.name?.toLowerCase() || '';
+    const description = flightPack.description?.toLowerCase() || '';
+    const code = flightPack.code?.toLowerCase() || '';
+    
+    return name.includes('sin vuelos') || 
+           name.includes('without flights') ||
+           description.includes('sin vuelos') ||
+           description.includes('without flights') ||
+           code.includes('sin vuelos') ||
+           code.includes('actpack');
   }
 
   /**

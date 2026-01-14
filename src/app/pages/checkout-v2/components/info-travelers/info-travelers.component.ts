@@ -345,6 +345,17 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
 
     const forms = this.travelerForms.toArray();
 
+    // PRIMERO: Forzar guardado de campos críticos de Amadeus para todos los viajeros
+    if (this.hasFlightSelected && this.amadeusBookingRequirements) {
+      console.log('[DEBUG canContinueToNextStep] Forzando guardado de campos críticos de Amadeus...');
+      const savePromises = forms.map(form => form.forceSaveCriticalAmadeusFields());
+      await Promise.all(savePromises);
+      // Esperar un momento adicional para asegurar que se completen los guardados y se actualicen en BD
+      console.log('[DEBUG canContinueToNextStep] Esperando a que se completen los guardados...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log('[DEBUG canContinueToNextStep] Guardados completados, continuando con validación...');
+    }
+
     // Función auxiliar para verificar el estado de todos los viajeros
     const checkAllTravelers = (attemptNumber: number): boolean => {
       console.log(`=== DEBUG canContinueToNextStep: Intento ${attemptNumber} ===`);

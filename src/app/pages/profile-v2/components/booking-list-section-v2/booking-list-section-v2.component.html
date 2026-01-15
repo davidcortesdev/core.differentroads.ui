@@ -35,20 +35,55 @@
                   (error)="imageLoadError(item)" loading="lazy"/>
               </div>
 
-              <!-- Item information -->
-              <div class="sect">
+              <!-- Main content section -->
+              <div class="main-content">
+                <!-- Title -->
                 <div class="title-section">
                   <h2>{{ item.title }}</h2>
                 </div>
-                <div class="cont">
-                  <!-- Show the appropriate ID field based on component type -->
-                  <div class="info-row">
-                    <span class="label">{{ 
+
+                <!-- Highlighted information: Departure Date, Price, Status -->
+                <div class="highlighted-info">
+                  <!-- Departure Date - DESTACADO -->
+                  <div class="highlight-item departure-date">
+                    <i class="pi pi-calendar"></i>
+                    <div class="highlight-content">
+                      <span class="highlight-label">Fecha de Salida</span>
+                      <strong class="highlight-value">{{ item.departureDate | date : "dd/MM/yyyy" }}</strong>
+                    </div>
+                  </div>
+
+                  <!-- Price - DESTACADO -->
+                  <div class="highlight-item price" *ngIf="item.price">
+                    <i class="pi pi-euro"></i>
+                    <div class="highlight-content">
+                      <span class="highlight-label">Precio</span>
+                      <strong class="highlight-value">
+                        {{ item.price | currency : "EUR" : "symbol" : "1.0-0" }}
+                      </strong>
+                    </div>
+                  </div>
+
+                  <!-- Status - DESTACADO con badge -->
+                  <div class="highlight-item status-badge">
+                    <div class="status-content">
+                      <span class="status-label">Estado</span>
+                      <span class="status-value" [ngClass]="getStatusClass(item.status)">
+                        {{ item.status }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Secondary information -->
+                <div class="secondary-info">
+                  <div class="info-item">
+                    <span class="info-label">{{ 
                       listType === 'active-bookings' ? 'Nº Reserva:' : 
                       listType === 'recent-budgets' ? 'Nº Presupuesto:' : 
                       'Nº Reserva:'
                     }}</span>
-                    <span class="value budget">
+                    <span class="info-value">
                       {{ 
                         listType === 'active-bookings' ? (item.reservationNumber || '') : 
                         listType === 'recent-budgets' ? (item.ID || '') : 
@@ -56,43 +91,22 @@
                       }}
                     </span>
                   </div>
-                  <div class="info-row">
-                    <span class="label">Fecha de creación:</span>
-                    <span class="value">{{ item.creationDate | date : "dd/MM/yyyy" }}</span>
+                  <div class="info-item">
+                    <span class="info-label">Fecha de creación:</span>
+                    <span class="info-value">{{ item.creationDate | date : "dd/MM/yyyy" }}</span>
                   </div>
-                  <div class="info-row status">
-                    <span class="label">Estado:</span>
-                    <span class="value">{{ item.status }}</span>
+                  <div class="info-item" *ngIf="item.passengers">
+                    <span class="info-label">Pasajeros:</span>
+                    <span class="info-value">
+                      <i class="pi pi-users"></i>
+                      {{ item.passengers }}
+                    </span>
                   </div>
                   <!-- Show origin only for travel history -->
-                  <div class="info-row" *ngIf="item.origin && listType === 'travel-history'">
-                    <span class="label">Origen:</span>
-                    <span class="value">{{ item.origin }}</span>
+                  <div class="info-item" *ngIf="item.origin && listType === 'travel-history'">
+                    <span class="info-label">Origen:</span>
+                    <span class="info-value">{{ item.origin }}</span>
                   </div>
-                </div>
-              </div>
-
-              <!-- Departure and passenger info -->
-              <div class="right">
-                <div class="departure-info">
-                  <span>Salida: </span>
-                  <strong>
-                    {{ item.departureDate | date : "dd/MM/yyyy" }}
-                  </strong>
-                </div>
-                <div class="price" *ngIf="item.passengers || item.price">
-                  <div class="info" *ngIf="item.passengers">
-                    <span class="num-users">{{ item.passengers }}</span>
-                    <i class="pi pi-users"></i>
-                  </div>
-                  <!-- Use currencyFormat pipe for budgets if available -->
-                  <strong *ngIf="item.price && listType === 'recent-budgets'">
-                    {{ item.price | currency : "EUR" }}
-                  </strong>
-                  <!-- Use currency pipe for other types -->
-                  <strong *ngIf="item.price && listType !== 'recent-budgets'">
-                    {{ item.price | currency : "EUR" }}
-                  </strong>
                 </div>
               </div>
 

@@ -59,6 +59,7 @@ interface City {
   code: string;
   activityId?: number;
   activityPackId?: number;
+  itineraryId?: number;
 }
 
 interface Travelers {
@@ -323,6 +324,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
               code: city.name.toUpperCase().replace(/\s+/g, '_'),
               activityId: city.activityId,
               activityPackId: city.activityPackId,
+              itineraryId: city.itineraryId,
             };
           });
 
@@ -334,12 +336,14 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
             (city) => !city.name || city.name.trim() === ''
           );
 
-          // Eliminar duplicados basándose en el nombre normalizado (sin espacios extra, case-insensitive)
-          // Mantener la primera ciudad encontrada para cada nombre (para mostrar en el selector)
+          // Eliminar duplicados basándose solo en el nombre normalizado
+          // La gestión de múltiples itinerarios para la misma ciudad es interna y transparente al usuario
+          // El usuario solo ve cada ciudad una vez en el selector
           const uniqueCitiesMap = new Map<string, City>();
           validCities.forEach((city) => {
             const normalizedName = city.name.trim().toLowerCase();
-            // Si ya existe, mantener la que tenga activityId y activityPackId (más completa)
+            
+            // Si ya existe una ciudad con este nombre, mantener la que tenga más información
             if (uniqueCitiesMap.has(normalizedName)) {
               const existingCity = uniqueCitiesMap.get(normalizedName);
               if (existingCity) {
@@ -397,7 +401,10 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
-   * Obtiene todos los activityIds que coinciden con el nombre de la ciudad seleccionada
+   * Obtiene todos los activityIds que coinciden con la ciudad seleccionada
+   * La gestión de itinerarios es interna: si una ciudad pertenece a múltiples itinerarios,
+   * se obtienen todos sus activityIds para todos los itinerarios de forma transparente al usuario
+   * Cada departure luego usará el activityId que corresponda según su itineraryId
    */
   private getActivityIdsForSelectedCity(): number[] {
     if (!this.selectedCity) {
@@ -406,17 +413,64 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
     const normalizedSelectedName = this.selectedCity.name.trim().toLowerCase();
     
-    // Buscar todas las ciudades que coincidan con el nombre (case-insensitive)
+    // Buscar todas las ciudades que coincidan con el nombre (en todos los itinerarios)
     const matchingCities = this.allCitiesFromService.filter(
-      (city) => city.name.trim().toLowerCase() === normalizedSelectedName && city.activityId
+      (city) => 
+        city.name.trim().toLowerCase() === normalizedSelectedName && 
+        city.activityId
     );
 
-    // Extraer todos los activityIds únicos
+    // Extraer todos los activityIds únicos (de todos los itinerarios)
     const activityIds = matchingCities
       .map(city => city.activityId)
       .filter((id, index, self) => self.indexOf(id) === index); // Eliminar duplicados
 
     return activityIds;
+  }
+
+  /**
+   * Obtiene el activityPackId correcto para un departure específico según su itineraryId
+   * Un tour puede tener departures de diferentes itinerarios con la misma ciudad
+   * pero diferentes activityPackId para su vuelo
+   */
+  private getActivityPackIdForDeparture(departureId: number): number | undefined {
+    if (!this.selectedCity) return undefined;
+
+    // 1. Obtener el departure para saber su itineraryId
+    const departure = this.allDepartures.find(d => d.id === departureId);
+    
+    // Si el departure tiene itineraryId, usarlo para buscar el activityPackId correcto
+    if (departure && departure.itineraryId && departure.itineraryId !== 0) {
+      const normalizedCityName = this.selectedCity.name.trim().toLowerCase();
+      const cityForDeparture = this.allCitiesFromService.find(
+        c => c.name.trim().toLowerCase() === normalizedCityName && 
+             c.itineraryId === departure.itineraryId
+      );
+      
+      if (cityForDeparture?.activityPackId) {
+        return cityForDeparture.activityPackId;
+      }
+    }
+
+    // Fallback: buscar en departuresByCity si no tenemos itineraryId aún
+    // (esto puede pasar si se llama antes de que se carguen los departures completos)
+    const normalizedCityName = this.selectedCity.name.trim().toLowerCase();
+    const activityPackIds = this.allCitiesFromService
+      .filter(c => c.name.trim().toLowerCase() === normalizedCityName && c.activityPackId)
+      .map(c => c.activityPackId)
+      .filter((id, index, self) => self.indexOf(id) === index);
+
+    for (const activityPackId of activityPackIds) {
+      const cityDepartures = this.departuresByCity.get(activityPackId);
+      if (cityDepartures) {
+        const foundDeparture = cityDepartures.find(d => d.departureId === departureId);
+        if (foundDeparture) {
+          return activityPackId;
+        }
+      }
+    }
+
+    return undefined;
   }
 
   private loadDeparturesPrices(activityIds: number[] | number, departureId?: number): Observable<ITourDeparturesPriceResponse[]> {
@@ -807,9 +861,20 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
           if (!this.selectedCity && this.cities.length > 0) {
             // Priorizar ciudad del defaultSelection si existe
             if (this.defaultSelection?.activityPackId) {
-              const defaultCity = this.cities.find(
-                (city) => city.activityPackId === this.defaultSelection?.activityPackId
+              // Buscar la ciudad en allCitiesFromService que tenga el activityPackId del defaultSelection
+              const cityFromService = this.allCitiesFromService.find(
+                c => c.activityPackId === this.defaultSelection?.activityPackId
               );
+              
+              // Si se encuentra, buscar la ciudad con ese nombre en el array de ciudades deduplicadas
+              let defaultCity = null;
+              if (cityFromService) {
+                const normalizedName = cityFromService.name.trim().toLowerCase();
+                defaultCity = this.cities.find(
+                  city => city.name.trim().toLowerCase() === normalizedName
+                );
+              }
+              
               if (defaultCity) {
                 this.selectedCity = defaultCity;
                 this.emitCityUpdate();
@@ -866,7 +931,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
             id: departureData.departureId,
             code: departureData.departureCode,
             tkId: '',
-            itineraryId: 0,
+            itineraryId: 0, // Se actualizará cuando se cargue el departure completo
             isVisibleOnWeb: true,
             isBookable: departureData.isBookable ?? false,
             departureDate: departureData.departureDate,
@@ -940,6 +1005,7 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
                 const existingDeparture = allDeparturesMap.get(departure.id);
                 if (existingDeparture) {
                   existingDeparture.tripTypeId = departure.tripTypeId ?? null;
+                  existingDeparture.itineraryId = departure.itineraryId;
                 }
               }
             });
@@ -1321,8 +1387,8 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       return null;
     }
 
-    // Si no hay activityId, no se pueden cargar precios, retornar 0
-    if (!this.selectedCity?.activityId) {
+    // Si no hay ciudad seleccionada, no se pueden cargar precios, retornar 0
+    if (!this.selectedCity) {
       return 0;
     }
 
@@ -1335,6 +1401,8 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       return 0;
     }
 
+    // Los precios se cargan para todos los activityIds de la ciudad (todos los itinerarios)
+    // así que el precio correcto estará disponible independientemente del itinerario del departure
     const priceData = this.departuresPrices.find(
       (price) =>
         price.departureId === departureId &&
@@ -1373,12 +1441,27 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
     let filteredDepartures = this.allDepartures;
     
-    if (this.selectedCity && this.selectedCity.activityPackId) {
-      const cityDepartures = this.departuresByCity.get(this.selectedCity.activityPackId);
-      if (cityDepartures && cityDepartures.length > 0) {
-        const departureIds = new Set(cityDepartures.map((d) => d.departureId));
+    if (this.selectedCity) {
+      // Una ciudad puede tener múltiples activityPackIds (uno por itinerario)
+      // Obtener todos los activityPackIds de la ciudad seleccionada
+      const normalizedCityName = this.selectedCity.name.trim().toLowerCase();
+      const activityPackIds = this.allCitiesFromService
+        .filter(c => c.name.trim().toLowerCase() === normalizedCityName && c.activityPackId)
+        .map(c => c.activityPackId)
+        .filter((id, index, self) => self.indexOf(id) === index); // Eliminar duplicados
+
+      // Obtener departures de todos los activityPackIds de la ciudad
+      const allDepartureIds = new Set<number>();
+      activityPackIds.forEach(activityPackId => {
+        const cityDepartures = this.departuresByCity.get(activityPackId);
+        if (cityDepartures && cityDepartures.length > 0) {
+          cityDepartures.forEach(d => allDepartureIds.add(d.departureId));
+        }
+      });
+
+      if (allDepartureIds.size > 0) {
         filteredDepartures = this.allDepartures.filter((departure) =>
-          departureIds.has(departure.id!)
+          allDepartureIds.has(departure.id!)
         );
       } else {
         filteredDepartures = [];
@@ -1446,15 +1529,25 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       this.loadDeparturesPrices(activityIds, 0).subscribe();
     }
 
-    // Solo cargar flight times para los departures de la ciudad seleccionada
-    const cityDepartures = this.departuresByCity.get(this.selectedCity.activityPackId!);
-    if (cityDepartures) {
-      cityDepartures.forEach(departureData => {
-        if (departureData.departureId) {
-          this.loadFlightTimes(departureData.departureId);
-        }
-      });
-    }
+    // Cargar flight times para todos los departures de la ciudad seleccionada
+    // Una ciudad puede tener múltiples activityPackIds (uno por itinerario)
+    const normalizedCityName = this.selectedCity.name.trim().toLowerCase();
+    const activityPackIds = this.allCitiesFromService
+      .filter(c => c.name.trim().toLowerCase() === normalizedCityName && c.activityPackId)
+      .map(c => c.activityPackId)
+      .filter((id, index, self) => self.indexOf(id) === index); // Eliminar duplicados
+
+    // Para cada activityPackId, cargar los flight times de sus departures
+    activityPackIds.forEach(activityPackId => {
+      const cityDepartures = this.departuresByCity.get(activityPackId);
+      if (cityDepartures) {
+        cityDepartures.forEach(departureData => {
+          if (departureData.departureId) {
+            this.loadFlightTimes(departureData.departureId);
+          }
+        });
+      }
+    });
   }
 
   private emitCityUpdate(): void {
@@ -1464,8 +1557,10 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       return;
     }
 
-    // ✅ AGREGAR emisión
-    this.activityPackIdUpdate.emit(this.selectedCity.activityPackId || null);
+    // Emitir null para activityPackId porque una ciudad puede tener múltiples activityPackIds
+    // (uno por itinerario). Cada departure usará el activityPackId que corresponda a su itinerario.
+    // Si se necesita el activityPackId de un departure específico, obtenerlo del evento departureUpdate.
+    this.activityPackIdUpdate.emit(null);
 
     // Verificar si realmente existe la opción "Sin Vuelos" en las ciudades disponibles
     const hasSinVuelosOption = this.cities.some(
@@ -1835,7 +1930,9 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
   // Cargar horarios de vuelos para un departure específico
   private loadFlightTimes(departureId: number): void {
-    if (!this.selectedCity?.activityPackId) return;
+    // Obtener el activityPackId correcto según el itinerario del departure
+    const activityPackId = this.getActivityPackIdForDeparture(departureId);
+    if (!activityPackId) return;
   
     // Limpiar información anterior y estados, y marcar como cargando
     delete this.flightTimesByDepartureId[departureId];
@@ -1847,8 +1944,9 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
       .subscribe({
         next: (flightPacks: any[]) => {
           if (flightPacks && flightPacks.length > 0) {
+            // Buscar el flight pack que corresponda al activityPackId del itinerario del departure
             let selectedFlightPack = flightPacks.find(
-              (pack) => pack.id === this.selectedCity?.activityPackId
+              (pack) => pack.id === activityPackId
             );
             
             if (!selectedFlightPack && flightPacks.length > 0) {
@@ -1926,8 +2024,10 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
   // Obtener el número de plazas disponibles para un departure
   // Usa el valor más restrictivo del nuevo endpoint by-tour cuando está disponible
   getAvailableSpots(departureId: number): number {
-    if (this.selectedCity?.activityPackId) {
-      const cityDepartures = this.departuresByCity.get(this.selectedCity.activityPackId);
+    // Obtener el activityPackId correcto según el itinerario del departure
+    const activityPackId = this.getActivityPackIdForDeparture(departureId);
+    if (activityPackId) {
+      const cityDepartures = this.departuresByCity.get(activityPackId);
       if (cityDepartures) {
         const departureData = cityDepartures.find((d) => d.departureId === departureId);
         if (departureData) {
@@ -1963,18 +2063,28 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
 
   // Verificar si una ciudad tiene al menos un departure con disponibilidad
   private hasCityAvailability(city: City): boolean {
-    if (!city || !city.activityPackId) {
+    if (!city) {
       return false;
     }
 
-    const cityDepartures = this.departuresByCity.get(city.activityPackId);
-    if (!cityDepartures || cityDepartures.length === 0) {
-      return false;
-    }
+    // Una ciudad puede tener múltiples activityPackIds (uno por itinerario)
+    // Verificar disponibilidad en todos ellos
+    const normalizedCityName = city.name.trim().toLowerCase();
+    const activityPackIds = this.allCitiesFromService
+      .filter(c => c.name.trim().toLowerCase() === normalizedCityName && c.activityPackId)
+      .map(c => c.activityPackId)
+      .filter((id, index, self) => self.indexOf(id) === index); // Eliminar duplicados
 
-    return cityDepartures.some(
-      (departure) => departure.mostRestrictiveAvailability > 0
-    );
+    // Verificar si algún activityPackId de la ciudad tiene departures con disponibilidad
+    return activityPackIds.some(activityPackId => {
+      const cityDepartures = this.departuresByCity.get(activityPackId);
+      if (!cityDepartures || cityDepartures.length === 0) {
+        return false;
+      }
+      return cityDepartures.some(
+        (departure) => departure.mostRestrictiveAvailability > 0
+      );
+    });
   }
 
   // Seleccionar la primera ciudad que tenga disponibilidad
@@ -2001,9 +2111,8 @@ export class TourDeparturesV2Component implements OnInit, OnDestroy, OnChanges {
         }
       });
     } else {
-      // Si no hay activityId, verificar si hay departures disponibles
-      const cityDepartures = this.departuresByCity.get(this.selectedCity.activityPackId!);
-      if (cityDepartures && cityDepartures.length > 0) {
+      // Si no hay activityIds, verificar si hay departures disponibles en cualquier activityPackId de la ciudad
+      if (this.filteredDepartures.length > 0) {
         this.autoSelectNearestBookableDeparture();
       }
     }

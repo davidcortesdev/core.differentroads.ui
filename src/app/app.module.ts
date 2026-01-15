@@ -169,6 +169,7 @@ import { InfoTravelerActivitiesComponent } from './pages/checkout-v2/components/
 import { PaymentManagementComponent } from './pages/checkout-v2/components/payment-management/payment-management.component';
 import { LoadingSectionComponent } from './pages/checkout-v2/components/payment-management/components/loading-section/loading-section.component';
 import { NewReservationComponent } from './pages/checkout-v2/components/new-reservation/new-reservation.component';
+import { ReservationInfoComponent } from './pages/checkout-v2/components/reservation-info/reservation-info.component';
 import { TravelInfoComponent } from './pages/checkout-v2/components/new-reservation/travel-info/travel-info.component';
 import { TravelersInfoComponent } from './pages/checkout-v2/components/new-reservation/travelers-info/travelers-info.component';
 import { SectionFlightComponent } from './pages/checkout-v2/components/new-reservation/section-flight/section-flight.component';
@@ -354,6 +355,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     PaymentManagementComponent,
     LoadingSectionComponent,
     NewReservationComponent,
+    ReservationInfoComponent,
     TravelInfoComponent,
     TravelersInfoComponent,
     SectionFlightComponent,

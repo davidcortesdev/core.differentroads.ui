@@ -12,6 +12,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { PasswordModule } from 'primeng/password';
 import { CommonModule } from '@angular/common'; // Import CommonModule
 import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
+import { ConfirmationCodeComponent } from '../../../../shared/components/confirmation-code/confirmation-code.component';
 
 @Component({
   selector: 'app-forget-password-form',
@@ -23,6 +24,7 @@ import { AuthenticateService } from '../../../../core/services/auth/auth-service
     InputTextModule,
     PasswordModule,
     InputNumberModule,
+    ConfirmationCodeComponent,
   ],
   templateUrl: './forget-password-form.component.html',
   styleUrls: ['./forget-password-form.component.scss'],
@@ -37,6 +39,7 @@ export class PasswordRecoveryFormComponent implements OnInit {
   showConfirmPassword: boolean = false;
   isRedirecting: boolean = false;
   isStandalone: boolean = false;
+  isConfirming: boolean = false;
 
   emailForm: FormGroup;
   resetForm: FormGroup;
@@ -108,7 +111,18 @@ export class PasswordRecoveryFormComponent implements OnInit {
       this.successMessage = 'Código de verificación enviado a su correo.';
       this.step = 'reset';
     } catch (error: any) {
-      this.errorMessage = error.message || 'Error al procesar la solicitud.';
+      const code = error?.code || '';
+      const email = this.emailForm.value.email;
+      if (code === 'UNCONFIRMED') {
+        this.userEmail = email;
+        this.isConfirming = true;
+        this.errorMessage =
+          'Debes confirmar tu email antes de poder recuperar la contraseña.';
+        this.successMessage =
+          'Hemos reenviado el código de confirmación a tu correo.';
+      } else {
+        this.errorMessage = error.message || 'Error al procesar la solicitud.';
+      }
     } finally {
       this.isLoading = false;
     }
@@ -156,5 +170,22 @@ export class PasswordRecoveryFormComponent implements OnInit {
 
   toggleConfirmPasswordVisibility() {
     this.showConfirmPassword = !this.showConfirmPassword;
+  }
+
+  async onConfirmSuccess() {
+    try {
+      this.isLoading = true;
+      await this.authService.forgotPassword(this.userEmail);
+      this.successMessage =
+        'Email verificado. Se ha enviado el código para restablecer la contraseña.';
+      this.errorMessage = '';
+      this.isConfirming = false;
+      this.step = 'reset';
+    } catch (e: any) {
+      this.errorMessage =
+        e?.message || 'Error al enviar el código de restablecimiento.';
+    } finally {
+      this.isLoading = false;
+    }
   }
 }

@@ -347,15 +347,15 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
 
     // Función auxiliar para verificar el estado de todos los viajeros
     const checkAllTravelers = (attemptNumber: number): boolean => {
-
+      console.log(`=== DEBUG canContinueToNextStep: Intento ${attemptNumber} ===`);
       return forms.every((form, index) => {
         const isReady = form.isReadyToContinue();
         const travelerNumber = index + 1;
         
         if (isReady) {
-
+          console.log(`Viajero ${travelerNumber}: Listo ✅`);
         } else {
-
+          console.log(`Viajero ${travelerNumber}: NO listo ❌`);
         }
         
         return isReady;

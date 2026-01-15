@@ -36,6 +36,9 @@ import { RetailerService } from '../../core/services/retailer/retailer.service';
 import { DepartureService } from '../../core/services/departure/departure.service';
 import { Title } from '@angular/platform-browser';
 import { ReservationStatusService } from '../../core/services/reservation/reservation-status.service';
+import { ReservationFlightService, IFlightPackDTO } from '../../core/services/flight/reservationflight.service';
+import { switchMap, map, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 interface BookingData {
   title: string;
@@ -249,7 +252,8 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
     @Inject(RetailerService) private retailerService: RetailerService,
     private departureService: DepartureService,
     private titleService: Title,
-    private reservationStatusService: ReservationStatusService
+    private reservationStatusService: ReservationStatusService,
+    private reservationFlightService: ReservationFlightService
   ) {
     this.paymentForm = this.fb.group({
       amount: [0, [Validators.required, Validators.min(1)]],
@@ -438,7 +442,7 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
     // Cargar datos reales del tour, retailer y departure
     this.loadTourData(reservation.tourId);
     this.loadRetailerData(reservation.retailerId);
-    this.loadDepartureData(reservation.departureId);
+    this.loadDepartureData(reservation.departureId, reservation.id);
     this.loadReservationStatusCode(reservation.reservationStatusId);
   }
 
@@ -540,42 +544,97 @@ export class Bookingsv2Component implements OnInit, OnDestroy {
   }
 
   // Método para cargar datos del departure
-  private loadDepartureData(departureId: number): void {
-    this.departureService.getById(departureId).subscribe({
-      next: (departure) => {
-        // Helper para formatear fechas de forma consistente
-        const formatDate = (dateString: string): string => {
-          if (!dateString) return '';
-          try {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('es-ES', {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit',
-            });
-          } catch {
-            return dateString;
+  // La fecha de salida debe venir del endpoint flight de la API tour asociado a la reserva
+  private loadDepartureData(departureId: number, reservationId: number): void {
+    // Helper para formatear fechas de forma consistente
+    const formatDate = (dateString: string): string => {
+      if (!dateString) return '';
+      try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('es-ES', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        });
+      } catch {
+        return dateString;
+      }
+    };
+
+    // Intentar obtener la fecha del flight asociado a la reserva
+    // La fecha correcta debe venir del endpoint flight de la API tour
+    this.reservationFlightService.getSelectedFlightPack(reservationId)
+      .pipe(
+        map((flightPacks: IFlightPackDTO | IFlightPackDTO[]) => {
+          // Manejar tanto arrays como objetos individuales
+          let flightPackData: IFlightPackDTO | null = null;
+          
+          if (Array.isArray(flightPacks)) {
+            if (flightPacks.length > 0) {
+              flightPackData = flightPacks[0];
+            }
+          } else if (flightPacks && typeof flightPacks === 'object') {
+            flightPackData = flightPacks as IFlightPackDTO;
           }
-        };
 
-        // Actualizar la fecha de salida en bookingData (sin formatear para mantener ISO)
-        if (departure.departureDate) {
-          this.bookingData.date = departure.departureDate;
-          // Guardar la fecha sin formatear para componentes que la necesiten
-          this.departureDate = departure.departureDate;
-        }
-
-        // Actualizar la fecha de salida en bookingImages (formateada para display)
-        if (this.bookingImages.length > 0 && departure.departureDate) {
-          this.bookingImages[0].departureDate = formatDate(
-            departure.departureDate
+          if (flightPackData?.flights && flightPackData.flights.length > 0) {
+            // Buscar el flight de tipo "salida" (flightTypeId === 4)
+            const outboundFlight = flightPackData.flights.find(
+              (f: any) => f.flightTypeId === 4
+            );
+            
+            if (outboundFlight?.departureDate) {
+              return outboundFlight.departureDate;
+            }
+            
+            // Si no hay flight de salida, usar el primer flight disponible
+            if (flightPackData.flights[0]?.departureDate) {
+              return flightPackData.flights[0].departureDate;
+            }
+          }
+          
+          return null;
+        }),
+        catchError(() => of(null)),
+        switchMap((flightDate: string | null) => {
+          if (flightDate) {
+            // Si tenemos la fecha del flight, usarla
+            this.bookingData.date = flightDate;
+            this.departureDate = flightDate;
+            
+            // Actualizar la fecha de salida en bookingImages (formateada para display)
+            if (this.bookingImages.length > 0) {
+              this.bookingImages[0].departureDate = formatDate(flightDate);
+            }
+            
+            return of(null);
+          }
+          
+          // Fallback: obtener desde departure service
+          return this.departureService.getById(departureId).pipe(
+            catchError(() => of(null))
           );
-        }
-      },
-      error: (error) => {
-        // Mantener la fecha por defecto si hay error
-      },
-    });
+        })
+      )
+      .subscribe({
+        next: (departure) => {
+          // Solo actualizar si no se obtuvo del flight y tenemos departure
+          if (!this.departureDate && departure?.departureDate) {
+            this.bookingData.date = departure.departureDate;
+            this.departureDate = departure.departureDate;
+            
+            // Actualizar la fecha de salida en bookingImages (formateada para display)
+            if (this.bookingImages.length > 0) {
+              this.bookingImages[0].departureDate = formatDate(
+                departure.departureDate
+              );
+            }
+          }
+        },
+        error: (error) => {
+          // Mantener la fecha por defecto si hay error
+        },
+      });
   }
 
   // Actualizar información de las imágenes

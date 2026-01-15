@@ -77,6 +77,8 @@
     <app-booking-flights-v2
       *ngIf="reservation?.id"
       [reservationId]="reservation.id"
+      [isATC]="isATC"
+      [reservationStatusId]="reservation?.reservationStatusId || 0"
     >
     </app-booking-flights-v2>
 

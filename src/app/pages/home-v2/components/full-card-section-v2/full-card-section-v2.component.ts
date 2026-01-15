@@ -7,9 +7,14 @@ import {
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Router } from '@angular/router';
+import { of, forkJoin, Subject } from 'rxjs';
+import { switchMap, map, catchError, takeUntil } from 'rxjs/operators';
 import { HomeSectionService } from '../../../../core/services/home/home-section.service';
 import { HomeSectionConfigurationService } from '../../../../core/services/home/home-section-configuration.service';
-import { HomeSectionCardService } from '../../../../core/services/home/home-section-card.service';
+import {
+  HomeSectionCardService,
+  IHomeSectionCardResponse,
+} from '../../../../core/services/home/home-section-card.service';
 
 interface Card {
   id: number;
@@ -32,6 +37,7 @@ export class FullCardSectionV2Component implements OnInit, OnDestroy {
   sectionDescription: string = '';
 
   private abortController = new AbortController();
+  private destroy$ = new Subject<void>();
 
   constructor(
     private sanitizer: DomSanitizer,
@@ -46,8 +52,14 @@ export class FullCardSectionV2Component implements OnInit, OnDestroy {
     this.loadFullScreenCards();
   }
 
+  /**
+   * Limpia los recursos del componente al destruirlo.
+   * Cancela las peticiones HTTP pendientes y completa las suscripciones.
+   */
   ngOnDestroy(): void {
     this.abortController.abort();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   protected sanitizeHtml(html: string): SafeHtml {
@@ -63,84 +75,138 @@ export class FullCardSectionV2Component implements OnInit, OnDestroy {
     return card.id;
   }
 
+  /**
+   * Carga las cards de pantalla completa.
+   * Obtiene la sección FULLSCREEN_CARDS, luego sus configuraciones y finalmente todas las cards.
+   */
   private loadFullScreenCards(): void {
-    // 1. Obtener la sección con code 'FULLSCREEN_CARDS'
     this.homeSectionService
       .getAll({ code: 'FULLSCREEN_CARDS', isActive: true }, this.abortController.signal)
+      .pipe(
+        switchMap((sections) => {
+          if (sections.length === 0) {
+            console.warn('FullCardSectionV2 - No FULLSCREEN_CARDS section found');
+            return of([]);
+          }
+
+          const fullScreenSection = sections[0];
+
+          // Obtener las configuraciones de esta sección
+          return this.homeSectionConfigurationService
+            .getBySectionType(fullScreenSection.id, true, this.abortController.signal)
+            .pipe(
+              map((configurations) => {
+                if (configurations.length === 0) {
+                  console.warn('FullCardSectionV2 - No configurations found for section');
+                  return [];
+                }
+
+                // Usar la primera configuración para título y descripción
+                const firstConfiguration = configurations[0];
+                this.sectionTitle = firstConfiguration.title || '';
+                this.sectionDescription = firstConfiguration.content || '';
+
+                return configurations;
+              }),
+              catchError((error) => {
+                console.error('FullCardSectionV2 - Error loading configurations:', error);
+                return of([]);
+              })
+            );
+        }),
+        catchError((error) => {
+          console.error('FullCardSectionV2 - Error loading FULLSCREEN_CARDS section:', error);
+          return of([]);
+        }),
+        takeUntil(this.destroy$)
+      )
       .subscribe({
-        next: (sections) => {
-          if (sections.length > 0) {
-            const fullScreenSection = sections[0];
-
-            // 2. Obtener las configuraciones de esta sección
-            this.homeSectionConfigurationService
-              .getBySectionType(fullScreenSection.id, true, this.abortController.signal)
-              .subscribe({
-                next: (configurations) => {
-                  if (configurations.length > 0) {
-                    // Usar la primera configuración para título y descripción
-                    const firstConfiguration = configurations[0];
-                    this.sectionTitle = firstConfiguration.title || '';
-                    this.sectionDescription = firstConfiguration.content || '';
-
-                    // 3. Obtener todas las cards de todas las configuraciones
-                    this.loadAllCardsFromConfigurations(configurations);
-                  } else {
-                  }
-                },
-                error: (error) => {
-                },
-              });
+        next: (configurations) => {
+          if (configurations.length > 0) {
+            // Obtener todas las cards de todas las configuraciones
+            this.loadAllCardsFromConfigurations(configurations);
           } else {
+            this.cards = [];
+            this.cdr.markForCheck();
           }
         },
         error: (error) => {
+          console.error('FullCardSectionV2 - Error in loadFullScreenCards:', error);
+          this.cards = [];
+          this.cdr.markForCheck();
         },
       });
   }
 
+  /**
+   * Carga todas las cards de múltiples configuraciones usando forkJoin.
+   * Elimina race conditions al esperar todas las peticiones en paralelo.
+   * @param configurations - Array de configuraciones de las que cargar cards
+   * @private
+   */
   private loadAllCardsFromConfigurations(configurations: any[]): void {
-    const allCards: Card[] = [];
-    let completedRequests = 0;
-    const totalRequests = configurations.length;
+    if (configurations.length === 0) {
+      this.cards = [];
+      this.cdr.markForCheck();
+      return;
+    }
 
-    configurations.forEach((configuration) => {
+    // Crear un observable para cada configuración
+    const cardRequests = configurations.map((config) =>
       this.homeSectionCardService
-        .getByConfiguration(configuration.id, true, this.abortController.signal)
-        .subscribe({
-          next: (cards) => {
-            // Mapear las cards de esta configuración
-            const mappedCards = cards.map((card) => ({
-              id: card.id,
-              subtitle: card.title,
-              content: card.content || '',
-              link: card.linkUrl || '',
-              image: {
-                url: card.imageUrl,
-                alt: card.imageAlt,
-              },
-            }));
+        .getByConfiguration(config.id, true, this.abortController.signal)
+        .pipe(
+          map((cards) => cards.map((card) => this.transformCard(card))),
+          catchError((error) => {
+            console.error(
+              `FullCardSectionV2 - Error loading cards for configuration ${config.id}:`,
+              error
+            );
+            return of([]); // Retornar array vacío en caso de error
+          })
+        )
+    );
 
-            allCards.push(...mappedCards);
-            completedRequests++;
+    // Ejecutar todas las peticiones en paralelo y esperar a que todas completen
+    forkJoin(cardRequests)
+      .pipe(
+        map((cardArrays) => cardArrays.flat()), // Aplanar todos los arrays en uno solo
+        catchError((error) => {
+          console.error('FullCardSectionV2 - Error in forkJoin loading cards:', error);
+          return of([]);
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe({
+        next: (allCards) => {
+          this.cards = allCards;
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          console.error('FullCardSectionV2 - Error loading all cards:', error);
+          this.cards = [];
+          this.cdr.markForCheck();
+        },
+      });
+  }
 
-            // Si hemos completado todas las peticiones, actualizar el array de cards
-            if (completedRequests === totalRequests) {
-              this.cards = allCards;
-              this.cdr.detectChanges();
-            }
-          },
-          error: (error) => {
-            completedRequests++;
-
-            // Si hemos completado todas las peticiones (incluso con errores), actualizar
-            if (completedRequests === totalRequests) {
-              this.cards = allCards;
-              this.cdr.detectChanges();
-            }
-          },
-        });
-    });
+  /**
+   * Transforma una card del backend al formato requerido por el componente.
+   * @param card - Card del backend
+   * @returns Card transformada
+   * @private
+   */
+  private transformCard(card: IHomeSectionCardResponse): Card {
+    return {
+      id: card.id,
+      subtitle: card.title,
+      content: card.content || '',
+      link: card.linkUrl || '',
+      image: {
+        url: card.imageUrl,
+        alt: card.imageAlt,
+      },
+    };
   }
 
   private navigate(url: string): void {

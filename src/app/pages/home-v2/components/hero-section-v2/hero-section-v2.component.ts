@@ -8,8 +8,8 @@ import {
   ElementRef,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { of, Subject } from 'rxjs';
+import { catchError, switchMap, map, takeUntil } from 'rxjs/operators';
 import {
   HomeSectionContentService,
   IHomeSectionContentResponse,
@@ -77,6 +77,7 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit, OnDestroy 
   tripTypes: ITripTypeResponse[] = [];
 
   private abortController = new AbortController();
+  private destroy$ = new Subject<void>();
 
   constructor(
     private router: Router,
@@ -88,6 +89,10 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit, OnDestroy 
     private tourService: TourService
   ) { }
 
+  /**
+   * Inicializa el componente.
+   * Establece los valores iniciales y carga los datos necesarios.
+   */
   ngOnInit(): void {
     this.setInitialValues();
     this.loadBannerContent();
@@ -112,11 +117,18 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit, OnDestroy 
     
     this.tourService
       .autocomplete({ searchText: normalized, maxResults: 8 })
-      .pipe(catchError(() => of([])))
+      .pipe(
+        catchError(() => of([])),
+        takeUntil(this.destroy$)
+      )
       .subscribe((results: UnifiedSearchResult[]) => {
         this.sugerencias = Array.isArray(results) ? results : [];
       });
   }
+  /**
+   * Se ejecuta después de que la vista del componente ha sido inicializada.
+   * Reproduce el video si está disponible.
+   */
   ngAfterViewInit(): void {
     // Ensure video plays when view is initialized
     if (this.isVideo && this.bannerContent) {
@@ -124,70 +136,150 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit, OnDestroy 
     }
   }
 
+  /**
+   * Limpia los recursos del componente al destruirlo.
+   * Cancela las peticiones HTTP pendientes y completa las suscripciones.
+   */
   ngOnDestroy(): void {
     this.abortController.abort();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
+  /**
+   * Carga el contenido del banner (video o imagen).
+   * Intenta cargar videos primero, si no hay videos o hay error, carga imágenes como fallback.
+   */
   private loadBannerContent(): void {
-    // Assuming banner content has a specific configuration ID
-    // You may need to adjust this based on your actual configuration
-    this.homeSectionContentService.getVideos(true, this.abortController.signal).subscribe({
-      next: (videos) => {
-        if (videos && videos.length > 0) {
-          // Get the first video content
-          this.bannerContent = videos[0];
-          this.isVideo = true;
+    this.homeSectionContentService
+      .getVideos(true, this.abortController.signal)
+      .pipe(
+        switchMap((videos) => {
+          // Si hay videos, usar el primero
+          if (videos && videos.length > 0) {
+            return of({
+              content: videos[0],
+              isVideo: true,
+              isImage: false,
+            });
+          }
+          // Si no hay videos, intentar cargar imágenes
+          return this.homeSectionContentService
+            .getImages(true, this.abortController.signal)
+            .pipe(
+              map((images) => {
+                if (images && images.length > 0) {
+                  return {
+                    content: images[0],
+                    isVideo: false,
+                    isImage: true,
+                  };
+                }
+                // No hay imágenes ni videos
+                return {
+                  content: null,
+                  isVideo: false,
+                  isImage: false,
+                };
+              }),
+              catchError(() => {
+                // Error al cargar imágenes, retornar null
+                return of({
+                  content: null,
+                  isVideo: false,
+                  isImage: false,
+                });
+              })
+            );
+        }),
+        catchError(() => {
+          // Error al cargar videos, intentar cargar imágenes como fallback
+          return this.homeSectionContentService
+            .getImages(true, this.abortController.signal)
+            .pipe(
+              map((images) => {
+                if (images && images.length > 0) {
+                  return {
+                    content: images[0],
+                    isVideo: false,
+                    isImage: true,
+                  };
+                }
+                return {
+                  content: null,
+                  isVideo: false,
+                  isImage: false,
+                };
+              }),
+              catchError((imageError) => {
+                console.error('HeroSectionV2 - Error loading banner images:', imageError);
+                return of({
+                  content: null,
+                  isVideo: false,
+                  isImage: false,
+                });
+              })
+            );
+        }),
+        takeUntil(this.destroy$)
+      )
+      .subscribe({
+        next: (result) => {
+          this.bannerContent = result.content;
+          this.isVideo = result.isVideo;
+          this.isImage = result.isImage;
+          
+          // Si es video, intentar reproducirlo después de un breve delay
+          if (result.isVideo && result.content) {
+            setTimeout(() => this.playVideo(), 100);
+          }
+        },
+        error: (error) => {
+          console.error('HeroSectionV2 - Error loading banner content:', error);
+          this.bannerContent = null;
+          this.isVideo = false;
           this.isImage = false;
-          // Trigger video play after content is set
-          setTimeout(() => this.playVideo(), 100);
-        } else {
-          // Fallback to images if no videos
-          this.homeSectionContentService.getImages(true, this.abortController.signal).subscribe({
-            next: (images) => {
-              if (images && images.length > 0) {
-                this.bannerContent = images[0];
-                this.isVideo = false;
-                this.isImage = true;
-              }
-            },
-            error: (error) => {
-            },
-          });
-        }
-      },
-      error: (error) => {
-        // Fallback to images on error
-        this.homeSectionContentService.getImages(true, this.abortController.signal).subscribe({
-          next: (images) => {
-            if (images && images.length > 0) {
-              this.bannerContent = images[0];
-              this.isVideo = false;
-              this.isImage = true;
-            }
-          },
-          error: (imageError) => {
-          },
-        });
-      },
-    });
+        },
+      });
   }
 
-  getBannerUrl(): string | null {
+  /**
+   * Obtiene la URL del banner (video o imagen).
+   * @returns La URL del contenido del banner o null si no hay contenido.
+   */
+  get bannerUrl(): string | null {
     return this.bannerContent?.contentUrl || null;
   }
 
-  getBannerAltText(): string {
+  /**
+   * Obtiene el texto alternativo del banner.
+   * @returns El texto alternativo del banner o cadena vacía si no hay contenido.
+   */
+  get bannerAltText(): string {
     return this.bannerContent?.altText || '';
   }
 
+  /**
+   * Maneja el evento cuando el video ha sido cargado.
+   * Intenta reproducir el video automáticamente.
+   */
   onVideoLoaded(): void {
     this.playVideo();
   }
 
+  /**
+   * Maneja el evento cuando el video está listo para reproducirse.
+   * Intenta reproducir el video automáticamente.
+   */
   onVideoCanPlay(): void {
     this.playVideo();
   }
 
+  /**
+   * Intenta reproducir el video del banner.
+   * Silencia el video para permitir autoplay y maneja errores de reproducción.
+   * @private
+   */
   private playVideo(): void {
     if (this.videoElement && this.videoElement.nativeElement) {
       const video = this.videoElement.nativeElement;
@@ -201,37 +293,59 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit, OnDestroy 
           // Try to play again after a short delay
           setTimeout(() => {
             video.play().catch((retryError) => {
+              console.error('HeroSectionV2 - Error playing video after retry:', retryError);
             });
           }, 100);
         });
     }
   }
 
+  /**
+   * Carga la lista de países/destinos disponibles.
+   * @private
+   */
   private loadDestinations(): void {
-    this.countriesService.getCountries(this.abortController.signal).subscribe({
-      next: (countries) => {
-        this.destinations = countries;
-      },
-      error: (error) => {
-      },
-    });
+    this.countriesService
+      .getCountries(this.abortController.signal)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (countries) => {
+          this.destinations = countries;
+        },
+        error: (error) => {
+          console.error('HeroSectionV2 - Error loading destinations:', error);
+        },
+      });
   }
 
+  /**
+   * Carga los tipos de viaje disponibles.
+   * Si hay un tipo de viaje inicial, lo mapea al ID correspondiente.
+   * @private
+   */
   private loadTripTypes(): void {
-    this.tripTypeService.getActiveTripTypes(this.abortController.signal).subscribe({
-      next: (tripTypes) => {
-        this.tripTypes = tripTypes;
-        // Si viene initialTripType (code), mapea a id
-        if (this.initialTripType && this.selectedTripTypeId == null) {
-          const match = this.tripTypes.find(t => t.code === this.initialTripType);
-          this.selectedTripTypeId = match ? match.id : null;
-        }
-      },
-      error: (error) => {
-      },
-    });
+    this.tripTypeService
+      .getActiveTripTypes(this.abortController.signal)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (tripTypes) => {
+          this.tripTypes = tripTypes;
+          // Si viene initialTripType (code), mapea a id
+          if (this.initialTripType && this.selectedTripTypeId == null) {
+            const match = this.tripTypes.find(t => t.code === this.initialTripType);
+            this.selectedTripTypeId = match ? match.id : null;
+          }
+        },
+        error: (error) => {
+          console.error('HeroSectionV2 - Error loading trip types:', error);
+        },
+      });
   }
 
+  /**
+   * Filtra los destinos según la consulta del usuario.
+   * @param event - Evento con la consulta de búsqueda
+   */
   filterDestinations(event: { query: string }): void {
     const query = event.query.toLowerCase().trim();
     this.filteredDestinations = this.destinations.filter(
@@ -241,6 +355,10 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit, OnDestroy 
     );
   }
 
+  /**
+   * Filtra los tipos de viaje según la consulta del usuario.
+   * @param event - Evento con la consulta de búsqueda
+   */
   filterTripTypes(event: { query: string }): void {
     const query = event.query.toLowerCase().trim();
     this.filteredTripTypes = this.tripTypes.filter(
@@ -250,6 +368,10 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit, OnDestroy 
     );
   }
 
+  /**
+   * Realiza la búsqueda de tours con los parámetros seleccionados.
+   * Valida las fechas antes de navegar y dispara eventos de analytics.
+   */
   searchTrips(): void {
     // Validar fechas antes de buscar
     if (this.rangeDates && this.rangeDates.length > 0 && !this.isValidDateRange()) {
@@ -316,15 +438,23 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit, OnDestroy 
     const endDate = this.rangeDates?.[1] ? this.rangeDates[1].toISOString() : undefined;
     const tripTypeId = this.selectedTripTypeId !== null && this.selectedTripTypeId !== undefined ? this.selectedTripTypeId : undefined;
 
-    this.tourService.searchWithScore({
-      searchText: destinationText || undefined,
-      startDate,
-      endDate,
-      tripTypeId,
-      fuzzyThreshold: 0.7,
-      tagScoreThreshold: 0.7,
-      flexDays: this.dateFlexibility > 0 ? this.dateFlexibility : undefined,
-    }).subscribe({ next: () => { }, error: () => { } });
+    this.tourService
+      .searchWithScore({
+        searchText: destinationText || undefined,
+        startDate,
+        endDate,
+        tripTypeId,
+        fuzzyThreshold: 0.7,
+        tagScoreThreshold: 0.7,
+        flexDays: this.dateFlexibility > 0 ? this.dateFlexibility : undefined,
+      })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {},
+        error: (error) => {
+          console.error('HeroSectionV2 - Error in searchWithScore:', error);
+        },
+      });
   }
 
   /**
@@ -357,6 +487,11 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit, OnDestroy 
     return maxDate;
   }
 
+  /**
+   * Establece los valores iniciales del componente basados en los inputs.
+   * Inicializa destino, fechas y tipo de viaje si están disponibles.
+   * @private
+   */
   private setInitialValues(): void {
     if (this.initialDestination) {
       this.selectedDestination = this.initialDestination.trim();
@@ -398,40 +533,44 @@ export class HeroSectionV2Component implements OnInit, AfterViewInit, OnDestroy 
     }
 
     // Obtener datos completos del usuario si está logueado
-    this.analyticsService.getCurrentUserData().subscribe({
-      next: (userData) => {
-        this.analyticsService.search(
-          {
-            search_term: queryParams.destination || '',
-            start_date: queryParams.departureDate || '',
-            end_date: queryParams.returnDate || '',
-            trip_type: tripTypeName
-          },
-          userData
-        );
-      },
-      error: () => {
-        // Fallback si no se pueden obtener datos completos - incluir todos los campos según estructura requerida
-        const fallbackUserData = this.analyticsService.getUserData(
-          this.authService.getUserEmailValue(),
-          '',
-          this.authService.getCognitoIdValue()
-        ) || {
-          email_address: this.authService.getUserEmailValue() || '',
-          phone_number: '',
-          user_id: this.authService.getCognitoIdValue() || ''
-        };
-        this.analyticsService.search(
-          {
-            search_term: queryParams.destination || '',
-            start_date: queryParams.departureDate || '',
-            end_date: queryParams.returnDate || '',
-            trip_type: tripTypeName
-          },
-          fallbackUserData
-        );
-      }
-    });
+    this.analyticsService
+      .getCurrentUserData()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (userData) => {
+          this.analyticsService.search(
+            {
+              search_term: queryParams.destination || '',
+              start_date: queryParams.departureDate || '',
+              end_date: queryParams.returnDate || '',
+              trip_type: tripTypeName
+            },
+            userData
+          );
+        },
+        error: (error) => {
+          console.error('HeroSectionV2 - Error getting user data for analytics:', error);
+          // Fallback si no se pueden obtener datos completos - incluir todos los campos según estructura requerida
+          const fallbackUserData = this.analyticsService.getUserData(
+            this.authService.getUserEmailValue(),
+            '',
+            this.authService.getCognitoIdValue()
+          ) || {
+            email_address: this.authService.getUserEmailValue() || '',
+            phone_number: '',
+            user_id: this.authService.getCognitoIdValue() || ''
+          };
+          this.analyticsService.search(
+            {
+              search_term: queryParams.destination || '',
+              start_date: queryParams.departureDate || '',
+              end_date: queryParams.returnDate || '',
+              trip_type: tripTypeName
+            },
+            fallbackUserData
+          );
+        }
+      });
   }
 
   /**

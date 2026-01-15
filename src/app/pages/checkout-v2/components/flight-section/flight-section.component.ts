@@ -103,10 +103,19 @@ export class FlightSectionV2Component implements OnChanges {
     }
 
     // Separar vuelos de ida y vuelta
+    // Soporta tanto los IDs legacy (4 para ida, 5 para vuelta) como los nuevos (0 para ida, 1 para vuelta)
+    const isIdaFlight = (flightTypeId: number | undefined): boolean => {
+      return flightTypeId === 4 || flightTypeId === 0; // Legacy: 4, Nuevo: 0
+    };
+
+    const isVueltaFlight = (flightTypeId: number | undefined): boolean => {
+      return flightTypeId === 5 || flightTypeId === 1; // Legacy: 5, Nuevo: 1
+    };
+
     this.departureFlight =
-      this.flightPack.flights.find((f) => f.flightTypeId === 4) || null;
+      this.flightPack.flights.find((f) => isIdaFlight(f.flightTypeId)) || null;
     this.returnFlight =
-      this.flightPack.flights.find((f) => f.flightTypeId !== 4) || null;
+      this.flightPack.flights.find((f) => isVueltaFlight(f.flightTypeId)) || null;
     
   }
 

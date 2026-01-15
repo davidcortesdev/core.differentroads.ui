@@ -1,12 +1,12 @@
 <section class="hero">
   <!-- Video de fondo dinámico -->
-  <video *ngIf="isVideo && getBannerUrl()" class="hero-bg" autoplay loop muted playsinline preload="auto"
+  <video *ngIf="isVideo && bannerUrl" class="hero-bg" autoplay loop muted playsinline preload="auto"
     (loadeddata)="onVideoLoaded()" (canplay)="onVideoCanPlay()" #videoElement>
-    <source [src]="getBannerUrl()" type="video/mp4" />
+    <source [src]="bannerUrl" type="video/mp4" />
   </video>
 
   <!-- Imagen de fondo dinámica -->
-  <img *ngIf="isImage && getBannerUrl()" class="hero-bg" [src]="getBannerUrl()" [alt]="getBannerAltText()" loading="lazy" />
+  <img *ngIf="isImage && bannerUrl" class="hero-bg" [src]="bannerUrl" [alt]="bannerAltText" loading="lazy" />
 
   <div class="hero-search">
     <!-- Mensaje de validación de fechas -->

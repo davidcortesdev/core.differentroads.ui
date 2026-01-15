@@ -59,7 +59,7 @@ export class TourTagRelationTypeService {
    * @param filters Filtros para aplicar en la búsqueda.
    * @returns Lista de tipos de relación.
    */
-  getAll(filters?: TourTagRelationTypeFilters): Observable<ITourTagRelationTypeResponse[]> {
+  getAll(filters?: TourTagRelationTypeFilters, signal?: AbortSignal): Observable<ITourTagRelationTypeResponse[]> {
     let params = new HttpParams();
 
     // Add filter parameters if provided
@@ -74,7 +74,15 @@ export class TourTagRelationTypeService {
       });
     }
 
-    return this.http.get<ITourTagRelationTypeResponse[]>(this.API_URL, { params });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<ITourTagRelationTypeResponse[]>(this.API_URL, options);
   }
 
   /**
@@ -93,8 +101,15 @@ export class TourTagRelationTypeService {
    * @param id ID del tipo de relación.
    * @returns El tipo de relación encontrado.
    */
-  getById(id: number): Observable<ITourTagRelationTypeResponse> {
-    return this.http.get<ITourTagRelationTypeResponse>(`${this.API_URL}/${id}`);
+  getById(id: number, signal?: AbortSignal): Observable<ITourTagRelationTypeResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<ITourTagRelationTypeResponse>(`${this.API_URL}/${id}`, options);
   }
 
   /**

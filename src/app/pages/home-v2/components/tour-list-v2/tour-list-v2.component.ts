@@ -23,6 +23,7 @@ import {
 // Importar servicios para filtros por tag y ubicación
 import { TourTagService } from '../../../../core/services/tag/tour-tag.service';
 import { TourLocationService } from '../../../../core/services/tour/tour-location.service';
+import { HomeSectionId } from '../../../../shared/constants/home-section-codes.constants';
 
 @Component({
   selector: 'app-tour-list-v2',
@@ -56,16 +57,35 @@ export class TourListV2Component implements OnInit, OnDestroy {
     private readonly tourLocationService: TourLocationService
   ) {}
 
+  /**
+   * Inicializa el componente y carga la lista de tours.
+   * Valida que haya al menos un identificador (configurationId o sectionType).
+   */
   ngOnInit(): void {
+    if (!this.configurationId && !this.sectionType) {
+      console.warn('TourListV2: configurationId or sectionType is required');
+      return;
+    }
+
     this.loadTourList();
   }
 
+  /**
+   * Limpia los recursos del componente al destruirlo.
+   * Cancela las peticiones HTTP pendientes y completa las suscripciones.
+   */
   ngOnDestroy(): void {
     this.abortController.abort();
     this.destroy$.next();
     this.destroy$.complete();
   }
 
+  /**
+   * Carga la lista de tours.
+   * Si se proporciona un configurationId, lo usa directamente.
+   * Si no, busca configuraciones por tipo de sección y displayOrder.
+   * @private
+   */
   private loadTourList(): void {
     // Si se proporciona un configurationId específico, úsalo
     if (this.configurationId) {
@@ -74,11 +94,11 @@ export class TourListV2Component implements OnInit, OnDestroy {
     }
 
     // Determinar el tipo de sección a cargar
-    const sectionType = this.sectionType || 3; // Por defecto TOUR_GRID (ID: 3)
+    const sectionType = this.sectionType || HomeSectionId.TOUR_GRID;
 
     // Cargar configuraciones según el tipo de sección
     let configObservable;
-    if (sectionType === 3) {
+    if (sectionType === HomeSectionId.TOUR_GRID) {
       configObservable =
         this.homeSectionConfigurationService.getTourGridConfigurations();
     } else {
@@ -102,18 +122,36 @@ export class TourListV2Component implements OnInit, OnDestroy {
             if (foundConfig) {
               targetConfig = foundConfig;
             } else {
+              console.warn(
+                'TourListV2 - Configuration with displayOrder not found:',
+                this.sectionDisplayOrder
+              );
             }
           }
 
           this.loadSpecificConfiguration(targetConfig.id);
         } else {
+          console.warn(
+            'TourListV2 - No configurations found for section type:',
+            sectionType
+          );
         }
       },
       error: (error) => {
+        console.error(
+          'TourListV2 - Error loading tour list configurations:',
+          error
+        );
       },
     });
   }
 
+  /**
+   * Carga una configuración específica por ID.
+   * Establece título, descripción, opciones y carga los filtros de tours.
+   * @param configId - ID de la configuración a cargar
+   * @private
+   */
   private loadSpecificConfiguration(configId: number): void {
     // Cargar la configuración específica
     this.homeSectionConfigurationService
@@ -144,11 +182,20 @@ export class TourListV2Component implements OnInit, OnDestroy {
           }
         },
         error: (error) => {
+          console.error(
+            'TourListV2 - Error loading specific configuration:',
+            error
+          );
           this.tourIds = [];
         },
       });
   }
 
+  /**
+   * Procesa los filtros y configura el botón "Ver más" del primer filtro.
+   * @param filters - Array de filtros a procesar
+   * @private
+   */
   private loadTourIdsFromFilters(
     filters: IHomeSectionTourFilterResponse[]
   ): void {
@@ -254,6 +301,10 @@ export class TourListV2Component implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Maneja el clic en el botón "Ver más".
+   * Navega a la URL especificada en viewMoreButton.
+   */
   onViewMore(): void {
     if (this.viewMoreButton?.url) {
       this.router.navigate([this.viewMoreButton.url]);

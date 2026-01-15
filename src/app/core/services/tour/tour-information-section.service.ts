@@ -35,7 +35,8 @@ export class TourInformationSectionService {
    * @returns Observable of TourInformationSection array
    */
   getTourInformationSections(
-    filter?: TourInformationSectionFilter
+    filter?: TourInformationSectionFilter,
+    signal?: AbortSignal
   ): Observable<TourInformationSection[]> {
     let params = new HttpParams();
 
@@ -51,12 +52,21 @@ export class TourInformationSectionService {
       });
     }
 
-    return this.http.get<TourInformationSection[]>(this.API_URL, {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      headers?: { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = {
       params,
       headers: {
         Accept: 'text/plain',
       },
-    });
+    };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<TourInformationSection[]>(this.API_URL, options);
   }
 
   /**
@@ -65,17 +75,27 @@ export class TourInformationSectionService {
    * @returns Observable of TourInformationSection
    */
   getTourInformationSectionById(
-    id: number
+    id: number,
+    signal?: AbortSignal
   ): Observable<TourInformationSection> {
     let params = new HttpParams().set('Id', id.toString());
 
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      headers?: { [header: string]: string | string[] };
+      signal?: AbortSignal;
+    } = {
+      params,
+      headers: {
+        Accept: 'text/plain',
+      },
+    };
+    if (signal) {
+      options.signal = signal;
+    }
+
     return this.http
-      .get<TourInformationSection>(this.API_URL, {
-        params,
-        headers: {
-          Accept: 'text/plain',
-        },
-      })
+      .get<TourInformationSection>(this.API_URL, options)
       .pipe(
         map((response) => {
           // Check if response is an array and take the first item

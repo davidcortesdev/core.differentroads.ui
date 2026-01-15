@@ -9,6 +9,7 @@ import {
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
+import { HomeSectionId } from '../../../../shared/constants/home-section-codes.constants';
 
 // Servicios de Home
 import {
@@ -39,7 +40,7 @@ interface HighlightImage {
 export class HighlightSectionV2Component implements OnInit, OnDestroy {
   @Input() configurationId?: number; // ID específico de configuración
   @Input() sectionDisplayOrder?: number; // Orden de visualización
-  @Input() sectionType: number = 8; // Por defecto FEATURED_SECTION (8)
+  @Input() sectionType: number = HomeSectionId.FEATURED_SECTION; // Por defecto FEATURED_SECTION
 
   protected image: HighlightImage | null = null;
   protected isActive = false;
@@ -55,10 +56,17 @@ export class HighlightSectionV2Component implements OnInit, OnDestroy {
     private readonly cdr: ChangeDetectorRef
   ) {}
 
+  /**
+   * Inicializa el componente y carga la sección destacada.
+   */
   ngOnInit(): void {
     this.loadHighlightSection();
   }
 
+  /**
+   * Limpia los recursos del componente al destruirlo.
+   * Cancela las peticiones HTTP pendientes y completa las suscripciones.
+   */
   ngOnDestroy(): void {
     this.abortController.abort();
     this.destroy$.next();
@@ -75,6 +83,12 @@ export class HighlightSectionV2Component implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Carga la sección destacada.
+   * Si se proporciona un configurationId, lo usa directamente.
+   * Si no, busca configuraciones por tipo de sección y displayOrder.
+   * @private
+   */
   private loadHighlightSection(): void {
     // Si se proporciona un configurationId específico, úsalo
     if (this.configurationId) {
@@ -101,13 +115,27 @@ export class HighlightSectionV2Component implements OnInit, OnDestroy {
             }
             this.loadSpecificConfiguration(targetConfig.id);
           } else {
+            console.warn(
+              'HighlightSectionV2 - No configurations found for section type:',
+              this.sectionType
+            );
           }
         },
         error: (error) => {
+          console.error(
+            'HighlightSectionV2 - Error loading highlight configurations:',
+            error
+          );
         },
       });
   }
 
+  /**
+   * Carga una configuración específica por ID.
+   * Establece el estado activo y carga la imagen si está activa.
+   * @param configId - ID de la configuración a cargar
+   * @private
+   */
   private loadSpecificConfiguration(configId: number): void {
     // Cargar la configuración específica
     this.homeSectionConfigurationService
@@ -125,13 +153,27 @@ export class HighlightSectionV2Component implements OnInit, OnDestroy {
             // Cargar imagen destacada (que incluye título y descripción)
             this.loadSectionImage(configId);
           } else {
+            console.warn(
+              'HighlightSectionV2 - Configuration is not active:',
+              configId
+            );
           }
         },
         error: (error) => {
+          console.error(
+            'HighlightSectionV2 - Error loading configuration:',
+            error
+          );
         },
       });
   }
 
+  /**
+   * Carga la imagen destacada de la sección.
+   * Ordena las imágenes por displayOrder y selecciona la primera.
+   * @param configId - ID de la configuración
+   * @private
+   */
   private loadSectionImage(configId: number): void {
     this.homeSectionImageService
       .getByConfigurationOrdered(configId, true, this.abortController.signal)
@@ -139,8 +181,9 @@ export class HighlightSectionV2Component implements OnInit, OnDestroy {
       .subscribe({
         next: (images) => {
           if (images.length > 0) {
+            // Crear copia antes de ordenar para evitar mutación in-place
             // Tomar la primera imagen (o la que tenga displayOrder más bajo)
-            const sortedImages = images.sort(
+            const sortedImages = [...images].sort(
               (a, b) => a.displayOrder - b.displayOrder
             );
             const selectedImage = sortedImages[0];
@@ -151,11 +194,21 @@ export class HighlightSectionV2Component implements OnInit, OnDestroy {
           }
         },
         error: (error) => {
+          console.error(
+            'HighlightSectionV2 - Error loading section image:',
+            error
+          );
           this.image = null;
         },
       });
   }
 
+  /**
+   * Transforma una imagen del backend al formato requerido por el componente.
+   * @param homeImage - Imagen del backend
+   * @returns Imagen transformada al formato HighlightImage
+   * @private
+   */
   private transformImageToHighlightFormat(
     homeImage: IHomeSectionImageResponse
   ): HighlightImage {
@@ -169,6 +222,11 @@ export class HighlightSectionV2Component implements OnInit, OnDestroy {
     };
   }
 
+  /**
+   * Navega a una URL, manejando URLs externas e internas.
+   * @param url - URL a la que navegar
+   * @private
+   */
   private navigate(url: string): void {
     if (!url) return;
 
@@ -177,6 +235,12 @@ export class HighlightSectionV2Component implements OnInit, OnDestroy {
       : this.router.navigate([url]);
   }
 
+  /**
+   * Verifica si una URL es externa (http/https).
+   * @param url - URL a verificar
+   * @returns true si la URL es externa, false en caso contrario
+   * @private
+   */
   private isExternalUrl(url: string): boolean {
     return /^https?:\/\//.test(url);
   }

@@ -79,7 +79,7 @@ export class CMSBlogService {
     name?: string;
     visibleWeb?: boolean;
     versionActiva?: number;
-  }): Observable<ICMSBlogResponse[]> {
+  }, signal?: AbortSignal): Observable<ICMSBlogResponse[]> {
     let httpParams = new HttpParams();
     
     if (params) {
@@ -90,11 +90,26 @@ export class CMSBlogService {
       if (params.versionActiva !== undefined) httpParams = httpParams.set('VersionActiva', params.versionActiva.toString());
     }
 
-    return this.http.get<ICMSBlogResponse[]>(this.API_URL, { params: httpParams });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params: httpParams };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<ICMSBlogResponse[]>(this.API_URL, options);
   }
 
-  getBlogById(id: number): Observable<ICMSBlogResponse> {
-    return this.http.get<ICMSBlogResponse>(`${this.API_URL}/${id}`);
+  getBlogById(id: number, signal?: AbortSignal): Observable<ICMSBlogResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<ICMSBlogResponse>(`${this.API_URL}/${id}`, options);
   }
 
   createBlog(blogData: CMSBlogCreate): Observable<ICMSBlogResponse> {
@@ -121,7 +136,7 @@ export class CMSBlogService {
     bannerImagen?: string;
     bannerTitulo?: string;
     blogId?: number;
-  }): Observable<ICMSBlogVersionResponse[]> {
+  }, signal?: AbortSignal): Observable<ICMSBlogVersionResponse[]> {
     let httpParams = new HttpParams();
     
     if (params) {
@@ -137,11 +152,26 @@ export class CMSBlogService {
       if (params.blogId !== undefined) httpParams = httpParams.set('BlogId', params.blogId.toString());
     }
 
-    return this.http.get<ICMSBlogVersionResponse[]>(this.VERSION_API_URL, { params: httpParams });
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = { params: httpParams };
+    if (signal) {
+      options.signal = signal;
+    }
+
+    return this.http.get<ICMSBlogVersionResponse[]>(this.VERSION_API_URL, options);
   }
 
-  getBlogVersionById(id: number): Observable<ICMSBlogVersionResponse> {
-    return this.http.get<ICMSBlogVersionResponse>(`${this.VERSION_API_URL}/${id}`);
+  getBlogVersionById(id: number, signal?: AbortSignal): Observable<ICMSBlogVersionResponse> {
+    const options: {
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<ICMSBlogVersionResponse>(`${this.VERSION_API_URL}/${id}`, options);
   }
 
   createBlogVersion(versionData: CMSBlogVersionCreate): Observable<ICMSBlogVersionResponse> {

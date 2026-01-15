@@ -142,20 +142,30 @@ export class FlightStopsComponent implements OnInit {
     if (this.isLoading) return 'Cargando...';
     if (!this.flightDetail) return 'Error';
     
-    // Manejar ambos tipos de respuesta
+    // Calcular el número de escalas basándose en los segmentos reales
+    // El número de escalas = número de segmentos - 1
+    // (1 segmento = directo, 2 segmentos = 1 escala, 3 segmentos = 2 escalas, etc.)
+    let numScales: number;
+    let segments: any[] = [];
+    
     if (this.useNewService) {
       const newDetail = this.flightDetail as IFlightSearchFlightDetailDTO;
-      return newDetail.numScales === 0
-        ? 'Directo'
-        : newDetail.numScales === 1
-        ? '1 escala'
-        : newDetail.numScales + ' escalas';
+      segments = newDetail.segments || [];
     } else {
       const currentDetail = this.flightDetail as IFlightsNetFlightDetailDTO;
-      return currentDetail.numScales === 0
-        ? 'Directo'
-        : currentDetail.numScales + ' escalas';
+      segments = currentDetail.segments || [];
     }
+    
+    // Calcular escalas basándose en los segmentos reales
+    // Filtrar segmentos válidos (que tengan departureIata y arrivalIata)
+    const validSegments = segments.filter(seg => seg.departureIata && seg.arrivalIata);
+    numScales = validSegments.length > 0 ? validSegments.length - 1 : 0;
+    
+    return numScales === 0
+        ? 'Directo'
+      : numScales === 1
+      ? '1 escala'
+      : numScales + ' escalas';
   }
 
   /**

@@ -27,6 +27,7 @@ import {
 } from '../../../../core/services/reservation/reservation-status.service';
 import { FlightSearchService, IBookingRequirements } from '../../../../core/services/flight/flight-search.service';
 import { InfoTravelerFormComponent } from './components/info-traveler-form/info-traveler-form.component';
+import { ReservationTravelerActivityPackService } from '../../../../core/services/reservation/reservation-traveler-activity-pack.service';
 
 @Component({
   selector: 'app-info-travelers',
@@ -65,6 +66,10 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
   hasFlightSelected: boolean = false;
   isCheckingFlightStatus: boolean = false;
 
+  // Propiedades para vuelos de TK
+  hasTKFlightSelected: boolean = false;
+  tkBookingRequirements: IBookingRequirements | null = null;
+
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -73,7 +78,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
     private messageService: MessageService,
     private reservationStatusService: ReservationStatusService,
     private reservationService: ReservationService,
-    private flightSearchService: FlightSearchService
+    private flightSearchService: FlightSearchService,
+    private reservationTravelerActivityPackService: ReservationTravelerActivityPackService
   ) {}
 
   ngOnInit(): void {
@@ -103,6 +109,8 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         this.error = null;
         this.amadeusBookingRequirements = null;
         this.hasFlightSelected = false;
+        this.hasTKFlightSelected = false;
+        this.tkBookingRequirements = null; // Resetear requisitos de TK también
         this.isInitialized = true;
         this.checkFlightSelectionStatus();
       }
@@ -202,6 +210,14 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
           this.ageGroups = ageGroups;
           this.travelers = this.sortTravelersWithLeadFirst(travelers);
           this.loading = false;
+          // Verificar si hay vuelos de TK asignados (puede coexistir con Amadeus)
+          // Esperar un momento para asegurar que la verificación de Amadeus haya terminado
+          setTimeout(() => {
+            // Verificar TK independientemente de Amadeus (pueden coexistir)
+            if (!this.isCheckingFlightStatus) {
+              this.checkTKFlightSelection();
+            }
+          }, 500);
         },
         error: (error) => {
           this.error = 'Error al cargar los datos de los viajeros';
@@ -277,13 +293,71 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
           this.getAmadeusBookingRequirements();
         } else {
           this.isCheckingFlightStatus = false;
+          // Verificar vuelos de TK después de verificar Amadeus
           this.loadReservationStatuses();
         }
       },
       error: (error) => {
         this.isCheckingFlightStatus = false;
+        // Verificar vuelos de TK incluso si hay error con Amadeus
         this.loadReservationStatuses();
       }
+    });
+  }
+
+  /**
+   * Verifica si hay vuelos de TK asignados a los viajeros
+   */
+  private checkTKFlightSelection(): void {
+    if (!this.reservationId || !this.travelers || this.travelers.length === 0) {
+      this.hasTKFlightSelected = false;
+      return;
+    }
+
+    // Verificar si algún viajero tiene un vuelo de TK asignado
+    // Los vuelos de TK se asignan como activityPacks (no como vuelos del consolidador)
+    const checkPromises = this.travelers.map(traveler => 
+      this.reservationTravelerActivityPackService.getByReservationTraveler(traveler.id).toPromise()
+    );
+
+    Promise.all(checkPromises).then(results => {
+      // Un vuelo de TK es un activityPack que NO es del consolidador
+      // Si hay activityPacks asignados y NO hay vuelo de Amadeus, probablemente es TK
+      const hasAnyActivityPacks = results.some(assignments => 
+        assignments && assignments.length > 0 && 
+        assignments.some(a => a.activityPackId > 0)
+      );
+
+      // Si hay activityPacks, es un vuelo de TK (puede coexistir con Amadeus)
+      const previousTKFlightSelected = this.hasTKFlightSelected;
+      this.hasTKFlightSelected = hasAnyActivityPacks;
+      
+      // Si hay vuelo de TK, obtener sus requisitos
+      if (this.hasTKFlightSelected) {
+        this.getTKBookingRequirements();
+      } else {
+        this.tkBookingRequirements = null;
+      }
+      
+      // Si cambió el estado de TK, forzar actualización de los formularios
+      if (this.hasTKFlightSelected !== previousTKFlightSelected && this.travelerForms) {
+        this.travelerForms.forEach(form => {
+          if (form && typeof form['ngOnChanges'] === 'function') {
+            // Forzar actualización del formulario para que agregue campos de TK
+            form.ngOnChanges({
+              hasTKFlightSelected: {
+                previousValue: previousTKFlightSelected,
+                currentValue: this.hasTKFlightSelected,
+                firstChange: false,
+                isFirstChange: () => false
+              }
+            } as any);
+          }
+        });
+      }
+    }).catch(() => {
+      this.hasTKFlightSelected = false;
+      this.tkBookingRequirements = null;
     });
   }
 
@@ -307,6 +381,41 @@ export class InfoTravelersComponent implements OnInit, OnDestroy, OnChanges {
         this.amadeusBookingRequirements = null;
         this.isCheckingFlightStatus = false;
         this.loadReservationStatuses();
+      }
+    });
+  }
+
+  /**
+   * Obtiene los requisitos de reserva de TK
+   * Usa el mismo endpoint que Amadeus pero puede devolver requisitos diferentes según el tipo de vuelo
+   */
+  private getTKBookingRequirements(): void {
+    if (!this.reservationId) {
+      this.tkBookingRequirements = null;
+      return;
+    }
+
+    // Por ahora, usar el mismo endpoint que Amadeus
+    // Si en el futuro hay un endpoint específico para TK, cambiarlo aquí
+    this.flightSearchService.getBookingRequirements(this.reservationId).subscribe({
+      next: (requirements: IBookingRequirements) => {
+        this.tkBookingRequirements = requirements;
+      },
+      error: (error) => {
+        // Si no hay endpoint específico para TK, usar requisitos mínimos (al menos sex)
+        this.tkBookingRequirements = {
+          travelerRequirements: this.travelers.map(t => ({
+            travelerId: String(t.travelerNumber),
+            genderRequired: true, // TK siempre requiere sexo según el error
+            documentRequired: false,
+            dateOfBirthRequired: false,
+            residenceRequired: false,
+            documentIssuanceCityRequired: false,
+            redressRequiredIfAny: false,
+            airFranceDiscountRequired: false,
+            spanishResidentDiscountRequired: false
+          }))
+        };
       }
     });
   }

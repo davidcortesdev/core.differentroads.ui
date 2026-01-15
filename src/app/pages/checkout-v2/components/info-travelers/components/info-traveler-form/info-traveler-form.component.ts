@@ -65,6 +65,8 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
   @Input() itineraryId: number | null = null;
   @Input() amadeusBookingRequirements: IBookingRequirements | null = null;
   @Input() hasFlightSelected: boolean = false;
+  @Input() hasTKFlightSelected: boolean = false;
+  @Input() tkBookingRequirements: IBookingRequirements | null = null;
 
   @Output() dataUpdated = new EventEmitter<void>();
 
@@ -226,8 +228,8 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       }
     }
 
-    // Reaccionar a cambios en los requisitos de Amadeus
-    if (changes['amadeusBookingRequirements'] || changes['hasFlightSelected']) {
+    // Reaccionar a cambios en los requisitos de Amadeus o TK
+    if (changes['amadeusBookingRequirements'] || changes['hasFlightSelected'] || changes['hasTKFlightSelected']) {
       
       // Agregar/actualizar campos dinámicos de Amadeus
       if (this.traveler && this.departureId && this.reservationFields.length > 0) {
@@ -307,10 +309,10 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
               // Ordenar los campos por displayOrder
               this.sortDepartureFieldsByDisplayOrder();
 
-              // Agregar campos dinámicos de Amadeus si hay requisitos
+              // Agregar campos dinámicos de Amadeus o TK si hay requisitos
               this.addAmadeusVirtualFields();
-              
-              // Agregar controles al formulario para campos de Amadeus
+
+              // Agregar controles al formulario para campos de Amadeus o TK
               this.addAmadeusFieldsToForm();
 
               // Cargar campos existentes del viajero
@@ -547,8 +549,9 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     // Calcular fechas para los campos de fecha
     this.calculateTravelerFieldDates();
 
-    // Agregar campos de Amadeus al formulario si existen
-    if (this.hasFlightSelected && this.amadeusBookingRequirements) {
+    // Agregar campos de Amadeus o TK al formulario si existen
+    if ((this.hasFlightSelected && this.amadeusBookingRequirements) || 
+        (this.hasTKFlightSelected && this.tkBookingRequirements)) {
       this.addAmadeusFieldsToForm();
     }
 
@@ -1102,6 +1105,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
   /**
    * Verifica si un campo es obligatorio
    * SOLUCIÓN SIMPLIFICADA: Prioriza siempre los requisitos de Amadeus cuando hay vuelo de Amadeus
+   * También maneja requisitos de TK cuando hay vuelo de TK
    */
   isFieldMandatory(
     field: IDepartureReservationFieldResponse,
@@ -1112,23 +1116,35 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       return false;
     }
 
-    // PRIMERO: Si hay vuelo de Amadeus, verificar requisitos de Amadeus (tiene prioridad)
-    if (this.hasFlightSelected && this.amadeusBookingRequirements) {
-      const isAmadeusMandatory = this.isFieldAmadeusMandatory(fieldDetails, isLeadTraveler);
-      if (isAmadeusMandatory) {
-        return true; // Campo requerido por Amadeus = SIEMPRE obligatorio
-      }
-      // Si no es requerido por Amadeus pero está en BD como obligatorio, verificar campos básicos
-      if (field.mandatoryTypeId === 2 || (field.mandatoryTypeId === 3 && isLeadTraveler)) {
-        const basicFields = ['name', 'surname', 'email', 'phone'];
-        if (basicFields.includes(fieldDetails.code)) {
-          return true; // Campos básicos siempre obligatorios
-        }
-      }
-      return false; // Con vuelo de Amadeus, solo campos requeridos por Amadeus o básicos son obligatorios
+    // Verificar requisitos de Amadeus y TK (pueden coexistir)
+    const isAmadeusMandatory = (this.hasFlightSelected && this.amadeusBookingRequirements) 
+      ? this.isFieldAmadeusMandatory(fieldDetails, isLeadTraveler) 
+      : false;
+    
+    const isTKMandatory = (this.hasTKFlightSelected && this.tkBookingRequirements) 
+      ? this.isFieldTKMandatory(fieldDetails, isLeadTraveler) 
+      : false;
+
+    // Si es requerido por Amadeus O por TK, es obligatorio
+    if (isAmadeusMandatory || isTKMandatory) {
+      return true;
     }
 
-    // SEGUNDO: Sin vuelo de Amadeus, usar lógica estándar de BD
+    // Si no es requerido por Amadeus ni TK pero está en BD como obligatorio, verificar campos básicos
+    if (field.mandatoryTypeId === 2 || (field.mandatoryTypeId === 3 && isLeadTraveler)) {
+      const basicFields = ['name', 'surname', 'email', 'phone'];
+      if (basicFields.includes(fieldDetails.code)) {
+        return true; // Campos básicos siempre obligatorios
+      }
+    }
+
+    // Si hay vuelo de Amadeus o TK pero el campo no es requerido por ninguno, no es obligatorio
+    if ((this.hasFlightSelected && this.amadeusBookingRequirements) || 
+        (this.hasTKFlightSelected && this.tkBookingRequirements)) {
+      return false;
+    }
+
+    // TERCERO: Sin vuelo de Amadeus ni TK, usar lógica estándar de BD
     if (field.mandatoryTypeId === 2) {
       return true;
     }
@@ -1197,7 +1213,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
         this.traveler) {
       
       const travelerRequirements = this.amadeusBookingRequirements.travelerRequirements.find(
-        req => String(req.travelerId) === String(this.traveler!.travelerNumber)
+        (req: any) => String(req.travelerId) === String(this.traveler!.travelerNumber)
       );
 
       if (travelerRequirements) {
@@ -1247,6 +1263,30 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
+   * Verifica si un campo es obligatorio según los requisitos de TK
+   * TK requiere al menos el campo "sex" (sexo) para todos los viajeros
+   */
+  private isFieldTKMandatory(
+    fieldDetails: IReservationFieldResponse,
+    isLeadTraveler: boolean
+  ): boolean {
+    if (!this.hasTKFlightSelected) {
+      return false;
+    }
+
+    const fieldCode = fieldDetails.code.toLowerCase();
+
+    // TK requiere el campo "sex" (sexo) para todos los viajeros
+    if (fieldCode === 'sex') {
+      return true;
+    }
+
+    // TK también puede requerir otros campos según la configuración
+    // Por ahora, solo "sex" es obligatorio según el error reportado
+    return false;
+  }
+
+  /**
    * Actualiza las validaciones de todos los campos cuando cambian los requisitos de Amadeus
    */
   private updateValidationsForAmadeusRequirements(): void {
@@ -1283,10 +1323,29 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
 
   /**
    * Agrega campos dinámicos de Amadeus a departureReservationFields basándose en los requisitos de reserva
+   * También agrega campos requeridos por TK si hay vuelo de TK
    * Solo agrega campos que existan en BD (reservationFields)
+   * PRIORIDAD: Amadeus tiene prioridad sobre TK
    */
   private addAmadeusVirtualFields(): void {
-    if (!this.amadeusBookingRequirements || !this.hasFlightSelected || !this.traveler || !this.departureId) {
+    // PRIMERO: Agregar campos de Amadeus si hay vuelo de Amadeus (tiene prioridad)
+    if (this.amadeusBookingRequirements && this.hasFlightSelected && this.traveler && this.departureId) {
+      this.addAmadeusFields();
+      // Si hay vuelo de Amadeus, NO agregar campos de TK
+      return;
+    }
+
+    // SEGUNDO: Agregar campos de TK solo si NO hay vuelo de Amadeus
+    if (this.hasTKFlightSelected && !this.hasFlightSelected && this.traveler && this.departureId) {
+      this.addTKFields();
+    }
+  }
+
+  /**
+   * Agrega campos requeridos por Amadeus
+   */
+  private addAmadeusFields(): void {
+    if (!this.amadeusBookingRequirements || !this.traveler || !this.departureId) {
       return;
     }
 
@@ -1301,7 +1360,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
     // NOTA: Amadeus usa travelerNumber (1, 2, 3...) no el ID real del viajero
     if (this.amadeusBookingRequirements.travelerRequirements) {
       const travelerReq = this.amadeusBookingRequirements.travelerRequirements.find(
-        req => String(req.travelerId) === String(this.traveler!.travelerNumber)
+        (req: any) => String(req.travelerId) === String(this.traveler!.travelerNumber)
       );
 
       if (travelerReq) {
@@ -1376,7 +1435,87 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
         }
       }
     });
-    
+  }
+
+  /**
+   * Agrega campos requeridos por TK
+   * Similar a addAmadeusFields pero para TK
+   */
+  private addTKFields(): void {
+    if (!this.tkBookingRequirements || !this.traveler || !this.departureId) {
+      return;
+    }
+
+    let temporaryFieldId = -2000; // IDs diferentes a los de Amadeus
+    const isLeadTraveler = this.traveler.isLeadTraveler;
+
+    // Array para almacenar los códigos de campos que necesitamos
+    const requiredFieldCodes = new Set<string>();
+
+    // Requisitos por viajero
+    if (this.tkBookingRequirements.travelerRequirements) {
+      const travelerReq = this.tkBookingRequirements.travelerRequirements.find(
+        (req: any) => String(req.travelerId) === String(this.traveler!.travelerNumber)
+      );
+
+      if (travelerReq) {
+        if (travelerReq.genderRequired) requiredFieldCodes.add('sex');
+        if (travelerReq.documentRequired) {
+          requiredFieldCodes.add('national_id');
+        }
+        if (travelerReq.dateOfBirthRequired) requiredFieldCodes.add('birthdate');
+        if (travelerReq.documentIssuanceCityRequired) requiredFieldCodes.add('document_issuance_city');
+        if (travelerReq.residenceRequired) requiredFieldCodes.add('country');
+      }
+    }
+
+    // Requisitos generales (solo para lead traveler)
+    if (isLeadTraveler) {
+      if (this.tkBookingRequirements.emailAddressRequired) requiredFieldCodes.add('email');
+      if (this.tkBookingRequirements.mobilePhoneNumberRequired || this.tkBookingRequirements.phoneNumberRequired) {
+        requiredFieldCodes.add('phone');
+      }
+    }
+
+    const travelerForFields = this.traveler;
+
+    // Para cada campo requerido por TK, verificar si existe en BD y agregarlo dinámicamente
+    requiredFieldCodes.forEach(fieldCode => {
+      const existingField = this.reservationFields.find(f => f.code === fieldCode);
+      
+      if (!existingField) {
+        return; // Saltar este campo - no existe en BD
+      }
+
+      // Verificar si ya existe en departureReservationFields (por código)
+      const existingDepartureFieldIndex = this.departureReservationFields.findIndex(
+        f => {
+          const fieldDetails = this.getReservationFieldDetails(f.reservationFieldId);
+          return fieldDetails?.code === fieldCode;
+        }
+      );
+
+      // Si el campo no está en departureReservationFields, agregarlo
+      if (existingDepartureFieldIndex === -1) {
+        const departureField: IDepartureReservationFieldResponse = {
+          id: temporaryFieldId--,
+          departureId: this.departureId!,
+          reservationFieldId: existingField.id,
+          mandatoryTypeId: 2, // Obligatorio
+          ageGroupId: travelerForFields.ageGroupId
+        };
+
+        this.departureReservationFields.push(departureField);
+      } else {
+        // Si el campo ya existe (puede haber sido agregado por Amadeus), 
+        // actualizar su mandatoryTypeId a 2 (obligatorio) si es requerido por TK
+        const existingDepartureField = this.departureReservationFields[existingDepartureFieldIndex];
+        if (existingDepartureField.mandatoryTypeId !== 2) {
+          existingDepartureField.mandatoryTypeId = 2;
+        }
+        // Si ya es obligatorio (por Amadeus), mantenerlo así (no hay conflicto)
+      }
+    });
   }
 
   /**
@@ -1892,9 +2031,22 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
             // Guardar si el usuario modificó el campo o si es un campo crítico de Amadeus con valor válido
             // Para campos críticos, guardar SIEMPRE si tienen valor válido, incluso si no están dirty/touched
             // Esto asegura que los campos críticos se guarden antes de avanzar al paso de pago
+            // IMPORTANTE: Para campos críticos de Amadeus, guardar SIEMPRE si tienen valor válido,
+            // independientemente de si están dirty o si el valor es igual al existente
+            // Esto es crítico porque el backend de Amadeus requiere estos campos para hacer el booking
+            const isCriticalAmadeusFieldWithValue = isCriticalAmadeusField && hasValue && isValid;
+            
+            // Para campos críticos, también verificar si no existe en BD o si el valor es diferente
+            // Esto asegura que se guarden incluso si el usuario no modificó el campo manualmente
+            const shouldSaveCriticalField = isCriticalAmadeusFieldWithValue && (
+              !existingField || // No existe en BD, debe guardarse
+              isDifferent || // Valor diferente al existente
+              true // Siempre guardar campos críticos si tienen valor válido
+            );
+            
             const shouldSave = !this.isInitializing && hasValue && isValid && (
               (isUserModified && isDifferent) || 
-              (isCriticalAmadeusField) // Guardar siempre si es crítico y tiene valor válido (incluso si no está dirty)
+              shouldSaveCriticalField // Guardar campos críticos de Amadeus siempre que tengan valor válido
             );
 
             if (shouldSave) {

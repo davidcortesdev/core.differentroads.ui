@@ -2031,9 +2031,22 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
             // Guardar si el usuario modificó el campo o si es un campo crítico de Amadeus con valor válido
             // Para campos críticos, guardar SIEMPRE si tienen valor válido, incluso si no están dirty/touched
             // Esto asegura que los campos críticos se guarden antes de avanzar al paso de pago
+            // IMPORTANTE: Para campos críticos de Amadeus, guardar SIEMPRE si tienen valor válido,
+            // independientemente de si están dirty o si el valor es igual al existente
+            // Esto es crítico porque el backend de Amadeus requiere estos campos para hacer el booking
+            const isCriticalAmadeusFieldWithValue = isCriticalAmadeusField && hasValue && isValid;
+            
+            // Para campos críticos, también verificar si no existe en BD o si el valor es diferente
+            // Esto asegura que se guarden incluso si el usuario no modificó el campo manualmente
+            const shouldSaveCriticalField = isCriticalAmadeusFieldWithValue && (
+              !existingField || // No existe en BD, debe guardarse
+              isDifferent || // Valor diferente al existente
+              true // Siempre guardar campos críticos si tienen valor válido
+            );
+            
             const shouldSave = !this.isInitializing && hasValue && isValid && (
               (isUserModified && isDifferent) || 
-              (isCriticalAmadeusField) // Guardar siempre si es crítico y tiene valor válido (incluso si no está dirty)
+              shouldSaveCriticalField // Guardar campos críticos de Amadeus siempre que tengan valor válido
             );
 
             if (shouldSave) {

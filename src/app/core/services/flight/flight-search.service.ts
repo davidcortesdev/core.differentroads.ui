@@ -567,6 +567,32 @@ export class FlightSearchService {
   }
 
   /**
+   * Obtiene el vuelo del consolidador seleccionado para una reserva específica
+   * @param reservationId ID de la reserva
+   * @param signal Signal de cancelación opcional para abortar la petición HTTP.
+   * @returns Observable con el FlightPackDTO del vuelo seleccionado o null si no hay selección
+   */
+  getConsolidatorSelected(reservationId: number, signal?: AbortSignal): Observable<IFlightPackDTO | null> {
+    const options: {
+      headers?: HttpHeaders | { [header: string]: string | string[] };
+      params?: HttpParams | { [param: string]: any };
+      signal?: AbortSignal;
+    } = {};
+    if (signal) {
+      options.signal = signal;
+    }
+    return this.http.get<IFlightPackDTO | null>(
+      `${this.API_URL}/reservation/${reservationId}/consolidator/selected`,
+      options
+    ).pipe(
+      catchError((error: unknown) => {
+        // Si hay error (por ejemplo, no hay vuelo seleccionado), retornar null
+        return of(null);
+      })
+    );
+  }
+
+  /**
    * Valida si el precio de una oferta de vuelo ha cambiado entre el registro en base de datos y la respuesta actual de Amadeus
    * @param reservationId ID de la reserva para la cual validar el cambio de precio
    * @param signal Signal de cancelación opcional para abortar la petición HTTP.

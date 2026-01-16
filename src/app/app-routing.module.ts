@@ -59,6 +59,7 @@ import { CompleteInformationComponent } from './pages/complete-information/compl
 // SHARED COMPONENTS
 // ========================================
 import { ToursComponent } from './shared/components/tours/tours.component';
+import { AuthGuard } from './shared/auth.guard';
 
 // ========================================
 // ROUTES CONFIGURATION
@@ -72,23 +73,29 @@ const routes: Routes = [
     component: StandaloneComponent,
     children: [
       { path: 'checkout/:reservationId', component: CheckoutV2Component },
-      { path: 'bookings/:id', component: Bookingsv2Component },
+      { path: 'bookings/:id', component: Bookingsv2Component, 
+        // canActivate: [AuthGuard] 
+      },
       {
         path: 'reservation/:reservationId/:paymentId',
         component: ReservationInfoComponent,
+        // canActivate: [AuthGuard],
       },
       {
         path: 'reservation/:reservationId',
         component: ReservationInfoComponent,
+        // canActivate: [AuthGuard],
       },
       // Rutas del componente HIJO (sin purchase event)
       {
         path: 'reservation-view/:reservationId/:paymentId',
         component: NewReservationComponent,
+        // canActivate: [AuthGuard],
       },
       {
         path: 'reservation-view/:reservationId',
         component: NewReservationComponent,
+        // canActivate: [AuthGuard],
       },
       { path: 'forget-password', component: ForgetPasswordComponent },
       // ========================================
@@ -121,7 +128,7 @@ const routes: Routes = [
       // ========================================
       // PROFILE ROUTES
       // ========================================
-      { path: 'profile', component: ProfileV2Component },
+      { path: 'profile', component: ProfileV2Component, canActivate: [AuthGuard] },
 
       // ========================================
       // TOUR ROUTES
@@ -143,26 +150,30 @@ const routes: Routes = [
       {
         path: 'reservation/:reservationId/:paymentId',
         component: ReservationInfoComponent,
+        canActivate: [AuthGuard],
       },
       // Versión nueva sin paymentId (opcional)
       {
         path: 'reservation/:reservationId',
         component: ReservationInfoComponent,
+        canActivate: [AuthGuard],
       },
       // Rutas del componente HIJO (sin purchase event)
       {
         path: 'reservation-view/:reservationId/:paymentId',
         component: NewReservationComponent,
+        canActivate: [AuthGuard],
       },
       {
         path: 'reservation-view/:reservationId',
         component: NewReservationComponent,
+        canActivate: [AuthGuard],
       },
 
       // ========================================
       // BOOKINGS ROUTES
       // ========================================
-      { path: 'bookings/:id', component: Bookingsv2Component },
+      { path: 'bookings/:id', component: Bookingsv2Component, canActivate: [AuthGuard] },
 
       // ========================================
       // CONTENT PAGES ROUTES

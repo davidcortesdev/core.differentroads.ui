@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { map } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 
 export interface IAgeGroupPriceDTO {
   price: number;
@@ -93,6 +93,7 @@ export interface IAirlineResponse {
 })
 export class FlightsNetService {
   private readonly API_URL_DEPARTURE = `${environment.toursApiUrl}/Departure`;
+  private readonly API_URL_FLIGHT = `${environment.reservationsApiUrl}/Flight`;
   private readonly API_URL_SEGMENT = `${environment.toursApiUrl}/FlightSegment`;
   private readonly API_URL_AIRLINE = `${environment.hotelsApiUrl}/Airline`;
   
@@ -221,5 +222,27 @@ export class FlightsNetService {
       size: this.airlineNamesCache.size,
       keys: Array.from(this.airlineNamesCache.keys())
     };
+  }
+
+  /**
+   * Cambia el vuelo de una reserva
+   * @param reservationId ID de la reserva
+   * @param id ID del vuelo, tanto consolidadorSearchId como activityPackId
+   * @param origin Origen del vuelo, 'consolidator' o 'default'
+   * @returns Observable que se completa cuando el vuelo se ha cambiado
+   */
+  changeReservationFlight(reservationId: number, id: number, origin: ('consolidator' | 'default')): Observable<boolean> {
+    return this.http.put<boolean>(`${this.API_URL_FLIGHT}/reservation/${reservationId}/flight/${id}/change?origin=${origin}`, {}).pipe(
+      map((response: boolean) => {
+        return response;
+      }),
+      catchError((error: unknown) => {
+        return of(false);
+      })
+    );
+  }
+
+  getPackSinVuelos(departureId: number): Observable<IFlightPackDTO> {
+    return this.http.get<IFlightPackDTO>(`${this.API_URL_FLIGHT}/departure/${departureId}/without-flights`);
   }
 }

@@ -21,7 +21,7 @@ import {
 } from '../../../../core/services/tour/tour.service';
 import { forkJoin, Subscription } from 'rxjs';
 import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
-import { IFlightPackDTO } from '../../services/flightsNet.service';
+import { FlightsNetService, IFlightPackDTO } from '../../services/flightsNet.service';
 import { DefaultFlightsComponent } from './default-flights/default-flights.component';
 import { FlightSelectionState } from '../../types/flight-selection-state';
 
@@ -37,8 +37,8 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
   @Input() reservationId: number = 0;
   @Input() tourId: number = 0;
   @Input() selectedFlight: IFlightPackDTO | null = null;
-  @Input() departureActivityPackId: number | null = null; // ✅ NUEVO: ID del paquete del departure
-  @Input() isStandaloneMode: boolean = false; // ✅ NUEVO: Modo standalone
+  @Input() departureActivityPackId: number | null = null;
+  @Input() isStandaloneMode: boolean = false;
   @Output() flightSelectionChange = new EventEmitter<{
     selectedFlight: IFlightPackDTO | null;
     totalPrice: number;
@@ -56,11 +56,9 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
 
   private dataSubscription: Subscription | null = null;
 
-  // Propiedad privada para cachear la transformación
   private _cachedTransformedFlight: any = null;
   private _lastSelectedFlightId: number | null = null;
 
-  // Getter que solo transforma cuando es necesario
   get transformedSelectedFlight(): any {
     if (!this.selectedFlight) {
       this._cachedTransformedFlight = null;
@@ -68,7 +66,6 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
       return null;
     }
 
-    // Solo transformar si el vuelo ha cambiado
     if (this._lastSelectedFlightId !== this.selectedFlight.id) {
       this._cachedTransformedFlight = this.convertFlightsNetToFlightSearch(this.selectedFlight);
       this._lastSelectedFlightId = this.selectedFlight.id;
@@ -81,7 +78,8 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
     private tourService: TourService,
     private authService: AuthenticateService,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private flightsNetService: FlightsNetService
   ) { }
 
   ngOnInit(): void {
@@ -89,16 +87,14 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    // NUEVO: Manejar cambio en departureActivityPackId
     if (
       changes['departureActivityPackId'] &&
       changes['departureActivityPackId'].currentValue !==
       changes['departureActivityPackId'].previousValue
     ) {
-      // Logic for departureActivityPackId change if needed
+      // No action needed
     }
 
-    // Verificar si departureId o tourId han cambiado
     if (
       (changes['departureId'] &&
         changes['departureId'].currentValue !==
@@ -109,29 +105,25 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
       this.loadTourAndDepartureData();
     }
 
-    // Limpiar cache si selectedFlight cambió
     if (changes['selectedFlight']) {
       this.clearFlightCache();
     }
     
     if (changes['specificSearchVisible']) {
-      // Componente specific-search visibility changed
+      // No action needed
     }
   }
 
-  // Método para limpiar el cache de vuelos
   private clearFlightCache(): void {
     this._cachedTransformedFlight = null;
     this._lastSelectedFlightId = null;
   }
 
   private loadTourAndDepartureData(): void {
-    // Cancelar suscripción anterior si existe
     if (this.dataSubscription) {
       this.dataSubscription.unsubscribe();
     }
 
-    // Si no hay IDs válidos, resetear y salir
     if (!this.tourId || !this.departureId) {
       this.isConsolidadorVuelosActive = false;
       return;
@@ -146,8 +138,6 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
         const departureActive = !!results.departure.isConsolidadorVuelosActive;
         
         this.isConsolidadorVuelosActive = tourActive && departureActive;
-
-        // Forzar detección de cambios
         this.cdr.markForCheck();
       },
       error: (error) => {
@@ -157,9 +147,6 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
     });
   }
 
-  private loadTourData(): void {
-    // Este método ya no se usa con la nueva lógica AND
-  }
 
   checkAuthAndShowSpecificSearch(): void {
     if (this.isStandaloneMode) {
@@ -171,7 +158,6 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
       if (isLoggedIn) {
         this.specificSearchVisible = true;
       } else {
-        // Guardar la URL actual con el step en sessionStorage (step 1 = vuelos)
         const currentUrl = window.location.pathname;
         const redirectUrl = `${currentUrl}?step=1`;
         sessionStorage.setItem('redirectUrl', redirectUrl);
@@ -198,30 +184,11 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
     selectedFlight: IFlightPackDTO | null;
     totalPrice: number;
   }): Promise<void> {
-
-    // NUEVO: Log específico para "Sin Vuelos"
-    if (!flightData.selectedFlight) {
-    }
-
-    // NUEVO: Actualizar el vuelo seleccionado internamente
     this.selectedFlight = flightData.selectedFlight;
-
-    // Intentar guardar en la base de datos antes de emitir el evento
-    if (this.defaultFlightsComponent) {
-      try {
-        await this.defaultFlightsComponent.saveFlightAssignments();
-      } catch (error) {
-      }
-    }
-
-    // Siempre emitir el evento después del intento de guardado
     this.flightSelectionChange.emit(flightData);
   }
 
-  // Método para manejar la selección de vuelos desde specific-search
   onSpecificSearchFlightSelection(flightData: FlightSelectionState): void {
-
-    // Convertir el tipo del FlightSearchService al tipo de FlightsNetService
     const convertedFlight = flightData.selectedFlight ? this.convertFlightSearchToFlightsNet(flightData.selectedFlight) : null;
 
     this.flightSelectionChange.emit({
@@ -230,87 +197,57 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
     });
   }
 
-  // NUEVO: Método para manejar la selección de vuelos desde default-flights
   async onDefaultFlightSelected(flightData: {
     selectedFlight: IFlightPackDTO | null;
     totalPrice: number;
   }): Promise<void> {
-
-    // Actualizar el vuelo seleccionado
-    this.selectedFlight = flightData.selectedFlight;
-
-    // NUEVO: Deseleccionar vuelos en specific-search SOLO si isConsolidadorVuelosActive es true
-    if (this.isConsolidadorVuelosActive && this.specificSearchComponent && this.reservationId) {
-      // Llamar al método unselectAllFlights del servicio
-      this.specificSearchComponent.flightSearchService.unselectAllFlights(this.reservationId).subscribe({
-        next: () => {
-        },
-        error: (error: any) => {
-        }
-      });
+    if (!flightData.selectedFlight) {
+      return;
     }
 
-    // Intentar guardar en la base de datos antes de emitir el evento
-    if (this.defaultFlightsComponent) {
+    this.selectedFlight = flightData.selectedFlight;
+
+    if (this.reservationId && this.selectedFlight) {
       try {
-        await this.defaultFlightsComponent.saveFlightAssignments();
+        await this.flightsNetService
+          .changeReservationFlight(this.reservationId, this.selectedFlight.id, 'default')
+          .toPromise();
       } catch (error) {
+        // Silent error handling
       }
     }
 
-    // Siempre emitir el evento después del intento de guardado
     this.flightSelectionChange.emit(flightData);
   }
 
-  // NUEVO: Método para manejar la selección de vuelos desde specific-search
   async onSpecificFlightSelected(flightData: {
-    selectedFlight: any | null; // Usar any para evitar conflictos de tipos
+    selectedFlight: any | null;
     totalPrice: number;
-    shouldAssignNoFlight?: boolean; // NUEVO: Indicar si se debe asignar "sin vuelos"
+    shouldAssignNoFlight?: boolean;
   }): Promise<void> {
+    if (!flightData.selectedFlight && !flightData.shouldAssignNoFlight) {
+      return;
+    }
 
-    // Convertir el vuelo al formato de FlightsNetService si existe
     const convertedFlight = flightData.selectedFlight ? this.convertFlightSearchToFlightsNet(flightData.selectedFlight) : null;
-
-    // Actualizar el vuelo seleccionado
     this.selectedFlight = convertedFlight;
 
-    // NUEVO: Si shouldAssignNoFlight es true, asignar "sin vuelos" a todos los viajeros
-    if (flightData.shouldAssignNoFlight && this.defaultFlightsComponent && this.reservationId) {
-      // CORRECCIÓN: No deseleccionar vuelos de specific-search cuando asignamos "sin vuelos"
-      // porque acabamos de hacer la selección
+    if (this.reservationId && convertedFlight) {
       try {
-        await this.defaultFlightsComponent.saveFlightAssignmentsForAllTravelers(0, false);
+        await this.flightsNetService
+          .changeReservationFlight(this.reservationId, convertedFlight.id, 'consolidator')
+          .toPromise();
       } catch (error) {
+        // Silent error handling
       }
     }
 
-    // MODIFICADO: NO marcar "Sin Vuelos" automáticamente, solo deseleccionar el vuelo del departure
-    if (this.isConsolidadorVuelosActive && this.defaultFlightsComponent && this.reservationId) {
-
-      // Usar el nuevo método que deselecciona y guarda en BD
-      try {
-        await this.defaultFlightsComponent.deselectDepartureFlightWithoutSaving();
-      } catch (error) {
-      }
-    }
-
-    // Intentar guardar en la base de datos antes de emitir el evento
-    if (this.specificSearchComponent) {
-      try {
-        await this.specificSearchComponent.saveFlightAssignments();
-      } catch (error) {
-      }
-    }
-
-    // Siempre emitir el evento después del intento de guardado
     this.flightSelectionChange.emit({
       selectedFlight: convertedFlight,
       totalPrice: flightData.totalPrice
     });
   }
 
-  // Método para convertir IFlightPackDTO del FlightSearchService al formato de FlightsNetService
   private convertFlightSearchToFlightsNet(flightSearchFlight: any): IFlightPackDTO {
     return {
       id: flightSearchFlight.id,
@@ -352,9 +289,7 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
     };
   }
 
-  // Método para convertir IFlightPackDTO del FlightsNetService al formato de FlightSearchService
   convertFlightsNetToFlightSearch(flightsNetFlight: IFlightPackDTO): any {
-    // Crear el objeto base una sola vez
     const baseObject = {
       id: flightsNetFlight.id,
       code: flightsNetFlight.code,
@@ -395,13 +330,6 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
     };
 
     return baseObject;
-  }
-
-  async saveFlightAssignments(): Promise<boolean> {
-    if (this.defaultFlightsComponent) {
-      return await this.defaultFlightsComponent.saveFlightAssignments();
-    }
-    return false;
   }
 
   ngOnDestroy(): void {

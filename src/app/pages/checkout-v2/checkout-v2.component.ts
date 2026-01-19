@@ -990,19 +990,22 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
     }
 
     // Guardar inmediatamente cambios de vuelos
-    try {
-      if (
-        this.flightManagement?.defaultFlightsComponent?.saveFlightAssignmentsForAllTravelers
-      ) {
-        const targetId = this.selectedFlight ? this.selectedFlight.id : 0;
-        const shouldUnselectSpecificSearch = targetId === 0;
-        await this.flightManagement.defaultFlightsComponent.saveFlightAssignmentsForAllTravelers(
-          targetId,
-          shouldUnselectSpecificSearch
-        );
-      }
-    } catch (err) {
-    }
+    // LÓGICA OBSOLETA: guardado inmediato de asignaciones de vuelos por viajero desde frontend.
+    // El nuevo endpoint backend changeReservationFlight será el responsable de cambiar el vuelo
+    // de la reserva. Se mantiene comentado temporalmente.
+    // try {
+    //   if (
+    //     this.flightManagement?.defaultFlightsComponent?.saveFlightAssignmentsForAllTravelers
+    //   ) {
+    //     const targetId = this.selectedFlight ? this.selectedFlight.id : 0;
+    //     const shouldUnselectSpecificSearch = targetId === 0;
+    //     await this.flightManagement.defaultFlightsComponent.saveFlightAssignmentsForAllTravelers(
+    //       targetId,
+    //       shouldUnselectSpecificSearch
+    //     );
+    //   }
+    // } catch (err) {
+    // }
 
     // Disparar actualización del summary inmediatamente
     this.triggerSummaryRefresh();

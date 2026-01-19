@@ -68,8 +68,20 @@
                       <span>{{ payment.tkId }}</span>
                     </span>
                   </div>
-                  <div class="payment-header-actions" *ngIf="isATC && !payment.tkId">
+                  <div class="payment-header-actions" *ngIf="isATC">
+                    <!-- Botón sincronizado (si ya tiene tkId) -->
                     <p-button
+                      *ngIf="payment.tkId"
+                      label="Sincronizado con TK"
+                      icon="pi pi-check-circle"
+                      severity="success"
+                      size="small"
+                      [disabled]="true"
+                      pTooltip="Este pago ya está sincronizado con TourKnife"
+                    ></p-button>
+                    <!-- Botón para sincronizar (si no tiene tkId) -->
+                    <p-button
+                      *ngIf="!payment.tkId"
                       label="Sincronizar con TK"
                       icon="pi pi-sync"
                       severity="info"

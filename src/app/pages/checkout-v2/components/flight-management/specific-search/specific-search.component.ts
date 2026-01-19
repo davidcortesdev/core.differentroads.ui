@@ -14,7 +14,6 @@ import { LocationAirport, Location } from '../../../../../core/models/location/l
 import { FlightSearchService, FlightSearchRequest, IFlightPackDTO, IFlightDetailDTO, IFlightSearchResultDTO, IFlightSearchWarning, IFlightSearchMeta } from '../../../../../core/services/flight/flight-search.service';
 import { IFlightPackDTO as IFlightsNetFlightPackDTO } from '../../../services/flightsNet.service';
 import { ReservationTravelerService, IReservationTravelerResponse } from '../../../../../core/services/reservation/reservation-traveler.service';
-import { ReservationTravelerActivityPackService, IReservationTravelerActivityPackResponse } from '../../../../../core/services/reservation/reservation-traveler-activity-pack.service';
 import { FlightSelectionState } from '../../../types/flight-selection-state';
 import { AirportCityCacheService } from '../../../../../core/services/locations/airport-city-cache.service';
 
@@ -153,7 +152,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     private readonly locationNetService: LocationNetService,
     private readonly flightSearchService: FlightSearchService,
     private readonly reservationTravelerService: ReservationTravelerService,
-    private readonly reservationTravelerActivityPackService: ReservationTravelerActivityPackService,
     private readonly airportCityCacheService: AirportCityCacheService
   ) {
     this.flightForm = this.createFlightForm();
@@ -190,28 +188,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       changes['selectedFlightFromParent'].currentValue !==
         changes['selectedFlightFromParent'].previousValue
     ) {
-
       this.selectedFlight = changes['selectedFlightFromParent'].currentValue;
-
-      // Solo guardar asignaciones si NO es una selección interna
-      if (
-        !this.isInternalSelection &&
-        this.selectedFlight &&
-        this.reservationId
-      ) {
-
-        this.saveFlightAssignments()
-          .then((success) => {
-            if (success) {
-
-            } else {
-            }
-          })
-          .catch((error) => {
-          });
-      }
-
-      // Resetear la bandera después de procesar el cambio
       this.isInternalSelection = false;
     }
   }
@@ -1274,18 +1251,18 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       // Deseleccionar vuelo
 
       this.selectedFlight = null;
-      
-      // Deseleccionar usando el FlightSearchService
-      if (this.reservationId) {
-        this.flightSearchService.unselectAllFlights(this.reservationId).subscribe({
-          next: () => {
 
-          },
-          error: (error) => {
-          }
-        });
-      }
-      
+      // LÓGICA OBSOLETA: deselección en backend mediante FlightSearchService.unselectAllFlights.
+      // Esta responsabilidad pasa al nuevo endpoint de cambio de vuelo.
+      // if (this.reservationId) {
+      //   this.flightSearchService.unselectAllFlights(this.reservationId).subscribe({
+      //     next: () => {
+      //     },
+      //     error: (error) => {
+      //     }
+      //   });
+      // }
+
       this.flightSelectionChange.emit({ 
         selectedFlight: null, 
         totalPrice: 0, 
@@ -1322,210 +1299,14 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         packId: flightPack.id
       });
 
-      // Buscar el flightPack "sin vuelos" y asignarlo a todos los viajeros
-
-      this.findAndAssignNoFlightOption();
+      // LÓGICA OBSOLETA: búsqueda y asignación de opción "sin vuelos" a todos los viajeros
+      // mediante lógica propia de frontend. El backend gestionará este flujo.
+      // this.findAndAssignNoFlightOption();
     }
   }
 
-  /**
-   * Buscar el flightPack "sin vuelos" y asignarlo a todos los viajeros.
-   * Emite un evento para que el componente padre (flight-management) lo maneje.
-   */
-  private async findAndAssignNoFlightOption(): Promise<void> {
-
-    if (!this.reservationId) {
-
-      return;
-    }
-
-    if (!this.selectedFlight) {
-
-      return;
-    }
-
-    try {
-      // Obtener todos los viajeros de la reserva
-      const travelers = await new Promise<IReservationTravelerResponse[]>(
-        (resolve, reject) => {
-          this.reservationTravelerService
-            .getAll({ reservationId: this.reservationId! })
-            .subscribe({
-              next: (travelers) => {
-
-                resolve(travelers);
-              },
-              error: (error) => {
-                reject(error);
-              },
-            });
-        }
-      );
-
-      if (travelers.length === 0) {
-
-        return;
-      }
-
-      // En specific-search no tenemos acceso a flightPacks "sin vuelos"
-      // Por lo tanto, emitimos un evento para que el componente padre lo maneje
-
-      // Emitir evento específico para que el padre sepa que debe asignar "sin vuelos"
-      this.specificFlightSelected.emit({
-        selectedFlight: this.selectedFlight,
-        totalPrice: this.selectedFlight.ageGroupPrices?.[0]?.price || 0,
-        shouldAssignNoFlight: true // Indicar que se debe asignar "sin vuelos"
-      });
-
-      // Llamar a select de specific-search para guardar la selección
-      if (this.reservationId && this.selectedFlight) {
-
-        this.flightSearchService.selectFlight(this.reservationId, this.selectedFlight.id).subscribe({
-          next: () => {
-
-          },
-          error: (error) => {
-          },
-        });
-      }
-
-    } catch (error) {
-    }
-  }
-
-  // Método para guardar asignaciones de vuelos (similar a default-flights)
-  async saveFlightAssignments(): Promise<boolean> {
-
-    if (!this.selectedFlight || !this.reservationId) {
-
-      return true;
-    }
-
-    try {
-
-      const travelers = await new Promise<IReservationTravelerResponse[]>(
-        (resolve, reject) => {
-          this.reservationTravelerService
-            .getAll({ reservationId: this.reservationId! })
-            .subscribe({
-              next: (travelers) => {
-
-                resolve(travelers);
-              },
-              error: (error) => {
-                reject(error);
-              },
-            });
-        }
-      );
-
-      if (travelers.length === 0) {
-
-        return true;
-      }
-
-      const activityPackId = this.selectedFlight.id;
-
-      // Solo actualizar asignaciones existentes del departure, NUNCA crear nuevas
-
-      const existingAssignmentsPromises = travelers.map((traveler) => {
-        return new Promise<{
-          traveler: IReservationTravelerResponse;
-          existingAssignments: IReservationTravelerActivityPackResponse[];
-        }>((resolve, reject) => {
-          this.reservationTravelerActivityPackService
-            .getByReservationTraveler(traveler.id)
-            .subscribe({
-              next: (assignments) => {
-                // SOLO buscar asignaciones del departure (por departureActivityPackId)
-                const departureAssignments = assignments.filter(
-                  (a) => a.activityPackId === this.departureActivityPackId
-                );
-
-                // Ordenar por ID descendente para obtener el más reciente
-                const sortedAssignments = departureAssignments.sort(
-                  (a, b) => b.id - a.id
-                );
-
-                resolve({
-                  traveler,
-                  existingAssignments: sortedAssignments,
-                });
-              },
-              error: (error) => {
-                reject(error);
-              },
-            });
-        });
-      });
-
-      const existingAssignmentsResults = await Promise.all(
-        existingAssignmentsPromises
-      );
-
-      // SOLO actualizar registros existentes, NUNCA crear nuevos
-      const hasExistingDepartureAssignments = existingAssignmentsResults.some(
-        (result) => result.existingAssignments.length > 0
-      );
-
-      if (hasExistingDepartureAssignments) {
-
-        const updatePromises = existingAssignmentsResults.map((result) => {
-          return new Promise<boolean>((resolve, reject) => {
-            const { traveler, existingAssignments } = result;
-
-            if (existingAssignments.length > 0) {
-              // Siempre usar la primera asignación (la más reciente por ID)
-              const mostRecentAssignment = existingAssignments[0];
-
-              const updateData = {
-                id: mostRecentAssignment.id,
-                reservationTravelerId: traveler.id,
-                activityPackId: activityPackId,
-                updatedAt: new Date().toISOString(),
-              };
-
-              this.reservationTravelerActivityPackService
-                .update(mostRecentAssignment.id, updateData)
-                .subscribe({
-                  next: (updated: boolean) => {
-                    if (updated) {
-
-                    } else {
-                    }
-                    resolve(updated);
-                  },
-                  error: (error: any) => {
-                    reject(error);
-                  },
-                });
-            } else {
-              // NO crear nuevas asignaciones
-
-              resolve(true); // Resolver como éxito sin crear nada
-            }
-          });
-        });
-
-        await Promise.all(updatePromises);
-
-      } else {
-        // NO crear nuevas asignaciones si no existen
-
-      }
-
-      // Marcar "Sin Vuelos" en default-flights después de guardar
-      if (this.reservationId) {
-        // En lugar de crear asignaciones duplicadas, solo emitir el evento
-        // El componente padre se encargará de marcar "Sin Vuelos" en default-flights
-
-      }
-
-      return true;
-    } catch (error) {
-      return false;
-    }
-  }
+  // Lógica de asignación en BD se ha movido al backend con changeReservationFlight,
+  // por lo que ya no necesitamos findAndAssignNoFlightOption ni saveFlightAssignments.
 
   trackByFlightId(index: number, flightPack: IFlightsNetFlightPackDTO): number {
     return flightPack.id;

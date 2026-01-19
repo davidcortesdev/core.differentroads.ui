@@ -21,7 +21,7 @@ import {
 } from '../../../../core/services/tour/tour.service';
 import { forkJoin, Subscription } from 'rxjs';
 import { AuthenticateService } from '../../../../core/services/auth/auth-service.service';
-import { IFlightPackDTO } from '../../services/flightsNet.service';
+import { FlightsNetService, IFlightPackDTO } from '../../services/flightsNet.service';
 import { DefaultFlightsComponent } from './default-flights/default-flights.component';
 import { FlightSelectionState } from '../../types/flight-selection-state';
 
@@ -81,7 +81,8 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
     private tourService: TourService,
     private authService: AuthenticateService,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private flightsNetService: FlightsNetService
   ) { }
 
   ngOnInit(): void {
@@ -206,13 +207,14 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
     // NUEVO: Actualizar el vuelo seleccionado internamente
     this.selectedFlight = flightData.selectedFlight;
 
-    // Intentar guardar en la base de datos antes de emitir el evento
-    if (this.defaultFlightsComponent) {
-      try {
-        await this.defaultFlightsComponent.saveFlightAssignments();
-      } catch (error) {
-      }
-    }
+    // LÓGICA OBSOLETA: El guardado de asignaciones de vuelo ahora se delega al nuevo endpoint backend (changeReservationFlight)
+    // Se mantiene comentado temporalmente para futura eliminación.
+    // if (this.defaultFlightsComponent) {
+    //   try {
+    //     await this.defaultFlightsComponent.saveFlightAssignments();
+    //   } catch (error) {
+    //   }
+    // }
 
     // Siempre emitir el evento después del intento de guardado
     this.flightSelectionChange.emit(flightData);
@@ -236,29 +238,29 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
     totalPrice: number;
   }): Promise<void> {
 
+    // No permitir deselección (selectedFlight null). La única vía para “sin vuelos”
+    // debe ser la opción explícita de “lo quiero sin vuelos” que envía un pack válido.
+    if (!flightData.selectedFlight) {
+      return;
+    }
+
     // Actualizar el vuelo seleccionado
     this.selectedFlight = flightData.selectedFlight;
 
-    // NUEVO: Deseleccionar vuelos en specific-search SOLO si isConsolidadorVuelosActive es true
-    if (this.isConsolidadorVuelosActive && this.specificSearchComponent && this.reservationId) {
-      // Llamar al método unselectAllFlights del servicio
-      this.specificSearchComponent.flightSearchService.unselectAllFlights(this.reservationId).subscribe({
-        next: () => {
-        },
-        error: (error: any) => {
-        }
-      });
-    }
-
-    // Intentar guardar en la base de datos antes de emitir el evento
-    if (this.defaultFlightsComponent) {
+    // NUEVO: usar el endpoint backend para cambiar el vuelo de la reserva cuando se selecciona
+    // un vuelo por defecto (origen "default").
+    if (this.reservationId && this.selectedFlight) {
       try {
-        await this.defaultFlightsComponent.saveFlightAssignments();
+        await this.flightsNetService
+          .changeReservationFlight(this.reservationId, this.selectedFlight.id, 'default')
+          .toPromise();
       } catch (error) {
+        // En caso de error, dejamos el estado de UI como está y delegamos el manejo
+        // a futuras mejoras (logs, mensajes al usuario, etc.).
       }
     }
 
-    // Siempre emitir el evento después del intento de guardado
+    // Siempre emitir el evento hacia el padre
     this.flightSelectionChange.emit(flightData);
   }
 
@@ -269,41 +271,32 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
     shouldAssignNoFlight?: boolean; // NUEVO: Indicar si se debe asignar "sin vuelos"
   }): Promise<void> {
 
+    // No permitir deselección directa (selectedFlight null) a menos que sea el flujo
+    // explícito de “sin vuelos” indicado por shouldAssignNoFlight.
+    if (!flightData.selectedFlight && !flightData.shouldAssignNoFlight) {
+      return;
+    }
+
     // Convertir el vuelo al formato de FlightsNetService si existe
     const convertedFlight = flightData.selectedFlight ? this.convertFlightSearchToFlightsNet(flightData.selectedFlight) : null;
 
     // Actualizar el vuelo seleccionado
     this.selectedFlight = convertedFlight;
 
-    // NUEVO: Si shouldAssignNoFlight es true, asignar "sin vuelos" a todos los viajeros
-    if (flightData.shouldAssignNoFlight && this.defaultFlightsComponent && this.reservationId) {
-      // CORRECCIÓN: No deseleccionar vuelos de specific-search cuando asignamos "sin vuelos"
-      // porque acabamos de hacer la selección
+    // NUEVO: usar el endpoint backend para cambiar el vuelo de la reserva cuando se selecciona
+    // un vuelo desde el consolidador (origen "consolidator").
+    if (this.reservationId && convertedFlight) {
       try {
-        await this.defaultFlightsComponent.saveFlightAssignmentsForAllTravelers(0, false);
+        await this.flightsNetService
+          .changeReservationFlight(this.reservationId, convertedFlight.id, 'consolidator')
+          .toPromise();
       } catch (error) {
+        // En caso de error, dejamos el estado de UI como está y delegamos el manejo
+        // a futuras mejoras (logs, mensajes al usuario, etc.).
       }
     }
 
-    // MODIFICADO: NO marcar "Sin Vuelos" automáticamente, solo deseleccionar el vuelo del departure
-    if (this.isConsolidadorVuelosActive && this.defaultFlightsComponent && this.reservationId) {
-
-      // Usar el nuevo método que deselecciona y guarda en BD
-      try {
-        await this.defaultFlightsComponent.deselectDepartureFlightWithoutSaving();
-      } catch (error) {
-      }
-    }
-
-    // Intentar guardar en la base de datos antes de emitir el evento
-    if (this.specificSearchComponent) {
-      try {
-        await this.specificSearchComponent.saveFlightAssignments();
-      } catch (error) {
-      }
-    }
-
-    // Siempre emitir el evento después del intento de guardado
+    // Siempre emitir el evento hacia el padre
     this.flightSelectionChange.emit({
       selectedFlight: convertedFlight,
       totalPrice: flightData.totalPrice
@@ -395,13 +388,6 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
     };
 
     return baseObject;
-  }
-
-  async saveFlightAssignments(): Promise<boolean> {
-    if (this.defaultFlightsComponent) {
-      return await this.defaultFlightsComponent.saveFlightAssignments();
-    }
-    return false;
   }
 
   ngOnDestroy(): void {

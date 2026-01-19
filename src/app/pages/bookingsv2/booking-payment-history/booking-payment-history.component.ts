@@ -1521,14 +1521,15 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
 
   /**
    * Sincroniza un pago con TourKnife
-   * Usa el servicio de sincronización de reservas que sincroniza toda la reserva (incluyendo pagos)
+
+  * Usa el endpoint específico para sincronizar un pago individual
    */
   syncPaymentWithTk(payment: Payment): void {
-    if (!payment.id || !this.reservationId || this.reservationId <= 0) {
+    if (!payment.id) {
       this.messageService.add({
         severity: 'error',
         summary: 'Error',
-        detail: 'No se puede sincronizar el pago: falta información del pago o reserva.',
+        detail: 'No se puede sincronizar el pago: falta información del pago.',
         life: 5000,
       });
       return;
@@ -1537,10 +1538,10 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
     const paymentKey = payment.id.toString();
     this.isSyncingPayment[paymentKey] = true;
 
-    this.reservationsSyncsService.enqueueByReservationId(this.reservationId)
+    this.reservationsSyncsService.enqueuePaymentSync(payment.id)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response) => {
+        next: (jobId) => {
           this.messageService.add({
             severity: 'success',
             summary: 'Sincronización iniciada',

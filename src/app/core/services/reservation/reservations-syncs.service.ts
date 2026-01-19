@@ -56,5 +56,16 @@ export class ReservationsSyncsService {
       `${environment.tourknifeApiUrl}/sync/tours/status/${jobId}`
     );
   }
+
+  /**
+   * Encola el envío de un pago a TourKnife usando Hangfire para ejecución en background.
+   * POST {tourknifeApiUrl}/PaymentSync/{paymentId}/Enqueue
+   */
+  enqueuePaymentSync(paymentId: number): Observable<string> {
+    return this.http.post<string>(
+      `${environment.tourknifeApiUrl}/PaymentSync/${paymentId}/Enqueue`,
+      {}
+    );
+  }
 }
 

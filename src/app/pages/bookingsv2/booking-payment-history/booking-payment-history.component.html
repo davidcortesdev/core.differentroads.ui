@@ -114,7 +114,36 @@
                     <span class="date">{{ item.createdAt | date : 'dd/MM/yyyy' }}</span>
                   </div>
 
-                  <!-- Columna 6: Acciones ATC -->
+                  <!-- Columna 6: IDs del pago -->
+                  <div class="history-column ids-column">
+                    <div class="ids-content">
+                      <!-- ID del sistema - siempre visible -->
+                      <div class="id-item" *ngIf="item.id">
+                        <span class="id-label">ID:</span>
+                        <span class="id-value">{{ item.id }}</span>
+                      </div>
+                      <!-- ID de TK - solo si estamos en ATC y existe -->
+                      <div class="id-item" *ngIf="isATC && item.tkId">
+                        <span class="id-label">ID TK:</span>
+                        <span class="id-value">{{ item.tkId }}</span>
+                      </div>
+                      <!-- Botón para sincronizar con TK - solo si estamos en ATC y no hay tkId -->
+                      <div class="sync-action" *ngIf="isATC && !item.tkId">
+                        <p-button
+                          label="Sincronizar con TK"
+                          icon="pi pi-sync"
+                          severity="info"
+                          size="small"
+                          [disabled]="isSyncingPayment[item.id?.toString() || '']"
+                          [loading]="isSyncingPayment[item.id?.toString() || '']"
+                          (onClick)="syncPaymentWithTk(item)"
+                          pTooltip="Sincronizar pago con TourKnife"
+                        ></p-button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Columna 7: Acciones ATC -->
                   <div class="history-column actions-column">
                     <div class="actions-container">
                       <!-- Acciones de ATC -->

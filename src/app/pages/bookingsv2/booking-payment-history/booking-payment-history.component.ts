@@ -30,6 +30,7 @@ import { switchMap, map, catchError, concatMap, takeUntil, finalize } from 'rxjs
 import { forkJoin, of, Observable, Subject } from 'rxjs';
 import { FileUploadService, CloudinaryResponse } from '../../../core/services/media/file-upload.service';
 import { MessageService } from 'primeng/api';
+import { ReservationsSyncsService } from '../../../core/services/reservation/reservations-syncs.service';
 
 // Interfaces existentes
 interface TripItemData {
@@ -95,6 +96,9 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
   // Estado para tracking de eliminación de vouchers
   isDeletingVoucher: { [voucherId: string]: boolean } = {};
 
+  // Estado para tracking de sincronización de pagos con TK
+  isSyncingPayment: { [paymentId: string]: boolean } = {};
+
   // Fecha de salida para mostrar en el historial
   displayDepartureDate: string = '';
 
@@ -153,7 +157,8 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
     private activityService: ActivityService,
     private reservationFlightService: ReservationFlightService,
     private fileUploadService: FileUploadService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private reservationsSyncsService: ReservationsSyncsService
   ) {
     this.paymentForm = this.fb.group({
       amount: [0, [Validators.required, Validators.min(1)]],
@@ -1501,6 +1506,54 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
             severity: 'error',
             summary: 'Error',
             detail: 'Error al procesar el justificante. Por favor, intente nuevamente.',
+            life: 5000,
+          });
+        },
+      });
+  }
+
+  /**
+   * Sincroniza un pago con TourKnife
+   * Usa el servicio de sincronización de reservas que sincroniza toda la reserva (incluyendo pagos)
+   */
+  syncPaymentWithTk(payment: Payment): void {
+    if (!payment.id || !this.reservationId || this.reservationId <= 0) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No se puede sincronizar el pago: falta información del pago o reserva.',
+        life: 5000,
+      });
+      return;
+    }
+
+    const paymentKey = payment.id.toString();
+    this.isSyncingPayment[paymentKey] = true;
+
+    this.reservationsSyncsService.enqueueByReservationId(this.reservationId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Sincronización iniciada',
+            detail: 'La sincronización del pago con TourKnife se ha iniciado. Esto puede tardar unos momentos...',
+            life: 5000,
+          });
+
+          // Recargar los pagos después de un breve delay para dar tiempo a la sincronización
+          setTimeout(() => {
+            this.refreshPayments();
+          }, 2000);
+
+          this.isSyncingPayment[paymentKey] = false;
+        },
+        error: (error) => {
+          this.isSyncingPayment[paymentKey] = false;
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error al sincronizar',
+            detail: 'No se pudo sincronizar el pago con TourKnife. Por favor, intente nuevamente.',
             life: 5000,
           });
         },

@@ -60,6 +60,7 @@ import { CompleteInformationComponent } from './pages/complete-information/compl
 // ========================================
 import { ToursComponent } from './shared/components/tours/tours.component';
 import { AuthGuard } from './shared/auth.guard';
+import { StandaloneAuthGuard } from './shared/standalone-auth.guard';
 
 // ========================================
 // ROUTES CONFIGURATION
@@ -73,29 +74,31 @@ const routes: Routes = [
     component: StandaloneComponent,
     children: [
       { path: 'checkout/:reservationId', component: CheckoutV2Component },
-      { path: 'bookings/:id', component: Bookingsv2Component, 
-        // canActivate: [AuthGuard] 
+      { 
+        path: 'bookings/:id', 
+        component: Bookingsv2Component, 
+        canActivate: [StandaloneAuthGuard] 
       },
       {
         path: 'reservation/:reservationId/:paymentId',
         component: ReservationInfoComponent,
-        // canActivate: [AuthGuard],
+        canActivate: [StandaloneAuthGuard],
       },
       {
         path: 'reservation/:reservationId',
         component: ReservationInfoComponent,
-        // canActivate: [AuthGuard],
+        canActivate: [StandaloneAuthGuard],
       },
       // Rutas del componente HIJO (sin purchase event)
       {
         path: 'reservation-view/:reservationId/:paymentId',
         component: NewReservationComponent,
-        // canActivate: [AuthGuard],
+        canActivate: [StandaloneAuthGuard],
       },
       {
         path: 'reservation-view/:reservationId',
         component: NewReservationComponent,
-        // canActivate: [AuthGuard],
+        canActivate: [StandaloneAuthGuard],
       },
       { path: 'forget-password', component: ForgetPasswordComponent },
       // ========================================

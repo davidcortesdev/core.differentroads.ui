@@ -116,7 +116,20 @@ export class FlightSectionV2Component implements OnChanges {
       this.flightPack.flights.find((f) => isIdaFlight(f.flightTypeId)) || null;
     this.returnFlight =
       this.flightPack.flights.find((f) => isVueltaFlight(f.flightTypeId)) || null;
-    
+
+    // ✅ FALLBACK: En algunos paquetes del consolidador la vuelta puede no venir
+    // correctamente marcada con flightTypeId. Si no hemos encontrado vuelo de vuelta
+    // pero hay al menos 2 vuelos, inferimos ida/vuelta por orden cronológico.
+    if (!this.returnFlight && this.flightPack.flights.length >= 2) {
+      const sorted = [...this.flightPack.flights].sort((a, b) => {
+        const aDateTime = `${a.departureDate || ''}T${a.departureTime || ''}`;
+        const bDateTime = `${b.departureDate || ''}T${b.departureTime || ''}`;
+        return aDateTime.localeCompare(bDateTime);
+      });
+
+      this.departureFlight = sorted[0];
+      this.returnFlight = sorted[sorted.length - 1];
+    }
   }
 
   /**

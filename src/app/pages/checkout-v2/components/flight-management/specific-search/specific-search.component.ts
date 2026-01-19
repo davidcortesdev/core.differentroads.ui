@@ -14,7 +14,6 @@ import { LocationAirport, Location } from '../../../../../core/models/location/l
 import { FlightSearchService, FlightSearchRequest, IFlightPackDTO, IFlightDetailDTO, IFlightSearchResultDTO, IFlightSearchWarning, IFlightSearchMeta } from '../../../../../core/services/flight/flight-search.service';
 import { IFlightPackDTO as IFlightsNetFlightPackDTO } from '../../../services/flightsNet.service';
 import { ReservationTravelerService, IReservationTravelerResponse } from '../../../../../core/services/reservation/reservation-traveler.service';
-import { ReservationTravelerActivityPackService, IReservationTravelerActivityPackResponse } from '../../../../../core/services/reservation/reservation-traveler-activity-pack.service';
 import { FlightSelectionState } from '../../../types/flight-selection-state';
 import { AirportCityCacheService } from '../../../../../core/services/locations/airport-city-cache.service';
 
@@ -63,7 +62,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   @Input() reservationId: number | null = null;
   @Input() tourId: number | null = null; // Necesario para obtener aeropuertos permitidos
   @Input() departureActivityPackId: number | null = null; // ID del paquete del departure
-  @Input() selectedFlightFromParent: IFlightPackDTO | null = null; // Nuevo input para sincronización con el padre
+  @Input() selectedFlightFromParent: IFlightPackDTO | null = null;
 
   // Propiedades públicas
   flightForm: FormGroup;
@@ -153,7 +152,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     private readonly locationNetService: LocationNetService,
     private readonly flightSearchService: FlightSearchService,
     private readonly reservationTravelerService: ReservationTravelerService,
-    private readonly reservationTravelerActivityPackService: ReservationTravelerActivityPackService,
     private readonly airportCityCacheService: AirportCityCacheService
   ) {
     this.flightForm = this.createFlightForm();
@@ -169,8 +167,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     }
     if (this.reservationId) {
       this.getTravelers();
-      // Verificar si hay un vuelo ya seleccionado en el servicio
-      this.checkExistingFlightSelection();
     }
   }
 
@@ -184,34 +180,12 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       }
     }
 
-    // Nuevo: Actualizar selectedFlight cuando cambie desde el padre
     if (
       changes['selectedFlightFromParent'] &&
       changes['selectedFlightFromParent'].currentValue !==
         changes['selectedFlightFromParent'].previousValue
     ) {
-
       this.selectedFlight = changes['selectedFlightFromParent'].currentValue;
-
-      // Solo guardar asignaciones si NO es una selección interna
-      if (
-        !this.isInternalSelection &&
-        this.selectedFlight &&
-        this.reservationId
-      ) {
-
-        this.saveFlightAssignments()
-          .then((success) => {
-            if (success) {
-
-            } else {
-            }
-          })
-          .catch((error) => {
-          });
-      }
-
-      // Resetear la bandera después de procesar el cambio
       this.isInternalSelection = false;
     }
   }
@@ -223,8 +197,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     this.destroy$.next();
     this.destroy$.complete();
   }
-
-  // --- Métodos de inicialización ---
 
   private createFlightForm(): FormGroup {
     return this.fb.group({
@@ -578,26 +550,20 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       });
   }
 
-  // --- Métodos públicos y de lógica de negocio ---
-
   buscar() {
-    // Marcar todos los campos como touched para mostrar errores
     this.flightForm.markAllAsTouched();
     
-    // Verificar si el formulario es válido
     if (this.flightForm.invalid) {
       this.errorMessage = 'Por favor, completa todos los campos requeridos';
-      // Limpiar resultados anteriores para evitar que se muestre el mensaje de carga de ciudades
       this.flightOffersRaw = [];
       this.adaptedFlightPacks = [];
       this.searchPerformed = false;
-      // Limpiar el caché de ciudades para evitar estados inconsistentes
       this.airportCityCacheService.clearCache();
       return;
     }
     
     this.searchPerformed = true;
-    this.errorMessage = ''; // Limpiar mensaje de error anterior
+    this.errorMessage = '';
     this.searchFlights();
   }
 
@@ -609,17 +575,12 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     this.isLoading = true;
     this.searchPerformed = true;
     this.errorMessage = '';
-    
-    // Limpiar estado anterior de warnings y meta
     this.clearSearchState();
-    
-    // Reinicializar el estado de carga de ciudades
     this.airportCityCacheService.clearCache();
 
     const formValue = this.flightForm.value;
     const tipoViaje = formValue.tipoViaje;
     
-    // Determinar códigos según el tipo de viaje
     let originCode: string | null = null;
     let destinationCode: string | null = null;
     
@@ -634,8 +595,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       destinationCode = formValue.destinoVuelta?.codigo || formValue.origen?.codigo || null;
     }
     
-    // Obtener fechas/horas seleccionadas y formatearlas
-    // Solo incluir fecha/hora de vuelta si el tipo de viaje requiere vuelta
     const fechaHoraIda = formValue.fechaHoraIda;
     const fechaHoraVuelta = (tipoViaje === 'Vuelta' || tipoViaje === 'IdaVuelta') ? formValue.fechaHoraVuelta : null;
     
@@ -644,16 +603,13 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     const fechaVueltaFormatted = fechaHoraVuelta ? this.formatDateForAPI(fechaHoraVuelta) : null;
     const horaVueltaFormatted = fechaHoraVuelta ? this.formatTimeForAPI(fechaHoraVuelta) : null;
     
-    // Validar fechas/horas antes de enviar la petición (usando valores formateados para evitar problemas de zona horaria)
     const validationError = this.validateFlightDatesBeforeSearch(tipoViaje, fechaHoraIda, fechaHoraVuelta, fechaIdaFormatted, horaIdaFormatted, fechaVueltaFormatted, horaVueltaFormatted);
     if (validationError) {
       this.isLoading = false;
       this.errorMessage = validationError;
-      // Limpiar resultados anteriores para evitar que se muestre el mensaje de carga de ciudades
       this.flightOffersRaw = [];
       this.adaptedFlightPacks = [];
       this.searchPerformed = false;
-      // Limpiar el caché de ciudades para evitar estados inconsistentes
       this.airportCityCacheService.clearCache();
       return;
     }
@@ -666,7 +622,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       iataDestino: destinationCode,
       fechaIda: fechaIdaFormatted,
       horaIda: horaIdaFormatted,
-      // Solo incluir fecha/hora de vuelta si el tipo de viaje requiere vuelta
       fechaVuelta: (tipoViaje === 'Vuelta' || tipoViaje === 'IdaVuelta') ? fechaVueltaFormatted : null,
       horaVuelta: (tipoViaje === 'Vuelta' || tipoViaje === 'IdaVuelta') ? horaVueltaFormatted : null
     };
@@ -675,12 +630,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       next: (response: IFlightSearchResultDTO) => {
         this.isLoading = false;
         this.flightOffersRaw = response.flightPacks || [];
-        
-        // Eliminar duplicados antes de procesar
         this.flightOffersRaw = this.removeDuplicateFlightPacks(this.flightOffersRaw);
         
-        // Ordenar vuelos dentro de cada paquete ANTES de adaptar
-        // Esto asegura que IDA aparezca antes que VUELTA
         this.flightOffersRaw.forEach(flightPack => {
           if (flightPack.flights && flightPack.flights.length > 0) {
             const isIda = (flightTypeId: number): boolean => {
@@ -701,11 +652,9 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
           }
         });
         
-        // Procesar warnings y meta información
         this.hasSearchWarnings = response.hasWarnings || false;
         this.isEmptySearchResult = response.isEmptyResult || false;
         
-        // Procesar warnings JSON si existe
         if (response.warningsJson) {
           try {
             const warningsArray = JSON.parse(response.warningsJson);
@@ -728,17 +677,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
           this.searchMeta = null;
         }
         
-        // Log de información de la búsqueda
-        if (this.hasSearchWarnings && this.searchWarnings.length > 0) {
-          this.searchWarnings.forEach(warning => {
-          });
-        }
-        
-        // Transformar los datos directamente aquí para evitar recreaciones constantes
-        // El ordenamiento se hace dentro de adaptFlightPackForFlightItem también
         this.adaptedFlightPacks = this.flightOffersRaw.map(flightPack => this.adaptFlightPackForFlightItem(flightPack));
         
-        // Precargar nombres de ciudades para todos los aeropuertos
         this.preloadAllAirportCities().then(() => {
           this.filterOffers();
         });
@@ -750,10 +690,8 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         this.transformedFlights = [];
         this.filteredFlightsChange.emit([]);
         
-        // Intentar extraer mensaje de error del backend
         const errorMessage = this.extractErrorMessage(err);
         
-        // Detectar si es un error de aeropuerto no permitido
         if (this.isAirportNotAllowedError(errorMessage)) {
           this.errorMessage = this.formatAirportNotAllowedMessage(errorMessage);
         } else {
@@ -777,32 +715,23 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   filterOffers() {
     const formValue = this.flightForm.value;
     
-    // Si se especifica filtro de escalas, cargar detalles primero
     if (formValue.escala) {
       this.loadFlightDetailsAndFilter();
       return;
     }
     
-    // Si no hay filtros de escalas, aplicar filtros básicos y ordenamiento
     this.sortFlights(this.selectedSortOption);
     
-    // Solo mostrar vuelos si las ciudades están cargadas
     if (!this.hasPendingCities()) {
       this.displayFlights();
     } else {
-      // Si las ciudades no están cargadas, esperar a que se completen
-
       this.preloadAllAirportCities().then(() => {
         this.displayFlights();
       });
     }
   }
 
-  /**
-   * Método privado para mostrar los vuelos una vez que las ciudades están cargadas
-   */
   private displayFlights(): void {
-    // Asegurar que los vuelos estén ordenados antes de adaptar
     this.flightOffersRaw.forEach(flightPack => {
       if (flightPack.flights && flightPack.flights.length > 0) {
         const isIda = (flightTypeId: number): boolean => {
@@ -823,20 +752,15 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       }
     });
     
-    // Actualizar adaptedFlightPacks para mantener sincronización
     this.adaptedFlightPacks = this.flightOffersRaw.map(flightPack => this.adaptFlightPackForFlightItem(flightPack));
-    
     this.transformedFlights = this.transformOffersToFlightFormat(this.flightOffersRaw);
     this.filteredFlightsChange.emit(this.transformedFlights);
-
   }
 
-  // Método para obtener detalles de un vuelo específico cuando sea necesario
   getFlightDetails(consolidatorSearchId: number, amadeusFlightId: string): Observable<IFlightDetailDTO> {
     return this.flightSearchService.getFlightDetails(consolidatorSearchId, amadeusFlightId);
   }
 
-  // Método para cargar detalles de todos los vuelos y aplicar filtros de escalas
   loadFlightDetailsAndFilter(): void {
     if (!this.flightOffersRaw || this.flightOffersRaw.length === 0) return;
 
@@ -847,10 +771,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     this.isLoadingDetails = true;
-
-    // Cargar detalles de todos los vuelos en todos los paquetes para poder filtrar por escalas
-    // El nuevo endpoint requiere: /api/FlightSearch/{packId}/details/{flightId}
-    // Por eso necesitamos tanto el ID del paquete como el ID del vuelo individual
     const detailRequests: Observable<IFlightDetailDTO>[] = [];
     
     this.flightOffersRaw.forEach(flightPack => {
@@ -866,37 +786,29 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     ).subscribe({
       next: (flightDetails) => {
         this.isLoadingDetails = false;
-        // Aplicar filtros basados en los detalles cargados
         this.applyScaleFilters(flightDetails);
       },
       error: (err) => {
         this.isLoadingDetails = false;
-        // Si falla la carga de detalles, mostrar todos los vuelos
         this.filterOffers();
       }
     });
   }
 
-  // Aplicar filtros de escalas basándose en los detalles cargados
   private applyScaleFilters(flightDetails: IFlightDetailDTO[]): void {
     const formValue = this.flightForm.value;
     
-    // Filtrar paquetes basándose en los detalles de escalas
     this.flightOffersRaw = this.flightOffersRaw.filter((flightPack) => {
       if (!flightPack.flights || flightPack.flights.length === 0) return false;
       
-      // Buscar el primer vuelo de ida
       const outboundFlight = flightPack.flights.find(f => 
         f.flightTypeId === FlightTypeId.IDA_NEW || f.flightTypeId === FlightTypeId.IDA_LEGACY
       );
       if (!outboundFlight) return false;
       
-      // Por ahora, mostrar todos los vuelos ya que los detalles se cargan internamente
-      // en cada flight-item cuando useNewService="true"
       return true;
     });
     
-    // Asegurar ordenamiento de vuelos dentro de cada paquete
     this.flightOffersRaw.forEach(flightPack => {
       if (flightPack.flights && flightPack.flights.length > 0) {
         const isIda = (flightTypeId: number): boolean => {
@@ -919,12 +831,9 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     
     this.sortFlights(this.selectedSortOption);
     
-    // Solo mostrar vuelos si las ciudades están cargadas
     if (!this.hasPendingCities()) {
       this.displayFlights();
     } else {
-      // Si las ciudades no están cargadas, esperar a que se completen
-
       this.preloadAllAirportCities().then(() => {
         this.displayFlights();
       });
@@ -948,7 +857,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         });
         break;
       case 'duration':
-        // Por ahora ordenamos por precio ya que no tenemos duración detallada
         this.flightOffersRaw.sort((a, b) => {
           const priceA = a.ageGroupPrices?.[0]?.price || 0;
           const priceB = b.ageGroupPrices?.[0]?.price || 0;
@@ -963,12 +871,9 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     if (this.flightOffersRaw.length > 0) {
       this.sortFlights(this.selectedSortOption);
       
-      // Solo mostrar vuelos si las ciudades están cargadas
       if (!this.hasPendingCities()) {
         this.displayFlights();
       } else {
-        // Si las ciudades no están cargadas, esperar a que se completen
-
         this.preloadAllAirportCities().then(() => {
           this.displayFlights();
         });
@@ -976,23 +881,15 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  // --- Utilidades privadas y helpers ---
-
-  /**
-   * Elimina paquetes de vuelos duplicados basándose en precio y vuelos idénticos
-   * Mantiene solo el primer paquete de cada grupo de duplicados
-   */
   private removeDuplicateFlightPacks(flightPacks: IFlightPackDTO[]): IFlightPackDTO[] {
     const seen = new Set<string>();
     const uniquePacks: IFlightPackDTO[] = [];
     
     for (const pack of flightPacks) {
-      // Crear una clave única basada en precio y IDs de vuelos
       const price = pack.ageGroupPrices?.[0]?.price || 0;
       const flightIds = pack.flights?.map(f => f.id).sort().join(',') || '';
       const key = `${price}_${flightIds}`;
       
-      // Si no hemos visto esta combinación antes, agregarla
       if (!seen.has(key)) {
         seen.add(key);
         uniquePacks.push(pack);
@@ -1025,7 +922,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         f.flightTypeId === FlightTypeId.VUELTA_NEW || f.flightTypeId === FlightTypeId.VUELTA_LEGACY
       );
 
-      // Crear segmentos básicos basados en la información disponible
       const outboundSegments: FlightSegment[] = outboundFlight ? [{
         departureCity: outboundFlight.departureCity || outboundFlight.departureIATACode || '',
         arrivalCity: outboundFlight.arrivalCity || outboundFlight.arrivalIATACode || '',
@@ -1067,7 +963,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         }];
       }
 
-      // Convertir IAgeGroupPriceDTO a PriceData
       const priceData = flightPack.ageGroupPrices?.map(price => ({
         id: price.ageGroupId?.toString() || '',
         value: price.price || 0,
@@ -1124,7 +1019,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     const city = this.filteredCities.find(
       (c) => c.nombre.toLowerCase() === cityName.toLowerCase()
     );
-    // Retorna vacío si no se encuentra la ciudad
     return city ? city.codigo : '';
   }
 
@@ -1160,7 +1054,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       return false;
     }
 
-    // Obtener todos los códigos IATA únicos de aeropuertos
     const allAirportCodes: string[] = [];
     
     this.flightOffersRaw.forEach(flightPack => {
@@ -1188,7 +1081,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       return Promise.resolve();
     }
 
-    // Obtener todos los códigos IATA únicos de aeropuertos
     const allAirportCodes: string[] = [];
     
     this.flightOffersRaw.forEach(flightPack => {
@@ -1223,21 +1115,14 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   selectFlight(flightPack: any): void {
-
-    // Convertir de vuelta al formato del FlightSearchService si es necesario
     if (flightPack && typeof flightPack === 'object') {
-      // Buscar el vuelo original en flightOffersRaw
       const originalFlight = this.flightOffersRaw.find(f => f.id === flightPack.id);
       if (originalFlight) {
-
         this.selectFlightFromFlightItem(originalFlight);
-      } else {
       }
-    } else {
     }
   }
 
-  // Método para obtener viajeros de la reserva
   getTravelers(): void {
     if (!this.reservationId) {
       return;
@@ -1248,44 +1133,18 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       .subscribe({
         next: (travelers) => {
           this.travelers = travelers;
-
         },
         error: (error) => {
+          // Silent error handling
         },
       });
   }
 
-  // Método para verificar si hay un vuelo ya seleccionado en el servicio
-  checkExistingFlightSelection(): void {
-    if (!this.reservationId) {
-      return;
-    }
-
-    // Por ahora, no hay un método directo para obtener el vuelo seleccionado
-    // del FlightSearchService. La selección se maneja a través de la sincronización
-    // con el componente padre via selectedFlightFromParent
-
-  }
-
-  // Método para seleccionar/deseleccionar vuelos (similar a default-flights)
   selectFlightFromFlightItem(flightPack: IFlightPackDTO): void {
 
     if (this.selectedFlight === flightPack) {
-      // Deseleccionar vuelo
-
       this.selectedFlight = null;
-      
-      // Deseleccionar usando el FlightSearchService
-      if (this.reservationId) {
-        this.flightSearchService.unselectAllFlights(this.reservationId).subscribe({
-          next: () => {
 
-          },
-          error: (error) => {
-          }
-        });
-      }
-      
       this.flightSelectionChange.emit({ 
         selectedFlight: null, 
         totalPrice: 0, 
@@ -1298,8 +1157,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         totalPrice: 0,
       });
     } else {
-      // Seleccionar nuevo vuelo
-
       this.selectedFlight = flightPack;
       
       const basePrice =
@@ -1309,7 +1166,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       const totalTravelers = this.travelers.length;
       const totalPrice = totalTravelers > 0 ? basePrice * totalTravelers : 0;
 
-      // Emitir eventos
       this.specificFlightSelected.emit({
         selectedFlight: flightPack,
         totalPrice: basePrice,
@@ -1321,209 +1177,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         source: 'specific',
         packId: flightPack.id
       });
-
-      // Buscar el flightPack "sin vuelos" y asignarlo a todos los viajeros
-
-      this.findAndAssignNoFlightOption();
-    }
-  }
-
-  /**
-   * Buscar el flightPack "sin vuelos" y asignarlo a todos los viajeros.
-   * Emite un evento para que el componente padre (flight-management) lo maneje.
-   */
-  private async findAndAssignNoFlightOption(): Promise<void> {
-
-    if (!this.reservationId) {
-
-      return;
-    }
-
-    if (!this.selectedFlight) {
-
-      return;
-    }
-
-    try {
-      // Obtener todos los viajeros de la reserva
-      const travelers = await new Promise<IReservationTravelerResponse[]>(
-        (resolve, reject) => {
-          this.reservationTravelerService
-            .getAll({ reservationId: this.reservationId! })
-            .subscribe({
-              next: (travelers) => {
-
-                resolve(travelers);
-              },
-              error: (error) => {
-                reject(error);
-              },
-            });
-        }
-      );
-
-      if (travelers.length === 0) {
-
-        return;
-      }
-
-      // En specific-search no tenemos acceso a flightPacks "sin vuelos"
-      // Por lo tanto, emitimos un evento para que el componente padre lo maneje
-
-      // Emitir evento específico para que el padre sepa que debe asignar "sin vuelos"
-      this.specificFlightSelected.emit({
-        selectedFlight: this.selectedFlight,
-        totalPrice: this.selectedFlight.ageGroupPrices?.[0]?.price || 0,
-        shouldAssignNoFlight: true // Indicar que se debe asignar "sin vuelos"
-      });
-
-      // Llamar a select de specific-search para guardar la selección
-      if (this.reservationId && this.selectedFlight) {
-
-        this.flightSearchService.selectFlight(this.reservationId, this.selectedFlight.id).subscribe({
-          next: () => {
-
-          },
-          error: (error) => {
-          },
-        });
-      }
-
-    } catch (error) {
-    }
-  }
-
-  // Método para guardar asignaciones de vuelos (similar a default-flights)
-  async saveFlightAssignments(): Promise<boolean> {
-
-    if (!this.selectedFlight || !this.reservationId) {
-
-      return true;
-    }
-
-    try {
-
-      const travelers = await new Promise<IReservationTravelerResponse[]>(
-        (resolve, reject) => {
-          this.reservationTravelerService
-            .getAll({ reservationId: this.reservationId! })
-            .subscribe({
-              next: (travelers) => {
-
-                resolve(travelers);
-              },
-              error: (error) => {
-                reject(error);
-              },
-            });
-        }
-      );
-
-      if (travelers.length === 0) {
-
-        return true;
-      }
-
-      const activityPackId = this.selectedFlight.id;
-
-      // Solo actualizar asignaciones existentes del departure, NUNCA crear nuevas
-
-      const existingAssignmentsPromises = travelers.map((traveler) => {
-        return new Promise<{
-          traveler: IReservationTravelerResponse;
-          existingAssignments: IReservationTravelerActivityPackResponse[];
-        }>((resolve, reject) => {
-          this.reservationTravelerActivityPackService
-            .getByReservationTraveler(traveler.id)
-            .subscribe({
-              next: (assignments) => {
-                // SOLO buscar asignaciones del departure (por departureActivityPackId)
-                const departureAssignments = assignments.filter(
-                  (a) => a.activityPackId === this.departureActivityPackId
-                );
-
-                // Ordenar por ID descendente para obtener el más reciente
-                const sortedAssignments = departureAssignments.sort(
-                  (a, b) => b.id - a.id
-                );
-
-                resolve({
-                  traveler,
-                  existingAssignments: sortedAssignments,
-                });
-              },
-              error: (error) => {
-                reject(error);
-              },
-            });
-        });
-      });
-
-      const existingAssignmentsResults = await Promise.all(
-        existingAssignmentsPromises
-      );
-
-      // SOLO actualizar registros existentes, NUNCA crear nuevos
-      const hasExistingDepartureAssignments = existingAssignmentsResults.some(
-        (result) => result.existingAssignments.length > 0
-      );
-
-      if (hasExistingDepartureAssignments) {
-
-        const updatePromises = existingAssignmentsResults.map((result) => {
-          return new Promise<boolean>((resolve, reject) => {
-            const { traveler, existingAssignments } = result;
-
-            if (existingAssignments.length > 0) {
-              // Siempre usar la primera asignación (la más reciente por ID)
-              const mostRecentAssignment = existingAssignments[0];
-
-              const updateData = {
-                id: mostRecentAssignment.id,
-                reservationTravelerId: traveler.id,
-                activityPackId: activityPackId,
-                updatedAt: new Date().toISOString(),
-              };
-
-              this.reservationTravelerActivityPackService
-                .update(mostRecentAssignment.id, updateData)
-                .subscribe({
-                  next: (updated: boolean) => {
-                    if (updated) {
-
-                    } else {
-                    }
-                    resolve(updated);
-                  },
-                  error: (error: any) => {
-                    reject(error);
-                  },
-                });
-            } else {
-              // NO crear nuevas asignaciones
-
-              resolve(true); // Resolver como éxito sin crear nada
-            }
-          });
-        });
-
-        await Promise.all(updatePromises);
-
-      } else {
-        // NO crear nuevas asignaciones si no existen
-
-      }
-
-      // Marcar "Sin Vuelos" en default-flights después de guardar
-      if (this.reservationId) {
-        // En lugar de crear asignaciones duplicadas, solo emitir el evento
-        // El componente padre se encargará de marcar "Sin Vuelos" en default-flights
-
-      }
-
-      return true;
-    } catch (error) {
-      return false;
     }
   }
 
@@ -1531,9 +1184,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     return flightPack.id;
   }
 
-  // Adaptador para convertir IFlightPackDTO del FlightSearchService al formato esperado por app-flight-item
   adaptFlightPackForFlightItem(flightPack: IFlightPackDTO): IFlightsNetFlightPackDTO {
-    // Crear nuevo objeto adaptado
     const adaptedFlights = (flightPack.flights?.map(flight => ({
         id: flight.id,
         tkId: flight.tkId || '',
@@ -1556,7 +1207,6 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         arrivalCity: this.airportCityCacheService.getCityNameFromCache(flight.arrivalIATACode) || flight.arrivalCity || ''
     })) || []);
 
-    // Ordenar vuelos por flightTypeId para asegurar que IDA aparezca antes que VUELTA
     const isIda = (flightTypeId: number): boolean => {
       return flightTypeId === FlightTypeId.IDA_NEW || flightTypeId === FlightTypeId.IDA_LEGACY;
     };
@@ -1595,17 +1245,14 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     return adaptedObject;
   }
 
-  // Método helper para verificar si un vuelo está seleccionado
   isFlightSelected(flightPack: IFlightsNetFlightPackDTO): boolean {
     return this.selectedFlight !== null && this.selectedFlight.id === flightPack.id;
   }
 
-  // Método para obtener el texto del botón de selección
   getSelectionButtonText(flightPack: IFlightsNetFlightPackDTO): string {
     return this.isFlightSelected(flightPack) ? 'Seleccionado' : 'Seleccionar';
   }
 
-  // Método para obtener la clase CSS del botón de selección
   getSelectionButtonClass(flightPack: IFlightsNetFlightPackDTO): string {
     return this.isFlightSelected(flightPack) ? 'selected-flight-button' : '';
   }
@@ -1920,33 +1567,20 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  /**
-   * Método helper para verificar si el campo de fecha/hora de ida es requerido
-   */
   isFechaHoraIdaRequired(): boolean {
     const tipoViaje = this.flightForm?.get('tipoViaje')?.value;
     return tipoViaje === 'Ida' || tipoViaje === 'IdaVuelta';
   }
 
-  /**
-   * Método helper para verificar si el campo de fecha/hora de vuelta es requerido
-   */
   isFechaHoraVueltaRequired(): boolean {
     const tipoViaje = this.flightForm?.get('tipoViaje')?.value;
     return tipoViaje === 'Vuelta' || tipoViaje === 'IdaVuelta';
   }
 
-  /**
-   * Método helper para verificar si el campo origen es requerido
-   */
   isOrigenRequired(): boolean {
-    return true; // Siempre requerido
+    return true;
   }
 
-  /**
-   * Valida las fechas/horas antes de enviar la petición de búsqueda
-   * Retorna un mensaje de error en español si hay problemas, o null si todo está bien
-   */
   private validateFlightDatesBeforeSearch(
     tipoViaje: 'Ida' | 'Vuelta' | 'IdaVuelta',
     fechaHoraIda: Date | null,
@@ -1958,21 +1592,15 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   ): string | null {
     const errors: string[] = [];
 
-    // Validar fecha/hora de ida (llegada al aeropuerto) usando comparación de strings
     if (tipoViaje === 'Ida' || tipoViaje === 'IdaVuelta') {
       if (fechaIdaFormatted && horaIdaFormatted) {
-        // Intentar validar si hay límites disponibles
         const hasStringLimit = !!(this.fechaIdaConstante && this.fechaIdaConstante.trim() !== '');
         
-        if (!hasStringLimit) {
-          // Si no hay límites configurados, no validamos (el backend lo hará)
-        } else {
+        if (hasStringLimit) {
           try {
             const maxFechaStr = this.fechaIdaConstante;
             const maxHoraStr = this.formatTimeForDisplay(this.horaIdaConstante) || '23:59';
             
-            // Comparar directamente usando strings (YYYY-MM-DD y HH:mm)
-            // Esto evita problemas de zona horaria
             if (fechaIdaFormatted > maxFechaStr || 
                 (fechaIdaFormatted === maxFechaStr && horaIdaFormatted > maxHoraStr)) {
               errors.push(
@@ -1986,21 +1614,15 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       }
     }
 
-    // Validar fecha/hora de vuelta (salida del aeropuerto) usando comparación de strings
     if (tipoViaje === 'Vuelta' || tipoViaje === 'IdaVuelta') {
       if (fechaVueltaFormatted && horaVueltaFormatted) {
-        // Intentar validar si hay límites disponibles
         const hasStringLimit = !!(this.fechaRegresoConstante && this.fechaRegresoConstante.trim() !== '');
         
-        if (!hasStringLimit) {
-          // Si no hay límites configurados, no validamos (el backend lo hará)
-        } else {
+        if (hasStringLimit) {
           try {
             const minFechaStr = this.fechaRegresoConstante;
             const minHoraStr = this.formatTimeForDisplay(this.horaRegresoConstante) || '00:00';
             
-            // Comparar directamente usando strings (YYYY-MM-DD y HH:mm)
-            // Esto evita problemas de zona horaria
             if (fechaVueltaFormatted < minFechaStr || 
                 (fechaVueltaFormatted === minFechaStr && horaVueltaFormatted < minHoraStr)) {
               errors.push(

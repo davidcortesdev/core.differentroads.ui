@@ -1513,6 +1513,13 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
   }
 
   /**
+   * TrackBy function para mejorar el rendimiento del *ngFor
+   */
+  trackByPaymentId(index: number, payment: Payment): number | string {
+    return payment.id || payment.publicID || index;
+  }
+
+  /**
    * Sincroniza un pago con TourKnife
    * Usa el servicio de sincronización de reservas que sincroniza toda la reserva (incluyendo pagos)
    */

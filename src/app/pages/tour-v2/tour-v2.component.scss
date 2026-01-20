@@ -51,3 +51,40 @@
     }
   }
 }
+
+/* ============================================================
+ * Ocultar burbuja de chat (HubSpot) cuando se accede desde touroperacion
+ * ============================================================
+ * Esta regla solo se aplica cuando el componente TourV2Component
+ * detecta source=touroperacion en los query params y añade
+ * la clase hide-chat-widget al <body>.
+ * 
+ * Usamos ::ng-deep para poder afectar elementos fuera del scope
+ * del componente (el body y los elementos de HubSpot).
+ */
+::ng-deep body.hide-chat-widget {
+  /* Contenedor principal del widget de mensajes de HubSpot */
+  [id^='hubspot-messages-iframe-container'],
+  [id*='hubspot-messages'],
+  [id*='hubspot-conversations'],
+  /* Iframes relacionados con HubSpot / chat */
+  iframe[src*='hs-scripts.com'],
+  iframe[src*='hubspot.com'],
+  iframe[src*='hubspotusercontent.com'],
+  /* Clases comunes de HubSpot */
+  .hs-chat-widget,
+  .hs-chat-flow,
+  .hs-messages-widget,
+  .hs-messages-widget-open,
+  .hs-messages-widget-container,
+  /* Selectores más genéricos para capturar cualquier elemento de chat */
+  [class*='hs-chat'],
+  [class*='hs-messages'],
+  [id*='hs-chat'],
+  [id*='hs-messages'] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+}

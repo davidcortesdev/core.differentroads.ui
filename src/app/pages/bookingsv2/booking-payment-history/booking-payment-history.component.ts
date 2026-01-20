@@ -1167,6 +1167,27 @@ export class BookingPaymentHistoryV2Component implements OnInit, OnChanges, OnDe
   }
 
   /**
+   * Verifica si un pago está en estado completado
+   */
+  isPaymentCompleted(payment: Payment): boolean {
+    if (!payment.paymentStatusId || this.paymentStatuses.length === 0) {
+      return false;
+    }
+    const statusName = this.paymentService.getPaymentStatusName(payment.paymentStatusId, this.paymentStatuses);
+    return statusName?.toLowerCase() === 'completado';
+  }
+
+  /**
+   * Obtiene el mensaje del tooltip para el botón de sincronización
+   */
+  getSyncButtonTooltip(payment: Payment): string {
+    if (this.isPaymentCompleted(payment)) {
+      return 'Sincronizar pago con TourKnife';
+    }
+    return 'El pago debe estar completado para poder sincronizarlo con TourKnife';
+  }
+
+  /**
    * Obtiene todos los justificantes (vouchers) de todos los pagos
    */
   getPaymentVouchers(): IPaymentVoucher[] {

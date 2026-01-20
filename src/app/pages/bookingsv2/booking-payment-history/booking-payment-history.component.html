@@ -78,6 +78,8 @@
                       size="small"
                       [disabled]="true"
                       pTooltip="Este pago ya está sincronizado con TourKnife"
+                      tooltipPosition="top"
+                      appendTo="body"
                     ></p-button>
                     <!-- Botón para sincronizar (si no tiene tkId) -->
                     <p-button
@@ -89,6 +91,8 @@
                       [loading]="isSyncingPayment[payment.id?.toString() || '']"
                       (onClick)="syncPaymentWithTk(payment)"
                       pTooltip="Sincronizar pago con TourKnife"
+                      tooltipPosition="top"
+                      appendTo="body"
                     ></p-button>
                   </div>
                 </header>

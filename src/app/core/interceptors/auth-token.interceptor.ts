@@ -15,7 +15,10 @@ import { AuthenticateService } from '../services/auth/auth-service.service';
 @Injectable()
 export class AuthTokenInterceptor implements HttpInterceptor {
   private isRefreshing = false;
+  private isGeneratingToken = false;
   private refreshTokenSubject: BehaviorSubject<string | null> =
+    new BehaviorSubject<string | null>(null);
+  private generateTokenSubject: BehaviorSubject<string | null> =
     new BehaviorSubject<string | null>(null);
 
   constructor(
@@ -28,13 +31,42 @@ export class AuthTokenInterceptor implements HttpInterceptor {
     request: HttpRequest<unknown>,
     next: HttpHandler
   ): Observable<HttpEvent<unknown>> {
+    // Excluir la petición de generación de token para evitar bucles infinitos
+    if (request.url.includes('/generate-token')) {
+      return next.handle(request);
+    }
+
     let token = this.tokenManagerService.getInternalToken();
 
     // Si no hay token pero el usuario está autenticado con Cognito, generar uno
     if (!token && this.authService.isUserLoggedIn()) {
+      // Si ya se está generando un token, esperar a que termine
+      if (this.isGeneratingToken) {
+        return this.generateTokenSubject.pipe(
+          filter((newToken) => newToken !== null),
+          take(1),
+          switchMap((newToken) => {
+            request = this.addTokenHeader(request, newToken as string);
+            return next.handle(request).pipe(
+              catchError((error: HttpErrorResponse) => {
+                if (error.status === 401) {
+                  return this.handle401Error(request, next);
+                }
+                return throwError(() => error);
+              })
+            );
+          })
+        );
+      }
+
       // Generar token antes de continuar con la petición
+      this.isGeneratingToken = true;
+      this.generateTokenSubject.next(null);
+
       return from(this.authService.refreshInternalToken()).pipe(
         switchMap((newToken: string) => {
+          this.isGeneratingToken = false;
+          this.generateTokenSubject.next(newToken);
           token = newToken;
           request = this.addTokenHeader(request, token);
           return next.handle(request).pipe(
@@ -47,6 +79,8 @@ export class AuthTokenInterceptor implements HttpInterceptor {
           );
         }),
         catchError((error: unknown) => {
+          this.isGeneratingToken = false;
+          this.generateTokenSubject.next(null);
           // Si falla la generación del token, continuar sin token
           // (puede ser una ruta pública o el backend manejará el error)
           console.warn('Error generating internal token in interceptor:', error);

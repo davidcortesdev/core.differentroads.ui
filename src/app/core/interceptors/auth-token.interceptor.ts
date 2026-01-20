@@ -28,7 +28,39 @@ export class AuthTokenInterceptor implements HttpInterceptor {
     request: HttpRequest<unknown>,
     next: HttpHandler
   ): Observable<HttpEvent<unknown>> {
-    const token = this.tokenManagerService.getInternalToken();
+    let token = this.tokenManagerService.getInternalToken();
+
+    // Si no hay token pero el usuario está autenticado con Cognito, generar uno
+    if (!token && this.authService.isUserLoggedIn()) {
+      // Generar token antes de continuar con la petición
+      return from(this.authService.refreshInternalToken()).pipe(
+        switchMap((newToken: string) => {
+          token = newToken;
+          request = this.addTokenHeader(request, token);
+          return next.handle(request).pipe(
+            catchError((error: HttpErrorResponse) => {
+              if (error.status === 401 && token) {
+                return this.handle401Error(request, next);
+              }
+              return throwError(() => error);
+            })
+          );
+        }),
+        catchError((error: unknown) => {
+          // Si falla la generación del token, continuar sin token
+          // (puede ser una ruta pública o el backend manejará el error)
+          console.warn('Error generating internal token in interceptor:', error);
+          return next.handle(request).pipe(
+            catchError((httpError: HttpErrorResponse) => {
+              if (httpError.status === 401) {
+                return this.handle401Error(request, next);
+              }
+              return throwError(() => httpError);
+            })
+          );
+        })
+      );
+    }
 
     // Añadir token a todas las peticiones si existe (incluso rutas públicas)
     if (token) {

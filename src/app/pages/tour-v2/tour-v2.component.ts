@@ -149,7 +149,7 @@ export class TourV2Component implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.titleService.setTitle('Tour - Different Roads');
     
-    // Verificar si debe ocultar el chat (solo cuando viene desde touroperacion)
+    // Verificar si debe ocultar el chat (solo en rutas standalone)
     this.checkAndToggleChatWidget();
     
     this.route.paramMap.subscribe((params) => {
@@ -185,14 +185,14 @@ export class TourV2Component implements OnInit, OnDestroy {
   }
 
   /**
-   * Verifica si debe ocultar el chat basándose en query params.
-   * Solo se oculta cuando source=touroperacion (vista previa desde touroperacion).
+   * Verifica si debe ocultar el chat basándose en la ruta.
+   * Solo se oculta cuando la ruta es standalone (rutas que contienen '/standalone/').
    */
   private checkAndToggleChatWidget(): void {
-    const queryParams = this.route.snapshot.queryParams;
-    const isFromTourOperacion = queryParams['source'] === 'touroperacion';
+    const currentUrl = this.router.url;
+    const isStandaloneRoute = currentUrl.includes('/standalone/');
     
-    if (isFromTourOperacion) {
+    if (isStandaloneRoute) {
       this.renderer.addClass(document.body, 'hide-chat-widget');
       
       // Forzar ocultación adicional con delay para asegurar que funcione incluso si el chat se carga después

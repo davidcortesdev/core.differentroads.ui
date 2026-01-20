@@ -53,10 +53,10 @@
 }
 
 /* ============================================================
- * Ocultar burbuja de chat (HubSpot) cuando se accede desde touroperacion
+ * Ocultar burbuja de chat (HubSpot) en rutas standalone
  * ============================================================
  * Esta regla solo se aplica cuando el componente TourV2Component
- * detecta source=touroperacion en los query params y añade
+ * detecta que la ruta es standalone (contiene '/standalone/') y añade
  * la clase hide-chat-widget al <body>.
  * 
  * Usamos ::ng-deep para poder afectar elementos fuera del scope

@@ -782,13 +782,23 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         if (itineraries && itineraries.length > 0) {
           // Tomar el primer itinerario que coincida con los filtros
           this.itineraryData = itineraries[0];
-          this.itineraryId = this.itineraryData.id;
+          // CORREGIDO: Solo establecer itineraryId si no hay uno del departure ya cargado
+          // El departure tiene prioridad ya que es específico del período
+          if (!this.departureData?.itineraryId) {
+            this.itineraryId = this.itineraryData.id;
+          }
         } else {
-          this.itineraryId = null;
+          // Solo establecer a null si no hay departure con itineraryId
+          if (!this.departureData?.itineraryId) {
+            this.itineraryId = null;
+          }
         }
       },
       error: (error) => {
-        this.itineraryId = null;
+        // Solo establecer a null si no hay departure con itineraryId
+        if (!this.departureData?.itineraryId) {
+          this.itineraryId = null;
+        }
       },
     });
   }
@@ -807,10 +817,11 @@ export class CheckoutV2Component implements OnInit, OnDestroy, AfterViewInit {
         // Por ahora, vamos a usar un valor por defecto o buscar en la BD
         this.loadDepartureActivityPackId(departureId);
 
-        // Solo asignar si no se ha obtenido desde el tour (como respaldo)
-        if (!this.itineraryId && departure.itineraryId) {
+        // CORREGIDO: Priorizar siempre el itineraryId del departure sobre el del tour
+        // ya que el departure es específico del período y puede tener un itinerario diferente
+        if (departure.itineraryId) {
           this.itineraryId = departure.itineraryId;
-          }
+        }
         } else {
           // Si departure es null, establecer valores por defecto
           this.departureDate = '';

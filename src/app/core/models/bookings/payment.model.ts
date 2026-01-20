@@ -16,6 +16,7 @@ export interface Payment {
   paymentMethodId?: number;
   paymentStatusId?: number; // NUEVO: Para el dropdown de estados en ATC
   id?: number; // ID numérico del pago para navegación
+  tkId?: string; // ID de TK del pago
 }
 
 export interface IPaymentVoucher {

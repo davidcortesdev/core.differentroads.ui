@@ -49,104 +49,139 @@
               <p-progressSpinner></p-progressSpinner>
             </div>
 
-            <!-- Payment history list -->
-            <div *ngIf="!isLoadingPayments">
-              <div *ngFor="let item of paymentHistory" class="history-item">
-                <div class="history-item-content">
-                  <!-- Columna 1: Método de pago -->
-                  <div class="history-column method-column">
-                    <span class="method" *ngIf="item.method">
-                      <i class="pi pi-credit-card"></i> {{ item.method }}
-                    </span>
-                  </div>
-
-                  <!-- Columna 2: Importe -->
-                  <div class="history-column amount-column">
-                    <span class="amount">{{ item.amount | currencyFormat }}</span>
-                  </div>
-
-                  <!-- Columna 3: Estado -->
-                  <div class="history-column status-column">
-                    <span class="status-text">
-                      <p-tag 
-                        [value]="getPaymentStatusDisplayName(item)" 
-                        [severity]="getPaymentStatusColor(item) ? undefined : 'info'"
-                        [style.background-color]="getPaymentStatusColor(item) || undefined"
-                        [style.color]="getPaymentStatusColor(item) ? '#fff' : undefined"
-                        [style.border]="getPaymentStatusColor(item) ? 'none' : undefined"
-                      ></p-tag>
-                    </span>
-                  </div>
-
-                  <!-- Columna 4: Botón justificante -->
-                  <div class="history-column notes-column">
-                    <div class="notes-content">
-                      <!-- Botón para subir justificante si es transferencia -->
-                      <span class="upload-voucher-action" *ngIf="isTransfer(item)">
-                        <input
-                          type="file"
-                          [id]="'file-input-' + (item.id || item.publicID)"
-                          accept="image/*,.pdf"
-                          style="display: none;"
-                          (change)="onVoucherFileSelect($event, item)"
-                          [disabled]="isUploadingVoucher[item.id || item.publicID]"
-                        />
-                        <p-button
-                          [label]="getUploadVoucherButtonLabel(item)"
-                          icon="pi pi-upload"
-                          severity="warning"
-                          size="small"
-                          [disabled]="isUploadingVoucher[item.id || item.publicID]"
-                          (onClick)="triggerFileInput(item)"
-                          [pTooltip]="getUploadVoucherButtonLabel(item)"
-                        ></p-button>
-                        <p-progressSpinner
-                          *ngIf="isUploadingVoucher[item.id || item.publicID]"
-                          styleClass="upload-spinner"
-                          [style]="{ width: '20px', height: '20px' }"
-                        ></p-progressSpinner>
-                      </span>
-                    </div>
-                  </div>
-
-                  <!-- Columna 5: Fecha del pago -->
-                  <div class="history-column date-column">
-                    <span class="date">{{ item.createdAt | date : 'dd/MM/yyyy' }}</span>
-                  </div>
-
-                  <!-- Columna 6: Acciones ATC -->
-                  <div class="history-column actions-column">
-                    <div class="actions-container">
-                      <!-- Acciones de ATC -->
-                      <span class="actions" *ngIf="isATC">
-                        <p-dropdown
-                          [options]="paymentStatuses"
-                          [(ngModel)]="selectedStatusByPaymentId[item.publicID]"
-                          optionLabel="name"
-                          optionValue="id"
-                          [placeholder]="getPaymentStatusDisplayName(item)"
-                          [style]="{ minWidth: '200px' }"
-                          [disabled]="loadingStatuses || paymentStatuses.length === 0 || isChanging[item.publicID]"
-                          appendTo="body"
-                        ></p-dropdown>
-                        <button
-                          pButton
-                          label="Aceptar"
-                          class="status-change-btn"
-                          [disabled]="isChangeDisabled(item)"
-                          [loading]="isChanging[item.publicID]"
-                          (click)="onChangeStatusClick(item)"
-                        ></button>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div
-                *ngIf="!paymentHistory || paymentHistory.length === 0"
-                class="empty-message"
+            <!-- Payment History List -->
+            <div *ngIf="!isLoadingPayments" class="payment-history-list">
+              <!-- Payment Items -->
+              <article 
+                *ngFor="let payment of paymentHistory; trackBy: trackByPaymentId" 
+                class="payment-item"
               >
-                No hay ningun pago registrado
+                <!-- Payment Identifiers -->
+                <header class="payment-header">
+                  <div class="payment-identifiers">
+                    <span class="payment-id" *ngIf="payment.id">
+                      <strong>ID:</strong>
+                      <span>{{ payment.id }}</span>
+                    </span>
+                    <span class="payment-id" *ngIf="isATC && payment.tkId">
+                      <strong>ID TK:</strong>
+                      <span>{{ payment.tkId }}</span>
+                    </span>
+                  </div>
+                  <div class="payment-header-actions" *ngIf="isATC">
+                    <!-- Botón sincronizado (si ya tiene tkId) -->
+                    <p-button
+                      *ngIf="payment.tkId"
+                      label="Sincronizado con TK"
+                      icon="pi pi-check-circle"
+                      severity="success"
+                      size="small"
+                      [disabled]="true"
+                      pTooltip="Este pago ya está sincronizado con TourKnife"
+                      tooltipPosition="top"
+                      appendTo="body"
+                    ></p-button>
+                    <!-- Botón para sincronizar (si no tiene tkId) -->
+                    <p-button
+                      *ngIf="!payment.tkId"
+                      label="Sincronizar con TK"
+                      icon="pi pi-sync"
+                      size="small"
+                      [disabled]="isSyncingPayment[payment.id?.toString() || ''] || !isPaymentCompleted(payment)"
+                      [loading]="isSyncingPayment[payment.id?.toString() || '']"
+                      (onClick)="syncPaymentWithTk(payment)"
+                      [pTooltip]="getSyncButtonTooltip(payment)"
+                      tooltipPosition="top"
+                      appendTo="body"
+                    ></p-button>
+                  </div>
+                </header>
+
+                <!-- Payment Details -->
+                <section class="payment-details">
+                  <div class="payment-info">
+                    <div class="payment-method" *ngIf="payment.method">
+                      <i class="pi pi-credit-card" aria-hidden="true"></i>
+                      <span>{{ payment.method }}</span>
+                    </div>
+                    <div class="payment-amount">
+                      {{ payment.amount | currencyFormat }}
+                    </div>
+                    <div class="payment-status">
+                      <p-tag 
+                        [value]="getPaymentStatusDisplayName(payment)" 
+                        [severity]="getPaymentStatusColor(payment) ? undefined : 'info'"
+                        [style.background-color]="getPaymentStatusColor(payment) || undefined"
+                        [style.color]="getPaymentStatusColor(payment) ? '#fff' : undefined"
+                        [style.border]="getPaymentStatusColor(payment) ? 'none' : undefined"
+                      ></p-tag>
+                    </div>
+                    <div class="payment-date">
+                      <time [attr.datetime]="payment.createdAt">
+                        {{ payment.createdAt | date : 'dd/MM/yyyy' }}
+                      </time>
+                    </div>
+                  </div>
+
+                  <!-- Payment Actions -->
+                  <div class="payment-actions">
+                    <!-- Voucher Upload (Transfer payments only) -->
+                    <div *ngIf="isTransfer(payment)" class="voucher-upload">
+                      <input
+                        type="file"
+                        [id]="'file-input-' + (payment.id || payment.publicID)"
+                        accept="image/*,.pdf"
+                        style="display: none;"
+                        (change)="onVoucherFileSelect($event, payment)"
+                        [disabled]="isUploadingVoucher[payment.id || payment.publicID]"
+                      />
+                      <p-button
+                        [label]="getUploadVoucherButtonLabel(payment)"
+                        icon="pi pi-upload"
+                        severity="warning"
+                        size="small"
+                        [disabled]="isUploadingVoucher[payment.id || payment.publicID]"
+                        (onClick)="triggerFileInput(payment)"
+                        [pTooltip]="getUploadVoucherButtonLabel(payment)"
+                      ></p-button>
+                      <p-progressSpinner
+                        *ngIf="isUploadingVoucher[payment.id || payment.publicID]"
+                        styleClass="upload-spinner"
+                        [style]="{ width: '20px', height: '20px' }"
+                      ></p-progressSpinner>
+                    </div>
+
+                    <!-- ATC Actions -->
+                    <div *ngIf="isATC" class="atc-actions">
+                      <p-dropdown
+                        [options]="paymentStatuses"
+                        [(ngModel)]="selectedStatusByPaymentId[payment.publicID]"
+                        optionLabel="name"
+                        optionValue="id"
+                        [placeholder]="getPaymentStatusDisplayName(payment)"
+                        [style]="{ minWidth: '200px' }"
+                        [disabled]="loadingStatuses || paymentStatuses.length === 0 || isChanging[payment.publicID]"
+                        appendTo="body"
+                      ></p-dropdown>
+                      <button
+                        pButton
+                        label="Aceptar"
+                        class="status-change-btn"
+                        [disabled]="isChangeDisabled(payment)"
+                        [loading]="isChanging[payment.publicID]"
+                        (click)="onChangeStatusClick(payment)"
+                      ></button>
+                    </div>
+                  </div>
+                </section>
+              </article>
+
+              <!-- Empty State -->
+              <div 
+                *ngIf="!paymentHistory || paymentHistory.length === 0" 
+                class="empty-state"
+              >
+                <p>No hay ningún pago registrado</p>
               </div>
             </div>
           </p-panel>

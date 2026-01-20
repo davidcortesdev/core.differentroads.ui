@@ -14,6 +14,7 @@ export interface IPaymentResponse {
   notes?: string;
   attachmentUrl?: string;
   currencyId: number;
+  tkId?: string;
 }
 
 export interface IPaymentCreate {

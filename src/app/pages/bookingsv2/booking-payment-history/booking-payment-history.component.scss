@@ -24,79 +24,107 @@
   p-panel { flex: 1; }
 }
 
-.history-item {
-  padding: 0.75rem 0;
-  border-bottom: 1px solid #eee;
-  &:last-child { border-bottom: none; }
-  .history-item-content {
-    display: grid;
-    grid-template-columns: 1.5fr 1fr 1.2fr 2fr 1fr auto;
-    gap: 1rem;
-    align-items: center;
-    
-    @media (max-width: 1200px) {
-      grid-template-columns: 1.2fr 0.8fr 1fr 1.5fr 0.9fr auto;
-      gap: 0.75rem;
-    }
-    
-    @media (max-width: 992px) {
-      grid-template-columns: 1fr 0.8fr 1fr;
-      gap: 0.75rem;
-      .notes-column, .date-column { display: none; }
-      .method-column { grid-column: 1; }
-      .amount-column { grid-column: 2; }
-      .status-column { grid-column: 3; }
-      .actions-column { grid-column: 1 / -1; margin-top: 0.5rem; }
-    }
-  }
-  
-  .history-column {
+// Payment History Styles
+.payment-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.payment-item {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.25rem;
+  overflow: hidden;
+}
+
+.payment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #f3f4f6;
+
+  .payment-identifiers {
     display: flex;
-    align-items: center;
-    &.method-column .method {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      font-size: 0.938rem;
-      font-weight: 500;
-      color: var(--background-azul);
-      i { font-size: 0.938rem; }
-    }
-    &.amount-column .amount { font-weight: 600; font-size: 0.938rem; color: var(--background-azul); }
-    &.status-column .status-text { color: var(--background-azul); font-size: 0.938rem; }
-    &.notes-column .notes-content {
+    gap: 1.5rem;
+
+    .payment-id {
       display: flex;
-      gap: 0.75rem;
-      align-items: center;
-      flex-wrap: wrap;
-      .notes {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        font-size: 0.813rem;
-        font-style: italic;
-        color: #888;
-        word-break: break-word;
-        flex: 1;
-        min-width: 0;
-        i { font-size: 0.813rem; flex-shrink: 0; }
+      gap: 0.5rem;
+      font-size: 0.875rem;
+
+      strong {
+        color: #6b7280;
       }
-      .upload-voucher-action { display: inline-flex; align-items: center; flex-shrink: 0; }
-    }
-    &.date-column .date { font-weight: 500; font-size: 0.938rem; color: #666; }
-    &.actions-column {
-      justify-content: flex-end;
-      .actions-container {
-        display: inline-flex;
-        gap: 0.5rem;
-        align-items: center;
-        flex-wrap: wrap;
-        justify-content: flex-end;
-        .upload-voucher-action, .actions { display: inline-flex; align-items: center; gap: 0.5rem; }
+
+      span {
+        color: var(--background-azul);
+        font-weight: 500;
       }
     }
   }
 }
+
+.payment-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+
+  .payment-info {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .payment-method {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--background-azul);
+    font-weight: 500;
+  }
+
+  .payment-amount {
+    font-weight: 600;
+    color: var(--background-azul);
+  }
+
+  .payment-date {
+    color: #6b7280;
+    font-size: 0.875rem;
+  }
+
+  .payment-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-shrink: 0;
+    min-width: 0;
+
+    .atc-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      max-width: 100%;
+    }
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+}
+
 :host ::ng-deep {
   .p-panel {
     border: 1px solid #eaeaea;

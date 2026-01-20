@@ -444,6 +444,7 @@ export class BookingsServiceV2 {
         createdAt: new Date(payment.paymentDate).toISOString(),
         updatedAt: new Date(payment.paymentDate).toISOString(),
         id: payment.id, // NUEVO: Incluir el ID numérico para navegación
+        tkId: payment.tkId, // ID de TK del pago
       };
 
       // Agregar vouchers si hay archivo adjunto

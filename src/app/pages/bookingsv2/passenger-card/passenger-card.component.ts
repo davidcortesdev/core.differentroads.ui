@@ -58,6 +58,7 @@ export class PassengerCardV2Component implements OnInit, OnChanges, OnDestroy {
   passengerForm!: FormGroup;
   isEditing = false;
   today = new Date();
+  minExpirationDate: Date = new Date();
 
   // Opciones para el dropdown de prefijo telefónico
   phonePrefixOptions: IPhonePrefixResponse[] = [];
@@ -92,6 +93,12 @@ export class PassengerCardV2Component implements OnInit, OnChanges, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    // Establecer fecha mínima para fechas de expiración (mañana)
+    const tomorrow = new Date(this.today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    this.minExpirationDate = tomorrow;
+
     // Cargar prefijos telefónicos
     this.phonePrefixService.getAllOrdered()
       .pipe(takeUntil(this.destroy$))
@@ -857,7 +864,67 @@ export class PassengerCardV2Component implements OnInit, OnChanges, OnDestroy {
       validators.push(Validators.minLength(5));
     }
 
+    // Validador para fechas de expiración (deben ser futuras)
+    if (fieldDetails.fieldType === 'date') {
+      const fieldCode = fieldDetails.code.toLowerCase();
+      const isExpirationDate = fieldCode.includes('expir') || 
+                              fieldCode.includes('venc') ||
+                              fieldCode === 'minoridexpirationdate' ||
+                              fieldCode === 'documentexpirationdate' ||
+                              fieldCode === 'dniexpiration';
+      
+      if (isExpirationDate) {
+        validators.push(this.expirationDateValidator());
+      }
+    }
+    
     return validators;
+  }
+
+  /**
+   * Validador para fechas de expiración (deben ser futuras)
+   */
+  private expirationDateValidator() {
+    return (control: AbstractControl): { [key: string]: boolean } | null => {
+      if (!control.value) {
+        return null;
+      }
+
+      let date: Date;
+      if (control.value instanceof Date) {
+        date = control.value;
+      } else if (typeof control.value === 'string') {
+        if (control.value.includes('/')) {
+          const parts = control.value.split('/');
+          if (parts.length === 3) {
+            const day = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1;
+            const year = parseInt(parts[2], 10);
+            date = new Date(year, month, day);
+          } else {
+            return { invalidDate: true };
+          }
+        } else {
+          date = new Date(control.value);
+        }
+      } else {
+        return { invalidDate: true };
+      }
+
+      if (isNaN(date.getTime())) {
+        return { invalidDate: true };
+      }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      date.setHours(0, 0, 0, 0);
+
+      if (date <= today) {
+        return { expirationDatePast: true };
+      }
+
+      return null;
+    };
   }
 
   /**

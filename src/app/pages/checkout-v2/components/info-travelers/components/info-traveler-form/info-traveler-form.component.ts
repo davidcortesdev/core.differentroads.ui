@@ -148,7 +148,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       futureDate: () => 'La fecha debe ser posterior a hoy.',
       birthdateTooRecent: () => 'La fecha de nacimiento no puede ser posterior a la fecha máxima permitida. La edad mínima para este grupo no corresponde.',
       birthdateFuture: () => 'La fecha de nacimiento no puede ser futura.',
-      expirationDatePast: () => 'La fecha de expiración no puede ser anterior a hoy.'
+      expirationDatePast: () => 'La fecha de expiración debe ser una fecha futura.'
     },
     sex: {
       required: () => 'Debe seleccionar un sexo.',
@@ -813,7 +813,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       today.setHours(0, 0, 0, 0);
       date.setHours(0, 0, 0, 0);
 
-      if (date < today) {
+      if (date <= today) {
         return { expirationDatePast: true };
       }
 
@@ -864,7 +864,10 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       }
     } else if (fieldCode === 'expirationdate' || fieldCode === 'dniexpiration') {
       const today = new Date();
-      return today;
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      return tomorrow;
     }
     
     const today = new Date();

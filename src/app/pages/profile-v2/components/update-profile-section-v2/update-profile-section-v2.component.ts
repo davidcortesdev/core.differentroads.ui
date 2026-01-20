@@ -42,6 +42,9 @@ export class UpdateProfileSectionV2Component implements OnInit, OnDestroy {
   phonePrefixOptions: IPhonePrefixResponse[] = [];
   selectedPhonePrefix: string | null = null;
 
+  // Fecha mínima para la fecha de caducidad del DNI (mañana)
+  minExpirationDate: Date = new Date();
+
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -51,6 +54,13 @@ export class UpdateProfileSectionV2Component implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
+    // Establecer fecha mínima para fecha de caducidad DNI (mañana)
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    this.minExpirationDate = tomorrow;
+
     // Cargar prefijos telefónicos
     this.phonePrefixService.getAllOrdered()
       .pipe(takeUntil(this.destroy$))

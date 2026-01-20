@@ -84,7 +84,6 @@
                       *ngIf="!payment.tkId"
                       label="Sincronizar con TK"
                       icon="pi pi-sync"
-                      severity="info"
                       size="small"
                       [disabled]="isSyncingPayment[payment.id?.toString() || '']"
                       [loading]="isSyncingPayment[payment.id?.toString() || '']"

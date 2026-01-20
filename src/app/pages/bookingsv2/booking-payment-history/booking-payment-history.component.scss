@@ -104,6 +104,12 @@
     align-items: center;
     gap: 0.75rem;
     flex-shrink: 0;
+
+    .atc-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
   }
 }
 

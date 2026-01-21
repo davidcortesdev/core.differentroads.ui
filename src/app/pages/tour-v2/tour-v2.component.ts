@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Renderer2 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TourService, Tour } from '../../core/services/tour/tour.service';
 import { catchError, switchMap, map, first, concatMap } from 'rxjs/operators';
@@ -84,6 +84,7 @@ export class TourV2Component implements OnInit, OnDestroy {
   
   private viewItemTracked: boolean = false;
   private abortController = new AbortController();
+  private chatHideTimeouts: number[] = [];
 
   selectedCity: string = '';
 
@@ -141,11 +142,16 @@ export class TourV2Component implements OnInit, OnDestroy {
     private tourLocationService: TourLocationService,
     private locationService: LocationNetService,
     private departureService: DepartureService,
-    private tripTypeService: TripTypeService
+    private tripTypeService: TripTypeService,
+    private renderer: Renderer2
   ) {}
 
   ngOnInit(): void {
     this.titleService.setTitle('Tour - Different Roads');
+    
+    // Verificar si debe ocultar el chat (solo en rutas standalone)
+    this.checkAndToggleChatWidget();
+    
     this.route.paramMap.subscribe((params) => {
       const slug: string | null = params.get('slug');
       
@@ -160,6 +166,9 @@ export class TourV2Component implements OnInit, OnDestroy {
         this.tourSlug = slug;
         this.preview = isPreview;
         this.loadTourBySlug(slug);
+        
+        // Re-verificar chat después de cambiar de tour
+        this.checkAndToggleChatWidget();
       } else {
         this.error = 'No se proporcionó un slug de tour válido';
         this.loading = false;
@@ -169,6 +178,64 @@ export class TourV2Component implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.abortController.abort();
+    // Limpiar timeouts y restaurar chat
+    this.chatHideTimeouts.forEach(timeout => clearTimeout(timeout));
+    this.chatHideTimeouts = [];
+    this.renderer.removeClass(document.body, 'hide-chat-widget');
+  }
+
+  /**
+   * Verifica si debe ocultar el chat basándose en la ruta.
+   * Solo se oculta cuando la ruta es standalone (rutas que contienen '/standalone/').
+   */
+  private checkAndToggleChatWidget(): void {
+    const currentUrl = this.router.url;
+    const isStandaloneRoute = currentUrl.includes('/standalone/');
+    
+    if (isStandaloneRoute) {
+      this.renderer.addClass(document.body, 'hide-chat-widget');
+      
+      // Forzar ocultación adicional con delay para asegurar que funcione incluso si el chat se carga después
+      const timeout1 = window.setTimeout(() => this.hideChatElements(), 100);
+      const timeout2 = window.setTimeout(() => this.hideChatElements(), 500);
+      const timeout3 = window.setTimeout(() => this.hideChatElements(), 1000);
+      
+      this.chatHideTimeouts.push(timeout1, timeout2, timeout3);
+    } else {
+      this.renderer.removeClass(document.body, 'hide-chat-widget');
+    }
+  }
+
+  /**
+   * Fuerza la ocultación de elementos de chat directamente en el DOM
+   */
+  private hideChatElements(): void {
+    const selectors = [
+      '[id^="hubspot-messages-iframe-container"]',
+      '[id*="hubspot-messages"]',
+      '[id*="hubspot-conversations"]',
+      'iframe[src*="hs-scripts.com"]',
+      'iframe[src*="hubspot.com"]',
+      '.hs-chat-widget',
+      '.hs-messages-widget',
+      '[class*="hs-chat"]',
+      '[id*="hs-chat"]'
+    ];
+
+    selectors.forEach(selector => {
+      try {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach((el: Element) => {
+          const htmlEl = el as HTMLElement;
+          htmlEl.style.display = 'none';
+          htmlEl.style.visibility = 'hidden';
+          htmlEl.style.opacity = '0';
+          htmlEl.style.pointerEvents = 'none';
+        });
+      } catch (e) {
+        // Ignorar errores de selectores
+      }
+    });
   }
 
 private getTourTripTypesForAnalytics(tourId: number): Observable<string[]> {

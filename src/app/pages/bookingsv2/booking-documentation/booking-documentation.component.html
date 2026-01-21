@@ -101,7 +101,7 @@
           <tr>
             <th style="width: 3rem"></th>
             <th>Tipo</th>
-            <th>Email</th>
+            <th *ngIf="isAtc">Email</th>
             <th>Estado</th>
             <th>Fecha de creación</th>
             <th>Fecha de envío</th>
@@ -134,7 +134,7 @@
             <td>
               {{ getNotificationTypeText(notification.notificationTypeId) }}
             </td>
-            <td>
+            <td *ngIf="isAtc">
               {{ notification.recipientEmail || "N/A" }}
             </td>
             <td>

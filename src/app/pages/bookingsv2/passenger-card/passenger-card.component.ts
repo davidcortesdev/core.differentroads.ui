@@ -847,6 +847,27 @@ export class PassengerCardV2Component implements OnInit, OnChanges, OnDestroy {
   }
 
   /**
+   * Verifica si un campo es de fecha de expiración
+   */
+  isExpirationDateField(fieldDetails: IReservationFieldResponse): boolean {
+    if (fieldDetails.fieldType !== 'date') {
+      return false;
+    }
+    
+    const fieldCode = fieldDetails.code.toLowerCase();
+    const fieldName = (fieldDetails.name || '').toLowerCase();
+    
+    return fieldCode.includes('expir') || 
+           fieldCode.includes('venc') ||
+           fieldCode === 'minoridexpirationdate' ||
+           fieldCode === 'documentexpirationdate' ||
+           fieldCode === 'dniexpiration' ||
+           fieldName.includes('expiración') ||
+           fieldName.includes('vencimiento') ||
+           fieldName.includes('caducidad');
+  }
+
+  /**
    * Obtiene los validadores para un campo basado en su configuración
    */
   getFieldValidators(drf: IDepartureReservationFieldResponse, fieldDetails: IReservationFieldResponse): any[] {
@@ -865,17 +886,8 @@ export class PassengerCardV2Component implements OnInit, OnChanges, OnDestroy {
     }
 
     // Validador para fechas de expiración (deben ser futuras)
-    if (fieldDetails.fieldType === 'date') {
-      const fieldCode = fieldDetails.code.toLowerCase();
-      const isExpirationDate = fieldCode.includes('expir') || 
-                              fieldCode.includes('venc') ||
-                              fieldCode === 'minoridexpirationdate' ||
-                              fieldCode === 'documentexpirationdate' ||
-                              fieldCode === 'dniexpiration';
-      
-      if (isExpirationDate) {
-        validators.push(this.expirationDateValidator());
-      }
+    if (this.isExpirationDateField(fieldDetails)) {
+      validators.push(this.expirationDateValidator());
     }
     
     return validators;

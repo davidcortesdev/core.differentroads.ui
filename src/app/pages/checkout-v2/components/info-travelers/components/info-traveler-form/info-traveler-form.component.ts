@@ -822,32 +822,53 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   /**
+   * Verifica si un campo es de fecha de expiración
+   */
+  private isExpirationDateField(fieldCode: string, fieldName?: string): boolean {
+    const code = fieldCode.toLowerCase();
+    const name = (fieldName || '').toLowerCase();
+    
+    return code.includes('expir') || 
+           code.includes('venc') ||
+           code === 'expirationdate' ||
+           code === 'dniexpiration' ||
+           code === 'minoridexpirationdate' ||
+           code === 'documentexpirationdate' ||
+           name.includes('expiración') ||
+           name.includes('vencimiento') ||
+           name.includes('caducidad');
+  }
+
+  /**
    * Calcular y almacenar fechas para los campos de fecha
    */
   private calculateTravelerFieldDates(): void {
-    if (!this.traveler) {
+    if (!this.traveler || !this.departureReservationFields) {
       return;
     }
 
     this.travelerFieldDates = {};
     
-    const dateFields = ['birthdate', 'expirationdate', 'dniexpiration'];
-    
-    dateFields.forEach(fieldCode => {
-      const minDate = this.getMinDateForField(fieldCode);
-      const maxDate = this.getMaxDateForField(fieldCode);
-      
-      this.travelerFieldDates[fieldCode] = {
-        minDate: minDate,
-        maxDate: maxDate
-      };
+    // Procesar todos los campos de fecha dinámicamente
+    this.departureReservationFields.forEach(field => {
+      const fieldDetails = this.getReservationFieldDetails(field.reservationFieldId);
+      if (fieldDetails && fieldDetails.fieldType === 'date') {
+        const fieldCode = fieldDetails.code;
+        const minDate = this.getMinDateForField(fieldCode, fieldDetails.name);
+        const maxDate = this.getMaxDateForField(fieldCode, fieldDetails.name);
+        
+        this.travelerFieldDates[fieldCode] = {
+          minDate: minDate,
+          maxDate: maxDate
+        };
+      }
     });
   }
 
   /**
    * Obtener fecha mínima para el campo de fecha
    */
-  private getMinDateForField(fieldCode: string): Date {
+  private getMinDateForField(fieldCode: string, fieldName?: string): Date {
     if (!this.traveler) {
       return new Date(1924, 0, 1);
     }
@@ -862,7 +883,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
         const minDate = new Date(today.getFullYear() - 100, 0, 1);
         return minDate;
       }
-    } else if (fieldCode === 'expirationdate' || fieldCode === 'dniexpiration') {
+    } else if (this.isExpirationDateField(fieldCode, fieldName)) {
       const today = new Date();
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
@@ -877,7 +898,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
   /**
    * Obtener fecha máxima para el campo de fecha
    */
-  private getMaxDateForField(fieldCode: string): Date {
+  private getMaxDateForField(fieldCode: string, fieldName?: string): Date {
     if (!this.traveler) {
       return new Date();
     }
@@ -891,7 +912,7 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
       } else {
         return today;
       }
-    } else if (fieldCode === 'expirationdate' || fieldCode === 'dniexpiration') {
+    } else if (this.isExpirationDateField(fieldCode, fieldName)) {
       const today = new Date();
       return new Date(today.getFullYear() + 30, 11, 31);
     }
@@ -902,15 +923,94 @@ export class InfoTravelerFormComponent implements OnInit, OnDestroy, OnChanges {
   /**
    * Obtener fecha mínima almacenada para un campo específico
    */
-  getStoredMinDate(fieldCode: string): Date {
-    return this.travelerFieldDates[fieldCode]?.minDate || new Date(1924, 0, 1);
+  getStoredMinDate(fieldCode: string, fieldDetails?: IReservationFieldResponse): Date {
+    // Si ya está calculado, devolverlo
+    if (this.travelerFieldDates[fieldCode]?.minDate) {
+      return this.travelerFieldDates[fieldCode].minDate;
+    }
+    
+    // Si tenemos fieldDetails, usarlo directamente
+    if (fieldDetails && fieldDetails.fieldType === 'date') {
+      const minDate = this.getMinDateForField(fieldCode, fieldDetails.name);
+      // Guardar en el mapa para futuras consultas
+      if (!this.travelerFieldDates[fieldCode]) {
+        this.travelerFieldDates[fieldCode] = { minDate, maxDate: new Date() };
+      } else {
+        this.travelerFieldDates[fieldCode].minDate = minDate;
+      }
+      return minDate;
+    }
+    
+    // Si no está calculado, intentar calcularlo dinámicamente
+    // Buscar el fieldDetails para obtener el nombre del campo
+    if (this.departureReservationFields) {
+      for (const field of this.departureReservationFields) {
+        const details = this.getReservationFieldDetails(field.reservationFieldId);
+        if (details && details.code === fieldCode && details.fieldType === 'date') {
+          const minDate = this.getMinDateForField(fieldCode, details.name);
+          // Guardar en el mapa para futuras consultas
+          if (!this.travelerFieldDates[fieldCode]) {
+            this.travelerFieldDates[fieldCode] = { minDate, maxDate: new Date() };
+          } else {
+            this.travelerFieldDates[fieldCode].minDate = minDate;
+          }
+          return minDate;
+        }
+      }
+    }
+    
+    // Fallback: si es campo de expiración, devolver mañana
+    if (this.isExpirationDateField(fieldCode)) {
+      const today = new Date();
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      return tomorrow;
+    }
+    
+    return new Date(1924, 0, 1);
   }
 
   /**
    * Obtener fecha máxima almacenada para un campo específico
    */
-  getStoredMaxDate(fieldCode: string): Date {
-    return this.travelerFieldDates[fieldCode]?.maxDate || new Date();
+  getStoredMaxDate(fieldCode: string, fieldDetails?: IReservationFieldResponse): Date {
+    // Si ya está calculado, devolverlo
+    if (this.travelerFieldDates[fieldCode]?.maxDate) {
+      return this.travelerFieldDates[fieldCode].maxDate;
+    }
+    
+    // Si tenemos fieldDetails, usarlo directamente
+    if (fieldDetails && fieldDetails.fieldType === 'date') {
+      const maxDate = this.getMaxDateForField(fieldCode, fieldDetails.name);
+      // Guardar en el mapa para futuras consultas
+      if (!this.travelerFieldDates[fieldCode]) {
+        this.travelerFieldDates[fieldCode] = { minDate: new Date(1924, 0, 1), maxDate };
+      } else {
+        this.travelerFieldDates[fieldCode].maxDate = maxDate;
+      }
+      return maxDate;
+    }
+    
+    // Si no está calculado, intentar calcularlo dinámicamente
+    // Buscar el fieldDetails para obtener el nombre del campo
+    if (this.departureReservationFields) {
+      for (const field of this.departureReservationFields) {
+        const details = this.getReservationFieldDetails(field.reservationFieldId);
+        if (details && details.code === fieldCode && details.fieldType === 'date') {
+          const maxDate = this.getMaxDateForField(fieldCode, details.name);
+          // Guardar en el mapa para futuras consultas
+          if (!this.travelerFieldDates[fieldCode]) {
+            this.travelerFieldDates[fieldCode] = { minDate: new Date(1924, 0, 1), maxDate };
+          } else {
+            this.travelerFieldDates[fieldCode].maxDate = maxDate;
+          }
+          return maxDate;
+        }
+      }
+    }
+    
+    return new Date();
   }
 
   /**

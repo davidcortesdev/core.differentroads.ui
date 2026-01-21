@@ -202,7 +202,7 @@
                     appendTo="body"
                     dateFormat="dd/mm/yy"
                     [maxDate]="fieldDetails.code === 'birthdate' ? today : undefined"
-                    [minDate]="fieldDetails.code === 'minorIdExpirationDate' || fieldDetails.code === 'documentExpirationDate' ? minExpirationDate : undefined"
+                    [minDate]="isExpirationDateField(fieldDetails) ? minExpirationDate : undefined"
                   ></p-datepicker>
                 </div>
               </ng-container>

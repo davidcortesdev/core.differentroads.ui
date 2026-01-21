@@ -16,8 +16,19 @@
     label="Ver otras opciones de vuelos"
     icon="pi pi-search"
     (onClick)="checkAuthAndShowSpecificSearch()"
-    outlined=" true"
+    [outlined]="true"
+    [disabled]="isDepartureDateInvalid"
+    [pTooltip]="isDepartureDateInvalid ? 'Las fechas no son válidas' : ''"
+    tooltipPosition="top"
   ></p-button>
+  <p-message 
+    *ngIf="isDepartureDateInvalid" 
+    severity="warn" 
+    [closable]="false"
+    styleClass="date-invalid-message"
+  >
+    Las fechas no son válidas para buscar otras opciones de vuelos.
+  </p-message>
 </div>
 
 <div class="specific-search" *ngIf="specificSearchVisible">

@@ -16,12 +16,16 @@ import {
   signInWithRedirect,
   getCurrentUser,
   fetchUserAttributes,
+  fetchAuthSession,
 } from 'aws-amplify/auth';
 import { AnalyticsService } from '../analytics/analytics.service'; // new import
 import {
   CognitoIdentityProviderClient,
   InitiateAuthCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
+import { AuthApiService } from './auth-api.service';
+import { TokenManagerService } from './token-manager.service';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -49,7 +53,9 @@ export class AuthenticateService {
   constructor(
     private router: Router,
     private hubspotService: HubspotService,
-    private analyticsService: AnalyticsService // new injection
+    private analyticsService: AnalyticsService, // new injection
+    private authApiService: AuthApiService,
+    private tokenManagerService: TokenManagerService
   ) {
     this.userPool = new CognitoUserPool({
       UserPoolId: environment.cognitoUserPoolId,
@@ -75,21 +81,95 @@ export class AuthenticateService {
   // Método para comprobar el estado de autenticación al iniciar
   private async checkAuthStatus(): Promise<void> {
     try {
-      const user = await getCurrentUser();
-      if (user) {
-        this.isAuthenticated.next(true);
-        try {
-          const attributes = await fetchUserAttributes();
-          if (attributes && attributes.email) {
-            this.currentUserEmail.next(attributes.email);
-
-            // ✅ CORREGIDO: Obtener el Cognito ID (sub) - priorizar sub de atributos, luego user.userId
-            // El sub es el Cognito User ID real (UUID), mientras que user.userId puede ser el username
-            const cognitoUserId = attributes.sub || user.userId;
-
-            this.currentUserCognitoId.next(cognitoUserId);
+      // NUEVO: Verificar primero si hay token interno almacenado
+      if (this.tokenManagerService.hasInternalToken()) {
+        // Verificar expiración local del token
+        if (!this.tokenManagerService.isTokenExpired()) {
+          // Token válido localmente, verificar Cognito para obtener información del usuario
+          try {
+            const user = await getCurrentUser();
+            if (user) {
+              this.isAuthenticated.next(true);
+              try {
+                const attributes = await fetchUserAttributes();
+                if (attributes && attributes.email) {
+                  this.currentUserEmail.next(attributes.email);
+                  const cognitoUserId = attributes.sub || user.userId;
+                  this.currentUserCognitoId.next(cognitoUserId);
+                }
+              } catch (error) {
+              }
+            }
+          } catch (error) {
+            // Si falla la verificación de Cognito, pero hay token válido, mantener autenticado
+            // El token se validará en el backend cuando se use
+            this.isAuthenticated.next(true);
           }
-        } catch (error) {
+        } else {
+          // Token expirado, intentar renovar
+          try {
+            await this.refreshInternalToken();
+            // Token renovado, verificar Cognito
+            const user = await getCurrentUser();
+            if (user) {
+              this.isAuthenticated.next(true);
+              try {
+                const attributes = await fetchUserAttributes();
+                if (attributes && attributes.email) {
+                  this.currentUserEmail.next(attributes.email);
+                  const cognitoUserId = attributes.sub || user.userId;
+                  this.currentUserCognitoId.next(cognitoUserId);
+                }
+              } catch (error) {
+              }
+            }
+          } catch (error) {
+            // Si falla la renovación, verificar Cognito como fallback
+            const user = await getCurrentUser();
+            if (user) {
+              this.isAuthenticated.next(true);
+              try {
+                const attributes = await fetchUserAttributes();
+                if (attributes && attributes.email) {
+                  this.currentUserEmail.next(attributes.email);
+                  const cognitoUserId = attributes.sub || user.userId;
+                  this.currentUserCognitoId.next(cognitoUserId);
+                }
+              } catch (error) {
+              }
+            } else {
+              this.isAuthenticated.next(false);
+            }
+          }
+        }
+      } else {
+        // No hay token interno, verificar Cognito (fallback)
+        const user = await getCurrentUser();
+        if (user) {
+          this.isAuthenticated.next(true);
+          try {
+            const attributes = await fetchUserAttributes();
+            if (attributes && attributes.email) {
+              this.currentUserEmail.next(attributes.email);
+              const cognitoUserId = attributes.sub || user.userId;
+              this.currentUserCognitoId.next(cognitoUserId);
+              
+              // Intentar generar token interno si hay sesión de Cognito
+              try {
+                const session = await fetchAuthSession();
+                const idToken = session.tokens?.idToken?.toString();
+                if (idToken) {
+                  await this.generateInternalTokenAfterLogin(idToken);
+                }
+              } catch (tokenError) {
+                // Continuar aunque falle la generación del token
+                console.warn('Error generating internal token on auth check:', tokenError);
+              }
+            }
+          } catch (error) {
+          }
+        } else {
+          this.isAuthenticated.next(false);
         }
       }
     } catch (error) {
@@ -309,24 +389,42 @@ export class AuthenticateService {
             this.currentUserCognitoId.next(cognitoUserId);
             this.userAttributesChanged.next();
 
-            // Agregar la integración con Hubspot
-            const contactData = {
-              email: emailaddress,
-            };
+            // NUEVO: Generar token interno después del login exitoso
+            this.generateInternalTokenAfterLogin(idTokenString).then(() => {
+              // Agregar la integración con Hubspot
+              const contactData = {
+                email: emailaddress,
+              };
 
-            this.hubspotService.createContact(contactData).subscribe({
-              next: (hubspotResponse) => {
+              this.hubspotService.createContact(contactData).subscribe({
+                next: (hubspotResponse) => {
+                  // Retornar el usuario de Cognito para que el componente maneje la navegación
+                  observer.next(this.cognitoUser);
+                  observer.complete();
+                },
+                error: (hubspotError) => {
+                  // Even if Hubspot fails, return the Cognito user for component to handle navigation
+                  observer.next(this.cognitoUser);
+                  observer.complete();
+                },
+              });
+            }).catch((tokenError) => {
+              console.warn('Error generating internal token, continuing with Cognito:', tokenError);
+              // Continuar con el flujo normal aunque falle la generación del token interno
+              const contactData = {
+                email: emailaddress,
+              };
 
-                // Retornar el usuario de Cognito para que el componente maneje la navegación
-                observer.next(this.cognitoUser);
-                observer.complete();
-              },
-              error: (hubspotError) => {
-
-                // Even if Hubspot fails, return the Cognito user for component to handle navigation
-                observer.next(this.cognitoUser);
-                observer.complete();
-              },
+              this.hubspotService.createContact(contactData).subscribe({
+                next: (hubspotResponse) => {
+                  observer.next(this.cognitoUser);
+                  observer.complete();
+                },
+                error: (hubspotError) => {
+                  observer.next(this.cognitoUser);
+                  observer.complete();
+                },
+              });
             });
           } else if (response.ChallengeName) {
             // Manejar desafíos como NEW_PASSWORD_REQUIRED
@@ -365,6 +463,9 @@ export class AuthenticateService {
 
   // Logout
   logOut() {
+    // NUEVO: Limpiar token interno antes de hacer logout de Cognito
+    this.tokenManagerService.clearInternalToken();
+    
     const currentUser = this.userPool.getCurrentUser();
     if (currentUser) {
       currentUser.signOut();
@@ -676,6 +777,18 @@ export class AuthenticateService {
           this.currentUserCognitoId.next(cognitoUserId);
 
           this.userAttributesChanged.next();
+
+          // NUEVO: Generar token interno después de autenticación con Google
+          try {
+            const session = await fetchAuthSession();
+            const idToken = session.tokens?.idToken?.toString();
+            if (idToken) {
+              await this.generateInternalTokenAfterLogin(idToken);
+            }
+          } catch (tokenError) {
+            console.warn('Error generating internal token after Google auth:', tokenError);
+            // Continuar aunque falle la generación del token
+          }
         }
       }
     } catch (error) {
@@ -692,5 +805,73 @@ export class AuthenticateService {
       this.getCognitoIdValue()
     );
     this.analyticsService.signUp(method, userData);
+  }
+
+  /**
+   * Genera token interno después del login exitoso
+   * @param idToken El ID token de Cognito
+   */
+  private async generateInternalTokenAfterLogin(idToken: string): Promise<void> {
+    try {
+      const internalToken = await firstValueFrom(
+        this.authApiService.generateInternalToken(idToken)
+      );
+      this.tokenManagerService.setInternalToken(internalToken);
+    } catch (error) {
+      console.warn('Error generating internal token after login:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Renueva el token interno usando el token de Cognito de Amplify
+   * @returns Promise con el nuevo token interno
+   */
+  async refreshInternalToken(): Promise<string> {
+    try {
+      const session = await fetchAuthSession();
+      const idToken = session.tokens?.idToken?.toString();
+
+      if (!idToken) {
+        throw new Error('No se pudo obtener token de Cognito');
+      }
+
+      const internalToken = await firstValueFrom(
+        this.authApiService.generateInternalToken(idToken)
+      );
+      this.tokenManagerService.setInternalToken(internalToken);
+      return internalToken;
+    } catch (error) {
+      console.error('Error refreshing internal token:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Renueva el token interno si está próximo a expirar
+   * @param minutesBeforeExpiration Minutos antes de la expiración (default: 5)
+   * @returns Promise con true si se renovó el token
+   */
+  async refreshInternalTokenIfNeeded(
+    minutesBeforeExpiration: number = 5
+  ): Promise<boolean> {
+    if (this.tokenManagerService.isTokenExpiringSoon(minutesBeforeExpiration)) {
+      try {
+        await this.refreshInternalToken();
+        return true;
+      } catch (error) {
+        console.warn('Failed to refresh internal token:', error);
+        return false;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Verifica si el usuario está logueado (compatibilidad)
+   * @returns true si el usuario está autenticado
+   */
+  isUserLoggedIn(): boolean {
+    return this.isAuthenticatedValue();
   }
 }

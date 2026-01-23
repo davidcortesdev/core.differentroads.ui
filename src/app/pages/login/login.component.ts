@@ -21,7 +21,7 @@ export class LoginComponent implements OnInit {
   ngOnInit(): void {
     this.titleService.setTitle('Iniciar Sesión - Different Roads');
     if (this.authService.getCurrentUser()) {
-      this.router.navigate(['/home']);
+      this.router.navigate(['/']);
     }
   }
 }

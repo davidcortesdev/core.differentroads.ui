@@ -53,6 +53,7 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
   isConsolidadorVuelosActive: boolean = false;
   loginDialogVisible: boolean = false;
   specificSearchVisible: boolean = false;
+  isDepartureDateInvalid: boolean = false;
 
   private dataSubscription: Subscription | null = null;
 
@@ -137,18 +138,63 @@ export class FlightManagementComponent implements OnInit, OnChanges, OnDestroy {
         const tourActive = !!results.tour.isConsolidadorVuelosActive;
         const departureActive = !!results.departure.isConsolidadorVuelosActive;
         
+        // Validar si la fecha del período es válida (debe ser futura)
+        this.isDepartureDateInvalid = !this.isDepartureDateInFuture(results.departure.departureDate);
+        
+        // Activar el consolidador si el tour y departure lo tienen activo
+        // (independientemente de la fecha, para poder mostrar el mensaje)
         this.isConsolidadorVuelosActive = tourActive && departureActive;
         this.cdr.markForCheck();
       },
       error: (error) => {
         this.isConsolidadorVuelosActive = false;
+        this.isDepartureDateInvalid = false;
         this.cdr.markForCheck();
       }
     });
   }
 
+  /**
+   * Valida si la fecha del período es en el futuro
+   * @param departureDate Fecha del período en formato string (YYYY-MM-DD o similar)
+   * @returns true si la fecha es en el futuro, false si es en el pasado o hoy
+   */
+  private isDepartureDateInFuture(departureDate: string | null | undefined): boolean {
+    if (!departureDate) {
+      return false;
+    }
+
+    try {
+      // Parsear la fecha del departure
+      // Puede venir en formato YYYY-MM-DD o con hora
+      const departureDateObj = new Date(departureDate);
+      
+      // Verificar que la fecha sea válida
+      if (isNaN(departureDateObj.getTime())) {
+        return false;
+      }
+
+      // Obtener la fecha de hoy sin hora (solo fecha)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      // Comparar solo las fechas (sin hora)
+      const departureDateOnly = new Date(departureDateObj);
+      departureDateOnly.setHours(0, 0, 0, 0);
+
+      // La fecha debe ser mayor a hoy (futuro)
+      return departureDateOnly > today;
+    } catch (error) {
+      // Si hay error al parsear, considerar como fecha inválida
+      return false;
+    }
+  }
 
   checkAuthAndShowSpecificSearch(): void {
+    // Validar si las fechas no son válidas (período ya pasó o está en curso)
+    if (this.isDepartureDateInvalid) {
+      return;
+    }
     if (this.isStandaloneMode) {
       this.specificSearchVisible = true;
       return;

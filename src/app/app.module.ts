@@ -11,7 +11,12 @@ import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { CommonModule, NgComponentOutlet, DatePipe } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { provideHttpClient, HttpClient } from '@angular/common/http';
+import {
+  provideHttpClient,
+  HttpClient,
+  withInterceptorsFromDi,
+  HTTP_INTERCEPTORS,
+} from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { registerLocaleData } from '@angular/common';
 import localeEs from '@angular/common/locales/es';
@@ -94,6 +99,11 @@ import { PasswordModule } from 'primeng/password';
 // ========================================
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
+
+// ========================================
+// HTTP INTERCEPTORS
+// ========================================
+import { AuthTokenInterceptor } from './core/interceptors/auth-token.interceptor';
 
 // ========================================
 // LAYOUT COMPONENTS
@@ -542,10 +552,19 @@ export function HttpLoaderFactory(http: HttpClient) {
   ],
   providers: [
     // ========================================
+    // HTTP INTERCEPTORS (DEBE estar ANTES de provideHttpClient)
+    // ========================================
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthTokenInterceptor,
+      multi: true,
+    },
+
+    // ========================================
     // ANGULAR PROVIDERS
     // ========================================
     provideAnimationsAsync(),
-    provideHttpClient(),
+    provideHttpClient(withInterceptorsFromDi()), // OBLIGATORIO: usar withInterceptorsFromDi()
     { provide: LOCALE_ID, useValue: 'es-ES' },
 
     // ========================================

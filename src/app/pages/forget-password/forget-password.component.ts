@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, Renderer2 } from '@angular/core';
 import { PasswordRecoveryFormComponent } from './components/forget-password-form/forget-password-form.component';
 import { CommonModule } from '@angular/common';
 import { Title } from '@angular/platform-browser';
-import { ActivatedRoute } from '@angular/router';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-forget-password',
@@ -13,17 +13,16 @@ import { ActivatedRoute } from '@angular/router';
 
 export class ForgetPasswordComponent implements OnInit, OnDestroy {
   private chatHideTimeouts: number[] = [];
-  private chatHideInterval: number | null = null;
 
   constructor(
     private titleService: Title,
     private renderer: Renderer2,
-    private route: ActivatedRoute
+    private router: Router
   ) {}
 
   ngOnInit(): void {
     this.titleService.setTitle('Recuperar Contraseña - Different Roads');
-    // Verificar si viene desde touroperacion para ocultar el chat
+    // Verificar si debe ocultar el chat (solo en rutas standalone)
     this.checkAndToggleChatWidget();
   }
 
@@ -31,53 +30,29 @@ export class ForgetPasswordComponent implements OnInit, OnDestroy {
     // Limpiar timeouts y restaurar chat
     this.chatHideTimeouts.forEach(timeout => clearTimeout(timeout));
     this.chatHideTimeouts = [];
-    
-    if (this.chatHideInterval !== null) {
-      clearInterval(this.chatHideInterval);
-      this.chatHideInterval = null;
-    }
-    
     this.renderer.removeClass(document.body, 'hide-chat-widget');
   }
 
   /**
-   * Verifica si debe ocultar el chat.
-   * Solo se oculta si viene desde touroperacion (source=touroperacion en query params).
+   * Verifica si debe ocultar el chat basándose en la ruta.
+   * Solo se oculta cuando la ruta es standalone (rutas que contienen '/standalone/').
    */
   private checkAndToggleChatWidget(): void {
-    // Verificar si viene desde touroperacion
-    this.route.queryParams.subscribe(params => {
-      const isFromTourOperacion = params['source'] === 'touroperacion';
+    const currentUrl = this.router.url;
+    const isStandaloneRoute = currentUrl.includes('/standalone/');
+    
+    if (isStandaloneRoute) {
+      this.renderer.addClass(document.body, 'hide-chat-widget');
       
-      if (isFromTourOperacion) {
-        this.renderer.addClass(document.body, 'hide-chat-widget');
-        
-        // Forzar ocultación inmediata
-        this.hideChatElements();
-        
-        // Forzar ocultación adicional con múltiples delays para asegurar que funcione incluso si el chat se carga después
-        const delays = [50, 100, 200, 300, 500, 1000, 2000, 3000, 5000];
-        delays.forEach(delay => {
-          const timeout = window.setTimeout(() => this.hideChatElements(), delay);
-          this.chatHideTimeouts.push(timeout);
-        });
-        
-        // Configurar intervalo para verificar periódicamente
-        this.setupInterval();
-      } else {
-        // Si no viene de touroperacion, asegurarse de que el chat esté visible
-        this.renderer.removeClass(document.body, 'hide-chat-widget');
-      }
-    });
-  }
-
-  /**
-   * Configura un intervalo para verificar y ocultar el chat periódicamente
-   */
-  private setupInterval(): void {
-    this.chatHideInterval = window.setInterval(() => {
-      this.hideChatElements();
-    }, 500); // Verificar cada 500ms
+      // Forzar ocultación adicional con delay para asegurar que funcione incluso si el chat se carga después
+      const timeout1 = window.setTimeout(() => this.hideChatElements(), 100);
+      const timeout2 = window.setTimeout(() => this.hideChatElements(), 500);
+      const timeout3 = window.setTimeout(() => this.hideChatElements(), 1000);
+      
+      this.chatHideTimeouts.push(timeout1, timeout2, timeout3);
+    } else {
+      this.renderer.removeClass(document.body, 'hide-chat-widget');
+    }
   }
 
   /**

@@ -165,7 +165,7 @@ export class TravelerFieldComponent implements OnChanges {
         futureDate: () => 'La fecha debe ser posterior a hoy.',
         birthdateTooRecent: () => 'La fecha de nacimiento no puede ser posterior a la fecha máxima permitida. La edad mínima para este grupo no corresponde.',
         birthdateFuture: () => 'La fecha de nacimiento no puede ser futura.',
-        expirationDatePast: () => 'La fecha de expiración no puede ser anterior a hoy.'
+        expirationDatePast: () => 'La fecha de expiración debe ser una fecha futura.'
       },
       sex: {
         required: () => 'Debe seleccionar un sexo.',

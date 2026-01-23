@@ -424,6 +424,38 @@ export class UpdateProfileV2Service {
       }
     }
 
+    // Validación de fecha de expiración del DNI (debe ser futura)
+    if (personalInfo.fechaExpiracionDni) {
+      let expirationDate: Date | null = null;
+
+      if (typeof personalInfo.fechaExpiracionDni === 'object' && personalInfo.fechaExpiracionDni !== null && 'getTime' in personalInfo.fechaExpiracionDni) {
+        expirationDate = personalInfo.fechaExpiracionDni as Date;
+      } else if (typeof personalInfo.fechaExpiracionDni === 'string') {
+        if (personalInfo.fechaExpiracionDni.includes('/')) {
+          const parts = personalInfo.fechaExpiracionDni.split('/');
+          if (parts.length === 3) {
+            const day = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1;
+            const year = parseInt(parts[2], 10);
+            expirationDate = new Date(year, month, day);
+          }
+        } else {
+          expirationDate = new Date(personalInfo.fechaExpiracionDni);
+        }
+      }
+
+      if (expirationDate && !isNaN(expirationDate.getTime())) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        expirationDate.setHours(0, 0, 0, 0);
+
+        if (expirationDate <= today) {
+          errors['fechaExpiracionDni'] = 'La fecha de expiración debe ser una fecha futura';
+          isValid = false;
+        }
+      }
+    }
+
     return { errors, isValid };
   }
 

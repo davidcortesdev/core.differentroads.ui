@@ -21,11 +21,26 @@ export class AuthTokenInterceptor implements HttpInterceptor {
   private generateTokenSubject: BehaviorSubject<string | null> =
     new BehaviorSubject<string | null>(null);
 
+  // Lista de dominios excluidos del manejo de tokens
+  private readonly excludedDomains: string[] = [
+    'api.cloudinary.com',
+    // Agregar más dominios aquí según sea necesario
+  ];
+
   constructor(
     private tokenManagerService: TokenManagerService,
     private authService: AuthenticateService,
     private router: Router
   ) {}
+
+  /**
+   * Verifica si una petición debe ser excluida del manejo de tokens
+   * @param request La petición HTTP a verificar
+   * @returns true si la petición debe ser excluida, false en caso contrario
+   */
+  private shouldExcludeRequest(request: HttpRequest<unknown>): boolean {
+    return this.excludedDomains.some((domain) => request.url.includes(domain));
+  }
 
   intercept(
     request: HttpRequest<unknown>,
@@ -33,6 +48,11 @@ export class AuthTokenInterceptor implements HttpInterceptor {
   ): Observable<HttpEvent<unknown>> {
     // Excluir la petición de generación de token para evitar bucles infinitos
     if (request.url.includes('/generate-token')) {
+      return next.handle(request);
+    }
+
+    // Verificar si la petición debe ser excluida del manejo de tokens
+    if (this.shouldExcludeRequest(request)) {
       return next.handle(request);
     }
 
@@ -46,10 +66,18 @@ export class AuthTokenInterceptor implements HttpInterceptor {
           filter((newToken) => newToken !== null),
           take(1),
           switchMap((newToken) => {
-            request = this.addTokenHeader(request, newToken as string);
+            // Solo añadir token si la petición no está excluida
+            if (!this.shouldExcludeRequest(request)) {
+              request = this.addTokenHeader(request, newToken as string);
+            }
             return next.handle(request).pipe(
               catchError((error: HttpErrorResponse) => {
-                if (error.status === 401) {
+                // Solo manejar 401 si hay token y la petición no está excluida
+                if (
+                  error.status === 401 &&
+                  newToken &&
+                  !this.shouldExcludeRequest(request)
+                ) {
                   return this.handle401Error(request, next);
                 }
                 return throwError(() => error);
@@ -68,10 +96,18 @@ export class AuthTokenInterceptor implements HttpInterceptor {
           this.isGeneratingToken = false;
           this.generateTokenSubject.next(newToken);
           token = newToken;
-          request = this.addTokenHeader(request, token);
+          // Solo añadir token si la petición no está excluida
+          if (!this.shouldExcludeRequest(request)) {
+            request = this.addTokenHeader(request, token);
+          }
           return next.handle(request).pipe(
             catchError((error: HttpErrorResponse) => {
-              if (error.status === 401 && token) {
+              // Solo manejar 401 si hay token y la petición no está excluida
+              if (
+                error.status === 401 &&
+                token &&
+                !this.shouldExcludeRequest(request)
+              ) {
                 return this.handle401Error(request, next);
               }
               return throwError(() => error);
@@ -86,7 +122,11 @@ export class AuthTokenInterceptor implements HttpInterceptor {
           console.warn('Error generating internal token in interceptor:', error);
           return next.handle(request).pipe(
             catchError((httpError: HttpErrorResponse) => {
-              if (httpError.status === 401) {
+              // Solo manejar 401 si la petición no está excluida
+              if (
+                httpError.status === 401 &&
+                !this.shouldExcludeRequest(request)
+              ) {
                 return this.handle401Error(request, next);
               }
               return throwError(() => httpError);
@@ -96,14 +136,19 @@ export class AuthTokenInterceptor implements HttpInterceptor {
       );
     }
 
-    // Añadir token a todas las peticiones si existe (incluso rutas públicas)
-    if (token) {
+    // Añadir token a todas las peticiones si existe y no está excluida
+    if (token && !this.shouldExcludeRequest(request)) {
       request = this.addTokenHeader(request, token);
     }
 
     return next.handle(request).pipe(
       catchError((error: HttpErrorResponse) => {
-        if (error.status === 401 && token) {
+        // Solo manejar 401 si hay token y la petición no está excluida
+        if (
+          error.status === 401 &&
+          token &&
+          !this.shouldExcludeRequest(request)
+        ) {
           return this.handle401Error(request, next);
         }
         return throwError(() => error);
@@ -126,6 +171,11 @@ export class AuthTokenInterceptor implements HttpInterceptor {
     request: HttpRequest<unknown>,
     next: HttpHandler
   ): Observable<HttpEvent<unknown>> {
+    // Si la petición debe ser excluida, no intentar refrescar el token
+    if (this.shouldExcludeRequest(request)) {
+      return throwError(() => new Error('Request to excluded domain failed'));
+    }
+
     if (!this.isRefreshing) {
       this.isRefreshing = true;
       this.refreshTokenSubject.next(null);

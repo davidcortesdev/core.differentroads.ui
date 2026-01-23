@@ -31,8 +31,8 @@ export class AuthTokenInterceptor implements HttpInterceptor {
     request: HttpRequest<unknown>,
     next: HttpHandler
   ): Observable<HttpEvent<unknown>> {
-    // Excluir la petición de generación de token para evitar bucles infinitos
-    if (request.url.includes('/generate-token')) {
+    // Excluir peticiones a Cloudinary y generación de token para evitar bucles infinitos
+    if (request.url.includes('/generate-token') || request.url.includes('api.cloudinary.com')) {
       return next.handle(request);
     }
 

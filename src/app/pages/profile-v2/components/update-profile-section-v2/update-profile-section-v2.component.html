@@ -196,6 +196,7 @@
             [(ngModel)]="personalInfo.fechaExpiracionDni"
             showIcon
             iconDisplay="input"
+            [minDate]="minExpirationDate"
             (onSelect)="onFechaExpiracionDniChange($event)"
             [class.error]="hasFieldError('fechaExpiracionDni')"/>
           <label for="fechaExpiracionDni">Fecha caducidad DNI</label>

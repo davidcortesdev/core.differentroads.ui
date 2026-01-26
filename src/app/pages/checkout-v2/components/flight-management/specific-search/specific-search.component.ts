@@ -80,11 +80,14 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   maxFechaIda: Date | null = null;
   maxHoraIda: string | null = null;
   
+  // Fecha por defecto para mostrar en el calendario cuando está vacío (ida)
+  defaultDateFechaIda: Date | null = null;
+  
   // Límites para fecha/hora de vuelta (salida del aeropuerto)
   minFechaVuelta: Date | null = null;
   minHoraVuelta: string | null = null;
   
-  // Fecha por defecto para mostrar en el calendario cuando está vacío
+  // Fecha por defecto para mostrar en el calendario cuando está vacío (vuelta)
   defaultDateFechaVuelta: Date | null = null;
   
   // Flag para rastrear si el valor temporal fue establecido para mostrar el mes correcto
@@ -242,16 +245,25 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         if (value === 'Ida') {
           this.flightForm.get('fechaHoraVuelta')?.setValue(null, { emitEvent: false });
           this.flightForm.get('destinoVuelta')?.setValue(null, { emitEvent: false });
+          // Asegurar que la fecha de ida esté establecida
+          setTimeout(() => this.setDefaultFechaIdaIfEmpty(), 0);
         }
         
         // Limpiar fecha/hora de ida si el tipo de viaje es "Solo vuelta"
         if (value === 'Vuelta') {
           this.flightForm.get('fechaHoraIda')?.setValue(null, { emitEvent: false });
           this.flightForm.get('destinoVuelta')?.setValue(null, { emitEvent: false });
+          // Asegurar que la fecha de vuelta esté establecida
+          setTimeout(() => this.setDefaultFechaVueltaIfEmpty(), 0);
         }
         
         if (value === 'IdaVuelta' && this.flightForm.get('origen')?.value) {
           this.flightForm.get('destinoVuelta')?.setValue(this.flightForm.get('origen')?.value);
+          // Asegurar que ambas fechas estén establecidas
+          setTimeout(() => {
+            this.setDefaultFechaIdaIfEmpty();
+            this.setDefaultFechaVueltaIfEmpty();
+          }, 0);
         }
       });
     
@@ -593,11 +605,15 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
               this.maxFechaIda = maxDateIda;
               this.maxHoraIda = data.maxArrivalTimeAtAirport || null;
               
-              // Precargar el valor por defecto en el formulario (combinar fecha y hora)
-              const fechaHoraIda = this.combineDateAndTime(maxDateIda, data.maxArrivalTimeAtAirport);
-              this.flightForm.patchValue({
-                fechaHoraIda: fechaHoraIda
-              });
+              // Establecer la fecha por defecto para que el calendario muestre el mes correcto
+              if (this.maxHoraIda) {
+                this.defaultDateFechaIda = this.combineDateAndTime(this.maxFechaIda, this.maxHoraIda);
+              } else {
+                this.defaultDateFechaIda = new Date(this.maxFechaIda);
+              }
+              
+              // Autocompletar la fecha máxima de llegada en el formulario si está vacío
+              this.setDefaultFechaIdaIfEmpty();
             }
           }
           
@@ -1671,6 +1687,27 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       } else {
         this.fechaVueltaTemporalEstablecida = false;
       }
+    }
+  }
+
+  /**
+   * Establece la fecha máxima de ida (llegada) en el formulario si el campo está vacío
+   * Se llama automáticamente cuando se carga la fecha máxima desde la API
+   * Resta una hora a la fecha máxima para evitar errores de validación
+   */
+  private setDefaultFechaIdaIfEmpty(): void {
+    if (!this.defaultDateFechaIda) {
+      return;
+    }
+
+    const fechaHoraIdaControl = this.flightForm.get('fechaHoraIda');
+    if (fechaHoraIdaControl && !fechaHoraIdaControl.value) {
+      // Crear una copia de la fecha máxima y restarle una hora para evitar errores de validación
+      const fechaConHoraMenos = new Date(this.defaultDateFechaIda);
+      fechaConHoraMenos.setHours(fechaConHoraMenos.getHours() - 1);
+      
+      // Establecer la fecha máxima - 1 hora automáticamente si el campo está vacío
+      fechaHoraIdaControl.setValue(fechaConHoraMenos, { emitEvent: true });
     }
   }
 

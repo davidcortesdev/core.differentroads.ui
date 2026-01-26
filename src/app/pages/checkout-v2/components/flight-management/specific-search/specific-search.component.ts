@@ -939,22 +939,22 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     switch (sortOption) {
       case 'price-asc':
         this.flightOffersRaw.sort((a, b) => {
-          const priceA = a.ageGroupPrices?.[0]?.price || 0;
-          const priceB = b.ageGroupPrices?.[0]?.price || 0;
+          const priceA = this.parsePriceToNumber(a.ageGroupPrices?.[0]?.price) || 0;
+          const priceB = this.parsePriceToNumber(b.ageGroupPrices?.[0]?.price) || 0;
           return priceA - priceB;
         });
         break;
       case 'price-desc':
         this.flightOffersRaw.sort((a, b) => {
-          const priceA = a.ageGroupPrices?.[0]?.price || 0;
-          const priceB = b.ageGroupPrices?.[0]?.price || 0;
+          const priceA = this.parsePriceToNumber(a.ageGroupPrices?.[0]?.price) || 0;
+          const priceB = this.parsePriceToNumber(b.ageGroupPrices?.[0]?.price) || 0;
           return priceB - priceA;
         });
         break;
       case 'duration':
         this.flightOffersRaw.sort((a, b) => {
-          const priceA = a.ageGroupPrices?.[0]?.price || 0;
-          const priceB = b.ageGroupPrices?.[0]?.price || 0;
+          const priceA = this.parsePriceToNumber(a.ageGroupPrices?.[0]?.price) || 0;
+          const priceB = this.parsePriceToNumber(b.ageGroupPrices?.[0]?.price) || 0;
           return priceA - priceB;
         });
         break;
@@ -981,7 +981,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     const uniquePacks: IFlightPackDTO[] = [];
     
     for (const pack of flightPacks) {
-      const price = pack.ageGroupPrices?.[0]?.price || 0;
+      const price = this.parsePriceToNumber(pack.ageGroupPrices?.[0]?.price) || 0;
       const flightIds = pack.flights?.map(f => f.id).sort().join(',') || '';
       const key = `${price}_${flightIds}`;
       
@@ -1058,16 +1058,34 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         }];
       }
 
-      const priceData = flightPack.ageGroupPrices?.map(price => ({
-        id: price.ageGroupId?.toString() || '',
-        value: price.price || 0,
-        value_with_campaign: price.price || 0,
-        campaign: null,
-        age_group_name: price.ageGroupName || 'Adultos',
-        category_name: 'Vuelo',
-        period_product: undefined,
-        _id: undefined,
-      })) || [];
+      const priceData = flightPack.ageGroupPrices?.map(price => {
+        // Asegurar que el precio sea un número, no un string
+        let numericPrice: number = 0;
+        if (price.price != null) {
+          if (typeof price.price === 'string') {
+            // Si viene como string, puede tener punto decimal (formato inglés) o coma (formato español)
+            // Reemplazar coma por punto para parseFloat
+            const priceString = String(price.price);
+            const normalizedPrice = priceString.replace(',', '.');
+            numericPrice = parseFloat(normalizedPrice);
+            if (isNaN(numericPrice)) {
+              numericPrice = 0;
+            }
+          } else {
+            numericPrice = Number(price.price) || 0;
+          }
+        }
+        return {
+          id: price.ageGroupId?.toString() || '',
+          value: numericPrice,
+          value_with_campaign: numericPrice,
+          campaign: null,
+          age_group_name: price.ageGroupName || 'Adultos',
+          category_name: 'Vuelo',
+          period_product: undefined,
+          _id: undefined,
+        };
+      }) || [];
 
       const flight: Flight = {
         id: flightPack.id.toString(),
@@ -1101,7 +1119,17 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
               serviceCombinationID: 0,
               prices: [],
             },
-        price: flightPack.ageGroupPrices?.[0]?.price || 0,
+        price: (() => {
+          const price = flightPack.ageGroupPrices?.[0]?.price;
+          if (price == null) return 0;
+          if (typeof price === 'string') {
+            const priceString = String(price);
+            const normalizedPrice = priceString.replace(',', '.');
+            const numericPrice = parseFloat(normalizedPrice);
+            return isNaN(numericPrice) ? 0 : numericPrice;
+          }
+          return Number(price) || 0;
+        })(),
         priceData: priceData,
         source: FlightSourceType.AMADEUS,
       };
@@ -1254,10 +1282,11 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     } else {
       this.selectedFlight = flightPack;
       
-      const basePrice =
+      const basePrice = this.parsePriceToNumber(
         flightPack.ageGroupPrices?.find(
           (price) => price.ageGroupId === this.travelers[0]?.ageGroupId
-        )?.price || 0;
+        )?.price
+      ) || 0;
       const totalTravelers = this.travelers.length;
       const totalPrice = totalTravelers > 0 ? basePrice * totalTravelers : 0;
 
@@ -1329,11 +1358,29 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       imageUrl: flightPack.imageUrl || '',
       imageAlt: flightPack.imageAlt || '',
       isVisibleOnWeb: flightPack.isVisibleOnWeb,
-      ageGroupPrices: flightPack.ageGroupPrices?.map(price => ({
-        price: price.price || 0,
-        ageGroupId: price.ageGroupId || 0,
-        ageGroupName: price.ageGroupName || 'Adultos'
-      })) || [],
+      ageGroupPrices: flightPack.ageGroupPrices?.map(price => {
+        // Asegurar que el precio sea un número, no un string
+        let numericPrice: number = 0;
+        if (price.price != null) {
+          if (typeof price.price === 'string') {
+            // Si viene como string, puede tener punto decimal (formato inglés) o coma (formato español)
+            // Reemplazar coma por punto para parseFloat
+            const priceString = String(price.price);
+            const normalizedPrice = priceString.replace(',', '.');
+            numericPrice = parseFloat(normalizedPrice);
+            if (isNaN(numericPrice)) {
+              numericPrice = 0;
+            }
+          } else {
+            numericPrice = Number(price.price) || 0;
+          }
+        }
+        return {
+          price: numericPrice,
+          ageGroupId: price.ageGroupId || 0,
+          ageGroupName: price.ageGroupName || 'Adultos'
+        };
+      }) || [],
       flights: adaptedFlights
     };
 
@@ -1483,6 +1530,23 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Parsea un precio a número, manejando strings con punto o coma decimal
+   */
+  private parsePriceToNumber(price: number | string | null | undefined): number {
+    if (price == null) return 0;
+    
+    if (typeof price === 'string') {
+      // Si viene como string, puede tener punto decimal (formato inglés) o coma (formato español)
+      // Reemplazar coma por punto para parseFloat
+      const normalizedPrice = price.replace(',', '.');
+      const numericPrice = parseFloat(normalizedPrice);
+      return isNaN(numericPrice) ? 0 : numericPrice;
+    }
+    
+    return Number(price) || 0;
   }
 
   private combineDateAndTime(date: Date | null, timeString: string | null): Date | null {

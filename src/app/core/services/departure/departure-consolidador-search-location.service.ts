@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 
 export interface ConsolidadorSearchLocationWithSourceResponse {
@@ -35,5 +36,16 @@ export class DepartureConsolidadorSearchLocationService {
    */
   getDepartureLocations(departureId: number): Observable<ConsolidadorSearchLocationWithSourceResponse[]> {
     return this.http.get<ConsolidadorSearchLocationWithSourceResponse[]>(`${this.baseUrl}?DepartureId=${departureId}`);
+  }
+
+  /**
+   * Obtiene las ubicaciones de búsqueda del consolidador a nivel de tour (TourConsolidadorDepartureAirport).
+   * @param tourId ID del tour a consultar
+   */
+  getTourLocations(tourId: number): Observable<ConsolidadorSearchLocationWithSourceResponse[]> {
+    const tourLocationUrl = `${environment.toursApiUrl}/TourConsolidadorDepartureAirport?TourId=${tourId}`;
+    return this.http.get<ConsolidadorSearchLocationWithSourceResponse[]>(tourLocationUrl).pipe(
+      map(locations => locations.map(loc => ({ ...loc, source: 'Tour' as const })))
+    );
   }
 } 

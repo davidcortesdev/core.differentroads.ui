@@ -311,6 +311,15 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       })
     );
 
+    // Obtener las localizaciones a nivel de tour (TourConsolidadorDepartureAirport)
+    const tourLocations$ = this.tourId
+      ? this.departureConsolidadorSearchLocationService.getTourLocations(this.tourId).pipe(
+          catchError(error => {
+            return of([]);
+          })
+        )
+      : of([]);
+
     // Obtener aeropuertos del tour configurados en el consolidador
     // Primero obtener los del departure
     const departureTourAirports$ = this.departureConsolidadorTourAirportService.getTourAirports(this.departureId!).pipe(
@@ -352,13 +361,14 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       defaultAirports: defaultAirports$,
       configuredLocations: configuredLocations$,
       departureLocations: departureLocations$,
+      tourLocations: tourLocations$,
       tourAirports: tourAirports$
     }).pipe(
       takeUntil(this.destroy$),
-      switchMap(({ defaultAirports, configuredLocations, departureLocations, tourAirports }) => {
-        // Combinar configuredLocations y departureLocations, eliminando duplicados por ID
+      switchMap(({ defaultAirports, configuredLocations, departureLocations, tourLocations, tourAirports }) => {
+        // Combinar configuredLocations, departureLocations y tourLocations, eliminando duplicados por ID
         const allLocationsMap = new Map<number, ConsolidadorSearchLocationWithSourceResponse>();
-        [...configuredLocations, ...departureLocations].forEach(loc => {
+        [...configuredLocations, ...departureLocations, ...tourLocations].forEach(loc => {
           if (!allLocationsMap.has(loc.id)) {
             allLocationsMap.set(loc.id, loc);
           }
@@ -374,13 +384,40 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         const locationIds = allConfiguredLocations.filter(item => typeof item.locationId === 'number').map(item => item.locationId as number);
         const configuredAirportIds = allConfiguredLocations.filter(item => typeof item.locationAirportId === 'number').map(item => item.locationAirportId as number);
         
-        // Combinar todos los IDs de aeropuertos (configurados + tour) sin duplicados
+        // NUEVO: Obtener aeropuertos asociados a las Locations configuradas
+        const airportsForLocations$ = locationIds.length > 0
+          ? forkJoin(
+              locationIds.map(locationId => 
+                this.locationAirportNetService.getAirports({ LocationId: locationId }).pipe(
+                  catchError(() => of([]))
+                )
+              )
+            ).pipe(
+              map(airportsArrays => {
+                // Aplanar el array de arrays y eliminar duplicados por ID
+                const allAirports: LocationAirport[] = [];
+                const seenIds = new Set<number>();
+                airportsArrays.forEach(airports => {
+                  airports.forEach((airport: LocationAirport) => {
+                    if (airport.id && !seenIds.has(airport.id)) {
+                      seenIds.add(airport.id);
+                      allAirports.push(airport);
+                    }
+                  });
+                });
+                return allAirports;
+              }),
+              catchError(() => of([]))
+            )
+          : of([]);
+        
+        // Combinar todos los IDs de aeropuertos (configurados + tour + aeropuertos de locations) sin duplicados
         const allAirportIds = [...new Set([...configuredAirportIds, ...tourAirportIds])];
         
         return forkJoin({
             locations: locationIds.length ? this.locationNetService.getLocationsByIds(locationIds) : of([]),
           airports: allAirportIds.length ? this.locationAirportNetService.getAirportsByIds(allAirportIds) : of([]),
-          locationAirports: of([])
+          airportsForLocations: airportsForLocations$
         }).pipe(
           map(configuredLocationsDetails => {
             // Crear mapa con aeropuertos por defecto
@@ -401,31 +438,69 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
             // Agregar ubicaciones configuradas al mapa
             const locationMap = new Map(configuredLocationsDetails.locations.map((l: Location) => [l.id, l]));
             const airportMap = new Map(configuredLocationsDetails.airports.map((a: LocationAirport) => [a.id, a]));
+            
+            // NUEVO: Crear mapa de aeropuertos asociados a Locations (por locationId)
+            const airportsForLocationsMap = new Map<number, LocationAirport[]>();
+            configuredLocationsDetails.airportsForLocations.forEach((airport: LocationAirport) => {
+              if (airport.locationId) {
+                if (!airportsForLocationsMap.has(airport.locationId)) {
+                  airportsForLocationsMap.set(airport.locationId, []);
+                }
+                airportsForLocationsMap.get(airport.locationId)!.push(airport);
+              }
+            });
 
             // Agregar ubicaciones configuradas (search locations) - usar allConfiguredLocations
             allConfiguredLocations.forEach(item => {
               if (item.locationId && locationMap.has(item.locationId)) {
                 const loc = locationMap.get(item.locationId);
+                
+                // NUEVO: Obtener aeropuertos asociados a esta Location
+                const locationAirports = airportsForLocationsMap.get(item.locationId) || [];
+                
+                // Agregar cada aeropuerto asociado a la Location
+                locationAirports.forEach((airport: LocationAirport) => {
+                  if (airport.iata) {
+                    const key = airport.iata.toUpperCase();
+                    // Solo agregar si no existe ya (evitar duplicados)
+                    if (!citiesMap.has(key)) {
+                      citiesMap.set(key, {
+                        nombre: airport.name || loc?.name || '',
+                        codigo: airport.iata,
+                        source: item.source,
+                        id: airport.id
+                      });
+                    }
+                  }
+                });
+                
+                // También agregar la Location directamente si tiene iataCode (para casos donde no hay aeropuertos asociados)
                 const codigo = loc && loc.iataCode ? String(loc.iataCode) : (loc && loc.code ? String(loc.code) : '');
                 if (codigo) {
                   const key = codigo.toUpperCase();
-                  citiesMap.set(key, {
-                  nombre: loc && loc.name ? loc.name : '',
-                    codigo: codigo,
-                  source: item.source,
-                  id: item.id
-                  });
+                  // Solo agregar si no existe ya (evitar duplicados)
+                  if (!citiesMap.has(key)) {
+                    citiesMap.set(key, {
+                      nombre: loc && loc.name ? loc.name : '',
+                      codigo: codigo,
+                      source: item.source,
+                      id: item.id
+                    });
+                  }
                 }
               } else if (item.locationAirportId && airportMap.has(item.locationAirportId)) {
                 const airport = airportMap.get(item.locationAirportId);
                 if (airport && airport.iata) {
                   const key = airport.iata.toUpperCase();
-                  citiesMap.set(key, {
-                    nombre: airport.name ? airport.name : '',
-                    codigo: airport.iata,
-                  source: item.source,
-                  id: item.id
-                  });
+                  // Solo agregar si no existe ya (evitar duplicados)
+                  if (!citiesMap.has(key)) {
+                    citiesMap.set(key, {
+                      nombre: airport.name ? airport.name : '',
+                      codigo: airport.iata,
+                      source: item.source,
+                      id: item.id
+                    });
+                  }
                 }
               }
             });

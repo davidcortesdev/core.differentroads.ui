@@ -587,8 +587,9 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
             this.horaIdaConstante = data.maxArrivalTimeAtAirport || '';
             
             // Convertir string a Date para el límite máximo
-            const maxDateIda = new Date(data.maxArrivalDateAtAirport);
-            if (!isNaN(maxDateIda.getTime())) {
+            // Parsear correctamente la fecha sin problemas de zona horaria
+            const maxDateIda = this.parseDateString(data.maxArrivalDateAtAirport);
+            if (maxDateIda && !isNaN(maxDateIda.getTime())) {
               this.maxFechaIda = maxDateIda;
               this.maxHoraIda = data.maxArrivalTimeAtAirport || null;
               
@@ -605,9 +606,9 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
             this.fechaRegresoConstante = data.minDepartureDateFromAirport || '';
             this.horaRegresoConstante = data.minDepartureTimeFromAirport || '';
             
-            // Convertir string a Date para el límite mínimo
-            const minDateVuelta = new Date(data.minDepartureDateFromAirport);
-            if (!isNaN(minDateVuelta.getTime())) {
+            // Convertir string a Date para el límite mínimo (parsear correctamente sin problemas de zona horaria)
+            const minDateVuelta = this.parseDateString(data.minDepartureDateFromAirport);
+            if (minDateVuelta && !isNaN(minDateVuelta.getTime())) {
               this.minFechaVuelta = minDateVuelta;
               this.minHoraVuelta = data.minDepartureTimeFromAirport || null;
               
@@ -617,6 +618,9 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
               } else {
                 this.defaultDateFechaVuelta = new Date(this.minFechaVuelta);
               }
+              
+              // Autocompletar la fecha mínima de salida en el formulario si está vacío
+              this.setDefaultFechaVueltaIfEmpty();
             }
           }
         },
@@ -1440,6 +1444,31 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
    * @param timeString Hora en formato HH:mm
    * @returns Date combinado o null si hay error
    */
+  /**
+   * Parsea un string de fecha (formato YYYY-MM-DD) a Date sin problemas de zona horaria
+   * Evita que JavaScript interprete la fecha como UTC y la convierta a la zona horaria local
+   */
+  private parseDateString(dateString: string): Date | null {
+    if (!dateString) return null;
+    
+    try {
+      // Parsear el string de fecha (formato YYYY-MM-DD)
+      const parts = dateString.split('-');
+      if (parts.length !== 3) return null;
+      
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1; // Los meses en JavaScript son 0-indexados
+      const day = parseInt(parts[2], 10);
+      
+      if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
+      
+      // Crear la fecha en la zona horaria local (no UTC)
+      return new Date(year, month, day);
+    } catch {
+      return null;
+    }
+  }
+
   private combineDateAndTime(date: Date | null, timeString: string | null): Date | null {
     if (!date || !timeString) return date;
     
@@ -1627,18 +1656,42 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
 
   /**
    * Maneja el evento cuando se cierra el datepicker de fecha de vuelta
-   * Limpia el valor temporal si el usuario no seleccionó nada
+   * Ya no limpiamos el valor temporal - ahora se establece permanentemente
    */
   onFechaVueltaPickerHide(): void {
     const fechaHoraVueltaControl = this.flightForm.get('fechaHoraVuelta');
     if (fechaHoraVueltaControl && this.fechaVueltaTemporalEstablecida) {
-      // Si el valor sigue siendo el mismo que establecimos temporalmente, limpiarlo
+      // Si el usuario no seleccionó nada y el valor sigue siendo el temporal, mantenerlo
+      // Esto asegura que la fecha mínima se mantenga establecida
       if (fechaHoraVueltaControl.value && 
           this.defaultDateFechaVuelta &&
           fechaHoraVueltaControl.value.getTime() === this.defaultDateFechaVuelta.getTime()) {
-        fechaHoraVueltaControl.setValue(null, { emitEvent: false });
+        // Mantener el valor - ya no lo limpiamos
+        this.fechaVueltaTemporalEstablecida = false;
+      } else {
+        this.fechaVueltaTemporalEstablecida = false;
       }
-      this.fechaVueltaTemporalEstablecida = false;
+    }
+  }
+
+  /**
+   * Establece la fecha mínima de vuelta en el formulario si el campo está vacío
+   * Se llama automáticamente cuando se carga la fecha mínima desde la API
+   * Agrega una hora a la fecha mínima para evitar errores de validación
+   */
+  private setDefaultFechaVueltaIfEmpty(): void {
+    if (!this.defaultDateFechaVuelta) {
+      return;
+    }
+
+    const fechaHoraVueltaControl = this.flightForm.get('fechaHoraVuelta');
+    if (fechaHoraVueltaControl && !fechaHoraVueltaControl.value) {
+      // Crear una copia de la fecha mínima y agregarle una hora para evitar errores de validación
+      const fechaConHoraExtra = new Date(this.defaultDateFechaVuelta);
+      fechaConHoraExtra.setHours(fechaConHoraExtra.getHours() + 1);
+      
+      // Establecer la fecha mínima + 1 hora automáticamente si el campo está vacío
+      fechaHoraVueltaControl.setValue(fechaConHoraExtra, { emitEvent: true });
     }
   }
 

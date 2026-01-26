@@ -543,7 +543,12 @@ export class BookingDocumentationV2Component implements OnInit {
         })
       )
       .subscribe((logs: IReservationTKLogResponse[]) => {
-        this.tkLogs = logs;
+        // Ordenar logs por fecha de envío (sentAt) descendente (más reciente primero)
+        this.tkLogs = logs.sort((a, b) => {
+          const dateA = a.sentAt ? new Date(a.sentAt).getTime() : 0;
+          const dateB = b.sentAt ? new Date(b.sentAt).getTime() : 0;
+          return dateB - dateA; // Orden descendente
+        });
         this.tkLogsLoading = false;
         this.showTkLogsTable = logs.length > 0;
       });

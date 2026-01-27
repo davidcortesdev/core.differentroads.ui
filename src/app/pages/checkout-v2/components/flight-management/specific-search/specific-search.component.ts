@@ -80,11 +80,14 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
   maxFechaIda: Date | null = null;
   maxHoraIda: string | null = null;
   
+  // Fecha por defecto para mostrar en el calendario cuando está vacío (ida)
+  defaultDateFechaIda: Date | null = null;
+  
   // Límites para fecha/hora de vuelta (salida del aeropuerto)
   minFechaVuelta: Date | null = null;
   minHoraVuelta: string | null = null;
   
-  // Fecha por defecto para mostrar en el calendario cuando está vacío
+  // Fecha por defecto para mostrar en el calendario cuando está vacío (vuelta)
   defaultDateFechaVuelta: Date | null = null;
   
   // Flag para rastrear si el valor temporal fue establecido para mostrar el mes correcto
@@ -242,16 +245,25 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         if (value === 'Ida') {
           this.flightForm.get('fechaHoraVuelta')?.setValue(null, { emitEvent: false });
           this.flightForm.get('destinoVuelta')?.setValue(null, { emitEvent: false });
+          // Asegurar que la fecha de ida esté establecida
+          setTimeout(() => this.setDefaultFechaIdaIfEmpty(), 0);
         }
         
         // Limpiar fecha/hora de ida si el tipo de viaje es "Solo vuelta"
         if (value === 'Vuelta') {
           this.flightForm.get('fechaHoraIda')?.setValue(null, { emitEvent: false });
           this.flightForm.get('destinoVuelta')?.setValue(null, { emitEvent: false });
+          // Asegurar que la fecha de vuelta esté establecida
+          setTimeout(() => this.setDefaultFechaVueltaIfEmpty(), 0);
         }
         
         if (value === 'IdaVuelta' && this.flightForm.get('origen')?.value) {
           this.flightForm.get('destinoVuelta')?.setValue(this.flightForm.get('origen')?.value);
+          // Asegurar que ambas fechas estén establecidas
+          setTimeout(() => {
+            this.setDefaultFechaIdaIfEmpty();
+            this.setDefaultFechaVueltaIfEmpty();
+          }, 0);
         }
       });
     
@@ -587,16 +599,21 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
             this.horaIdaConstante = data.maxArrivalTimeAtAirport || '';
             
             // Convertir string a Date para el límite máximo
-            const maxDateIda = new Date(data.maxArrivalDateAtAirport);
-            if (!isNaN(maxDateIda.getTime())) {
+            // Parsear correctamente la fecha sin problemas de zona horaria
+            const maxDateIda = this.parseDateString(data.maxArrivalDateAtAirport);
+            if (maxDateIda && !isNaN(maxDateIda.getTime())) {
               this.maxFechaIda = maxDateIda;
               this.maxHoraIda = data.maxArrivalTimeAtAirport || null;
               
-              // Precargar el valor por defecto en el formulario (combinar fecha y hora)
-              const fechaHoraIda = this.combineDateAndTime(maxDateIda, data.maxArrivalTimeAtAirport);
-              this.flightForm.patchValue({
-                fechaHoraIda: fechaHoraIda
-              });
+              // Establecer la fecha por defecto para que el calendario muestre el mes correcto
+              if (this.maxHoraIda) {
+                this.defaultDateFechaIda = this.combineDateAndTime(this.maxFechaIda, this.maxHoraIda);
+              } else {
+                this.defaultDateFechaIda = new Date(this.maxFechaIda);
+              }
+              
+              // Autocompletar la fecha máxima de llegada en el formulario si está vacío
+              this.setDefaultFechaIdaIfEmpty();
             }
           }
           
@@ -605,9 +622,9 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
             this.fechaRegresoConstante = data.minDepartureDateFromAirport || '';
             this.horaRegresoConstante = data.minDepartureTimeFromAirport || '';
             
-            // Convertir string a Date para el límite mínimo
-            const minDateVuelta = new Date(data.minDepartureDateFromAirport);
-            if (!isNaN(minDateVuelta.getTime())) {
+            // Convertir string a Date para el límite mínimo (parsear correctamente sin problemas de zona horaria)
+            const minDateVuelta = this.parseDateString(data.minDepartureDateFromAirport);
+            if (minDateVuelta && !isNaN(minDateVuelta.getTime())) {
               this.minFechaVuelta = minDateVuelta;
               this.minHoraVuelta = data.minDepartureTimeFromAirport || null;
               
@@ -617,6 +634,9 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
               } else {
                 this.defaultDateFechaVuelta = new Date(this.minFechaVuelta);
               }
+              
+              // Autocompletar la fecha mínima de salida en el formulario si está vacío
+              this.setDefaultFechaVueltaIfEmpty();
             }
           }
         },
@@ -919,22 +939,22 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     switch (sortOption) {
       case 'price-asc':
         this.flightOffersRaw.sort((a, b) => {
-          const priceA = a.ageGroupPrices?.[0]?.price || 0;
-          const priceB = b.ageGroupPrices?.[0]?.price || 0;
+          const priceA = this.parsePriceToNumber(a.ageGroupPrices?.[0]?.price) || 0;
+          const priceB = this.parsePriceToNumber(b.ageGroupPrices?.[0]?.price) || 0;
           return priceA - priceB;
         });
         break;
       case 'price-desc':
         this.flightOffersRaw.sort((a, b) => {
-          const priceA = a.ageGroupPrices?.[0]?.price || 0;
-          const priceB = b.ageGroupPrices?.[0]?.price || 0;
+          const priceA = this.parsePriceToNumber(a.ageGroupPrices?.[0]?.price) || 0;
+          const priceB = this.parsePriceToNumber(b.ageGroupPrices?.[0]?.price) || 0;
           return priceB - priceA;
         });
         break;
       case 'duration':
         this.flightOffersRaw.sort((a, b) => {
-          const priceA = a.ageGroupPrices?.[0]?.price || 0;
-          const priceB = b.ageGroupPrices?.[0]?.price || 0;
+          const priceA = this.parsePriceToNumber(a.ageGroupPrices?.[0]?.price) || 0;
+          const priceB = this.parsePriceToNumber(b.ageGroupPrices?.[0]?.price) || 0;
           return priceA - priceB;
         });
         break;
@@ -961,7 +981,7 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     const uniquePacks: IFlightPackDTO[] = [];
     
     for (const pack of flightPacks) {
-      const price = pack.ageGroupPrices?.[0]?.price || 0;
+      const price = this.parsePriceToNumber(pack.ageGroupPrices?.[0]?.price) || 0;
       const flightIds = pack.flights?.map(f => f.id).sort().join(',') || '';
       const key = `${price}_${flightIds}`;
       
@@ -1038,16 +1058,34 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
         }];
       }
 
-      const priceData = flightPack.ageGroupPrices?.map(price => ({
-        id: price.ageGroupId?.toString() || '',
-        value: price.price || 0,
-        value_with_campaign: price.price || 0,
-        campaign: null,
-        age_group_name: price.ageGroupName || 'Adultos',
-        category_name: 'Vuelo',
-        period_product: undefined,
-        _id: undefined,
-      })) || [];
+      const priceData = flightPack.ageGroupPrices?.map(price => {
+        // Asegurar que el precio sea un número, no un string
+        let numericPrice: number = 0;
+        if (price.price != null) {
+          if (typeof price.price === 'string') {
+            // Si viene como string, puede tener punto decimal (formato inglés) o coma (formato español)
+            // Reemplazar coma por punto para parseFloat
+            const priceString = String(price.price);
+            const normalizedPrice = priceString.replace(',', '.');
+            numericPrice = parseFloat(normalizedPrice);
+            if (isNaN(numericPrice)) {
+              numericPrice = 0;
+            }
+          } else {
+            numericPrice = Number(price.price) || 0;
+          }
+        }
+        return {
+          id: price.ageGroupId?.toString() || '',
+          value: numericPrice,
+          value_with_campaign: numericPrice,
+          campaign: null,
+          age_group_name: price.ageGroupName || 'Adultos',
+          category_name: 'Vuelo',
+          period_product: undefined,
+          _id: undefined,
+        };
+      }) || [];
 
       const flight: Flight = {
         id: flightPack.id.toString(),
@@ -1081,7 +1119,17 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
               serviceCombinationID: 0,
               prices: [],
             },
-        price: flightPack.ageGroupPrices?.[0]?.price || 0,
+        price: (() => {
+          const price = flightPack.ageGroupPrices?.[0]?.price;
+          if (price == null) return 0;
+          if (typeof price === 'string') {
+            const priceString = String(price);
+            const normalizedPrice = priceString.replace(',', '.');
+            const numericPrice = parseFloat(normalizedPrice);
+            return isNaN(numericPrice) ? 0 : numericPrice;
+          }
+          return Number(price) || 0;
+        })(),
         priceData: priceData,
         source: FlightSourceType.AMADEUS,
       };
@@ -1234,10 +1282,11 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
     } else {
       this.selectedFlight = flightPack;
       
-      const basePrice =
+      const basePrice = this.parsePriceToNumber(
         flightPack.ageGroupPrices?.find(
           (price) => price.ageGroupId === this.travelers[0]?.ageGroupId
-        )?.price || 0;
+        )?.price
+      ) || 0;
       const totalTravelers = this.travelers.length;
       const totalPrice = totalTravelers > 0 ? basePrice * totalTravelers : 0;
 
@@ -1309,11 +1358,29 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
       imageUrl: flightPack.imageUrl || '',
       imageAlt: flightPack.imageAlt || '',
       isVisibleOnWeb: flightPack.isVisibleOnWeb,
-      ageGroupPrices: flightPack.ageGroupPrices?.map(price => ({
-        price: price.price || 0,
-        ageGroupId: price.ageGroupId || 0,
-        ageGroupName: price.ageGroupName || 'Adultos'
-      })) || [],
+      ageGroupPrices: flightPack.ageGroupPrices?.map(price => {
+        // Asegurar que el precio sea un número, no un string
+        let numericPrice: number = 0;
+        if (price.price != null) {
+          if (typeof price.price === 'string') {
+            // Si viene como string, puede tener punto decimal (formato inglés) o coma (formato español)
+            // Reemplazar coma por punto para parseFloat
+            const priceString = String(price.price);
+            const normalizedPrice = priceString.replace(',', '.');
+            numericPrice = parseFloat(normalizedPrice);
+            if (isNaN(numericPrice)) {
+              numericPrice = 0;
+            }
+          } else {
+            numericPrice = Number(price.price) || 0;
+          }
+        }
+        return {
+          price: numericPrice,
+          ageGroupId: price.ageGroupId || 0,
+          ageGroupName: price.ageGroupName || 'Adultos'
+        };
+      }) || [],
       flights: adaptedFlights
     };
 
@@ -1440,6 +1507,48 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
    * @param timeString Hora en formato HH:mm
    * @returns Date combinado o null si hay error
    */
+  /**
+   * Parsea un string de fecha (formato YYYY-MM-DD) a Date sin problemas de zona horaria
+   * Evita que JavaScript interprete la fecha como UTC y la convierta a la zona horaria local
+   */
+  private parseDateString(dateString: string): Date | null {
+    if (!dateString) return null;
+    
+    try {
+      // Parsear el string de fecha (formato YYYY-MM-DD)
+      const parts = dateString.split('-');
+      if (parts.length !== 3) return null;
+      
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1; // Los meses en JavaScript son 0-indexados
+      const day = parseInt(parts[2], 10);
+      
+      if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
+      
+      // Crear la fecha en la zona horaria local (no UTC)
+      return new Date(year, month, day);
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Parsea un precio a número, manejando strings con punto o coma decimal
+   */
+  private parsePriceToNumber(price: number | string | null | undefined): number {
+    if (price == null) return 0;
+    
+    if (typeof price === 'string') {
+      // Si viene como string, puede tener punto decimal (formato inglés) o coma (formato español)
+      // Reemplazar coma por punto para parseFloat
+      const normalizedPrice = price.replace(',', '.');
+      const numericPrice = parseFloat(normalizedPrice);
+      return isNaN(numericPrice) ? 0 : numericPrice;
+    }
+    
+    return Number(price) || 0;
+  }
+
   private combineDateAndTime(date: Date | null, timeString: string | null): Date | null {
     if (!date || !timeString) return date;
     
@@ -1627,18 +1736,63 @@ export class SpecificSearchComponent implements OnInit, OnDestroy, OnChanges {
 
   /**
    * Maneja el evento cuando se cierra el datepicker de fecha de vuelta
-   * Limpia el valor temporal si el usuario no seleccionó nada
+   * Ya no limpiamos el valor temporal - ahora se establece permanentemente
    */
   onFechaVueltaPickerHide(): void {
     const fechaHoraVueltaControl = this.flightForm.get('fechaHoraVuelta');
     if (fechaHoraVueltaControl && this.fechaVueltaTemporalEstablecida) {
-      // Si el valor sigue siendo el mismo que establecimos temporalmente, limpiarlo
+      // Si el usuario no seleccionó nada y el valor sigue siendo el temporal, mantenerlo
+      // Esto asegura que la fecha mínima se mantenga establecida
       if (fechaHoraVueltaControl.value && 
           this.defaultDateFechaVuelta &&
           fechaHoraVueltaControl.value.getTime() === this.defaultDateFechaVuelta.getTime()) {
-        fechaHoraVueltaControl.setValue(null, { emitEvent: false });
+        // Mantener el valor - ya no lo limpiamos
+        this.fechaVueltaTemporalEstablecida = false;
+      } else {
+        this.fechaVueltaTemporalEstablecida = false;
       }
-      this.fechaVueltaTemporalEstablecida = false;
+    }
+  }
+
+  /**
+   * Establece la fecha máxima de ida (llegada) en el formulario si el campo está vacío
+   * Se llama automáticamente cuando se carga la fecha máxima desde la API
+   * Resta una hora a la fecha máxima para evitar errores de validación
+   */
+  private setDefaultFechaIdaIfEmpty(): void {
+    if (!this.defaultDateFechaIda) {
+      return;
+    }
+
+    const fechaHoraIdaControl = this.flightForm.get('fechaHoraIda');
+    if (fechaHoraIdaControl && !fechaHoraIdaControl.value) {
+      // Crear una copia de la fecha máxima y restarle una hora para evitar errores de validación
+      const fechaConHoraMenos = new Date(this.defaultDateFechaIda);
+      fechaConHoraMenos.setHours(fechaConHoraMenos.getHours() - 1);
+      
+      // Establecer la fecha máxima - 1 hora automáticamente si el campo está vacío
+      fechaHoraIdaControl.setValue(fechaConHoraMenos, { emitEvent: true });
+    }
+  }
+
+  /**
+   * Establece la fecha mínima de vuelta en el formulario si el campo está vacío
+   * Se llama automáticamente cuando se carga la fecha mínima desde la API
+   * Agrega una hora a la fecha mínima para evitar errores de validación
+   */
+  private setDefaultFechaVueltaIfEmpty(): void {
+    if (!this.defaultDateFechaVuelta) {
+      return;
+    }
+
+    const fechaHoraVueltaControl = this.flightForm.get('fechaHoraVuelta');
+    if (fechaHoraVueltaControl && !fechaHoraVueltaControl.value) {
+      // Crear una copia de la fecha mínima y agregarle una hora para evitar errores de validación
+      const fechaConHoraExtra = new Date(this.defaultDateFechaVuelta);
+      fechaConHoraExtra.setHours(fechaConHoraExtra.getHours() + 1);
+      
+      // Establecer la fecha mínima + 1 hora automáticamente si el campo está vacío
+      fechaHoraVueltaControl.setValue(fechaConHoraExtra, { emitEvent: true });
     }
   }
 

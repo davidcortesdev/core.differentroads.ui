@@ -353,6 +353,24 @@ export class FlightItemComponent implements OnInit, OnChanges, OnDestroy {
       return 'N/A';
     }
     
+    // Convertir el precio a número si viene como string
+    // Esto asegura que se formatee correctamente independientemente del formato del backend
+    let numericPrice: number;
+    if (typeof price === 'string') {
+      // Si viene como string, puede tener punto decimal (formato inglés) o coma (formato español)
+      // Reemplazar coma por punto para parseFloat
+      const priceString = String(price);
+      const normalizedPrice = priceString.replace(',', '.');
+      numericPrice = parseFloat(normalizedPrice);
+      
+      // Si parseFloat falla, intentar como número directo
+      if (isNaN(numericPrice)) {
+        numericPrice = Number(price) || 0;
+      }
+    } else {
+      numericPrice = Number(price) || 0;
+    }
+    
     // Formatear el precio usando el mismo formato que el pipe currencyFormat
     return new Intl.NumberFormat('es-ES', {
       style: 'currency',
@@ -360,7 +378,7 @@ export class FlightItemComponent implements OnInit, OnChanges, OnDestroy {
       minimumFractionDigits: 0,
       maximumFractionDigits: 2,
       useGrouping: true,
-    }).format(price);
+    }).format(numericPrice);
   }
 
   /**

@@ -349,7 +349,7 @@ export class BookingsServiceV2 {
 
     // Construir la URL correcta para el endpoint by-bucket
     const url = `${this.API_URL}/by-bucket`;
-    let params = new HttpParams().set('bucket', bucket);
+    let params = new HttpParams().set('buckets', bucket);
 
     if (userId) {
       params = params.set('userId', userId.toString());

@@ -16,10 +16,27 @@ export const MyPreset = definePreset(Aura, {
       activeColor: '#0a4252',
     },
     accent: {
+      // Coral DR, usado para links y acentos
       color: '#ea685c',
       contrastColor: '#ffffff',
       hoverColor: '#f08a81',
       activeColor: '#e45345',
+    },
+
+    // Paleta de marca explícita usada en los componentes React de HOME
+    brand: {
+      navy: '#093642',        // textos principales, bordes fuertes
+      navySoft: '#0a4252',    // hover de botones primarios
+      coral: '#ea685c',       // CTAs secundarios y hovers
+      softCoral: '#f7b5af',
+      roseNude: '#f5e5e3',
+      lightBlue: '#e8f4f8',
+      bgSubtle: '#f9fafb',    // fondos tipo bloques/sections
+      textSecondary: '#6b7280',
+      borderSoft: 'rgba(9, 54, 66, 0.1)',   // líneas divisorias suaves
+      borderSofter: 'rgba(9, 54, 66, 0.05)',// por si necesitas /20 ó /10
+      borderStrong: 'rgba(9, 54, 66, 0.2)', // equivalentes a border-[#093642]/5
+      danger: '#d4183d',
     },
 
     colorScheme: {

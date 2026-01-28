@@ -2,7 +2,8 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  border-bottom: 1px solid var(--dr-border-soft);
+  border-bottom: 1px solid var(--p-border-color);
+  background-color: var(--p-surface-0);
 }
 
 .home-v3-header__container {
@@ -64,14 +65,14 @@
 .home-v3-header__link {
   font-size: 0.875rem;
   line-height: 1.25rem;
-  color: var(--dr-navy);
+  color: var(--p-text-color);
   text-decoration: none;
   transition-property: color;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
 
   &:hover {
-    color: var(--dr-coral);
+    color: var(--p-accent-color);
   }
 }
 
@@ -82,8 +83,15 @@
   font-weight: 500;
   padding-inline: 1.5rem;
   padding-block: 0.625rem;
+  background-color: var(--p-primary-color);
+  color: var(--p-primary-contrast-color);
   transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
+
+  &:hover {
+    background-color: var(--p-primary-hover-color);
+    color: var(--p-primary-contrast-color);
+  }
 }
 

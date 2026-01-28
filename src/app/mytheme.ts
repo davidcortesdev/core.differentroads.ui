@@ -6,6 +6,22 @@ import { definePreset } from '@primeng/themes';
 
 export const MyPreset = definePreset(Aura, {
   semantic: {
+    // Tokens semánticos globales que se exponen como variables CSS:
+    // primary.color   -> --p-primary-color
+    // accent.color    -> --p-accent-color
+    primary: {
+      color: '#093642',
+      contrastColor: '#ffffff',
+      hoverColor: '#0a4252',
+      activeColor: '#0a4252',
+    },
+    accent: {
+      color: '#ea685c',
+      contrastColor: '#ffffff',
+      hoverColor: '#f08a81',
+      activeColor: '#e45345',
+    },
+
     colorScheme: {
       // Equivalente a :root (tema claro)
       light: {

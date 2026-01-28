@@ -1,6 +1,8 @@
 .top-trust-bar {
-  /* bg-[#f9fafb] + border-[#093642]/5 del componente React */
-  background-color: var(--p-highlight-bg);
+  width: 100%;
+  /* highlight.background -> --p-highlight-background en PrimeNG 21 */
+  background: var(--p-highlight-ba
+ckground);
   border-bottom: 1px solid color-mix(
     in srgb,
     var(--p-primary-color),

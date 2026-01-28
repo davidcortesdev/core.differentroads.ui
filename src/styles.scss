@@ -31,166 +31,173 @@
 
 :root {
   --font-family: "Montserrat", sans-serif;
-  
-  --primary-color-20: #fdeadd;
-  --primary-color-50: #fce5d9;
-  --primary-color-100: #f9cbb3;
-  --primary-color-200: #f6b18d;
-  --primary-color-300: #f39767;
-  --primary-color-400: #f07d41;
-  --primary-color-500: #ea685c; /* Color principal */
-  --primary-color-600: #d15e53;
-  --primary-color-700: #b85449;
-  --primary-color-800: #9f4a40;
-  --primary-color-900: #863f36;
-  --primary-color-950: #6d352d;
 
-  --secondary-color-50: #c4e2e1;
-  --secondary-color-100: #89c5c3;
-  --secondary-color-200: #5ba8a6;
-  --secondary-color-300: #3d8b89;
-  --secondary-color-400: #1f6e6c;
-  --secondary-color-500: #093642; /* Color principal */
-  --secondary-color-600: #08313b;
-  --secondary-color-700: #072c34;
-  --secondary-color-800: #06272d;
-  --secondary-color-900: #051f26;
-  --secondary-color-950: #041a1f;
+  /* Tema PrimeNG 21 basado en la paleta Different Roads
+ *
+ * Este archivo asume:
+ * - Prefix por defecto de PrimeNG: "p"  -> variables tipo --p-primary-color
+ * - Se carga DESPUÉS del CSS del preset (Aura, Material, etc.) para sobrescribir colores.
+ *
+ * Para usarlo en Angular:
+ * 1. Configura PrimeNG con un preset (p.ej. Aura).
+ * 2. Importa este CSS en tu global styles (styles.css / styles.scss).
+ */
 
-  --rose-nude-50: #fef9f5;
-  --rose-nude-100: #fdf3eb;
-  --rose-nude-200: #fcede1;
-  --rose-nude-300: #fce7d7;
-  --rose-nude-400: #fde1cd;
-  --rose-nude-500: #fdeadd; /* Color secundario */
-  --rose-nude-600: #e1d3c7;
-  --rose-nude-700: #c5bcb1;
-  --rose-nude-800: #a9a59b;
-  --rose-nude-900: #8d8e85;
-  --rose-nude-950: #71776f;
 
-  --light-blue-50: #f4f9f9;
-  --light-blue-100: #e9f3f3;
-  --light-blue-200: #deeeee;
-  --light-blue-300: #d3e8e8;
-  --light-blue-400: #c8e2e2;
-  --light-blue-500: #c4e2e1; /* Color secundario */
-  --light-blue-600: #b2cbcb;
-  --light-blue-700: #a0b4b4;
-  --light-blue-800: #8e9d9d;
-  --light-blue-900: #7c8686;
-  --light-blue-950: #6a7070;
+  /* Colores de marca base (tomados de src/styles/theme.css) */
+  --dr-navy: #093642;
+  --dr-navy-soft: #0a4252; /* tono hover usado en los botones */
+  --dr-coral: #ea685c;
+  --dr-soft-coral: #f7b5af;
+  --dr-rose-nude: #f5e5e3;
+  --dr-light-blue: #e8f4f8;
+  --dr-bg-subtle: #f9fafb;
+  --dr-text-secondary: #6b7280;
+  --dr-border-soft: rgba(9, 54, 66, 0.1);
+  --dr-danger: #d4183d;
 
-  --soft-coral-50: #fef7f4;
-  --soft-coral-100: #fdeee9;
-  --soft-coral-200: #fce5dd;
-  --soft-coral-300: #fbdbd2;
-  --soft-coral-400: #f7c4bc;
-  --soft-coral-500: #f3b0a9; /* Color secundario */
-  --soft-coral-600: #db9e98;
-  --soft-coral-700: #c38c87;
-  --soft-coral-800: #ab7a76;
-  --soft-coral-900: #936865;
-  --soft-coral-950: #7b5654;
+  /* Texto y superficies */
+  --p-text-color: var(--dr-navy);
+  --p-text-secondary-color: var(--dr-text-secondary);
 
-  --yellow-sun-50: #fffcf2;
-  --yellow-sun-100: #fff9e5;
-  --yellow-sun-200: #fff6d8;
-  --yellow-sun-300: #fff3cb;
-  --yellow-sun-400: #fff0be;
-  --yellow-sun-500: #f8ed7f; /* Color secundario */
-  --yellow-sun-600: #dfd576;
-  --yellow-sun-700: #c6bd6d;
-  --yellow-sun-800: #ada564;
-  --yellow-sun-900: #948d5b;
-  --yellow-sun-950: #7b7552;
+  /* Superficies principales */
+  --p-surface-ground: var(--dr-bg-subtle); /* fondo general de la app */
+  --p-surface-0: #ffffff;                 /* superficies principales (cards, paneles) */
+  --p-surface-50: #f5f5f5;
+  --p-surface-100: #e5e7eb;
+  --p-surface-200: #e5e7eb;
+  --p-surface-300: #d1d5db;
+  --p-surface-400: #9ca3af;
+  --p-surface-500: #6b7280;
+  --p-surface-600: #4b5563;
+  --p-surface-700: #374151;
+  --p-surface-800: #1f2933;
+  --p-surface-900: #111827;
+  --p-surface-950: #020617;
 
-  --intense-blue-50: #f2fbfa;
-  --intense-blue-100: #e5f7f5;
-  --intense-blue-200: #d8f3f0;
-  --intense-blue-300: #cbefeb;
-  --intense-blue-400: #aee5e3;
-  --intense-blue-500: #82cbcf; /* Color secundario */
-  --intense-blue-600: #75b7ba;
-  --intense-blue-700: #68a3a5;
-  --intense-blue-800: #5b8f90;
-  --intense-blue-900: #4e7b7b;
-  --intense-blue-950: #416766;
+  /* Color primario (navy DR) */
+  --p-primary-color: var(--dr-navy);
+  --p-primary-contrast-color: #ffffff;
+  --p-primary-hover-color: var(--dr-navy-soft);
+  --p-primary-active-color: var(--dr-navy-soft);
 
-  --violet-50: #f8f4f8;
-  --violet-100: #f1e9f1;
-  --violet-200: #e9dee9;
-  --violet-300: #e2d3e2;
-  --violet-400: #dbc8db;
-  --violet-500: #a26ea1; /* Color secundario */
-  --violet-600: #926392;
-  --violet-700: #825883;
-  --violet-800: #724d74;
-  --violet-900: #624265;
-  --violet-950: #523756;
+  /* Variantes de intensidad primaria (aprox.) */
+  --p-primary-50: #e5edf0;
+  --p-primary-100: #ccdbe1;
+  --p-primary-200: #9ab7c3;
+  --p-primary-300: #6893a4;
+  --p-primary-400: #366f86;
+  --p-primary-500: #093642;
+  --p-primary-600: #072a33;
+  --p-primary-700: #051f25;
+  --p-primary-800: #031317;
+  --p-primary-900: #02090d;
 
-  --background-azul: #093642;
-  --background-azul-color-letra: white;
-  --background-white: #f7f6f2;
+  /* Color de acento (coral DR) para botones destacados, badges, etc. */
+  --p-accent-color: var(--dr-coral);
+  --p-accent-contrast-color: #ffffff;
+  --p-accent-hover-color: #f08a81;
+  --p-accent-active-color: #e45345;
 
-  --color-group: var(--rose-nude-500);
-  --color-single: var(--light-blue-500);
-  --color-private: var(--yellow-sun-500);
+  /* Estados */
+  --p-highlight-bg: var(--dr-bg-subtle);
+  --p-highlight-text-color: var(--dr-navy);
+  --p-highlight-focus-bg: #e5edf0;
 
-  --surface-color-0: #f7f6f2;
-  --surface-color-50: #fafaf9;
-  --surface-color-100: #f5f5f4;
-  --surface-color-200: #e7e5e4;
-  --surface-color-300: #d6d3d1;
-  --surface-color-400: #a8a29e;
-  --surface-color-500: #78716c;
-  --surface-color-600: #57534e;
-  --surface-color-700: #44403c;
-  --surface-color-800: #292524;
-  --surface-color-900: #1c1917;
-  --surface-color-950: #0c0a09;
+  --p-danger-color: var(--dr-danger);
+  --p-danger-contrast-color: #ffffff;
+  --p-danger-hover-color: #b31334;
+  --p-danger-active-color: #8f0f2a;
 
-  --accent-white: #f7f6f2;
+  /* Bordes y sombras suaves alineados con el diseño actual */
+  --p-border-color: var(--dr-border-soft);
+  --p-input-border-color: var(--dr-border-soft);
+  --p-input-focus-border-color: var(--dr-navy);
+  --p-input-bg: #ffffff;
+  --p-input-text-color: var(--dr-navy);
 
-  --gray: #a4a4a4;
+  /* Links */
+  --p-link-color: var(--dr-navy);
+  --p-link-hover-color: var(--dr-navy-soft);
 
-  --p-primary-50: var(--primary-color-50);
-  --p-primary-100: var(--primary-color-100);
-  --p-primary-200: var(--primary-color-200);
-  --p-primary-300: var(--primary-color-300);
-  --p-primary-400: var(--primary-color-400);
-  --p-primary-500: var(--primary-color-500);
-  --p-primary-600: var(--primary-color-600);
-  --p-primary-700: var(--primary-color-700);
-  --p-primary-800: var(--primary-color-800);
-  --p-primary-900: var(--primary-color-900);
-  --p-primary-950: var(--primary-color-950);
+  /* Componentes comunes */
+  --p-button-primary-bg: var(--p-primary-color);
+  --p-button-primary-text-color: var(--p-primary-contrast-color);
+  --p-button-primary-hover-bg: var(--p-primary-hover-color);
+  --p-button-primary-active-bg: var(--p-primary-active-color);
 
-  --p-primary-color: var(--p-primary-500);
+  --p-button-secondary-bg: #ffffff;
+  --p-button-secondary-text-color: var(--dr-navy);
+  --p-button-secondary-border-color: var(--dr-border-soft);
+  --p-button-secondary-hover-bg: var(--dr-bg-subtle);
 
-  --p-menubar-border-color: var(--p-menubar-background);
+  --p-chip-bg: var(--dr-bg-subtle);
+  --p-chip-text-color: var(--dr-navy);
+
+  --p-tag-info-bg: var(--dr-light-blue);
+  --p-tag-info-text-color: var(--dr-navy);
 }
 
-body {
-  margin: 0;
-}
+/* Variante de dark mode (usando el selector sugerido por PrimeNG)
+ * En tu app Angular puedes configurar:
+ *
+ * providePrimeNG({
+ *   theme: {
+ *     preset: Aura,
+ *     options: {
+ *       darkModeSelector: '.my-app-dark'
+ *     }
+ *   }
+ * });
+ *
+ * y luego aplicar/quitar la clase "my-app-dark" en <html>.
+ */
+.my-app-dark {
+  --p-text-color: #f9fafb;
+  --p-text-secondary-color: #d1d5db;
 
-body.with-test-banner {
-  padding-top: 50px; /* Espacio para el banner de entorno de pruebas */
-}
+  --p-surface-ground: #020617;
+  --p-surface-0: #020617;
+  --p-surface-50: #020617;
+  --p-surface-100: #111827;
+  --p-surface-200: #1f2933;
+  --p-surface-300: #374151;
+  --p-surface-400: #4b5563;
+  --p-surface-500: #6b7280;
+  --p-surface-600: #9ca3af;
+  --p-surface-700: #d1d5db;
+  --p-surface-800: #e5e7eb;
+  --p-surface-900: #f9fafb;
+  --p-surface-950: #ffffff;
 
-:root {
-  --toast-z-index: 9999;
-}
+  --p-primary-color: var(--dr-coral); /* en dark, el coral luce mejor como primario visible */
+  --p-primary-contrast-color: #0b1120;
+  --p-primary-hover-color: #f08a81;
+  --p-primary-active-color: #e45345;
 
-.p-toast {
-  position: fixed !important;
-  z-index: var(--toast-z-index) !important;
-}
+  --p-highlight-bg: rgba(248, 250, 252, 0.08);
+  --p-highlight-text-color: #f9fafb;
+  --p-highlight-focus-bg: rgba(248, 250, 252, 0.16);
 
-.p-toast-top-right {
-  top: 20px !important;
-  right: 20px !important;
+  --p-border-color: rgba(15, 23, 42, 0.6);
+  --p-input-border-color: rgba(15, 23, 42, 0.6);
+  --p-input-focus-border-color: var(--p-primary-color);
+  --p-input-bg: #020617;
+  --p-input-text-color: #f9fafb;
+
+  --p-link-color: var(--p-primary-color);
+  --p-link-hover-color: var(--p-primary-hover-color);
+
+  --p-button-primary-bg: var(--p-primary-color);
+  --p-button-primary-text-color: var(--p-primary-contrast-color);
+  --p-button-primary-hover-bg: var(--p-primary-hover-color);
+  --p-button-primary-active-bg: var(--p-primary-active-color);
+
+  --p-button-secondary-bg: transparent;
+  --p-button-secondary-text-color: #f9fafb;
+  --p-button-secondary-border-color: rgba(148, 163, 184, 0.7);
+  --p-button-secondary-hover-bg: rgba(15, 23, 42, 0.8);
+
 }
 
 /* Configuración de fuente Montserrat global */

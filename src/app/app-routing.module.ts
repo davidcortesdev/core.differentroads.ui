@@ -111,6 +111,17 @@ const routes: Routes = [
   },
 
   // ========================================
+  // HOME V3 - FULLSCREEN (sin header ni footer)
+  // ========================================
+  {
+    path: 'home-v3',
+    component: StandaloneComponent,
+    children: [
+      { path: '', component: HomeV3Component },
+    ],
+  },
+
+  // ========================================
   // MAIN LAYOUT ROUTES (con header y footer)
   // ========================================
   {
@@ -121,7 +132,6 @@ const routes: Routes = [
       // HOME
       // ========================================
       { path: '', component: HomeV2Component, pathMatch: 'full' },
-      { path: 'home-v3', component: HomeV3Component },
 
       // ========================================
       // AUTH ROUTES

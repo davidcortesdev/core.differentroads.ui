@@ -1,0 +1,51 @@
+.top-trust-bar {
+  /* bg-[#f9fafb] + border-[#093642]/5 del componente React */
+  background-color: var(--p-highlight-bg);
+  border-bottom: 1px solid color-mix(
+    in srgb,
+    var(--p-primary-color),
+    transparent 80%
+  );
+}
+
+.top-trust-bar__container {
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: 1rem;
+  padding-block: 0.625rem; // py-2.5
+
+  @media (min-width: 1024px) {
+    padding-inline: 5rem; // lg:px-20
+  }
+}
+
+.top-trust-bar__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  column-gap: 2rem; // gap-x-8
+  row-gap: 0.75rem; // gap-y-3
+
+  @media (min-width: 1024px) {
+    column-gap: 3rem; // lg:gap-12
+  }
+}
+
+.top-trust-bar__item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.top-trust-bar__icon {
+  font-size: 1.125rem; // ≈ 18px
+  color: var(--p-text-color);
+}
+
+.top-trust-bar__text {
+  font-size: 0.875rem;      // text-sm
+  line-height: 1.25rem;
+  color: var(--p-text-color);
+}
+

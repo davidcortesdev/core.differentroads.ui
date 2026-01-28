@@ -1,0 +1,16 @@
+<div class="top-trust-bar">
+  <div class="top-trust-bar__container">
+    <div class="top-trust-bar__inner">
+      <div
+        class="top-trust-bar__item"
+        *ngFor="let item of items"
+      >
+        <i class="top-trust-bar__icon" [ngClass]="item.icon"></i>
+        <span class="top-trust-bar__text">
+          {{ item.text }}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+

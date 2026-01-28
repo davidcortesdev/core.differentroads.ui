@@ -21,6 +21,7 @@ import { ForgetPasswordComponent } from './pages/forget-password/forget-password
 // PAGE COMPONENTS - HOME
 // ========================================
 import { HomeV2Component } from './pages/home-v2/home-v2.component';
+import { HomeV3Component } from './pages/home-v3/home-v3.component';
 
 // ========================================
 // PAGE COMPONENTS - TOUR
@@ -120,6 +121,7 @@ const routes: Routes = [
       // HOME
       // ========================================
       { path: '', component: HomeV2Component, pathMatch: 'full' },
+      { path: 'home-v3', component: HomeV3Component },
 
       // ========================================
       // AUTH ROUTES
